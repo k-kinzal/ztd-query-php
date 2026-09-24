@@ -51,23 +51,24 @@
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Model\Validation\InvalidStructure</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">DropAttribute</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DropAttributeTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a>{</span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRetainsTheOperands</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    {</span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>        <span class="tok-var">$change</span> = <span class="tok-kw">new</span> <span class="tok-id">DropAttribute</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-id">true</span>, <span class="tok-id">DropBehavior</span>::<span class="tok-id">Restrict</span>);</span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-var">$change</span>-&gt;<span class="tok-id">name</span>);</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$change</span>-&gt;<span class="tok-id">ifExists</span>);</span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">DropBehavior</span>::<span class="tok-id">Restrict</span>, <span class="tok-var">$change</span>-&gt;<span class="tok-id">behavior</span>);</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    }</span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRejectsAnEmptyName</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    {</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidStructure</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-kw">new</span> <span class="tok-id">DropAttribute</span>(<span class="tok-str">&#039;&#039;</span>);</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    }</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>}</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a>#[<span class="tok-id">\PHPUnit\Framework\Attributes\Medium</span>]</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DropAttributeTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>{</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRetainsTheOperands</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    {</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>        <span class="tok-var">$change</span> = <span class="tok-kw">new</span> <span class="tok-id">DropAttribute</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-id">true</span>, <span class="tok-id">DropBehavior</span>::<span class="tok-id">Restrict</span>);</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-var">$change</span>-&gt;<span class="tok-id">name</span>);</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$change</span>-&gt;<span class="tok-id">ifExists</span>);</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">DropBehavior</span>::<span class="tok-id">Restrict</span>, <span class="tok-var">$change</span>-&gt;<span class="tok-id">behavior</span>);</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    }</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRejectsAnEmptyName</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    {</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidStructure</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">new</span> <span class="tok-id">DropAttribute</span>(<span class="tok-str">&#039;&#039;</span>);</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    }</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>}</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
