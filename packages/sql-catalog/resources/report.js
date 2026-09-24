@@ -1,20 +1,22 @@
-/* SQL catalog report: search, narrowing a listing, sortable tables, theme and mobile navigation. */
+/*
+ * SQL catalog report: what the pages need beyond doc-ui.
+ *
+ * The theme, the navigation on a phone, sorting a table, copying a statement,
+ * the search box and its results all come from the bundled document-design
+ * v1.0.0 script. What is here is the catalog's own: how a search over
+ * statements is ranked and where each hit leads from the page it is read on,
+ * how a listing is narrowed by facts a page arrives with in its query string,
+ * and how a table of tables, classes or files is narrowed by name.
+ *
+ * Loaded before document-design.js, so the search provider is in place when
+ * the search box is wired.
+ */
 (function () {
   'use strict';
 
   var root = document.body.getAttribute('data-root') || '';
 
-  function esc(text) {
-    var div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
   /* ---- Search over every statement ---- */
-
-  var input = document.getElementById('search');
-  var results = document.getElementById('search-results');
-  var selected = -1;
 
   function items() {
     return window.__CATALOG_INDEX__ || [];
@@ -30,7 +32,14 @@
     return -1;
   }
 
-  function search(query) {
+  function hit(item) {
+    var where = [];
+    if (item.f !== '' && item.f !== '{main}') { where.push(item.f); }
+    if (item.r !== 'resolved') { where.push(item.r); }
+    return { name: item.k + ' at ' + item.w, where: where.join(' · '), body: item.q, href: root + item.u };
+  }
+
+  window.ddSearch = function (query) {
     query = query.trim().toLowerCase();
     if (query === '') { return []; }
     var hits = [];
@@ -40,79 +49,19 @@
       if (s !== -1) { hits.push({ s: s, len: list[i].q.length, item: list[i] }); }
     }
     hits.sort(function (a, b) { return a.s - b.s || a.len - b.len; });
-    return hits.slice(0, 40).map(function (h) { return h.item; });
-  }
-
-  function renderResults(list, query) {
-    if (!results) { return; }
-    selected = -1;
-    if (query === '') {
-      results.hidden = true;
-      results.innerHTML = '';
-      return;
-    }
-    if (list.length === 0) {
-      results.innerHTML = '<p class="search-empty">No statement matches ' + esc(query) + '.</p>';
-      results.hidden = false;
-      return;
-    }
-    var html = '';
-    for (var i = 0; i < list.length; i++) {
-      var item = list[i];
-      html += '<a href="' + root + item.u + '">'
-        + '<span class="chip chip-sm k-' + item.g + '">' + esc(item.k) + '</span> '
-        + (item.r === 'resolved' ? '' : '<span class="chip chip-sm s-' + item.c + '">' + esc(item.r) + '</span> ')
-        + '<span class="search-hit-where">' + esc(item.w) + (item.f ? ' · ' + esc(item.f) : '') + '</span>'
-        + '<span class="search-hit-sql">' + esc(item.q) + '</span>'
-        + '</a>';
-    }
-    results.innerHTML = html;
-    results.hidden = false;
-  }
-
-  function moveSelection(delta) {
-    if (!results || results.hidden) { return; }
-    var links = results.querySelectorAll('a');
-    if (links.length === 0) { return; }
-    if (selected >= 0) { links[selected].classList.remove('selected'); }
-    selected = (selected + delta + links.length) % links.length;
-    links[selected].classList.add('selected');
-    links[selected].scrollIntoView({ block: 'nearest' });
-  }
-
-  if (input) {
-    input.addEventListener('input', function () { renderResults(search(input.value), input.value.trim()); });
-    input.addEventListener('keydown', function (event) {
-      if (event.key === 'ArrowDown') { event.preventDefault(); moveSelection(1); }
-      if (event.key === 'ArrowUp') { event.preventDefault(); moveSelection(-1); }
-      if (event.key === 'Enter' && results && !results.hidden) {
-        var links = results.querySelectorAll('a');
-        var target = selected >= 0 ? links[selected] : links[0];
-        if (target) { window.location.href = target.getAttribute('href'); }
-      }
-      if (event.key === 'Escape') { renderResults([], ''); input.blur(); }
-    });
-  }
-
-  document.addEventListener('keydown', function (event) {
-    if (event.key === '/' && input && document.activeElement !== input
-      && !/^(input|textarea|select)$/i.test(document.activeElement.tagName)) {
-      event.preventDefault();
-      input.focus();
-      input.select();
-    }
-  });
-
-  document.addEventListener('click', function (event) {
-    if (results && !results.hidden && !results.contains(event.target) && event.target !== input) {
-      renderResults([], '');
-    }
-  });
+    return hits.slice(0, 40).map(function (h) { return hit(h.item); });
+  };
 
   /* ---- Narrowing a listing of statements ---- */
 
   var FACETS = ['kind', 'resolution', 'severity'];
   var PRESETS = ['namespace', 'class', 'function', 'file', 'table', 'rule', 'sink', 'open'];
+
+  function esc(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
 
   function readQuery() {
     var query = {};
@@ -197,10 +146,12 @@
         groups[g].classList.toggle('is-empty', groups[g].querySelectorAll('li.row:not(.is-hidden)').length === 0);
       }
       for (var c = 0; c < chips.length; c++) {
-        chips[c].classList.toggle('is-on', state[chips[c].dataset.facet].indexOf(chips[c].dataset.value) !== -1);
+        var on = state[chips[c].dataset.facet].indexOf(chips[c].dataset.value) !== -1;
+        chips[c].classList.toggle('is-on', on);
+        chips[c].setAttribute('aria-pressed', on ? 'true' : 'false');
       }
       var narrowed = kept !== rows.length;
-      if (shown) { shown.textContent = narrowed ? kept + ' of ' + rows.length + ' shown' : ''; }
+      if (shown) { shown.textContent = narrowed ? kept + ' / ' + rows.length : ''; }
       if (clear) { clear.hidden = !narrowed; }
       if (active) {
         var html = '';
@@ -248,9 +199,9 @@
     narrowable(containers[n], n === 0);
   }
 
-  /* ---- Narrowing a table of tables, classes or files by name ---- */
+  /* ---- Narrowing every table of tables, classes or files on a page by name ---- */
 
-  var rowFilter = document.querySelector('.row-filter');
+  var rowFilter = document.querySelector('[data-filter-rows]');
   if (rowFilter) {
     rowFilter.addEventListener('input', function () {
       var query = rowFilter.value.trim().toLowerCase();
@@ -266,75 +217,6 @@
         var group = tables[t].closest('.group');
         if (group) { group.classList.toggle('is-empty', kept === 0); }
       }
-    });
-  }
-
-  /* ---- Sorting a table by a column ---- */
-
-  function cellValue(row, index, numeric) {
-    var cell = row.children[index];
-    var text = cell ? cell.textContent.trim() : '';
-    return numeric ? parseFloat(text.replace(/,/g, '')) || 0 : text.toLowerCase();
-  }
-
-  document.addEventListener('click', function (event) {
-    var th = event.target.closest('.sortable th[data-sort]');
-    if (!th) { return; }
-    var table = th.closest('table');
-    var index = Array.prototype.indexOf.call(th.parentNode.children, th);
-    var numeric = th.dataset.sort === 'num';
-    var ascending = !th.classList.contains('is-asc') && (th.classList.contains('is-desc') || !numeric);
-    var heads = th.parentNode.querySelectorAll('th');
-    for (var h = 0; h < heads.length; h++) { heads[h].classList.remove('is-asc', 'is-desc'); }
-    th.classList.add(ascending ? 'is-asc' : 'is-desc');
-    var body = table.tBodies[0];
-    var rows = Array.prototype.slice.call(body.rows);
-    rows.sort(function (a, b) {
-      var left = cellValue(a, index, numeric);
-      var right = cellValue(b, index, numeric);
-      if (left < right) { return ascending ? -1 : 1; }
-      if (left > right) { return ascending ? 1 : -1; }
-      return 0;
-    });
-    for (var r = 0; r < rows.length; r++) { body.appendChild(rows[r]); }
-  });
-
-  /* ---- Copying the statement ---- */
-
-  var copy = document.querySelector('[data-copy]');
-  if (copy) {
-    copy.addEventListener('click', function () {
-      var source = document.getElementById(copy.dataset.copy);
-      if (!source) { return; }
-      var done = function () { copy.classList.add('is-done'); copy.textContent = 'Copied'; setTimeout(function () { copy.classList.remove('is-done'); copy.textContent = 'Copy'; }, 1500); };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(source.value).then(done, function () { /* denied */ });
-      } else {
-        source.hidden = false;
-        source.select();
-        try { document.execCommand('copy'); done(); } catch (error) { /* unsupported */ }
-        source.hidden = true;
-      }
-    });
-  }
-
-  /* ---- Theme and navigation ---- */
-
-  var themeToggle = document.getElementById('theme-toggle');
-  if (themeToggle) {
-    themeToggle.addEventListener('click', function () {
-      var current = document.documentElement.dataset.theme
-        || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      var next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.dataset.theme = next;
-      try { localStorage.setItem('sql-catalog-theme', next); } catch (error) { /* private mode */ }
-    });
-  }
-
-  var navToggle = document.getElementById('nav-toggle');
-  if (navToggle) {
-    navToggle.addEventListener('click', function () {
-      document.body.classList.toggle('nav-open');
     });
   }
 })();

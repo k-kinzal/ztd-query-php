@@ -86,7 +86,7 @@ final class FilePageTest extends TestCase
         $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []);
 
         self::assertSame(
-            '<h2 id="tables">Tables</h2><ol class="route-top route-chips"><li><a class="chip chip-ghost" href="../tables/users.html">users</a><span class="route-figures">1</span></li></ol>',
+            '<h2 id="tables">Tables</h2><div class="chips"><a class="chip chip-ghost" href="../tables/users.html">users<span class="facet-count">1</span></a></div>',
             (new FilePage())->tables(new ReportSite(new Catalog([$entry])), [$entry]),
         );
     }
@@ -194,27 +194,27 @@ final class FilePageTest extends TestCase
         $site = new ReportSite($catalog);
 
         self::assertSame(
-            '<h1><code>lib/c.php</code><span class="count">2 statements</span></h1><p class="lede">2 statements issued from 2 functions in this file.</p>'
-                . '<h2 id="tables">Tables</h2><p class="none">No statement here names a table.</p><h2 id="functions">Functions</h2><div class="filterable" data'
-                . '-narrowable><div class="facets"><input type="search" class="facet-search" placeholder="Narrow by text…" autocomplete="off" spellcheck="false'
-                . '"><span class="facet-group"><button type="button" class="chip facet k-select" data-facet="kind" data-value="select">SELECT<span class="facet'
-                . '-count">1</span></button><button type="button" class="chip facet k-other" data-facet="kind" data-value="unknown">UNKNOWN<span class="facet-c'
-                . 'ount">1</span></button></span><span class="facet-group"><button type="button" class="chip facet s-open" data-facet="resolution" data-value="'
-                . 'incomplete">incomplete<span class="facet-count">1</span></button><button type="button" class="chip facet s-neutral" data-facet="resolution" '
-                . 'data-value="not-analyzed">not-analyzed<span class="facet-count">1</span></button></span><span class="facet-shown" data-total="2"></span><but'
-                . 'ton type="button" class="facet-clear" hidden>Clear</button></div><section class="group" id="fn-helper"><h3><code>helper</code><span class="c'
-                . 'ount">1</span><span class="muted">line 2</span><a class="anchor" href="#fn-helper">#</a></h3><ol class="rows"><li class="row" data-kind="sel'
-                . 'ect" data-resolution="incomplete" data-severity="low" data-rule="analysis-incomplete" data-sink="mysqli.query" data-open="open" data-table="'
-                . '" data-namespace="" data-class="" data-function="helper" data-file="lib/c.php"><a class="row-main" href="../statements/c1.html"><span class='
-                . '"chip k-select">SELECT</span><code class="row-sql"><span class="hole hole-open" title="This is a gap: a dependency the analyzer stopped foll'
-                . 'owing fills it.">{$}</span></code></a><div class="row-meta"><span class="chip s-open" title="A cycle or an analysis budget stopped the searc'
-                . 'h before it closed.">incomplete</span></div></li></ol></section><section class="group" id="fn-main"><h3><code>top-level code</code><span cla'
-                . 'ss="count">1</span><span class="muted">line 6</span><a class="anchor" href="#fn-main">#</a></h3><ol class="rows"><li class="row" data-kind="'
-                . 'unknown" data-resolution="not-analyzed" data-severity="low" data-rule="call-not-analyzed" data-sink="unmatched" data-open="open" data-table='
-                . '"" data-namespace="" data-class="" data-function="{main}" data-file="lib/c.php"><a class="row-main" href="../statements/c2.html"><span class'
-                . '="chip k-other">UNKNOWN</span><code class="row-sql"><span class="tok-com">no statement was read from this call</span> $db-&gt;query($sql)</c'
-                . 'ode></a><div class="row-meta"><span class="chip s-neutral" title="The call was found but never examined, so nothing was read from it.">not-a'
-                . 'nalyzed</span></div></li></ol></section></div>',
+            '<h1><code>lib/c.php</code><span class="count">2 statements</span></h1><p class="lede">2 statements issued from 2 functions in this file.</p><h2 id="ta'
+                . 'bles">Tables</h2><p class="empty-inline">No statement here names a table.</p><h2 id="functions">Functions</h2><div data-narrowable><div class="facets"'
+                . ' role="group" aria-label="Narrow the listing"><input type="search" name="narrow" class="input facet-search" placeholder="Narrow by text…" aria-label="'
+                . 'Narrow by text" autocomplete="off" spellcheck="false"><span class="facet-group"><button type="button" class="chip facet tone-blue" data-facet="kind" d'
+                . 'ata-value="select" aria-pressed="false">SELECT<span class="facet-count">1</span></button><button type="button" class="chip facet tone-slate" data-face'
+                . 't="kind" data-value="unknown" aria-pressed="false">UNKNOWN<span class="facet-count">1</span></button></span><span class="facet-group"><button type="bu'
+                . 'tton" class="chip facet chip-ghost" data-facet="resolution" data-value="incomplete" aria-pressed="false">incomplete<span class="facet-count">1</span><'
+                . '/button><button type="button" class="chip facet tone-neutral" data-facet="resolution" data-value="not-analyzed" aria-pressed="false">not-analyzed<span'
+                . ' class="facet-count">1</span></button></span><span class="facet-shown" aria-live="polite"></span><button type="button" class="btn facet-clear" hidden>'
+                . 'Clear</button></div><section class="group" id="fn-helper"><h3><code>helper</code><span class="count">1</span><span class="muted">line 2</span><a class'
+                . '="anchor" href="#fn-helper">#</a></h3><ol class="rows"><li class="row" data-kind="select" data-resolution="incomplete" data-severity="low" data-rule="'
+                . 'analysis-incomplete" data-sink="mysqli.query" data-open="open" data-table="" data-namespace="" data-class="" data-function="helper" data-file="lib/c.p'
+                . 'hp"><a class="row-main" href="../statements/c1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="hole tone-warn" tit'
+                . 'le="This is a gap: a dependency the analyzer stopped following fills it.">{$}</span></span></a><p class="row-meta"><span class="chip chip-ghost" title'
+                . '="A cycle or an analysis budget stopped the search before it closed.">incomplete</span></p></li></ol></section><section class="group" id="fn-main"><h3'
+                . '><code>top-level code</code><span class="count">1</span><span class="muted">line 6</span><a class="anchor" href="#fn-main">#</a></h3><ol class="rows">'
+                . '<li class="row" data-kind="unknown" data-resolution="not-analyzed" data-severity="low" data-rule="call-not-analyzed" data-sink="unmatched" data-open="'
+                . 'open" data-table="" data-namespace="" data-class="" data-function="{main}" data-file="lib/c.php"><a class="row-main" href="../statements/c2.html"><spa'
+                . 'n class="chip tone-slate">UNKNOWN</span><span class="row-body"><span class="tok-com">no statement was read from this call</span> $db-&gt;query($sql)</'
+                . 'span></a><p class="row-meta"><span class="chip tone-neutral" title="The call was found but never examined, so nothing was read from it.">not-analyzed<'
+                . '/span></p></li></ol></section></div>',
             (new FilePage())->render($site, 'lib/c.php'),
         );
     }

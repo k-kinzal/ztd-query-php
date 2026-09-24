@@ -89,7 +89,7 @@ final class FileIndexPageTest extends TestCase
         ]);
         $section = (new FileIndexPage())->section(new ReportSite($catalog), 'src', ['src/a.php']);
 
-        self::assertStringContainsString('<table class="sortable filter-target"><thead><tr><th data-sort="text">File</th>', $section);
+        self::assertStringContainsString('<table class="sortable filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">File</th>', $section);
         self::assertStringContainsString('href="files/src-a-php.html">a.php</a>', $section);
     }
 
@@ -160,29 +160,29 @@ final class FileIndexPageTest extends TestCase
         $site = new ReportSite($catalog);
 
         self::assertSame(
-            '<h1>Files<span class="count">11 files</span></h1><p class="lede">Every file a statement is written in, by directory. Open a file to read its'
-                . ' statements function by function.</p><input type="search" class="row-filter" placeholder="Narrow by file name…" autocomplete="off" spellchec'
-                . 'k="false"><section class="group"><h2 id="dir-lib"><code>lib/</code><span class="count">1 file</span></h2><div class="table-wrap"><table clas'
-                . 's="sortable filter-target"><thead><tr><th data-sort="text">File</th><th class="num" data-sort="num">Statements</th><th class="num" data-sort'
-                . '="num">Functions</th><th class="num" data-sort="num">Tables</th><th class="num" data-sort="num">Attention</th></tr></thead><tbody><tr><td><a'
-                . ' class="mono" href="files/lib-c-php.html">c.php</a></td><td class="num">2</td><td class="num">2</td><td class="num"><span class="none">0</sp'
-                . 'an></td><td class="num"><span class="none">0</span></td></tr></tbody></table></div></section><section class="group"><h2 id="dir-src"><code>s'
-                . 'rc/</code><span class="count">10 files</span></h2><div class="table-wrap"><table class="sortable filter-target"><thead><tr><th data-sort="te'
-                . 'xt">File</th><th class="num" data-sort="num">Statements</th><th class="num" data-sort="num">Functions</th><th class="num" data-sort="num">Ta'
-                . 'bles</th><th class="num" data-sort="num">Attention</th></tr></thead><tbody><tr><td><a class="mono" href="files/src-a-php.html">a.php</a></td'
-                . '><td class="num">3</td><td class="num">2</td><td class="num">1</td><td class="num">2</td></tr><tr><td><a class="mono" href="files/src-b-php.'
-                . 'html">b.php</a></td><td class="num">2</td><td class="num">2</td><td class="num">1</td><td class="num"><span class="none">0</span></td></tr><'
-                . 'tr><td><a class="mono" href="files/src-d-php.html">d.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">2</td><td class'
-                . '="num">1</td></tr><tr><td><a class="mono" href="files/src-e-php.html">e.php</a></td><td class="num">1</td><td class="num">1</td><td class="n'
-                . 'um"><span class="none">0</span></td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mono" href="files/src-f-php.html"'
-                . '>f.php</a></td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num"><span class="none">0</span></td></tr><tr><t'
-                . 'd><a class="mono" href="files/src-g-php.html">g.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num'
-                . '"><span class="none">0</span></td></tr><tr><td><a class="mono" href="files/src-h-php.html">h.php</a></td><td class="num">1</td><td class="nu'
-                . 'm">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mono" href="files/src-i-php.html">i.ph'
-                . 'p</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="files/s'
-                . 'rc-j-php.html">j.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr><tr><td><a class="'
-                . 'mono" href="files/src-k-php.html">k.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr'
-                . '></tbody></table></div></section>',
+            '<h1>Files<span class="count">11 files</span></h1><p class="lede">Every file a statement is written in, by directory. Open a file to read its statement'
+                . 's function by function.</p><input type="search" name="filter" class="input input-block" data-filter-rows placeholder="Narrow by file name…" aria-label'
+                . '="Narrow by file name" autocomplete="off" spellcheck="false"><section class="group"><h2 id="dir-lib"><code>lib/</code><span class="count">1 file</span'
+                . '></h2><div class="table-wrap"><table class="sortable filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">File</th><th scope'
+                . '="col" class="num" data-dd-sort="number">Statements</th><th scope="col" class="num" data-dd-sort="number">Functions</th><th scope="col" class="num" da'
+                . 'ta-dd-sort="number">Tables</th><th scope="col" class="num" data-dd-sort="number">Attention</th></tr></thead><tbody><tr><td><a class="mono" href="files'
+                . '/lib-c-php.html">c.php</a></td><td class="num">2</td><td class="num">2</td><td class="num"><span class="none">0</span></td><td class="num"><span class'
+                . '="none">0</span></td></tr></tbody></table></div></section><section class="group"><h2 id="dir-src"><code>src/</code><span class="count">10 files</span>'
+                . '</h2><div class="table-wrap"><table class="sortable filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">File</th><th scope='
+                . '"col" class="num" data-dd-sort="number">Statements</th><th scope="col" class="num" data-dd-sort="number">Functions</th><th scope="col" class="num" dat'
+                . 'a-dd-sort="number">Tables</th><th scope="col" class="num" data-dd-sort="number">Attention</th></tr></thead><tbody><tr><td><a class="mono" href="files/'
+                . 'src-a-php.html">a.php</a></td><td class="num">3</td><td class="num">2</td><td class="num">1</td><td class="num">2</td></tr><tr><td><a class="mono" hre'
+                . 'f="files/src-b-php.html">b.php</a></td><td class="num">2</td><td class="num">2</td><td class="num">1</td><td class="num"><span class="none">0</span></'
+                . 'td></tr><tr><td><a class="mono" href="files/src-d-php.html">d.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">2</td><td class='
+                . '"num">1</td></tr><tr><td><a class="mono" href="files/src-e-php.html">e.php</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span c'
+                . 'lass="none">0</span></td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mono" href="files/src-f-php.html">f.php</a></td><td cl'
+                . 'ass="num">4</td><td class="num">4</td><td class="num">4</td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mono" href="files/s'
+                . 'rc-g-php.html">g.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td></tr><t'
+                . 'r><td><a class="mono" href="files/src-h-php.html">h.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num"><spa'
+                . 'n class="none">0</span></td></tr><tr><td><a class="mono" href="files/src-i-php.html">i.php</a></td><td class="num">1</td><td class="num">1</td><td cla'
+                . 'ss="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="files/src-j-php.html">j.php</a></td><td class="num">1</td><td class="num">1</t'
+                . 'd><td class="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="files/src-k-php.html">k.php</a></td><td class="num">1</td><td class="'
+                . 'num">1</td><td class="num">1</td><td class="num">1</td></tr></tbody></table></div></section>',
             (new FileIndexPage())->render($site),
         );
     }

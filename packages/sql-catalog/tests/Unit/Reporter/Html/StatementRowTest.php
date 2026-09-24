@@ -60,13 +60,11 @@ final class StatementRowTest extends TestCase
         $site = new ReportSite(new Catalog([$entry]));
 
         self::assertSame(
-            '<li class="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="users"'
-            . ' data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/a.php">'
-            . '<a class="row-main" href="../statements/a1.html"><span class="chip k-select">SELECT</span>'
-            . '<code class="row-sql"><span class="tok-kw">SELECT</span> <span class="tok-num">1</span> <span class="tok-kw">FROM</span> users</code></a>'
-            . '<div class="row-meta"><a class="row-site" href="../files/src-a-php.html">src/a.php:4</a>'
-            . '<a class="row-fn" href="../classes/app-r.html#fn-app-r-find">R::find</a>'
-            . '<a class="chip chip-ghost" href="../tables/users.html">users</a></div></li>',
+            '<li class="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="users" data'
+                . '-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/a.php"><a class="row-main" href="../statements/a1.html"><span class="'
+                . 'chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span> <span class="tok-num">1</span> <span class="tok-kw">FROM</span>'
+                . ' users</span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:4</a><a href="../classes/app-r.html#fn-app-r-find">R::find</a><a clas'
+                . 's="chip chip-ghost" href="../tables/users.html">users</a></p></li>',
             (new StatementRow())->render($site, 'tables/users.html', $entry),
         );
     }
@@ -79,8 +77,8 @@ final class StatementRowTest extends TestCase
         ]);
 
         self::assertSame(
-            ' data-kind="select" data-resolution="incomplete" data-severity="medium" data-rule="dynamic-sql analysis-incomplete" data-sink="pdo.query"'
-            . ' data-open="open" data-table="a b" data-namespace="" data-class="" data-function="f" data-file="a.php"',
+            ' data-kind="select" data-resolution="incomplete" data-severity="medium" data-rule="dynamic-sql analysis-incomplete" data-sink="pdo.query" data-open="o'
+                . 'pen" data-table="a b" data-namespace="" data-class="" data-function="f" data-file="a.php"',
             (new StatementRow())->attributes($entry),
         );
     }
@@ -103,8 +101,8 @@ final class StatementRowTest extends TestCase
         $site = new ReportSite(new Catalog([$entry]));
 
         self::assertSame(
-            '<span class="chip s-danger" title="The values were followed to runtime input, so the text cannot be fixed.">external-input</span>'
-            . '<span class="chip s-danger" title="The most serious finding on this statement">high</span>',
+            '<span class="chip tone-danger" title="The values were followed to runtime input, so the text cannot be fixed.">external-input</span><span class="chip '
+                . 'tone-danger" title="The most serious finding on this statement">high</span>',
             (new StatementRow())->meta($site, '', $entry, ['file', 'function', 'tables']),
         );
     }
@@ -127,7 +125,7 @@ final class StatementRowTest extends TestCase
         $site = new ReportSite(new Catalog([$entry]));
         $row = new StatementRow();
 
-        self::assertSame('<a class="row-fn" href="files/a-php.html#fn-f">f</a>', $row->meta($site, '', $entry, ['file', 'tables']));
+        self::assertSame('<a href="files/a-php.html#fn-f">f</a>', $row->meta($site, '', $entry, ['file', 'tables']));
         self::assertSame('', $row->meta($site, '', $entry, ['file', 'tables', 'function']));
     }
 }

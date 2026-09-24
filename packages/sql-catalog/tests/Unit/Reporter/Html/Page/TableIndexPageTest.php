@@ -99,7 +99,7 @@ final class TableIndexPageTest extends TestCase
     {
         $table = (new TableIndexPage())->table(new ReportSite(new Catalog()), []);
 
-        self::assertStringContainsString('<table class="sortable filter-target"><thead><tr><th data-sort="text">Table</th><th class="num" data-sort="num">Statements</th>', $table);
+        self::assertStringContainsString('<table class="sortable filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">Table</th><th scope="col" class="num" data-dd-sort="number">Statements</th>', $table);
     }
 
     public function testRowCountsHowTheTableIsUsedAndMarksAGapInItsName(): void
@@ -111,8 +111,9 @@ final class TableIndexPageTest extends TestCase
         $site = new ReportSite(new Catalog($entries));
 
         self::assertSame(
-            '<tr><td><a class="mono" href="tables/users.html"><span class="hole hole-open" title="A part of this name the analysis could not pin down">{$}</span>users</a></td>'
-            . '<td class="num">2</td><td class="num">1</td><td class="num"><span class="none">0</span></td><td class="num">1</td><td class="num">1</td><td class="num">2</td></tr>',
+            '<tr><td><a class="mono" href="tables/users.html"><span class="hole tone-warn" title="A part of this name the analysis could not pin down">{$}</span>us'
+                . 'ers</a></td><td class="num">2</td><td class="num">1</td><td class="num"><span class="none">0</span></td><td class="num">1</td><td class="num">1</td><t'
+                . 'd class="num">2</td></tr>',
             (new TableIndexPage())->row($site, '{$}users', $entries),
         );
     }
@@ -162,32 +163,32 @@ final class TableIndexPageTest extends TestCase
         $site = new ReportSite($catalog);
 
         self::assertSame(
-            '<h1>Tables<span class="count">11 tables</span></h1><p class="lede">Every table the statements name, most named first. A join counts for each'
-                . ' of its tables. Open a table to see what reads, writes and alters it, and from where.</p><input type="search" class="row-filter" placeholder'
-                . '="Narrow by table name…" autocomplete="off" spellcheck="false"><div class="table-wrap"><table class="sortable filter-target"><thead><tr><th '
-                . 'data-sort="text">Table</th><th class="num" data-sort="num">Statements</th><th class="num" data-sort="num">Reads</th><th class="num" data-sor'
-                . 't="num">Writes</th><th class="num" data-sort="num">Schema</th><th class="num" data-sort="num">Attention</th><th class="num" data-sort="num">'
-                . 'Functions</th></tr></thead><tbody><tr><td><a class="mono" href="tables/posts.html">posts</a></td><td class="num">4</td><td class="num">2</td'
-                . '><td class="num">2</td><td class="num"><span class="none">0</span></td><td class="num">3</td><td class="num">2</td></tr><tr><td><a class="mo'
-                . 'no" href="tables/users.html">users</a></td><td class="num">3</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class'
-                . '="num">1</td><td class="num">3</td></tr><tr><td><a class="mono" href="tables/t1.html">t1</a></td><td class="num">1</td><td class="num">1</td'
-                . '><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span>'
-                . '</td><td class="num">1</td></tr><tr><td><a class="mono" href="tables/t2.html">t2</a></td><td class="num">1</td><td class="num">1</td><td cla'
-                . 'ss="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td'
-                . ' class="num">1</td></tr><tr><td><a class="mono" href="tables/t3.html">t3</a></td><td class="num">1</td><td class="num">1</td><td class="num"'
-                . '><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="'
-                . 'num">1</td></tr><tr><td><a class="mono" href="tables/t4.html">t4</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span c'
-                . 'lass="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num">1</'
-                . 'td></tr><tr><td><a class="mono" href="tables/t5.html">t5</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class="no'
-                . 'ne">0</span></td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num">1</td></tr>'
-                . '<tr><td><a class="mono" href="tables/t6.html">t6</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">0</s'
-                . 'pan></td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num">1</td></tr><tr><td>'
-                . '<a class="mono" href="tables/t7.html">t7</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td'
-                . '><td class="num"><span class="none">0</span></td><td class="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="tables/t8.ht'
-                . 'ml">t8</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td><td class="num"><span class="none'
-                . '">0</span></td><td class="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="tables/t9.html">t9</a></td><td class="num">1</'
-                . 'td><td class="num">1</td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num">1</'
-                . 'td><td class="num">1</td></tr></tbody></table></div>',
+            '<h1>Tables<span class="count">11 tables</span></h1><p class="lede">Every table the statements name, most named first. A join counts for each of its ta'
+                . 'bles. Open a table to see what reads, writes and alters it, and from where.</p><input type="search" name="filter" class="input input-block" data-filte'
+                . 'r-rows placeholder="Narrow by table name…" aria-label="Narrow by table name" autocomplete="off" spellcheck="false"><div class="table-wrap"><table clas'
+                . 's="sortable filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">Table</th><th scope="col" class="num" data-dd-sort="number"'
+                . '>Statements</th><th scope="col" class="num" data-dd-sort="number">Reads</th><th scope="col" class="num" data-dd-sort="number">Writes</th><th scope="co'
+                . 'l" class="num" data-dd-sort="number">Schema</th><th scope="col" class="num" data-dd-sort="number">Attention</th><th scope="col" class="num" data-dd-so'
+                . 'rt="number">Functions</th></tr></thead><tbody><tr><td><a class="mono" href="tables/posts.html">posts</a></td><td class="num">4</td><td class="num">2</'
+                . 'td><td class="num">2</td><td class="num"><span class="none">0</span></td><td class="num">3</td><td class="num">2</td></tr><tr><td><a class="mono" href'
+                . '="tables/users.html">users</a></td><td class="num">3</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td c'
+                . 'lass="num">3</td></tr><tr><td><a class="mono" href="tables/t1.html">t1</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class'
+                . '="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num">1</td></tr><tr><t'
+                . 'd><a class="mono" href="tables/t2.html">t2</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td><td cla'
+                . 'ss="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num">1</td></tr><tr><td><a class="mono" href="tabl'
+                . 'es/t3.html">t3</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">'
+                . '0</span></td><td class="num"><span class="none">0</span></td><td class="num">1</td></tr><tr><td><a class="mono" href="tables/t4.html">t4</a></td><td c'
+                . 'lass="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num"'
+                . '><span class="none">0</span></td><td class="num">1</td></tr><tr><td><a class="mono" href="tables/t5.html">t5</a></td><td class="num">1</td><td class="'
+                . 'num">1</td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span>'
+                . '</td><td class="num">1</td></tr><tr><td><a class="mono" href="tables/t6.html">t6</a></td><td class="num">1</td><td class="num">1</td><td class="num"><'
+                . 'span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num">1</td><'
+                . '/tr><tr><td><a class="mono" href="tables/t7.html">t7</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></'
+                . 'td><td class="num"><span class="none">0</span></td><td class="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="tables/t8.html">t8</'
+                . 'a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td'
+                . ' class="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="tables/t9.html">t9</a></td><td class="num">1</td><td class="num">1</td><td'
+                . ' class="num"><span class="none">0</span></td><td class="num"><span class="none">0</span></td><td class="num">1</td><td class="num">1</td></tr></tbody>'
+                . '</table></div>',
             (new TableIndexPage())->render($site),
         );
     }

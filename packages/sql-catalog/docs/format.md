@@ -126,13 +126,25 @@ as the routes to a statement rather than as one long listing:
 | `files.html`, `files/*.html` | Every file by directory; and one page per file with its statements function by function |
 | `findings.html` | The functions flagged most, then every finding under the rule that reported it |
 | `statements/*.html` | One page per statement: the SQL laid out a clause per line, where it is issued and through what, its tables, bound values and findings, and the other statements of the same function and on the same table |
-| `assets/report.css`, `assets/report.js` | The stylesheet and the script, written once beside the pages rather than into each of them |
+| `assets/document-design-v1.0.0.css`, `assets/document-design-v1.0.0.js`, `assets/document-design-LICENSE.txt` | The design the pages are written in: the unmodified [document-design](https://k-kinzal.github.io/document-design/) doc-ui release, its script, and the notice naming the release, its license and the SHA-256 of each file |
+| `assets/report.css`, `assets/report.js` | What the report needs beyond doc-ui — a few rules in doc-ui's tokens, the ranking of a search over statements, and the narrowing of a listing by the facts a page arrives with — written once beside the pages rather than into each of them |
 | `assets/search-index.js` | Every statement and its page, so the search box on every page finds a statement by its SQL, table, function or file |
+
+The pages are written in doc-ui, document-design's design system for
+documentation and reports, in its `.doc` layout for catalogs and its components:
+the sidebar, topbar and breadcrumbs, listing rows and facets, chips and tones,
+tables, code, facts, the meter, stats and cards. The stylesheet and script are
+the v1.0.0 release, bundled unmodified and pinned to that version — a report is
+read long after it is written, and has to look then the way it looked when it
+was checked — so no floating version is ever loaded from a CDN. Colour is
+doc-ui's: identity tones for what a statement does, state tones for how far the
+analysis got and how much attention a finding wants, and both themes follow the
+reader's system unless the switch in the topbar says otherwise.
 
 The pages are read from the file system as readily as from a server: the search
 index is a script rather than data fetched at runtime, nothing is loaded over
-the network, and every page reads without the script — the script only adds
-narrowing, sorting and search.
+the network, and every page reads without the scripts — they only add
+narrowing, sorting, copying, the theme switch and search.
 
 A gap is rendered as a marked `{$}` that says, when pointed at, where the value
 filling it comes from — and a call that no statement was read from is not

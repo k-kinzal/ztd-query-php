@@ -78,7 +78,7 @@ final class OverviewPageTest extends TestCase
         $page = (new OverviewPage())->render(new ReportSite($catalog));
 
         self::assertStringContainsString('<h1>Overview</h1>', $page);
-        self::assertStringContainsString('<div class="routes">', $page);
+        self::assertStringContainsString('<div class="cards">', $page);
         self::assertStringContainsString('href="tables/users.html"', $page);
         self::assertStringContainsString('href="classes/app-r.html"', $page);
         self::assertStringContainsString('href="files/src-a-php.html"', $page);
@@ -95,8 +95,10 @@ final class OverviewPageTest extends TestCase
         ]);
 
         self::assertSame(
-            '<p class="facts"><a href="statements.html">1 statement</a><span class="facts-sep">·</span><a href="tables.html">1 table</a>'
-            . '<span class="facts-sep">·</span><a href="namespaces.html">1 function</a><span class="facts-sep">·</span><a href="files.html">1 file</a></p>',
+            '<div class="stats"><a class="stat" href="statements.html"><b class="stat-fig">1</b><span class="stat-label">statement</span></a>'
+            . '<a class="stat" href="tables.html"><b class="stat-fig">1</b><span class="stat-label">table</span></a>'
+            . '<a class="stat" href="namespaces.html"><b class="stat-fig">1</b><span class="stat-label">function</span></a>'
+            . '<a class="stat" href="files.html"><b class="stat-fig">1</b><span class="stat-label">file</span></a></div>',
             (new OverviewPage())->facts(new ReportSite($catalog)),
         );
     }
@@ -109,7 +111,7 @@ final class OverviewPageTest extends TestCase
         ]);
         $route = (new OverviewPage())->tableRoute(new ReportSite($catalog));
 
-        self::assertStringContainsString('<li><a href="tables/users.html">users</a><span class="route-figures">2 · 1 read · 1 write</span></li>', $route);
+        self::assertStringContainsString('<li><a class="mono" href="tables/users.html">users</a><span class="usage-kind">2 · 1 read · 1 write</span></li>', $route);
         self::assertStringContainsString('<a href="tables.html">All 1 table</a>', $route);
     }
 
@@ -123,8 +125,8 @@ final class OverviewPageTest extends TestCase
         ]);
         $page = new OverviewPage();
 
-        self::assertStringContainsString('<a href="classes/app-r.html">App\\R</a>', $page->namespaceRoute(new ReportSite($withClass)));
-        self::assertStringContainsString('<a href="statements.html?function=helper">helper</a>', $page->namespaceRoute(new ReportSite($withoutClass)));
+        self::assertStringContainsString('<a class="mono" href="classes/app-r.html">App\\R</a>', $page->namespaceRoute(new ReportSite($withClass)));
+        self::assertStringContainsString('<a class="mono" href="statements.html?function=helper">helper</a>', $page->namespaceRoute(new ReportSite($withoutClass)));
     }
 
     public function testFileRouteListsTheFilesWithTheMostStatements(): void
@@ -136,7 +138,7 @@ final class OverviewPageTest extends TestCase
         ]);
 
         self::assertStringContainsString(
-            '<li><a href="files/b-php.html">b.php</a><span class="route-figures">2 statements</span></li><li><a href="files/a-php.html">a.php</a>',
+            '<li><a class="mono" href="files/b-php.html">b.php</a><span class="usage-kind">2 statements</span></li><li><a class="mono" href="files/a-php.html">a.php</a>',
             (new OverviewPage())->fileRoute(new ReportSite($catalog)),
         );
     }
@@ -148,7 +150,7 @@ final class OverviewPageTest extends TestCase
         ]);
 
         self::assertStringContainsString(
-            '<a class="chip k-delete" href="statements.html?kind=delete">DELETE</a><span class="route-figures">1</span>',
+            '<li><a class="chip tone-pink" href="statements.html?kind=delete">DELETE</a><span class="usage-kind">1 statement</span></li>',
             (new OverviewPage())->kindRoute(new ReportSite($catalog)),
         );
     }
@@ -156,8 +158,8 @@ final class OverviewPageTest extends TestCase
     public function testRouteSaysSoWhenThereIsNothingOnIt(): void
     {
         self::assertSame(
-            '<section class="route"><h2><a href="tables.html">Tables</a><span class="count">0</span></h2><p class="route-hint">hint</p>'
-            . '<p class="none">Nothing here.</p><p class="route-all"><a href="tables.html">All 0 tables</a></p></section>',
+            '<section class="card"><h2><a href="tables.html">Tables</a><span class="count">0</span></h2><p class="card-description">hint</p>'
+            . '<p class="empty-inline">Nothing here.</p><p class="card-more"><a href="tables.html">All 0 tables</a></p></section>',
             (new OverviewPage())->route('Tables', 'tables.html', 0, 'table', 'hint', ''),
         );
     }
@@ -172,7 +174,7 @@ final class OverviewPageTest extends TestCase
         $attention = (new OverviewPage())->attention(new ReportSite($catalog));
 
         self::assertStringContainsString('<a class="mono" href="findings.html#rule-external-input">external-input</a>', $attention);
-        self::assertStringContainsString('<a class="mono" href="findings.html#hotspots">f</a><span class="route-figures">a.php · 1 high</span>', $attention);
+        self::assertStringContainsString('<a class="mono" href="findings.html#hotspots">f</a><span class="usage-kind">a.php · 1 high</span>', $attention);
         self::assertStringContainsString('Nothing was reported', (new OverviewPage())->attention(new ReportSite(new Catalog())));
     }
 
@@ -184,8 +186,8 @@ final class OverviewPageTest extends TestCase
         ]);
         $coverage = (new OverviewPage())->coverage(new ReportSite($catalog));
 
-        self::assertStringContainsString('<a class="bar-ok" style="--w:50%" href="statements.html?resolution=resolved"', $coverage);
-        self::assertStringNotContainsString('class="bar-neutral"', $coverage);
+        self::assertStringContainsString('<a class="meter-part tone-ok" style="--dd-part:50%" href="statements.html?resolution=resolved"', $coverage);
+        self::assertStringNotContainsString('class="meter-part tone-neutral"', $coverage);
         self::assertStringContainsString('<a href="statements.html?open=open">1 statement</a> are lower bounds', $coverage);
         self::assertStringContainsString('Every search closed', (new OverviewPage())->coverage(new ReportSite(new Catalog())));
     }
@@ -246,75 +248,75 @@ final class OverviewPageTest extends TestCase
         $site = new ReportSite($catalog);
 
         self::assertSame(
-            '<h1>Overview</h1><p class="lede">Every statement this source can issue, read back from the calls that receive it. Start from the table, clas'
-                . 's or file you are working on, or from what the analysis flagged.</p><p class="facts"><a href="statements.html">18 statements</a><span class='
-                . '"facts-sep">·</span><a href="tables.html">11 tables</a><span class="facts-sep">·</span><a href="namespaces.html">15 functions</a><span class'
-                . '="facts-sep">·</span><a href="files.html">11 files</a></p><div class="routes"><section class="route"><h2><a href="tables.html">Tables</a><sp'
-                . 'an class="count">11</span></h2><p class="route-hint">Which statements read, write or alter a table, and where each is issued. Start here bef'
-                . 'ore changing a schema.</p><ol class="route-top"><li><a href="tables/posts.html">posts</a><span class="route-figures">4 · 2 read · 2 write</s'
-                . 'pan></li><li><a href="tables/users.html">users</a><span class="route-figures">3 · 1 read · 1 write</span></li><li><a href="tables/t1.html">t'
-                . '1</a><span class="route-figures">1 · 1 read · 0 write</span></li><li><a href="tables/t2.html">t2</a><span class="route-figures">1 · 1 read ·'
-                . ' 0 write</span></li><li><a href="tables/t3.html">t3</a><span class="route-figures">1 · 1 read · 0 write</span></li><li><a href="tables/t4.ht'
-                . 'ml">t4</a><span class="route-figures">1 · 1 read · 0 write</span></li></ol><p class="route-all"><a href="tables.html">All 11 tables</a></p><'
-                . '/section><section class="route"><h2><a href="namespaces.html">Namespaces</a><span class="count">3</span></h2><p class="route-hint">The state'
-                . 'ments each class and function issues, method by method. Start here before refactoring code that talks to the database.</p><ol class="route-t'
-                . 'op"><li><a href="classes/app-r.html">App\\R</a><span class="route-figures">5 statements</span></li><li><a href="classes/app-admin-u.html">App'
-                . '\\Admin\\U</a><span class="route-figures">2 statements</span></li><li><a href="classes/app-f.html">App\\F</a><span class="route-figures">2 stat'
-                . 'ements</span></li><li><a href="classes/app-g.html">App\\G</a><span class="route-figures">1 statement</span></li><li><a href="classes/app-h.ht'
-                . 'ml">App\\H</a><span class="route-figures">1 statement</span></li><li><a href="classes/app-i.html">App\\I</a><span class="route-figures">1 stat'
-                . 'ement</span></li></ol><p class="route-all"><a href="namespaces.html">All 3 namespaces</a></p></section><section class="route"><h2><a href="f'
-                . 'iles.html">Files</a><span class="count">11</span></h2><p class="route-hint">The statements written in each file, function by function.</p><o'
-                . 'l class="route-top"><li><a href="files/src-f-php.html">src/f.php</a><span class="route-figures">4 statements</span></li><li><a href="files/s'
-                . 'rc-a-php.html">src/a.php</a><span class="route-figures">3 statements</span></li><li><a href="files/lib-c-php.html">lib/c.php</a><span class='
-                . '"route-figures">2 statements</span></li><li><a href="files/src-b-php.html">src/b.php</a><span class="route-figures">2 statements</span></li>'
-                . '<li><a href="files/src-d-php.html">src/d.php</a><span class="route-figures">1 statement</span></li><li><a href="files/src-e-php.html">src/e.'
-                . 'php</a><span class="route-figures">1 statement</span></li></ol><p class="route-all"><a href="files.html">All 11 files</a></p></section><sect'
-                . 'ion class="route"><h2><a href="statements.html">Statements</a><span class="count">18</span></h2><p class="route-hint">Every statement, to na'
-                . 'rrow down by what it does, how far the analysis got and what was reported.</p><ol class="route-top route-chips"><li><a class="chip k-select"'
-                . ' href="statements.html?kind=select">SELECT</a><span class="route-figures">12</span></li><li><a class="chip k-other" href="statements.html?ki'
-                . 'nd=unknown">UNKNOWN</a><span class="route-figures">1</span></li><li><a class="chip k-insert" href="statements.html?kind=insert">INSERT</a><s'
-                . 'pan class="route-figures">1</span></li><li><a class="chip k-update" href="statements.html?kind=update">UPDATE</a><span class="route-figures"'
-                . '>1</span></li><li><a class="chip k-delete" href="statements.html?kind=delete">DELETE</a><span class="route-figures">1</span></li><li><a clas'
-                . 's="chip k-schema" href="statements.html?kind=alter">ALTER</a><span class="route-figures">1</span></li><li><a class="chip k-other" href="stat'
-                . 'ements.html?kind=show">SHOW</a><span class="route-figures">1</span></li></ol><p class="route-all"><a href="statements.html">All 18 statement'
-                . 's</a></p></section></div><h2 id="attention">Needs attention<span class="count">8 findings</span></h2><div class="split"><div class="table-wr'
-                . 'ap"><table><thead><tr><th>Rule</th><th class="tight">Severity</th><th class="num">Statements</th><th>What it reports</th></tr></thead><tbody'
-                . '><tr><td class="tight"><a class="mono" href="findings.html#rule-dynamic-sql">dynamic-sql</a></td><td class="tight"><span class="chip s-warn"'
-                . '>medium</span></td><td class="num">4</td><td>A value is spliced into the statement text instead of being bound.</td></tr><tr><td class="tigh'
-                . 't"><a class="mono" href="findings.html#rule-analysis-incomplete">analysis-incomplete</a></td><td class="tight"><span class="chip s-neutral">'
-                . 'low</span></td><td class="num">1</td><td>A cycle or an analysis budget stopped the search before it closed.</td></tr><tr><td class="tight"><'
-                . 'a class="mono" href="findings.html#rule-call-not-analyzed">call-not-analyzed</a></td><td class="tight"><span class="chip s-neutral">low</spa'
-                . 'n></td><td class="num">1</td><td>A call that carries a statement was found but never examined.</td></tr><tr><td class="tight"><a class="mono'
-                . '" href="findings.html#rule-external-input">external-input</a></td><td class="tight"><span class="chip s-danger">high</span></td><td class="n'
-                . 'um">1</td><td>A value spliced into the statement text comes from external input.</td></tr><tr><td class="tight"><a class="mono" href="findin'
-                . 'gs.html#rule-placeholder-count-mismatch">placeholder-count-mismatch</a></td><td class="tight"><span class="chip s-warn">medium</span></td><t'
-                . 'd class="num">1</td><td>The statement binds a different number of values than it has placeholders.</td></tr></tbody></table></div><section c'
-                . 'lass="aside"><h3>Functions issuing flagged statements</h3><ol class="route-top"><li><a class="mono" href="findings.html#hotspots">R::find</a'
-                . '><span class="route-figures">src/a.php · 1 high · 1 medium</span></li><li><a class="mono" href="findings.html#hotspots">K::a</a><span class='
-                . '"route-figures">src/i.php · 1 medium</span></li><li><a class="mono" href="findings.html#hotspots">L::a</a><span class="route-figures">src/j.'
-                . 'php · 1 medium</span></li><li><a class="mono" href="findings.html#hotspots">M::a</a><span class="route-figures">src/k.php · 1 medium</span><'
-                . '/li><li><a class="mono" href="findings.html#hotspots">R::add</a><span class="route-figures">src/a.php · 1 medium</span></li></ol><p class="r'
-                . 'oute-all"><a href="findings.html#hotspots">Every flagged function</a></p></section></div><h2 id="coverage">How far the analysis got</h2><div'
-                . ' class="stack"><a class="bar-ok" style="--w:83%" href="statements.html?resolution=resolved" title="resolved: The statement text is fully det'
-                . 'ermined."></a><a class="bar-danger" style="--w:6%" href="statements.html?resolution=external-input" title="external-input: The values were f'
-                . 'ollowed to runtime input, so the text cannot be fixed."></a><a class="bar-open" style="--w:6%" href="statements.html?resolution=incomplete" '
-                . 'title="incomplete: A cycle or an analysis budget stopped the search before it closed."></a><a class="bar-neutral" style="--w:6%" href="state'
-                . 'ments.html?resolution=not-analyzed" title="not-analyzed: The call was found but never examined, so nothing was read from it."></a></div><ul '
-                . 'class="legend"><li><a class="chip s-ok" href="statements.html?resolution=resolved" title="The statement text is fully determined.">resolved<'
-                . '/a><span class="legend-count">15</span><span class="legend-note">The statement text is fully determined.</span></li><li><a class="chip s-dan'
-                . 'ger" href="statements.html?resolution=external-input" title="The values were followed to runtime input, so the text cannot be fixed.">extern'
-                . 'al-input</a><span class="legend-count">1</span><span class="legend-note">The values were followed to runtime input, so the text cannot be fi'
-                . 'xed.</span></li><li><a class="chip s-open" href="statements.html?resolution=incomplete-model" title="A dependency the analyzer does not mode'
-                . 'l was reached.">incomplete-model</a><span class="legend-count">0</span><span class="legend-note">A dependency the analyzer does not model wa'
-                . 's reached.</span></li><li><a class="chip s-open" href="statements.html?resolution=incomplete" title="A cycle or an analysis budget stopped t'
-                . 'he search before it closed.">incomplete</a><span class="legend-count">1</span><span class="legend-note">A cycle or an analysis budget stoppe'
-                . 'd the search before it closed.</span></li><li><a class="chip s-neutral" href="statements.html?resolution=not-analyzed" title="The call was f'
-                . 'ound but never examined, so nothing was read from it.">not-analyzed</a><span class="legend-count">1</span><span class="legend-note">The call'
-                . ' was found but never examined, so nothing was read from it.</span></li></ul><p class="muted"><a href="statements.html?open=open">2 statement'
-                . 's</a> are lower bounds: a dependency, a cycle or a budget stopped the search, so the call may issue more than is listed.</p><h2 id="problems'
-                . '">Not read<span class="count">1 file</span></h2><p class="lede">These files could not be parsed, so nothing in them was catalogued.</p><div '
-                . 'class="table-wrap"><table><thead><tr><th>File</th><th>Why</th></tr></thead><tbody><tr><td><code>src/broken.php</code></td><td>broken</td></t'
-                . 'r></tbody></table></div>',
+            '<h1>Overview</h1><p class="lede">Every statement this source can issue, read back from the calls that receive it. Start from the table, class or file '
+                . 'you are working on, or from what the analysis flagged.</p><div class="stats"><a class="stat" href="statements.html"><b class="stat-fig">18</b><span cl'
+                . 'ass="stat-label">statements</span></a><a class="stat" href="tables.html"><b class="stat-fig">11</b><span class="stat-label">tables</span></a><a class='
+                . '"stat" href="namespaces.html"><b class="stat-fig">15</b><span class="stat-label">functions</span></a><a class="stat" href="files.html"><b class="stat-'
+                . 'fig">11</b><span class="stat-label">files</span></a></div><div class="cards"><section class="card"><h2><a href="tables.html">Tables</a><span class="co'
+                . 'unt">11</span></h2><p class="card-description">Which statements read, write or alter a table, and where each is issued. Start here before changing a s'
+                . 'chema.</p><ul class="usage-list"><li><a class="mono" href="tables/posts.html">posts</a><span class="usage-kind">4 · 2 read · 2 write</span></li><li><a'
+                . ' class="mono" href="tables/users.html">users</a><span class="usage-kind">3 · 1 read · 1 write</span></li><li><a class="mono" href="tables/t1.html">t1<'
+                . '/a><span class="usage-kind">1 · 1 read · 0 write</span></li><li><a class="mono" href="tables/t2.html">t2</a><span class="usage-kind">1 · 1 read · 0 wr'
+                . 'ite</span></li><li><a class="mono" href="tables/t3.html">t3</a><span class="usage-kind">1 · 1 read · 0 write</span></li><li><a class="mono" href="tabl'
+                . 'es/t4.html">t4</a><span class="usage-kind">1 · 1 read · 0 write</span></li></ul><p class="card-more"><a href="tables.html">All 11 tables</a></p></sect'
+                . 'ion><section class="card"><h2><a href="namespaces.html">Namespaces</a><span class="count">3</span></h2><p class="card-description">The statements each'
+                . ' class and function issues, method by method. Start here before refactoring code that talks to the database.</p><ul class="usage-list"><li><a class="m'
+                . 'ono" href="classes/app-r.html">App\\R</a><span class="usage-kind">5 statements</span></li><li><a class="mono" href="classes/app-admin-u.html">App\\Adm'
+                . 'in\\U</a><span class="usage-kind">2 statements</span></li><li><a class="mono" href="classes/app-f.html">App\\F</a><span class="usage-kind">2 statement'
+                . 's</span></li><li><a class="mono" href="classes/app-g.html">App\\G</a><span class="usage-kind">1 statement</span></li><li><a class="mono" href="classes'
+                . '/app-h.html">App\\H</a><span class="usage-kind">1 statement</span></li><li><a class="mono" href="classes/app-i.html">App\\I</a><span class="usage-kind'
+                . '">1 statement</span></li></ul><p class="card-more"><a href="namespaces.html">All 3 namespaces</a></p></section><section class="card"><h2><a href="file'
+                . 's.html">Files</a><span class="count">11</span></h2><p class="card-description">The statements written in each file, function by function.</p><ul class'
+                . '="usage-list"><li><a class="mono" href="files/src-f-php.html">src/f.php</a><span class="usage-kind">4 statements</span></li><li><a class="mono" href="'
+                . 'files/src-a-php.html">src/a.php</a><span class="usage-kind">3 statements</span></li><li><a class="mono" href="files/lib-c-php.html">lib/c.php</a><span'
+                . ' class="usage-kind">2 statements</span></li><li><a class="mono" href="files/src-b-php.html">src/b.php</a><span class="usage-kind">2 statements</span><'
+                . '/li><li><a class="mono" href="files/src-d-php.html">src/d.php</a><span class="usage-kind">1 statement</span></li><li><a class="mono" href="files/src-e'
+                . '-php.html">src/e.php</a><span class="usage-kind">1 statement</span></li></ul><p class="card-more"><a href="files.html">All 11 files</a></p></section><'
+                . 'section class="card"><h2><a href="statements.html">Statements</a><span class="count">18</span></h2><p class="card-description">Every statement, to nar'
+                . 'row down by what it does, how far the analysis got and what was reported.</p><ul class="usage-list"><li><a class="chip tone-blue" href="statements.htm'
+                . 'l?kind=select">SELECT</a><span class="usage-kind">12 statements</span></li><li><a class="chip tone-slate" href="statements.html?kind=unknown">UNKNOWN<'
+                . '/a><span class="usage-kind">1 statement</span></li><li><a class="chip tone-teal" href="statements.html?kind=insert">INSERT</a><span class="usage-kind"'
+                . '>1 statement</span></li><li><a class="chip tone-violet" href="statements.html?kind=update">UPDATE</a><span class="usage-kind">1 statement</span></li><'
+                . 'li><a class="chip tone-pink" href="statements.html?kind=delete">DELETE</a><span class="usage-kind">1 statement</span></li><li><a class="chip tone-indi'
+                . 'go" href="statements.html?kind=alter">ALTER</a><span class="usage-kind">1 statement</span></li><li><a class="chip tone-slate" href="statements.html?ki'
+                . 'nd=show">SHOW</a><span class="usage-kind">1 statement</span></li></ul><p class="card-more"><a href="statements.html">All 18 statements</a></p></sectio'
+                . 'n></div><h2 id="attention">Needs attention<span class="count">8 findings</span></h2><div class="split"><div class="table-wrap"><table><thead><tr><th s'
+                . 'cope="col">Rule</th><th scope="col" class="tight">Severity</th><th scope="col" class="num">Statements</th><th scope="col">What it reports</th></tr></t'
+                . 'head><tbody><tr><td class="tight"><a class="mono" href="findings.html#rule-dynamic-sql">dynamic-sql</a></td><td class="tight"><span class="chip tone-w'
+                . 'arn">medium</span></td><td class="num">4</td><td>A value is spliced into the statement text instead of being bound.</td></tr><tr><td class="tight"><a '
+                . 'class="mono" href="findings.html#rule-analysis-incomplete">analysis-incomplete</a></td><td class="tight"><span class="chip tone-neutral">low</span></t'
+                . 'd><td class="num">1</td><td>A cycle or an analysis budget stopped the search before it closed.</td></tr><tr><td class="tight"><a class="mono" href="fi'
+                . 'ndings.html#rule-call-not-analyzed">call-not-analyzed</a></td><td class="tight"><span class="chip tone-neutral">low</span></td><td class="num">1</td><'
+                . 'td>A call that carries a statement was found but never examined.</td></tr><tr><td class="tight"><a class="mono" href="findings.html#rule-external-inpu'
+                . 't">external-input</a></td><td class="tight"><span class="chip tone-danger">high</span></td><td class="num">1</td><td>A value spliced into the statemen'
+                . 't text comes from external input.</td></tr><tr><td class="tight"><a class="mono" href="findings.html#rule-placeholder-count-mismatch">placeholder-coun'
+                . 't-mismatch</a></td><td class="tight"><span class="chip tone-warn">medium</span></td><td class="num">1</td><td>The statement binds a different number o'
+                . 'f values than it has placeholders.</td></tr></tbody></table></div><section class="aside"><h3>Functions issuing flagged statements</h3><ul class="usage'
+                . '-list"><li><a class="mono" href="findings.html#hotspots">R::find</a><span class="usage-kind">src/a.php · 1 high · 1 medium</span></li><li><a class="mo'
+                . 'no" href="findings.html#hotspots">K::a</a><span class="usage-kind">src/i.php · 1 medium</span></li><li><a class="mono" href="findings.html#hotspots">L'
+                . '::a</a><span class="usage-kind">src/j.php · 1 medium</span></li><li><a class="mono" href="findings.html#hotspots">M::a</a><span class="usage-kind">src'
+                . '/k.php · 1 medium</span></li><li><a class="mono" href="findings.html#hotspots">R::add</a><span class="usage-kind">src/a.php · 1 medium</span></li></ul'
+                . '><p class="more"><a href="findings.html#hotspots">Every flagged function</a></p></section></div><h2 id="coverage">How far the analysis got</h2><div cl'
+                . 'ass="meter meter-lg"><a class="meter-part tone-ok" style="--dd-part:83%" href="statements.html?resolution=resolved" title="resolved: The statement tex'
+                . 't is fully determined."></a><a class="meter-part tone-danger" style="--dd-part:6%" href="statements.html?resolution=external-input" title="external-in'
+                . 'put: The values were followed to runtime input, so the text cannot be fixed."></a><a class="meter-part is-open" style="--dd-part:6%" href="statements.'
+                . 'html?resolution=incomplete" title="incomplete: A cycle or an analysis budget stopped the search before it closed."></a><a class="meter-part tone-neutr'
+                . 'al" style="--dd-part:6%" href="statements.html?resolution=not-analyzed" title="not-analyzed: The call was found but never examined, so nothing was rea'
+                . 'd from it."></a></div><ul class="legend"><li><a class="chip tone-ok" href="statements.html?resolution=resolved" title="The statement text is fully det'
+                . 'ermined.">resolved</a><span class="meter-legend-count">15</span><span class="meter-legend-description">The statement text is fully determined.</span><'
+                . '/li><li><a class="chip tone-danger" href="statements.html?resolution=external-input" title="The values were followed to runtime input, so the text can'
+                . 'not be fixed.">external-input</a><span class="meter-legend-count">1</span><span class="meter-legend-description">The values were followed to runtime i'
+                . 'nput, so the text cannot be fixed.</span></li><li><a class="chip chip-ghost" href="statements.html?resolution=incomplete-model" title="A dependency th'
+                . 'e analyzer does not model was reached.">incomplete-model</a><span class="meter-legend-count">0</span><span class="meter-legend-description">A dependen'
+                . 'cy the analyzer does not model was reached.</span></li><li><a class="chip chip-ghost" href="statements.html?resolution=incomplete" title="A cycle or a'
+                . 'n analysis budget stopped the search before it closed.">incomplete</a><span class="meter-legend-count">1</span><span class="meter-legend-description">'
+                . 'A cycle or an analysis budget stopped the search before it closed.</span></li><li><a class="chip tone-neutral" href="statements.html?resolution=not-an'
+                . 'alyzed" title="The call was found but never examined, so nothing was read from it.">not-analyzed</a><span class="meter-legend-count">1</span><span cla'
+                . 'ss="meter-legend-description">The call was found but never examined, so nothing was read from it.</span></li></ul><p class="muted"><a href="statements'
+                . '.html?open=open">2 statements</a> are lower bounds: a dependency, a cycle or a budget stopped the search, so the call may issue more than is listed.</'
+                . 'p><h2 id="problems">Not read<span class="count">1 file</span></h2><p class="lede">These files could not be parsed, so nothing in them was catalogued.<'
+                . '/p><div class="table-wrap"><table><thead><tr><th scope="col">File</th><th scope="col">Why</th></tr></thead><tbody><tr><td><code>src/broken.php</code><'
+                . '/td><td>broken</td></tr></tbody></table></div>',
             (new OverviewPage())->render($site),
         );
     }

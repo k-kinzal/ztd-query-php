@@ -14,7 +14,6 @@ use SqlCatalog\Catalog\Resolution;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
-use SqlCatalog\Reporter\Html\Palette;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
 use SqlCatalog\Reporter\Html\SearchIndex;
@@ -29,7 +28,6 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(CatalogIndex::class)]
 #[UsesClass(CatalogStatistics::class)]
 #[UsesClass(HtmlText::class)]
-#[UsesClass(Palette::class)]
 #[UsesClass(ReportSite::class)]
 #[UsesClass(Resolution::class)]
 #[UsesClass(Scope::class)]
@@ -45,7 +43,7 @@ final class SearchIndexTest extends TestCase
         ]);
 
         self::assertSame(
-            'window.__CATALOG_INDEX__ = [{"q":"SELECT 1","w":"a.php:1","f":"f","t":"","u":"statements/a1.html","k":"SELECT","g":"select","r":"resolved","c":"ok"}];' . "\n",
+            'window.__CATALOG_INDEX__ = [{"q":"SELECT 1","w":"a.php:1","f":"f","t":"","u":"statements/a1.html","k":"SELECT","r":"resolved"}];' . "\n",
             (new SearchIndex())->render(new ReportSite($catalog)),
         );
         self::assertSame("window.__CATALOG_INDEX__ = [];\n", (new SearchIndex())->render(new ReportSite(new Catalog())));
@@ -56,7 +54,7 @@ final class SearchIndexTest extends TestCase
         $entry = new CatalogEntry('a1', StatementKind::Delete, TextPattern::fromText("DELETE FROM users\n WHERE id = 1"), ['users'], [], new CallSite('a.php', 3, 'App\\R::gone', 'pdo.query'), []);
 
         self::assertSame(
-            ['q' => 'DELETE FROM users WHERE id = 1', 'w' => 'a.php:3', 'f' => 'App\\R::gone', 't' => 'users', 'u' => 'statements/a1.html', 'k' => 'DELETE', 'g' => 'delete', 'r' => 'resolved', 'c' => 'ok'],
+            ['q' => 'DELETE FROM users WHERE id = 1', 'w' => 'a.php:3', 'f' => 'App\\R::gone', 't' => 'users', 'u' => 'statements/a1.html', 'k' => 'DELETE', 'r' => 'resolved'],
             (new SearchIndex())->entryToArray(new ReportSite(new Catalog([$entry])), $entry),
         );
     }
