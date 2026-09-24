@@ -54,32 +54,33 @@
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a>    <span class="tok-kw">case</span> <span class="tok-id">Prepare</span> = <span class="tok-str">&#039;prepare&#039;</span>;</span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a>    <span class="tok-kw">case</span> <span class="tok-id">Execute</span> = <span class="tok-str">&#039;execute&#039;</span>;</span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a>    <span class="tok-kw">case</span> <span class="tok-id">Bind</span> = <span class="tok-str">&#039;bind&#039;</span>;</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a></span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com">     * Whether the call hands the statement text back rather than sending it.</span></span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com">     * Some interfaces interpolate a statement and return it for something else</span></span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com">     * to run. Treating the interpolation as the statement&#039;s source, rather than</span></span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com">     * as a call the analyzer cannot see through, is what keeps the statement</span></span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com">     * readable where it is finally issued.</span></span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">returnsSql</span>(): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    {</span>
-<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span> === <span class="tok-id">self</span>::<span class="tok-id">Compose</span>;</span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>    }</span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a></span>
-<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com">     * Whether the call carries the statement text itself.</span></span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">carriesSql</span>(): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>    {</span>
-<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$this</span>) {</span>
-<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>            <span class="tok-id">self</span>::<span class="tok-id">Query</span>, <span class="tok-id">self</span>::<span class="tok-id">Compose</span>, <span class="tok-id">self</span>::<span class="tok-id">Prepare</span> =&gt; <span class="tok-id">true</span>,</span>
-<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>            <span class="tok-id">self</span>::<span class="tok-id">Execute</span>, <span class="tok-id">self</span>::<span class="tok-id">Bind</span> =&gt; <span class="tok-id">false</span>,</span>
-<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>        };</span>
-<span class="src-line" id="L42"><a class="ln" href="#L42">42</a>    }</span>
-<span class="src-line" id="L43"><a class="ln" href="#L43">43</a>}</span>
-<span class="src-line" id="L44"><a class="ln" href="#L44">44</a></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a>    <span class="tok-kw">case</span> <span class="tok-id">Modelled</span> = <span class="tok-str">&#039;modelled&#039;</span>;</span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a></span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com">     * Whether the call hands the statement text back rather than sending it.</span></span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com">     * Some interfaces interpolate a statement and return it for something else</span></span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com">     * to run. Treating the interpolation as the statement&#039;s source, rather than</span></span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com">     * as a call the analyzer cannot see through, is what keeps the statement</span></span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com">     * readable where it is finally issued.</span></span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">returnsSql</span>(): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>    {</span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span> === <span class="tok-id">self</span>::<span class="tok-id">Compose</span>;</span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>    }</span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a></span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com">     * Whether the call carries the statement text itself.</span></span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">carriesSql</span>(): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>    {</span>
+<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$this</span>) {</span>
+<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>            <span class="tok-id">self</span>::<span class="tok-id">Query</span>, <span class="tok-id">self</span>::<span class="tok-id">Compose</span>, <span class="tok-id">self</span>::<span class="tok-id">Prepare</span> =&gt; <span class="tok-id">true</span>,</span>
+<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>            <span class="tok-id">self</span>::<span class="tok-id">Execute</span>, <span class="tok-id">self</span>::<span class="tok-id">Bind</span>, <span class="tok-id">self</span>::<span class="tok-id">Modelled</span> =&gt; <span class="tok-id">false</span>,</span>
+<span class="src-line" id="L42"><a class="ln" href="#L42">42</a>        };</span>
+<span class="src-line" id="L43"><a class="ln" href="#L43">43</a>    }</span>
+<span class="src-line" id="L44"><a class="ln" href="#L44">44</a>}</span>
+<span class="src-line" id="L45"><a class="ln" href="#L45">45</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

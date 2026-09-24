@@ -351,89 +351,106 @@
 <span class="src-line" id="L313"><a class="ln" href="#L313">313</a></span>
 <span class="src-line" id="L314"><a class="ln" href="#L314">314</a>            <span class="tok-kw">return</span>;</span>
 <span class="src-line" id="L315"><a class="ln" href="#L315">315</a>        }</span>
-<span class="src-line" id="L316"><a class="ln" href="#L316">316</a>        <span class="tok-kw">if</span> (<span class="tok-var">$target</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\ArrayDimFetch</span>) {</span>
-<span class="src-line" id="L317"><a class="ln" href="#L317">317</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">assignElement</span>(<span class="tok-var">$target</span>, <span class="tok-var">$value</span>, <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$expressions</span>);</span>
-<span class="src-line" id="L318"><a class="ln" href="#L318">318</a></span>
-<span class="src-line" id="L319"><a class="ln" href="#L319">319</a>            <span class="tok-kw">return</span>;</span>
-<span class="src-line" id="L320"><a class="ln" href="#L320">320</a>        }</span>
-<span class="src-line" id="L321"><a class="ln" href="#L321">321</a>        <span class="tok-kw">if</span> (<span class="tok-var">$target</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\List_</span> || <span class="tok-var">$target</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Array_</span>) {</span>
-<span class="src-line" id="L322"><a class="ln" href="#L322">322</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">assignList</span>(<span class="tok-var">$target</span>, <span class="tok-var">$value</span>, <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$expressions</span>);</span>
-<span class="src-line" id="L323"><a class="ln" href="#L323">323</a>        }</span>
-<span class="src-line" id="L324"><a class="ln" href="#L324">324</a>    }</span>
-<span class="src-line" id="L325"><a class="ln" href="#L325">325</a></span>
-<span class="src-line" id="L326"><a class="ln" href="#L326">326</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L327"><a class="ln" href="#L327">327</a><span class="tok-com">     * Writes the elements of an array into the targets a destructuring assignment lists.</span></span>
-<span class="src-line" id="L328"><a class="ln" href="#L328">328</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L329"><a class="ln" href="#L329">329</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">assignList</span>(</span>
-<span class="src-line" id="L330"><a class="ln" href="#L330">330</a>        <span class="tok-id">Expr\List_</span>|<span class="tok-id">Expr\Array_</span> <span class="tok-var">$target</span>,</span>
-<span class="src-line" id="L331"><a class="ln" href="#L331">331</a>        <span class="tok-id">Domain</span> <span class="tok-var">$value</span>,</span>
-<span class="src-line" id="L332"><a class="ln" href="#L332">332</a>        <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>,</span>
-<span class="src-line" id="L333"><a class="ln" href="#L333">333</a>        <span class="tok-id">FunctionScope</span> <span class="tok-var">$scope</span>,</span>
-<span class="src-line" id="L334"><a class="ln" href="#L334">334</a>        <span class="tok-id">ExpressionEvaluator</span> <span class="tok-var">$expressions</span>,</span>
-<span class="src-line" id="L335"><a class="ln" href="#L335">335</a>    ): <span class="tok-id">void</span> {</span>
-<span class="src-line" id="L336"><a class="ln" href="#L336">336</a>        <span class="tok-var">$array</span> = <span class="tok-var">$value</span>-&gt;<span class="tok-id">soleArray</span>();</span>
-<span class="src-line" id="L337"><a class="ln" href="#L337">337</a>        <span class="tok-var">$position</span> = <span class="tok-num">0</span>;</span>
-<span class="src-line" id="L338"><a class="ln" href="#L338">338</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$target</span>-&gt;<span class="tok-id">items</span> <span class="tok-kw">as</span> <span class="tok-var">$item</span>) {</span>
-<span class="src-line" id="L339"><a class="ln" href="#L339">339</a>            <span class="tok-kw">if</span> (<span class="tok-var">$item</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L340"><a class="ln" href="#L340">340</a>                <span class="tok-var">$position</span>++;</span>
-<span class="src-line" id="L341"><a class="ln" href="#L341">341</a>                <span class="tok-kw">continue</span>;</span>
-<span class="src-line" id="L342"><a class="ln" href="#L342">342</a>            }</span>
-<span class="src-line" id="L343"><a class="ln" href="#L343">343</a>            <span class="tok-var">$key</span> = <span class="tok-var">$item</span>-&gt;<span class="tok-id">key</span> === <span class="tok-id">null</span> ? <span class="tok-var">$position</span>++ : <span class="tok-var">$expressions</span>-&gt;<span class="tok-id">evaluate</span>(<span class="tok-var">$item</span>-&gt;<span class="tok-id">key</span>, <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>)-&gt;<span class="tok-id">soleLiteral</span>()?-&gt;<span class="tok-id">value</span>;</span>
-<span class="src-line" id="L344"><a class="ln" href="#L344">344</a>            <span class="tok-var">$element</span> = <span class="tok-var">$array</span> === <span class="tok-id">null</span> || <span class="tok-var">$key</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-var">$this</span>-&gt;<span class="tok-id">lookup</span>(<span class="tok-var">$array</span>, <span class="tok-var">$key</span>);</span>
-<span class="src-line" id="L345"><a class="ln" href="#L345">345</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">assign</span>(</span>
-<span class="src-line" id="L346"><a class="ln" href="#L346">346</a>                <span class="tok-var">$item</span>-&gt;<span class="tok-id">value</span>,</span>
-<span class="src-line" id="L347"><a class="ln" href="#L347">347</a>                <span class="tok-var">$element</span> ?? <span class="tok-id">Domain</span>::<span class="tok-id">opaque</span>(<span class="tok-id">TypeShape</span>::<span class="tok-id">unknown</span>(), <span class="tok-var">$this</span>-&gt;<span class="tok-id">originOf</span>(<span class="tok-var">$value</span>), <span class="tok-var">$this</span>-&gt;<span class="tok-id">text</span>-&gt;<span class="tok-id">render</span>(<span class="tok-var">$item</span>-&gt;<span class="tok-id">value</span>)),</span>
-<span class="src-line" id="L348"><a class="ln" href="#L348">348</a>                <span class="tok-var">$environment</span>,</span>
-<span class="src-line" id="L349"><a class="ln" href="#L349">349</a>                <span class="tok-var">$scope</span>,</span>
-<span class="src-line" id="L350"><a class="ln" href="#L350">350</a>                <span class="tok-var">$expressions</span>,</span>
-<span class="src-line" id="L351"><a class="ln" href="#L351">351</a>            );</span>
-<span class="src-line" id="L352"><a class="ln" href="#L352">352</a>        }</span>
-<span class="src-line" id="L353"><a class="ln" href="#L353">353</a>    }</span>
-<span class="src-line" id="L354"><a class="ln" href="#L354">354</a></span>
-<span class="src-line" id="L355"><a class="ln" href="#L355">355</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L356"><a class="ln" href="#L356">356</a><span class="tok-com">     * Writes a value into an array held by a tracked name, keeping the key when one is written.</span></span>
-<span class="src-line" id="L357"><a class="ln" href="#L357">357</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L358"><a class="ln" href="#L358">358</a><span class="tok-com">     * A write one level down, such as `$parts[&#039;where&#039;][] = …`, is not followed</span></span>
-<span class="src-line" id="L359"><a class="ln" href="#L359">359</a><span class="tok-com">     * element by element: the array it goes into is marked as no longer known</span></span>
-<span class="src-line" id="L360"><a class="ln" href="#L360">360</a><span class="tok-com">     * in full, so reading it back never claims to have seen all of it.</span></span>
-<span class="src-line" id="L361"><a class="ln" href="#L361">361</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L362"><a class="ln" href="#L362">362</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">assignElement</span>(</span>
-<span class="src-line" id="L363"><a class="ln" href="#L363">363</a>        <span class="tok-id">Expr\ArrayDimFetch</span> <span class="tok-var">$target</span>,</span>
-<span class="src-line" id="L364"><a class="ln" href="#L364">364</a>        <span class="tok-id">Domain</span> <span class="tok-var">$value</span>,</span>
-<span class="src-line" id="L365"><a class="ln" href="#L365">365</a>        <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>,</span>
-<span class="src-line" id="L366"><a class="ln" href="#L366">366</a>        <span class="tok-id">FunctionScope</span> <span class="tok-var">$scope</span>,</span>
-<span class="src-line" id="L367"><a class="ln" href="#L367">367</a>        <span class="tok-id">ExpressionEvaluator</span> <span class="tok-var">$expressions</span>,</span>
-<span class="src-line" id="L368"><a class="ln" href="#L368">368</a>    ): <span class="tok-id">void</span> {</span>
-<span class="src-line" id="L369"><a class="ln" href="#L369">369</a>        <span class="tok-var">$name</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">trackedName</span>(<span class="tok-var">$target</span>-&gt;<span class="tok-id">var</span>);</span>
-<span class="src-line" id="L370"><a class="ln" href="#L370">370</a>        <span class="tok-kw">if</span> (<span class="tok-var">$name</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L371"><a class="ln" href="#L371">371</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">loseTrack</span>(<span class="tok-var">$target</span>-&gt;<span class="tok-id">var</span>, <span class="tok-var">$environment</span>);</span>
-<span class="src-line" id="L372"><a class="ln" href="#L372">372</a></span>
-<span class="src-line" id="L373"><a class="ln" href="#L373">373</a>            <span class="tok-kw">return</span>;</span>
-<span class="src-line" id="L374"><a class="ln" href="#L374">374</a>        }</span>
-<span class="src-line" id="L375"><a class="ln" href="#L375">375</a>        <span class="tok-var">$key</span> = <span class="tok-var">$target</span>-&gt;<span class="tok-id">dim</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-var">$expressions</span>-&gt;<span class="tok-id">evaluate</span>(<span class="tok-var">$target</span>-&gt;<span class="tok-id">dim</span>, <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>);</span>
-<span class="src-line" id="L376"><a class="ln" href="#L376">376</a>        <span class="tok-var">$array</span> = <span class="tok-var">$environment</span>-&gt;<span class="tok-id">has</span>(<span class="tok-var">$name</span>) ? <span class="tok-var">$environment</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$name</span>)-&gt;<span class="tok-id">soleArray</span>() : <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L377"><a class="ln" href="#L377">377</a>        <span class="tok-var">$entries</span> = <span class="tok-var">$array</span> === <span class="tok-id">null</span> ? [] : <span class="tok-var">$array</span>-&gt;<span class="tok-id">entries</span>;</span>
-<span class="src-line" id="L378"><a class="ln" href="#L378">378</a>        <span class="tok-var">$entries</span>[] = <span class="tok-kw">new</span> <span class="tok-id">ArrayEntry</span>(<span class="tok-var">$key</span>, <span class="tok-var">$value</span>);</span>
-<span class="src-line" id="L379"><a class="ln" href="#L379">379</a></span>
-<span class="src-line" id="L380"><a class="ln" href="#L380">380</a>        <span class="tok-var">$environment</span>-&gt;<span class="tok-id">write</span>(<span class="tok-var">$name</span>, <span class="tok-id">Domain</span>::<span class="tok-id">of</span>(<span class="tok-kw">new</span> <span class="tok-id">ArrayTerm</span>(<span class="tok-var">$entries</span>, <span class="tok-var">$array</span> === <span class="tok-id">null</span> || <span class="tok-var">$array</span>-&gt;<span class="tok-id">complete</span>)));</span>
-<span class="src-line" id="L381"><a class="ln" href="#L381">381</a>    }</span>
-<span class="src-line" id="L382"><a class="ln" href="#L382">382</a></span>
-<span class="src-line" id="L383"><a class="ln" href="#L383">383</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L384"><a class="ln" href="#L384">384</a><span class="tok-com">     * Marks the array a nested write goes into as no longer known in full.</span></span>
-<span class="src-line" id="L385"><a class="ln" href="#L385">385</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L386"><a class="ln" href="#L386">386</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">loseTrack</span>(<span class="tok-id">Expr</span> <span class="tok-var">$target</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L387"><a class="ln" href="#L387">387</a>    {</span>
-<span class="src-line" id="L388"><a class="ln" href="#L388">388</a>        <span class="tok-kw">while</span> (<span class="tok-var">$target</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\ArrayDimFetch</span>) {</span>
-<span class="src-line" id="L389"><a class="ln" href="#L389">389</a>            <span class="tok-var">$target</span> = <span class="tok-var">$target</span>-&gt;<span class="tok-id">var</span>;</span>
-<span class="src-line" id="L390"><a class="ln" href="#L390">390</a>        }</span>
-<span class="src-line" id="L391"><a class="ln" href="#L391">391</a>        <span class="tok-var">$name</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">trackedName</span>(<span class="tok-var">$target</span>);</span>
-<span class="src-line" id="L392"><a class="ln" href="#L392">392</a>        <span class="tok-var">$array</span> = <span class="tok-var">$name</span> === <span class="tok-id">null</span> || !<span class="tok-var">$environment</span>-&gt;<span class="tok-id">has</span>(<span class="tok-var">$name</span>) ? <span class="tok-id">null</span> : <span class="tok-var">$environment</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$name</span>)-&gt;<span class="tok-id">soleArray</span>();</span>
-<span class="src-line" id="L393"><a class="ln" href="#L393">393</a>        <span class="tok-kw">if</span> (<span class="tok-var">$name</span> !== <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$array</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L394"><a class="ln" href="#L394">394</a>            <span class="tok-var">$environment</span>-&gt;<span class="tok-id">write</span>(<span class="tok-var">$name</span>, <span class="tok-id">Domain</span>::<span class="tok-id">of</span>(<span class="tok-kw">new</span> <span class="tok-id">ArrayTerm</span>(<span class="tok-var">$array</span>-&gt;<span class="tok-id">entries</span>, <span class="tok-id">false</span>)));</span>
-<span class="src-line" id="L395"><a class="ln" href="#L395">395</a>        }</span>
-<span class="src-line" id="L396"><a class="ln" href="#L396">396</a>    }</span>
-<span class="src-line" id="L397"><a class="ln" href="#L397">397</a>}</span>
-<span class="src-line" id="L398"><a class="ln" href="#L398">398</a></span>
+<span class="src-line" id="L316"><a class="ln" href="#L316">316</a>        <span class="tok-kw">if</span> (<span class="tok-var">$target</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\PropertyFetch</span>) {</span>
+<span class="src-line" id="L317"><a class="ln" href="#L317">317</a>            <span class="tok-var">$receiver</span> = <span class="tok-var">$expressions</span>-&gt;<span class="tok-id">evaluate</span>(<span class="tok-var">$target</span>-&gt;<span class="tok-id">var</span>, <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>);</span>
+<span class="src-line" id="L318"><a class="ln" href="#L318">318</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$receiver</span>-&gt;<span class="tok-id">terms</span> <span class="tok-kw">as</span> <span class="tok-var">$term</span>) {</span>
+<span class="src-line" id="L319"><a class="ln" href="#L319">319</a>                <span class="tok-kw">if</span> (<span class="tok-var">$term</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ObjectTerm</span> &amp;&amp; <span class="tok-var">$term</span>-&gt;<span class="tok-id">identity</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L320"><a class="ln" href="#L320">320</a>                    <span class="tok-var">$environment</span>-&gt;<span class="tok-id">objects</span>()-&gt;<span class="tok-id">remember</span>(<span class="tok-kw">new</span> <span class="tok-id">ObjectTerm</span>(<span class="tok-var">$term</span>-&gt;<span class="tok-id">className</span>, <span class="tok-var">$term</span>-&gt;<span class="tok-id">enumCase</span>, <span class="tok-var">$term</span>-&gt;<span class="tok-id">statementId</span>, <span class="tok-var">$term</span>-&gt;<span class="tok-id">identity</span>));</span>
+<span class="src-line" id="L321"><a class="ln" href="#L321">321</a>                }</span>
+<span class="src-line" id="L322"><a class="ln" href="#L322">322</a>            }</span>
+<span class="src-line" id="L323"><a class="ln" href="#L323">323</a></span>
+<span class="src-line" id="L324"><a class="ln" href="#L324">324</a>            <span class="tok-kw">return</span>;</span>
+<span class="src-line" id="L325"><a class="ln" href="#L325">325</a>        }</span>
+<span class="src-line" id="L326"><a class="ln" href="#L326">326</a>        <span class="tok-kw">if</span> (<span class="tok-var">$target</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\ArrayDimFetch</span>) {</span>
+<span class="src-line" id="L327"><a class="ln" href="#L327">327</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">assignElement</span>(<span class="tok-var">$target</span>, <span class="tok-var">$value</span>, <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$expressions</span>);</span>
+<span class="src-line" id="L328"><a class="ln" href="#L328">328</a></span>
+<span class="src-line" id="L329"><a class="ln" href="#L329">329</a>            <span class="tok-kw">return</span>;</span>
+<span class="src-line" id="L330"><a class="ln" href="#L330">330</a>        }</span>
+<span class="src-line" id="L331"><a class="ln" href="#L331">331</a>        <span class="tok-kw">if</span> (<span class="tok-var">$target</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\List_</span> || <span class="tok-var">$target</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Array_</span>) {</span>
+<span class="src-line" id="L332"><a class="ln" href="#L332">332</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">assignList</span>(<span class="tok-var">$target</span>, <span class="tok-var">$value</span>, <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$expressions</span>);</span>
+<span class="src-line" id="L333"><a class="ln" href="#L333">333</a>        }</span>
+<span class="src-line" id="L334"><a class="ln" href="#L334">334</a>    }</span>
+<span class="src-line" id="L335"><a class="ln" href="#L335">335</a></span>
+<span class="src-line" id="L336"><a class="ln" href="#L336">336</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L337"><a class="ln" href="#L337">337</a><span class="tok-com">     * Writes the elements of an array into the targets a destructuring assignment lists.</span></span>
+<span class="src-line" id="L338"><a class="ln" href="#L338">338</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L339"><a class="ln" href="#L339">339</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">assignList</span>(</span>
+<span class="src-line" id="L340"><a class="ln" href="#L340">340</a>        <span class="tok-id">Expr\List_</span>|<span class="tok-id">Expr\Array_</span> <span class="tok-var">$target</span>,</span>
+<span class="src-line" id="L341"><a class="ln" href="#L341">341</a>        <span class="tok-id">Domain</span> <span class="tok-var">$value</span>,</span>
+<span class="src-line" id="L342"><a class="ln" href="#L342">342</a>        <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>,</span>
+<span class="src-line" id="L343"><a class="ln" href="#L343">343</a>        <span class="tok-id">FunctionScope</span> <span class="tok-var">$scope</span>,</span>
+<span class="src-line" id="L344"><a class="ln" href="#L344">344</a>        <span class="tok-id">ExpressionEvaluator</span> <span class="tok-var">$expressions</span>,</span>
+<span class="src-line" id="L345"><a class="ln" href="#L345">345</a>    ): <span class="tok-id">void</span> {</span>
+<span class="src-line" id="L346"><a class="ln" href="#L346">346</a>        <span class="tok-var">$array</span> = <span class="tok-var">$value</span>-&gt;<span class="tok-id">soleArray</span>();</span>
+<span class="src-line" id="L347"><a class="ln" href="#L347">347</a>        <span class="tok-var">$position</span> = <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L348"><a class="ln" href="#L348">348</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$target</span>-&gt;<span class="tok-id">items</span> <span class="tok-kw">as</span> <span class="tok-var">$item</span>) {</span>
+<span class="src-line" id="L349"><a class="ln" href="#L349">349</a>            <span class="tok-kw">if</span> (<span class="tok-var">$item</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L350"><a class="ln" href="#L350">350</a>                <span class="tok-var">$position</span>++;</span>
+<span class="src-line" id="L351"><a class="ln" href="#L351">351</a>                <span class="tok-kw">continue</span>;</span>
+<span class="src-line" id="L352"><a class="ln" href="#L352">352</a>            }</span>
+<span class="src-line" id="L353"><a class="ln" href="#L353">353</a>            <span class="tok-var">$key</span> = <span class="tok-var">$item</span>-&gt;<span class="tok-id">key</span> === <span class="tok-id">null</span> ? <span class="tok-var">$position</span>++ : <span class="tok-var">$expressions</span>-&gt;<span class="tok-id">evaluate</span>(<span class="tok-var">$item</span>-&gt;<span class="tok-id">key</span>, <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>)-&gt;<span class="tok-id">soleLiteral</span>()?-&gt;<span class="tok-id">value</span>;</span>
+<span class="src-line" id="L354"><a class="ln" href="#L354">354</a>            <span class="tok-var">$element</span> = <span class="tok-var">$array</span> === <span class="tok-id">null</span> || <span class="tok-var">$key</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-var">$this</span>-&gt;<span class="tok-id">lookup</span>(<span class="tok-var">$array</span>, <span class="tok-var">$key</span>);</span>
+<span class="src-line" id="L355"><a class="ln" href="#L355">355</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">assign</span>(</span>
+<span class="src-line" id="L356"><a class="ln" href="#L356">356</a>                <span class="tok-var">$item</span>-&gt;<span class="tok-id">value</span>,</span>
+<span class="src-line" id="L357"><a class="ln" href="#L357">357</a>                <span class="tok-var">$element</span> ?? <span class="tok-id">Domain</span>::<span class="tok-id">opaque</span>(<span class="tok-id">TypeShape</span>::<span class="tok-id">unknown</span>(), <span class="tok-var">$this</span>-&gt;<span class="tok-id">originOf</span>(<span class="tok-var">$value</span>), <span class="tok-var">$this</span>-&gt;<span class="tok-id">text</span>-&gt;<span class="tok-id">render</span>(<span class="tok-var">$item</span>-&gt;<span class="tok-id">value</span>)),</span>
+<span class="src-line" id="L358"><a class="ln" href="#L358">358</a>                <span class="tok-var">$environment</span>,</span>
+<span class="src-line" id="L359"><a class="ln" href="#L359">359</a>                <span class="tok-var">$scope</span>,</span>
+<span class="src-line" id="L360"><a class="ln" href="#L360">360</a>                <span class="tok-var">$expressions</span>,</span>
+<span class="src-line" id="L361"><a class="ln" href="#L361">361</a>            );</span>
+<span class="src-line" id="L362"><a class="ln" href="#L362">362</a>        }</span>
+<span class="src-line" id="L363"><a class="ln" href="#L363">363</a>    }</span>
+<span class="src-line" id="L364"><a class="ln" href="#L364">364</a></span>
+<span class="src-line" id="L365"><a class="ln" href="#L365">365</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L366"><a class="ln" href="#L366">366</a><span class="tok-com">     * Writes a value into an array held by a tracked name, keeping the key when one is written.</span></span>
+<span class="src-line" id="L367"><a class="ln" href="#L367">367</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L368"><a class="ln" href="#L368">368</a><span class="tok-com">     * A write one level down, such as `$parts[&#039;where&#039;][] = …`, is not followed</span></span>
+<span class="src-line" id="L369"><a class="ln" href="#L369">369</a><span class="tok-com">     * element by element: the array it goes into is marked as no longer known</span></span>
+<span class="src-line" id="L370"><a class="ln" href="#L370">370</a><span class="tok-com">     * in full, so reading it back never claims to have seen all of it.</span></span>
+<span class="src-line" id="L371"><a class="ln" href="#L371">371</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L372"><a class="ln" href="#L372">372</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">assignElement</span>(</span>
+<span class="src-line" id="L373"><a class="ln" href="#L373">373</a>        <span class="tok-id">Expr\ArrayDimFetch</span> <span class="tok-var">$target</span>,</span>
+<span class="src-line" id="L374"><a class="ln" href="#L374">374</a>        <span class="tok-id">Domain</span> <span class="tok-var">$value</span>,</span>
+<span class="src-line" id="L375"><a class="ln" href="#L375">375</a>        <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>,</span>
+<span class="src-line" id="L376"><a class="ln" href="#L376">376</a>        <span class="tok-id">FunctionScope</span> <span class="tok-var">$scope</span>,</span>
+<span class="src-line" id="L377"><a class="ln" href="#L377">377</a>        <span class="tok-id">ExpressionEvaluator</span> <span class="tok-var">$expressions</span>,</span>
+<span class="src-line" id="L378"><a class="ln" href="#L378">378</a>    ): <span class="tok-id">void</span> {</span>
+<span class="src-line" id="L379"><a class="ln" href="#L379">379</a>        <span class="tok-var">$name</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">trackedName</span>(<span class="tok-var">$target</span>-&gt;<span class="tok-id">var</span>);</span>
+<span class="src-line" id="L380"><a class="ln" href="#L380">380</a>        <span class="tok-kw">if</span> (<span class="tok-var">$name</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L381"><a class="ln" href="#L381">381</a>            <span class="tok-var">$base</span> = <span class="tok-var">$target</span>-&gt;<span class="tok-id">var</span>;</span>
+<span class="src-line" id="L382"><a class="ln" href="#L382">382</a>            <span class="tok-kw">while</span> (<span class="tok-var">$base</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\ArrayDimFetch</span>) {</span>
+<span class="src-line" id="L383"><a class="ln" href="#L383">383</a>                <span class="tok-var">$base</span> = <span class="tok-var">$base</span>-&gt;<span class="tok-id">var</span>;</span>
+<span class="src-line" id="L384"><a class="ln" href="#L384">384</a>            }</span>
+<span class="src-line" id="L385"><a class="ln" href="#L385">385</a>            <span class="tok-kw">if</span> (<span class="tok-var">$base</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\PropertyFetch</span>) {</span>
+<span class="src-line" id="L386"><a class="ln" href="#L386">386</a>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">assign</span>(<span class="tok-var">$base</span>, <span class="tok-id">Domain</span>::<span class="tok-id">unknown</span>(), <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$expressions</span>);</span>
+<span class="src-line" id="L387"><a class="ln" href="#L387">387</a>            }</span>
+<span class="src-line" id="L388"><a class="ln" href="#L388">388</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">loseTrack</span>(<span class="tok-var">$target</span>-&gt;<span class="tok-id">var</span>, <span class="tok-var">$environment</span>);</span>
+<span class="src-line" id="L389"><a class="ln" href="#L389">389</a></span>
+<span class="src-line" id="L390"><a class="ln" href="#L390">390</a>            <span class="tok-kw">return</span>;</span>
+<span class="src-line" id="L391"><a class="ln" href="#L391">391</a>        }</span>
+<span class="src-line" id="L392"><a class="ln" href="#L392">392</a>        <span class="tok-var">$key</span> = <span class="tok-var">$target</span>-&gt;<span class="tok-id">dim</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-var">$expressions</span>-&gt;<span class="tok-id">evaluate</span>(<span class="tok-var">$target</span>-&gt;<span class="tok-id">dim</span>, <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>);</span>
+<span class="src-line" id="L393"><a class="ln" href="#L393">393</a>        <span class="tok-var">$array</span> = <span class="tok-var">$environment</span>-&gt;<span class="tok-id">has</span>(<span class="tok-var">$name</span>) ? <span class="tok-var">$environment</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$name</span>)-&gt;<span class="tok-id">soleArray</span>() : <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L394"><a class="ln" href="#L394">394</a>        <span class="tok-var">$entries</span> = <span class="tok-var">$array</span> === <span class="tok-id">null</span> ? [] : <span class="tok-var">$array</span>-&gt;<span class="tok-id">entries</span>;</span>
+<span class="src-line" id="L395"><a class="ln" href="#L395">395</a>        <span class="tok-var">$entries</span>[] = <span class="tok-kw">new</span> <span class="tok-id">ArrayEntry</span>(<span class="tok-var">$key</span>, <span class="tok-var">$value</span>);</span>
+<span class="src-line" id="L396"><a class="ln" href="#L396">396</a></span>
+<span class="src-line" id="L397"><a class="ln" href="#L397">397</a>        <span class="tok-var">$environment</span>-&gt;<span class="tok-id">write</span>(<span class="tok-var">$name</span>, <span class="tok-id">Domain</span>::<span class="tok-id">of</span>(<span class="tok-kw">new</span> <span class="tok-id">ArrayTerm</span>(<span class="tok-var">$entries</span>, <span class="tok-var">$array</span> === <span class="tok-id">null</span> || <span class="tok-var">$array</span>-&gt;<span class="tok-id">complete</span>)));</span>
+<span class="src-line" id="L398"><a class="ln" href="#L398">398</a>    }</span>
+<span class="src-line" id="L399"><a class="ln" href="#L399">399</a></span>
+<span class="src-line" id="L400"><a class="ln" href="#L400">400</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L401"><a class="ln" href="#L401">401</a><span class="tok-com">     * Marks the array a nested write goes into as no longer known in full.</span></span>
+<span class="src-line" id="L402"><a class="ln" href="#L402">402</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L403"><a class="ln" href="#L403">403</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">loseTrack</span>(<span class="tok-id">Expr</span> <span class="tok-var">$target</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L404"><a class="ln" href="#L404">404</a>    {</span>
+<span class="src-line" id="L405"><a class="ln" href="#L405">405</a>        <span class="tok-kw">while</span> (<span class="tok-var">$target</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\ArrayDimFetch</span>) {</span>
+<span class="src-line" id="L406"><a class="ln" href="#L406">406</a>            <span class="tok-var">$target</span> = <span class="tok-var">$target</span>-&gt;<span class="tok-id">var</span>;</span>
+<span class="src-line" id="L407"><a class="ln" href="#L407">407</a>        }</span>
+<span class="src-line" id="L408"><a class="ln" href="#L408">408</a>        <span class="tok-var">$name</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">trackedName</span>(<span class="tok-var">$target</span>);</span>
+<span class="src-line" id="L409"><a class="ln" href="#L409">409</a>        <span class="tok-var">$array</span> = <span class="tok-var">$name</span> === <span class="tok-id">null</span> || !<span class="tok-var">$environment</span>-&gt;<span class="tok-id">has</span>(<span class="tok-var">$name</span>) ? <span class="tok-id">null</span> : <span class="tok-var">$environment</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$name</span>)-&gt;<span class="tok-id">soleArray</span>();</span>
+<span class="src-line" id="L410"><a class="ln" href="#L410">410</a>        <span class="tok-kw">if</span> (<span class="tok-var">$name</span> !== <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$array</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L411"><a class="ln" href="#L411">411</a>            <span class="tok-var">$environment</span>-&gt;<span class="tok-id">write</span>(<span class="tok-var">$name</span>, <span class="tok-id">Domain</span>::<span class="tok-id">of</span>(<span class="tok-kw">new</span> <span class="tok-id">ArrayTerm</span>(<span class="tok-var">$array</span>-&gt;<span class="tok-id">entries</span>, <span class="tok-id">false</span>)));</span>
+<span class="src-line" id="L412"><a class="ln" href="#L412">412</a>        }</span>
+<span class="src-line" id="L413"><a class="ln" href="#L413">413</a>    }</span>
+<span class="src-line" id="L414"><a class="ln" href="#L414">414</a>}</span>
+<span class="src-line" id="L415"><a class="ln" href="#L415">415</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

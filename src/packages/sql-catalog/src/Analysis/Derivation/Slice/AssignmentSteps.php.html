@@ -84,63 +84,64 @@
 <span class="src-line" id="L46"><a class="ln" href="#L46">46</a>            <span class="tok-kw">if</span> (!<span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">touches</span>(<span class="tok-var">$assignment</span>, <span class="tok-var">$path</span>-&gt;<span class="tok-id">needs</span>)) {</span>
 <span class="src-line" id="L47"><a class="ln" href="#L47">47</a>                <span class="tok-kw">continue</span>;</span>
 <span class="src-line" id="L48"><a class="ln" href="#L48">48</a>            }</span>
-<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>            <span class="tok-var">$needs</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">replaces</span>(<span class="tok-var">$assignment</span>) &amp;&amp; !<span class="tok-kw">isset</span>(<span class="tok-var">$written</span>[<span class="tok-id">WriteEffects</span>::<span class="tok-id">ALL</span>]) ? <span class="tok-id">array_diff_key</span>(<span class="tok-var">$path</span>-&gt;<span class="tok-id">needs</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">own</span>(<span class="tok-var">$assignment</span>)) : <span class="tok-var">$path</span>-&gt;<span class="tok-id">needs</span>;</span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>            <span class="tok-var">$path</span> = <span class="tok-var">$path</span>-&gt;<span class="tok-id">through</span>(<span class="tok-kw">new</span> <span class="tok-id">SliceStep</span>(<span class="tok-var">$assignment</span>), <span class="tok-var">$needs</span> + <span class="tok-var">$this</span>-&gt;<span class="tok-id">names</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$assignment</span>));</span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>        }</span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a></span>
-<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>        <span class="tok-kw">return</span> <span class="tok-var">$path</span>;</span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>    }</span>
-<span class="src-line" id="L55"><a class="ln" href="#L55">55</a></span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L57"><a class="ln" href="#L57">57</a><span class="tok-com">     * Whether an assignment replaces what its target held rather than adding to it.</span></span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">replaces</span>(<span class="tok-id">Expr</span> <span class="tok-var">$assignment</span>): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>    {</span>
-<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>        <span class="tok-kw">return</span> <span class="tok-var">$assignment</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Assign</span> &amp;&amp; !<span class="tok-var">$assignment</span>-&gt;<span class="tok-id">var</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\ArrayDimFetch</span>;</span>
-<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>    }</span>
-<span class="src-line" id="L63"><a class="ln" href="#L63">63</a></span>
-<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L65"><a class="ln" href="#L65">65</a><span class="tok-com">     * The assignments an expression makes, in the order they run.</span></span>
-<span class="src-line" id="L66"><a class="ln" href="#L66">66</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L67"><a class="ln" href="#L67">67</a><span class="tok-com">     * @return list&lt;Expr&gt;</span></span>
-<span class="src-line" id="L68"><a class="ln" href="#L68">68</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L69"><a class="ln" href="#L69">69</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">within</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L70"><a class="ln" href="#L70">70</a>    {</span>
-<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Closure</span> || <span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\ArrowFunction</span>) {</span>
-<span class="src-line" id="L72"><a class="ln" href="#L72">72</a>            <span class="tok-kw">return</span> [];</span>
-<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>        }</span>
-<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr</span> &amp;&amp; (<span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">own</span>(<span class="tok-var">$node</span>) !== []</span>
-<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>            || ((<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Ternary</span> || <span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Match_</span> || <span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\BinaryOp</span>)</span>
-<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>                &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">of</span>(<span class="tok-var">$node</span>) !== []))) {</span>
-<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>            <span class="tok-kw">return</span> [<span class="tok-var">$node</span>];</span>
-<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>        }</span>
-<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>        <span class="tok-var">$found</span> = [];</span>
-<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">get_object_vars</span>(<span class="tok-var">$node</span>) <span class="tok-kw">as</span> <span class="tok-var">$sub</span>) {</span>
-<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>            <span class="tok-kw">foreach</span> (<span class="tok-id">is_array</span>(<span class="tok-var">$sub</span>) ? <span class="tok-var">$sub</span> : [<span class="tok-var">$sub</span>] <span class="tok-kw">as</span> <span class="tok-var">$child</span>) {</span>
-<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>                <span class="tok-kw">if</span> (<span class="tok-var">$child</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Node</span>) {</span>
-<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>                    <span class="tok-var">$found</span> = <span class="tok-id">array_merge</span>(<span class="tok-var">$found</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">within</span>(<span class="tok-var">$child</span>));</span>
-<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>                }</span>
-<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>            }</span>
-<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>        }</span>
-<span class="src-line" id="L87"><a class="ln" href="#L87">87</a></span>
-<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>        <span class="tok-kw">return</span> <span class="tok-var">$found</span>;</span>
-<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>    }</span>
-<span class="src-line" id="L90"><a class="ln" href="#L90">90</a></span>
-<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L92"><a class="ln" href="#L92">92</a><span class="tok-com">     * One path walked back over a `global`, `static` or `unset` that defines names it needs.</span></span>
-<span class="src-line" id="L93"><a class="ln" href="#L93">93</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L94"><a class="ln" href="#L94">94</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">declaration</span>(<span class="tok-id">Stmt\Global_</span>|<span class="tok-id">Stmt\Static_</span>|<span class="tok-id">Stmt\Unset_</span> <span class="tok-var">$statement</span>, <span class="tok-id">Pending</span> <span class="tok-var">$path</span>): <span class="tok-id">Pending</span></span>
-<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>    {</span>
-<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>        <span class="tok-var">$written</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">own</span>(<span class="tok-var">$statement</span>);</span>
-<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>        <span class="tok-var">$needs</span> = <span class="tok-id">array_diff_key</span>(<span class="tok-var">$path</span>-&gt;<span class="tok-id">needs</span>, <span class="tok-var">$written</span>);</span>
-<span class="src-line" id="L98"><a class="ln" href="#L98">98</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Stmt\Unset_</span>) {</span>
-<span class="src-line" id="L99"><a class="ln" href="#L99">99</a>            <span class="tok-var">$needs</span> = <span class="tok-var">$path</span>-&gt;<span class="tok-id">needs</span>;</span>
-<span class="src-line" id="L100"><a class="ln" href="#L100">100</a>        }</span>
-<span class="src-line" id="L101"><a class="ln" href="#L101">101</a></span>
-<span class="src-line" id="L102"><a class="ln" href="#L102">102</a>        <span class="tok-kw">return</span> <span class="tok-var">$path</span>-&gt;<span class="tok-id">through</span>(<span class="tok-kw">new</span> <span class="tok-id">SliceStep</span>(<span class="tok-var">$statement</span>), <span class="tok-var">$needs</span>);</span>
-<span class="src-line" id="L103"><a class="ln" href="#L103">103</a>    }</span>
-<span class="src-line" id="L104"><a class="ln" href="#L104">104</a>}</span>
-<span class="src-line" id="L105"><a class="ln" href="#L105">105</a></span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>            <span class="tok-var">$replaced</span> = <span class="tok-var">$assignment</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Assign</span> || <span class="tok-var">$assignment</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\AssignRef</span> ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">targets</span>(<span class="tok-var">$assignment</span>-&gt;<span class="tok-id">var</span>) : <span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">own</span>(<span class="tok-var">$assignment</span>);</span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>            <span class="tok-var">$needs</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">replaces</span>(<span class="tok-var">$assignment</span>) &amp;&amp; !<span class="tok-kw">isset</span>(<span class="tok-var">$written</span>[<span class="tok-id">WriteEffects</span>::<span class="tok-id">ALL</span>]) ? <span class="tok-id">array_diff_key</span>(<span class="tok-var">$path</span>-&gt;<span class="tok-id">needs</span>, <span class="tok-var">$replaced</span>) : <span class="tok-var">$path</span>-&gt;<span class="tok-id">needs</span>;</span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>            <span class="tok-var">$path</span> = <span class="tok-var">$path</span>-&gt;<span class="tok-id">through</span>(<span class="tok-kw">new</span> <span class="tok-id">SliceStep</span>(<span class="tok-var">$assignment</span>), <span class="tok-var">$needs</span> + <span class="tok-var">$this</span>-&gt;<span class="tok-id">names</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$assignment</span>));</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        }</span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a></span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>        <span class="tok-kw">return</span> <span class="tok-var">$path</span>;</span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>    }</span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a></span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a><span class="tok-com">     * Whether an assignment replaces what its target held rather than adding to it.</span></span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">replaces</span>(<span class="tok-id">Expr</span> <span class="tok-var">$assignment</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>    {</span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>        <span class="tok-kw">return</span> <span class="tok-var">$assignment</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Assign</span> &amp;&amp; !<span class="tok-var">$assignment</span>-&gt;<span class="tok-id">var</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\ArrayDimFetch</span>;</span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>    }</span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a></span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a><span class="tok-com">     * The assignments an expression makes, in the order they run.</span></span>
+<span class="src-line" id="L67"><a class="ln" href="#L67">67</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L68"><a class="ln" href="#L68">68</a><span class="tok-com">     * @return list&lt;Expr&gt;</span></span>
+<span class="src-line" id="L69"><a class="ln" href="#L69">69</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L70"><a class="ln" href="#L70">70</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">within</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>    {</span>
+<span class="src-line" id="L72"><a class="ln" href="#L72">72</a>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Closure</span> || <span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\ArrowFunction</span>) {</span>
+<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>            <span class="tok-kw">return</span> [];</span>
+<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>        }</span>
+<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr</span> &amp;&amp; (<span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">tracksObjects</span>() || <span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">own</span>(<span class="tok-var">$node</span>) !== []</span>
+<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>            || ((<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Ternary</span> || <span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\Match_</span> || <span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr\BinaryOp</span>)</span>
+<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>                &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">of</span>(<span class="tok-var">$node</span>) !== []))) {</span>
+<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>            <span class="tok-kw">return</span> [<span class="tok-var">$node</span>];</span>
+<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>        }</span>
+<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>        <span class="tok-var">$found</span> = [];</span>
+<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">get_object_vars</span>(<span class="tok-var">$node</span>) <span class="tok-kw">as</span> <span class="tok-var">$sub</span>) {</span>
+<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>            <span class="tok-kw">foreach</span> (<span class="tok-id">is_array</span>(<span class="tok-var">$sub</span>) ? <span class="tok-var">$sub</span> : [<span class="tok-var">$sub</span>] <span class="tok-kw">as</span> <span class="tok-var">$child</span>) {</span>
+<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>                <span class="tok-kw">if</span> (<span class="tok-var">$child</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Node</span>) {</span>
+<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>                    <span class="tok-var">$found</span> = <span class="tok-id">array_merge</span>(<span class="tok-var">$found</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">within</span>(<span class="tok-var">$child</span>));</span>
+<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>                }</span>
+<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>            }</span>
+<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>        }</span>
+<span class="src-line" id="L88"><a class="ln" href="#L88">88</a></span>
+<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>        <span class="tok-kw">return</span> <span class="tok-var">$found</span>;</span>
+<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>    }</span>
+<span class="src-line" id="L91"><a class="ln" href="#L91">91</a></span>
+<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L93"><a class="ln" href="#L93">93</a><span class="tok-com">     * One path walked back over a `global`, `static` or `unset` that defines names it needs.</span></span>
+<span class="src-line" id="L94"><a class="ln" href="#L94">94</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">declaration</span>(<span class="tok-id">Stmt\Global_</span>|<span class="tok-id">Stmt\Static_</span>|<span class="tok-id">Stmt\Unset_</span> <span class="tok-var">$statement</span>, <span class="tok-id">Pending</span> <span class="tok-var">$path</span>): <span class="tok-id">Pending</span></span>
+<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>    {</span>
+<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>        <span class="tok-var">$written</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">modified</span>-&gt;<span class="tok-id">own</span>(<span class="tok-var">$statement</span>);</span>
+<span class="src-line" id="L98"><a class="ln" href="#L98">98</a>        <span class="tok-var">$needs</span> = <span class="tok-id">array_diff_key</span>(<span class="tok-var">$path</span>-&gt;<span class="tok-id">needs</span>, <span class="tok-var">$written</span>);</span>
+<span class="src-line" id="L99"><a class="ln" href="#L99">99</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Stmt\Unset_</span>) {</span>
+<span class="src-line" id="L100"><a class="ln" href="#L100">100</a>            <span class="tok-var">$needs</span> = <span class="tok-var">$path</span>-&gt;<span class="tok-id">needs</span>;</span>
+<span class="src-line" id="L101"><a class="ln" href="#L101">101</a>        }</span>
+<span class="src-line" id="L102"><a class="ln" href="#L102">102</a></span>
+<span class="src-line" id="L103"><a class="ln" href="#L103">103</a>        <span class="tok-kw">return</span> <span class="tok-var">$path</span>-&gt;<span class="tok-id">through</span>(<span class="tok-kw">new</span> <span class="tok-id">SliceStep</span>(<span class="tok-var">$statement</span>), <span class="tok-var">$needs</span>);</span>
+<span class="src-line" id="L104"><a class="ln" href="#L104">104</a>    }</span>
+<span class="src-line" id="L105"><a class="ln" href="#L105">105</a>}</span>
+<span class="src-line" id="L106"><a class="ln" href="#L106">106</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

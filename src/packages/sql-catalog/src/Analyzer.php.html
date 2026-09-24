@@ -198,23 +198,25 @@
 <span class="src-line" id="L160"><a class="ln" href="#L160">160</a>            <span class="tok-var">$options</span>-&gt;<span class="tok-id">budget</span>(),</span>
 <span class="src-line" id="L161"><a class="ln" href="#L161">161</a>            <span class="tok-kw">new</span> <span class="tok-id">DeclaredGlobals</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">extensions</span>-&gt;<span class="tok-id">globalsOf</span>(<span class="tok-var">$options</span>-&gt;<span class="tok-id">extensions</span>)),</span>
 <span class="src-line" id="L162"><a class="ln" href="#L162">162</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">functionModels</span>,</span>
-<span class="src-line" id="L163"><a class="ln" href="#L163">163</a>        );</span>
-<span class="src-line" id="L164"><a class="ln" href="#L164">164</a></span>
-<span class="src-line" id="L165"><a class="ln" href="#L165">165</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">sortRecords</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">entries</span>-&gt;<span class="tok-id">build</span>(<span class="tok-var">$interpreter</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$files</span>)));</span>
-<span class="src-line" id="L166"><a class="ln" href="#L166">166</a>    }</span>
-<span class="src-line" id="L167"><a class="ln" href="#L167">167</a></span>
-<span class="src-line" id="L168"><a class="ln" href="#L168">168</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L169"><a class="ln" href="#L169">169</a><span class="tok-com">     * The entries in the order a report lists them.</span></span>
-<span class="src-line" id="L170"><a class="ln" href="#L170">170</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L171"><a class="ln" href="#L171">171</a><span class="tok-com">     * @param list&lt;CatalogEntry&gt; $entries</span></span>
-<span class="src-line" id="L172"><a class="ln" href="#L172">172</a><span class="tok-com">     * @return list&lt;CatalogEntry&gt;</span></span>
-<span class="src-line" id="L173"><a class="ln" href="#L173">173</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L174"><a class="ln" href="#L174">174</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">sortRecords</span>(<span class="tok-kw">array</span> <span class="tok-var">$entries</span>): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L175"><a class="ln" href="#L175">175</a>    {</span>
-<span class="src-line" id="L176"><a class="ln" href="#L176">176</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">Catalog</span>(<span class="tok-var">$entries</span>))-&gt;<span class="tok-id">sorted</span>()-&gt;<span class="tok-id">entries</span>();</span>
-<span class="src-line" id="L177"><a class="ln" href="#L177">177</a>    }</span>
-<span class="src-line" id="L178"><a class="ln" href="#L178">178</a>}</span>
-<span class="src-line" id="L179"><a class="ln" href="#L179">179</a></span>
+<span class="src-line" id="L163"><a class="ln" href="#L163">163</a>            <span class="tok-var">$options</span>-&gt;<span class="tok-id">dialect</span>,</span>
+<span class="src-line" id="L164"><a class="ln" href="#L164">164</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">extensions</span>-&gt;<span class="tok-id">modelProvidersOf</span>(<span class="tok-var">$options</span>-&gt;<span class="tok-id">extensions</span>),</span>
+<span class="src-line" id="L165"><a class="ln" href="#L165">165</a>        );</span>
+<span class="src-line" id="L166"><a class="ln" href="#L166">166</a></span>
+<span class="src-line" id="L167"><a class="ln" href="#L167">167</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">sortRecords</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">entries</span>-&gt;<span class="tok-id">build</span>(<span class="tok-var">$interpreter</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$files</span>)));</span>
+<span class="src-line" id="L168"><a class="ln" href="#L168">168</a>    }</span>
+<span class="src-line" id="L169"><a class="ln" href="#L169">169</a></span>
+<span class="src-line" id="L170"><a class="ln" href="#L170">170</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L171"><a class="ln" href="#L171">171</a><span class="tok-com">     * The entries in the order a report lists them.</span></span>
+<span class="src-line" id="L172"><a class="ln" href="#L172">172</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L173"><a class="ln" href="#L173">173</a><span class="tok-com">     * @param list&lt;CatalogEntry&gt; $entries</span></span>
+<span class="src-line" id="L174"><a class="ln" href="#L174">174</a><span class="tok-com">     * @return list&lt;CatalogEntry&gt;</span></span>
+<span class="src-line" id="L175"><a class="ln" href="#L175">175</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L176"><a class="ln" href="#L176">176</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">sortRecords</span>(<span class="tok-kw">array</span> <span class="tok-var">$entries</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L177"><a class="ln" href="#L177">177</a>    {</span>
+<span class="src-line" id="L178"><a class="ln" href="#L178">178</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">Catalog</span>(<span class="tok-var">$entries</span>))-&gt;<span class="tok-id">sorted</span>()-&gt;<span class="tok-id">entries</span>();</span>
+<span class="src-line" id="L179"><a class="ln" href="#L179">179</a>    }</span>
+<span class="src-line" id="L180"><a class="ln" href="#L180">180</a>}</span>
+<span class="src-line" id="L181"><a class="ln" href="#L181">181</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
