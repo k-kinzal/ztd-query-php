@@ -29,15 +29,15 @@
 <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../../index.html">src</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">packages/sql-catalog/src/Evaluation/ObjectMemory.php</span></nav>
 <div class="topbar-tools">
 <input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing 7de9c21db0 to working tree">7de9c21db0 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<span class="diff-range" title="Comparing 38fe996d32 to working tree">38fe996d32 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
 <button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content" id="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 7de9c21db0 and working tree." data-off="This page documents what 7de9c21db0 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 38fe996d32 and working tree." data-off="This page documents what 38fe996d32 had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1 class="source-title">packages/sql-catalog/src/Evaluation/ObjectMemory.php</h1></div>
-<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 7de9c21db0.</div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 38fe996d32.</div>
 <pre class="code code-scroll source" data-diff="added"><code><span class="src-line" id="L1" data-diff="added"><a class="ln" href="#L1">1</a>&lt;?php</span>
 <span class="src-line" id="L2" data-diff="added"><a class="ln" href="#L2">2</a></span>
 <span class="src-line" id="L3" data-diff="added"><a class="ln" href="#L3">3</a><span class="tok-kw">declare</span>(<span class="tok-id">strict_types</span>=<span class="tok-num">1</span>);</span>
@@ -162,8 +162,28 @@
 <span class="src-line" id="L122" data-diff="added"><a class="ln" href="#L122">122</a></span>
 <span class="src-line" id="L123" data-diff="added"><a class="ln" href="#L123">123</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039;;&#039;</span>, <span class="tok-var">$parts</span>);</span>
 <span class="src-line" id="L124" data-diff="added"><a class="ln" href="#L124">124</a>    }</span>
-<span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a>}</span>
-<span class="src-line" id="L126" data-diff="added"><a class="ln" href="#L126">126</a></span>
+<span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L126" data-diff="added"><a class="ln" href="#L126">126</a><span class="tok-com">     * Opens tracked object state when an unknown call can mutate an escaped reference.</span></span>
+<span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">invalidate</span>(<span class="tok-id">Domain</span> <span class="tok-var">$value</span>): <span class="tok-id">Domain</span></span>
+<span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a>    {</span>
+<span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a>        <span class="tok-var">$terms</span> = [];</span>
+<span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$value</span>-&gt;<span class="tok-id">terms</span> <span class="tok-kw">as</span> <span class="tok-var">$term</span>) {</span>
+<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a>            <span class="tok-kw">if</span> (<span class="tok-var">$term</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ObjectTerm</span> &amp;&amp; <span class="tok-var">$term</span>-&gt;<span class="tok-id">identity</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a>                <span class="tok-var">$term</span> = <span class="tok-kw">new</span> <span class="tok-id">ObjectTerm</span>(<span class="tok-var">$term</span>-&gt;<span class="tok-id">className</span>, <span class="tok-var">$term</span>-&gt;<span class="tok-id">enumCase</span>, <span class="tok-var">$term</span>-&gt;<span class="tok-id">statementId</span>, <span class="tok-var">$term</span>-&gt;<span class="tok-id">identity</span>);</span>
+<span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a>            } <span class="tok-kw">elseif</span> (<span class="tok-var">$term</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ArrayTerm</span>) {</span>
+<span class="src-line" id="L135" data-diff="added"><a class="ln" href="#L135">135</a>                <span class="tok-var">$term</span> = <span class="tok-kw">new</span> <span class="tok-id">ArrayTerm</span>(<span class="tok-id">array_map</span>(<span class="tok-kw">fn</span> (<span class="tok-id">ArrayEntry</span> <span class="tok-var">$entry</span>): <span class="tok-id">ArrayEntry</span> =&gt; <span class="tok-kw">new</span> <span class="tok-id">ArrayEntry</span>(<span class="tok-var">$entry</span>-&gt;<span class="tok-id">key</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">invalidate</span>(<span class="tok-var">$entry</span>-&gt;<span class="tok-id">value</span>)), <span class="tok-var">$term</span>-&gt;<span class="tok-id">entries</span>), <span class="tok-var">$term</span>-&gt;<span class="tok-id">complete</span>);</span>
+<span class="src-line" id="L136" data-diff="added"><a class="ln" href="#L136">136</a>            }</span>
+<span class="src-line" id="L137" data-diff="added"><a class="ln" href="#L137">137</a>            <span class="tok-var">$terms</span>[] = <span class="tok-var">$term</span>;</span>
+<span class="src-line" id="L138" data-diff="added"><a class="ln" href="#L138">138</a>        }</span>
+<span class="src-line" id="L139" data-diff="added"><a class="ln" href="#L139">139</a>        <span class="tok-var">$result</span> = <span class="tok-id">Domain</span>::<span class="tok-id">fromTerms</span>(<span class="tok-var">$terms</span>, <span class="tok-var">$value</span>-&gt;<span class="tok-id">widened</span>, <span class="tok-var">$value</span>-&gt;<span class="tok-id">combined</span>);</span>
+<span class="src-line" id="L140" data-diff="added"><a class="ln" href="#L140">140</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">rememberValue</span>(<span class="tok-var">$result</span>);</span>
+<span class="src-line" id="L141" data-diff="added"><a class="ln" href="#L141">141</a></span>
+<span class="src-line" id="L142" data-diff="added"><a class="ln" href="#L142">142</a>        <span class="tok-kw">return</span> <span class="tok-var">$result</span>;</span>
+<span class="src-line" id="L143" data-diff="added"><a class="ln" href="#L143">143</a>    }</span>
+<span class="src-line" id="L144" data-diff="added"><a class="ln" href="#L144">144</a></span>
+<span class="src-line" id="L145" data-diff="added"><a class="ln" href="#L145">145</a>}</span>
+<span class="src-line" id="L146" data-diff="added"><a class="ln" href="#L146">146</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
