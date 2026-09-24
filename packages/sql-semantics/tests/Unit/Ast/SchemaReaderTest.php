@@ -307,4 +307,37 @@ final class SchemaReaderTest extends TestCase
         self::assertSame(Nullability::NotNull, $strict->columns[0]->nullability);
         self::assertSame(Nullability::NotNull, $named->columns[0]->nullability);
     }
+
+
+    public function testAutoIncrementCarriesATableLevelKeyToItsColumn(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
+        $statement = $binder->bind('CREATE TABLE u (a INTEGER, b INT, PRIMARY KEY (a AUTOINCREMENT) ON CONFLICT IGNORE)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\AutoIncrementColumn::class, $statement->definition->table->columns[0]->generation);
+        $expected = 'CREATE TABLE "main"."u"("a" "integer" NOT NULL PRIMARY KEY ON CONFLICT IGNORE AUTOINCREMENT, "b" "int")';
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
+    #[TestWith(['CREATE TABLE u (a INT, b INT, PRIMARY KEY (a AUTOINCREMENT))'])]
+    #[TestWith(['CREATE TABLE u (a INTEGER, b INT, PRIMARY KEY (a, b AUTOINCREMENT))'])]
+    public function testAutoIncrementOutsideAnIntegerKeyIsInvalidSql(string $sql): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::AutoIncrementKey->message());
+        (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind($sql);
+    }
+
+    #[TestWith(['mysql-8.4.7', 0])]
+    #[TestWith(['mysql-9.0.1', 2])]
+    #[TestWith(['mysql-9.1.0', 2])]
+    public function testColumnNodesEnforceInlineReferencesFromMySql9(string $release, int $count): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE p (x INT PRIMARY KEY)', 'CREATE TABLE u (a INT REFERENCES p (x) ON DELETE CASCADE, b INT REFERENCES p)');
+        self::assertCount($count, $schema->tables[1]->constraints);
+        $binder = new Binder($schema);
+        $statement = $binder->bind('CREATE TABLE v (a INT REFERENCES p (x))');
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
 }

@@ -123,4 +123,19 @@ final class ConstraintBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $unique->keys[0]);
         self::assertSame('+', $unique->keys[0]->value()->spelling());
     }
+
+
+    public function testResolutionReadsTheSqliteConflictClauseOfEachConstraint(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
+        $statement = $binder->bind('CREATE TABLE u (id INTEGER PRIMARY KEY ON CONFLICT REPLACE AUTOINCREMENT, a INT UNIQUE ON CONFLICT FAIL, b INT, UNIQUE (a, b) ON CONFLICT ROLLBACK, CHECK (a > 1) ON CONFLICT IGNORE, CHECK (b > 0))');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $keys = array_values(array_filter($statement->definition->table->constraints, static fn ($constraint): bool => $constraint instanceof \SqlSemantics\Schema\Constraint\PrimaryKey || $constraint instanceof \SqlSemantics\Schema\Constraint\UniqueKey || $constraint instanceof \SqlSemantics\Schema\Constraint\Check));
+        $resolutions = array_column($keys, 'onConflict');
+        $response = \SqlSemantics\Model\Write\Policy\ConstraintResponse::class;
+        self::assertSame([$response::Replace, $response::Fail, $response::Rollback, $response::Ignore, $response::Default], $resolutions);
+        $expected = 'CREATE TABLE "main"."u"("id" "integer" NOT NULL PRIMARY KEY ON CONFLICT REPLACE AUTOINCREMENT, "a" "int", "b" "int", UNIQUE("a") ON CONFLICT FAIL, UNIQUE("a", "b") ON CONFLICT ROLLBACK, CHECK (("a" > 1)) ON CONFLICT IGNORE, CHECK (("b" > 0)))';
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
 }

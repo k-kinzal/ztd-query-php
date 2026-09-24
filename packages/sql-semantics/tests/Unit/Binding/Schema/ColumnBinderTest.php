@@ -94,4 +94,16 @@ final class ColumnBinderTest extends TestCase
         $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::ColumnStorage->message());
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(c text STORAGE foo)');
     }
+
+
+    public function testNullConflictReadsTheLastNotNullResolution(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER)'));
+        $table = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE u (a INT NOT NULL ON CONFLICT IGNORE, b INT NOT NULL ON CONFLICT FAIL NOT NULL ON CONFLICT REPLACE, c INT NULL ON CONFLICT ABORT, d INT NOT NULL)')->tables[0];
+        $response = \SqlSemantics\Model\Write\Policy\ConstraintResponse::class;
+        self::assertSame([$response::Ignore, $response::Replace, $response::Default, $response::Default], array_column($table->columns, 'nullConflict'));
+        $expected = 'ALTER TABLE "t" ADD COLUMN "c" "int" NOT NULL ON CONFLICT IGNORE DEFAULT 1';
+        self::assertSame($expected, $binder->bind('ALTER TABLE t ADD COLUMN c INT NOT NULL ON CONFLICT IGNORE DEFAULT 1')->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
 }

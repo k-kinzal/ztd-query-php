@@ -52,6 +52,8 @@ enum InputViolation: string
     case OrderedSetWindow = 'ordered-set-window';
     case CteColumnCount = 'cte-column-count';
     case DerivedColumnCount = 'derived-column-count';
+    case InsertRowAlias = 'insert-row-alias';
+    case DerivedColumnName = 'derived-column-name';
     case QuantifiedOperator = 'quantified-operator';
     case OverlapsWidth = 'overlaps-width';
     case UniquePredicate = 'unique-predicate';
@@ -183,6 +185,8 @@ enum InputViolation: string
     case ProgramObject = 'stored-program-object';
     case ProgramStatement = 'stored-program-statement';
     case ProgramDefinition = 'stored-program-definition';
+    case SampleArguments = 'sample-arguments';
+    case StoredTableClause = 'stored-table-clause';
 
     /**
      * Describes the operand invariant identified by this diagnosis.

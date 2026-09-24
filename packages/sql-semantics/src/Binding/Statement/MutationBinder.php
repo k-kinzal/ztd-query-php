@@ -44,7 +44,6 @@ final class MutationBinder
         if ($kind === 'UPDATE') {
             $targets = $this->updatedTargets($targets, $writes, $scope);
         }
-        $conflicts = (new \SqlSemantics\Binding\Write\ConflictBinder())->bind($statement, $scope);
         $whereNode = in_array($kind, ['INSERT', 'REPLACE'], true) ? null : (QueryNodes::local($statement, ['where_clause', 'opt_where_clause', 'where_or_current_clause', 'where_opt', 'where_opt_ret'])[0] ?? null);
         if ($whereNode !== null && strtoupper($whereNode->tokens()[0]->text ?? '') !== 'WHERE') {
             $whereNode = null;
@@ -63,6 +62,8 @@ final class MutationBinder
             }
             $insertion = (new \SqlSemantics\Binding\Write\InsertionBinder())->bind($statement, $targets[0], $scope, $values, $queries, $writes);
         }
+        $rowAlias = \SqlSemantics\Binding\Write\RowAliasBinder::bind($statement, $insertion, $this->context, $id);
+        $conflicts = (new \SqlSemantics\Binding\Write\ConflictBinder())->bind($statement, \SqlSemantics\Binding\Write\RowAliasBinder::scope($scope, $rowAlias), \SqlSemantics\Binding\Write\RowAliasBinder::destinations($scope, $rowAlias));
         $modifiers = new \SqlSemantics\Binding\SelectModifiersBinder();
         [$limit, $offset] = $modifiers->pagination($statement, $scope);
         $origin = new \SqlSemantics\Model\Statement\Origin($id, $source, $this->context->tables->identifiers->dialect);
@@ -70,7 +71,7 @@ final class MutationBinder
         return match ($kind) {
             'UPDATE' => MutationForms::update($origin, $statement, $input, $targets, $writes, $where, $outputs, $this->context, $order, $limit),
             'DELETE' => MutationForms::delete($origin, $statement, $input, $targets, $where, $outputs, $this->context, $order, $limit),
-            'INSERT', 'REPLACE' => (new InsertBinder())->statement($origin, $statement, $insertion, $values, $queries, $writes, \SqlSemantics\Model\Write\InsertMode::from($kind), $outputs, $conflicts, (new \SqlSemantics\Binding\Query\CteBinder())->clause($source, $this->context)),
+            'INSERT', 'REPLACE' => (new InsertBinder())->statement($origin, $statement, $insertion, $values, $queries, $writes, \SqlSemantics\Model\Write\InsertMode::from($kind), $outputs, $conflicts, (new \SqlSemantics\Binding\Query\CteBinder())->clause($source, $this->context), $rowAlias),
             default => throw new LogicException('Unclassified mutation: ' . $kind),
         };
     }
@@ -166,6 +167,10 @@ final class MutationBinder
         $name = Tree::outer($node, ['qualified_name', 'table_ident'])[0] ?? $node;
         $alias = Tree::child($node, ['ColId', 'as']);
         $aliasName = $alias === null ? null : $tables->identifiers->parts($alias)[0];
+        $tableAlias = array_values(array_filter(QueryNodes::local($statement, ['opt_table_alias']), Tree::hasTokens(...)))[0] ?? null;
+        if ($tableAlias !== null) {
+            $aliasName = $tables->identifiers->name($tableAlias->tokens()[count($tableAlias->tokens()) - 1]);
+        }
         if ($node->name === 'xfullname') {
             $tokens = $node->tokens();
             $aliasPosition = array_search('AS', array_map(static fn ($token): string => strtoupper($token->text), $tokens), true);
@@ -173,7 +178,9 @@ final class MutationBinder
             $aliasName = $aliasPosition === false || !isset($tokens[$aliasPosition + 1]) ? null : $tables->identifiers->name($tokens[$aliasPosition + 1]);
         }
         $declaration = $tables->resolve($tables->identifiers->parts($name), $name);
-        return [\SqlSemantics\Binding\Query\TableOccurrence::bind($this->context->ids->relation(), $id, $declaration, $tables->name($tables->identifiers->parts($name), $declaration), $aliasName, $node)];
+        $partitions = \SqlSemantics\Binding\Query\TableOccurrence::partitions(QueryNodes::local($statement, ['opt_use_partition', 'use_partition'])[0] ?? null, $tables->identifiers);
+        $indexing = \SqlSemantics\Binding\Query\TableOccurrence::indexing(QueryNodes::local($statement, ['indexed_opt'])[0] ?? null, $tables->identifiers);
+        return [\SqlSemantics\Binding\Query\TableOccurrence::bind($this->context->ids->relation(), $id, $declaration, $tables->name($tables->identifiers->parts($name), $declaration), $aliasName, $node, [], $partitions, $indexing)];
     }
     /**
      * @param list<TableUse> $targets

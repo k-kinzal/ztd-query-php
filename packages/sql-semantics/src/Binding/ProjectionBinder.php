@@ -139,11 +139,14 @@ final class ProjectionBinder
             if (!$relation->declaration->resolved) {
                 $outputs[] = new OutputColumn($ordinal + count($outputs), null, new \SqlSemantics\Model\Scalar\Reference\Wildcard(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($scope->identifiers->dialect, 'unknown'), \SqlSemantics\Type\Nullability::Unknown, []), $source, [$relation->alias ?? $relation->declaration->name]));
             }
-            foreach ($relation->declaration->columns as $column) {
+            $names = array_map(static fn (\SqlSemantics\Schema\ColumnDefinition $column): string => $column->name, $relation->declaration->columns);
+            $positional = count(array_unique($names)) !== count($names);
+            foreach ($relation->declaration->columns as $position => $column) {
                 if ($qualifiers === [] && isset($scope->merged[$column->name])) {
                     continue;
                 }
-                $bound = $scope->column([$relation->alias ?? $relation->declaration->name, $column->name], $source);
+                $parts = [$relation->alias ?? $relation->declaration->name, $column->name];
+                $bound = $positional ? $scope->reference($relation, $position, $parts, $source) : $scope->column($parts, $source);
                 $outputs[] = new OutputColumn($ordinal + count($outputs), $column->name, $bound);
             }
         }

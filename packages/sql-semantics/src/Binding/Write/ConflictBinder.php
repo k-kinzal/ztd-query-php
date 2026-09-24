@@ -20,9 +20,10 @@ use SqlSemantics\Model\Write\ConflictAction;
 final class ConflictBinder
 {
     /**
+     * @param Scope|null $destinations Resolves assigned columns when they are narrower than the value scope, as beside a MySQL row alias
      * @return list<ConflictAction>
      */
-    public function bind(Node $statement, Scope $scope): array
+    public function bind(Node $statement, Scope $scope, ?Scope $destinations = null): array
     {
         $result = [];
         foreach (Tree::outer($statement, ['opt_on_conflict', 'opt_insert_update_list', 'insert_update_list', 'upsert', 'SelectStmt', 'select', 'query_expression']) as $node) {
@@ -32,7 +33,7 @@ final class ConflictBinder
             $nodes = $node->name === 'upsert' ? $node->find('upsert') : [$node];
             foreach ($nodes as $clause) {
                 if (Tree::hasTokens($clause) && !str_starts_with(strtoupper(Tree::text($clause)), 'RETURNING')) {
-                    $result[] = $this->action($clause, $scope);
+                    $result[] = $this->action($clause, $scope, $destinations);
                 }
             }
         }
@@ -42,7 +43,7 @@ final class ConflictBinder
     /**
      * Binds a single handler with its own inference and update predicates.
      */
-    public function action(Node $node, Scope $scope): ConflictAction
+    public function action(Node $node, Scope $scope, ?Scope $destinations = null): ConflictAction
     {
         $children = $node->name === 'insert_update_list' ? $node->find('insert_update_elem') : array_values(array_filter($node->children, static fn ($child): bool => !$child instanceof Node || $child->name !== 'upsert'));
         $source = new Node('conflict_action', 0, $children);
@@ -53,7 +54,7 @@ final class ConflictBinder
         $keys = $sqlite === null ? $keys : Tree::outer($sqlite, ['expr']);
         $expressions = array_map(static fn (Node $key): Expression => (new ExpressionBinder())->bind(Tree::child($key, ['a_expr', 'expr', 'ColId']) ?? $key, $scope), $keys);
         $constraint = $inference === null ? null : Tree::child($inference, ['name']);
-        $assignments = (new AssignmentBinder())->bind($source, $scope);
+        $assignments = (new AssignmentBinder())->bind($source, $scope, $destinations);
         $where = Tree::child($source, ['where_clause', 'where_opt']);
         $indexWhere = $inference === null ? null : Tree::child($inference, ['where_clause']);
         if ($sqlite !== null) {

@@ -322,4 +322,15 @@ final class OptionReaderTest extends TestCase
         $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT auto_increment PRIMARY KEY)')->tables[0];
         self::assertInstanceOf(\SqlSemantics\Schema\Column\AutoIncrementColumn::class, $table->columns[0]->generation);
     }
+
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    public function testReadKeepsTheFullTextParser(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE p (b TEXT)'));
+        $expected = "CREATE FULLTEXT INDEX `ft` ON `p`(`b`) COMMENT 'x' WITH PARSER `ngram`";
+        self::assertSame($expected, $binder->bind("CREATE FULLTEXT INDEX ft ON p (b) WITH PARSER ngram COMMENT 'x'")->toString());
+        self::assertSame('CREATE TABLE `u`(`b` text, FULLTEXT INDEX `ft`(`b`) WITH PARSER `ngram`)', $binder->bind('CREATE TABLE u (b TEXT, FULLTEXT KEY ft (b) WITH PARSER ngram)')->toString());
+    }
 }

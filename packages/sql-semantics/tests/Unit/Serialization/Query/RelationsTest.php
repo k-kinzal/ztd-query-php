@@ -95,4 +95,46 @@ final class RelationsTest extends TestCase
         self::assertInstanceOf(DerivedRelation::class, $derived->from);
         self::assertSame([], Relations::indexHints($derived->from, Dialect::MySql));
     }
+
+
+    public function testPartitionsWritesTheMySqlPartitionSelection(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (id INT)')))->bind('SELECT id FROM t PARTITION (p0, `p 1`)');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        self::assertInstanceOf(TableReference::class, $statement->from);
+        self::assertSame('PARTITION (`p0`, `p 1`)', implode(' ', array_map(static fn ($tree): string => $tree->toString(), Relations::partitions($statement->from, Dialect::MySql))));
+    }
+
+    public function testIndexingWritesTheSqliteDirective(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (id INT); CREATE INDEX ix ON t(id)'));
+        $indexed = $binder->bind('SELECT id FROM t INDEXED BY ix');
+        $unindexed = $binder->bind('SELECT id FROM t NOT INDEXED');
+        self::assertInstanceOf(BoundSelect::class, $indexed);
+        self::assertInstanceOf(BoundSelect::class, $unindexed);
+        self::assertInstanceOf(TableReference::class, $indexed->from);
+        self::assertInstanceOf(TableReference::class, $unindexed->from);
+        self::assertSame(['INDEXED BY', '"ix"'], array_map(static fn ($tree): string => $tree->toString(), Relations::indexing($indexed->from, Dialect::Sqlite)));
+        self::assertSame(['NOT INDEXED'], array_map(static fn ($tree): string => $tree->toString(), Relations::indexing($unindexed->from, Dialect::Sqlite)));
+    }
+
+    public function testSampleWritesMethodArgumentsAndSeed(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INT)')))->bind('SELECT id FROM t TABLESAMPLE s.m (1, 2) REPEATABLE (3)');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        self::assertInstanceOf(TableReference::class, $statement->from);
+        self::assertSame('TABLESAMPLE "s"."m" (1, 2) REPEATABLE (3)', implode(' ', array_map(static fn ($tree): string => $tree->toString(), Relations::sample($statement->from))));
+    }
+
+    #[TestWith(['DELETE FROM t AS x PARTITION (p0) WHERE x.id = 1', 'DELETE FROM `t` AS `x` PARTITION(`p0`) WHERE (`x`.`id` = 1)'])]
+    #[TestWith(['DELETE FROM t x WHERE x.id = 1', 'DELETE FROM `t` AS `x` WHERE (`x`.`id` = 1)'])]
+    public function testDeletionWritesTheAliasBeforeThePartitions(string $sql, string $serialized): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.0.44'))->build('CREATE TABLE t (id INT)'));
+        $statement = $binder->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $statement);
+        self::assertSame($serialized, $statement->toString());
+        self::assertSame($serialized, $binder->bind($serialized)->toString());
+        self::assertSame(Relations::write($statement->target, Dialect::PostgreSql)->toString(), Relations::deletion($statement->target, Dialect::PostgreSql)->toString());
+    }
 }

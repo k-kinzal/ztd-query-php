@@ -22,14 +22,15 @@ final class StorageParameters
 {
     /**
      * @param list<string> $boundaries
+     * @param string $element Parameter production: reloption_elem, or def_elem in a constraint's WITH clause
      * @return list<Parameter>
      * @throws UnclassifiedSql
      */
-    public static function read(Node $source, Scope $scope, array $boundaries = []): array
+    public static function read(Node $source, Scope $scope, array $boundaries = [], string $element = 'reloption_elem'): array
     {
         $result = [];
-        foreach (Tree::outer($source, [...$boundaries, 'reloption_elem']) as $option) {
-            if ($option->name !== 'reloption_elem') {
+        foreach (Tree::outer($source, [...$boundaries, $element]) as $option) {
+            if ($option->name !== $element) {
                 continue;
             }
             $tokens = $option->tokens();

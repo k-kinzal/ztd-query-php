@@ -55,8 +55,37 @@ abstract class InsertStatement extends BoundStatement implements ResultStatement
         if ($this->policy->dialect() !== $origin->dialect) {
             throw new \SqlSemantics\Model\Validation\InvalidStructure('An insertion policy must use the statement dialect.');
         }
+        $this->checkRowAlias($this->policy, $origin, $insertion);
         \SqlSemantics\Model\Validation\StatementOperands::outputs($outputs, $origin->dialect, true);
         Collections::objects($conflicts, ConflictAction::class);
+    }
+
+    /**
+     * Requires a MySQL proposed-row alias to name this insertion's own row on a release whose grammar has it.
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
+     */
+    protected function checkRowAlias(\SqlSemantics\Model\Write\Policy\InsertPolicy $policy, Origin $origin, Insertion $insertion): void
+    {
+        $alias = $policy instanceof \SqlSemantics\Model\Write\Policy\MySqlInsertion ? $policy->rowAlias : null;
+        if ($alias === null) {
+            return;
+        }
+        if (!$this->namesProposedRow()) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('Only a VALUES or SET insertion can name its proposed row.');
+        }
+        \SqlSemantics\Model\Configuration\Replication\ReplicationRelease::require($origin, 'An insert row alias', 80019);
+        $target = $alias->row->target;
+        if ($target->id !== $insertion->target->id || [$target->declaration->schema, $target->declaration->name] !== [$insertion->target->declaration->schema, $insertion->target->declaration->name] || (count($alias->row->declaration->columns) !== count($insertion->columns) && $insertion->columns !== [])) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('An insert row alias has one column per inserted column of its own target, unless the target columns are unknown.');
+        }
+    }
+
+    /**
+     * Whether the input form can be followed by a proposed-row alias; only VALUES and SET insertions can.
+     */
+    protected function namesProposedRow(): bool
+    {
+        return false;
     }
 
     #[Override]

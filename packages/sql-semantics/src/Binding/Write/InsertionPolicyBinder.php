@@ -17,8 +17,9 @@ final class InsertionPolicyBinder
 {
     /**
      * Returns a policy whose native fields belong to the statement dialect.
+     * @param Policy\RowAlias|null $rowAlias MySQL's bound name for the proposed row
      */
-    public static function bind(Node $source, Dialect $dialect): Policy\InsertPolicy
+    public static function bind(Node $source, Dialect $dialect, ?Policy\RowAlias $rowAlias = null): Policy\InsertPolicy
     {
         $words = array_map(static fn ($token): string => strtoupper($token->text), $source->tokens());
         $into = array_search('INTO', $words, true);
@@ -34,7 +35,7 @@ final class InsertionPolicyBinder
             foreach ($prefix as $word) {
                 $scheduling = Policy\Scheduling::tryFrom($word) ?? $scheduling;
             }
-            return new Policy\MySqlInsertion($scheduling, in_array('IGNORE', $prefix, true));
+            return new Policy\MySqlInsertion($scheduling, in_array('IGNORE', $prefix, true), $rowAlias);
         }
         $input = \SqlSemantics\Ast\Tree::child($source, ['insert_rest']) ?? $source;
         $overriding = \SqlSemantics\Ast\Tree::child($input, ['override_kind']);

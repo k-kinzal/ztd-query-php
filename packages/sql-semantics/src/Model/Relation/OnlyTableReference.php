@@ -18,10 +18,12 @@ final class OnlyTableReference extends NamedTableReference
 {
     /**
      * Requires a PostgreSQL table declaration independently of any owning statement.
+     * @param \SqlSemantics\Model\Query\Sampling\TableSample|null $sample TABLESAMPLE clause reading a sample of the rows
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
-    public function __construct(string $id, string $scopeId, \SqlSemantics\Schema\TableDefinition $declaration, QualifiedName $name, ?string $alias, \SqlParser\Parser\Node $source)
+    public function __construct(string $id, string $scopeId, \SqlSemantics\Schema\TableDefinition $declaration, QualifiedName $name, ?string $alias, \SqlParser\Parser\Node $source, ?\SqlSemantics\Model\Query\Sampling\TableSample $sample = null)
     {
-        parent::__construct($id, $scopeId, $declaration, $name, $alias, $source);
+        parent::__construct($id, $scopeId, $declaration, $name, $alias, $source, $sample);
         \SqlSemantics\Model\Validation\StatementOperands::relation($this, \SqlSemantics\Dialect::PostgreSql);
     }
 
@@ -31,7 +33,7 @@ final class OnlyTableReference extends NamedTableReference
     #[Override]
     public function withScope(string $scopeId): static
     {
-        return new self($this->id, $scopeId, $this->declaration, $this->name, $this->alias, $this->source);
+        return new self($this->id, $scopeId, $this->declaration, $this->name, $this->alias, $this->source, $this->sample);
     }
 
 }

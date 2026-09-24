@@ -30,6 +30,7 @@ final class ConstraintActions
         return match (true) {
             $action instanceof Constraint\AddConstraint => new Tree('add-constraint', [Build::keyword('ADD'), Constraints::write($action->constraint, $dialect), ...($action->notValid ? [Build::keyword('NOT VALID')] : [])]),
             $action instanceof Constraint\AddExclusionConstraint => new Tree('add-exclusion', [Build::keyword('ADD'), self::exclusion($action->constraint)]),
+            $action instanceof Constraint\AddIndexConstraint => new Tree('add-index-constraint', [Build::keyword('ADD'), ...($action->name === null ? [] : [Build::keyword('CONSTRAINT'), Build::identifier([$action->name], $dialect)]), Build::keyword(($action->kind === \SqlSemantics\Schema\ConstraintKind::PrimaryKey ? 'PRIMARY KEY' : 'UNIQUE') . ' USING INDEX'), Build::identifier([$action->index], $dialect), Constraints::checking($action->checking)]),
             $action instanceof Constraint\AlterConstraint => new Tree('alter-constraint', [Build::keyword('ALTER CONSTRAINT'), Build::identifier([$action->name], $dialect), Constraints::checking($action->checking)]),
             $action instanceof Constraint\ValidateConstraint => new Tree('validate-constraint', [Build::keyword('VALIDATE CONSTRAINT'), Build::identifier([$action->name], $dialect)]),
             $action instanceof Constraint\DropConstraint => new Tree('drop-constraint', [Build::keyword('DROP CONSTRAINT' . ($action->ifExists ? ' IF EXISTS' : '')), Build::identifier([$action->name], $dialect), Build::keyword($action->behavior->value)]),

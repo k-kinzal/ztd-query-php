@@ -27,6 +27,7 @@ final class ForeignKey extends \SqlSemantics\Schema\TableConstraint
      * @param list<string> $columns
      * @param list<string> $referencedColumns
      * @param list<string> $deleteColumns
+     * @param string|null $indexName MySQL FOREIGN KEY index name, naming the index MySQL creates when no CONSTRAINT name is written
      * Constructs a valid declaration.
      * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
@@ -41,8 +42,12 @@ final class ForeignKey extends \SqlSemantics\Schema\TableConstraint
         public readonly array $deleteColumns = [],
         ?string $name = null,
         \SqlParser\Parser\Node $source = new \SqlParser\Parser\Node('constraint', 0, []),
+        public readonly ?string $indexName = null,
     ) {
         parent::__construct($name, $source);
+        if ($indexName === '') {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('A foreign key index name is nonempty.');
+        }
         \SqlSemantics\Model\Validation\Collections::strings($columns);
         \SqlSemantics\Model\Validation\Collections::strings($referencedColumns);
         \SqlSemantics\Model\Validation\Collections::strings($deleteColumns);

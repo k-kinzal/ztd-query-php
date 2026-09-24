@@ -108,7 +108,7 @@ final class StatementOperandsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER, KEY k (id))')))->bind('SELECT id FROM t USE INDEX (k)');
         self::assertInstanceOf(BoundSelect::class, $statement);
         $this->expectException(InvalidStructure::class);
-        $this->expectExceptionMessage('Index hints require MySQL.');
+        $this->expectExceptionMessage('Index hints and partition selection require MySQL.');
         StatementOperands::relation($statement->from, Dialect::Sqlite);
     }
 }

@@ -288,4 +288,15 @@ final class ConflictBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
     }
+
+    public function testBindResolvesDuplicateKeyDestinationsOnlyInTheTargetBesideARowAlias(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
+        $statement = $binder->bind('INSERT INTO t VALUES (1, 2) AS r ON DUPLICATE KEY UPDATE n = r.n');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
+        $destination = $statement->conflicts[0]->assignments[0]->destinations()[0]->column();
+        self::assertSame($statement->insertion->target->id, $destination->columnBinding()?->relationId);
+        self::assertSame('INSERT INTO `t` VALUES (1, 2) AS `r` ON DUPLICATE KEY UPDATE `n` = `r`.`n`', $statement->toString());
+    }
 }

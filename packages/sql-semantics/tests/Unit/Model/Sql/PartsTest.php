@@ -202,4 +202,14 @@ final class PartsTest extends TestCase
         self::assertSame('("t".*) AS "t"', Sql\Parts::outputs($query->outputs, Dialect::PostgreSql)->toString());
         self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
     }
+
+    public function testOutputsWritesAPositionalExpansionBackAsItsStar(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(id INTEGER, v INTEGER)'));
+        $query = $binder->bind('SELECT 1 AS k, * FROM (p CROSS JOIN p AS q) AS j');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertCount(5, $query->outputs);
+        self::assertSame('1 AS "k", "j".*', Sql\Parts::outputs($query->outputs, Dialect::PostgreSql)->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
 }

@@ -40,10 +40,14 @@ final class ConstraintActions
      * @throws UnclassifiedSql
      * @throws InvalidSql
      */
-    public static function add(Node $command, Scope $scope, QueryContext $context): Constraint\AddConstraint|Constraint\AddExclusionConstraint
+    public static function add(Node $command, Scope $scope, QueryContext $context): Constraint\AddConstraint|Constraint\AddExclusionConstraint|Constraint\AddIndexConstraint
     {
         $node = Tree::child($command, ['TableConstraint']) ?? throw new UnclassifiedSql('ADD CONSTRAINT requires its constraint.');
         $attributes = array_map(static fn (Node $element): string => strtoupper(Tree::text($element)), Tree::outer($node, ['ConstraintAttributeElem']));
+        $existing = Tree::outer($node, ['ExistingIndex'])[0] ?? null;
+        if ($existing !== null) {
+            return self::existing($node, $existing, $attributes, $scope);
+        }
         $parsed = (new ConstraintReader($context->tables->identifiers))->read($node);
         if ($parsed === null) {
             if (!in_array('EXCLUDE', ObjectAddresses::words($node), true)) {
@@ -64,6 +68,27 @@ final class ConstraintActions
         } catch (InvalidStructure $error) {
             throw new InvalidSql(InputViolation::ConstraintAttribute, $node, $error);
         }
+    }
+
+    /**
+     * Binds a primary key or unique constraint that adopts an existing index; NOT VALID and NO INHERIT do not apply to it.
+     * @param list<string> $attributes
+     * @throws InvalidSql
+     */
+    public static function existing(Node $node, Node $existing, array $attributes, Scope $scope): Constraint\AddIndexConstraint
+    {
+        if (array_intersect($attributes, ['NOT VALID', 'NO INHERIT']) !== []) {
+            throw new InvalidSql(InputViolation::ConstraintAttribute, $node);
+        }
+        $identifiers = $scope->identifiers;
+        $nameNode = Tree::child($node, ['name']);
+        $indexTokens = $existing->tokens();
+        return new Constraint\AddIndexConstraint(
+            strtoupper($indexTokens[0]->text ?? '') === 'PRIMARY' || in_array('PRIMARY', ObjectAddresses::words($node), true) ? \SqlSemantics\Schema\ConstraintKind::PrimaryKey : \SqlSemantics\Schema\ConstraintKind::Unique,
+            $identifiers->name($indexTokens[count($indexTokens) - 1]),
+            $nameNode === null ? null : $identifiers->name($nameNode->tokens()[0]),
+            self::checking($attributes, $node),
+        );
     }
 
     /**

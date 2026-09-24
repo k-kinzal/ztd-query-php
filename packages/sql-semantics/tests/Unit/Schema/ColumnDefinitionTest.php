@@ -195,4 +195,21 @@ final class ColumnDefinitionTest extends TestCase
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         $column->withGeneration(new \SqlSemantics\Schema\Column\SuppliedColumn(\SqlSemantics\Model\Expression::literal(1, Dialect::MySql)));
     }
+
+
+    public function testNullConflictRequiresASqliteNotNullColumn(): void
+    {
+        $column = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(a INT NOT NULL ON CONFLICT REPLACE)')->tables[0]->columns[0];
+        self::assertSame(\SqlSemantics\Model\Write\Policy\ConstraintResponse::Replace, $column->withName('b')->nullConflict);
+        self::assertSame(\SqlSemantics\Model\Write\Policy\ConstraintResponse::Replace, $column->withType($column->type)->withGeneration($column->generation)->nullConflict);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new \SqlSemantics\Schema\ColumnDefinition('a', $column->type, Nullability::MaybeNull, $column->source, nullConflict: \SqlSemantics\Model\Write\Policy\ConstraintResponse::Ignore);
+    }
+
+    public function testNullConflictOutsideSqliteIsRejected(): void
+    {
+        $column = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT NOT NULL)')->tables[0]->columns[0];
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new \SqlSemantics\Schema\ColumnDefinition('a', $column->type, $column->nullability, $column->source, nullConflict: \SqlSemantics\Model\Write\Policy\ConstraintResponse::Ignore);
+    }
 }

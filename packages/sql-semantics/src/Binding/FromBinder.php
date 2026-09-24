@@ -98,6 +98,10 @@ final class FromBinder
             $alias = Tree::child($node, ['alias_clause', 'opt_alias_clause']);
             return $alias === null ? $relation : (new RelationFactory())->alias($relation, $alias, $node, $this->queries ?? new QueryContext($this->tables, $this->ids), $this->scopeId);
         }
+        $list = QueryNodes::local($node, ['table_reference_list_parens'])[0] ?? null;
+        if ($list !== null) {
+            return $this->bind($list) ?? Tree::invalid($list, 'parenthesized table list');
+        }
         $derived = self::derivedQuery($node);
         $factor = Tree::outer($node, ['table_factor'])[0] ?? null;
         if ($derived === null && $factor !== null && QueryNodes::isBody($factor)) {
@@ -110,6 +114,15 @@ final class FromBinder
         if ($function !== null) {
             return (new RelationFactory())->function($node, $function, $this->queries ?? new QueryContext($this->tables, $this->ids), $this->parent, $this->scopeId);
         }
+        return $this->named($node);
+    }
+
+    /**
+     * Binds a named table occurrence with its alias and the clauses written after its name.
+     * @throws \SqlSemantics\InvalidSql
+     */
+    public function named(Node $node): BoundRelation
+    {
         $base = Tree::outer($node, ['relation_expr', 'single_table', 'table_factor'])[0] ?? null;
         if ($base === null) {
             Tree::invalid($node, 'relation');
@@ -121,7 +134,20 @@ final class FromBinder
 
         $alias = Tree::outer($node, ['opt_alias_clause', 'opt_table_alias'])[0] ?? null;
 
-        return $this->table($node, $this->tables->identifiers->parts($name), $alias, Query\TableOccurrence::hints($base, $this->tables->identifiers));
+        return $this->table($node, $this->tables->identifiers->parts($name), $alias, Query\TableOccurrence::hints($base, $this->tables->identifiers), ...$this->access($node, $base));
+    }
+
+    /**
+     * Reads the clauses written after a table name: the MySQL partition selection and the MySQL or PostgreSQL sample.
+     * @return array{?\SqlSemantics\Model\Maintenance\IndexCache\NamedPartitions, null, ?\SqlSemantics\Model\Query\Sampling\TableSample}
+     * @throws \SqlSemantics\InvalidSql
+     */
+    public function access(Node $node, Node $base): array
+    {
+        $scope = new Scope($this->tables->identifiers, parent: $this->parent, queries: $this->queries);
+        $base = Tree::child($base, ['single_table']) ?? $base;
+        $sample = Tree::child($base, ['opt_tablesample_clause']) ?? Tree::child($node, ['tablesample_clause']);
+        return [Query\TableOccurrence::partitions(Tree::child($base, ['opt_use_partition']), $this->tables->identifiers), null, Query\TableOccurrence::sample($sample, $scope)];
     }
 
     /**
@@ -220,14 +246,16 @@ final class FromBinder
         if ($db !== null) {
             $parts = [$parts[0], ...$this->tables->identifiers->parts($db)];
         }
-        return $this->table($node, $parts, Tree::child($node, ['as']));
+        return $this->table($node, $parts, Tree::child($node, ['as']), [], null, Query\TableOccurrence::indexing(Tree::child($node, ['indexed_by']), $this->tables->identifiers));
     }
 
     /**
+     * Binds a named table or common table expression with its alias and the clauses written after its name; those clauses apply to stored tables only.
      * @param list<string> $parts
      * @param list<\SqlSemantics\Model\Query\Optimization\IndexHint> $indexHints MySQL index hints written after the table
+     * @throws \SqlSemantics\InvalidSql
      */
-    public function table(Node $source, array $parts, ?Node $aliasNode, array $indexHints = []): BoundRelation
+    public function table(Node $source, array $parts, ?Node $aliasNode, array $indexHints = [], ?\SqlSemantics\Model\Maintenance\IndexCache\NamedPartitions $partitions = null, ?\SqlSemantics\Model\Query\Optimization\IndexDirective $indexing = null, ?\SqlSemantics\Model\Query\Sampling\TableSample $sample = null): BoundRelation
     {
         $alias = null;
         if ($aliasNode !== null && Tree::hasTokens($aliasNode)) {
@@ -246,9 +274,12 @@ final class FromBinder
                 }
             }
         }
+        if ($definition !== null && ($partitions !== null || $indexing !== null || $sample !== null)) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::StoredTableClause, $source);
+        }
         $declaration = $definition === null ? $this->tables->resolve($parts, $source) : QueryRelation::declaration($definition->query, $definition->name, $definition->columns, $source);
         $table = $definition === null
-            ? Query\TableOccurrence::bind($this->ids->relation(), $this->scopeId, $declaration, $this->tables->name($parts, $declaration), $alias, $source, $indexHints)
+            ? Query\TableOccurrence::bind($this->ids->relation(), $this->scopeId, $declaration, $this->tables->name($parts, $declaration), $alias, $source, $indexHints, $partitions, $indexing, $sample)
             : new \SqlSemantics\Model\Relation\CteReference($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $definition);
 
         $relation = new BoundRelation($table, new Scope($this->tables->identifiers, [$table], parent: $this->parent, queries: $this->queries));
@@ -286,6 +317,7 @@ final class FromBinder
         if ($width !== null && $columns !== [] && (count($columns) > $width || $query->origin->dialect !== \SqlSemantics\Dialect::PostgreSql && count($columns) !== $width)) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::DerivedColumnCount, $source);
         }
+        QueryRelation::distinct($query, $columns, $source);
         $declaration = QueryRelation::declaration($query, $alias, $columns, $source);
         $table = new \SqlSemantics\Model\Relation\DerivedRelation($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $query, $columns, str_starts_with(strtoupper(Tree::text($source)), 'LATERAL '));
         return new BoundRelation($table, new Scope($this->tables->identifiers, [$table], parent: $this->parent, queries: $context));

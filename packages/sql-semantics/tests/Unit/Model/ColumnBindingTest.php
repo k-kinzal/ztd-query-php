@@ -148,5 +148,16 @@ final class ColumnBindingTest extends TestCase
         self::assertSame(0, $statement->outputs[0]->expression->binding->column->ordinal);
         self::assertSame($schema->tables[0]->columns[0]->name, $statement->outputs[0]->expression->binding->column->name);
         self::assertSame($schema->tables[0]->columns[0]->type, $statement->outputs[0]->expression->binding->column->type);
+        self::assertSame(['id', 'parent_id', 'score'], $statement->outputs[0]->expression->binding->relationColumns);
+    }
+
+    public function testRetainsTheRepeatedColumnNamesOfAJoinRelation(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p (id INTEGER, v INTEGER)');
+        $statement = (new Binder($schema))->bind('SELECT j.* FROM (p CROSS JOIN p AS q) AS j');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\ColumnReference::class, $statement->outputs[3]->expression);
+        self::assertSame(['id', 'v', 'id', 'v'], $statement->outputs[3]->expression->binding->relationColumns);
+        self::assertSame(3, $statement->outputs[3]->expression->binding->column->ordinal);
     }
 }

@@ -116,4 +116,34 @@ final class ConstraintsTest extends TestCase
         $constraints = $statement->definition->table->constraints;
         self::assertSame(['UNIQUE', 'PRIMARY KEY'], [Constraints::column($constraints[0], Dialect::PostgreSql)->toString(), Constraints::column($constraints[1], Dialect::PostgreSql)->toString()]);
     }
+
+
+    public function testResolutionWritesOnlyADeclaredConflictClause(): void
+    {
+        self::assertSame([], Constraints::resolution(\SqlSemantics\Model\Write\Policy\ConstraintResponse::Default));
+        self::assertSame('ON CONFLICT REPLACE', Constraints::resolution(\SqlSemantics\Model\Write\Policy\ConstraintResponse::Replace)[0]->toString());
+    }
+
+    public function testKeyHeadWritesTheMySqlIndexNameAndMethod(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, UNIQUE KEY uk USING HASH (a))')->tables[0];
+        $unique = $table->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $unique);
+        self::assertSame(['KEY', '`uk`', 'USING HASH'], array_map(static fn ($tree): string => $tree->toString(), Constraints::keyHead($unique, Dialect::MySql)));
+    }
+
+    public function testKeyTailWritesThePostgreSqlIndexClauses(): void
+    {
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT, PRIMARY KEY (a) INCLUDE (b) WITH (fillfactor = 70) USING INDEX TABLESPACE ts)')->tables[0];
+        $primary = $table->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $primary);
+        self::assertSame('INCLUDE ("b") WITH ("fillfactor" = 70) USING INDEX TABLESPACE "ts"', implode(' ', array_map(static fn ($tree): string => $tree->toString(), Constraints::keyTail($primary->index, Dialect::PostgreSql))));
+    }
+
+    public function testColumnIndexWritesMySqlIndexOptions(): void
+    {
+        $index = new \SqlSemantics\Schema\Constraint\KeyIndex(properties: new \SqlSemantics\Schema\Index\Properties(comment: 'c'));
+        self::assertSame("COMMENT 'c'", Constraints::columnIndex($index, Dialect::MySql)[0]->toString());
+        self::assertSame([], Constraints::columnIndex(new \SqlSemantics\Schema\Constraint\KeyIndex(), Dialect::PostgreSql));
+    }
 }

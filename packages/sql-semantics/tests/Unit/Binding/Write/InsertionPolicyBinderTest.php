@@ -80,4 +80,18 @@ final class InsertionPolicyBinderTest extends TestCase
     {
         self::assertSame($expected, (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT)')))->bind($sql)->toString());
     }
+
+    public function testBindAttachesTheMySqlRowAlias(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)'));
+        $statement = $binder->bind('INSERT INTO t VALUES (1) AS n(x)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Policy\MySqlInsertion::class, $statement->policy);
+        $alias = $statement->policy->rowAlias;
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Policy\RowAlias::class, $alias);
+        $policy = InsertionPolicyBinder::bind($statement->origin->source, Dialect::MySql, $alias);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Policy\MySqlInsertion::class, $policy);
+        self::assertSame($alias, $policy->rowAlias);
+        self::assertSame(['x'], $policy->rowAlias->columns);
+    }
 }

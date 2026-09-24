@@ -29,11 +29,12 @@ final class InsertBinder
      * @param list<Assignment> $writes
      * @param list<OutputColumn> $outputs
      * @param list<ConflictAction> $conflicts
+     * @param \SqlSemantics\Model\Write\Policy\RowAlias|null $rowAlias MySQL's name for the proposed row
      * @throws LogicException
      */
-    public function statement(Origin $origin, \SqlParser\Parser\Node $source, ?Insertion $insertion, array $rows, array $queries, array $writes, InsertMode $mode, array $outputs, array $conflicts, ?\SqlSemantics\Model\Query\WithClause $ctes): InsertStatement
+    public function statement(Origin $origin, \SqlParser\Parser\Node $source, ?Insertion $insertion, array $rows, array $queries, array $writes, InsertMode $mode, array $outputs, array $conflicts, ?\SqlSemantics\Model\Query\WithClause $ctes, ?\SqlSemantics\Model\Write\Policy\RowAlias $rowAlias = null): InsertStatement
     {
-        $policy = \SqlSemantics\Binding\Write\InsertionPolicyBinder::bind($source, $origin->dialect);
+        $policy = \SqlSemantics\Binding\Write\InsertionPolicyBinder::bind($source, $origin->dialect, $rowAlias);
         if ($insertion === null) {
             throw new LogicException('Insertion classification requires a destination.');
         }

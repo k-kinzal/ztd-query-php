@@ -308,4 +308,19 @@ final class ScopeTest extends TestCase
         $this->expectException(SemanticException::class);
         (new \SqlSemantics\Binding\Scope($identifiers, queries: $context))->unmatched(['a'], false, $source);
     }
+
+    public function testReferenceBindsARepeatedColumnNameByPosition(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p (id int, v int)')))->bind('SELECT * FROM (p CROSS JOIN p AS q) AS j');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $relation = $query->from;
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\AliasedRelation::class, $relation);
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), [$relation]);
+        $third = $scope->reference($relation, 2, ['j', 'id'], new \SqlParser\Parser\Node('expr', 0, []));
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\ColumnReference::class, $third);
+        self::assertSame(2, $third->binding->column->ordinal);
+        self::assertSame($relation->id, $third->binding->relationId);
+        self::assertSame(['j', 'id'], $third->referenceParts());
+        self::assertSame([$relation->resultExpressions()[2]], $third->inputs());
+    }
 }

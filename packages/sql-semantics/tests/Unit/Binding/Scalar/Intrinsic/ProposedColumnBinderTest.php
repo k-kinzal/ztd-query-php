@@ -34,4 +34,19 @@ final class ProposedColumnBinderTest extends TestCase
         $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql));
         self::assertNull(ProposedColumnBinder::bind($tree->find('simple_expr')[0], $scope));
     }
+
+    public function testDestinationsLeaveOutTheNamedProposedRow(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (id INT, a INT)'));
+        $statement = $binder->bind('INSERT INTO t VALUES (1, 2) AS n ON DUPLICATE KEY UPDATE a = VALUES(a) + n.a');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Policy\MySqlInsertion::class, $statement->policy);
+        $row = $statement->policy->rowAlias?->row;
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\ProposedRow::class, $row);
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql), [$statement->insertion->target, $row]);
+        self::assertSame([$statement->insertion->target], ProposedColumnBinder::destinations($scope)->relations);
+        $plain = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql), [$statement->insertion->target]);
+        self::assertSame($plain, ProposedColumnBinder::destinations($plain));
+        self::assertSame('INSERT INTO `t` VALUES (1, 2) AS `n` ON DUPLICATE KEY UPDATE `a` = (VALUES (`a`) + `n`.`a`)', $statement->toString());
+    }
 }

@@ -48,7 +48,22 @@ final class ColumnBinder
             storageStrategy: ($value = OptionBinding::string($options, 'storage')) === null || !$postgreSql ? null : (\SqlSemantics\Model\Definition\Relation\Column\ColumnStorageMode::tryFrom(strtoupper($value)) ?? throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::ColumnStorage, $column->source)),
         );
         OptionBinding::classified($options, ['collation', 'character_set', 'comment', 'invisible', 'visible', 'storage', 'column_format', 'compression', 'engine_attribute', 'secondary_engine_attribute', 'srid', 'zerofill', 'binary', 'signed', 'unsigned', 'auto_increment', 'identity', 'start', 'increment', 'minvalue', 'maxvalue', 'cache', 'cycle', 'no', 'as', 'sequence', 'restart', 'owned', 'logged', 'unlogged', 'generated_storage', 'on_update']);
-        return new ColumnDefinition($column->name, $column->type, $column->nullability, $column->source, $generation, $attributes);
+        return new ColumnDefinition($column->name, $column->type, $column->nullability, $column->source, $generation, $attributes, self::nullConflict($column));
+    }
+
+    /**
+     * Reads the SQLite ON CONFLICT resolution of a column's NOT NULL constraint; the last NOT NULL written decides, as in SQLite.
+     */
+    public static function nullConflict(ParsedColumn $column): \SqlSemantics\Model\Write\Policy\ConstraintResponse
+    {
+        $resolution = \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default;
+        foreach ($column->attributes as $attribute) {
+            $tokens = $attribute->name === 'ccons' ? $attribute->tokens() : [];
+            if (strtoupper(($tokens[0]->text ?? '') . ' ' . ($tokens[1]->text ?? '')) === 'NOT NULL') {
+                $resolution = ConstraintBinder::resolution($attribute);
+            }
+        }
+        return $column->nullability === \SqlSemantics\Type\Nullability::NotNull ? $resolution : \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default;
     }
 
     /**

@@ -93,7 +93,7 @@ final class ObjectBinder
      */
     public static function tableAs(Origin $origin, Node $source, Node $query, QueryContext $context): Statement\CreateTableAsStatement
     {
-        $parsed = (new \SqlSemantics\Ast\SchemaReader($context->tables->identifiers, $context->tables->defaultSchema, $context->tables->diagnostics->report(...)))->table($source);
+        $parsed = (new \SqlSemantics\Ast\SchemaReader($context->tables->identifiers, $context->tables->defaultSchema, $context->tables->diagnostics->report(...), $context->tables->schema->grammarVersion))->table($source);
         if ($parsed->columns !== []) {
             throw new UnclassifiedSql('A table declaration with both explicit columns and an input query requires its own form.');
         }

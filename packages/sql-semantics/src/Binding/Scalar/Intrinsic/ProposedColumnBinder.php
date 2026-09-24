@@ -28,6 +28,15 @@ final class ProposedColumnBinder
         if ($scope->identifiers->dialect !== Dialect::MySql || !$first instanceof Token || strtoupper($first->text) !== 'VALUES' || $column === null) {
             return null;
         }
-        return new ProposedColumn($source, $scope->column($scope->identifiers->parts($column), $column));
+        return new ProposedColumn($source, self::destinations($scope)->column($scope->identifiers->parts($column), $column));
+    }
+
+    /**
+     * Names a destination column: a proposed row named by a MySQL row alias is not searched.
+     */
+    public static function destinations(Scope $scope): Scope
+    {
+        $relations = array_values(array_filter($scope->relations, static fn (\SqlSemantics\Model\TableUse $relation): bool => !$relation instanceof \SqlSemantics\Model\Relation\ProposedRow));
+        return count($relations) === count($scope->relations) ? $scope : new Scope($scope->identifiers, $relations, $scope->extensions, $scope->parent, $scope->queries, $scope->merged, $scope->outputs, $scope->detached);
     }
 }

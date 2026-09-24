@@ -63,21 +63,13 @@ final class Scope
             return $merged;
         }
         $matches = [];
-        $origins = [];
-        $versions = [];
         foreach ($this->relations as $relation) {
             if (!$this->matches($relation, $qualifiers)) {
                 continue;
             }
             foreach ($relation->declaration->columns as $ordinal => $column) {
                 if ($this->identifiers->equal($column->name, $name)) {
-                    $matches[] = new ColumnBinding($relation->id, $relation->declaration, $column);
-                    if ($relation instanceof \SqlSemantics\Model\Relation\TriggerRow) {
-                        $versions[$relation->id] = $relation->version;
-                    }
-                    if (isset($relation->resultExpressions()[$ordinal])) {
-                        $origins[] = $relation->resultExpressions()[$ordinal];
-                    }
+                    $matches[] = [$relation, $ordinal];
                 }
             }
         }
@@ -90,13 +82,24 @@ final class Scope
         if (count($matches) !== 1) {
             return $this->unmatched($parts, $matches !== [], $source);
         }
-        $binding = $matches[0];
-        if (isset($versions[$binding->relationId])) {
-            return new \SqlSemantics\Model\Scalar\Reference\TriggerColumn(new \SqlSemantics\Model\Scalar\ExpressionFacts($binding->column->type, $binding->column->nullability), $source, $binding, $versions[$binding->relationId]);
+        return $this->reference($matches[0][0], $matches[0][1], [...$qualifiers, $name], $source);
+    }
+
+    /**
+     * References one column of a visible relation by its position, as a star expansion does when the relation repeats a column name.
+     * @param list<string> $parts The written name of the reference
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
+     */
+    public function reference(TableUse $relation, int $ordinal, array $parts, Node|Token $source): Expression
+    {
+        $binding = new ColumnBinding($relation->id, $relation->declaration, $relation->declaration->columns[$ordinal]);
+        if ($relation instanceof \SqlSemantics\Model\Relation\TriggerRow) {
+            return new \SqlSemantics\Model\Scalar\Reference\TriggerColumn(new \SqlSemantics\Model\Scalar\ExpressionFacts($binding->column->type, $binding->column->nullability), $source, $binding, $relation->version);
         }
         $extensions = $this->extensions[$binding->relationId] ?? [];
+        $origins = isset($relation->resultExpressions()[$ordinal]) ? [$relation->resultExpressions()[$ordinal]] : [];
 
-        return new \SqlSemantics\Model\Scalar\Reference\ColumnReference(new \SqlSemantics\Model\Scalar\ExpressionFacts($binding->column->type, $extensions === [] ? $binding->column->nullability : Nullability::MaybeNull, $extensions), $source, $binding, $origins, [...$qualifiers, $name]);
+        return new \SqlSemantics\Model\Scalar\Reference\ColumnReference(new \SqlSemantics\Model\Scalar\ExpressionFacts($binding->column->type, $extensions === [] ? $binding->column->nullability : Nullability::MaybeNull, $extensions), $source, $binding, $origins, $parts);
     }
 
     /**

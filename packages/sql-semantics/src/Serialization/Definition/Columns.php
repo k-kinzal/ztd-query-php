@@ -7,6 +7,7 @@ namespace SqlSemantics\Serialization\Definition;
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\Sql\Build;
 use SqlSemantics\Model\Sql\Tree;
+use SqlSemantics\Model\Write\Policy\ConstraintResponse;
 use SqlSemantics\Schema\Column;
 use SqlSemantics\Schema\ColumnDefinition;
 use SqlSemantics\Serialization\Expressions;
@@ -21,14 +22,15 @@ final class Columns
 {
     /**
      * Writes declaration-level nullability and generation behavior; a MySQL generated column writes its expression before the other attributes, as its grammar requires.
+     * @param ConstraintResponse $keyConflict ON CONFLICT resolution of the SQLite primary key an AUTOINCREMENT column declares
      */
-    public static function write(ColumnDefinition $column, Dialect $dialect): Tree
+    public static function write(ColumnDefinition $column, Dialect $dialect, ConstraintResponse $keyConflict = ConstraintResponse::Default): Tree
     {
         $generation = $column->generation;
         $computed = $dialect === Dialect::MySql && $generation instanceof Column\ComputedColumn ? [Build::keyword('GENERATED ALWAYS AS'), Build::parentheses(Expressions::write($generation->expression)), Build::keyword(strtoupper($generation->storage->value))] : [];
         $parts = [Build::identifier([$column->name], $dialect), TypeDeclaration::write($column->type), ...$computed, ColumnAttributes::write($column->attributes, $dialect)];
         if ($column->nullability === \SqlSemantics\Type\Nullability::NotNull) {
-            $parts[] = Build::keyword('NOT NULL');
+            array_push($parts, Build::keyword('NOT NULL'), ...Constraints::resolution($column->nullConflict));
         }
         if ($generation instanceof Column\SuppliedColumn) {
             if ($generation->default !== null) {
@@ -42,7 +44,7 @@ final class Columns
         } elseif ($generation instanceof Column\IdentityColumn) {
             array_push($parts, Build::keyword('GENERATED ' . ($generation->mode === Column\IdentityMode::Always ? 'ALWAYS' : 'BY DEFAULT') . ' AS IDENTITY'), Sequence::write($generation->sequence));
         } elseif ($generation instanceof Column\AutoIncrementColumn) {
-            $parts[] = Build::keyword($dialect === Dialect::Sqlite ? 'PRIMARY KEY AUTOINCREMENT' : 'AUTO_INCREMENT');
+            array_push($parts, ...($dialect === Dialect::Sqlite ? [Build::keyword('PRIMARY KEY'), ...Constraints::resolution($keyConflict), Build::keyword('AUTOINCREMENT')] : [Build::keyword('AUTO_INCREMENT')]));
         }
         return new Tree('column', $parts);
     }

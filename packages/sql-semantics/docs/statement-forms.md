@@ -55,6 +55,7 @@ example `Definition\MySql\Program\CreateFunctionStatement` and
 | SQL | Returned type | Required structure and applicable options |
 |-----|---------------|------------------------------------------|
 | `INSERT INTO users(id,score) VALUES (1,10)` | `InsertValuesStatement` | `insertion` destination mapping and nonempty `rows`; row widths agree with known destinations. |
+| MySQL 8.0.19+: `INSERT INTO t (a) VALUES (1) AS n(x) ON DUPLICATE KEY UPDATE a = x` | `InsertValuesStatement`, `InsertSetStatement` | A row alias on `MySqlInsertion::$rowAlias` (`RowAlias`): a `ProposedRow` named by the alias with one column per inserted column, renamed by the optional column aliases. ON DUPLICATE KEY UPDATE references resolve to it beside the target. INSERT ... SELECT has no row alias; a table-name alias, an alias count other than the inserted column count, or a repeated alias is `InvalidSql` (`insert-row-alias`). |
 | `INSERT INTO users(id,score) SELECT id,score FROM incoming` | `InsertSelectStatement` | `insertion` and a required `query`. The query supplies the input columns. |
 | PostgreSQL and SQLite: `INSERT INTO users DEFAULT VALUES` | `InsertDefaultValuesStatement` | A destination whose omitted columns obtain defaults or generated values. No row or SELECT payload. |
 | MySQL: `INSERT INTO users SET id=1, score=10` | `InsertSetStatement` | `insertion` and nonempty ordered `writes`. |

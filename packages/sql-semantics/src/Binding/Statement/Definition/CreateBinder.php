@@ -32,7 +32,7 @@ final class CreateBinder
             if ($copy !== null) {
                 return $copy;
             }
-            $reader = new \SqlSemantics\Ast\SchemaReader($tables->identifiers, $tables->defaultSchema, $tables->diagnostics->report(...));
+            $reader = new \SqlSemantics\Ast\SchemaReader($tables->identifiers, $tables->defaultSchema, $tables->diagnostics->report(...), $tables->schema->grammarVersion);
             $parsed = $reader->table($tables->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? $statement : $create);
             $declarations[] = \SqlSemantics\Binding\Schema\DeclarationBinder::bind($parsed, $context);
         }

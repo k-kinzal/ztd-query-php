@@ -33,7 +33,7 @@ final class Insertions
             $statement instanceof Insert\InsertDefaultValuesStatement => Build::keyword($dialect === \SqlSemantics\Dialect::MySql ? '() VALUES ()' : 'DEFAULT VALUES'),
             default => throw new InvalidStructure('Unclassified insertion input.'),
         };
-        return new Tree('insertion', [Query\QueryParts::with($statement->ctes, $dialect), self::header($statement), $trigger ? Build::identifier([$insertion->target->declaration->name], $dialect) : Query\Relations::write($insertion->target, $dialect), $columns, self::overriding($statement), $input, ...array_map(static fn ($conflict): Tree => Write\Conflicts::write($conflict, $dialect), $statement->conflicts), ...($statement->outputs === [] ? [] : [Build::keyword('RETURNING'), Parts::outputs($statement->outputs, $dialect)])]);
+        return new Tree('insertion', [Query\QueryParts::with($statement->ctes, $dialect), self::header($statement), $trigger ? Build::identifier([$insertion->target->declaration->name], $dialect) : Query\Relations::write($insertion->target, $dialect), $columns, self::overriding($statement), $input, self::rowAlias($statement), ...array_map(static fn ($conflict): Tree => Write\Conflicts::write($conflict, $dialect), $statement->conflicts), ...($statement->outputs === [] ? [] : [Build::keyword('RETURNING'), Parts::outputs($statement->outputs, $dialect)])]);
     }
     /**
      * Writes conflict and scheduling policies in the dialect's insertion header.
@@ -55,6 +55,21 @@ final class Insertions
         }
         $parts[] = 'INTO';
         return Build::keyword(implode(' ', $parts));
+    }
+
+    /**
+     * Writes MySQL's name for the proposed row, with its column aliases when they were given.
+     */
+    public static function rowAlias(InsertStatement $statement): Tree
+    {
+        $policy = $statement->policy;
+        $alias = $policy instanceof \SqlSemantics\Model\Write\Policy\MySqlInsertion ? $policy->rowAlias : null;
+        if ($alias === null || $alias->row->alias === null) {
+            return new Tree('row-alias', []);
+        }
+        $dialect = $statement->origin->dialect;
+        $columns = $alias->columns === [] ? new Tree('columns', []) : Build::parentheses(Build::separated(array_map(static fn (string $column): Tree => Build::identifier([$column], $dialect), $alias->columns)));
+        return new Tree('row-alias', [Build::keyword('AS'), Build::identifier([$alias->row->alias], $dialect), $columns]);
     }
 
     /**

@@ -49,4 +49,11 @@ final class StorageParametersTest extends TestCase
         self::assertSame(['autovacuum_enabled'], $statement->storageParameters[0]->name->parts);
     }
 
+
+    public function testReadTakesTheDefinitionElementsOfAConstraint(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('CREATE TABLE t (a INT, UNIQUE (a) WITH (fillfactor = 70, deduplicate_items))');
+        $parameters = \SqlSemantics\Binding\Schema\StorageParameters::read($tree->find('TableConstraint')[0], new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)), [], 'def_elem');
+        self::assertSame([['fillfactor'], ['deduplicate_items']], array_map(static fn ($parameter): array => $parameter->name->parts, $parameters));
+    }
 }

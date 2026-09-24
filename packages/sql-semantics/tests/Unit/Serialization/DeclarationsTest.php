@@ -123,4 +123,12 @@ final class DeclarationsTest extends TestCase
         $sqlite = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TEMP TABLE a(x INT)', 'CREATE TABLE temp.b(x INT)');
         self::assertSame([['a'], ['temp', 'b']], array_map(Declarations::tableName(...), $sqlite->tables));
     }
+
+
+    public function testKeyConflictReadsThePrimaryKeyResolution(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER PRIMARY KEY ON CONFLICT FAIL); CREATE TABLE u(id INTEGER UNIQUE)');
+        self::assertSame(\SqlSemantics\Model\Write\Policy\ConstraintResponse::Fail, Declarations::keyConflict($schema->tables[0]));
+        self::assertSame(\SqlSemantics\Model\Write\Policy\ConstraintResponse::Default, Declarations::keyConflict($schema->tables[1]));
+    }
 }

@@ -76,4 +76,69 @@ final class TableOccurrenceTest extends TestCase
         self::assertInstanceOf(UpdateStatement::class, $statement);
         self::assertSame('UPDATE `t` USE INDEX(`k`) SET `a` = 1', $statement->toString());
     }
+
+
+    #[TestWith(['mysql-5.6.51'])]
+    #[TestWith(['mysql-5.7.44'])]
+    #[TestWith(['mysql-8.0.44'])]
+    #[TestWith(['mysql-8.4.7'])]
+    #[TestWith(['mysql-9.1.0'])]
+    public function testPartitionsKeepTheSelectedPartitionsOfEveryTarget(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE t (id INT PRIMARY KEY, a INT) PARTITION BY HASH(id) PARTITIONS 2'));
+        $cases = [
+            'SELECT * FROM t PARTITION (p0, p1) x' => 'SELECT `x`.`id` AS `id`, `x`.`a` AS `a` FROM `t` PARTITION(`p0`, `p1`) AS `x`',
+            'INSERT INTO t PARTITION (p0) VALUES (1, 2)' => 'INSERT INTO `t` PARTITION(`p0`) VALUES (1, 2)',
+            'REPLACE t PARTITION (p0) SET a = 1' => 'REPLACE INTO `t` PARTITION(`p0`) SET `a` = 1',
+            'UPDATE t PARTITION (p0) SET a = 1' => 'UPDATE `t` PARTITION(`p0`) SET `a` = 1',
+            'DELETE FROM t PARTITION (p0) WHERE id = 1' => 'DELETE FROM `t` PARTITION(`p0`) WHERE (`id` = 1)',
+            'INSERT t PARTITION (p0) SELECT * FROM t PARTITION (p1)' => 'INSERT INTO `t` PARTITION(`p0`) SELECT `t`.`id` AS `id`, `t`.`a` AS `a` FROM `t` PARTITION(`p1`)',
+        ];
+        self::assertSame(array_values($cases), array_map(static fn (string $sql): string => $binder->bind($sql)->toString(), array_keys($cases)));
+        self::assertSame(array_values($cases), array_map(static fn (string $sql): string => $binder->bind($sql)->toString(), array_values($cases)));
+        $statement = $binder->bind('SELECT * FROM t PARTITION (p0, p1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $statement->from);
+        self::assertSame(['p0', 'p1'], $statement->from->partitions?->names);
+        self::assertNull(TableOccurrence::partitions(null, new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+    }
+
+    #[TestWith(['UPDATE t INDEXED BY ix SET a = 1', 'UPDATE "main"."t" INDEXED BY "ix" SET "a" = 1'])]
+    #[TestWith(['UPDATE OR REPLACE t AS x NOT INDEXED SET a = 1', 'UPDATE OR REPLACE "main"."t" AS "x" NOT INDEXED SET "a" = 1'])]
+    #[TestWith(['DELETE FROM main.t AS x INDEXED BY ix RETURNING *', 'DELETE FROM "main"."t" AS "x" INDEXED BY "ix" RETURNING "x"."id" AS "id", "x"."a" AS "a"'])]
+    #[TestWith(['SELECT * FROM t INDEXED BY "ix" JOIN t u NOT INDEXED', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "u"."id" AS "id", "u"."a" AS "a" FROM "main"."t" INDEXED BY "ix" CROSS JOIN "main"."t" AS "u" NOT INDEXED'])]
+    #[TestWith(['UPDATE t SET a = 1 FROM t u INDEXED BY ix WHERE u.id = t.id', 'UPDATE "main"."t" SET "a" = 1 FROM "main"."t" AS "u" INDEXED BY "ix" WHERE ("u"."id" = "t"."id")'])]
+    public function testIndexingKeepsTheSqliteIndexDirective(string $sql, string $serialized): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (id INTEGER PRIMARY KEY, a INT); CREATE INDEX ix ON t(a)'));
+        self::assertSame($serialized, $binder->bind($sql)->toString());
+        self::assertSame($serialized, $binder->bind($serialized)->toString());
+        self::assertNull(TableOccurrence::indexing(null, new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite)));
+    }
+
+    public function testIndexingOfATriggerMutationIsInvalidSql(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (id INTEGER PRIMARY KEY, a INT); CREATE INDEX ix ON t(a)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $binder->bind('CREATE TRIGGER tr AFTER INSERT ON t BEGIN UPDATE t INDEXED BY ix SET a = 1; END');
+    }
+
+    #[TestWith(['postgresql', 'WITH c AS (SELECT 1) SELECT * FROM c TABLESAMPLE SYSTEM (1)'])]
+    #[TestWith(['sqlite', 'WITH c AS (SELECT 1) SELECT * FROM c INDEXED BY ix'])]
+    #[TestWith(['mysql', 'WITH c AS (SELECT 1) SELECT * FROM c PARTITION (p0)'])]
+    public function testSampleOrOtherClauseOnACommonTableExpressionIsInvalidSql(string $dialect, string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::from($dialect)))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::StoredTableClause->message());
+        $binder->bind($sql);
+    }
+
+    public function testSampleArgumentsSeeTheOuterQuery(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INT, a INT)'));
+        $expected = 'SELECT "t"."id" AS "id", "t"."a" AS "a", "z"."id" AS "id", "z"."a" AS "a" FROM "public"."t" CROSS JOIN LATERAL(SELECT "u"."id" AS "id", "u"."a" AS "a" FROM "public"."t" AS "u" TABLESAMPLE SYSTEM("t"."a")) AS "z"';
+        self::assertSame($expected, $binder->bind('SELECT * FROM t, LATERAL (SELECT * FROM t u TABLESAMPLE SYSTEM (t.a)) z')->toString());
+        self::assertNull(TableOccurrence::sample(null, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql))));
+    }
 }

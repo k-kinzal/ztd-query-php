@@ -68,9 +68,7 @@ final class StatementOperands
             if ($table instanceof \SqlSemantics\Model\Relation\OnlyTableReference && $dialect !== Dialect::PostgreSql) {
                 throw new InvalidStructure('ONLY table references require PostgreSQL.');
             }
-            if ($table instanceof \SqlSemantics\Model\Relation\TableReference && $table->indexHints !== [] && $dialect !== Dialect::MySql) {
-                throw new InvalidStructure('Index hints require MySQL.');
-            }
+            TableAccess::check($table, $dialect);
             if ($table->declaration->properties !== null && $table->declaration->properties->dialect() !== $dialect) {
                 throw new InvalidStructure('A relation declaration must use the statement dialect.');
             }

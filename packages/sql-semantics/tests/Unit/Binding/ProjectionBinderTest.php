@@ -218,4 +218,13 @@ final class ProjectionBinderTest extends TestCase
         self::assertSame([true, false], array_map(static fn ($expression): bool => \SqlSemantics\Binding\ProjectionBinder::starred($expression?->tokens() ?? [], $expression), $expressions));
         self::assertSame([false, true], array_map(\SqlSemantics\Binding\ProjectionBinder::composite(...), $expressions));
     }
+
+    public function testStarExpandsARelationWithRepeatedColumnNamesByPosition(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id int, a int); CREATE TABLE u (id int, b int)')))->bind('SELECT * FROM (t JOIN u ON t.id = u.id) AS x');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame(['id', 'a', 'id', 'b'], array_map(static fn ($output): ?string => $output->name, $query->outputs));
+        self::assertSame([0, 1, 2, 3], array_map(static fn ($output): ?int => $output->expression->columnBinding()?->column->ordinal, $query->outputs));
+        self::assertSame('SELECT "x".* FROM("public"."t" INNER JOIN "public"."u" ON ("t"."id" = "u"."id")) AS "x"', $query->toString());
+    }
 }

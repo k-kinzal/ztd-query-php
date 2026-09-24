@@ -376,4 +376,17 @@ final class MutationBinderTest extends TestCase
         self::assertSame('INSERT INTO "main"."t" VALUES (1, \'x\') ON CONFLICT("id") DO NOTHING ON CONFLICT DO UPDATE SET "n" = \'RETURNING\' RETURNING "id" AS "id"', $statement->toString());
         self::assertSame('DELETE FROM "main"."t" WHERE ("n" = \'RETURNING\')', $plain->toString());
     }
+
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.0.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0'])]
+    public function testTargetsKeepTheAliasAndPartitionsOfASingleTableDeletion(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE t (id INT PRIMARY KEY)'));
+        $statement = $binder->bind('DELETE FROM t AS x PARTITION (p0) WHERE x.id = 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $statement->target);
+        self::assertSame(['x', ['p0']], [$statement->target->alias, $statement->target->partitions?->names]);
+        self::assertSame('DELETE FROM `t` AS `x` PARTITION(`p0`) WHERE (`x`.`id` = 1)', $statement->toString());
+    }
 }

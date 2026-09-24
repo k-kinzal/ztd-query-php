@@ -24,6 +24,8 @@ final class PrimaryKey extends \SqlSemantics\Schema\TableConstraint
 
     /**
      * @param list<\SqlSemantics\Schema\IndexElement> $keys
+     * @param \SqlSemantics\Model\Write\Policy\ConstraintResponse $onConflict SQLite ON CONFLICT resolution; Default when none is declared
+     * @param KeyIndex $index Declared options of the index enforcing the key
      * Constructs a valid declaration.
      * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
@@ -33,6 +35,8 @@ final class PrimaryKey extends \SqlSemantics\Schema\TableConstraint
         public readonly bool $nullsDistinct = true,
         ?string $name = null,
         \SqlParser\Parser\Node $source = new \SqlParser\Parser\Node('constraint', 0, []),
+        public readonly \SqlSemantics\Model\Write\Policy\ConstraintResponse $onConflict = \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default,
+        public readonly KeyIndex $index = new KeyIndex(),
     ) {
         parent::__construct($name, $source);
         \SqlSemantics\Model\Validation\Collections::objects($keys, \SqlSemantics\Schema\IndexElement::class);
@@ -40,6 +44,8 @@ final class PrimaryKey extends \SqlSemantics\Schema\TableConstraint
             throw new \SqlSemantics\Model\Validation\InvalidStructure('A key requires distinct column names.');
         }
         $this->keys = \SqlSemantics\Model\Validation\Collections::nonEmpty($keys);
+        ConflictClause::check($onConflict, $this->keys[0]->value()->type->dialect);
+        $index->check($this->keys[0]->value()->type->dialect);
     }
 
     #[Override]

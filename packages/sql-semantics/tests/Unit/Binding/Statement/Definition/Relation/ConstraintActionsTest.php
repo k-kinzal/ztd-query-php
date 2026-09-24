@@ -161,4 +161,14 @@ final class ConstraintActionsTest extends TestCase
         $this->expectException(InvalidSql::class);
         $binder->bind($sql, strict: false);
     }
+
+
+    public function testExistingAdoptsAUniqueIndex(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE UNIQUE INDEX ix ON t(id)'));
+        $statement = $binder->bind('ALTER TABLE t ADD CONSTRAINT u UNIQUE USING INDEX ix');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Definition\Relation\Constraint\AddIndexConstraint::class, $statement->actions[0]);
+        self::assertSame('ALTER TABLE "t" ADD CONSTRAINT "u" UNIQUE USING INDEX "ix"', $statement->toString());
+    }
 }

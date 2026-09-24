@@ -19,8 +19,9 @@ final class MySqlInsertion implements InsertPolicy
 {
     /**
      * Records the selected policy.
+     * @param RowAlias|null $rowAlias MySQL 8.0.19+ name of the proposed row, allowed after VALUES or SET
      */
-    public function __construct(public readonly Scheduling $scheduling = Scheduling::Default, public readonly bool $ignore = false)
+    public function __construct(public readonly Scheduling $scheduling = Scheduling::Default, public readonly bool $ignore = false, public readonly ?RowAlias $rowAlias = null)
     {
     }
 

@@ -82,4 +82,19 @@ final class InsertionsTest extends TestCase
         self::assertInstanceOf(InsertStatement::class, $implicit);
         self::assertSame('', Insertions::overriding($implicit)->toString());
     }
+
+    public function testRowAliasWritesTheProposedRowNameAndItsColumnAliases(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)'));
+        $named = $binder->bind('INSERT INTO t (id, n) VALUES (1, 2) AS r(i, m) ON DUPLICATE KEY UPDATE n = m');
+        self::assertInstanceOf(InsertStatement::class, $named);
+        self::assertSame('AS `r`(`i`, `m`)', Insertions::rowAlias($named)->toString());
+        $bare = $binder->bind('INSERT INTO t SET id = 1 AS r ON DUPLICATE KEY UPDATE n = r.id');
+        self::assertInstanceOf(InsertSetStatement::class, $bare);
+        self::assertSame('AS `r`', Insertions::rowAlias($bare)->toString());
+        self::assertSame('INSERT INTO `t` SET `id` = 1 AS `r` ON DUPLICATE KEY UPDATE `n` = `r`.`id`', Insertions::write($bare)->toString());
+        $none = $binder->bind('INSERT INTO t VALUES (1, 2)');
+        self::assertInstanceOf(InsertStatement::class, $none);
+        self::assertSame('', Insertions::rowAlias($none)->toString());
+    }
 }

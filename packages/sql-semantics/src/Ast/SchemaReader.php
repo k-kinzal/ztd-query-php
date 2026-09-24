@@ -25,8 +25,9 @@ final class SchemaReader
      * Binds the dependencies used for semantic binding.
      *
      * @param Closure(string, string, Node): void|null $onDiagnostic Optional analysis diagnostic receiver
+     * @param string|null $grammarVersion Grammar release tag; MySQL enforces an inline column REFERENCES from 9.0 on and ignores it before
      */
-    public function __construct(public readonly Identifiers $identifiers, public readonly string $defaultSchema, public readonly ?Closure $onDiagnostic = null)
+    public function __construct(public readonly Identifiers $identifiers, public readonly string $defaultSchema, public readonly ?Closure $onDiagnostic = null, public readonly ?string $grammarVersion = null)
     {
     }
 
@@ -101,7 +102,7 @@ final class SchemaReader
                 $constraints[] = $constraint;
             }
         }
-        $columns = $this->primaryKeys($columns, $constraints, $create);
+        $columns = $this->autoIncrement($this->primaryKeys($columns, $constraints, $create), $constraints);
 
         $namespace = $this->namespace($header, $parts);
         $name = $parts[count($parts) - 1];
@@ -158,8 +159,9 @@ final class SchemaReader
             }
             return array_reverse($columns);
         }
+        $inline = $this->identifiers->dialect === Dialect::MySql && \SqlSemantics\Model\Configuration\Replication\ReplicationRelease::number($this->grammarVersion) >= 90000 ? ['opt_references'] : [];
         foreach (Tree::outer($create, ['columnDef', 'column_def']) as $column) {
-            $columns[] = [$column, Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute', 'gcol_attribute'])];
+            $columns[] = [$column, array_values(array_filter(Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute', 'gcol_attribute', ...$inline]), Tree::hasTokens(...)))];
         }
 
         return $columns;
@@ -198,6 +200,28 @@ final class SchemaReader
         }
 
         return $result;
+    }
+
+    /**
+     * Carries a SQLite table-level PRIMARY KEY (column AUTOINCREMENT) to its column, as a column-level key would declare it.
+     * @param list<ColumnDefinition> $columns
+     * @param list<TableConstraint> $constraints
+     * @return list<ColumnDefinition>
+     * @throws \SqlSemantics\InvalidSql
+     */
+    public function autoIncrement(array $columns, array $constraints): array
+    {
+        foreach ($constraints as $constraint) {
+            if ($constraint->kind !== ConstraintKind::PrimaryKey || $constraint->source->name !== 'tcons' || !Tree::hasTokens(Tree::outer($constraint->source, ['autoinc'])[0] ?? new Node('autoinc', 0, []))) {
+                continue;
+            }
+            if (count($constraint->columns) !== 1) {
+                throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::AutoIncrementKey, $constraint->source);
+            }
+            $key = strtolower($constraint->columns[0]);
+            $columns = array_map(static fn (ColumnDefinition $column): ColumnDefinition => strtolower($column->name) !== $key ? $column : new ColumnDefinition($column->name, $column->type, $column->nullability, $column->source, $column->defaultExpression, $column->attributes, $column->generatedExpression, [...$column->options, 'auto_increment' => true]), $columns);
+        }
+        return $columns;
     }
 
     /**

@@ -39,14 +39,23 @@ final class ConstraintBinder
         if ($constraint->kind === ConstraintKind::Check) {
             $predicate = (new ExpressionBinder())->bind($constraint->expression ?? throw new UnclassifiedSql('A CHECK requires a predicate.'), $scope);
             (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->predicate($predicate);
-            return new Constraint\Check($predicate, $constraint->enforced, $constraint->noInherit, name: $constraint->name, source: $constraint->source);
+            return new Constraint\Check($predicate, $constraint->enforced, $constraint->noInherit, name: $constraint->name, source: $constraint->source, onConflict: self::resolution($constraint->source));
         }
         return match ($constraint->kind) {
-            ConstraintKind::PrimaryKey => new Constraint\PrimaryKey(self::keys($constraint, $scope), $checking, name: $constraint->name, source: $constraint->source),
-            ConstraintKind::Unique => new Constraint\UniqueKey(self::keys($constraint, $scope), $checking, nullsDistinct: (\SqlSemantics\Ast\Definition\OptionReader::read($constraint->source, $scope->identifiers)['nulls_distinct'] ?? true) !== false, name: $constraint->name, source: $constraint->source),
-            ConstraintKind::ForeignKey => new Constraint\ForeignKey($constraint->columns, new QualifiedName($constraint->referencedTable), $constraint->referencedColumns, $constraint->onDelete, $constraint->onUpdate, $scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? Constraint\MatchMode::Simple : Constraint\MatchMode::from($constraint->match), $checking, $constraint->deleteColumns, $constraint->name, $constraint->source),
+            ConstraintKind::PrimaryKey => new Constraint\PrimaryKey(self::keys($constraint, $scope), $checking, name: $constraint->name, source: $constraint->source, onConflict: self::resolution($constraint->source), index: \SqlSemantics\Binding\Schema\Constraint\KeyIndexBinder::bind($constraint->source, $scope, true)),
+            ConstraintKind::Unique => new Constraint\UniqueKey(self::keys($constraint, $scope), $checking, nullsDistinct: (\SqlSemantics\Ast\Definition\OptionReader::read($constraint->source, $scope->identifiers)['nulls_distinct'] ?? true) !== false, name: $constraint->name, source: $constraint->source, onConflict: self::resolution($constraint->source), index: \SqlSemantics\Binding\Schema\Constraint\KeyIndexBinder::bind($constraint->source, $scope, false)),
+            ConstraintKind::ForeignKey => new Constraint\ForeignKey($constraint->columns, new QualifiedName($constraint->referencedTable), $constraint->referencedColumns, $constraint->onDelete, $constraint->onUpdate, $scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? Constraint\MatchMode::Simple : Constraint\MatchMode::from($constraint->match), $checking, $constraint->deleteColumns, $constraint->name, $constraint->source, \SqlSemantics\Binding\Schema\Constraint\KeyIndexBinder::name($constraint->source, $scope)),
         };
     }
+    /**
+     * Reads the SQLite ON CONFLICT resolution declared by a constraint; Default when the constraint declares none.
+     */
+    public static function resolution(\SqlParser\Parser\Node $source): \SqlSemantics\Model\Write\Policy\ConstraintResponse
+    {
+        $tokens = (Tree::outer($source, ['onconf'])[0] ?? null)?->tokens() ?? [];
+        return $tokens === [] ? \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default : \SqlSemantics\Model\Write\Policy\ConstraintResponse::from(strtoupper($tokens[count($tokens) - 1]->text));
+    }
+
     /**
      * Returns the key elements; a SQLite column-level PRIMARY KEY keeps its written direction.
      * @return non-empty-list<\SqlSemantics\Schema\IndexElement>

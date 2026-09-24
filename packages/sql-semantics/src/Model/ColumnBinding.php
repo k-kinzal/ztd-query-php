@@ -31,6 +31,13 @@ final class ColumnBinding
     public readonly Relation\ColumnSymbol $column;
 
     /**
+     * Names of every column of the referenced relation occurrence, in declaration order; a derived or join relation may repeat a name.
+     *
+     * @var list<string>
+     */
+    public readonly array $relationColumns;
+
+    /**
      * @param string $relationId Query-local relation occurrence, such as r0
      * @param TableDefinition $table Table declaration
      * @param ColumnDefinition $column Column declaration
@@ -47,5 +54,6 @@ final class ColumnBinding
         }
         $this->table = new Relation\TableIdentity($table->schema, $table->name);
         $this->column = new Relation\ColumnSymbol($ordinal, $column->name, $column->type, $column->nullability);
+        $this->relationColumns = array_map(static fn (ColumnDefinition $member): string => $member->name, $table->columns);
     }
 }

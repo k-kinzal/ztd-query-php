@@ -16,6 +16,7 @@ use SqlSemantics\Type\TypeDescriptor;
  * @example Reading and renaming a column declaration
  *     $column = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL)')->tables[0]->columns[0];
  *     $column->name // => 'id'
+ *     $column->nullConflict // => \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default
  *     $column->nullability // => \SqlSemantics\Type\Nullability::NotNull
  *     $column->withName('key')->name // => 'key'
  *     $column->name // => 'id'
@@ -23,6 +24,7 @@ use SqlSemantics\Type\TypeDescriptor;
 final class ColumnDefinition
 {
     /**
+     * @param \SqlSemantics\Model\Write\Policy\ConstraintResponse $nullConflict SQLite ON CONFLICT resolution of the NOT NULL constraint; Default when none is declared
      * @throws InvalidStructure
      */
     public function __construct(
@@ -32,7 +34,12 @@ final class ColumnDefinition
         public readonly Node $source,
         public readonly Column\Generation $generation = new Column\SuppliedColumn(),
         public readonly Column\Attributes $attributes = new Column\Attributes(),
+        public readonly \SqlSemantics\Model\Write\Policy\ConstraintResponse $nullConflict = \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default,
     ) {
+        Constraint\ConflictClause::check($nullConflict, $type->dialect);
+        if ($nullConflict !== \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default && $nullability !== Nullability::NotNull) {
+            throw new InvalidStructure('An ON CONFLICT resolution for NULL values requires a NOT NULL column.');
+        }
         foreach ($generation->expressions() as $expression) {
             if ($expression->type->dialect !== $type->dialect) {
                 throw new InvalidStructure('A column and its generation expressions must use the same dialect.');
@@ -45,7 +52,7 @@ final class ColumnDefinition
      */
     public function withName(string $name): self
     {
-        return new self($name, $this->type, $this->nullability, $this->source, $this->generation, $this->attributes);
+        return new self($name, $this->type, $this->nullability, $this->source, $this->generation, $this->attributes, $this->nullConflict);
     }
 
     /**
@@ -53,7 +60,7 @@ final class ColumnDefinition
      */
     public function withType(TypeDescriptor $type): self
     {
-        return new self($this->name, $type, $this->nullability, $this->source, $this->generation, $this->attributes);
+        return new self($this->name, $type, $this->nullability, $this->source, $this->generation, $this->attributes, $this->nullConflict);
     }
 
     /**
@@ -61,6 +68,6 @@ final class ColumnDefinition
      */
     public function withGeneration(Column\Generation $generation): self
     {
-        return new self($this->name, $this->type, $this->nullability, $this->source, $generation, $this->attributes);
+        return new self($this->name, $this->type, $this->nullability, $this->source, $generation, $this->attributes, $this->nullConflict);
     }
 }

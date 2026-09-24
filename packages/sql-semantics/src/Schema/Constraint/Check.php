@@ -21,7 +21,8 @@ final class Check extends \SqlSemantics\Schema\TableConstraint
 {
     /**
      * Constructs a valid declaration.
-
+     * @param \SqlSemantics\Model\Write\Policy\ConstraintResponse $onConflict SQLite ON CONFLICT resolution of a table-level CHECK; Default when none is declared
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
     public function __construct(
         public readonly \SqlSemantics\Model\Expression $predicate,
@@ -29,8 +30,10 @@ final class Check extends \SqlSemantics\Schema\TableConstraint
         public readonly bool $noInherit = false,
         ?string $name = null,
         \SqlParser\Parser\Node $source = new \SqlParser\Parser\Node('constraint', 0, []),
+        public readonly \SqlSemantics\Model\Write\Policy\ConstraintResponse $onConflict = \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default,
     ) {
         parent::__construct($name, $source);
+        ConflictClause::check($onConflict, $predicate->type->dialect);
     }
 
     #[Override]

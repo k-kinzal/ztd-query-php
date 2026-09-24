@@ -76,7 +76,7 @@ final class Mutations
             }
         }
         $parts = match (true) {
-            $statement instanceof Mutation\DeleteTableStatement => [Build::keyword('FROM'), $trigger ? Build::identifier([$statement->target->declaration->name], $dialect) : Query\Relations::write($statement->target, $dialect)],
+            $statement instanceof Mutation\DeleteTableStatement => [Build::keyword('FROM'), $trigger ? Build::identifier([$statement->target->declaration->name], $dialect) : Query\Relations::deletion($statement->target, $dialect)],
             $statement instanceof Mutation\DeleteUsingStatement => [Build::keyword('FROM'), $trigger ? Build::identifier([$statement->target->declaration->name], $dialect) : Query\Relations::write($statement->target, $dialect), Build::keyword('USING'), Query\Relations::write($statement->using, $dialect)],
             $statement instanceof Mutation\DeleteJoinedStatement => [Build::separated(array_map(static fn ($table): Tree => Build::identifier($table->alias === null ? $table->name->parts : [$table->alias], $dialect), $statement->targets)), Build::keyword('FROM'), Query\Relations::write($statement->from, $dialect)],
             default => throw new InvalidStructure('Unclassified DELETE form.'),

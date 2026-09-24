@@ -253,4 +253,17 @@ final class SchemaEvolutionTest extends TestCase
         $this->expectException(\SqlSemantics\SemanticException::class);
         (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a text)', "CREATE TABLE t(a text DEFAULT 'IF NOT EXISTS')");
     }
+
+
+    public function testApplyRegistersForeignTablesAndTheirChanges(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INT, a INT) PARTITION BY RANGE (id); CREATE FOREIGN TABLE f (id INT) SERVER s; CREATE FOREIGN TABLE IF NOT EXISTS f (id INT) SERVER s; CREATE FOREIGN TABLE p PARTITION OF t FOR VALUES FROM (1) TO (2) SERVER s; CREATE FOREIGN TABLE g (x INT) INHERITS (f) SERVER s; ALTER FOREIGN TABLE f ADD COLUMN b INT; CREATE FOREIGN TABLE gone (id INT) SERVER s; DROP FOREIGN TABLE gone');
+        self::assertSame(['t', 'f', 'p', 'g'], array_column($schema->tables, 'name'));
+        self::assertSame(['id', 'b'], array_column($schema->tables[1]->columns, 'name'));
+        self::assertSame(['id', 'a'], array_column($schema->tables[2]->columns, 'name'));
+        self::assertSame(['id', 'x'], array_column($schema->tables[3]->columns, 'name'));
+        $binder = new Binder($schema);
+        self::assertSame('ALTER FOREIGN TABLE "f" ADD COLUMN "c" integer', $binder->bind('ALTER FOREIGN TABLE f ADD COLUMN c INT')->toString());
+        self::assertSame('ALTER FOREIGN TABLE "g" RENAME COLUMN "x" TO "y"', $binder->bind('ALTER FOREIGN TABLE g RENAME COLUMN x TO y')->toString());
+    }
 }

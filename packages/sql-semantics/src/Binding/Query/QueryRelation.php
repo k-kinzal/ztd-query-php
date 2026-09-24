@@ -41,4 +41,21 @@ final class QueryRelation
         }
         return new TableDefinition('', $name, $columns, [], $source, $resolved);
     }
+
+    /**
+     * Rejects a MySQL derived table or CTE that names two columns the same, as MySQL does; PostgreSQL and SQLite keep them as separate positions.
+     * @param list<string> $aliases Optional column alias list
+     * @throws \SqlSemantics\InvalidSql
+     */
+    public static function distinct(ResultStatement $query, array $aliases, Node $source): void
+    {
+        if ($query->resultColumns() === [] || $query->resultColumns()[0]->expression->type->dialect !== \SqlSemantics\Dialect::MySql) {
+            return;
+        }
+        $names = $aliases !== [] ? $aliases : array_values(array_filter(array_map(static fn (\SqlSemantics\Model\OutputColumn $output): ?string => $output->name, $query->resultColumns()), static fn (?string $name): bool => $name !== null));
+        $folded = array_map(strtolower(...), $names);
+        if (count(array_unique($folded)) !== count($folded)) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::DerivedColumnName, $source);
+        }
+    }
 }

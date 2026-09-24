@@ -45,4 +45,16 @@ final class MySqlInsertionTest extends TestCase
         self::assertSame(Scheduling::LowPriority, $rebound->policy->scheduling);
         self::assertTrue($rebound->policy->ignore);
     }
+
+    public function testBindsTheProposedRowAlias(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('INSERT IGNORE INTO t VALUES(1) AS n ON DUPLICATE KEY UPDATE id = n.id + 1');
+        self::assertInstanceOf(InsertStatement::class, $statement);
+        self::assertInstanceOf(MySqlInsertion::class, $statement->policy);
+        self::assertTrue($statement->policy->ignore);
+        self::assertSame('n', $statement->policy->rowAlias?->row->alias);
+        self::assertNull((new MySqlInsertion())->rowAlias);
+        self::assertSame('INSERT IGNORE INTO `t` VALUES (1) AS `n` ON DUPLICATE KEY UPDATE `id` = (`n`.`id` + 1)', $statement->toString());
+    }
 }

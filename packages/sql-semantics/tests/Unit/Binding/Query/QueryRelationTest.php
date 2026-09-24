@@ -171,4 +171,26 @@ final class QueryRelationTest extends TestCase
         self::assertFalse($declaration->resolved);
         self::assertSame([], $declaration->columns);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT * FROM (SELECT 1 AS a, 2 AS A) AS s'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 FROM (SELECT * FROM p, p AS q) AS s'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 FROM (SELECT 1 AS a, 2 AS b) AS s (x, x)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['WITH c AS (SELECT 1 AS a, 2 AS a) SELECT 1 FROM c'])]
+    public function testDistinctRejectsARepeatedMysqlDerivedColumnName(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE p (id INT, v INT)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::DerivedColumnName->message());
+        $binder->bind($sql);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'WITH c (x, y) AS (SELECT 1 AS a, 2 AS a) SELECT * FROM c', 'WITH `c`(`x`, `y`) AS (SELECT 1 AS `a`, 2 AS `a`) SELECT `c`.`x` AS `x`, `c`.`y` AS `y` FROM `c`'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'SELECT * FROM (SELECT 1 AS a, 2 AS a) AS s', 'SELECT "s".* FROM(SELECT 1 AS "a", 2 AS "a") AS "s"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'SELECT * FROM (SELECT 1 AS a, 2 AS a) AS s', 'SELECT "s".* FROM(SELECT 1 AS "a", 2 AS "a") AS "s"'])]
+    public function testDistinctKeepsRenamedOrNonMysqlColumns(Dialect $dialect, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build());
+        self::assertSame($expected, $binder->bind($sql)->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
 }

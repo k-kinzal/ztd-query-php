@@ -45,6 +45,7 @@ final class CteBinder
         if ($width !== null && $columns !== [] && (count($columns) > $width || $query->origin->dialect !== \SqlSemantics\Dialect::PostgreSql && count($columns) !== $width)) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::CteColumnCount, $node);
         }
+        QueryRelation::distinct($query, $columns, $node);
         $policy = Tree::child($node, ['opt_materialized', 'wqas']);
         $text = $policy === null ? '' : strtoupper(Tree::text($policy));
         $mode = str_contains($text, 'NOT MATERIALIZED') ? Query\Materialization::Inline : (str_contains($text, 'MATERIALIZED') ? Query\Materialization::Materialized : Query\Materialization::Default);

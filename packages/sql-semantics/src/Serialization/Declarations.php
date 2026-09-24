@@ -37,9 +37,10 @@ final class Declarations
         $dialect = $statement->origin->dialect;
         $columns = [];
         $columnKey = self::columnKey($table, $dialect);
+        $keyConflict = self::keyConflict($table);
         foreach ($table->columns as $position => $column) {
             array_push($columns, ...Definition\Table\PostgreSqlTables::templates($statement->templates, $position));
-            $written = Definition\Columns::write($column, $dialect);
+            $written = Definition\Columns::write($column, $dialect, $keyConflict);
             $columns[] = $columnKey !== null && $columnKey->localColumns() === [$column->name] ? new Tree('column', [$written, Definition\Constraints::column($columnKey, $dialect)]) : $written;
         }
         array_push($columns, ...Definition\Table\PostgreSqlTables::templates($statement->templates, count($table->columns)));
@@ -60,6 +61,15 @@ final class Declarations
             Table\Persistence::Permanent => '', Table\Persistence::Temporary => 'TEMPORARY ', Table\Persistence::Unlogged => 'UNLOGGED ',
         } : (($properties instanceof Table\MySqlProperties || $properties instanceof Table\SqliteProperties) && $properties->temporary ? 'TEMPORARY ' : '');
         return new Tree('create-table', [Build::keyword('CREATE ' . $modifier . 'TABLE' . ($statement->ifNotExists ? ' IF NOT EXISTS' : '')), Build::identifier($statement->catalog === null ? self::tableName($table) : [$statement->catalog, $table->schema, $table->name], $dialect), Build::parentheses(Build::separated($columns)), Definition\Storage::table($properties, $dialect)]);
+    }
+
+    /**
+     * Returns the ON CONFLICT resolution of the table's primary key, which an AUTOINCREMENT column writes with its key.
+     */
+    public static function keyConflict(\SqlSemantics\Schema\TableDefinition $table): \SqlSemantics\Model\Write\Policy\ConstraintResponse
+    {
+        $keys = array_values(array_filter($table->constraints, static fn ($constraint): bool => $constraint instanceof PrimaryKey));
+        return isset($keys[0]) ? $keys[0]->onConflict : \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default;
     }
 
     /**

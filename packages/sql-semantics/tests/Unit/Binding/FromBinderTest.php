@@ -492,4 +492,40 @@ final class FromBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $derived);
         self::assertSame('d', $derived->declaration->name);
     }
+
+
+    #[TestWith(['mysql-8.4.7'])]
+    #[TestWith(['mysql-9.1.0'])]
+    public function testAccessReadsPartitionsAndSampleOfATable(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE t (id INT PRIMARY KEY)'));
+        $statement = $binder->bind('SELECT * FROM t PARTITION (p0) AS x FORCE INDEX (PRIMARY) TABLESAMPLE BERNOULLI (5)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $statement->from);
+        self::assertSame(['p0'], $statement->from->partitions?->names);
+        self::assertSame(\SqlSemantics\Model\Query\Sampling\SamplingMethod::Bernoulli, $statement->from->sample?->method);
+        $expected = 'SELECT `x`.`id` AS `id` FROM `t` PARTITION(`p0`) AS `x` FORCE INDEX(`PRIMARY`) TABLESAMPLE BERNOULLI(5)';
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
+    #[TestWith(['mysql-5.7.44'])]
+    #[TestWith(['mysql-8.0.44'])]
+    #[TestWith(['mysql-9.1.0'])]
+    public function testRelationBindsEveryTableOfAParenthesizedList(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE p (x INT PRIMARY KEY)'));
+        $expected = 'SELECT `x`.`x` AS `x`, `y`.`x` AS `x` FROM `p` AS `x` CROSS JOIN `p` AS `y`';
+        self::assertSame($expected, $binder->bind('SELECT * FROM (p AS x, p AS y)')->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
+
+    public function testNamedBindsATableWithItsClauses(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)'));
+        $expected = 'SELECT "x"."id" AS "id" FROM "public"."t" AS "x" TABLESAMPLE SYSTEM(1)';
+        self::assertSame($expected, $binder->bind('SELECT * FROM t x TABLESAMPLE SYSTEM (1)')->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
 }

@@ -29,7 +29,18 @@ final class Parts
                 throw new \SqlSemantics\Model\Validation\InvalidStructure('Projection positions and dialect must match the destination statement.');
             }
         }
-        return Build::separated(array_map(static fn (OutputColumn $output): Tree => new Tree('output', [$output->name !== null && $output->expression instanceof \SqlSemantics\Model\Scalar\Reference\Wildcard ? Build::parentheses($output->expression->structure()) : $output->expression->structure(), ...($output->name === null ? [] : [Build::keyword('AS'), Build::identifier([$output->name], $dialect)])]), $outputs));
+        $items = [];
+        for ($index = 0; $index < count($outputs); $index++) {
+            $output = $outputs[$index];
+            $star = \SqlSemantics\Serialization\Query\PositionalStars::length($outputs, $index);
+            if ($star > 0 && $output->expression instanceof \SqlSemantics\Model\Scalar\Reference\ColumnReference) {
+                $items[] = new Tree('output', [\SqlSemantics\Serialization\Query\PositionalStars::star($output->expression, $dialect)]);
+                $index += $star - 1;
+                continue;
+            }
+            $items[] = new Tree('output', [$output->name !== null && $output->expression instanceof \SqlSemantics\Model\Scalar\Reference\Wildcard ? Build::parentheses($output->expression->structure()) : $output->expression->structure(), ...($output->name === null ? [] : [Build::keyword('AS'), Build::identifier([$output->name], $dialect)])]);
+        }
+        return Build::separated($items);
     }
 
     /**

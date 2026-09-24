@@ -60,7 +60,7 @@ final class SchemaEvolution
         if (preg_match('/^CREATE (UNIQUE |FULLTEXT |SPATIAL )?INDEX /', $text) === 1) {
             return (new IndexEvolution($resolver))->apply($statement);
         }
-        $create = Tree::outer($statement, ['CreateStmt', 'CreateAsStmt', 'ViewStmt', 'create', 'create_table_stmt', 'view_tail', 'create_table'])[0] ?? null;
+        $create = Tree::outer($statement, ['CreateStmt', 'CreateForeignTableStmt', 'CreateAsStmt', 'ViewStmt', 'create', 'create_table_stmt', 'view_tail', 'create_table'])[0] ?? null;
         if ($create !== null || preg_match('/^CREATE (TEMP |TEMPORARY )?VIEW /', $text) === 1) {
             $table = $this->create($schema, $statement, $create ?? $statement, $resolver);
             $tables = $schema->tables;
@@ -78,10 +78,10 @@ final class SchemaEvolution
             }
             return [...$tables, $table];
         }
-        if (str_starts_with($text, 'ALTER TABLE ')) {
+        if (preg_match('/^ALTER (FOREIGN )?TABLE /', $text) === 1) {
             return (new TableAlteration($resolver))->apply($statement);
         }
-        if (preg_match('/^DROP (TEMPORARY )?(TABLE|VIEW) /', $text) === 1) {
+        if (preg_match('/^DROP (TEMPORARY |FOREIGN )?(TABLE|VIEW) /', $text) === 1) {
             $names = Tree::outer($statement, ['any_name', 'table_ident', 'fullname']);
             $drop = array_map(static fn (Node $name): string => implode('.', $identifiers->parts($name)), $names);
             return array_values(array_filter($schema->tables, static fn (TableDefinition $table): bool => !in_array($table->name, $drop, true) && !in_array($table->schema . '.' . $table->name, $drop, true)));
@@ -96,7 +96,7 @@ final class SchemaEvolution
      */
     public function create(Schema $schema, Node $statement, Node $create, TableResolver $resolver): TableDefinition
     {
-        $reader = new SchemaReader($resolver->identifiers, $schema->defaultSchema);
+        $reader = new SchemaReader($resolver->identifiers, $schema->defaultSchema, grammarVersion: $schema->grammarVersion);
         $source = $schema->dialect === Dialect::Sqlite ? $statement : $create;
         $copied = Copy\MySqlCopy::bind($source, $resolver);
         if ($copied !== null) {
@@ -113,7 +113,7 @@ final class SchemaEvolution
         $columns = $table->columns;
         $constraints = $table->constraints;
         $copies = $schema->dialect === Dialect::PostgreSql ? [] : Tree::outer($source, ['TableLikeClause', 'OptInherit']);
-        if ($schema->dialect === Dialect::PostgreSql && $source->name === 'CreateStmt') {
+        if ($schema->dialect === Dialect::PostgreSql && in_array($source->name, ['CreateStmt', 'CreateForeignTableStmt'], true)) {
             [$columns, $constraints] = Copy\PostgreSqlCopy::layout($source, $columns, $constraints, $resolver);
         }
         foreach ($copies as $copy) {

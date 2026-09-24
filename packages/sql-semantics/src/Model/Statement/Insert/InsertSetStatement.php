@@ -52,6 +52,15 @@ final class InsertSetStatement extends InsertStatement
     }
 
     /**
+     * VALUES and SET insertions can name their proposed row.
+     */
+    #[Override]
+    protected function namesProposedRow(): bool
+    {
+        return true;
+    }
+
+    /**
 
      * @visibility SqlSemantics
 
