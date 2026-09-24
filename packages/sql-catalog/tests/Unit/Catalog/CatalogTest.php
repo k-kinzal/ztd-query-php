@@ -25,6 +25,8 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(CatalogEntry::class)]
 #[UsesClass(LiteralText::class)]
 #[UsesClass(TextPattern::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 final class CatalogTest extends TestCase
 {
     public function testEntriesAreReturnedInTheOrderTheyWereGiven(): void

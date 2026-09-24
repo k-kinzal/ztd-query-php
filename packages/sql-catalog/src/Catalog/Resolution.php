@@ -46,7 +46,13 @@ enum Resolution: string
             return self::Incomplete;
         }
 
-        return in_array(Origin::External, $origins, true) ? self::ExternalInput : self::IncompleteModel;
+        foreach ($origins as $origin) {
+            if ($origin !== Origin::External) {
+                return self::IncompleteModel;
+            }
+        }
+
+        return self::ExternalInput;
     }
 
     /**

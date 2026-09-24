@@ -92,6 +92,9 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class CallEvaluatorTest extends TestCase
 {
     public function testTheCallMethodsAreReachedDirectly(): void
@@ -105,7 +108,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             $index,
             new \SqlCatalog\Analysis\SinkMatcher((new PdoExtension())->sinks(), $index),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -137,7 +140,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -159,7 +162,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -178,7 +181,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -396,7 +399,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             $index,
             new \SqlCatalog\Analysis\SinkMatcher([], $index),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -431,7 +434,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             $index,
             new \SqlCatalog\Analysis\SinkMatcher([], $index),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -448,7 +451,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -462,7 +465,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -481,7 +484,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -501,7 +504,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             $index,
             new \SqlCatalog\Analysis\SinkMatcher((new PdoExtension())->sinks(), $index),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -525,7 +528,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             $index,
             new \SqlCatalog\Analysis\SinkMatcher((new PdoExtension())->sinks(), $index),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -549,7 +552,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             $index,
             new \SqlCatalog\Analysis\SinkMatcher([], $index),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -571,7 +574,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             $index,
             new \SqlCatalog\Analysis\SinkMatcher([], $index),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -589,7 +592,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -615,7 +618,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             $index,
             new \SqlCatalog\Analysis\SinkMatcher([], $index),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -635,7 +638,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher($sinks, new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -654,7 +657,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -674,7 +677,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher($sinks, new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -693,7 +696,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -713,7 +716,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -740,7 +743,7 @@ final class CallEvaluatorTest extends TestCase
         $evaluator = new CallEvaluator(
             new ProgramIndex(),
             new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()),
-            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(),
             new \SqlCatalog\Analysis\ExternalInput(),
             new \SqlCatalog\Php\NodeText(),
         );
@@ -755,4 +758,87 @@ final class CallEvaluatorTest extends TestCase
         self::assertSame('Q::sql()', $method->patterns()[0]->holes()[0]->expression);
         self::assertSame('string', $method->type()->display());
     }
+    public function testFunctionNameUsesRegisteredNamespaceBeforeGlobalFallback(): void
+    {
+        $models = \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins();
+        $models->register('App\implode', static fn (array $arguments): ?\SqlCatalog\Evaluation\Domain => null);
+        $evaluator = new CallEvaluator(new ProgramIndex(), new \SqlCatalog\Analysis\SinkMatcher([], new ProgramIndex()), $models, new \SqlCatalog\Analysis\ExternalInput(), new \SqlCatalog\Php\NodeText());
+        $local = new Name('implode', ['namespacedName' => new Name('App\implode')]);
+        self::assertSame('App\implode', $evaluator->functionName($local));
+        self::assertSame('implode', $evaluator->functionName(new Name('implode')));
+    }
+
+    public function testApplyEffectsKeepsKnownByValueArgumentsAndOpensReferences(): void
+    {
+        $file = (new SourceParser())->parse('a.php', '<?php function update($keep, &$change) {} update($a, $b);');
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $evaluator = new CallEvaluator($index, new \SqlCatalog\Analysis\SinkMatcher([], $index), \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(), new \SqlCatalog\Analysis\ExternalInput(), new \SqlCatalog\Php\NodeText());
+        $statement = $file->statements[1];
+        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        self::assertInstanceOf(FuncCall::class, $statement->expr);
+        $environment = new Environment(['a' => Domain::literal('a')]);
+        $environment->markAbsent('b');
+        $evaluator->applyEffects($statement->expr, $environment);
+        self::assertSame('a', $environment->read('a')->soleLiteral()?->value);
+        self::assertNull($environment->read('b')->soleLiteral());
+    }
+
+
+    /**
+     * @param array<string, string> $expected
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerCallWrites')]
+    public function testEvaluateAppliesOnlyPossibleCallWrites(string $source, array $expected): void
+    {
+        $file = (new SourceParser())->parse('a.php', '<?php function known($a, &$b) {} ' . $source . ';');
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $sinks = (new PdoExtension())->sinks();
+        $evaluator = new CallEvaluator($index, new \SqlCatalog\Analysis\SinkMatcher($sinks, $index), \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(), new \SqlCatalog\Analysis\ExternalInput(), new \SqlCatalog\Php\NodeText());
+        $statement = $file->statements[1];
+        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        self::assertInstanceOf(\PhpParser\Node\Expr\CallLike::class, $statement->expr);
+        $environment = new Environment(['a' => Domain::literal('a'), 'b' => Domain::literal('b'), 'd' => Domain::of(new ObjectTerm('PDO'))]);
+        $evaluator->evaluate($statement->expr, $environment, new FunctionScope('a.php'), (new Interpreter($index, $sinks))->evaluatorFor());
+        self::assertSame($expected, array_map(static fn (string $name): string => $environment->read($name)->signature(), ['a' => 'a', 'b' => 'b']));
+    }
+
+    /**
+     * @return array<string, array{string, array<string, string>}>
+     */
+    public static function providerCallWrites(): array
+    {
+        $kept = ['a' => 'literal:string:a', 'b' => 'literal:string:b'];
+        $changed = ['a' => 'literal:string:a', 'b' => 'opaque:mixed:unresolved'];
+        return [
+            'unknown' => ['unknown($b)', $changed],
+            'declared' => ['known($a, $b)', $changed],
+            'builtin' => ['str_replace($a, $a, $a, $b)', $changed],
+            'builtin without reference output' => ['str_replace($a, $a, $b)', $kept],
+            'read only builtin' => ['strtolower($a)', $kept],
+            'pdo sink' => ['$d->prepare($a)', $kept],
+            'unknown method' => ['$d->other($b)', $changed],
+            'dynamic method' => ['$d->$a($b)', $changed],
+            'unknown static' => ['Other::change($b)', $changed],
+            'unknown constructor' => ['new Other($b)', $changed],
+        ];
+    }
+
+    public function testEvaluateRetainsReferenceWritesForAModeledNamespacedFunction(): void
+    {
+        $file = (new SourceParser())->parse('a.php', '<?php namespace App; function strtolower(&$value) { $value = "changed"; } strtolower($a);');
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $models = \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins();
+        $models->register('App\strtolower', static fn (array $arguments): Domain => Domain::literal('modeled'));
+        $evaluator = new CallEvaluator($index, new \SqlCatalog\Analysis\SinkMatcher([], $index), $models, new \SqlCatalog\Analysis\ExternalInput(), new \SqlCatalog\Php\NodeText());
+        $namespace = $file->statements[0];
+        self::assertInstanceOf(\PhpParser\Node\Stmt\Namespace_::class, $namespace);
+        $statement = $namespace->stmts[1];
+        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        self::assertInstanceOf(FuncCall::class, $statement->expr);
+        $environment = new Environment(['a' => Domain::literal('before')]);
+        $result = $evaluator->evaluate($statement->expr, $environment, new FunctionScope('a.php'), (new Interpreter($index, []))->evaluatorFor());
+        self::assertSame('modeled', $result->soleLiteral()?->value);
+        self::assertNull($environment->read('a')->soleLiteral());
+    }
+
 }

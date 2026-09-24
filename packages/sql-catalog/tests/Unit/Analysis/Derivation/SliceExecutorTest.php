@@ -97,6 +97,9 @@ use WeakMap;
 #[UsesClass(LiteralText::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class SliceExecutorTest extends TestCase
 {
     public function testRunSplitsOnATernarySoLaterReadsAgree(): void
@@ -195,7 +198,7 @@ final class SliceExecutorTest extends TestCase
         self::assertSame([
             'a=literal:int:1;b=literal:string:x',
             'a=literal:int:1;b=literal:string:y',
-            'a=literal:int:2;b=literal:string:x|literal:string:y',
+            'combined;a=literal:int:2;b=literal:string:x|literal:string:y',
         ], array_map(static fn (Environment $environment): string => $environment->signature(), $runs));
     }
 
@@ -211,7 +214,7 @@ final class SliceExecutorTest extends TestCase
 
         $runs = (new SliceExecutor(budget: $budget))->run($steps, new Environment(), new FunctionScope('t.php'), $expressions);
 
-        self::assertSame(['a=literal:string:x;b=opaque:mixed:budget'], array_map(static fn (Environment $environment): string => $environment->signature(), $runs));
+        self::assertSame(['a=literal:string:x;maybe:b=opaque:mixed:budget'], array_map(static fn (Environment $environment): string => $environment->signature(), $runs));
         self::assertEquals([new OpaqueTerm(TypeShape::unknown(), Origin::Budget, '$b')], $runs[0]->read('b')->terms);
     }
 
@@ -245,7 +248,7 @@ final class SliceExecutorTest extends TestCase
         $runs = (new SliceExecutor(budget: $budget))->run($steps, $start, new FunctionScope('t.php'), $expressions, true);
 
         self::assertSame(
-            ['a=opaque:mixed:budget;b=opaque:mixed:budget;keep=literal:string:k'],
+            ['keep=literal:string:k;maybe:a=opaque:mixed:budget;maybe:b=opaque:mixed:budget'],
             array_map(static fn (Environment $environment): string => $environment->signature(), $runs),
         );
         self::assertSame(['keep'], $start->names());
@@ -323,8 +326,8 @@ final class SliceExecutorTest extends TestCase
         $open = (new SliceExecutor())->abandon($steps, [$first, $second]);
 
         self::assertSame([
-            'a=opaque:mixed:budget;b=opaque:mixed:budget;c=opaque:mixed:budget;keep=literal:string:k',
-            'a=opaque:mixed:budget;b=opaque:mixed:budget;c=opaque:mixed:budget',
+            'keep=literal:string:k;maybe:a=opaque:mixed:budget;maybe:b=opaque:mixed:budget;maybe:c=opaque:mixed:budget',
+            'maybe:a=opaque:mixed:budget;maybe:b=opaque:mixed:budget;maybe:c=opaque:mixed:budget',
         ], array_map(static fn (Environment $environment): string => $environment->signature(), $open));
         self::assertEquals([new OpaqueTerm(TypeShape::unknown(), Origin::Budget, '$c')], $open[1]->read('c')->terms);
         self::assertNotSame($first, $open[0]);
@@ -478,7 +481,7 @@ final class SliceExecutorTest extends TestCase
         return [
             'global' => ['<?php global $db;', 'a=literal:string:x;db=object:PDO::'],
             'static' => ['<?php static $cache;', 'a=literal:string:x;cache=opaque:mixed:unresolved'],
-            'unset' => ['<?php unset($a);', 'a=literal:null:'],
+            'unset' => ['<?php unset($a);', 'absent:a=literal:null:'],
         ];
     }
 
@@ -653,7 +656,7 @@ final class SliceExecutorTest extends TestCase
         self::assertSame(0, $budget->spent());
     }
 
-    public function testEnterClosureBindsTheParametersByTypeAndTheRestAsUnresolved(): void
+    public function testEnterClosureBindsParametersAndMarksOtherLocalsAbsent(): void
     {
         $closure = (new NodeFinder())->findFirstInstanceOf(
             (new SourceParser())->parse('t.php', '<?php function (int $id, $name, ?string $unlisted) use ($t) {};')->statements,
@@ -667,7 +670,7 @@ final class SliceExecutorTest extends TestCase
         self::assertSame(['id', 'name', 'other'], $environment->names());
         self::assertEquals([new OpaqueTerm(TypeShape::of(['int']), Origin::Parameter, '$id')], $environment->read('id')->terms);
         self::assertEquals([new OpaqueTerm(TypeShape::unknown(), Origin::Parameter, '$name')], $environment->read('name')->terms);
-        self::assertEquals([new OpaqueTerm(TypeShape::unknown(), Origin::Unresolved, '$other')], $environment->read('other')->terms);
+        self::assertEquals(Domain::literal(null)->terms, $environment->read('other')->terms);
     }
 
     public function testEnterClosureOfAnArrowFunctionReadsItsParameterTypes(): void
@@ -684,14 +687,14 @@ final class SliceExecutorTest extends TestCase
         self::assertEquals([new OpaqueTerm(TypeShape::of(['string', 'null']), Origin::Parameter, '$s')], $environment->read('s')->terms);
     }
 
-    public function testEnterClosureLeavesAParameterWithoutANameUnresolved(): void
+    public function testEnterClosureMarksNamesWithoutAParameterAbsent(): void
     {
         $closure = new Expr\Closure(['params' => [new Node\Param(new Expr\Variable(new Expr\Variable('n')), null, new Node\Identifier('int'))]]);
         $environment = new Environment();
 
         (new SliceExecutor())->enterClosure($closure, ['n'], $environment);
 
-        self::assertEquals([new OpaqueTerm(TypeShape::unknown(), Origin::Unresolved, '$n')], $environment->read('n')->terms);
+        self::assertEquals(Domain::literal(null)->terms, $environment->read('n')->terms);
     }
 
     public function testDeclareUnsetClearsOnlyThePlainVariablesItNames(): void
@@ -702,7 +705,7 @@ final class SliceExecutorTest extends TestCase
 
         (new SliceExecutor())->declare($declaration, $environment);
 
-        self::assertSame('a=literal:null:;b=literal:string:y;c=literal:string:z;d=literal:null:', $environment->signature());
+        self::assertSame('absent:a=literal:null:;absent:d=literal:null:;b=literal:string:y;c=literal:string:z', $environment->signature());
     }
 
     public function testDeclareGlobalTakesTheClassTheNameIsKnownToHold(): void
@@ -851,8 +854,8 @@ final class SliceExecutorTest extends TestCase
             'a post-decrement' => ['$i--', 'i=opaque:int:unresolved'],
             'a pre-decrement' => ['--$i', 'i=opaque:int:unresolved'],
             'an arithmetic assignment' => ['$i += 1', 'i=opaque:mixed:unresolved'],
-            'a reference assignment' => ['$r =& $i', 'i=literal:string:a;r=opaque:mixed:unresolved'],
-            'an expression that assigns nothing' => ['f($i)', 'i=literal:string:a'],
+            'a reference assignment' => ['$r =& $i', 'maybe:i=opaque:mixed:unresolved;r=opaque:mixed:unresolved'],
+            'an expression that assigns nothing' => ['f($i)', 'maybe:i=opaque:mixed:unresolved'],
         ];
     }
 
@@ -1024,7 +1027,7 @@ final class SliceExecutorTest extends TestCase
         self::assertSame([
             'a=literal:int:1;b=literal:string:x',
             'a=literal:int:1;b=literal:string:y',
-            'a=literal:int:2;b=literal:string:x|literal:string:y',
+            'combined;a=literal:int:2;b=literal:string:x|literal:string:y',
         ], array_map(static fn (Environment $one): string => $one->signature(), $split));
     }
 
@@ -1060,7 +1063,7 @@ final class SliceExecutorTest extends TestCase
         ], 2);
 
         self::assertSame(
-            ['a=literal:int:1', 'a=literal:int:2|literal:int:3;b=literal:string:x'],
+            ['a=literal:int:1', 'combined;maybe:a=literal:int:2|literal:int:3|opaque:mixed:unresolved;maybe:b=literal:string:x|opaque:mixed:unresolved'],
             array_map(static fn (Environment $one): string => $one->signature(), $bound),
         );
         self::assertSame($first, $bound[0]);
@@ -1070,7 +1073,7 @@ final class SliceExecutorTest extends TestCase
     {
         $bound = (new SliceExecutor())->bound([new Environment(['a' => Domain::literal(1)]), new Environment(['a' => Domain::literal(2)])], 1);
 
-        self::assertSame(['a=literal:int:1|literal:int:2'], array_map(static fn (Environment $one): string => $one->signature(), $bound));
+        self::assertSame(['combined;a=literal:int:1|literal:int:2'], array_map(static fn (Environment $one): string => $one->signature(), $bound));
     }
 
     public function testBoundKeepsTwelveApartByDefault(): void
@@ -1080,7 +1083,7 @@ final class SliceExecutorTest extends TestCase
         $bound = (new SliceExecutor())->bound($environments);
 
         self::assertCount(12, $bound);
-        self::assertSame('a=literal:int:12|literal:int:13', $bound[11]->signature());
+        self::assertSame('combined;a=literal:int:12|literal:int:13', $bound[11]->signature());
     }
 
     public function testBoundOfNothingIsNothing(): void

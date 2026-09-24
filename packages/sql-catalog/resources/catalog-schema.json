@@ -4,17 +4,26 @@
     "title": "SQL catalog",
     "description": "The SQL statements a PHP application can issue, as reported by sql-catalog.",
     "type": "object",
-    "required": ["version", "summary", "statements", "problems"],
+    "required": ["version", "analysis", "summary", "statements", "problems"],
     "additionalProperties": false,
     "properties": {
         "$schema": {
             "type": "string",
             "description": "Where the schema for this document is written."
         },
+        "analysis": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["conditions", "reachability"],
+            "properties": {
+                "conditions": {"const": "not-evaluated"},
+                "reachability": {"const": "not-assessed"}
+            }
+        },
         "version": {
             "type": "integer",
-            "const": 1,
-            "description": "The format version. A reader that does not know this number should not guess."
+            "const": 2,
+            "description": "The format version. Version 2 explicitly disclaims condition evaluation and runtime reachability. A reader that does not know this number should not guess."
         },
         "summary": {
             "type": "object",
@@ -88,7 +97,7 @@
                 },
                 "correlated": {
                     "type": "boolean",
-                    "description": "Whether the alternatives at this call site are ones the code can reach. When false, the text was assembled from parts that vary independently, so some listed combinations may be unreachable."
+                    "description": "Whether alternatives retained their structural pairing. Conditions are never used to select branches; runtime reachability is not assessed, even when this is true."
                 },
                 "tables": {
                     "type": "array",

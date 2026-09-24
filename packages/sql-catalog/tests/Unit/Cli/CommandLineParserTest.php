@@ -18,6 +18,9 @@ use SqlCatalog\Sql\StatementKind;
 #[UsesClass(CommandLine::class)]
 #[UsesClass(CatalogFilter::class)]
 #[UsesClass(InvalidCommandLineException::class)]
+#[UsesClass(\SqlCatalog\Configuration::class)]
+#[UsesClass(\SqlCatalog\ConfigurationSchema::class)]
+#[UsesClass(\SqlCatalog\InvalidConfigurationException::class)]
 final class CommandLineParserTest extends TestCase
 {
     public function testParseReadsPathsAndOptions(): void
@@ -202,5 +205,55 @@ final class CommandLineParserTest extends TestCase
         $parser = new CommandLineParser();
         self::assertSame('b', $parser->last(['output' => ['a', 'b']], 'output'));
         self::assertNull($parser->last([], 'output'));
+    }
+    public function testParseReadsAConfigurationPathWithoutSplittingCommas(): void
+    {
+        $path = sys_get_temp_dir() . '/catalog,local-' . bin2hex(random_bytes(6)) . '.yaml';
+        file_put_contents($path, '{}');
+        try {
+            $parser = new CommandLineParser();
+            self::assertSame($path, $parser->parse(['--config=' . $path, 'src'])->config);
+            self::assertSame($path, $parser->parse(['-c', $path, 'src'])->config);
+            self::assertNull($parser->parse(['src'])->config);
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function testConfigurationDiscoversTheWorkingDirectoryFile(): void
+    {
+        $directory = sys_get_temp_dir() . '/catalog-' . bin2hex(random_bytes(6));
+        mkdir($directory);
+        file_put_contents($directory . '/.catalog.yaml', "paths: [src]\nexclude: [tests]\nreporter: html\noutput: catalog\n");
+        $original = getcwd();
+        self::assertNotFalse($original);
+        chdir($directory);
+        $absolute = getcwd();
+        self::assertNotFalse($absolute);
+        try {
+            $parser = new CommandLineParser();
+            $command = $parser->parse([]);
+            self::assertSame([$absolute . '/src'], $command->paths);
+            self::assertSame($absolute . '/catalog', $command->output);
+            self::assertSame($absolute, $command->root);
+            self::assertSame('html', $command->reporter);
+            self::assertSame(['tests'], $command->excluded);
+            $overridden = $parser->parse(['other', '--reporter=text', '--exclude=vendor', '--output=cli-output']);
+            self::assertSame(['other'], $overridden->paths);
+            self::assertSame('text', $overridden->reporter);
+            self::assertSame(['vendor'], $overridden->excluded);
+            self::assertSame('cli-output', $overridden->output);
+        } finally {
+            chdir($original);
+            unlink($directory . '/.catalog.yaml');
+            rmdir($directory);
+        }
+    }
+
+    public function testConfigurationIsOptionalAndExplicitFilesMustExist(): void
+    {
+        self::assertNull((new CommandLineParser())->configuration(null)->file);
+        $this->expectException(\SqlCatalog\InvalidConfigurationException::class);
+        (new CommandLineParser())->configuration('/missing/.catalog.yaml');
     }
 }

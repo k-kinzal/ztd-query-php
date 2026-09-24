@@ -164,7 +164,8 @@ $pdo->query("SELECT * FROM t ORDER BY a $dir, b $dir");
 
 gives `… a ASC, b ASC` and `… a DESC, b DESC`, never the mixed pairs.
 
-An `isset` guard on a local variable is evaluated within each run:
+Conditions are never used to choose a branch, including `isset` and literal
+`true` or `false`. For example:
 
 ```php
 function findUsers(PDO $pdo, bool $active): void {
@@ -176,16 +177,25 @@ function findUsers(PDO $pdo, bool $active): void {
 ```
 
 This gives `SELECT * FROM users WHERE active = 1` and `SELECT * FROM users`,
-both resolved. On the run without the assignment, the local is unset and the
-ternary reads only the fallback. Null also makes the guard false; empty strings,
-zero and false are set values. With several arguments, `isset` is true only when
-all are set. A known boolean condition selects only its ternary branch.
+both with exact text. Both ternary arms are read on every run. On the run without
+an assignment, `$where` is definitely absent: reading it produces null, which
+becomes an empty string during concatenation. Identical SQL strings then merge.
+A present null value and an absent variable remain distinct in the environment,
+even though their string representations are equal.
 
-A local with no definition still leaves an unresolved gap if read without a
-guard. Runtime inputs, unknown calls and declared globals keep their unknown
-values, so an `isset` guard does not discard a possible SQL fragment from them.
-Names entering file scope from outside the analyzed file, property checks and
-array element checks remain conservative.
+Only locals whose definitions were fully searched can be considered absent.
+Parameters, globals, file scope inputs, unmodelled values and exhausted searches
+stay open. Includes, `eval`, symbol table imports and dynamic assignments
+invalidate affected bindings; calls may change writable reference arguments.
+Possible reference aliases are conservatively invalidated rather than simulated.
+The analyzer does not execute included files or arbitrary callees for their writes.
+A later definite assignment can establish a value again.
+
+Unknown alternatives remain as gaps even when another arm yields exact SQL.
+This enumeration is structural: constant-false branches and incompatible guards
+can still contribute candidates. Neither `exact`, `searchClosed` nor `correlated`
+is evidence of runtime reachability. Expression arms run against separate states;
+joining those states records when structural pairing was lost.
 
 How many runs are kept apart is what the budget can pay for along the path: a
 short path keeps up to `SliceExecutor::MAX_RUNS`, a body of several hundred
@@ -368,3 +378,27 @@ code rather than in the analyzer:
 Most of the remaining gaps sit inside otherwise-resolved statements and are
 `$wpdb->posts`-style table names, which WordPress fixes at runtime from its
 configured prefix.
+
+## Configured function models
+
+Function evaluation uses `Analysis\FunctionModel\Registry`. The standard
+models are installed by `BuiltinCallModel::register()`, and applications can
+register additional models or conditional overrides through the same API.
+Models receive evaluated argument domains, so assignments and traced helper
+returns compose with them normally.
+
+The built-in `array_fill` model represents arrays filled with `'?'` as one
+placeholder, regardless of count. Together with `implode` this catalogs variable
+placeholder lists as `IN (?)` without enumerating lengths. A registered
+override takes precedence. Other unmodeled dependencies remain open.
+
+The CLI loads project settings from `.catalog.yaml`, including function model
+classes, paths, filters and output settings. Explicit command-line options
+override the corresponding file settings. See
+[Catalog configuration](../README.md#catalog-configuration) and
+[Function models](../README.md#function-models) for the configuration and
+registration contracts.
+
+Configured interpretations and built-in normalization define the cataloged SQL
+shape. Completion and binding findings describe that interpretation rather
+than discarded runtime variants.

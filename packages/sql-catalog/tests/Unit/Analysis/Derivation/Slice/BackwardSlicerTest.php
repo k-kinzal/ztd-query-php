@@ -40,6 +40,8 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\ExternalInput::class)]
 #[UsesClass(SourceParser::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class BackwardSlicerTest extends TestCase
 {
     /**
