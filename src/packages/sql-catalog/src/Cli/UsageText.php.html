@@ -81,59 +81,60 @@
 <span class="src-line" id="L43"><a class="ln" href="#L43">43</a>            <span class="tok-str">&#039;  -r, --reporter=NAME    Render with NAME (default: text on standard output, json into a directory)&#039;</span>,</span>
 <span class="src-line" id="L44"><a class="ln" href="#L44">44</a>            <span class="tok-str">&#039;&#039;</span>,</span>
 <span class="src-line" id="L45"><a class="ln" href="#L45">45</a>            <span class="tok-str">&#039;What to read:&#039;</span>,</span>
-<span class="src-line" id="L46"><a class="ln" href="#L46">46</a>            <span class="tok-str">&#039;  -e, --extension=NAME   Recognise the database calls of NAME; repeatable (default: pdo,mysqli)&#039;</span>,</span>
-<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>            <span class="tok-str">&#039;      --exclude=PATTERN  Skip source files whose reported path matches; repeatable&#039;</span>,</span>
-<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>            <span class="tok-str">&#039;      --root=DIR         Report paths relative to DIR (default: the working directory)&#039;</span>,</span>
-<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>            <span class="tok-str">&#039;&#039;</span>,</span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>            <span class="tok-str">&#039;What to keep:&#039;</span>,</span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>            <span class="tok-str">&#039;      --namespace=NS     Keep statements issued under a namespace; repeatable&#039;</span>,</span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>            <span class="tok-str">&#039;      --method=NAME      Keep statements issued in a function, as name or Class::method; repeatable&#039;</span>,</span>
-<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>            <span class="tok-str">&#039;      --path=PATTERN     Keep statements from files matching a pattern; repeatable&#039;</span>,</span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>            <span class="tok-str">&#039;      --kind=KIND        Keep statements of a kind, such as select or insert; repeatable&#039;</span>,</span>
-<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>            <span class="tok-str">&#039;      --table=NAME       Keep statements naming a table; repeatable&#039;</span>,</span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>            <span class="tok-str">&#039;      --sink=ID          Keep statements found at a database call, such as pdo.prepare; repeatable&#039;</span>,</span>
-<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>            <span class="tok-str">&#039;      --severity=LEVEL   Keep statements reported at LEVEL or above&#039;</span>,</span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>            <span class="tok-str">&#039;&#039;</span>,</span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>            <span class="tok-str">&#039;Exit status:&#039;</span>,</span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>            <span class="tok-str">&#039;      --fail-on=LEVEL    Exit with 1 when a statement is reported at LEVEL or above&#039;</span>,</span>
-<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>            <span class="tok-str">&#039;&#039;</span>,</span>
-<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>            <span class="tok-str">&#039;Information:&#039;</span>,</span>
-<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>            <span class="tok-str">&#039;      --list-extensions  List the extensions this build recognises&#039;</span>,</span>
-<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>            <span class="tok-str">&#039;      --list-reporters   List the reporters this build can render with&#039;</span>,</span>
-<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>            <span class="tok-str">&#039;  -h, --help             Show this help&#039;</span>,</span>
-<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>            <span class="tok-str">&#039;&#039;</span>,</span>
-<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>            <span class="tok-str">&#039;Values given to a repeatable option may also be written separated by commas.&#039;</span>,</span>
-<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>            <span class="tok-str">&#039;&#039;</span>,</span>
-<span class="src-line" id="L69"><a class="ln" href="#L69">69</a>        ]);</span>
-<span class="src-line" id="L70"><a class="ln" href="#L70">70</a>    }</span>
-<span class="src-line" id="L71"><a class="ln" href="#L71">71</a></span>
-<span class="src-line" id="L72"><a class="ln" href="#L72">72</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L73"><a class="ln" href="#L73">73</a><span class="tok-com">     * The extensions, one per line.</span></span>
-<span class="src-line" id="L74"><a class="ln" href="#L74">74</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">extensions</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>    {</span>
-<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>        <span class="tok-var">$lines</span> = [];</span>
-<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">extensions</span>-&gt;<span class="tok-id">all</span>() <span class="tok-kw">as</span> <span class="tok-var">$extension</span>) {</span>
-<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>            <span class="tok-var">$lines</span>[] = <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;  %-10s %s&#039;</span>, <span class="tok-var">$extension</span>-&gt;<span class="tok-id">name</span>(), <span class="tok-var">$extension</span>-&gt;<span class="tok-id">description</span>());</span>
-<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>        }</span>
-<span class="src-line" id="L81"><a class="ln" href="#L81">81</a></span>
-<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&quot;\n&quot;</span>, <span class="tok-var">$lines</span>) . <span class="tok-str">&quot;\n&quot;</span>;</span>
-<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>    }</span>
-<span class="src-line" id="L84"><a class="ln" href="#L84">84</a></span>
-<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L86"><a class="ln" href="#L86">86</a><span class="tok-com">     * The reporters, one per line.</span></span>
-<span class="src-line" id="L87"><a class="ln" href="#L87">87</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">reporters</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>    {</span>
-<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>        <span class="tok-var">$lines</span> = [];</span>
-<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">reporters</span>-&gt;<span class="tok-id">all</span>() <span class="tok-kw">as</span> <span class="tok-var">$reporter</span>) {</span>
-<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>            <span class="tok-var">$lines</span>[] = <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;  %-10s %s&#039;</span>, <span class="tok-var">$reporter</span>-&gt;<span class="tok-id">name</span>(), <span class="tok-var">$reporter</span>-&gt;<span class="tok-id">description</span>());</span>
-<span class="src-line" id="L93"><a class="ln" href="#L93">93</a>        }</span>
-<span class="src-line" id="L94"><a class="ln" href="#L94">94</a></span>
-<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&quot;\n&quot;</span>, <span class="tok-var">$lines</span>) . <span class="tok-str">&quot;\n&quot;</span>;</span>
-<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>    }</span>
-<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>}</span>
-<span class="src-line" id="L98"><a class="ln" href="#L98">98</a></span>
+<span class="src-line" id="L46"><a class="ln" href="#L46">46</a>            <span class="tok-str">&#039;  -c, --config=FILE      Read catalog settings (default: .catalog.yaml)&#039;</span>,</span>
+<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>            <span class="tok-str">&#039;  -e, --extension=NAME   Recognise the database calls of NAME; repeatable (default: pdo,mysqli)&#039;</span>,</span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>            <span class="tok-str">&#039;      --exclude=PATTERN  Skip source files whose reported path matches; repeatable&#039;</span>,</span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>            <span class="tok-str">&#039;      --root=DIR         Report paths relative to DIR (default: the working directory)&#039;</span>,</span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>            <span class="tok-str">&#039;&#039;</span>,</span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>            <span class="tok-str">&#039;What to keep:&#039;</span>,</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>            <span class="tok-str">&#039;      --namespace=NS     Keep statements issued under a namespace; repeatable&#039;</span>,</span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>            <span class="tok-str">&#039;      --method=NAME      Keep statements issued in a function, as name or Class::method; repeatable&#039;</span>,</span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>            <span class="tok-str">&#039;      --path=PATTERN     Keep statements from files matching a pattern; repeatable&#039;</span>,</span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>            <span class="tok-str">&#039;      --kind=KIND        Keep statements of a kind, such as select or insert; repeatable&#039;</span>,</span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>            <span class="tok-str">&#039;      --table=NAME       Keep statements naming a table; repeatable&#039;</span>,</span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>            <span class="tok-str">&#039;      --sink=ID          Keep statements found at a database call, such as pdo.prepare; repeatable&#039;</span>,</span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>            <span class="tok-str">&#039;      --severity=LEVEL   Keep statements reported at LEVEL or above&#039;</span>,</span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>            <span class="tok-str">&#039;&#039;</span>,</span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>            <span class="tok-str">&#039;Exit status:&#039;</span>,</span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>            <span class="tok-str">&#039;      --fail-on=LEVEL    Exit with 1 when a statement is reported at LEVEL or above&#039;</span>,</span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>            <span class="tok-str">&#039;&#039;</span>,</span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>            <span class="tok-str">&#039;Information:&#039;</span>,</span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>            <span class="tok-str">&#039;      --list-extensions  List the extensions this build recognises&#039;</span>,</span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>            <span class="tok-str">&#039;      --list-reporters   List the reporters this build can render with&#039;</span>,</span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>            <span class="tok-str">&#039;  -h, --help             Show this help&#039;</span>,</span>
+<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>            <span class="tok-str">&#039;&#039;</span>,</span>
+<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>            <span class="tok-str">&#039;Values given to a repeatable option may also be written separated by commas.&#039;</span>,</span>
+<span class="src-line" id="L69"><a class="ln" href="#L69">69</a>            <span class="tok-str">&#039;&#039;</span>,</span>
+<span class="src-line" id="L70"><a class="ln" href="#L70">70</a>        ]);</span>
+<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>    }</span>
+<span class="src-line" id="L72"><a class="ln" href="#L72">72</a></span>
+<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L74"><a class="ln" href="#L74">74</a><span class="tok-com">     * The extensions, one per line.</span></span>
+<span class="src-line" id="L75"><a class="ln" href="#L75">75</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">extensions</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>    {</span>
+<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>        <span class="tok-var">$lines</span> = [];</span>
+<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">extensions</span>-&gt;<span class="tok-id">all</span>() <span class="tok-kw">as</span> <span class="tok-var">$extension</span>) {</span>
+<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>            <span class="tok-var">$lines</span>[] = <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;  %-10s %s&#039;</span>, <span class="tok-var">$extension</span>-&gt;<span class="tok-id">name</span>(), <span class="tok-var">$extension</span>-&gt;<span class="tok-id">description</span>());</span>
+<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>        }</span>
+<span class="src-line" id="L82"><a class="ln" href="#L82">82</a></span>
+<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&quot;\n&quot;</span>, <span class="tok-var">$lines</span>) . <span class="tok-str">&quot;\n&quot;</span>;</span>
+<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>    }</span>
+<span class="src-line" id="L85"><a class="ln" href="#L85">85</a></span>
+<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L87"><a class="ln" href="#L87">87</a><span class="tok-com">     * The reporters, one per line.</span></span>
+<span class="src-line" id="L88"><a class="ln" href="#L88">88</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">reporters</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>    {</span>
+<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>        <span class="tok-var">$lines</span> = [];</span>
+<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">reporters</span>-&gt;<span class="tok-id">all</span>() <span class="tok-kw">as</span> <span class="tok-var">$reporter</span>) {</span>
+<span class="src-line" id="L93"><a class="ln" href="#L93">93</a>            <span class="tok-var">$lines</span>[] = <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;  %-10s %s&#039;</span>, <span class="tok-var">$reporter</span>-&gt;<span class="tok-id">name</span>(), <span class="tok-var">$reporter</span>-&gt;<span class="tok-id">description</span>());</span>
+<span class="src-line" id="L94"><a class="ln" href="#L94">94</a>        }</span>
+<span class="src-line" id="L95"><a class="ln" href="#L95">95</a></span>
+<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&quot;\n&quot;</span>, <span class="tok-var">$lines</span>) . <span class="tok-str">&quot;\n&quot;</span>;</span>
+<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>    }</span>
+<span class="src-line" id="L98"><a class="ln" href="#L98">98</a>}</span>
+<span class="src-line" id="L99"><a class="ln" href="#L99">99</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
