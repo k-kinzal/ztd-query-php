@@ -135,6 +135,9 @@ final class ExpressionEvaluator
         if ($node instanceof Expr\Ternary) {
             return $this->evaluateTernary($node, $environment, $scope);
         }
+        if ($node instanceof Expr\Isset_) {
+            return $this->evaluateIsset($node, $environment, $scope);
+        }
         if ($node instanceof Expr\BinaryOp\Coalesce) {
             return $this->evaluate($node->left, $environment, $scope)
                 ->union($this->evaluate($node->right, $environment, $scope));
@@ -268,9 +271,46 @@ final class ExpressionEvaluator
     public function evaluateTernary(Expr\Ternary $node, Environment $environment, FunctionScope $scope): Domain
     {
         $condition = $this->evaluate($node->cond, $environment, $scope);
+        $literal = $condition->soleLiteral();
+        if ($literal?->value === true) {
+            return $node->if === null ? $condition : $this->evaluate($node->if, $environment, $scope);
+        }
+        if ($literal?->value === false) {
+            return $this->evaluate($node->else, $environment, $scope);
+        }
         $whenTrue = $node->if === null ? $condition : $this->evaluate($node->if, $environment, $scope);
 
         return $whenTrue->union($this->evaluate($node->else, $environment, $scope));
+    }
+
+    /**
+     * Whether every checked variable is defined and non-null in this run.
+     *
+     * Unknown values keep the test open. Property and element checks also stay
+     * open because their declared type does not prove they have been initialized.
+     */
+    public function evaluateIsset(Expr\Isset_ $node, Environment $environment, FunctionScope $scope): Domain
+    {
+        $unknown = false;
+        foreach ($node->vars as $variable) {
+            $value = $this->evaluate($variable, $environment, $scope);
+            if (!$variable instanceof Expr\Variable) {
+                $unknown = true;
+                continue;
+            }
+            if (is_string($variable->name) && $variable->name !== 'this'
+                && !(new ExternalInput())->isVariable($variable->name)
+                && !$environment->has($variable->name) && $scope->function !== FunctionScope::MAIN) {
+                return Domain::literal(false);
+            }
+            $type = $value->type();
+            if ($type->names === ['null']) {
+                return Domain::literal(false);
+            }
+            $unknown = $unknown || $type->isUnknown() || $type->isNullable();
+        }
+
+        return $unknown ? Domain::opaque(TypeShape::of(['bool']), Origin::Unresolved) : Domain::literal(true);
     }
 
     /**

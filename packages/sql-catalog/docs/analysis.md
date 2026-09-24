@@ -164,6 +164,29 @@ $pdo->query("SELECT * FROM t ORDER BY a $dir, b $dir");
 
 gives `… a ASC, b ASC` and `… a DESC, b DESC`, never the mixed pairs.
 
+An `isset` guard on a local variable is evaluated within each run:
+
+```php
+function findUsers(PDO $pdo, bool $active): void {
+    if ($active) {
+        $where = ' WHERE active = 1';
+    }
+    $pdo->prepare('SELECT * FROM users' . (isset($where) ? $where : ''));
+}
+```
+
+This gives `SELECT * FROM users WHERE active = 1` and `SELECT * FROM users`,
+both resolved. On the run without the assignment, the local is unset and the
+ternary reads only the fallback. Null also makes the guard false; empty strings,
+zero and false are set values. With several arguments, `isset` is true only when
+all are set. A known boolean condition selects only its ternary branch.
+
+A local with no definition still leaves an unresolved gap if read without a
+guard. Runtime inputs, unknown calls and declared globals keep their unknown
+values, so an `isset` guard does not discard a possible SQL fragment from them.
+Names entering file scope from outside the analyzed file, property checks and
+array element checks remain conservative.
+
 How many runs are kept apart is what the budget can pay for along the path: a
 short path keeps up to `SliceExecutor::MAX_RUNS`, a body of several hundred
 assignments under a hundred conditionals keeps a few. Beyond that the rest are

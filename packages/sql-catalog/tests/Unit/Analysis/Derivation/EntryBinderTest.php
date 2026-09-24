@@ -272,7 +272,7 @@ final class EntryBinderTest extends TestCase
             'no property at all' => [
                 ['this', 'y'],
                 [
-                    ['y=opaque:mixed:unresolved', ['C::m'], false, false],
+                    ['y=opaque:null:unresolved', ['C::m'], false, false],
                 ],
             ],
         ];
@@ -437,7 +437,7 @@ final class EntryBinderTest extends TestCase
         return [
             'a parameter every caller passes' => ['a', 0, ['literal:int:1', 'literal:string:x']],
             'a parameter at the depth limit' => ['a', 4, ['opaque:mixed:budget']],
-            'a name that is not a parameter' => ['b', 0, ['opaque:mixed:unresolved']],
+            'a name that is not a parameter' => ['b', 0, ['opaque:null:unresolved']],
         ];
     }
 
@@ -485,7 +485,7 @@ final class EntryBinderTest extends TestCase
         self::assertSame(['{main}'], $bindings[0]->through);
     }
 
-    public function testParameterBindingsLeaveNamesThatAreNotParametersUnresolvedWithoutAskingCallers(): void
+    public function testParameterBindingsLeaveUndefinedLocalsNullTypedWithoutAskingCallers(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php function f($a) { } f(1);');
         $function = $file->statements[0];
@@ -500,7 +500,7 @@ final class EntryBinderTest extends TestCase
 
         self::assertCount(1, $bindings);
         self::assertSame(['x', 'thisx'], $bindings[0]->environment->names());
-        self::assertSame('thisx=opaque:mixed:unresolved;x=opaque:mixed:unresolved', $bindings[0]->environment->signature());
+        self::assertSame('thisx=opaque:null:unresolved;x=opaque:null:unresolved', $bindings[0]->environment->signature());
         self::assertSame(['f'], $bindings[0]->through);
     }
 
@@ -522,8 +522,8 @@ final class EntryBinderTest extends TestCase
 
         self::assertSame(
             [
-                ['a=literal:int:1;b=literal:string:d;c=literal:int:5;x=opaque:mixed:unresolved', ['g', 'f'], false, false],
-                ['a=literal:int:2;b=literal:string:e;c=literal:int:3;x=opaque:mixed:unresolved', ['{main}', 'f'], false, false],
+                ['a=literal:int:1;b=literal:string:d;c=literal:int:5;x=opaque:null:unresolved', ['g', 'f'], false, false],
+                ['a=literal:int:2;b=literal:string:e;c=literal:int:3;x=opaque:null:unresolved', ['{main}', 'f'], false, false],
             ],
             array_map(
                 static fn (Binding $binding): array => [$binding->environment->signature(), $binding->through, $binding->truncated, $binding->combined],
@@ -573,7 +573,7 @@ final class EntryBinderTest extends TestCase
         $bindings = $deriver->binder()->parameterBindings(new Arrival($function, Pending::needing(['a' => true, 'x' => true])), 0, $deriver);
 
         self::assertCount(1, $bindings);
-        self::assertSame('a=opaque:int:parameter;x=opaque:mixed:unresolved', $bindings[0]->environment->signature());
+        self::assertSame('a=opaque:int:parameter;x=opaque:null:unresolved', $bindings[0]->environment->signature());
         self::assertSame(['f'], $bindings[0]->through);
         self::assertFalse($bindings[0]->truncated);
     }
