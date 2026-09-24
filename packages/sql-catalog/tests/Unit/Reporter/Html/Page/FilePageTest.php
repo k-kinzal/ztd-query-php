@@ -25,6 +25,7 @@ use SqlCatalog\Reporter\Html\Page\FilePage;
 use SqlCatalog\Reporter\Html\Palette;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
+use SqlCatalog\Reporter\Html\Source\SourceCode;
 use SqlCatalog\Reporter\Html\SqlFormatter;
 use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
@@ -48,6 +49,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(ReportSite::class)]
 #[UsesClass(Resolution::class)]
 #[UsesClass(Scope::class)]
+#[UsesClass(SourceCode::class)]
 #[UsesClass(Severity::class)]
 #[UsesClass(SqlHighlighter::class)]
 #[UsesClass(StatementKind::class)]
@@ -218,4 +220,15 @@ final class FilePageTest extends TestCase
             (new FilePage())->render($site, 'lib/c.php'),
         );
     }
+
+    public function testProblemsExplainsWhyThisFileCouldNotBeParsed(): void
+    {
+        $site = new ReportSite(new Catalog([], [new AnalysisProblem('broken.php', 'Unexpected <token>'), new AnalysisProblem('other.php', 'Other problem')]));
+        $page = new FilePage();
+
+        self::assertStringContainsString('Unexpected &lt;token&gt;', $page->problems($site, 'broken.php'));
+        self::assertStringNotContainsString('Other problem', $page->problems($site, 'broken.php'));
+        self::assertSame('', $page->problems($site, 'valid.php'));
+    }
+
 }

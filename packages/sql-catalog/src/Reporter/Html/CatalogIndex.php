@@ -27,11 +27,21 @@ final class CatalogIndex
     private array $entries;
 
     /**
+     * @var array<string, list<CatalogEntry>>
+     */
+    private array $unreadFiles = [];
+
+    /**
      * Groups a catalog, in the order the report lists statements.
      */
     public function __construct(Catalog $catalog)
     {
         $this->entries = $catalog->sorted()->entries();
+        foreach ($catalog->problems() as $problem) {
+            if ($catalog->source($problem->file) !== null) {
+                $this->unreadFiles[$problem->file] = [];
+            }
+        }
     }
 
     /**
@@ -121,7 +131,7 @@ final class CatalogIndex
      */
     public function byFile(): array
     {
-        $grouped = [];
+        $grouped = $this->unreadFiles;
         foreach ($this->entries as $entry) {
             $grouped[$entry->site->file][] = $entry;
         }

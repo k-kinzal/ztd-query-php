@@ -111,7 +111,7 @@ final class Analyzer
             $problems[] = $parsed;
         }
 
-        return new Catalog($this->entriesOf($files, $options), $problems);
+        return new Catalog($this->entriesOf($files, $options), $problems, $sources);
     }
 
     /**

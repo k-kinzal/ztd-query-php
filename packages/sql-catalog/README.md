@@ -180,6 +180,17 @@ an application that annotates its own globals needs no extension at all.
 | `html` | `index.html`, `statements.html`, `tables.html`, `namespaces.html`, `files.html`, `findings.html`, `tables/`, `classes/`, `files/`, `statements/`, `assets/` | A site of linked pages laid out as the routes to a statement: by the table it names, by the namespace and class that issue it, by the file it is written in, or by what the analysis reported on it. Every table, class, file and statement has a page of its own, every listing can be narrowed on the page, and a search covers all of them |
 | `text` | `catalog.txt` | One block per statement, for reading in a terminal |
 
+Statement pages include the PHP source around the database call, with line numbers
+and the call line highlighted. **View full source** opens the file at that line,
+so you can follow SQL construction and execution without an IDE, including calls
+that are unresolved or were not analyzed. Files that fail PHP parsing are linked
+from **Not read** on the overview, with the error and their source on the file page.
+
+The HTML embeds source captured during analysis and works after the original files
+are changed or removed. The report therefore contains application source code;
+share it with the same care as the source itself. Catalogs constructed manually
+without source snapshots keep their statement listings but have no source blocks.
+
 `html` writes a directory, so give it `--output`: printed to standard output it
 is the overview page alone, without the pages it links to. The pages are written
 in [doc-ui](https://k-kinzal.github.io/document-design/), document-design's

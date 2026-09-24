@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Reporter;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -37,6 +38,7 @@ use SqlCatalog\Reporter\Html\ReportAssets;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
 use SqlCatalog\Reporter\Html\SearchIndex;
+use SqlCatalog\Reporter\Html\Source\SourceCode;
 use SqlCatalog\Reporter\Html\SqlFormatter;
 use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
@@ -75,6 +77,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(ReportSite::class)]
 #[UsesClass(Resolution::class)]
 #[UsesClass(Scope::class)]
+#[UsesClass(SourceCode::class)]
 #[UsesClass(SearchIndex::class)]
 #[UsesClass(Severity::class)]
 #[UsesClass(SqlFormatter::class)]
@@ -248,4 +251,42 @@ final class HtmlReporterTest extends TestCase
         self::assertStringContainsString('<p class="sidebar-title">Files in src/</p>', (string) $artifacts->get('files/src-a-php.html'));
         self::assertStringContainsString('<p class="sidebar-title">Belongs to</p>', (string) $artifacts->get('statements/a1.html'));
     }
+
+    #[DataProvider('providerOpenOrigins')]
+    public function testRenderIncludesSourceForUnresolvedAndUnanalyzedCallsAndParseFailures(Origin $origin): void
+    {
+        $entry = new CatalogEntry($origin->value, StatementKind::Unknown, TextPattern::fromHole(new TextHole($origin, TypeShape::unknown(), '$db->query($sql)')), [], [], new CallSite('src/query.php', 3, 'f', 'unmatched'), []);
+        $catalog = new Catalog([$entry], [new AnalysisProblem('src/broken.php', 'Unexpected <token>')], [
+            'src/query.php' => "<?php\n\$sql = buildQuery();\n\$db->query(\$sql);",
+            'src/broken.php' => '<?php function { <script>alert(1)</script>',
+        ]);
+        $reporter = new HtmlReporter();
+        $artifacts = $reporter->render($catalog->filter(static fn (CatalogEntry $entry): bool => true));
+        $page = (string) $artifacts->get('statements/' . $entry->id . '.html');
+        self::assertStringContainsString('$sql = buildQuery();', $page);
+        self::assertStringContainsString('$db-&gt;query($sql);', $page);
+        self::assertStringContainsString('class="source-line source-call" id="L3"', $page);
+        self::assertStringContainsString('href="../files/src-query-php.html#L3">View full source</a>', $page);
+        $file = (string) $artifacts->get('files/src-query-php.html');
+        self::assertStringContainsString('href="#source" title="Source code">Source code</a>', $file);
+        self::assertStringContainsString('id="L3"', $file);
+        $broken = (string) $artifacts->get('files/src-broken-php.html');
+        self::assertStringContainsString('Unexpected &lt;token&gt;', $broken);
+        self::assertStringContainsString('&lt;?php function { &lt;script&gt;', $broken);
+        self::assertStringNotContainsString('<script>alert(1)</script>', $broken);
+        self::assertStringContainsString('href="files/src-broken-php.html#source"', (string) $artifacts->get('index.html'));
+        self::assertStringContainsString('href="files/src-broken-php.html"', (string) $artifacts->get('files.html'));
+        self::assertEquals($artifacts, $reporter->render($catalog));
+    }
+
+
+    /**
+     * @return iterable<string, array{Origin}>
+     */
+    public static function providerOpenOrigins(): iterable
+    {
+        yield 'unresolved' => [Origin::Call];
+        yield 'not analyzed' => [Origin::Unreached];
+    }
+
 }

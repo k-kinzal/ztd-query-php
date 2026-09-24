@@ -23,3 +23,13 @@ a.chip:not(.chip-ghost) { color: var(--dd-tone, var(--dd-neutral)); }
 
 /* A heading counts what follows it and the count sits beside the words, not under them. */
 .doc h1 .chip { font-size: var(--dd-text-md); }
+
+
+/* Source stays readable offline, with line anchors shared by excerpts and full files. */
+pre.source-code { padding: var(--dd-sp-3) 0; max-height: 40rem; overflow: auto; white-space: pre; word-break: normal; tab-size: 4; }
+.source-code > code { display: block; min-width: max-content; }
+.source-line { display: flex; min-height: 1.6em; scroll-margin-top: var(--dd-sp-6); }
+.source-line.source-call, .source-line:target { background: var(--dd-warn-tint); }
+.source-line:target { outline: 1px solid var(--dd-warn); outline-offset: -1px; }
+.source-number { flex: 0 0 5ch; padding: 0 var(--dd-sp-3); text-align: right; color: var(--dd-fg-muted); user-select: none; }
+.source-text { padding-right: var(--dd-sp-4); }

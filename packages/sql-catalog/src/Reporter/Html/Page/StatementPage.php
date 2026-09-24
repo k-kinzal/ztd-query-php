@@ -11,6 +11,7 @@ use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\Palette;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
+use SqlCatalog\Reporter\Html\Source\SourceCode;
 use SqlCatalog\Reporter\Html\SqlFormatter;
 use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
@@ -79,6 +80,7 @@ final class StatementPage
             . '<p class="lede">' . $this->where($site, $entry) . '</p>'
             . $this->body($entry)
             . $this->caveats($entry)
+            . (new SourceCode($this->text))->excerpt($site, $entry)
             . ($entry->placeholders === []
                 ? $this->facts($site, $entry)
                 : '<div class="split">' . $this->facts($site, $entry) . $this->values($entry) . '</div>')
@@ -271,6 +273,9 @@ final class StatementPage
         $index = $site->index();
         $scope = Scope::of($entry->site->function);
         $places = [];
+        if ($site->catalog()->source($entry->site->file) !== null) {
+            $places[] = ['Source code', '#source', null, false];
+        }
         foreach ($entry->tables as $table) {
             $places[] = ['Table ' . (new TableName($table))->label(), $site->tablePage($table), count($index->byTable()[$table] ?? []), false];
         }

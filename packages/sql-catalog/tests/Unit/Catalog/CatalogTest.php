@@ -84,4 +84,20 @@ final class CatalogTest extends TestCase
         $entry = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 's'), []);
         self::assertSame([$entry], iterator_to_array(new Catalog([$entry])));
     }
+
+    public function testSourceSurvivesFilteringSortingAndMerging(): void
+    {
+        $source = '<?php $db->query($sql);';
+        $left = new Catalog([], [], ['a.php' => $source, 'empty.php' => '']);
+        $right = new Catalog([], [], ['b.php' => '<?php function {']);
+        $catalog = $left->filter(static fn (CatalogEntry $entry): bool => false)->sorted()->merge($right);
+
+        self::assertSame($source, $catalog->source('a.php'));
+        self::assertSame('<?php function {', $catalog->source('b.php'));
+        self::assertSame('', $catalog->source('empty.php'));
+        self::assertNull($catalog->source('missing.php'));
+        self::assertSame('updated', $left->merge(new Catalog([], [], ['a.php' => 'updated']))->source('a.php'));
+        self::assertSame($source, $left->source('a.php'));
+    }
+
 }

@@ -265,7 +265,10 @@ final class OverviewPage
         }
         $rows = '';
         foreach ($problems as $problem) {
-            $rows .= '<tr><td><code>' . $this->text->escape($problem->file) . '</code></td>'
+            $file = $site->catalog()->source($problem->file) === null
+                ? '<code>' . $this->text->escape($problem->file) . '</code>'
+                : $this->text->link($problem->file, $site->filePage($problem->file) . '#source', 'mono');
+            $rows .= '<tr><td>' . $file . '</td>'
                 . '<td>' . $this->text->escape($problem->message) . '</td></tr>';
         }
 
