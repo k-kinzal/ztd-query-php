@@ -11,6 +11,7 @@ use SqlSemantics\Model\Scalar\Operator\Qualified\QualifiedOperator;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(QualifiedOperator::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class QualifiedOperatorTest extends TestCase
 {
     /**

@@ -20,6 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(DocumentInvariant::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DocumentInvariantTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]

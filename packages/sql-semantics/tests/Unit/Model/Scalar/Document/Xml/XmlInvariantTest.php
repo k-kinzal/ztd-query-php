@@ -15,6 +15,7 @@ use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(XmlInvariant::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class XmlInvariantTest extends TestCase
 {
     public function testCheckAcceptsPostgreSqlOperandsAndTheResultType(): void

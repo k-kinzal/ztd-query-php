@@ -14,6 +14,7 @@ use SqlSemantics\Serialization\Definition\TypeSystem\DefinitionLists;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(DefinitionLists::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DefinitionListsTest extends TestCase
 {
     public function testWriteParenthesizesTheElements(): void

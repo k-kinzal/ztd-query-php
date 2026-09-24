@@ -20,6 +20,7 @@ use SqlSemantics\Model\Scalar\Operator\UnaryExpression;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(Operations::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OperationsTest extends TestCase
 {
     /**

@@ -10,6 +10,7 @@ use SqlSemantics\Model\Definition\TypeSystem\TextSearch\DictionaryOption;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(DictionaryOption::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DictionaryOptionTest extends TestCase
 {
     public function testKeepsTheNameAndOptionalText(): void

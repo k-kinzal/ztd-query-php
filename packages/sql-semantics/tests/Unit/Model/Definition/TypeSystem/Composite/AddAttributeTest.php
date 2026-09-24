@@ -13,6 +13,7 @@ use SqlSemantics\Model\Definition\TypeSystem\Composite\CompositeAttribute;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(AddAttribute::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class AddAttributeTest extends TestCase
 {
     public function testRetainsTheAttributeAndPolicy(): void

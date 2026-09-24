@@ -12,6 +12,7 @@ use SqlSemantics\Binding\Statement\Definition\TypeSystem\DefinitionWords;
 use SqlSemantics\Dialect;
 
 #[CoversClass(DefinitionWords::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DefinitionWordsTest extends TestCase
 {
     public function testOfUppercasesTheClauseAndAcceptsAbsence(): void

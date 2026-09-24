@@ -10,6 +10,7 @@ use SqlSemantics\Model\Statement\Definition\PostgreSql\TextSearch\TextSearchInva
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(TextSearchInvariant::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TextSearchInvariantTest extends TestCase
 {
     public function testTokenTypesRejectsAnEmptyName(): void

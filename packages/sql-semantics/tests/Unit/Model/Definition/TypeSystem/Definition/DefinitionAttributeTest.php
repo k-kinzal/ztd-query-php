@@ -11,6 +11,7 @@ use SqlSemantics\Model\Definition\TypeSystem\Definition\DefinitionKind;
 use SqlSemantics\Model\Definition\TypeSystem\Definition\OperatorAttribute;
 
 #[CoversClass(DefinitionAttribute::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DefinitionAttributeTest extends TestCase
 {
     public function testSpellingNamesEveryAttribute(): void

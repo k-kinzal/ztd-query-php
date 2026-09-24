@@ -11,6 +11,7 @@ use SqlSemantics\Model\Definition\TypeSystem\Composite\DropAttribute;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(DropAttribute::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DropAttributeTest extends TestCase
 {
     public function testRetainsTheOperands(): void

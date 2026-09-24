@@ -14,6 +14,7 @@ use SqlSemantics\Binding\Statement\Utility\OptionWords;
 use SqlSemantics\Dialect;
 
 #[CoversClass(OptionWords::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OptionWordsTest extends TestCase
 {
     public function testRawReadsSignedIntegersAndKeepsOversizedNumbersAsText(): void

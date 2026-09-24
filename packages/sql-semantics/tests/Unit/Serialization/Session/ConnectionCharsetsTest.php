@@ -11,6 +11,7 @@ use SqlSemantics\Model\Configuration\Connection\ConnectionNames;
 use SqlSemantics\Serialization\Session\ConnectionCharsets;
 
 #[CoversClass(ConnectionCharsets::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ConnectionCharsetsTest extends TestCase
 {
     public function testWriteSpellsDefaultAndOptionalCollation(): void

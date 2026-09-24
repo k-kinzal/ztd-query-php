@@ -12,6 +12,7 @@ use SqlSemantics\Model\Relation\QualifiedName;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(DefinitionOption::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DefinitionOptionTest extends TestCase
 {
     public function testKeepsATypedArgumentOrNone(): void

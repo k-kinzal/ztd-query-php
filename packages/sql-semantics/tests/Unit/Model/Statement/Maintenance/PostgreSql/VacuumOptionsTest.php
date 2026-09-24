@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Maintenance\PostgreSql\VacuumOptions;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(VacuumOptions::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class VacuumOptionsTest extends TestCase
 {
     public function testDefaultsFollowTheServer(): void

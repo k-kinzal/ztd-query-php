@@ -14,6 +14,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(RetypeAttribute::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class RetypeAttributeTest extends TestCase
 {
     public function testRetainsTheOperands(): void

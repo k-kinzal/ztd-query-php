@@ -13,6 +13,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(SupportFunction::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class SupportFunctionTest extends TestCase
 {
     public function testRetainsTheFunctionName(): void

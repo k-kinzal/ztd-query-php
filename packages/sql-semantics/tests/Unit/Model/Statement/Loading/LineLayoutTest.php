@@ -13,6 +13,7 @@ use SqlSemantics\Model\Statement\Loading\LineLayout;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(LineLayout::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class LineLayoutTest extends TestCase
 {
     public function testKeepsMultiByteSeparators(): void

@@ -13,6 +13,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(OperatorMember::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OperatorMemberTest extends TestCase
 {
     public function testKeepsTheStrategyOperatorAndPurpose(): void

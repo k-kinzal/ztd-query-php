@@ -11,6 +11,7 @@ use SqlSemantics\Model\Statement\Loading\Copy\CopyOptions;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(CopyOptions::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class CopyOptionsTest extends TestCase
 {
     public function testEffectiveDelimiterFollowsTheFormat(): void

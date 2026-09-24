@@ -17,6 +17,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(BodyInvariant::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class BodyInvariantTest extends TestCase
 {
     public function testTextRequiresAStringConstant(): void

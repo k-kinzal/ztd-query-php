@@ -13,6 +13,7 @@ use SqlSemantics\Model\Configuration\Administration\ResetTarget;
 
 #[CoversClass(ResetTarget::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ResetTargetTest extends TestCase
 {
     public function testAvailableInAnswersForEveryTargetKind(): void

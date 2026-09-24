@@ -18,6 +18,7 @@ use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(ParameterDeclaration::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ParameterDeclarationTest extends TestCase
 {
     public function testRejectsASetParameter(): void

@@ -11,6 +11,7 @@ use SqlSemantics\Model\Definition\Database\PostgreSql\DatabaseParameter;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(DatabaseOption::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DatabaseOptionTest extends TestCase
 {
     public function testDefaultRequestIsRepresentedByNull(): void

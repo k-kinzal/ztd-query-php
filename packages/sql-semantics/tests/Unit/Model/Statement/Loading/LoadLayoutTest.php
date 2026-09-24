@@ -10,6 +10,7 @@ use SqlSemantics\Model\Statement\Loading\LoadLayout;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(LoadLayout::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class LoadLayoutTest extends TestCase
 {
     public function testDefaultsToNoCharacterSetAndNoSkippedRows(): void

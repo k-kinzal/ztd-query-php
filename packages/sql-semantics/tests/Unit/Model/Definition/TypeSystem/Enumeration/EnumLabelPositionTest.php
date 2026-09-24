@@ -11,6 +11,7 @@ use SqlSemantics\Model\Definition\TypeSystem\Enumeration\EnumLabelPosition;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(EnumLabelPosition::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class EnumLabelPositionTest extends TestCase
 {
     public function testRetainsThePlacementAndNeighbor(): void

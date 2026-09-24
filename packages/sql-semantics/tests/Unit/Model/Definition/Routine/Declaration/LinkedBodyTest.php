@@ -15,6 +15,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(LinkedBody::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class LinkedBodyTest extends TestCase
 {
     public function testRetainsTheFileAndSymbol(): void

@@ -14,6 +14,7 @@ use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(ResultColumn::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ResultColumnTest extends TestCase
 {
     public function testRetainsTheNameAndType(): void

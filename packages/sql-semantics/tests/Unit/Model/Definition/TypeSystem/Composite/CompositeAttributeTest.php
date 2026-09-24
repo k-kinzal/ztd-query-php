@@ -13,6 +13,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(CompositeAttribute::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class CompositeAttributeTest extends TestCase
 {
     public function testRetainsTheDeclaration(): void

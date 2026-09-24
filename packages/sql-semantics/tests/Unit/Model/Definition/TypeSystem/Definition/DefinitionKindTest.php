@@ -12,6 +12,7 @@ use SqlSemantics\Model\Relation\QualifiedName;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(DefinitionKind::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DefinitionKindTest extends TestCase
 {
     public function testAcceptsTheValueFormOfEachKind(): void

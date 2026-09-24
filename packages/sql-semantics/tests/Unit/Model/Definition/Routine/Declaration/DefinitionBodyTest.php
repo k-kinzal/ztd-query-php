@@ -15,6 +15,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(DefinitionBody::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DefinitionBodyTest extends TestCase
 {
     public function testRetainsTheDefinitionString(): void

@@ -13,6 +13,7 @@ use SqlSemantics\Model\Transformation\RebuiltOperands;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(RebuiltOperands::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class RebuiltOperandsTest extends TestCase
 {
     public function testFindReturnsNullForAnUnknownOperand(): void

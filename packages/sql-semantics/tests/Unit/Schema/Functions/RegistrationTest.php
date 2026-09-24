@@ -13,6 +13,7 @@ use SqlSemantics\Schema\FunctionSignature;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(Registration::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class RegistrationTest extends TestCase
 {
     public function testCheckAcceptsASignatureInTheSchemaDialect(): void

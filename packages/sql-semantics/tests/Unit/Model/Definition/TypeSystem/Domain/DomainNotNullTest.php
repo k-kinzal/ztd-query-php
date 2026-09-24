@@ -10,6 +10,7 @@ use SqlSemantics\Model\Definition\TypeSystem\Domain\DomainNotNull;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(DomainNotNull::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DomainNotNullTest extends TestCase
 {
     public function testRetainsTheOptionalName(): void

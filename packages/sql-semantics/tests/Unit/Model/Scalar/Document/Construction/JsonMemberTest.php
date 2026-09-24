@@ -13,6 +13,7 @@ use SqlSemantics\Model\TableFunction\Json\Format;
 use SqlSemantics\Model\TableFunction\Json\Input;
 
 #[CoversClass(JsonMember::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class JsonMemberTest extends TestCase
 {
     public function testKeepsTheKeyAndTheFormattedValue(): void

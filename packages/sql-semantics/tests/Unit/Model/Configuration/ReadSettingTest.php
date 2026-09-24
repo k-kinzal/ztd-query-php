@@ -14,6 +14,7 @@ use SqlSemantics\Model\Configuration\SettingScope;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(ReadSetting::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ReadSettingTest extends TestCase
 {
     public function testReadsANamedSettingWithoutOperands(): void

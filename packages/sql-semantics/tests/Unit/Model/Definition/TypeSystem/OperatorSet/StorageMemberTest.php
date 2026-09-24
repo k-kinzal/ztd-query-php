@@ -12,6 +12,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(StorageMember::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class StorageMemberTest extends TestCase
 {
     public function testKeepsThePostgreSqlType(): void

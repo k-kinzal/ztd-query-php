@@ -10,6 +10,7 @@ use SqlSemantics\Model\Statement\Maintenance\PostgreSql\AnalyzeOptions;
 use SqlSemantics\Model\Statement\Maintenance\PostgreSql\BufferUsageLimit;
 
 #[CoversClass(AnalyzeOptions::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class AnalyzeOptionsTest extends TestCase
 {
     public function testKeepsTheRequestedOptions(): void

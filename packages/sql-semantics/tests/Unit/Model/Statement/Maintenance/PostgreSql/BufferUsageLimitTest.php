@@ -11,6 +11,7 @@ use SqlSemantics\Model\Statement\Maintenance\PostgreSql\BufferUsageLimit;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(BufferUsageLimit::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class BufferUsageLimitTest extends TestCase
 {
     #[TestWith(['0', 0])]

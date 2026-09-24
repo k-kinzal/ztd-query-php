@@ -10,6 +10,7 @@ use SqlSemantics\Model\Scalar\Function\FunctionName;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(FunctionName::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class FunctionNameTest extends TestCase
 {
     public function testKeepsTheIdentifierPartsInOrder(): void

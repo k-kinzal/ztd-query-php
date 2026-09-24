@@ -15,6 +15,7 @@ use SqlSemantics\Model\Statement\Loading\Copy\EveryColumn;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(CopyOptionRules::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class CopyOptionRulesTest extends TestCase
 {
     public function testFormatRejectsTextOptionsInBinaryFormat(): void

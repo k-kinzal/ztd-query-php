@@ -14,6 +14,7 @@ use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(RoutineResult::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class RoutineResultTest extends TestCase
 {
     public function testRetainsTheSetRequest(): void

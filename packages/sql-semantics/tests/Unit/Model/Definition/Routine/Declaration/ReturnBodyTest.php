@@ -14,6 +14,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(ReturnBody::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ReturnBodyTest extends TestCase
 {
     public function testRetainsTheReturnedValue(): void

@@ -13,6 +13,7 @@ use SqlSemantics\Binding\Statement\Retrieval\IntoPlacement;
 use SqlSemantics\Dialect;
 
 #[CoversClass(IntoPlacement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class IntoPlacementTest extends TestCase
 {
     public function testClausesIgnoresTheEmptyPostgreSqlIntoProduction(): void

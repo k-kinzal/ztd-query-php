@@ -12,6 +12,7 @@ use SqlSemantics\Model\Scalar\Conditional\When;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(When::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class WhenTest extends TestCase
 {
     public function testPairsOneTestWithOneResult(): void

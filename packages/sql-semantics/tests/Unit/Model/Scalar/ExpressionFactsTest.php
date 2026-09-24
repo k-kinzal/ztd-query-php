@@ -12,6 +12,7 @@ use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(ExpressionFacts::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ExpressionFactsTest extends TestCase
 {
     public function testKeepsTheTypeNullabilityAndNullExtensionCauses(): void

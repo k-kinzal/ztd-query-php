@@ -11,6 +11,7 @@ use SqlSemantics\Model\Definition\Trigger\TriggerEvents;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(TriggerEvents::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TriggerEventsTest extends TestCase
 {
     public function testHasReportsOnlyTheNamedEvents(): void

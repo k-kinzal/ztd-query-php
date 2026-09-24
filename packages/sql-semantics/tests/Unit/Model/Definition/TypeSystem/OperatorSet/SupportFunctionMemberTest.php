@@ -14,6 +14,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(SupportFunctionMember::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class SupportFunctionMemberTest extends TestCase
 {
     public function testKeepsTheNumberAndFunction(): void

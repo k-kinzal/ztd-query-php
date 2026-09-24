@@ -14,6 +14,7 @@ use SqlSemantics\Model\Statement\Loading\SeparatorText;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(SeparatorText::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class SeparatorTextTest extends TestCase
 {
     public function testBytesDecodesStringLiterals(): void

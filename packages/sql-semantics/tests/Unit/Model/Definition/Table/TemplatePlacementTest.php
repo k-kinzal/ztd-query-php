@@ -14,6 +14,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(TemplatePlacement::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TemplatePlacementTest extends TestCase
 {
     public function testKeepsTheTemplateAndItsPosition(): void

@@ -16,6 +16,7 @@ use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(RoutineImplementation::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class RoutineImplementationTest extends TestCase
 {
     public function testRetainsTheTransformTypes(): void

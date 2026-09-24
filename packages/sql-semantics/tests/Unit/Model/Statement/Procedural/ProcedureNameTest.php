@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Procedural\ProcedureName;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(ProcedureName::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ProcedureNameTest extends TestCase
 {
     public function testValidateAcceptsADatabaseQualifiedName(): void

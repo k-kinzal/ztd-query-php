@@ -11,6 +11,7 @@ use SqlSemantics\Model\Relation\QualifiedName;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(TriggerInvocation::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TriggerInvocationTest extends TestCase
 {
     public function testAnInvocationRetainsItsFunctionAndArguments(): void

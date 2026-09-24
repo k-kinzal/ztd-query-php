@@ -13,6 +13,7 @@ use SqlSemantics\Model\Relation\QualifiedName;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(DefinitionOptions::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DefinitionOptionsTest extends TestCase
 {
     public function testValidateRejectsARepeatedAttribute(): void

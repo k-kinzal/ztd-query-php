@@ -12,6 +12,7 @@ use SqlSemantics\Type\CommonStorage;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(CommonStorage::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class CommonStorageTest extends TestCase
 {
     public function testResolveReturnsTheSharedAlternativeUnchanged(): void

@@ -13,6 +13,7 @@ use SqlSemantics\Model\Statement\Loading\FieldLayout;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(FieldLayout::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class FieldLayoutTest extends TestCase
 {
     public function testEmptyIsTrueOnlyWithoutSeparators(): void

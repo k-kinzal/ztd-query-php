@@ -14,6 +14,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(JsonReturning::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class JsonReturningTest extends TestCase
 {
     #[TestWith(['text', null, true])]

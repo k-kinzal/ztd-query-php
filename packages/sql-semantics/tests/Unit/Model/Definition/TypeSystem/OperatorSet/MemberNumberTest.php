@@ -13,6 +13,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(MemberNumber::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class MemberNumberTest extends TestCase
 {
     #[TestWith([0])]

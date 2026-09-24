@@ -13,6 +13,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(LocalVariable::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class LocalVariableTest extends TestCase
 {
     public function testRetainsNameAndDomain(): void

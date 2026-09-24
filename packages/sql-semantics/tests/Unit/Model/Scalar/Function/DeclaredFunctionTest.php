@@ -13,6 +13,7 @@ use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(DeclaredFunction::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DeclaredFunctionTest extends TestCase
 {
     public function testNameIncludesTheRegisteredSchema(): void

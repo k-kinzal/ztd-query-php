@@ -17,6 +17,7 @@ use SqlSemantics\Model\TableFunction\Json\Response\ValueBehavior;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(SqlJsonInvariant::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class SqlJsonInvariantTest extends TestCase
 {
     public function testDialectAcceptsOperandsOfTheDialect(): void

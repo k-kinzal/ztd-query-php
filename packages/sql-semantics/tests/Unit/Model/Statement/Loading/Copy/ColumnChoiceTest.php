@@ -11,6 +11,7 @@ use SqlSemantics\Model\Statement\Loading\Copy\EveryColumn;
 use SqlSemantics\Model\Statement\Loading\Copy\ListedColumns;
 
 #[CoversClass(ColumnChoice::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ColumnChoiceTest extends TestCase
 {
     public function testEveryAndListedColumnsAreChoices(): void

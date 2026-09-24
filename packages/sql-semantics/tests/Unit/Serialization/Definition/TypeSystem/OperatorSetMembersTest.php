@@ -14,6 +14,7 @@ use SqlSemantics\Serialization\Definition\TypeSystem\OperatorSetMembers;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(OperatorSetMembers::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OperatorSetMembersTest extends TestCase
 {
     public function testMemberSpellsEachForm(): void

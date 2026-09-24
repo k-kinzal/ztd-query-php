@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Binding\Configuration;
 
+use LogicException;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -152,7 +153,7 @@ final class SettingBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("SET SESSION sql_mode='ANSI', @n=1, @@GLOBAL.max_connections=200");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertSame([['sql_mode'], ['n'], ['max_connections']], array_column($statement->settings, 'name'));
-        self::assertSame(['session', 'user', 'global'], array_map(static fn ($item) => ($item instanceof \SqlSemantics\Model\Configuration\Setting ? $item : throw new \LogicException('setting'))->scope->value, $statement->settings));
+        self::assertSame(['session', 'user', 'global'], array_map(static fn ($item) => ($item instanceof \SqlSemantics\Model\Configuration\Setting ? $item : throw new LogicException('setting'))->scope->value, $statement->settings));
     }
     public function testMakeKeepsValueListsAndDefault(): void
     {
@@ -212,7 +213,7 @@ final class SettingBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $statement = $binder->bind("set @@local.sql_mode='ANSI', @x:=2, persist_only.max_connections=3");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
-        self::assertSame(['session','user','session'], array_map(static fn ($item) => ($item instanceof \SqlSemantics\Model\Configuration\Setting ? $item : throw new \LogicException('setting'))->scope->value, $statement->settings));
+        self::assertSame(['session','user','session'], array_map(static fn ($item) => ($item instanceof \SqlSemantics\Model\Configuration\Setting ? $item : throw new LogicException('setting'))->scope->value, $statement->settings));
         self::assertSame([['sql_mode'],['x'],['persist_only','max_connections']], array_column($statement->settings, 'name'));
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedUserVariable::class, $statement->settings[1]);
         self::assertSame('2', $statement->settings[1]->value->spelling());

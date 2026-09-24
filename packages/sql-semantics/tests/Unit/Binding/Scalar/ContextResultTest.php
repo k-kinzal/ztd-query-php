@@ -13,6 +13,7 @@ use SqlSemantics\Model\Scalar\Value\ContextValueKind;
 use SqlSemantics\Type\Identity\BuiltinIdentity;
 
 #[CoversClass(ContextResult::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ContextResultTest extends TestCase
 {
     #[TestWith([ContextValueKind::CurrentDate, Dialect::PostgreSql, BuiltinIdentity::Date])]

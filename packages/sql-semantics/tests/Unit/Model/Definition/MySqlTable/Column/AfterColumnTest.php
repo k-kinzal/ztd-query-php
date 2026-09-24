@@ -10,6 +10,7 @@ use SqlSemantics\Model\Definition\MySqlTable\Column\AfterColumn;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(AfterColumn::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class AfterColumnTest extends TestCase
 {
     public function testNamesTheColumn(): void

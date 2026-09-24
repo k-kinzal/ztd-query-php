@@ -13,6 +13,7 @@ use SqlSemantics\Model\Write\Conflict\ConstraintConflict;
 use SqlSemantics\Model\Write\Conflict\ReplaceRow;
 
 #[CoversClass(ReplaceRow::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ReplaceRowTest extends TestCase
 {
     public function testDerivesTheReplaceOperation(): void

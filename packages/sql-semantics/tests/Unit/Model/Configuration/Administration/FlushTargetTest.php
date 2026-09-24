@@ -13,6 +13,7 @@ use SqlSemantics\Model\Configuration\Administration\ServerFlush;
 
 #[CoversClass(FlushTarget::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class FlushTargetTest extends TestCase
 {
     public function testAvailableInAnswersForEveryTargetKind(): void

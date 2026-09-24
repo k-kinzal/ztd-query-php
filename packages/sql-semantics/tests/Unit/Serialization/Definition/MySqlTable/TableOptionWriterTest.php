@@ -14,6 +14,7 @@ use SqlSemantics\Schema\Table\TableStorage;
 use SqlSemantics\Serialization\Definition\MySqlTable\TableOptionWriter;
 
 #[CoversClass(TableOptionWriter::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TableOptionWriterTest extends TestCase
 {
     public function testWriteWritesStorageMergeAndSizeOptions(): void

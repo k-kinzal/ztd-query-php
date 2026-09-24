@@ -11,6 +11,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Binding\Query\OrderingNodes;
 
 #[CoversClass(OrderingNodes::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OrderingNodesTest extends TestCase
 {
     public function testReadFlattensALeftRecursiveListFromItsInnermostItem(): void

@@ -13,6 +13,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(MemberRemoval::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class MemberRemovalTest extends TestCase
 {
     public function testKeepsTheKindNumberAndTypes(): void

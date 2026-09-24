@@ -14,6 +14,7 @@ use SqlSemantics\Model\Scalar\Function\Argument\VariadicArgument;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(ArgumentOrder::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ArgumentOrderTest extends TestCase
 {
     public function testValidateAcceptsPositionalThenNamedThenVariadic(): void

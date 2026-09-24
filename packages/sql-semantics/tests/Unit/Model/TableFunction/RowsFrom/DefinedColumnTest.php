@@ -12,6 +12,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(DefinedColumn::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DefinedColumnTest extends TestCase
 {
     public function testKeepsTheNameAndType(): void

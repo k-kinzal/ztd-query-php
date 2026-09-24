@@ -10,6 +10,7 @@ use SqlSemantics\Model\Statement\Loading\Copy\ListedColumns;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(ListedColumns::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ListedColumnsTest extends TestCase
 {
     public function testKeepsTheColumnsInOrder(): void

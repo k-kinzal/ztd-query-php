@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Model\Validation\InputViolation;
 
 #[CoversClass(InputViolation::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class InputViolationTest extends TestCase
 {
     #[DataProvider('providerViolations')]

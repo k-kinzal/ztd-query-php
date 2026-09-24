@@ -10,6 +10,7 @@ use SqlSemantics\Model\Definition\TypeSystem\Domain\DomainNullable;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(DomainNullable::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DomainNullableTest extends TestCase
 {
     public function testRetainsTheOptionalName(): void
