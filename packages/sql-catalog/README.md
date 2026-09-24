@@ -235,6 +235,7 @@ See [How the analysis works](docs/analysis.md) and
 - [How the analysis works](docs/analysis.md)
 - [How it is verified](docs/verification.md)
 - [The catalog file format](docs/format.md)
+- [Proposed design: SQL alternatives without evaluating conditions](docs/conditional-alternatives-design.md)
 
 ## License
 

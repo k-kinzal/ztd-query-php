@@ -1,5 +1,9 @@
 # How the analysis works
 
+The [proposed design for SQL alternatives without evaluating conditions](conditional-alternatives-design.md)
+specifies a replacement for the `isset` branch selection described below. It is
+a design proposal; this page describes the current implementation.
+
 The analyzer answers one question: what SQL can this source send to a database?
 
 It is not a PHP interpreter that happens to notice queries along the way. It
