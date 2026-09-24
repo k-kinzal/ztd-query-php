@@ -181,7 +181,12 @@ an application that annotates its own globals needs no extension at all.
 | `text` | `catalog.txt` | One block per statement, for reading in a terminal |
 
 `html` writes a directory, so give it `--output`: printed to standard output it
-is the overview page alone, without the pages it links to.
+is the overview page alone, without the pages it links to. The pages are written
+in [doc-ui](https://k-kinzal.github.io/document-design/), document-design's
+design system for documentation and reports, whose v1.0.0 stylesheet and script
+are bundled unmodified under `assets/` with their license notice, so a report
+looks the same offline and years on. See [the HTML report](docs/format.md#the-html-report)
+for the pages and their layout.
 
 ## Alternatives, and saying what is not known
 

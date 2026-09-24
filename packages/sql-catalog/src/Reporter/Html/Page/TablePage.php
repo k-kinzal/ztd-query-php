@@ -58,7 +58,7 @@ final class TablePage
             . $this->usedFrom($site, $entries)
             . $this->alongside($site, $table)
             . '<h2 id="statements">Statements</h2>'
-            . '<div class="filterable" data-narrowable>' . $this->list->facets($entries) . $this->groups($site, $table, $entries) . '</div>';
+            . '<div data-narrowable>' . $this->list->facets($entries) . $this->groups($site, $table, $entries) . '</div>';
     }
 
     /**
@@ -105,8 +105,8 @@ final class TablePage
         }
 
         return '<h2 id="used-from">Used from' . $this->text->count(count($byFunction), 'function') . '</h2>'
-            . '<div class="table-wrap"><table class="sortable"><thead><tr><th data-sort="text">Function</th><th data-sort="text">File</th>'
-            . '<th class="num" data-sort="num">Statements</th><th class="tight">Does</th></tr></thead><tbody>' . $rows . '</tbody></table></div>';
+            . '<div class="table-wrap"><table class="sortable" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">Function</th><th scope="col" data-dd-sort="text">File</th>'
+            . '<th scope="col" class="num" data-dd-sort="number">Statements</th><th scope="col" class="tight">Does</th></tr></thead><tbody>' . $rows . '</tbody></table></div>';
     }
 
     /**
@@ -133,15 +133,14 @@ final class TablePage
     {
         $chips = '';
         foreach ($site->index()->alongside($table) as $other => $count) {
-            $chips .= '<li>' . $this->text->chipLink((new TableName($other))->label(), '../' . $site->tablePage($other), 'chip-ghost')
-                . '<span class="route-figures">' . $this->text->number($count) . '</span></li>';
+            $chips .= $this->text->chipCount((new TableName($other))->label(), '../' . $site->tablePage($other), $count, 'chip-ghost');
         }
         if ($chips === '') {
             return '';
         }
 
         return '<h2 id="alongside">Named alongside</h2><p class="lede">Tables that appear in the same statements, usually through a join.</p>'
-            . '<ol class="route-top route-chips">' . $chips . '</ol>';
+            . '<div class="chips">' . $chips . '</div>';
     }
 
     /**

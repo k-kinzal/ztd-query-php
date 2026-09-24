@@ -5,7 +5,15 @@ declare(strict_types=1);
 namespace SqlCatalog\Reporter\Html;
 
 /**
- * The stylesheet and the script the pages are read with.
+ * The stylesheets and the scripts the pages are read with.
+ *
+ * The design is document-design's doc-ui, carried as the release the pages
+ * were written for — the unmodified stylesheet and script of one version,
+ * with the notice that says which and where from — rather than loaded from
+ * the network at whatever version is current: a report is read years after it
+ * is written, offline as often as not, and has to look then the way it looked
+ * when it was checked. Beside them go the report's own stylesheet and script,
+ * which hold only what doc-ui does not.
  *
  * The assets are written beside the pages rather than inlined into each of
  * them: a report of a thousand statements is a hundred documents, and a
@@ -17,16 +25,29 @@ namespace SqlCatalog\Reporter\Html;
 final class ReportAssets
 {
     /**
+     * The files the report carries, as the name each is written under and the resource it is read from.
+     */
+    public const FILES = [
+        PageShell::DESIGN_STYLE => 'document-design-' . PageShell::DESIGN_VERSION . '.css',
+        PageShell::DESIGN_SCRIPT => 'document-design-' . PageShell::DESIGN_VERSION . '.js',
+        PageShell::DESIGN_LICENSE => 'document-design-LICENSE.txt',
+        PageShell::STYLE => 'report.css',
+        PageShell::SCRIPT => 'report.js',
+    ];
+
+    /**
      * The files the report carries, keyed by the name each is written under.
      *
      * @return array<string, string>
      */
     public function all(): array
     {
-        return [
-            PageShell::STYLE => $this->read('report.css'),
-            PageShell::SCRIPT => $this->read('report.js'),
-        ];
+        $files = [];
+        foreach (self::FILES as $name => $resource) {
+            $files[$name] = $this->read($resource);
+        }
+
+        return $files;
     }
 
     /**

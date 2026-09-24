@@ -48,7 +48,7 @@ final class NamespacePage
         return '<h1>Namespaces' . $this->text->count(count($namespaces), 'namespace') . '</h1>'
             . '<p class="lede">The classes and functions that issue statements, under the namespace each is declared in. '
             . 'Open a class to read its statements method by method.</p>'
-            . '<input type="search" class="row-filter" placeholder="Narrow by class or function name…" autocomplete="off" spellcheck="false">'
+            . '<input type="search" name="filter" class="input input-block" data-filter-rows placeholder="Narrow by class or function name…" aria-label="Narrow by class or function name" autocomplete="off" spellcheck="false">'
             . $sections;
     }
 
@@ -80,9 +80,9 @@ final class NamespacePage
         return '<section class="group"><h2 id="' . $this->text->escape('ns-' . $this->text->slug($label)) . '"><code>' . $this->text->escape($label) . '</code>'
             . $this->text->count(count($entries), 'statement')
             . $this->text->link('All statements', ReportSite::STATEMENTS . '?namespace=' . rawurlencode($namespace), 'anchor') . '</h2>'
-            . '<div class="table-wrap"><table class="sortable filter-target"><thead><tr><th data-sort="text">Name</th><th class="tight">Kind</th>'
-            . '<th data-sort="text">File</th><th class="num" data-sort="num">Statements</th><th class="num" data-sort="num">Tables</th>'
-            . '<th class="num" data-sort="num">Attention</th></tr></thead><tbody>' . $rows . '</tbody></table></div></section>';
+            . '<div class="table-wrap"><table class="sortable filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">Name</th><th scope="col" class="tight">Kind</th>'
+            . '<th scope="col" data-dd-sort="text">File</th><th scope="col" class="num" data-dd-sort="number">Statements</th><th scope="col" class="num" data-dd-sort="number">Tables</th>'
+            . '<th scope="col" class="num" data-dd-sort="number">Attention</th></tr></thead><tbody>' . $rows . '</tbody></table></div></section>';
     }
 
     /**

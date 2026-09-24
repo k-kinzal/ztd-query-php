@@ -15,6 +15,7 @@ use SqlFaker\Generation\Plan\RulePlan;
 use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
 
 /**
  * Derives grammar terminals without choosing spellings or pruning unsupported lexemes.
@@ -49,7 +50,7 @@ final class TokenGenerator
     /**
      * Produces the selected terminal occurrences and their grammar provenance.
      * @param GenerationPlan<bool> $plan
-     * @param (Closure(int): ?int)|null $choose
+     * @param (Closure(int, non-empty-list<Production>): ?int)|null $choose
      * @throws \SqlFaker\Generation\Exception\GenerationException When the grammar cannot complete the plan
      * @throws LogicException When derivation failed to retain its trace
      */
@@ -69,7 +70,7 @@ final class TokenGenerator
      * Runs the shared derivation engine on the selected grammar.
      * @throws \SqlFaker\Generation\Exception\GenerationException When the grammar cannot complete the plan
      * @param GenerationPlan<bool> $plan
-     * @param (Closure(int): ?int)|null $choose
+     * @param (Closure(int, non-empty-list<Production>): ?int)|null $choose
      * @throws LogicException When derivation failed to retain its trace
      */
     public function derive(string $root, GenerationPlan $plan, ?Closure $choose = null): TerminalSequence

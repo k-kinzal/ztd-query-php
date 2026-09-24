@@ -11,8 +11,8 @@ use SqlCatalog\Catalog\Severity;
 /**
  * A listing of statements that a reader can narrow down on the page.
  *
- * Every listing in the report is the same component: the rows, and above
- * them the facets the rows can be narrowed by — what the statements do, how
+ * Every listing in the report is the same component, doc-ui's listing with
+ * its facets: the rows, and above them the facets the rows can be narrowed by — what the statements do, how
  * far the analysis got, and how much attention they need — each showing how
  * many rows it would keep. A facet that every row shares is not offered,
  * since choosing it would change nothing.
@@ -46,7 +46,7 @@ final class StatementList
     public function rows(ReportSite $site, string $page, array $entries, array $omit = []): string
     {
         if ($entries === []) {
-            return '<p class="none">No statement here.</p>';
+            return '<p class="empty-inline">No statement here.</p>';
         }
         $rows = '';
         foreach ($entries as $entry) {
@@ -77,13 +77,13 @@ final class StatementList
         arsort($resolutions);
         arsort($severities);
 
-        return '<div class="facets">'
-            . '<input type="search" class="facet-search" placeholder="Narrow by text…" autocomplete="off" spellcheck="false">'
+        return '<div class="facets" role="group" aria-label="Narrow the listing">'
+            . '<input type="search" name="narrow" class="input facet-search" placeholder="Narrow by text…" aria-label="Narrow by text" autocomplete="off" spellcheck="false">'
             . $this->group('kind', $kinds, fn (string $kind): string => $this->palette->kind($kind), 'strtoupper')
             . $this->group('resolution', $resolutions, fn (string $value): string => $this->palette->resolution(Resolution::from($value)))
             . $this->group('severity', $severities, fn (string $value): string => $this->palette->severity(Severity::from($value)))
-            . '<span class="facet-shown" data-total="' . count($entries) . '"></span>'
-            . '<button type="button" class="facet-clear" hidden>Clear</button>'
+            . '<span class="facet-shown" aria-live="polite"></span>'
+            . '<button type="button" class="btn facet-clear" hidden>Clear</button>'
             . '</div>';
     }
 
@@ -102,7 +102,7 @@ final class StatementList
         $chips = '';
         foreach ($counts as $value => $count) {
             $chips .= '<button type="button" class="chip facet ' . $this->text->escape($role($value)) . '" data-facet="'
-                . $this->text->escape($facet) . '" data-value="' . $this->text->escape($value) . '">'
+                . $this->text->escape($facet) . '" data-value="' . $this->text->escape($value) . '" aria-pressed="false">'
                 . $this->text->escape($label === null ? $value : $label($value))
                 . '<span class="facet-count">' . $this->text->number($count) . '</span></button>';
         }

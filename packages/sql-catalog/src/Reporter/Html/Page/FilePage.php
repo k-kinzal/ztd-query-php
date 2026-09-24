@@ -49,7 +49,7 @@ final class FilePage
             . $this->text->escape($this->text->plural(count($functions), 'function')) . ' in this file.</p>'
             . $this->tables($site, $entries)
             . '<h2 id="functions">Functions</h2>'
-            . '<div class="filterable" data-narrowable>' . $this->list->facets($entries) . $this->sections($site, $file, $functions) . '</div>';
+            . '<div data-narrowable>' . $this->list->facets($entries) . $this->sections($site, $file, $functions) . '</div>';
     }
 
     /**
@@ -61,12 +61,11 @@ final class FilePage
     {
         $chips = '';
         foreach ($site->index()->tablesOf($entries) as $table => $count) {
-            $chips .= '<li>' . $this->text->chipLink((new TableName($table))->label(), '../' . $site->tablePage($table), 'chip-ghost')
-                . '<span class="route-figures">' . $this->text->number($count) . '</span></li>';
+            $chips .= $this->text->chipCount((new TableName($table))->label(), '../' . $site->tablePage($table), $count, 'chip-ghost');
         }
 
         return '<h2 id="tables">Tables</h2>'
-            . ($chips === '' ? '<p class="none">No statement here names a table.</p>' : '<ol class="route-top route-chips">' . $chips . '</ol>');
+            . ($chips === '' ? '<p class="empty-inline">No statement here names a table.</p>' : '<div class="chips">' . $chips . '</div>');
     }
 
     /**

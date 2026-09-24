@@ -37,7 +37,7 @@ final class Derivation
      * @param Grammar $grammar Grammar being walked
      * @param FakerGenerator $faker Source of the choices the walk makes freely
      * @param TerminationAnalyzer $analyzer Answers what a production still costs to finish
-     * @param (Closure(int): ?int)|null $choose Optional choice policy; null results choose the shortest completion
+     * @param (Closure(int, non-empty-list<Production>): ?int)|null $choose Optional choice policy given the count and the candidates; null results choose the shortest completion
      */
     public function __construct(
         private readonly Grammar $grammar,
@@ -172,7 +172,7 @@ final class Derivation
         if ($this->steps < $plan->maxDepth()) {
             $index = $this->choose === null
                 ? $this->faker->numberBetween(0, count($alternatives) - 1)
-                : ($this->choose)(count($alternatives));
+                : ($this->choose)(count($alternatives), $alternatives);
             if ($index !== null) {
                 return $alternatives[$index];
             }

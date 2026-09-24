@@ -20,9 +20,9 @@ final class HtmlText
     }
 
     /**
-     * One labelled chip, tinted by the role named in the class.
+     * One labelled chip, tinted by the tone named in the class.
      *
-     * @param string $role The role classes the chip carries, such as `k-select` or `s-ok`
+     * @param string $role The role classes the chip carries, such as `tone-blue` or `chip-ghost`
      */
     public function chip(string $text, string $role = '', string $title = ''): string
     {
@@ -42,6 +42,15 @@ final class HtmlText
     }
 
     /**
+     * One chip that is a link and carries how many it stands for.
+     */
+    public function chipCount(string $text, string $href, int $count, string $role = ''): string
+    {
+        return '<a class="chip' . ($role === '' ? '' : ' ' . $this->escape($role)) . '" href="' . $this->escape($href) . '">'
+            . $this->escape($text) . '<span class="facet-count">' . $this->number($count) . '</span></a>';
+    }
+
+    /**
      * One link.
      */
     public function link(string $text, string $href, string $class = ''): string
@@ -57,7 +66,7 @@ final class HtmlText
     {
         return str_replace(
             '{$}',
-            '<span class="hole hole-open" title="A part of this name the analysis could not pin down">{$}</span>',
+            '<span class="hole tone-warn" title="A part of this name the analysis could not pin down">{$}</span>',
             $this->escape($name),
         );
     }
@@ -71,11 +80,19 @@ final class HtmlText
     }
 
     /**
+     * The noun a count is written with, singular or plural.
+     */
+    public function noun(int $value, string $noun): string
+    {
+        return $noun . ($value === 1 ? '' : 's');
+    }
+
+    /**
      * A count with the noun it counts, singular or plural.
      */
     public function plural(int $value, string $noun): string
     {
-        return $this->number($value) . ' ' . $noun . ($value === 1 ? '' : 's');
+        return $this->number($value) . ' ' . $this->noun($value, $noun);
     }
 
     /**
@@ -84,17 +101,6 @@ final class HtmlText
     public function percent(int $value, int $total): string
     {
         return $total === 0 ? '0%' : (string) ((int) round($value * 100 / $total)) . '%';
-    }
-
-    /**
-     * A bar showing a share of a total.
-     *
-     * @param string $role The role class the fill is tinted by, such as `bar-ok`
-     */
-    public function bar(int $value, int $total, string $role = ''): string
-    {
-        return '<span class="bar' . ($role === '' ? '' : ' ' . $this->escape($role)) . '">'
-            . '<span style="--w:' . $this->escape($this->percent($value, $total)) . '"></span></span>';
     }
 
     /**

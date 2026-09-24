@@ -64,6 +64,21 @@ final class DerivationTest extends TestCase
         );
     }
 
+    public function testOfOffersTheCandidatesToTheChoicePolicy(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [new Production([new Terminal('SELECT')]), new Production([new Terminal('DELETE')])]),
+        ]);
+        $offered = [];
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar), null, static function (int $count, array $candidates) use (&$offered): int {
+            $offered = $candidates;
+            return $count - 1;
+        });
+
+        self::assertEquals([new Terminal('DELETE')], $derivation->of('stmt', GenerationPlan::all()));
+        self::assertSame($grammar->ruleMap['stmt']->alternatives, $offered);
+    }
+
     public function testOfReportsASymbolTheGrammarDeclaresNoRuleFor(): void
     {
         $grammar = new Grammar('stmt', [

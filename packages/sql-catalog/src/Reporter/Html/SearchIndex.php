@@ -12,7 +12,8 @@ use SqlCatalog\Catalog\CatalogEntry;
  * Splitting a catalog across pages is what makes it readable and what makes a
  * statement hard to find, so the split comes with an index of every statement
  * and the page it is on. The index is a script rather than data fetched at
- * runtime, so the report still works opened from a file.
+ * runtime, so the report still works opened from a file. The report's own
+ * script ranks it and hands each hit to doc-ui's search box to show.
  *
  * @visibility root
  */
@@ -25,15 +26,12 @@ final class SearchIndex
 
     private HtmlText $text;
 
-    private Palette $palette;
-
     /**
-     * Wires the index to the rendering the search results are written with.
+     * Wires the index to the text rendering the entries are shortened with.
      */
-    public function __construct(?HtmlText $text = null, ?Palette $palette = null)
+    public function __construct(?HtmlText $text = null)
     {
         $this->text = $text ?? new HtmlText();
-        $this->palette = $palette ?? new Palette();
     }
 
     /**
@@ -51,14 +49,12 @@ final class SearchIndex
     }
 
     /**
-     * One statement as the search reads it.
+     * One statement as the search reads it: the text, where it is issued, what it names, and where it is written up.
      *
-     * @return array{q: string, w: string, f: string, t: string, u: string, k: string, g: string, r: string, c: string}
+     * @return array{q: string, w: string, f: string, t: string, u: string, k: string, r: string}
      */
     public function entryToArray(ReportSite $site, CatalogEntry $entry): array
     {
-        $resolution = $entry->resolution();
-
         return [
             'q' => $this->text->truncate($entry->sql(), self::LENGTH),
             'w' => $entry->site->display(),
@@ -66,9 +62,7 @@ final class SearchIndex
             't' => implode(' ', $entry->tables),
             'u' => $site->statementPage($entry->id),
             'k' => strtoupper($entry->kind->value),
-            'g' => $this->palette->kindGroup($entry->kind->value),
-            'r' => $resolution->value,
-            'c' => substr($this->palette->resolution($resolution), 2),
+            'r' => $entry->resolution()->value,
         ];
     }
 }

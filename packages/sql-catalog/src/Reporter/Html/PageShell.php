@@ -7,24 +7,46 @@ namespace SqlCatalog\Reporter\Html;
 /**
  * The document every page of the report is written into.
  *
- * The navigation names the routes to a statement — by table, by namespace, by
- * file, by finding, or through the whole listing — and then whatever the page
- * being read is best left from: the other tables beside a table, the other
- * classes of a namespace beside a class, the places a statement belongs to
- * beside the statement, and the sections of a long page. Each page says what
- * that is; the shell only writes it.
+ * The page is a doc-ui document: the compact layout document-design keeps
+ * for catalogs and references, with the navigation beside the reading and
+ * the tools along the top. The navigation names the routes to a statement —
+ * by table, by namespace, by file, by finding, or through the whole listing —
+ * and then whatever the page being read is best left from: the other tables
+ * beside a table, the other classes of a namespace beside a class, the places
+ * a statement belongs to beside the statement, and the sections of a long
+ * page. Each page says what that is; the shell only writes it.
  *
  * @visibility root
  */
 final class PageShell
 {
     /**
-     * The name the stylesheet is written under.
+     * The release of document-design the pages are written for, and never a later one.
+     */
+    public const DESIGN_VERSION = 'v1.0.0';
+
+    /**
+     * The name the document-design stylesheet is written under.
+     */
+    public const DESIGN_STYLE = 'assets/document-design-' . self::DESIGN_VERSION . '.css';
+
+    /**
+     * The name the document-design script is written under.
+     */
+    public const DESIGN_SCRIPT = 'assets/document-design-' . self::DESIGN_VERSION . '.js';
+
+    /**
+     * The name the document-design license and provenance notice is written under.
+     */
+    public const DESIGN_LICENSE = 'assets/document-design-LICENSE.txt';
+
+    /**
+     * The name the report's own stylesheet is written under.
      */
     public const STYLE = 'assets/report.css';
 
     /**
-     * The name the client script is written under.
+     * The name the report's own script is written under.
      */
     public const SCRIPT = 'assets/report.js';
 
@@ -32,6 +54,11 @@ final class PageShell
      * The name the search index is written under.
      */
     public const INDEX = 'assets/search-index.js';
+
+    /**
+     * The key the chosen theme is remembered under.
+     */
+    public const THEME_KEY = 'sql-catalog-theme';
 
     /**
      * How many entries a navigation block lists before pointing at the listing.
@@ -59,33 +86,66 @@ final class PageShell
     {
         $prefix = $site->prefixOf($page);
 
-        return '<!DOCTYPE html>' . "\n"
-            . '<html lang="en">' . "\n"
-            . '<head>' . "\n"
-            . '<meta charset="utf-8">' . "\n"
-            . '<meta name="viewport" content="width=device-width, initial-scale=1">' . "\n"
-            . '<title>' . $this->text->escape($title) . '</title>' . "\n"
-            . '<link rel="stylesheet" href="' . $this->text->escape($prefix . self::STYLE) . '">' . "\n"
-            . $this->bootstrap() . "\n"
-            . '</head>' . "\n"
+        return $this->head($prefix, $title)
             . '<body data-root="' . $this->text->escape($prefix) . '">' . "\n"
-            . '<nav class="sidebar" id="sidebar">' . $this->sidebar($site, $page, $blocks) . '</nav>' . "\n"
-            . '<div class="page">' . "\n"
-            . '<header class="topbar">' . "\n"
-            . '<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>' . "\n"
-            . '<nav class="crumbs">' . $this->crumbs($crumbs, $prefix) . '</nav>' . "\n"
-            . '<div class="topbar-tools">' . "\n"
-            . '<input type="search" id="search" placeholder="Find a statement… ( / )" title="Search by SQL text, table, function or file" autocomplete="off" spellcheck="false">' . "\n"
-            . '<button id="theme-toggle" title="Toggle theme">◐</button>' . "\n"
+            . '<a class="skip" href="#content">Skip to content</a>' . "\n"
+            . '<div class="doc">' . "\n"
+            . '<nav class="sidebar" id="navigation" aria-label="Report navigation">' . $this->sidebar($site, $page, $blocks) . '</nav>' . "\n"
+            . '<div class="main">' . "\n"
+            . $this->topbar($crumbs, $prefix)
+            . '<div class="search-results" data-dd-search-results hidden></div>' . "\n"
+            . '<main class="content" id="content">' . "\n" . $body . '</main>' . "\n"
+            . '<footer class="doc-footer">Written by <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-catalog">sql-catalog</a>.</footer>' . "\n"
             . '</div>' . "\n"
-            . '</header>' . "\n"
-            . '<div class="search-results" id="search-results" hidden></div>' . "\n"
-            . '<main class="content">' . "\n" . $body . '</main>' . "\n"
             . '</div>' . "\n"
             . '<script src="' . $this->text->escape($prefix . self::INDEX) . '" defer></script>' . "\n"
             . '<script src="' . $this->text->escape($prefix . self::SCRIPT) . '" defer></script>' . "\n"
+            . '<script src="' . $this->text->escape($prefix . self::DESIGN_SCRIPT) . '" defer></script>' . "\n"
             . '</body>' . "\n"
             . '</html>' . "\n";
+    }
+
+    /**
+     * The head of a page: its title, the two stylesheets, and the theme restored before the first paint.
+     *
+     * The document-design stylesheet comes first and the report's own after
+     * it, so what the report adds is read on top of the design and not under
+     * it.
+     */
+    public function head(string $prefix, string $title): string
+    {
+        return '<!DOCTYPE html>' . "\n"
+            . '<html lang="en" data-dd-theme-key="' . self::THEME_KEY . '">' . "\n"
+            . '<head>' . "\n"
+            . '<meta charset="utf-8">' . "\n"
+            . '<meta name="viewport" content="width=device-width, initial-scale=1">' . "\n"
+            . '<meta name="color-scheme" content="light dark">' . "\n"
+            . '<title>' . $this->text->escape($title) . '</title>' . "\n"
+            . '<link rel="stylesheet" href="' . $this->text->escape($prefix . self::DESIGN_STYLE) . '">' . "\n"
+            . '<link rel="stylesheet" href="' . $this->text->escape($prefix . self::STYLE) . '">' . "\n"
+            . $this->bootstrap() . "\n"
+            . '</head>' . "\n";
+    }
+
+    /**
+     * The bar along the top of a page: the way into the navigation on a phone, the trail, the search and the theme.
+     *
+     * The search box and the theme switch are hidden until the script that
+     * drives them has run, so a page read without it shows no control that
+     * does nothing.
+     *
+     * @param list<array{string, string|null}> $crumbs
+     */
+    public function topbar(array $crumbs, string $prefix): string
+    {
+        return '<header class="topbar">' . "\n"
+            . '<button class="btn nav-toggle" type="button" data-dd-nav-toggle aria-controls="navigation" aria-expanded="false" aria-label="Open navigation">☰</button>' . "\n"
+            . '<nav class="breadcrumbs" aria-label="Breadcrumb">' . $this->crumbs($crumbs, $prefix) . '</nav>' . "\n"
+            . '<div class="topbar-tools">' . "\n"
+            . '<input type="search" id="search" class="input input-search" data-dd-search data-dd-enhance hidden placeholder="Find a statement… ( / )" aria-label="Search by SQL text, table, function or file" autocomplete="off" spellcheck="false">' . "\n"
+            . '<button class="btn" type="button" data-dd-theme-toggle data-dd-enhance hidden aria-label="Switch theme">◐</button>' . "\n"
+            . '</div>' . "\n"
+            . '</header>' . "\n";
     }
 
     /**
@@ -98,11 +158,11 @@ final class PageShell
         $written = [];
         foreach ($crumbs as [$label, $href]) {
             $written[] = $href === null
-                ? '<span class="crumb-current">' . $this->text->escape($label) . '</span>'
+                ? '<span class="breadcrumb-current">' . $this->text->escape($label) . '</span>'
                 : '<a href="' . $this->text->escape($prefix . $href) . '">' . $this->text->escape($label) . '</a>';
         }
 
-        return implode('<span class="crumb-sep">/</span>', $written);
+        return implode('<span class="breadcrumb-sep">/</span>', $written);
     }
 
     /**
@@ -140,11 +200,11 @@ final class PageShell
             $directory = substr($target, 0, -5) . '/';
             $active = $page === $target || str_starts_with($page, $directory);
             $items .= '<li' . ($active ? ' class="is-active"' : '') . '>'
-                . '<a href="' . $this->text->escape($prefix . $target) . '">' . $label . '</a>'
-                . ($count === null ? '' : '<span class="sb-count">' . $this->text->number($count) . '</span>') . '</li>';
+                . '<a href="' . $this->text->escape($prefix . $target) . '"' . ($active ? ' aria-current="page"' : '') . '>' . $label . '</a>'
+                . ($count === null ? '' : '<span class="sidebar-count">' . $this->text->number($count) . '</span>') . '</li>';
         }
 
-        return '<div class="sb-block"><p class="sb-title">Browse</p><ul class="sb-list">' . $items . '</ul></div>';
+        return '<div class="sidebar-section"><p class="sidebar-title">Browse</p><ul class="sidebar-list">' . $items . '</ul></div>';
     }
 
     /**
@@ -152,7 +212,9 @@ final class PageShell
      *
      * An address starting with `#` is a section of the page being read and is
      * written as it is; any other is relative to the root of the report. A
-     * block longer than the limit is cut, and says where the rest are.
+     * block of nothing but sections is the table of contents, and is marked so
+     * the section being read is followed as the page scrolls. A block longer
+     * than the limit is cut, and says where the rest are.
      *
      * @param list<array{string, string, int|null, bool}> $items
      * @param string|null $rest Where every entry is listed, for a block that had to be cut
@@ -163,17 +225,21 @@ final class PageShell
             return '';
         }
         $written = '';
+        $sections = true;
         foreach (array_slice($items, 0, self::LIMIT) as [$label, $href, $count, $active]) {
+            $section = str_starts_with($href, '#');
+            $sections = $sections && $section;
             $written .= '<li' . ($active ? ' class="is-active"' : '') . '>'
-                . '<a href="' . $this->text->escape(str_starts_with($href, '#') ? $href : $prefix . $href) . '" title="' . $this->text->escape($label) . '">'
+                . '<a href="' . $this->text->escape($section ? $href : $prefix . $href) . '" title="' . $this->text->escape($label) . '"' . ($active ? ' aria-current="page"' : '') . '>'
                 . $this->text->escape($label) . '</a>'
-                . ($count === null ? '' : '<span class="sb-count">' . $this->text->number($count) . '</span>') . '</li>';
+                . ($count === null ? '' : '<span class="sidebar-count">' . $this->text->number($count) . '</span>') . '</li>';
         }
         if (count($items) > self::LIMIT && $rest !== null) {
-            $written .= '<li class="sb-more"><a href="' . $this->text->escape($prefix . $rest) . '">All ' . $this->text->number(count($items)) . '…</a></li>';
+            $written .= '<li class="sidebar-more"><a href="' . $this->text->escape($prefix . $rest) . '">All ' . $this->text->number(count($items)) . '…</a></li>';
         }
 
-        return '<div class="sb-block"><p class="sb-title">' . $this->text->escape($title) . '</p><ul class="sb-list sb-context">' . $written . '</ul></div>';
+        return '<div class="sidebar-section"><p class="sidebar-title">' . $this->text->escape($title) . '</p>'
+            . '<ul class="sidebar-list sidebar-context"' . ($sections ? ' data-dd-toc' : '') . '>' . $written . '</ul></div>';
     }
 
     /**
@@ -197,9 +263,12 @@ final class PageShell
 
     /**
      * The inline script that restores the chosen theme before the page is laid out.
+     *
+     * The theme is kept where document-design reads it, so the switch in the
+     * topbar and this script agree on what the reader chose.
      */
     public function bootstrap(): string
     {
-        return '<script>try{var t=localStorage.getItem("sql-catalog-theme");if(t){document.documentElement.dataset.theme=t}}catch(e){}</script>';
+        return '<script>try{var t=localStorage.getItem("' . self::THEME_KEY . '");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>';
     }
 }

@@ -49,6 +49,21 @@ final class ByteChoices
     }
 
     /**
+     * Writes the little-endian bytes index() reads back as the same choice; the index must select one of the candidates.
+     *
+     * @throws InvalidArgumentException When the candidate count is not positive
+     */
+    public static function encode(int $count, int $index): string
+    {
+        $bytes = '';
+        for ($width = self::width($count); $width > 0; --$width) {
+            $bytes .= chr($index & 0xff);
+            $index >>= 8;
+        }
+        return $bytes;
+    }
+
+    /**
      * Counts the little-endian bytes used by both encoder and decoder.
      *
      * @throws InvalidArgumentException When the candidate count is not positive

@@ -81,8 +81,8 @@ final class FindingPage
         return '<h2 id="hotspots">Where to look first</h2>'
             . '<p class="lede">The functions issuing statements with a high or medium finding: SQL built from external input, '
             . 'or from values spliced into the text rather than bound. A function high on this list is one to read before trusting its queries.</p>'
-            . '<div class="table-wrap"><table class="sortable"><thead><tr><th data-sort="text">Function</th><th data-sort="text">File</th>'
-            . '<th class="num" data-sort="num">High</th><th class="num" data-sort="num">Medium</th></tr></thead><tbody>' . $rows . '</tbody></table></div>';
+            . '<div class="table-wrap"><table class="sortable" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">Function</th><th scope="col" data-dd-sort="text">File</th>'
+            . '<th scope="col" class="num" data-dd-sort="number">High</th><th scope="col" class="num" data-dd-sort="number">Medium</th></tr></thead><tbody>' . $rows . '</tbody></table></div>';
     }
 
     /**

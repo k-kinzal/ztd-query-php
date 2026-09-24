@@ -73,7 +73,7 @@ final class StatementListTest extends TestCase
         $list = new StatementList();
 
         self::assertStringStartsWith('<ol class="rows"><li class="row" data-kind="select"', $list->rows($site, 'index.html', [$entry]));
-        self::assertSame('<p class="none">No statement here.</p>', $list->rows($site, 'index.html', []));
+        self::assertSame('<p class="empty-inline">No statement here.</p>', $list->rows($site, 'index.html', []));
     }
 
     public function testFacetsOfferOnlyWhatWouldNarrowTheListing(): void
@@ -84,10 +84,11 @@ final class StatementListTest extends TestCase
         ];
 
         self::assertSame(
-            '<div class="facets"><input type="search" class="facet-search" placeholder="Narrow by text…" autocomplete="off" spellcheck="false">'
-            . '<span class="facet-group"><button type="button" class="chip facet k-select" data-facet="kind" data-value="select">SELECT<span class="facet-count">1</span></button>'
-            . '<button type="button" class="chip facet k-insert" data-facet="kind" data-value="insert">INSERT<span class="facet-count">1</span></button></span>'
-            . '<span class="facet-shown" data-total="2"></span><button type="button" class="facet-clear" hidden>Clear</button></div>',
+            '<div class="facets" role="group" aria-label="Narrow the listing"><input type="search" name="narrow" class="input facet-search" placeholder="Narrow by '
+                . 'text…" aria-label="Narrow by text" autocomplete="off" spellcheck="false"><span class="facet-group"><button type="button" class="chip facet tone-blue" '
+                . 'data-facet="kind" data-value="select" aria-pressed="false">SELECT<span class="facet-count">1</span></button><button type="button" class="chip facet to'
+                . 'ne-teal" data-facet="kind" data-value="insert" aria-pressed="false">INSERT<span class="facet-count">1</span></button></span><span class="facet-shown" '
+                . 'aria-live="polite"></span><button type="button" class="btn facet-clear" hidden>Clear</button></div>',
             (new StatementList())->facets($entries),
         );
     }
@@ -142,23 +143,25 @@ final class StatementListTest extends TestCase
         $site = new ReportSite($catalog);
 
         self::assertSame(
-            '<div class="facets"><input type="search" class="facet-search" placeholder="Narrow by text…" autocomplete="off" spellcheck="false"><span clas'
-                . 's="facet-group"><button type="button" class="chip facet k-select" data-facet="kind" data-value="select">SELECT<span class="facet-count">12</'
-                . 'span></button><button type="button" class="chip facet k-insert" data-facet="kind" data-value="insert">INSERT<span class="facet-count">1</spa'
-                . 'n></button><button type="button" class="chip facet k-update" data-facet="kind" data-value="update">UPDATE<span class="facet-count">1</span><'
-                . '/button><button type="button" class="chip facet k-delete" data-facet="kind" data-value="delete">DELETE<span class="facet-count">1</span></bu'
-                . 'tton><button type="button" class="chip facet k-schema" data-facet="kind" data-value="alter">ALTER<span class="facet-count">1</span></button>'
-                . '<button type="button" class="chip facet k-other" data-facet="kind" data-value="unknown">UNKNOWN<span class="facet-count">1</span></button><b'
-                . 'utton type="button" class="chip facet k-other" data-facet="kind" data-value="show">SHOW<span class="facet-count">1</span></button></span><sp'
-                . 'an class="facet-group"><button type="button" class="chip facet s-ok" data-facet="resolution" data-value="resolved">resolved<span class="face'
-                . 't-count">15</span></button><button type="button" class="chip facet s-danger" data-facet="resolution" data-value="external-input">external-in'
-                . 'put<span class="facet-count">1</span></button><button type="button" class="chip facet s-open" data-facet="resolution" data-value="incomplete'
-                . '">incomplete<span class="facet-count">1</span></button><button type="button" class="chip facet s-neutral" data-facet="resolution" data-value'
-                . '="not-analyzed">not-analyzed<span class="facet-count">1</span></button></span><span class="facet-group"><button type="button" class="chip fa'
-                . 'cet s-warn" data-facet="severity" data-value="medium">medium<span class="facet-count">5</span></button><button type="button" class="chip fac'
-                . 'et s-neutral" data-facet="severity" data-value="low">low<span class="facet-count">2</span></button><button type="button" class="chip facet s'
-                . '-danger" data-facet="severity" data-value="high">high<span class="facet-count">1</span></button></span><span class="facet-shown" data-total='
-                . '"18"></span><button type="button" class="facet-clear" hidden>Clear</button></div>',
+            '<div class="facets" role="group" aria-label="Narrow the listing"><input type="search" name="narrow" class="input facet-search" placeholder="Narrow by '
+                . 'text…" aria-label="Narrow by text" autocomplete="off" spellcheck="false"><span class="facet-group"><button type="button" class="chip facet tone-blue" '
+                . 'data-facet="kind" data-value="select" aria-pressed="false">SELECT<span class="facet-count">12</span></button><button type="button" class="chip facet t'
+                . 'one-teal" data-facet="kind" data-value="insert" aria-pressed="false">INSERT<span class="facet-count">1</span></button><button type="button" class="chi'
+                . 'p facet tone-violet" data-facet="kind" data-value="update" aria-pressed="false">UPDATE<span class="facet-count">1</span></button><button type="button"'
+                . ' class="chip facet tone-pink" data-facet="kind" data-value="delete" aria-pressed="false">DELETE<span class="facet-count">1</span></button><button type'
+                . '="button" class="chip facet tone-indigo" data-facet="kind" data-value="alter" aria-pressed="false">ALTER<span class="facet-count">1</span></button><bu'
+                . 'tton type="button" class="chip facet tone-slate" data-facet="kind" data-value="unknown" aria-pressed="false">UNKNOWN<span class="facet-count">1</span>'
+                . '</button><button type="button" class="chip facet tone-slate" data-facet="kind" data-value="show" aria-pressed="false">SHOW<span class="facet-count">1<'
+                . '/span></button></span><span class="facet-group"><button type="button" class="chip facet tone-ok" data-facet="resolution" data-value="resolved" aria-pr'
+                . 'essed="false">resolved<span class="facet-count">15</span></button><button type="button" class="chip facet tone-danger" data-facet="resolution" data-va'
+                . 'lue="external-input" aria-pressed="false">external-input<span class="facet-count">1</span></button><button type="button" class="chip facet chip-ghost"'
+                . ' data-facet="resolution" data-value="incomplete" aria-pressed="false">incomplete<span class="facet-count">1</span></button><button type="button" class'
+                . '="chip facet tone-neutral" data-facet="resolution" data-value="not-analyzed" aria-pressed="false">not-analyzed<span class="facet-count">1</span></butt'
+                . 'on></span><span class="facet-group"><button type="button" class="chip facet tone-warn" data-facet="severity" data-value="medium" aria-pressed="false">'
+                . 'medium<span class="facet-count">5</span></button><button type="button" class="chip facet tone-neutral" data-facet="severity" data-value="low" aria-pre'
+                . 'ssed="false">low<span class="facet-count">2</span></button><button type="button" class="chip facet tone-danger" data-facet="severity" data-value="high'
+                . '" aria-pressed="false">high<span class="facet-count">1</span></button></span><span class="facet-shown" aria-live="polite"></span><button type="button"'
+                . ' class="btn facet-clear" hidden>Clear</button></div>',
             (new StatementList())->facets($entries),
         );
     }

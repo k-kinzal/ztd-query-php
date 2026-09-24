@@ -52,7 +52,7 @@ final class OverviewPage
             . '<p class="lede">Every statement this source can issue, read back from the calls that receive it. '
             . 'Start from the table, class or file you are working on, or from what the analysis flagged.</p>'
             . $this->facts($site)
-            . '<div class="routes">' . $this->tableRoute($site) . $this->namespaceRoute($site)
+            . '<div class="cards">' . $this->tableRoute($site) . $this->namespaceRoute($site)
             . $this->fileRoute($site) . $this->kindRoute($site) . '</div>'
             . $this->attention($site)
             . $this->coverage($site)
@@ -60,23 +60,24 @@ final class OverviewPage
     }
 
     /**
-     * What the catalog holds, in one line.
+     * What the catalog holds, as a row of figures each leading to the listing it counts.
      */
     public function facts(ReportSite $site): string
     {
         $index = $site->index();
         $facts = [
-            [$this->text->plural($site->statistics()->statements(), 'statement'), ReportSite::STATEMENTS],
-            [$this->text->plural(count($site->tables()), 'table'), ReportSite::TABLES],
-            [$this->text->plural(count($index->byFunction()), 'function'), ReportSite::NAMESPACES],
-            [$this->text->plural(count($site->files()), 'file'), ReportSite::FILES],
+            [$site->statistics()->statements(), 'statement', ReportSite::STATEMENTS],
+            [count($site->tables()), 'table', ReportSite::TABLES],
+            [count($index->byFunction()), 'function', ReportSite::NAMESPACES],
+            [count($site->files()), 'file', ReportSite::FILES],
         ];
-        $written = [];
-        foreach ($facts as [$label, $href]) {
-            $written[] = $this->text->link($label, $href);
+        $written = '';
+        foreach ($facts as [$count, $noun, $href]) {
+            $written .= '<a class="stat" href="' . $this->text->escape($href) . '"><b class="stat-fig">' . $this->text->number($count) . '</b>'
+                . '<span class="stat-label">' . $this->text->escape($this->text->noun($count, $noun)) . '</span></a>';
         }
 
-        return '<p class="facts">' . implode('<span class="facts-sep">·</span>', $written) . '</p>';
+        return '<div class="stats">' . $written . '</div>';
     }
 
     /**
@@ -88,8 +89,8 @@ final class OverviewPage
         $items = '';
         foreach (array_slice($index->byTable(), 0, self::TOP, true) as $table => $entries) {
             $usage = $index->usage($entries);
-            $items .= '<li>' . $this->text->link((new TableName($table))->label(), $site->tablePage($table))
-                . '<span class="route-figures">' . $this->text->number(count($entries)) . ' · '
+            $items .= '<li>' . $this->text->link((new TableName($table))->label(), $site->tablePage($table), 'mono')
+                . '<span class="usage-kind">' . $this->text->number(count($entries)) . ' · '
                 . $this->text->number($usage['reads']) . ' read · ' . $this->text->number($usage['writes']) . ' write</span></li>';
         }
 
@@ -113,13 +114,13 @@ final class OverviewPage
         uasort($classes, static fn (array $left, array $right): int => count($right) <=> count($left));
         $items = '';
         foreach (array_slice($classes, 0, self::TOP, true) as $class => $entries) {
-            $items .= '<li>' . $this->text->link($class, $site->classPage($class))
-                . '<span class="route-figures">' . $this->text->plural(count($entries), 'statement') . '</span></li>';
+            $items .= '<li>' . $this->text->link($class, $site->classPage($class), 'mono')
+                . '<span class="usage-kind">' . $this->text->plural(count($entries), 'statement') . '</span></li>';
         }
         if ($items === '') {
             foreach (array_slice($index->mostFirst(array_map('count', $index->byFunction())), 0, self::TOP, true) as $function => $count) {
-                $items .= '<li>' . $this->text->link(Scope::of($function)->display(), ReportSite::STATEMENTS . '?function=' . rawurlencode($function))
-                    . '<span class="route-figures">' . $this->text->plural($count, 'statement') . '</span></li>';
+                $items .= '<li>' . $this->text->link(Scope::of($function)->display(), ReportSite::STATEMENTS . '?function=' . rawurlencode($function), 'mono')
+                    . '<span class="usage-kind">' . $this->text->plural($count, 'statement') . '</span></li>';
             }
         }
 
@@ -142,8 +143,8 @@ final class OverviewPage
         uasort($files, static fn (array $left, array $right): int => count($right) <=> count($left));
         $items = '';
         foreach (array_slice($files, 0, self::TOP, true) as $file => $entries) {
-            $items .= '<li>' . $this->text->link($file, $site->filePage($file))
-                . '<span class="route-figures">' . $this->text->plural(count($entries), 'statement') . '</span></li>';
+            $items .= '<li>' . $this->text->link($file, $site->filePage($file), 'mono')
+                . '<span class="usage-kind">' . $this->text->plural(count($entries), 'statement') . '</span></li>';
         }
 
         return $this->route(
@@ -164,7 +165,7 @@ final class OverviewPage
         $chips = '';
         foreach ($site->statistics()->byKind() as $kind => $count) {
             $chips .= '<li>' . $this->text->chipLink(strtoupper($kind), ReportSite::STATEMENTS . '?kind=' . rawurlencode($kind), $this->palette->kind($kind))
-                . '<span class="route-figures">' . $this->text->number($count) . '</span></li>';
+                . '<span class="usage-kind">' . $this->text->plural($count, 'statement') . '</span></li>';
         }
 
         return $this->route(
@@ -173,20 +174,19 @@ final class OverviewPage
             $site->statistics()->statements(),
             'statement',
             'Every statement, to narrow down by what it does, how far the analysis got and what was reported.',
-            $chips,
-            'route-chips'
+            $chips
         );
     }
 
     /**
-     * One route card.
+     * One route, as a card: where it leads, what it is for, the entries most worth starting from, and the way to all of them.
      */
-    public function route(string $label, string $href, int $count, string $noun, string $hint, string $items, string $class = ''): string
+    public function route(string $label, string $href, int $count, string $noun, string $hint, string $items): string
     {
-        return '<section class="route"><h2>' . $this->text->link($label, $href) . $this->text->count($count) . '</h2>'
-            . '<p class="route-hint">' . $this->text->escape($hint) . '</p>'
-            . ($items === '' ? '<p class="none">Nothing here.</p>' : '<ol class="route-top' . ($class === '' ? '' : ' ' . $class) . '">' . $items . '</ol>')
-            . '<p class="route-all">' . $this->text->link('All ' . $this->text->plural($count, $noun), $href) . '</p></section>';
+        return '<section class="card"><h2>' . $this->text->link($label, $href) . $this->text->count($count) . '</h2>'
+            . '<p class="card-description">' . $this->text->escape($hint) . '</p>'
+            . ($items === '' ? '<p class="empty-inline">Nothing here.</p>' : '<ul class="usage-list">' . $items . '</ul>')
+            . '<p class="card-more">' . $this->text->link('All ' . $this->text->plural($count, $noun), $href) . '</p></section>';
     }
 
     /**
@@ -209,22 +209,22 @@ final class OverviewPage
         $spots = '';
         foreach (array_slice($site->index()->hotspots(), 0, self::TOP) as $spot) {
             $spots .= '<li>' . $this->text->link(Scope::of($spot['function'])->display(), ReportSite::FINDINGS . '#hotspots', 'mono')
-                . '<span class="route-figures">' . $this->text->escape($spot['file'])
+                . '<span class="usage-kind">' . $this->text->escape($spot['file'])
                 . ($spot['high'] > 0 ? ' · ' . $this->text->number($spot['high']) . ' high' : '')
                 . ($spot['medium'] > 0 ? ' · ' . $this->text->number($spot['medium']) . ' medium' : '') . '</span></li>';
         }
 
         return '<h2 id="attention">Needs attention' . $this->text->count($site->statistics()->findings(), 'finding') . '</h2>'
-            . '<div class="split"><div class="table-wrap"><table><thead><tr><th>Rule</th><th class="tight">Severity</th>'
-            . '<th class="num">Statements</th><th>What it reports</th></tr></thead><tbody>' . $rows . '</tbody></table></div>'
+            . '<div class="split"><div class="table-wrap"><table><thead><tr><th scope="col">Rule</th><th scope="col" class="tight">Severity</th>'
+            . '<th scope="col" class="num">Statements</th><th scope="col">What it reports</th></tr></thead><tbody>' . $rows . '</tbody></table></div>'
             . ($spots === '' ? '' : '<section class="aside"><h3>Functions issuing flagged statements</h3>'
-                . '<ol class="route-top">' . $spots . '</ol><p class="route-all">'
+                . '<ul class="usage-list">' . $spots . '</ul><p class="more">'
                 . $this->text->link('Every flagged function', ReportSite::FINDINGS . '#hotspots') . '</p></section>')
             . '</div>';
     }
 
     /**
-     * How far the analysis got, as one bar whose every segment leads to the statements it counts.
+     * How far the analysis got, as one meter whose every segment leads to the statements it counts.
      */
     public function coverage(ReportSite $site): string
     {
@@ -237,17 +237,17 @@ final class OverviewPage
             $role = $this->palette->resolution($resolution);
             $href = ReportSite::STATEMENTS . '?resolution=' . rawurlencode($value);
             if ($count > 0) {
-                $segments .= '<a class="' . $this->text->escape($this->palette->bar($role)) . '" style="--w:' . $this->text->escape($this->text->percent($count, $total))
+                $segments .= '<a class="meter-part ' . $this->text->escape($this->palette->bar($role)) . '" style="--dd-part:' . $this->text->escape($this->text->percent($count, $total))
                     . '" href="' . $this->text->escape($href) . '" title="' . $this->text->escape($value . ': ' . $resolution->describe()) . '"></a>';
             }
             $legend .= '<li>' . $this->text->chipLink($value, $href, $role, $resolution->describe())
-                . '<span class="legend-count">' . $this->text->number($count) . '</span>'
-                . '<span class="legend-note">' . $this->text->escape($resolution->describe()) . '</span></li>';
+                . '<span class="meter-legend-count">' . $this->text->number($count) . '</span>'
+                . '<span class="meter-legend-description">' . $this->text->escape($resolution->describe()) . '</span></li>';
         }
         $open = $stats->open();
 
         return '<h2 id="coverage">How far the analysis got</h2>'
-            . '<div class="stack">' . $segments . '</div><ul class="legend">' . $legend . '</ul>'
+            . '<div class="meter meter-lg">' . $segments . '</div><ul class="legend">' . $legend . '</ul>'
             . '<p class="muted">' . ($open === 0
                 ? 'Every search closed: the statements listed are all of them.'
                 : $this->text->link($this->text->plural($open, 'statement'), ReportSite::STATEMENTS . '?open=open')
@@ -271,7 +271,7 @@ final class OverviewPage
 
         return '<h2 id="problems">Not read' . $this->text->count(count($problems), 'file') . '</h2>'
             . '<p class="lede">These files could not be parsed, so nothing in them was catalogued.</p>'
-            . '<div class="table-wrap"><table><thead><tr><th>File</th><th>Why</th></tr></thead><tbody>'
+            . '<div class="table-wrap"><table><thead><tr><th scope="col">File</th><th scope="col">Why</th></tr></thead><tbody>'
             . $rows . '</tbody></table></div>';
     }
 }

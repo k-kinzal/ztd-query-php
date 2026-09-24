@@ -45,7 +45,7 @@ final class FileIndexPage
 
         return '<h1>Files' . $this->text->count(count($site->files()), 'file') . '</h1>'
             . '<p class="lede">Every file a statement is written in, by directory. Open a file to read its statements function by function.</p>'
-            . '<input type="search" class="row-filter" placeholder="Narrow by file name…" autocomplete="off" spellcheck="false">'
+            . '<input type="search" name="filter" class="input input-block" data-filter-rows placeholder="Narrow by file name…" aria-label="Narrow by file name" autocomplete="off" spellcheck="false">'
             . $sections;
     }
 
@@ -67,9 +67,9 @@ final class FileIndexPage
 
         return '<section class="group"><h2 id="' . $this->text->escape('dir-' . $this->text->slug($label)) . '"><code>' . $this->text->escape($label) . '</code>'
             . $this->text->count(count($files), 'file') . '</h2>'
-            . '<div class="table-wrap"><table class="sortable filter-target"><thead><tr><th data-sort="text">File</th>'
-            . '<th class="num" data-sort="num">Statements</th><th class="num" data-sort="num">Functions</th>'
-            . '<th class="num" data-sort="num">Tables</th><th class="num" data-sort="num">Attention</th></tr></thead><tbody>'
+            . '<div class="table-wrap"><table class="sortable filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">File</th>'
+            . '<th scope="col" class="num" data-dd-sort="number">Statements</th><th scope="col" class="num" data-dd-sort="number">Functions</th>'
+            . '<th scope="col" class="num" data-dd-sort="number">Tables</th><th scope="col" class="num" data-dd-sort="number">Attention</th></tr></thead><tbody>'
             . $rows . '</tbody></table></div></section>';
     }
 

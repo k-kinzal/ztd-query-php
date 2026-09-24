@@ -35,10 +35,8 @@ final class SqlHighlighterTest extends TestCase
         ]);
 
         self::assertSame(
-            '<span class="tok-kw">SELECT</span> * <span class="tok-kw">FROM</span> t'
-            . ' <span class="tok-kw">WHERE</span> id = '
-            . '<span class="hole hole-external" title="This is a gap: external input fills it.'
-            . ' Written as $_GET[&quot;id&quot;].">{$}</span>',
+            '<span class="tok-kw">SELECT</span> * <span class="tok-kw">FROM</span> t <span class="tok-kw">WHERE</span> id = <span class="hole tone-danger" title="T'
+                . 'his is a gap: external input fills it. Written as $_GET[&quot;id&quot;].">{$}</span>',
             (new SqlHighlighter())->render(StatementPart::of($pattern)),
         );
     }
@@ -69,8 +67,7 @@ final class SqlHighlighterTest extends TestCase
     public function testHighlightMarksCommentsNumbersAndPlaceholders(): void
     {
         self::assertSame(
-            '<span class="tok-com">-- note</span>' . "\n" . '<span class="tok-num">42</span>'
-            . ' <span class="tok-ph">:id</span> <span class="tok-id">`t`</span>',
+            '<span class="tok-com">-- note</span>' . "\n" . '<span class="tok-num">42</span> <span class="tok-var">:id</span> <span class="tok-id">`t`</span>',
             (new SqlHighlighter())->highlight('-- note' . "\n" . '42 :id `t`'),
         );
     }
@@ -110,7 +107,7 @@ final class SqlHighlighterTest extends TestCase
     public function testHoleSaysWhereTheValueThatFillsItComesFrom(): void
     {
         self::assertSame(
-            '<span class="hole hole-open" title="This is a gap: an object property fills it.">{$}</span>',
+            '<span class="hole tone-warn" title="This is a gap: an object property fills it.">{$}</span>',
             (new SqlHighlighter())->hole(new StatementPart('', true, 'property', 'an object property')),
         );
     }
@@ -121,10 +118,10 @@ final class SqlHighlighterTest extends TestCase
     public static function providerHoleRole(): array
     {
         return [
-            [Origin::External, 'hole-external'],
-            [Origin::Unreached, 'hole-unreached'],
-            [Origin::Budget, 'hole-open'],
-            [Origin::Parameter, 'hole-open'],
+            [Origin::External, 'tone-danger'],
+            [Origin::Unreached, 'tone-neutral'],
+            [Origin::Budget, 'tone-warn'],
+            [Origin::Parameter, 'tone-warn'],
         ];
     }
 

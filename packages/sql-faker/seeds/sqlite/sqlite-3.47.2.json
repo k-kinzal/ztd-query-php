@@ -1,0 +1,1784 @@
+{
+    "database": "sqlite",
+    "version": "sqlite-3.47.2",
+    "root": "cmd",
+    "contract": {
+        "compiler": "SqlFaker\\Generation\\Choice\\BytePlanCompiler",
+        "plan": "GenerationPlan::fromRule('cmd')->requiringNonEmpty()",
+        "maximumBudget": 43
+    },
+    "coverage": {
+        "productions": 434,
+        "reached": 434,
+        "emitted": 424,
+        "seeds": 294,
+        "unreached": [],
+        "failures": []
+    },
+    "seeds": [
+        {
+            "file": "cmd-0.txt",
+            "target": "cmd#0",
+            "budget": 3,
+            "sql": "BEGIN"
+        },
+        {
+            "file": "cmd-1.txt",
+            "target": "cmd#1",
+            "budget": 2,
+            "sql": "COMMIT"
+        },
+        {
+            "file": "cmd-2.txt",
+            "target": "cmd#2",
+            "budget": 2,
+            "sql": "END"
+        },
+        {
+            "file": "cmd-3.txt",
+            "target": "cmd#3",
+            "budget": 2,
+            "sql": "ROLLBACK"
+        },
+        {
+            "file": "cmd-4.txt",
+            "target": "cmd#4",
+            "budget": 2,
+            "sql": "SAVEPOINT 'text'"
+        },
+        {
+            "file": "cmd-5.txt",
+            "target": "cmd#5",
+            "budget": 3,
+            "sql": "RELEASE 'text'"
+        },
+        {
+            "file": "cmd-6.txt",
+            "target": "cmd#6",
+            "budget": 4,
+            "sql": "ROLLBACK TO 'text'"
+        },
+        {
+            "file": "cmd-7.txt",
+            "target": "cmd#7",
+            "budget": 14,
+            "sql": "CREATE TABLE 'text' AS VALUES ( ?1 )"
+        },
+        {
+            "file": "cmd-8.txt",
+            "target": "cmd#8",
+            "budget": 4,
+            "sql": "DROP TABLE 'text'"
+        },
+        {
+            "file": "cmd-9.txt",
+            "target": "cmd#9",
+            "budget": 13,
+            "sql": "CREATE VIEW 'text' AS VALUES ( ?1 )"
+        },
+        {
+            "file": "cmd-10.txt",
+            "target": "cmd#10",
+            "budget": 4,
+            "sql": "DROP VIEW 'text'"
+        },
+        {
+            "file": "cmd-11.txt",
+            "target": "cmd#11",
+            "budget": 7,
+            "sql": "VALUES ( ?1 )"
+        },
+        {
+            "file": "cmd-12.txt",
+            "target": "cmd#12",
+            "budget": 6,
+            "sql": "DELETE FROM 'text'"
+        },
+        {
+            "file": "cmd-13.txt",
+            "target": "cmd#13",
+            "budget": 11,
+            "sql": "UPDATE 'text' SET 'text' = ?1"
+        },
+        {
+            "file": "cmd-14.txt",
+            "target": "cmd#14",
+            "budget": 13,
+            "sql": "REPLACE INTO 'text' VALUES ( ?1 )"
+        },
+        {
+            "file": "cmd-15.txt",
+            "target": "cmd#15",
+            "budget": 7,
+            "sql": "REPLACE INTO 'text' DEFAULT VALUES"
+        },
+        {
+            "file": "cmd-16.txt",
+            "target": "cmd#16",
+            "budget": 12,
+            "sql": "CREATE INDEX 'text' ON 'text' ( ?1 )"
+        },
+        {
+            "file": "cmd-17.txt",
+            "target": "cmd#17",
+            "budget": 4,
+            "sql": "DROP INDEX 'text'"
+        },
+        {
+            "file": "cmd-18.txt",
+            "target": "cmd#18",
+            "budget": 2,
+            "sql": "VACUUM"
+        },
+        {
+            "file": "cmd-19.txt",
+            "target": "cmd#19",
+            "budget": 3,
+            "sql": "VACUUM 'text'"
+        },
+        {
+            "file": "cmd-20.txt",
+            "target": "cmd#20",
+            "budget": 3,
+            "sql": "PRAGMA 'text'"
+        },
+        {
+            "file": "cmd-21.txt",
+            "target": "cmd#21",
+            "budget": 4,
+            "sql": "PRAGMA 'text' = ON"
+        },
+        {
+            "file": "cmd-22.txt",
+            "target": "cmd#22",
+            "budget": 4,
+            "sql": "PRAGMA 'text' ( ON )"
+        },
+        {
+            "file": "cmd-23.txt",
+            "target": "cmd#23",
+            "budget": 5,
+            "sql": "PRAGMA 'text' = - 1"
+        },
+        {
+            "file": "cmd-24.txt",
+            "target": "cmd#24",
+            "budget": 5,
+            "sql": "PRAGMA 'text' ( - 1 )"
+        },
+        {
+            "file": "cmd-25.txt",
+            "target": "cmd#25",
+            "budget": 20,
+            "sql": "CREATE TRIGGER 'text' DELETE ON 'text' BEGIN DELETE FROM 'text' ; END"
+        },
+        {
+            "file": "cmd-26.txt",
+            "target": "cmd#26",
+            "budget": 4,
+            "sql": "DROP TRIGGER 'text'"
+        },
+        {
+            "file": "cmd-27.txt",
+            "target": "cmd#27",
+            "budget": 5,
+            "sql": "ATTACH ?1 AS ?1"
+        },
+        {
+            "file": "cmd-28.txt",
+            "target": "cmd#28",
+            "budget": 3,
+            "sql": "DETACH ?1"
+        },
+        {
+            "file": "cmd-29.txt",
+            "target": "cmd#29",
+            "budget": 1,
+            "sql": "REINDEX"
+        },
+        {
+            "file": "cmd-30.txt",
+            "target": "cmd#30",
+            "budget": 3,
+            "sql": "REINDEX 'text'"
+        },
+        {
+            "file": "cmd-31.txt",
+            "target": "cmd#31",
+            "budget": 1,
+            "sql": "ANALYZE"
+        },
+        {
+            "file": "cmd-32.txt",
+            "target": "cmd#32",
+            "budget": 3,
+            "sql": "ANALYZE 'text'"
+        },
+        {
+            "file": "cmd-33.txt",
+            "target": "cmd#33",
+            "budget": 4,
+            "sql": "ALTER TABLE 'text' RENAME TO 'text'"
+        },
+        {
+            "file": "cmd-34.txt",
+            "target": "cmd#34",
+            "budget": 9,
+            "sql": "ALTER TABLE 'text' ADD 'text'"
+        },
+        {
+            "file": "cmd-35.txt",
+            "target": "cmd#35",
+            "budget": 5,
+            "sql": "ALTER TABLE 'text' DROP 'text'"
+        },
+        {
+            "file": "cmd-36.txt",
+            "target": "cmd#36",
+            "budget": 6,
+            "sql": "ALTER TABLE 'text' RENAME 'text' TO 'text'"
+        },
+        {
+            "file": "cmd-37.txt",
+            "target": "cmd#37",
+            "budget": 7,
+            "sql": "CREATE VIRTUAL TABLE 'text' USING 'text'"
+        },
+        {
+            "file": "cmd-38.txt",
+            "target": "cmd#38",
+            "budget": 9,
+            "sql": "CREATE VIRTUAL TABLE 'text' USING 'text' ( )"
+        },
+        {
+            "file": "trans_opt-1.txt",
+            "target": "trans_opt#1",
+            "budget": 3,
+            "sql": "BEGIN TRANSACTION"
+        },
+        {
+            "file": "trans_opt-2.txt",
+            "target": "trans_opt#2",
+            "budget": 4,
+            "sql": "BEGIN TRANSACTION 'text'"
+        },
+        {
+            "file": "transtype-1.txt",
+            "target": "transtype#1",
+            "budget": 3,
+            "sql": "BEGIN DEFERRED"
+        },
+        {
+            "file": "transtype-2.txt",
+            "target": "transtype#2",
+            "budget": 3,
+            "sql": "BEGIN IMMEDIATE"
+        },
+        {
+            "file": "transtype-3.txt",
+            "target": "transtype#3",
+            "budget": 3,
+            "sql": "BEGIN EXCLUSIVE"
+        },
+        {
+            "file": "savepoint_opt-0.txt",
+            "target": "savepoint_opt#0",
+            "budget": 3,
+            "sql": "RELEASE SAVEPOINT 'text'"
+        },
+        {
+            "file": "ifnotexists-1.txt",
+            "target": "ifnotexists#1",
+            "budget": 13,
+            "sql": "CREATE VIEW IF NOT EXISTS 'text' AS VALUES ( ?1 )"
+        },
+        {
+            "file": "temp-0.txt",
+            "target": "temp#0",
+            "budget": 13,
+            "sql": "CREATE TEMP VIEW 'text' AS VALUES ( ?1 )"
+        },
+        {
+            "file": "create_table_args-0.txt",
+            "target": "create_table_args#0",
+            "budget": 15,
+            "sql": "CREATE TABLE 'text' ( 'text' )"
+        },
+        {
+            "file": "table_option_set-1.txt",
+            "target": "table_option_set#1",
+            "budget": 17,
+            "sql": "CREATE TABLE 'text' ( 'text' ANY ) STRICT"
+        },
+        {
+            "file": "table_option_set-2.txt",
+            "target": "table_option_set#2",
+            "budget": 18,
+            "sql": "CREATE TABLE 'text' ( 'text' ANY ) , STRICT"
+        },
+        {
+            "file": "table_option-0.txt",
+            "target": "table_option#0",
+            "budget": 17,
+            "sql": "CREATE TABLE 'text' ( 'text' PRIMARY KEY ) WITHOUT ROWID"
+        },
+        {
+            "file": "columnlist-0.txt",
+            "target": "columnlist#0",
+            "budget": 20,
+            "sql": "CREATE TABLE 'text' ( 'text' , 'text' )"
+        },
+        {
+            "file": "nm-0.txt",
+            "target": "nm#0",
+            "budget": 3,
+            "sql": "SAVEPOINT name"
+        },
+        {
+            "file": "typetoken-1.txt",
+            "target": "typetoken#1",
+            "budget": 9,
+            "sql": "ATTACH CAST ( ?1 AS name ) AS ?1"
+        },
+        {
+            "file": "typetoken-2.txt",
+            "target": "typetoken#2",
+            "budget": 12,
+            "sql": "ATTACH CAST ( ?1 AS name ( 1 ) ) AS ?1"
+        },
+        {
+            "file": "typetoken-3.txt",
+            "target": "typetoken#3",
+            "budget": 15,
+            "sql": "ATTACH CAST ( ?1 AS name ( 1 , 1 ) ) AS ?1"
+        },
+        {
+            "file": "typename-1.txt",
+            "target": "typename#1",
+            "budget": 11,
+            "sql": "ATTACH CAST ( ?1 AS name name ) AS ?1"
+        },
+        {
+            "file": "signed-1.txt",
+            "target": "signed#1",
+            "budget": 12,
+            "sql": "ATTACH CAST ( ?1 AS name ( - 1 ) ) AS ?1"
+        },
+        {
+            "file": "scantok-0.txt",
+            "target": "scantok#0",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' DEFAULT NULL"
+        },
+        {
+            "file": "ccons-0.txt",
+            "target": "ccons#0",
+            "budget": 12,
+            "sql": "ALTER TABLE 'text' ADD 'text' CONSTRAINT 'text'"
+        },
+        {
+            "file": "ccons-2.txt",
+            "target": "ccons#2",
+            "budget": 12,
+            "sql": "ALTER TABLE 'text' ADD 'text' DEFAULT ( ?1 )"
+        },
+        {
+            "file": "ccons-3.txt",
+            "target": "ccons#3",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' DEFAULT + NULL"
+        },
+        {
+            "file": "ccons-4.txt",
+            "target": "ccons#4",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' DEFAULT - NULL"
+        },
+        {
+            "file": "ccons-5.txt",
+            "target": "ccons#5",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' DEFAULT name"
+        },
+        {
+            "file": "ccons-6.txt",
+            "target": "ccons#6",
+            "budget": 12,
+            "sql": "ALTER TABLE 'text' ADD 'text' NULL"
+        },
+        {
+            "file": "ccons-7.txt",
+            "target": "ccons#7",
+            "budget": 12,
+            "sql": "ALTER TABLE 'text' ADD 'text' NOT NULL"
+        },
+        {
+            "file": "ccons-8.txt",
+            "target": "ccons#8",
+            "budget": 14,
+            "sql": "ALTER TABLE 'text' ADD 'text' PRIMARY KEY"
+        },
+        {
+            "file": "ccons-9.txt",
+            "target": "ccons#9",
+            "budget": 12,
+            "sql": "ALTER TABLE 'text' ADD 'text' UNIQUE"
+        },
+        {
+            "file": "ccons-10.txt",
+            "target": "ccons#10",
+            "budget": 12,
+            "sql": "ALTER TABLE 'text' ADD 'text' CHECK ( ?1 )"
+        },
+        {
+            "file": "ccons-11.txt",
+            "target": "ccons#11",
+            "budget": 14,
+            "sql": "ALTER TABLE 'text' ADD 'text' REFERENCES 'text'"
+        },
+        {
+            "file": "ccons-12.txt",
+            "target": "ccons#12",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' DEFERRABLE"
+        },
+        {
+            "file": "ccons-13.txt",
+            "target": "ccons#13",
+            "budget": 12,
+            "sql": "ALTER TABLE 'text' ADD 'text' COLLATE name"
+        },
+        {
+            "file": "ccons-14.txt",
+            "target": "ccons#14",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' GENERATED ALWAYS AS ( ?1 )"
+        },
+        {
+            "file": "ccons-15.txt",
+            "target": "ccons#15",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' AS ( ?1 )"
+        },
+        {
+            "file": "generated-1.txt",
+            "target": "generated#1",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' GENERATED ALWAYS AS ( ?1 ) VIRTUAL"
+        },
+        {
+            "file": "autoinc-1.txt",
+            "target": "autoinc#1",
+            "budget": 14,
+            "sql": "ALTER TABLE 'text' ADD 'text' PRIMARY KEY AUTOINCREMENT"
+        },
+        {
+            "file": "refargs-1.txt",
+            "target": "refargs#1",
+            "budget": 17,
+            "sql": "ALTER TABLE 'text' ADD 'text' REFERENCES 'text' MATCH 'text'"
+        },
+        {
+            "file": "refarg-1.txt",
+            "target": "refarg#1",
+            "budget": 17,
+            "sql": "ALTER TABLE 'text' ADD 'text' REFERENCES 'text' ON INSERT CASCADE"
+        },
+        {
+            "file": "refarg-2.txt",
+            "target": "refarg#2",
+            "budget": 17,
+            "sql": "ALTER TABLE 'text' ADD 'text' REFERENCES 'text' ON DELETE CASCADE"
+        },
+        {
+            "file": "refarg-3.txt",
+            "target": "refarg#3",
+            "budget": 17,
+            "sql": "ALTER TABLE 'text' ADD 'text' REFERENCES 'text' ON UPDATE CASCADE"
+        },
+        {
+            "file": "refact-0.txt",
+            "target": "refact#0",
+            "budget": 17,
+            "sql": "ALTER TABLE 'text' ADD 'text' REFERENCES 'text' ON INSERT SET NULL"
+        },
+        {
+            "file": "refact-1.txt",
+            "target": "refact#1",
+            "budget": 17,
+            "sql": "ALTER TABLE 'text' ADD 'text' REFERENCES 'text' ON INSERT SET DEFAULT"
+        },
+        {
+            "file": "refact-3.txt",
+            "target": "refact#3",
+            "budget": 17,
+            "sql": "ALTER TABLE 'text' ADD 'text' REFERENCES 'text' ON INSERT RESTRICT"
+        },
+        {
+            "file": "refact-4.txt",
+            "target": "refact#4",
+            "budget": 17,
+            "sql": "ALTER TABLE 'text' ADD 'text' REFERENCES 'text' ON INSERT NO ACTION"
+        },
+        {
+            "file": "defer_subclause-0.txt",
+            "target": "defer_subclause#0",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' NOT DEFERRABLE"
+        },
+        {
+            "file": "init_deferred_pred_opt-1.txt",
+            "target": "init_deferred_pred_opt#1",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' NOT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+            "file": "init_deferred_pred_opt-2.txt",
+            "target": "init_deferred_pred_opt#2",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' NOT DEFERRABLE INITIALLY IMMEDIATE"
+        },
+        {
+            "file": "conslist_opt-1.txt",
+            "target": "conslist_opt#1",
+            "budget": 18,
+            "sql": "CREATE TABLE 'text' ( 'text' , CONSTRAINT 'text' )"
+        },
+        {
+            "file": "conslist-0.txt",
+            "target": "conslist#0",
+            "budget": 22,
+            "sql": "CREATE TABLE 'text' ( 'text' , CONSTRAINT 'text' CONSTRAINT 'text' )"
+        },
+        {
+            "file": "tconscomma-0.txt",
+            "target": "tconscomma#0",
+            "budget": 22,
+            "sql": "CREATE TABLE 'text' ( 'text' , CONSTRAINT 'text' , CONSTRAINT 'text' )"
+        },
+        {
+            "file": "tcons-1.txt",
+            "target": "tcons#1",
+            "budget": 27,
+            "sql": "CREATE TABLE 'text' ( 'text' , CONSTRAINT 'text' PRIMARY KEY ( ?1 ) )"
+        },
+        {
+            "file": "tcons-2.txt",
+            "target": "tcons#2",
+            "budget": 26,
+            "sql": "CREATE TABLE 'text' ( 'text' , CONSTRAINT 'text' UNIQUE ( ?1 ) )"
+        },
+        {
+            "file": "tcons-3.txt",
+            "target": "tcons#3",
+            "budget": 23,
+            "sql": "CREATE TABLE 'text' ( 'text' , CONSTRAINT 'text' CHECK ( ?1 ) )"
+        },
+        {
+            "file": "tcons-4.txt",
+            "target": "tcons#4",
+            "budget": 29,
+            "sql": "CREATE TABLE 'text' ( 'text' , CONSTRAINT 'text' FOREIGN KEY ( 'text' ) REFERENCES 'text' )"
+        },
+        {
+            "file": "defer_subclause_opt-1.txt",
+            "target": "defer_subclause_opt#1",
+            "budget": 31,
+            "sql": "CREATE TABLE 'text' ( 'text' , CONSTRAINT 'text' FOREIGN KEY ( 'text' ) REFERENCES 'text' DEFERRABLE )"
+        },
+        {
+            "file": "onconf-1.txt",
+            "target": "onconf#1",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' NULL ON CONFLICT IGNORE"
+        },
+        {
+            "file": "orconf-1.txt",
+            "target": "orconf#1",
+            "budget": 12,
+            "sql": "UPDATE OR IGNORE 'text' SET 'text' = ?1"
+        },
+        {
+            "file": "resolvetype-0.txt",
+            "target": "resolvetype#0",
+            "budget": 13,
+            "sql": "UPDATE OR ROLLBACK 'text' SET 'text' = ?1"
+        },
+        {
+            "file": "resolvetype-2.txt",
+            "target": "resolvetype#2",
+            "budget": 12,
+            "sql": "UPDATE OR REPLACE 'text' SET 'text' = ?1"
+        },
+        {
+            "file": "ifexists-0.txt",
+            "target": "ifexists#0",
+            "budget": 4,
+            "sql": "DROP TABLE IF EXISTS 'text'"
+        },
+        {
+            "file": "select-0.txt",
+            "target": "select#0",
+            "budget": 25,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) VALUES ( ?1 )"
+        },
+        {
+            "file": "select-1.txt",
+            "target": "select#1",
+            "budget": 25,
+            "sql": "CREATE VIEW 'text' AS WITH RECURSIVE 'text' AS ( VALUES ( ?1 ) ) VALUES ( ?1 )"
+        },
+        {
+            "file": "selectnowith-1.txt",
+            "target": "selectnowith#1",
+            "budget": 31,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) VALUES ( ?1 ) UNION VALUES ( ?1 )"
+        },
+        {
+            "file": "multiselect_op-1.txt",
+            "target": "multiselect_op#1",
+            "budget": 31,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) VALUES ( ?1 ) UNION ALL VALUES ( ?1 )"
+        },
+        {
+            "file": "multiselect_op-2.txt",
+            "target": "multiselect_op#2",
+            "budget": 31,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) VALUES ( ?1 ) EXCEPT VALUES ( ?1 )"
+        },
+        {
+            "file": "multiselect_op-3.txt",
+            "target": "multiselect_op#3",
+            "budget": 31,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) VALUES ( ?1 ) INTERSECT VALUES ( ?1 )"
+        },
+        {
+            "file": "oneselect-0.txt",
+            "target": "oneselect#0",
+            "budget": 32,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) SELECT *"
+        },
+        {
+            "file": "oneselect-1.txt",
+            "target": "oneselect#1",
+            "budget": 38,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) SELECT * WINDOW 'text' AS ( )"
+        },
+        {
+            "file": "oneselect-3.txt",
+            "target": "oneselect#3",
+            "budget": 28,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) VALUES ( ?1 ) , ( ?1 )"
+        },
+        {
+            "file": "mvalues-1.txt",
+            "target": "mvalues#1",
+            "budget": 31,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) VALUES ( ?1 ) , ( ?1 ) , ( ?1 )"
+        },
+        {
+            "file": "distinct-0.txt",
+            "target": "distinct#0",
+            "budget": 8,
+            "sql": "ATTACH name ( DISTINCT ) AS ?1"
+        },
+        {
+            "file": "distinct-1.txt",
+            "target": "distinct#1",
+            "budget": 8,
+            "sql": "ATTACH name ( ALL ) AS ?1"
+        },
+        {
+            "file": "sclp-0.txt",
+            "target": "sclp#0",
+            "budget": 15,
+            "sql": "DELETE FROM 'text' RETURNING * , ?1"
+        },
+        {
+            "file": "selcollist-2.txt",
+            "target": "selcollist#2",
+            "budget": 10,
+            "sql": "DELETE FROM 'text' RETURNING 'text' . *"
+        },
+        {
+            "file": "as-0.txt",
+            "target": "as#0",
+            "budget": 13,
+            "sql": "DELETE FROM 'text' RETURNING ?1 AS 'text'"
+        },
+        {
+            "file": "as-1.txt",
+            "target": "as#1",
+            "budget": 13,
+            "sql": "DELETE FROM 'text' RETURNING ?1 name"
+        },
+        {
+            "file": "from-1.txt",
+            "target": "from#1",
+            "budget": 17,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM 'text'"
+        },
+        {
+            "file": "stl_prefix-0.txt",
+            "target": "stl_prefix#0",
+            "budget": 24,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM 'text' , 'text'"
+        },
+        {
+            "file": "seltablist-1.txt",
+            "target": "seltablist#1",
+            "budget": 18,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM 'text' NOT INDEXED"
+        },
+        {
+            "file": "seltablist-2.txt",
+            "target": "seltablist#2",
+            "budget": 18,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM 'text' ( )"
+        },
+        {
+            "file": "seltablist-3.txt",
+            "target": "seltablist#3",
+            "budget": 21,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM ( VALUES ( ?1 ) )"
+        },
+        {
+            "file": "seltablist-4.txt",
+            "target": "seltablist#4",
+            "budget": 21,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM ( 'text' )"
+        },
+        {
+            "file": "dbnm-1.txt",
+            "target": "dbnm#1",
+            "budget": 14,
+            "sql": "CREATE VIEW 'text' . 'text' AS VALUES ( ?1 )"
+        },
+        {
+            "file": "fullname-1.txt",
+            "target": "fullname#1",
+            "budget": 5,
+            "sql": "DROP TABLE 'text' . 'text'"
+        },
+        {
+            "file": "xfullname-1.txt",
+            "target": "xfullname#1",
+            "budget": 7,
+            "sql": "DELETE FROM 'text' . 'text'"
+        },
+        {
+            "file": "xfullname-2.txt",
+            "target": "xfullname#2",
+            "budget": 8,
+            "sql": "DELETE FROM 'text' . 'text' AS 'text'"
+        },
+        {
+            "file": "xfullname-3.txt",
+            "target": "xfullname#3",
+            "budget": 7,
+            "sql": "DELETE FROM 'text' AS 'text'"
+        },
+        {
+            "file": "joinop-1.txt",
+            "target": "joinop#1",
+            "budget": 24,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM 'text' JOIN 'text'"
+        },
+        {
+            "file": "joinop-2.txt",
+            "target": "joinop#2",
+            "budget": 24,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM 'text' CROSS JOIN 'text'"
+        },
+        {
+            "file": "joinop-3.txt",
+            "target": "joinop#3",
+            "budget": 25,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM 'text' CROSS CROSS JOIN 'text'"
+        },
+        {
+            "file": "joinop-4.txt",
+            "target": "joinop#4",
+            "budget": 26,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM 'text' CROSS CROSS CROSS JOIN 'text'"
+        },
+        {
+            "file": "on_using-0.txt",
+            "target": "on_using#0",
+            "budget": 18,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM 'text'"
+        },
+        {
+            "file": "on_using-1.txt",
+            "target": "on_using#1",
+            "budget": 19,
+            "sql": "UPDATE 'text' SET 'text' = ?1 FROM 'text'"
+        },
+        {
+            "file": "indexed_opt-1.txt",
+            "target": "indexed_opt#1",
+            "budget": 7,
+            "sql": "DELETE FROM 'text' NOT INDEXED"
+        },
+        {
+            "file": "indexed_by-0.txt",
+            "target": "indexed_by#0",
+            "budget": 8,
+            "sql": "DELETE FROM 'text' INDEXED BY 'text'"
+        },
+        {
+            "file": "orderby_opt-1.txt",
+            "target": "orderby_opt#1",
+            "budget": 36,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) SELECT * ORDER BY ?1"
+        },
+        {
+            "file": "sortlist-0.txt",
+            "target": "sortlist#0",
+            "budget": 16,
+            "sql": "CREATE INDEX 'text' ON 'text' ( ?1 , ?1 )"
+        },
+        {
+            "file": "sortorder-0.txt",
+            "target": "sortorder#0",
+            "budget": 16,
+            "sql": "CREATE INDEX 'text' ON 'text' ( ?1 , ?1 ASC )"
+        },
+        {
+            "file": "sortorder-1.txt",
+            "target": "sortorder#1",
+            "budget": 16,
+            "sql": "CREATE INDEX 'text' ON 'text' ( ?1 , ?1 DESC )"
+        },
+        {
+            "file": "nulls-0.txt",
+            "target": "nulls#0",
+            "budget": 16,
+            "sql": "CREATE INDEX 'text' ON 'text' ( ?1 , ?1 NULLS FIRST )"
+        },
+        {
+            "file": "nulls-1.txt",
+            "target": "nulls#1",
+            "budget": 16,
+            "sql": "CREATE INDEX 'text' ON 'text' ( ?1 , ?1 NULLS LAST )"
+        },
+        {
+            "file": "groupby_opt-1.txt",
+            "target": "groupby_opt#1",
+            "budget": 34,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) SELECT * GROUP BY ?1"
+        },
+        {
+            "file": "having_opt-1.txt",
+            "target": "having_opt#1",
+            "budget": 33,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) SELECT * HAVING ?1"
+        },
+        {
+            "file": "limit_opt-1.txt",
+            "target": "limit_opt#1",
+            "budget": 33,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) SELECT * LIMIT ?1"
+        },
+        {
+            "file": "limit_opt-2.txt",
+            "target": "limit_opt#2",
+            "budget": 34,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) SELECT * LIMIT ?1 OFFSET ?1"
+        },
+        {
+            "file": "limit_opt-3.txt",
+            "target": "limit_opt#3",
+            "budget": 34,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) SELECT * LIMIT ?1 , ?1"
+        },
+        {
+            "file": "where_opt-1.txt",
+            "target": "where_opt#1",
+            "budget": 13,
+            "sql": "CREATE INDEX 'text' ON 'text' ( ?1 ) WHERE ?1"
+        },
+        {
+            "file": "where_opt_ret-1.txt",
+            "target": "where_opt_ret#1",
+            "budget": 7,
+            "sql": "DELETE FROM 'text' WHERE ?1"
+        },
+        {
+            "file": "where_opt_ret-3.txt",
+            "target": "where_opt_ret#3",
+            "budget": 10,
+            "sql": "DELETE FROM 'text' WHERE ?1 RETURNING *"
+        },
+        {
+            "file": "setlist-0.txt",
+            "target": "setlist#0",
+            "budget": 14,
+            "sql": "UPDATE 'text' SET 'text' = ?1 , 'text' = ?1"
+        },
+        {
+            "file": "setlist-1.txt",
+            "target": "setlist#1",
+            "budget": 15,
+            "sql": "UPDATE 'text' SET 'text' = ?1 , ( 'text' ) = ?1"
+        },
+        {
+            "file": "setlist-3.txt",
+            "target": "setlist#3",
+            "budget": 12,
+            "sql": "UPDATE 'text' SET ( 'text' ) = ?1"
+        },
+        {
+            "file": "upsert-1.txt",
+            "target": "upsert#1",
+            "budget": 16,
+            "sql": "REPLACE INTO 'text' VALUES ( ?1 ) RETURNING *"
+        },
+        {
+            "file": "upsert-2.txt",
+            "target": "upsert#2",
+            "budget": 23,
+            "sql": "REPLACE INTO 'text' VALUES ( ?1 ) ON CONFLICT ( ?1 ) DO UPDATE SET 'text' = ?1"
+        },
+        {
+            "file": "upsert-3.txt",
+            "target": "upsert#3",
+            "budget": 19,
+            "sql": "REPLACE INTO 'text' VALUES ( ?1 ) ON CONFLICT ( ?1 ) DO NOTHING"
+        },
+        {
+            "file": "upsert-4.txt",
+            "target": "upsert#4",
+            "budget": 14,
+            "sql": "REPLACE INTO 'text' VALUES ( ?1 ) ON CONFLICT DO NOTHING"
+        },
+        {
+            "file": "upsert-5.txt",
+            "target": "upsert#5",
+            "budget": 18,
+            "sql": "REPLACE INTO 'text' VALUES ( ?1 ) ON CONFLICT DO UPDATE SET 'text' = ?1"
+        },
+        {
+            "file": "returning-0.txt",
+            "target": "returning#0",
+            "budget": 10,
+            "sql": "REPLACE INTO 'text' DEFAULT VALUES RETURNING *"
+        },
+        {
+            "file": "insert_cmd-0.txt",
+            "target": "insert_cmd#0",
+            "budget": 14,
+            "sql": "INSERT INTO 'text' VALUES ( ?1 )"
+        },
+        {
+            "file": "idlist_opt-1.txt",
+            "target": "idlist_opt#1",
+            "budget": 15,
+            "sql": "REPLACE INTO 'text' ( 'text' ) VALUES ( ?1 )"
+        },
+        {
+            "file": "idlist-0.txt",
+            "target": "idlist#0",
+            "budget": 17,
+            "sql": "UPDATE 'text' SET 'text' = ?1 , ( 'text' , 'text' ) = ?1"
+        },
+        {
+            "file": "expr-0.txt",
+            "target": "expr#0",
+            "budget": 6,
+            "sql": "ATTACH NULL AS ?1"
+        },
+        {
+            "file": "expr-1.txt",
+            "target": "expr#1",
+            "budget": 6,
+            "sql": "ATTACH ( ?1 ) AS ?1"
+        },
+        {
+            "file": "expr-2.txt",
+            "target": "expr#2",
+            "budget": 6,
+            "sql": "ATTACH name AS ?1"
+        },
+        {
+            "file": "expr-3.txt",
+            "target": "expr#3",
+            "budget": 7,
+            "sql": "ATTACH 'text' . 'text' AS ?1"
+        },
+        {
+            "file": "expr-4.txt",
+            "target": "expr#4",
+            "budget": 8,
+            "sql": "ATTACH 'text' . 'text' . 'text' AS ?1"
+        },
+        {
+            "file": "expr-6.txt",
+            "target": "expr#6",
+            "budget": 7,
+            "sql": "ATTACH ?1 COLLATE name AS ?1"
+        },
+        {
+            "file": "expr-9.txt",
+            "target": "expr#9",
+            "budget": 12,
+            "sql": "ATTACH name ( ORDER BY ?1 ) AS ?1"
+        },
+        {
+            "file": "expr-10.txt",
+            "target": "expr#10",
+            "budget": 6,
+            "sql": "ATTACH name ( * ) AS ?1"
+        },
+        {
+            "file": "expr-11.txt",
+            "target": "expr#11",
+            "budget": 11,
+            "sql": "ATTACH name ( ) OVER 'text' AS ?1"
+        },
+        {
+            "file": "expr-12.txt",
+            "target": "expr#12",
+            "budget": 15,
+            "sql": "ATTACH name ( ORDER BY ?1 ) OVER 'text' AS ?1"
+        },
+        {
+            "file": "expr-13.txt",
+            "target": "expr#13",
+            "budget": 9,
+            "sql": "ATTACH name ( * ) OVER 'text' AS ?1"
+        },
+        {
+            "file": "expr-14.txt",
+            "target": "expr#14",
+            "budget": 8,
+            "sql": "ATTACH ( ?1 , ?1 ) AS ?1"
+        },
+        {
+            "file": "expr-15.txt",
+            "target": "expr#15",
+            "budget": 7,
+            "sql": "ATTACH ?1 AND ?1 AS ?1"
+        },
+        {
+            "file": "expr-16.txt",
+            "target": "expr#16",
+            "budget": 7,
+            "sql": "ATTACH ?1 OR ?1 AS ?1"
+        },
+        {
+            "file": "expr-17.txt",
+            "target": "expr#17",
+            "budget": 7,
+            "sql": "ATTACH ?1 < ?1 AS ?1"
+        },
+        {
+            "file": "expr-18.txt",
+            "target": "expr#18",
+            "budget": 7,
+            "sql": "ATTACH ?1 > ?1 AS ?1"
+        },
+        {
+            "file": "expr-19.txt",
+            "target": "expr#19",
+            "budget": 7,
+            "sql": "ATTACH ?1 >= ?1 AS ?1"
+        },
+        {
+            "file": "expr-20.txt",
+            "target": "expr#20",
+            "budget": 7,
+            "sql": "ATTACH ?1 <= ?1 AS ?1"
+        },
+        {
+            "file": "expr-21.txt",
+            "target": "expr#21",
+            "budget": 7,
+            "sql": "ATTACH ?1 = ?1 AS ?1"
+        },
+        {
+            "file": "expr-22.txt",
+            "target": "expr#22",
+            "budget": 7,
+            "sql": "ATTACH ?1 <> ?1 AS ?1"
+        },
+        {
+            "file": "expr-23.txt",
+            "target": "expr#23",
+            "budget": 7,
+            "sql": "ATTACH ?1 & ?1 AS ?1"
+        },
+        {
+            "file": "expr-24.txt",
+            "target": "expr#24",
+            "budget": 7,
+            "sql": "ATTACH ?1 | ?1 AS ?1"
+        },
+        {
+            "file": "expr-25.txt",
+            "target": "expr#25",
+            "budget": 7,
+            "sql": "ATTACH ?1 << ?1 AS ?1"
+        },
+        {
+            "file": "expr-26.txt",
+            "target": "expr#26",
+            "budget": 7,
+            "sql": "ATTACH ?1 >> ?1 AS ?1"
+        },
+        {
+            "file": "expr-27.txt",
+            "target": "expr#27",
+            "budget": 7,
+            "sql": "ATTACH ?1 + ?1 AS ?1"
+        },
+        {
+            "file": "expr-28.txt",
+            "target": "expr#28",
+            "budget": 7,
+            "sql": "ATTACH ?1 - ?1 AS ?1"
+        },
+        {
+            "file": "expr-29.txt",
+            "target": "expr#29",
+            "budget": 7,
+            "sql": "ATTACH ?1 * ?1 AS ?1"
+        },
+        {
+            "file": "expr-30.txt",
+            "target": "expr#30",
+            "budget": 7,
+            "sql": "ATTACH ?1 / ?1 AS ?1"
+        },
+        {
+            "file": "expr-31.txt",
+            "target": "expr#31",
+            "budget": 7,
+            "sql": "ATTACH ?1 % ?1 AS ?1"
+        },
+        {
+            "file": "expr-32.txt",
+            "target": "expr#32",
+            "budget": 7,
+            "sql": "ATTACH ?1 || ?1 AS ?1"
+        },
+        {
+            "file": "expr-33.txt",
+            "target": "expr#33",
+            "budget": 8,
+            "sql": "ATTACH ?1 GLOB ?1 AS ?1"
+        },
+        {
+            "file": "expr-34.txt",
+            "target": "expr#34",
+            "budget": 9,
+            "sql": "ATTACH ?1 GLOB ?1 ESCAPE ?1 AS ?1"
+        },
+        {
+            "file": "expr-35.txt",
+            "target": "expr#35",
+            "budget": 6,
+            "sql": "ATTACH ?1 ISNULL AS ?1"
+        },
+        {
+            "file": "expr-36.txt",
+            "target": "expr#36",
+            "budget": 6,
+            "sql": "ATTACH ?1 NOTNULL AS ?1"
+        },
+        {
+            "file": "expr-37.txt",
+            "target": "expr#37",
+            "budget": 6,
+            "sql": "ATTACH ?1 NOT NULL AS ?1"
+        },
+        {
+            "file": "expr-38.txt",
+            "target": "expr#38",
+            "budget": 7,
+            "sql": "ATTACH ?1 IS ?1 AS ?1"
+        },
+        {
+            "file": "expr-39.txt",
+            "target": "expr#39",
+            "budget": 7,
+            "sql": "ATTACH ?1 IS NOT ?1 AS ?1"
+        },
+        {
+            "file": "expr-40.txt",
+            "target": "expr#40",
+            "budget": 7,
+            "sql": "ATTACH ?1 IS NOT DISTINCT FROM ?1 AS ?1"
+        },
+        {
+            "file": "expr-41.txt",
+            "target": "expr#41",
+            "budget": 7,
+            "sql": "ATTACH ?1 IS DISTINCT FROM ?1 AS ?1"
+        },
+        {
+            "file": "expr-42.txt",
+            "target": "expr#42",
+            "budget": 6,
+            "sql": "ATTACH NOT ?1 AS ?1"
+        },
+        {
+            "file": "expr-43.txt",
+            "target": "expr#43",
+            "budget": 6,
+            "sql": "ATTACH ~ ?1 AS ?1"
+        },
+        {
+            "file": "expr-44.txt",
+            "target": "expr#44",
+            "budget": 6,
+            "sql": "ATTACH + ?1 AS ?1"
+        },
+        {
+            "file": "expr-45.txt",
+            "target": "expr#45",
+            "budget": 6,
+            "sql": "ATTACH - ?1 AS ?1"
+        },
+        {
+            "file": "expr-46.txt",
+            "target": "expr#46",
+            "budget": 7,
+            "sql": "ATTACH ?1 -> ?1 AS ?1"
+        },
+        {
+            "file": "expr-47.txt",
+            "target": "expr#47",
+            "budget": 9,
+            "sql": "ATTACH ?1 BETWEEN ?1 AND ?1 AS ?1"
+        },
+        {
+            "file": "expr-48.txt",
+            "target": "expr#48",
+            "budget": 8,
+            "sql": "ATTACH ?1 IN ( ) AS ?1"
+        },
+        {
+            "file": "expr-49.txt",
+            "target": "expr#49",
+            "budget": 11,
+            "sql": "ATTACH ( VALUES ( ?1 ) ) AS ?1"
+        },
+        {
+            "file": "expr-50.txt",
+            "target": "expr#50",
+            "budget": 13,
+            "sql": "ATTACH ?1 IN ( VALUES ( ?1 ) ) AS ?1"
+        },
+        {
+            "file": "expr-51.txt",
+            "target": "expr#51",
+            "budget": 10,
+            "sql": "ATTACH ?1 IN 'text' AS ?1"
+        },
+        {
+            "file": "expr-52.txt",
+            "target": "expr#52",
+            "budget": 11,
+            "sql": "ATTACH EXISTS ( VALUES ( ?1 ) ) AS ?1"
+        },
+        {
+            "file": "expr-53.txt",
+            "target": "expr#53",
+            "budget": 10,
+            "sql": "ATTACH CASE WHEN ?1 THEN ?1 END AS ?1"
+        },
+        {
+            "file": "expr-54.txt",
+            "target": "expr#54",
+            "budget": 5,
+            "sql": "ATTACH RAISE ( IGNORE ) AS ?1"
+        },
+        {
+            "file": "expr-55.txt",
+            "target": "expr#55",
+            "budget": 7,
+            "sql": "ATTACH RAISE ( ROLLBACK , ?1 ) AS ?1"
+        },
+        {
+            "file": "term-1.txt",
+            "target": "term#1",
+            "budget": 6,
+            "sql": "ATTACH 1.5 AS ?1"
+        },
+        {
+            "file": "term-2.txt",
+            "target": "term#2",
+            "budget": 6,
+            "sql": "ATTACH X'00' AS ?1"
+        },
+        {
+            "file": "term-3.txt",
+            "target": "term#3",
+            "budget": 6,
+            "sql": "ATTACH 'text' AS ?1"
+        },
+        {
+            "file": "term-4.txt",
+            "target": "term#4",
+            "budget": 6,
+            "sql": "ATTACH 1 AS ?1"
+        },
+        {
+            "file": "term-5.txt",
+            "target": "term#5",
+            "budget": 6,
+            "sql": "ATTACH CURRENT_DATE AS ?1"
+        },
+        {
+            "file": "term-6.txt",
+            "target": "term#6",
+            "budget": 6,
+            "sql": "ATTACH 1_0 AS ?1"
+        },
+        {
+            "file": "likeop-1.txt",
+            "target": "likeop#1",
+            "budget": 8,
+            "sql": "ATTACH ?1 MATCH ?1 AS ?1"
+        },
+        {
+            "file": "likeop-2.txt",
+            "target": "likeop#2",
+            "budget": 8,
+            "sql": "ATTACH ?1 NOT GLOB ?1 AS ?1"
+        },
+        {
+            "file": "likeop-3.txt",
+            "target": "likeop#3",
+            "budget": 8,
+            "sql": "ATTACH ?1 NOT MATCH ?1 AS ?1"
+        },
+        {
+            "file": "between_op-1.txt",
+            "target": "between_op#1",
+            "budget": 9,
+            "sql": "ATTACH ?1 NOT BETWEEN ?1 AND ?1 AS ?1"
+        },
+        {
+            "file": "in_op-1.txt",
+            "target": "in_op#1",
+            "budget": 8,
+            "sql": "ATTACH ?1 NOT IN ( ) AS ?1"
+        },
+        {
+            "file": "case_exprlist-0.txt",
+            "target": "case_exprlist#0",
+            "budget": 13,
+            "sql": "ATTACH CASE WHEN ?1 THEN ?1 WHEN ?1 THEN ?1 END AS ?1"
+        },
+        {
+            "file": "case_else-0.txt",
+            "target": "case_else#0",
+            "budget": 11,
+            "sql": "ATTACH CASE WHEN ?1 THEN ?1 ELSE ?1 END AS ?1"
+        },
+        {
+            "file": "case_operand-0.txt",
+            "target": "case_operand#0",
+            "budget": 11,
+            "sql": "ATTACH CASE ?1 WHEN ?1 THEN ?1 END AS ?1"
+        },
+        {
+            "file": "exprlist-0.txt",
+            "target": "exprlist#0",
+            "budget": 10,
+            "sql": "ATTACH name ( ?1 ) AS ?1"
+        },
+        {
+            "file": "nexprlist-0.txt",
+            "target": "nexprlist#0",
+            "budget": 10,
+            "sql": "ATTACH ( ?1 , ?1 , ?1 ) AS ?1"
+        },
+        {
+            "file": "paren_exprlist-1.txt",
+            "target": "paren_exprlist#1",
+            "budget": 11,
+            "sql": "ATTACH ?1 IN 'text' ( ) AS ?1"
+        },
+        {
+            "file": "uniqueflag-0.txt",
+            "target": "uniqueflag#0",
+            "budget": 12,
+            "sql": "CREATE UNIQUE INDEX 'text' ON 'text' ( ?1 )"
+        },
+        {
+            "file": "eidlist_opt-1.txt",
+            "target": "eidlist_opt#1",
+            "budget": 17,
+            "sql": "CREATE VIEW 'text' ( 'text' ) AS VALUES ( ?1 )"
+        },
+        {
+            "file": "eidlist-0.txt",
+            "target": "eidlist#0",
+            "budget": 21,
+            "sql": "CREATE VIEW 'text' ( 'text' , 'text' ) AS VALUES ( ?1 )"
+        },
+        {
+            "file": "collate-1.txt",
+            "target": "collate#1",
+            "budget": 22,
+            "sql": "CREATE VIEW 'text' ( 'text' , 'text' ) AS VALUES ( ?1 )"
+        },
+        {
+            "file": "vinto-0.txt",
+            "target": "vinto#0",
+            "budget": 3,
+            "sql": "VACUUM INTO ?1"
+        },
+        {
+            "file": "nmnum-0.txt",
+            "target": "nmnum#0",
+            "budget": 6,
+            "sql": "PRAGMA 'text' = 1"
+        },
+        {
+            "file": "nmnum-1.txt",
+            "target": "nmnum#1",
+            "budget": 5,
+            "sql": "PRAGMA 'text' = 'text'"
+        },
+        {
+            "file": "nmnum-3.txt",
+            "target": "nmnum#3",
+            "budget": 4,
+            "sql": "PRAGMA 'text' = DELETE"
+        },
+        {
+            "file": "nmnum-4.txt",
+            "target": "nmnum#4",
+            "budget": 4,
+            "sql": "PRAGMA 'text' = DEFAULT"
+        },
+        {
+            "file": "plus_num-0.txt",
+            "target": "plus_num#0",
+            "budget": 6,
+            "sql": "PRAGMA 'text' = + 1"
+        },
+        {
+            "file": "trigger_time-0.txt",
+            "target": "trigger_time#0",
+            "budget": 20,
+            "sql": "CREATE TRIGGER 'text' BEFORE DELETE ON 'text' BEGIN DELETE FROM 'text' ; END"
+        },
+        {
+            "file": "trigger_time-1.txt",
+            "target": "trigger_time#1",
+            "budget": 20,
+            "sql": "CREATE TRIGGER 'text' AFTER DELETE ON 'text' BEGIN DELETE FROM 'text' ; END"
+        },
+        {
+            "file": "trigger_time-2.txt",
+            "target": "trigger_time#2",
+            "budget": 20,
+            "sql": "CREATE TRIGGER 'text' INSTEAD OF DELETE ON 'text' BEGIN DELETE FROM 'text' ; END"
+        },
+        {
+            "file": "trigger_event-1.txt",
+            "target": "trigger_event#1",
+            "budget": 20,
+            "sql": "CREATE TRIGGER 'text' INSERT ON 'text' BEGIN DELETE FROM 'text' ; END"
+        },
+        {
+            "file": "trigger_event-2.txt",
+            "target": "trigger_event#2",
+            "budget": 20,
+            "sql": "CREATE TRIGGER 'text' UPDATE ON 'text' BEGIN DELETE FROM 'text' ; END"
+        },
+        {
+            "file": "trigger_event-3.txt",
+            "target": "trigger_event#3",
+            "budget": 22,
+            "sql": "CREATE TRIGGER 'text' UPDATE OF 'text' ON 'text' BEGIN DELETE FROM 'text' ; END"
+        },
+        {
+            "file": "foreach_clause-1.txt",
+            "target": "foreach_clause#1",
+            "budget": 20,
+            "sql": "CREATE TRIGGER 'text' DELETE ON 'text' FOR EACH ROW BEGIN DELETE FROM 'text' ; END"
+        },
+        {
+            "file": "when_clause-1.txt",
+            "target": "when_clause#1",
+            "budget": 21,
+            "sql": "CREATE TRIGGER 'text' DELETE ON 'text' WHEN ?1 BEGIN DELETE FROM 'text' ; END"
+        },
+        {
+            "file": "trigger_cmd_list-0.txt",
+            "target": "trigger_cmd_list#0",
+            "budget": 27,
+            "sql": "CREATE TRIGGER 'text' DELETE ON 'text' BEGIN DELETE FROM 'text' ; DELETE FROM 'text' ; END"
+        },
+        {
+            "file": "trnm-1.txt",
+            "target": "trnm#1",
+            "budget": 33,
+            "sql": "CREATE TRIGGER 'text' DELETE ON 'text' BEGIN DELETE FROM 'text' ; UPDATE 'text' . 'text' SET 'text' = ?1 ; END"
+        },
+        {
+            "file": "tridxby-1.txt",
+            "target": "tridxby#1",
+            "budget": 33,
+            "sql": "CREATE TRIGGER 'text' DELETE ON 'text' BEGIN DELETE FROM 'text' ; UPDATE 'text' INDEXED BY 'text' SET 'text' = ?1 ; END"
+        },
+        {
+            "file": "tridxby-2.txt",
+            "target": "tridxby#2",
+            "budget": 32,
+            "sql": "CREATE TRIGGER 'text' DELETE ON 'text' BEGIN DELETE FROM 'text' ; UPDATE 'text' NOT INDEXED SET 'text' = ?1 ; END"
+        },
+        {
+            "file": "trigger_cmd-1.txt",
+            "target": "trigger_cmd#1",
+            "budget": 35,
+            "sql": "CREATE TRIGGER 'text' DELETE ON 'text' BEGIN DELETE FROM 'text' ; REPLACE INTO 'text' VALUES ( ?1 ) ; END"
+        },
+        {
+            "file": "trigger_cmd-3.txt",
+            "target": "trigger_cmd#3",
+            "budget": 30,
+            "sql": "CREATE TRIGGER 'text' DELETE ON 'text' BEGIN DELETE FROM 'text' ; VALUES ( ?1 ) ; END"
+        },
+        {
+            "file": "raisetype-1.txt",
+            "target": "raisetype#1",
+            "budget": 7,
+            "sql": "ATTACH RAISE ( ABORT , ?1 ) AS ?1"
+        },
+        {
+            "file": "raisetype-2.txt",
+            "target": "raisetype#2",
+            "budget": 7,
+            "sql": "ATTACH RAISE ( FAIL , ?1 ) AS ?1"
+        },
+        {
+            "file": "key_opt-1.txt",
+            "target": "key_opt#1",
+            "budget": 6,
+            "sql": "ATTACH ?1 AS ?1 KEY ?1"
+        },
+        {
+            "file": "database_kw_opt-0.txt",
+            "target": "database_kw_opt#0",
+            "budget": 5,
+            "sql": "ATTACH DATABASE ?1 AS ?1"
+        },
+        {
+            "file": "kwcolumn_opt-1.txt",
+            "target": "kwcolumn_opt#1",
+            "budget": 9,
+            "sql": "ALTER TABLE 'text' ADD COLUMN 'text'"
+        },
+        {
+            "file": "vtabarglist-1.txt",
+            "target": "vtabarglist#1",
+            "budget": 11,
+            "sql": "CREATE VIRTUAL TABLE 'text' USING 'text' ( , )"
+        },
+        {
+            "file": "vtabarg-1.txt",
+            "target": "vtabarg#1",
+            "budget": 11,
+            "sql": "CREATE VIRTUAL TABLE 'text' USING 'text' ( name )"
+        },
+        {
+            "file": "vtabargtoken-1.txt",
+            "target": "vtabargtoken#1",
+            "budget": 13,
+            "sql": "CREATE VIRTUAL TABLE 'text' USING 'text' ( ( ) )"
+        },
+        {
+            "file": "anylist-1.txt",
+            "target": "anylist#1",
+            "budget": 15,
+            "sql": "CREATE VIRTUAL TABLE 'text' USING 'text' ( ( ( ) ) )"
+        },
+        {
+            "file": "anylist-2.txt",
+            "target": "anylist#2",
+            "budget": 14,
+            "sql": "CREATE VIRTUAL TABLE 'text' USING 'text' ( ( name ) )"
+        },
+        {
+            "file": "with-1.txt",
+            "target": "with#1",
+            "budget": 18,
+            "sql": "WITH 'text' AS ( VALUES ( ?1 ) ) DELETE FROM 'text'"
+        },
+        {
+            "file": "with-2.txt",
+            "target": "with#2",
+            "budget": 18,
+            "sql": "WITH RECURSIVE 'text' AS ( VALUES ( ?1 ) ) DELETE FROM 'text'"
+        },
+        {
+            "file": "wqas-1.txt",
+            "target": "wqas#1",
+            "budget": 25,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS MATERIALIZED ( VALUES ( ?1 ) ) VALUES ( ?1 )"
+        },
+        {
+            "file": "wqas-2.txt",
+            "target": "wqas#2",
+            "budget": 25,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS NOT MATERIALIZED ( VALUES ( ?1 ) ) VALUES ( ?1 )"
+        },
+        {
+            "file": "wqlist-1.txt",
+            "target": "wqlist#1",
+            "budget": 37,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) , 'text' AS ( VALUES ( ?1 ) ) VALUES ( ?1 )"
+        },
+        {
+            "file": "windowdefn_list-1.txt",
+            "target": "windowdefn_list#1",
+            "budget": 43,
+            "sql": "CREATE VIEW 'text' AS WITH 'text' AS ( VALUES ( ?1 ) ) SELECT * WINDOW 'text' AS ( ) , 'text' AS ( )"
+        },
+        {
+            "file": "window-0.txt",
+            "target": "window#0",
+            "budget": 17,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 ) AS ?1"
+        },
+        {
+            "file": "window-1.txt",
+            "target": "window#1",
+            "budget": 18,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( 'text' PARTITION BY ?1 ) AS ?1"
+        },
+        {
+            "file": "window-2.txt",
+            "target": "window#2",
+            "budget": 18,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( ORDER BY ?1 ) AS ?1"
+        },
+        {
+            "file": "window-3.txt",
+            "target": "window#3",
+            "budget": 19,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( 'text' ORDER BY ?1 ) AS ?1"
+        },
+        {
+            "file": "window-5.txt",
+            "target": "window#5",
+            "budget": 15,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( 'text' ) AS ?1"
+        },
+        {
+            "file": "frame_opt-1.txt",
+            "target": "frame_opt#1",
+            "budget": 20,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 RANGE UNBOUNDED PRECEDING ) AS ?1"
+        },
+        {
+            "file": "frame_opt-2.txt",
+            "target": "frame_opt#2",
+            "budget": 21,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING ) AS ?1"
+        },
+        {
+            "file": "range_or_rows-1.txt",
+            "target": "range_or_rows#1",
+            "budget": 20,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 ROWS UNBOUNDED PRECEDING ) AS ?1"
+        },
+        {
+            "file": "range_or_rows-2.txt",
+            "target": "range_or_rows#2",
+            "budget": 20,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 GROUPS UNBOUNDED PRECEDING ) AS ?1"
+        },
+        {
+            "file": "frame_bound_s-0.txt",
+            "target": "frame_bound_s#0",
+            "budget": 21,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 RANGE CURRENT ROW ) AS ?1"
+        },
+        {
+            "file": "frame_bound_e-0.txt",
+            "target": "frame_bound_e#0",
+            "budget": 22,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW ) AS ?1"
+        },
+        {
+            "file": "frame_bound-0.txt",
+            "target": "frame_bound#0",
+            "budget": 22,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 RANGE ?1 PRECEDING ) AS ?1"
+        },
+        {
+            "file": "frame_bound-1.txt",
+            "target": "frame_bound#1",
+            "budget": 22,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 RANGE BETWEEN ?1 FOLLOWING AND UNBOUNDED FOLLOWING ) AS ?1"
+        },
+        {
+            "file": "frame_exclude_opt-1.txt",
+            "target": "frame_exclude_opt#1",
+            "budget": 21,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 RANGE UNBOUNDED PRECEDING EXCLUDE GROUP ) AS ?1"
+        },
+        {
+            "file": "frame_exclude-0.txt",
+            "target": "frame_exclude#0",
+            "budget": 21,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 RANGE UNBOUNDED PRECEDING EXCLUDE NO OTHERS ) AS ?1"
+        },
+        {
+            "file": "frame_exclude-1.txt",
+            "target": "frame_exclude#1",
+            "budget": 21,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 RANGE UNBOUNDED PRECEDING EXCLUDE CURRENT ROW ) AS ?1"
+        },
+        {
+            "file": "frame_exclude-3.txt",
+            "target": "frame_exclude#3",
+            "budget": 21,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) OVER ( PARTITION BY ?1 RANGE UNBOUNDED PRECEDING EXCLUDE TIES ) AS ?1"
+        },
+        {
+            "file": "filter_over-2.txt",
+            "target": "filter_over#2",
+            "budget": 11,
+            "sql": "ATTACH name ( ) FILTER ( WHERE ?1 ) AS ?1"
+        },
+        {
+            "file": "id-1.txt",
+            "target": "id#1",
+            "budget": 13,
+            "sql": "ALTER TABLE 'text' ADD 'text' DEFAULT INDEXED"
+        },
+        {
+            "file": "ids-1.txt",
+            "target": "ids#1",
+            "budget": 7,
+            "sql": "ATTACH ?1 COLLATE 'text' AS ?1"
+        },
+        {
+            "file": "idj-1.txt",
+            "target": "idj#1",
+            "budget": 3,
+            "sql": "SAVEPOINT INDEXED"
+        },
+        {
+            "file": "idj-2.txt",
+            "target": "idj#2",
+            "budget": 3,
+            "sql": "SAVEPOINT CROSS"
+        },
+        {
+            "file": "number-1.txt",
+            "target": "number#1",
+            "budget": 5,
+            "sql": "PRAGMA 'text' = - 1.5"
+        }
+    ]
+}
