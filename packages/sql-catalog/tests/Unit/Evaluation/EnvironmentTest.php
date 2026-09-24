@@ -22,6 +22,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TextHole::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Evaluation\PatternTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\ArrayTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
 #[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
@@ -75,13 +76,13 @@ final class EnvironmentTest extends TestCase
         $right = new Environment(['a' => Domain::literal(2), 'b' => Domain::literal(3)]);
         $joined = $left->join($right);
         self::assertCount(2, $joined->read('a')->terms);
-        self::assertSame(3, $joined->read('b')->soleLiteral()?->value);
+        self::assertCount(2, $joined->read('b')->terms);
     }
 
     public function testJoinKeepsABindingOnlyOneSideHas(): void
     {
         $joined = (new Environment(['a' => Domain::literal(1)]))->join(new Environment());
-        self::assertSame(1, $joined->read('a')->soleLiteral()?->value);
+        self::assertCount(2, $joined->read('a')->terms);
     }
 
     public function testSignatureWritesEachBindingSortedByName(): void
@@ -126,6 +127,84 @@ final class EnvironmentTest extends TestCase
         self::assertFalse($left->equals(new Environment(['a' => Domain::literal(2)])));
         self::assertFalse($left->equals(new Environment()));
     }
+    public function testPresenceSeparatesUndefinedNullAndUnknown(): void
+    {
+        $environment = new Environment(['null' => Domain::literal(null)]);
+        $environment->markAbsent('missing');
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Present, $environment->presence('null'));
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Absent, $environment->presence('missing'));
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Maybe, $environment->presence('unknown'));
+        self::assertSame('', $environment->read('missing')->concat(Domain::literal(''))->soleLiteral()?->value);
+        self::assertNotSame($environment->signature(), (new Environment(['null' => Domain::literal(null), 'missing' => Domain::literal(null)]))->signature());
+    }
+
+    public function testMarkAbsentSurvivesCopyAndJoin(): void
+    {
+        $absent = new Environment();
+        $absent->markAbsent('part');
+        $joined = $absent->copy()->join(new Environment(['part' => Domain::literal('tail')]));
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Maybe, $joined->presence('part'));
+        self::assertSame('literal:null:|literal:string:tail', $joined->read('part')->signature());
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Absent, $absent->presence('part'));
+    }
+
+    public function testInvalidateDoesNotTurnUnknownWritesIntoEmptyStrings(): void
+    {
+        $environment = new Environment();
+        $environment->markAbsent('part');
+        $environment->invalidate('part');
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Maybe, $environment->presence('part'));
+        self::assertNull($environment->read('part')->concat(Domain::literal(''))->soleLiteral());
+        $environment->write('part', Domain::literal('known'));
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Present, $environment->presence('part'));
+    }
+
+    public function testReplaceRetainsPresenceAndCombinationMetadata(): void
+    {
+        $environment = new Environment(['old' => Domain::literal('old')]);
+        $other = new Environment();
+        $other->markAbsent('part');
+        $other->combined = true;
+        $environment->replace($other);
+        self::assertTrue($environment->equals($other));
+        self::assertTrue($environment->combined);
+        self::assertFalse($environment->has('old'));
+    }
+
+    public function testNarrowDoesNotTurnPossibleAbsenceIntoPresentNull(): void
+    {
+        $environment = new Environment();
+        $environment->markAbsent('tail');
+        $joined = $environment->join(new Environment(['tail' => Domain::literal('suffix')]));
+        $joined->narrow('tail', Domain::literal(null));
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Maybe, $joined->presence('tail'));
+        $joined->narrow('tail', Domain::literal('suffix'));
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Present, $joined->presence('tail'));
+        $environment->narrow('tail', Domain::literal(null));
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Absent, $environment->presence('tail'));
+    }
+
+
+    public function testJoinPreservesCombinationUncertaintyAndPresenceWithoutInventingIt(): void
+    {
+        $left = new Environment(['a' => Domain::literal('a')]);
+        self::assertFalse($left->join($left)->combined);
+        $right = $left->copy();
+        $right->combined = true;
+        self::assertTrue($left->join($right)->combined);
+        self::assertTrue($right->join($left)->combined);
+        self::assertTrue($left->join(new Environment(['a' => Domain::literal('b')]))->combined);
+        self::assertNotSame($left->signature(), $right->signature());
+        $left->invalidate('a');
+        $right->invalidate('b');
+        self::assertSame('$a', $left->read('a')->terms[0]->toPattern()->holes()[0]->expression);
+        self::assertSame('$b', $right->read('b')->terms[0]->toPattern()->holes()[0]->expression);
+        $absent = new Environment();
+        $absent->markAbsent('a');
+        self::assertNotSame($absent->signature(), $left->signature());
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Absent, $absent->join($absent)->presence('a'));
+    }
+
 
     public function testObjectsSharesSnapshotsAcrossAliasesButNotCopies(): void
     {
@@ -139,17 +218,18 @@ final class EnvironmentTest extends TestCase
         self::assertFalse($env->equals($copy));
     }
 
-    public function testMergeBranchesKeepsAlternativeObjectStates(): void
+    public function testReplaceKeepsJoinedAlternativeObjectStates(): void
     {
         $object = new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a');
         $env = new Environment(['q' => Domain::of($object)]);
         $left = $env->copy();
         $right = $env->copy();
         $right->objects()->remember(new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a', state: new \SqlCatalog\Evaluation\ArrayTerm([])));
-        $env->mergeBranches($left, $right);
+        $env->replace($left->join($right));
         self::assertCount(2, $env->read('q')->terms);
         self::assertSame($object, $left->read('q')->soleObject());
     }
+
     public function testRefreshObservesLaterMutationsThroughAnAlreadyEvaluatedReference(): void
     {
         $object = new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a');
@@ -160,5 +240,4 @@ final class EnvironmentTest extends TestCase
         self::assertSame($updated, $environment->refresh($value)->soleObject());
         self::assertSame($value, (new Environment())->refresh($value));
     }
-
 }

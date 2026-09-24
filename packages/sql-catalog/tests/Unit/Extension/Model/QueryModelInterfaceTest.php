@@ -46,6 +46,8 @@ use SqlCatalog\Extension\Model\QueryModelInterface;
 #[UsesClass(\SqlCatalog\Php\ProgramIndex::class)]
 #[UsesClass(\SqlCatalog\Evaluation\OpaqueTerm::class)]
 #[UsesClass(\SqlCatalog\Type\TypeShape::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class QueryModelInterfaceTest extends TestCase
 {
     public function testInputsCanBeProvidedOutsideTheBuiltins(): void

@@ -7,11 +7,13 @@ namespace SqlCatalog\Analysis;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use SqlCatalog\Analysis\Derivation\CalleeReturns;
+use SqlCatalog\Analysis\Effect\ReferenceEffects;
+use SqlCatalog\Analysis\Effect\WriteEffects;
+use SqlCatalog\Analysis\FunctionModel\Registry;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
 use SqlCatalog\Evaluation\ObjectTerm;
 use SqlCatalog\Extension\Model\CallContext;
-use SqlCatalog\Extension\Model\ModelSet;
 use SqlCatalog\Extension\SinkRole;
 use SqlCatalog\Extension\SinkSpec;
 use SqlCatalog\Php\FunctionShape;
@@ -38,7 +40,7 @@ final class CallEvaluator
 
     private SinkMatcher $sinks;
 
-    private BuiltinCallModel $builtins;
+    private Registry $functions;
 
     private ExternalInput $external;
 
@@ -46,21 +48,22 @@ final class CallEvaluator
 
     private ?CalleeReturns $returns;
 
+    private ?ReferenceEffects $references = null;
+
     /**
      * Wires the evaluator to everything a call may need.
      */
     public function __construct(
         ProgramIndex $index,
         SinkMatcher $sinks,
-        BuiltinCallModel $builtins,
+        Registry $functions,
         ExternalInput $external,
         NodeText $text,
         ?CalleeReturns $returns = null,
-        private readonly ?ModelSet $models = null,
     ) {
         $this->index = $index;
         $this->sinks = $sinks;
-        $this->builtins = $builtins;
+        $this->functions = $functions;
         $this->external = $external;
         $this->text = $text;
         $this->returns = $returns;
@@ -80,9 +83,10 @@ final class CallEvaluator
         }
         $receiver = $node instanceof Expr\MethodCall || $node instanceof Expr\NullsafeMethodCall ? $expressions->evaluate($node->var, $environment, $scope) : null;
         $arguments = $this->arguments($node, $environment, $scope, $expressions);
+        $this->applyEffects($node, $environment);
 
         if ($node instanceof Expr\New_) {
-            $modelled = $this->models?->evaluate(new CallContext($node, $arguments, $environment, $scope, $expressions, className: $node->class instanceof Node\Name ? $node->class->toString() : null));
+            $modelled = $this->functions->evaluateCall(new CallContext($node, $arguments, $environment, $scope, $expressions, className: $node->class instanceof Node\Name ? $node->class->toString() : null));
             if ($modelled !== null) {
                 return $modelled;
             }
@@ -100,6 +104,35 @@ final class CallEvaluator
         }
 
         return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
+    }
+
+    /**
+     * Opens arguments whose callees may write through references.
+     */
+    public function applyEffects(Expr\CallLike $node, Environment $environment): void
+    {
+        if ($node instanceof Expr\FuncCall && $node->name instanceof Node\Name) {
+            $name = $this->functionName($node->name);
+            if ($this->sinks->matchFunction($name) !== null) {
+                return;
+            }
+            if ($this->index->findFunction($name) === null && $this->functions->supports($name)) {
+                $count = $node->getArgs()[3] ?? null;
+                if ($this->functions->normalize($name) === 'str_replace' && $count !== null) {
+                    (new WriteEffects())->apply((new Derivation\ModifiedNames())->targets($count->value), $environment);
+                }
+                return;
+            }
+        }
+        if ($node instanceof Expr\MethodCall && $node->name instanceof Node\Identifier
+            && $node->var instanceof Expr\Variable && is_string($node->var->name)
+            && $this->sinks->matchMethod($environment->read($node->var->name), $node->name->toString()) !== null) {
+            return;
+        }
+        $effects = new WriteEffects();
+        $written = $effects->own($node, $this->index);
+        $this->references ??= new ReferenceEffects();
+        $effects->apply($written + $this->references->affected($node, $written), $environment);
     }
 
     /**
@@ -159,7 +192,7 @@ final class CallEvaluator
 
         $receiver = $environment->refresh($receiver ?? $expressions->evaluate($node->var, $environment, $scope));
         $sink = $this->sinks->matchMethod($receiver, $name);
-        $modelled = $this->models?->evaluate(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, $receiver, sink: $sink));
+        $modelled = $this->functions->evaluateCall(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, $receiver, sink: $sink));
         if ($modelled !== null) {
             return $modelled;
         }
@@ -244,7 +277,7 @@ final class CallEvaluator
 
         $sink = $this->sinks->matchStatic($className, $name);
         $environment ??= new Environment();
-        $modelled = $this->models?->evaluate(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, className: $className, sink: $sink));
+        $modelled = $this->functions->evaluateCall(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, className: $className, sink: $sink));
         if ($modelled !== null) {
             return $modelled;
         }
@@ -278,22 +311,23 @@ final class CallEvaluator
             }
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
-        $name = $node->name->toString();
+        $name = $this->functionName($node->name);
 
         $sink = $this->sinks->matchFunction($name);
         $environment ??= new Environment();
-        $modelled = $this->models?->evaluate(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, sink: $sink));
+        $modelled = $this->functions->evaluateCall(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, sink: $sink));
         if ($modelled !== null) {
             return $modelled;
         }
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
         }
+        $modeled = $this->functions->evaluate($name, $arguments);
+        if ($modeled !== null) {
+            return $modeled;
+        }
         if ($this->external->isFunction($name)) {
             return Domain::opaque(TypeShape::unknown(), Origin::External, $name . '()');
-        }
-        if ($this->builtins->supports($name)) {
-            return $this->builtins->evaluate($name, $arguments);
         }
 
         $this->invalidateEscapes($node, $environment);
@@ -314,6 +348,21 @@ final class CallEvaluator
         foreach ((new Derivation\FreeNames())->of($arguments) as $name => $_) {
             $environment->objects()->invalidate($environment->read($name));
         }
+    }
+
+    /**
+     * Resolves an unqualified call locally before PHP's global fallback.
+     */
+    public function functionName(Node\Name $name): string
+    {
+        $local = $name->getAttribute('namespacedName');
+        if ($local instanceof Node\Name
+            && ($this->functions->supports($local->toString()) || $this->index->findFunction($local->toString()) !== null)
+        ) {
+            return $local->toString();
+        }
+
+        return $name->toString();
     }
 
     /**

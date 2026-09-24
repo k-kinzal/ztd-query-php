@@ -8,6 +8,8 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
 use SqlCatalog\Analysis\Derivation\Objects\ObjectEffects;
+use SqlCatalog\Analysis\Effect\ReferenceEffects;
+use SqlCatalog\Analysis\Effect\WriteEffects;
 use WeakMap;
 
 /**
@@ -29,6 +31,8 @@ final class ModifiedNames
 
     private FreeNames $names;
 
+    private ?ReferenceEffects $references = null;
+
     /**
      * Builds the reader over the naming the rest of the derivation uses.
      */
@@ -45,7 +49,9 @@ final class ModifiedNames
      */
     public function touches(Node $node, array $wanted): bool
     {
-        return $wanted !== [] && array_intersect_key($this->of($node), $wanted) !== [];
+        $written = $this->of($node);
+
+        return $wanted !== [] && (isset($written[WriteEffects::ALL]) || array_intersect_key($written, $wanted) !== []);
     }
 
     /**
@@ -76,6 +82,8 @@ final class ModifiedNames
             return [];
         }
         $names = $this->own($node);
+        $this->references ??= new ReferenceEffects();
+        $names += $this->references->affected($node, $names);
         foreach (get_object_vars($node) as $sub) {
             foreach (is_array($sub) ? $sub : [$sub] as $child) {
                 if ($child instanceof Node) {
@@ -94,11 +102,8 @@ final class ModifiedNames
      */
     public function own(Node $node): array
     {
-        if ($node instanceof Expr\CallLike && $this->objects !== null) {
-            return $this->objects->writes($node);
-        }
         if ($node instanceof Expr\Assign || $node instanceof Expr\AssignOp || $node instanceof Expr\AssignRef) {
-            return $this->targets($node->var);
+            return $this->targets($node->var) + (new WriteEffects())->own($node);
         }
         if ($node instanceof Expr\PreInc || $node instanceof Expr\PostInc
             || $node instanceof Expr\PreDec || $node instanceof Expr\PostDec) {
@@ -122,7 +127,11 @@ final class ModifiedNames
             return $this->targets($node->var);
         }
 
-        return [];
+        $written = (new WriteEffects())->own($node)
+            + ($node instanceof Expr\CallLike ? ($this->objects?->writes($node) ?? []) : []);
+        $this->references ??= new ReferenceEffects();
+
+        return $written + ($node instanceof Expr\CallLike ? $this->references->affected($node, $written) : []);
     }
 
     /**

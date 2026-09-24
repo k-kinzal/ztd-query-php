@@ -99,6 +99,10 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
 #[UsesClass(\SqlCatalog\Extension\Model\ModelContext::class)]
 #[UsesClass(\SqlCatalog\Extension\Model\ModelSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class CallbackEffectsTest extends TestCase
 {
     public function testApplyFollowsMutationsOfTheCallbackParameter(): void

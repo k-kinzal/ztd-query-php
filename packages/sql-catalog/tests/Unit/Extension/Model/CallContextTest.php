@@ -36,6 +36,8 @@ use SqlCatalog\Extension\Model\CallContext;
 #[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 #[UsesClass(\SqlCatalog\Php\NodeText::class)]
 #[UsesClass(\SqlCatalog\Php\ProgramIndex::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class CallContextTest extends TestCase
 {
     public function testKeepsTheModelContractInputs(): void

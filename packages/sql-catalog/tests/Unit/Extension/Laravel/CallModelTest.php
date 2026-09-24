@@ -102,6 +102,9 @@ use SqlCatalog\Extension\Laravel\CallModel;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
 #[UsesClass(\SqlCatalog\Evaluation\OpaqueTerm::class)]
 #[UsesClass(\SqlCatalog\Php\ParameterShape::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class CallModelTest extends TestCase
 {
     public function testEvaluateModelsFactoriesMutationsAndLeavesOtherCallsAlone(): void

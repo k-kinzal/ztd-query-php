@@ -7,6 +7,7 @@ namespace SqlCatalog\Analysis;
 use PhpParser\Node\Expr;
 use PhpParser\Node\InterpolatedStringPart;
 use PhpParser\Node\Scalar;
+use SqlCatalog\Analysis\Effect\WriteEffects;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
 use SqlCatalog\Evaluation\ObjectTerm;
@@ -39,7 +40,6 @@ final class ExpressionEvaluator
         CallEvaluator $calls,
         EvaluationBudget $budget,
         NodeText $text,
-        private readonly bool $trackObjectEffects = false,
     ) {
         $this->references = $references;
         $this->calls = $calls;
@@ -81,6 +81,8 @@ final class ExpressionEvaluator
             return $reference;
         }
         $this->evaluateOperands($node, $environment, $scope);
+        $effects = new WriteEffects();
+        $effects->apply($effects->own($node), $environment);
 
         return Domain::opaque(TypeShape::unknown(), Origin::Unresolved, $this->text->render($node));
     }
@@ -145,11 +147,10 @@ final class ExpressionEvaluator
         if ($node instanceof Expr\Isset_) {
             return $this->evaluateIsset($node, $environment, $scope);
         }
-        if ($node instanceof Expr\BinaryOp\Coalesce && !$this->trackObjectEffects) {
-            return $this->evaluate($node->left, $environment, $scope)->union($this->evaluate($node->right, $environment, $scope));
-        }
-        if ($node instanceof Expr\BinaryOp\Coalesce) {
-            return (new Derivation\Objects\BranchEffects())->coalesce($node, $environment, $scope, $this);
+        if ($node instanceof Expr\BinaryOp\Coalesce || $node instanceof Expr\BinaryOp\BooleanAnd
+            || $node instanceof Expr\BinaryOp\BooleanOr || $node instanceof Expr\BinaryOp\LogicalAnd
+            || $node instanceof Expr\BinaryOp\LogicalOr) {
+            return $this->evaluateOptionalRight($node, $environment, $scope);
         }
         if ($node instanceof Expr\Match_) {
             return $this->evaluateMatch($node, $environment, $scope);
@@ -159,9 +160,6 @@ final class ExpressionEvaluator
         }
         if ($node instanceof Expr\Assign) {
             return $this->evaluateAssign($node, $environment, $scope);
-        }
-        if ($node instanceof Expr\AssignRef) {
-            return $this->evaluateReferenceAssign($node, $environment, $scope);
         }
         if ($node instanceof Expr\AssignOp\Concat) {
             return $this->evaluateAppend($node, $environment, $scope);
@@ -187,6 +185,21 @@ final class ExpressionEvaluator
         }
 
         return Domain::fromTerms($terms, $value->widened, $value->combined);
+    }
+
+    /**
+     * Keeps the effects of executing and skipping a short-circuited operand.
+     */
+    public function evaluateOptionalRight(Expr\BinaryOp $node, Environment $environment, FunctionScope $scope): Domain
+    {
+        $left = $this->evaluate($node->left, $environment, $scope);
+        $taken = $environment->copy();
+        $right = $this->evaluate($node->right, $taken, $scope);
+        $environment->replace($environment->join($taken));
+
+        return $node instanceof Expr\BinaryOp\Coalesce
+            ? $left->union($right)
+            : Domain::opaque(TypeShape::of(['bool']), Origin::Unresolved);
     }
 
     /**
@@ -244,11 +257,7 @@ final class ExpressionEvaluator
         if ($type === null) {
             return null;
         }
-        if ($this->trackObjectEffects && $node instanceof Expr\BinaryOp) {
-            return (new Derivation\Objects\BranchEffects())->shortCircuit($node, $environment, $scope, $this);
-        }
         $this->evaluateOperands($node, $environment, $scope);
-
 
         return Domain::opaque(TypeShape::of([$type]), Origin::Unresolved);
     }
@@ -306,50 +315,27 @@ final class ExpressionEvaluator
     public function evaluateTernary(Expr\Ternary $node, Environment $environment, FunctionScope $scope): Domain
     {
         $condition = $this->evaluate($node->cond, $environment, $scope);
-        $truth = $this->trackObjectEffects ? (new Derivation\Objects\BranchEffects())->truth($condition) : $condition->soleLiteral()?->value;
-        if ($truth === true) {
-            return $node->if === null ? $condition : $this->evaluate($node->if, $environment, $scope);
-        }
-        if ($truth === false) {
-            return $this->evaluate($node->else, $environment, $scope);
-        }
-        $left = $environment->copy();
-        $right = $environment->copy();
-        $whenTrue = $node->if === null ? $condition : $this->evaluate($node->if, $left, $scope);
-        $whenFalse = $this->evaluate($node->else, $right, $scope);
-        $environment->mergeBranches($left, $right);
+        $yes = $environment->copy();
+        $no = $environment->copy();
+        $whenTrue = $node->if === null ? $condition : $this->evaluate($node->if, $yes, $scope);
+        $whenFalse = $this->evaluate($node->else, $no, $scope);
+        $environment->replace($yes->join($no));
 
         return $whenTrue->union($whenFalse);
     }
 
     /**
-     * Whether every checked variable is defined and non-null in this run.
-     *
-     * Unknown values keep the test open. Property and element checks also stay
-     * open because their declared type does not prove they have been initialized.
+     * An existence test's boolean result stays open; its operands may have effects.
      */
     public function evaluateIsset(Expr\Isset_ $node, Environment $environment, FunctionScope $scope): Domain
     {
-        $unknown = false;
+        $taken = $environment->copy();
         foreach ($node->vars as $variable) {
-            $value = $this->evaluate($variable, $environment, $scope);
-            if (!$variable instanceof Expr\Variable) {
-                $unknown = true;
-                continue;
-            }
-            if (is_string($variable->name) && $variable->name !== 'this'
-                && !(new ExternalInput())->isVariable($variable->name)
-                && !$environment->has($variable->name) && $scope->function !== FunctionScope::MAIN) {
-                return Domain::literal(false);
-            }
-            $type = $value->type();
-            if ($type->names === ['null']) {
-                return Domain::literal(false);
-            }
-            $unknown = $unknown || $type->isUnknown() || $type->isNullable();
+            $this->evaluate($variable, $taken, $scope);
+            $environment->replace($environment->join($taken));
         }
 
-        return $unknown ? Domain::opaque(TypeShape::of(['bool']), Origin::Unresolved) : Domain::literal(true);
+        return Domain::opaque(TypeShape::of(['bool']), Origin::Unresolved);
     }
 
     /**
@@ -360,19 +346,20 @@ final class ExpressionEvaluator
         $this->evaluate($node->cond, $environment, $scope);
         $result = null;
         $joined = null;
+        $conditions = $environment->copy();
         foreach ($node->arms as $arm) {
-            $branch = $environment->copy();
             foreach ($arm->conds ?? [] as $condition) {
-                $this->evaluate($condition, $branch, $scope);
+                $tested = $conditions->copy();
+                $this->evaluate($condition, $tested, $scope);
+                $conditions = $conditions->join($tested);
             }
+            $branch = $conditions->copy();
             $value = $this->evaluate($arm->body, $branch, $scope);
-            $joined = $joined === null ? $branch : $joined->join($branch);
             $result = $result === null ? $value : $result->union($value);
+            $joined = $joined === null ? $branch : $joined->join($branch);
         }
 
-        if ($joined !== null) {
-            $environment->mergeBranches($joined, $joined);
-        }
+        $environment->replace($joined ?? $environment);
 
         return $result ?? Domain::unknown();
     }
@@ -386,21 +373,6 @@ final class ExpressionEvaluator
         $this->references->assign($node->var, $value, $environment, $scope, $this);
 
         return $value;
-    }
-
-    /**
-     * Reference rebinding is not tracked, so escaping object snapshots remain open.
-     */
-    public function evaluateReferenceAssign(Expr\AssignRef $node, Environment $environment, FunctionScope $scope): Domain
-    {
-        $value = $this->evaluate($node->expr, $environment, $scope);
-        foreach ($value->terms as $term) {
-            if ($term instanceof ObjectTerm && $term->identity !== null) {
-                $environment->objects()->remember(new ObjectTerm($term->className, $term->enumCase, $term->statementId, $term->identity));
-            }
-        }
-
-        return Domain::opaque(TypeShape::unknown(), Origin::Unresolved, $this->text->render($node));
     }
 
     /**

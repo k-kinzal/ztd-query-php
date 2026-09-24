@@ -8,6 +8,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
 use SqlCatalog\Analysis\Derivation\Slice\SliceStep;
+use SqlCatalog\Analysis\Effect\WriteEffects;
 use SqlCatalog\Analysis\EvaluationBudget;
 use SqlCatalog\Analysis\ExpressionEvaluator;
 use SqlCatalog\Analysis\FunctionScope;
@@ -172,9 +173,7 @@ final class SliceExecutor
         $open = [];
         foreach ($environments as $environment) {
             $left = $environment->copy();
-            foreach ($names as $name => $_) {
-                $left->write($name, Domain::opaque(TypeShape::unknown(), Origin::Budget, '$' . $name));
-            }
+            (new WriteEffects())->apply($names, $left, Origin::Budget);
             $open[] = $left;
         }
 
@@ -189,7 +188,7 @@ final class SliceExecutor
     public function writtenBy(SliceStep $step): array
     {
         if ($step->node !== null) {
-            $names = $this->modified->tracksObjects() ? $this->modified->of($step->node) : $this->modified->own($step->node);
+            $names = $this->modified->of($step->node);
             foreach ($step->names as $name) {
                 $names[$name] = true;
             }
@@ -249,12 +248,12 @@ final class SliceExecutor
             $iterables[$node] = $iterable;
             $this->iterate($node, $iterable, $pass, $next, $scope, $expressions);
 
-            return $this->split($next, $this->modified->own($node), $limit);
+            return $this->split($next, $this->modified->of($node), $limit);
         }
         if ($node instanceof Expr) {
             $this->assign($node, $next, $scope, $expressions);
 
-            return $this->split($next, $this->modified->own($node), $limit);
+            return $this->split($next, $this->modified->of($node), $limit);
         }
 
         return [$next];
@@ -274,9 +273,11 @@ final class SliceExecutor
             }
         }
         foreach ($names as $name) {
-            $environment->write($name, isset($types[$name])
-                ? Domain::opaque($types[$name], Origin::Parameter, '$' . $name)
-                : Domain::opaque(TypeShape::unknown(), Origin::Unresolved, '$' . $name));
+            if (isset($types[$name])) {
+                $environment->write($name, Domain::opaque($types[$name], Origin::Parameter, '$' . $name));
+            } else {
+                $environment->markAbsent($name);
+            }
         }
     }
 
@@ -288,7 +289,7 @@ final class SliceExecutor
         if ($declaration instanceof Stmt\Unset_) {
             foreach ($declaration->vars as $variable) {
                 if ($variable instanceof Expr\Variable && is_string($variable->name)) {
-                    $environment->write($variable->name, Domain::literal(null));
+                    $environment->markAbsent($variable->name);
                 }
             }
 
@@ -389,7 +390,7 @@ final class SliceExecutor
             foreach ($environments as $current) {
                 foreach ($domain->terms as $term) {
                     $one = $current->copy();
-                    $one->write($name, Domain::of($term));
+                    $one->narrow($name, Domain::of($term));
                     $split[] = $one;
                 }
             }

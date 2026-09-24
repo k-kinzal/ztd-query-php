@@ -76,6 +76,8 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Analysis\SinkMatcher::class)]
 #[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 #[UsesClass(\SqlCatalog\Php\NodeText::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class BuilderCallsTest extends TestCase
 {
     public function testIsBuilderRecognizesSourceDeclaredModelsAndBothBuilderContracts(): void

@@ -16,6 +16,8 @@ use SqlCatalog\Evaluation\LiteralTerm;
 #[UsesClass(Domain::class)]
 #[UsesClass(Environment::class)]
 #[UsesClass(LiteralTerm::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class BindingTest extends TestCase
 {
     public function testABindingHoldsTheNamesAndTheWayIn(): void

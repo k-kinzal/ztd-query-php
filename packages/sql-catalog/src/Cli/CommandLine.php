@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlCatalog\Cli;
 
 use SqlCatalog\Catalog\Severity;
+use SqlCatalog\Configuration;
 use SqlCatalog\Filter\CatalogFilter;
 
 /**
@@ -25,6 +26,7 @@ final class CommandLine
      * @param Severity|null $failOn The severity that makes the run report a failure
      * @param bool $help Whether the command was asked for its help
      * @param bool $listExtensions Whether the command was asked to list its extensions
+     * @param string|null $config The catalog YAML file selected for this run
      * @param bool $listReporters Whether the command was asked to list its reporters
      * @param string|null $dialect The SQL grammar used by framework builders
      */
@@ -40,6 +42,8 @@ final class CommandLine
         public readonly bool $help = false,
         public readonly bool $listExtensions = false,
         public readonly bool $listReporters = false,
+        public readonly ?string $config = null,
+        public readonly Configuration $configuration = new Configuration(),
         public readonly ?string $dialect = null,
     ) {
     }

@@ -109,6 +109,11 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
 final class TextReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void
@@ -167,6 +172,7 @@ final class TextReporterTest extends TestCase
             . '  resolved' . "\n"
             . '  ? = 7' . "\n"
             . "\n"
+            . 'Conditions are not evaluated; runtime reachability is not assessed.' . "\n"
             . '1 statement(s), 1 fully resolved, 0 finding(s), 0 unreadable file(s).' . "\n",
             (string) (new TextReporter())->render($catalog)->sole(),
         );

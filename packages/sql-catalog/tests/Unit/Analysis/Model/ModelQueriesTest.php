@@ -55,6 +55,10 @@ use SqlCatalog\Extension\Model\QueryOutput;
 #[UsesClass(\SqlCatalog\Php\ParsedFile::class)]
 #[UsesClass(\SqlCatalog\Php\SourceParser::class)]
 #[UsesClass(\SqlCatalog\Text\LiteralText::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
 final class ModelQueriesTest extends TestCase
 {
     public function testSolveRetainsMissingModelsAsIncompleteStatements(): void

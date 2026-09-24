@@ -21,6 +21,14 @@ final class Environment
 
     private ?ObjectMemory $objects;
 
+    /** @var array<string, Presence> */
+    private array $presence = [];
+
+    /**
+     * Whether joining branch states lost their pairing.
+     */
+    public bool $combined = false;
+
     /**
      * @param array<string, Domain> $variables Initial bindings, keyed by variable name without the sigil
      */
@@ -33,6 +41,7 @@ final class Environment
                 $this->objects()->import($value);
             }
         }
+        $this->presence = array_fill_keys(array_keys($variables), Presence::Present);
     }
 
     /**
@@ -40,17 +49,11 @@ final class Environment
      */
     public function read(string $name): Domain
     {
-        $value = $this->variables[$name] ?? Domain::opaque(TypeShape::unknown(), Origin::Unresolved, '$' . $name);
+        if ($this->presence($name) === Presence::Absent) {
+            return Domain::literal(null);
+        }
 
-        return $this->refresh($value);
-    }
-
-    /**
-     * Resolves an already-evaluated object reference after subsequent argument effects.
-     */
-    public function refresh(Domain $value): Domain
-    {
-        return $this->objects?->read($value) ?? $value;
+        return $this->refresh($this->variables[$name] ?? Domain::opaque(TypeShape::unknown(), Origin::Unresolved, '$' . $name));
     }
 
     /**
@@ -64,6 +67,19 @@ final class Environment
         if ($object?->identity !== null) {
             $this->objects()->remember($object);
         }
+        $this->presence[$name] = Presence::Present;
+    }
+
+    /**
+     * Narrows a value while keeping a possible absence distinct from present null.
+     */
+    public function narrow(string $name, Domain $domain): void
+    {
+        $presence = $this->presence($name);
+        $this->write($name, $domain);
+        if ($presence !== Presence::Present && ($domain->type()->isNullable() || $domain->type()->isUnknown())) {
+            $this->presence[$name] = $presence;
+        }
     }
 
     /**
@@ -71,7 +87,7 @@ final class Environment
      */
     public function has(string $name): bool
     {
-        return isset($this->variables[$name]);
+        return isset($this->presence[$name]);
     }
 
     /**
@@ -79,7 +95,7 @@ final class Environment
      */
     public function forget(string $name): void
     {
-        unset($this->variables[$name]);
+        unset($this->variables[$name], $this->presence[$name]);
     }
 
     /**
@@ -89,7 +105,7 @@ final class Environment
      */
     public function names(): array
     {
-        return array_keys($this->variables);
+        return array_keys($this->presence);
     }
 
     /**
@@ -97,7 +113,10 @@ final class Environment
      */
     public function copy(): self
     {
-        return new self($this->variables, $this->objects?->copy());
+        $copy = clone $this;
+        $copy->objects = $this->objects?->copy();
+
+        return $copy;
     }
 
     /**
@@ -108,29 +127,56 @@ final class Environment
      */
     public function join(self $other): self
     {
-        $joined = [];
-        foreach ($this->variables as $name => $domain) {
-            $joined[$name] = $other->has($name) ? $domain->union($other->read($name)) : $domain;
+        $joined = new self();
+        foreach (array_unique(array_merge($this->names(), $other->names())) as $name) {
+            $left = $this->presence($name);
+            $right = $other->presence($name);
+            $joined->variables[$name] = $this->read($name)->union($other->read($name));
+            $joined->presence[$name] = $left === $right ? $left : Presence::Maybe;
         }
-        foreach ($other->variables as $name => $domain) {
-            if (!isset($joined[$name])) {
-                $joined[$name] = $domain;
-            }
-        }
+        $joined->combined = $this->combined || $other->combined || !$this->equals($other);
 
-        $objects = $this->objects === null ? $other->objects?->copy() : ($other->objects === null ? $this->objects->copy() : $this->objects->join($other->objects));
+        $joined->objects = $this->objects === null ? $other->objects?->copy() : ($other->objects === null ? $this->objects->copy() : $this->objects->join($other->objects));
 
-        return new self($joined, $objects);
+        return $joined;
     }
 
     /**
-     * Replaces this run with the alternatives left by independent branches.
+     * The existence of a variable, independently of what value it holds.
      */
-    public function mergeBranches(self $left, self $right): void
+    public function presence(string $name): Presence
     {
-        $joined = $left->join($right);
-        $this->variables = $joined->variables;
-        $this->objects = $joined->objects;
+        return $this->presence[$name] ?? Presence::Maybe;
+    }
+
+    /**
+     * Records that a variable is definitely undefined.
+     */
+    public function markAbsent(string $name): void
+    {
+        unset($this->variables[$name]);
+        $this->presence[$name] = Presence::Absent;
+    }
+
+    /**
+     * Forgets both the value and existence after an unmodelled write.
+     */
+    public function invalidate(string $name, Origin $origin = Origin::Unresolved): void
+    {
+        $this->objects?->invalidate($this->read($name));
+        $this->variables[$name] = Domain::opaque(TypeShape::unknown(), $origin, '$' . $name);
+        $this->presence[$name] = Presence::Maybe;
+    }
+
+    /**
+     * Replaces this state with the result of evaluating alternatives.
+     */
+    public function replace(self $other): void
+    {
+        $this->variables = $other->variables;
+        $this->presence = $other->presence;
+        $this->combined = $other->combined;
+        $this->objects = $other->objects;
     }
 
     /**
@@ -139,14 +185,15 @@ final class Environment
     public function signature(): string
     {
         $parts = [];
-        foreach ($this->variables as $name => $domain) {
-            $parts[] = $name . '=' . $domain->signature();
+        foreach ($this->presence as $name => $presence) {
+            $domain = $this->read($name);
+            $parts[] = ($presence === Presence::Present ? '' : $presence->value . ':') . $name . '=' . $domain->signature();
         }
         sort($parts);
 
         $objects = $this->objects?->signature() ?? '';
 
-        return implode(';', $parts) . ($objects === '' ? '' : ';objects:' . $objects);
+        return ($this->combined ? 'combined;' : '') . implode(';', $parts) . ($objects === '' ? '' : ';objects:' . $objects);
     }
 
     /**
@@ -154,16 +201,15 @@ final class Environment
      */
     public function equals(self $other): bool
     {
-        if ($this->names() !== $other->names()) {
-            return false;
-        }
-        foreach ($this->variables as $name => $domain) {
-            if (!$this->read($name)->equals($other->read($name))) {
-                return false;
-            }
-        }
+        return $this->signature() === $other->signature();
+    }
 
-        return true;
+    /**
+     * Resolves an already-evaluated object reference after subsequent argument effects.
+     */
+    public function refresh(Domain $value): Domain
+    {
+        return $this->objects?->read($value) ?? $value;
     }
 
     /**

@@ -173,7 +173,7 @@ final class Deriver
                         array_map($environment->refresh(...), $values),
                         $binding->through,
                         $arrival->path->truncated || $binding->truncated,
-                        $binding->combined,
+                        $binding->combined || $environment->combined,
                     );
                 }
             }

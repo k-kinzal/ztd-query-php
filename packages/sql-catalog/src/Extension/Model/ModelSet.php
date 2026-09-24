@@ -22,7 +22,7 @@ use SqlCatalog\Evaluation\Domain;
 final class ModelSet
 {
     /**
-     * @param list<Closure(CallContext): ?Domain> $calls First non-null result handles the call.
+     * @param list<Closure(CallContext): ?Domain> $calls Registered with the shared function-model registry; later registrations take priority.
      * @param array<string, QueryModelInterface> $queries Statement models keyed by SinkSpec::model.
      * @param list<Closure(string, string): bool> $classRelations Additional known subtype relations.
      */
@@ -36,21 +36,6 @@ final class ModelSet
     public function merge(self $other): self
     {
         return new self(array_merge($this->calls, $other->calls), array_merge($this->queries, $other->queries), array_merge($this->classRelations, $other->classRelations));
-    }
-
-    /**
-     * A modelled value or SQL fragment, or null to use ordinary source evaluation.
-     */
-    public function evaluate(CallContext $context): ?Domain
-    {
-        foreach ($this->calls as $call) {
-            $value = $call($context);
-            if ($value !== null) {
-                return $value;
-            }
-        }
-
-        return null;
     }
 
     /**

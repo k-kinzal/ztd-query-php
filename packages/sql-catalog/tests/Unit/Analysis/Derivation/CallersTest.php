@@ -72,6 +72,11 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(\SqlCatalog\Php\TypeReader::class)]
 #[UsesClass(\SqlCatalog\Type\TypeShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
 final class CallersTest extends TestCase
 {
     public function testOfFindsTheCallsWrittenWithAFunctionsName(): void

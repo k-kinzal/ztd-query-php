@@ -15,9 +15,16 @@ framework classes need to be loaded.
 `ModelSet::calls` contains functions with the signature
 `Closure(CallContext): ?Domain`. The context contains the PHP call AST, its
 evaluated arguments, receiver or static class, matched sink and evaluation
-services. Functions run in registration order. Return `null` to decline a call;
+services. These functions are registered through
+`Analysis\FunctionModel\Registry::registerCall()`, extending the same registry
+that holds named function models. Later registrations run first. Return `null`
+to decline a call;
 return a `Domain` to model its result. A domain can contain a SQL string,
-fragments with unresolved holes, alternatives, arrays or object state.
+fragments with unresolved holes, alternatives, arrays or object state. If every
+context-aware model declines, named function models (including YAML-configured
+models) and ordinary source analysis remain available. Registrations are copied
+for each analysis, so enabling an extension does not affect later runs that
+leave it disabled.
 
 For example, this extension models an application's `today_sql()` helper:
 

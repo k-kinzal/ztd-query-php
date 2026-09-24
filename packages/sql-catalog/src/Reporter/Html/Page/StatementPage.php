@@ -186,7 +186,8 @@ final class StatementPage
             ['Resolution', $this->text->chip($resolution->value, $this->palette->resolution($resolution)) . ' <span class="muted">' . $this->text->escape($resolution->describe()) . '</span>'],
             ['Search', $entry->searchClosed()
                 ? '<span class="muted">closed: every dependency was followed to its end</span>'
-                : '<span class="muted">left open: the listing for this call is a lower bound</span>'],
+                : '<span class="muted">left open: candidates or dependencies remain unknown</span>'],
+            ['Reachability', '<span class="muted">not assessed: both branches are retained, including constant conditions</span>'],
             ['Tables', $tables === '' ? '<span class="none">none named</span>' : $tables],
             ['Kind', $this->text->chip(strtoupper($entry->kind->value), $this->palette->kind($entry->kind->value))],
             ['Identifier', '<code>' . $this->text->escape($entry->id) . '</code> <span class="muted">stable across runs while the statement is unchanged</span>'],

@@ -140,8 +140,18 @@ final class CalleeReturns
         }
         $result = null;
         foreach ($this->slicer->sliceFrom($return, $this->names->of([$return->expr])) as $arrival) {
-            foreach ($this->executor->run($arrival->path->forward(), $start->copy(), $scope, $expressions) as $environment) {
+            $entry = $start->copy();
+            foreach ($arrival->path->needs as $name => $_) {
+                if (!$entry->has($name) && $name !== FreeNames::THIS && !str_contains($name, '->') && !$arrival->path->exhausted) {
+                    $entry->markAbsent($name);
+                }
+            }
+            foreach ($this->executor->run($arrival->path->forward(), $entry, $scope, $expressions) as $environment) {
                 $value = $expressions->evaluate($return->expr, $environment, $scope);
+                $value = Domain::fromTerms($value->terms, $value->widened, $value->combined || $environment->combined);
+                if ($arrival->path->truncated || $arrival->path->exhausted) {
+                    $value = $value->union(Domain::opaque($value->type(), Origin::Budget, 'incomplete return search'));
+                }
                 $result = $result === null ? $value : $result->union($value);
             }
         }

@@ -37,11 +37,16 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(ParsedFile::class)]
 #[UsesClass(SourceFile::class)]
 #[UsesClass(SourceScanException::class)]
+#[UsesClass(\SqlCatalog\Analysis\CallEvaluator::class)]
 #[UsesClass(\SqlCatalog\Analysis\EntryFactory::class)]
 #[UsesClass(EvaluationBudget::class)]
+#[UsesClass(\SqlCatalog\Analysis\ExpressionEvaluator::class)]
 #[UsesClass(\SqlCatalog\Analysis\ExternalInput::class)]
 #[UsesClass(\SqlCatalog\Analysis\FunctionScope::class)]
+#[UsesClass(\SqlCatalog\Analysis\Interpreter::class)]
 #[UsesClass(\SqlCatalog\Analysis\QueryRecord::class)]
+#[UsesClass(\SqlCatalog\Analysis\ReferenceEvaluator::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkMatcher::class)]
 #[UsesClass(\SqlCatalog\Analysis\StatementRecorder::class)]
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
 #[UsesClass(CallSite::class)]
@@ -51,7 +56,9 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Evaluation\ArrayEntry::class)]
 #[UsesClass(\SqlCatalog\Evaluation\ArrayTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\Domain::class)]
+#[UsesClass(\SqlCatalog\Evaluation\Environment::class)]
 #[UsesClass(\SqlCatalog\Evaluation\LiteralTerm::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\OpaqueTerm::class)]
 #[UsesClass(\SqlCatalog\Extension\DoctrineExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\LaravelExtension::class)]
@@ -77,6 +84,7 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Type\TypeShape::class)]
 #[UsesClass(\SqlCatalog\Php\ClassShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
 #[UsesClass(\SqlCatalog\Catalog\Finding::class)]
 #[UsesClass(FindingRule::class)]
 #[UsesClass(\SqlCatalog\Evaluation\CallResults::class)]
@@ -88,12 +96,18 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Php\MethodShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\ConstantReader::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Binding::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\CalleeReturns::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerIndex::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Callers::class)]
-#[CoversClass(\SqlCatalog\Analysis\Derivation\Deriver::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Deriver::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\EntryBinder::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\FreeNames::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\ModifiedNames::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\PropertyWrites::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\SliceExecutor::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Arrival::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\AssignmentSteps::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\BranchArms::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\LoopPasses::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Pending::class)]
@@ -101,6 +115,13 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Configuration::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\NamedModel::class)]
+#[UsesClass(\SqlCatalog\ConfigurationSchema::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\Deriver::class)]
 #[CoversClass(\SqlCatalog\Analysis\CallEvaluator::class)]
 #[CoversClass(\SqlCatalog\Analysis\Derivation\CalleeReturns::class)]
 #[CoversClass(\SqlCatalog\Analysis\Derivation\FreeNames::class)]
@@ -128,7 +149,6 @@ use SqlCatalog\Source\SourceScanException;
 #[CoversClass(\SqlCatalog\Evaluation\Environment::class)]
 #[CoversClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
 #[CoversClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
-#[CoversClass(\SqlCatalog\Analysis\Derivation\Objects\BranchEffects::class)]
 #[CoversClass(\SqlCatalog\Extension\Laravel\CallModel::class)]
 #[CoversClass(\SqlCatalog\Extension\Model\ModelSet::class)]
 #[CoversClass(\SqlCatalog\Analysis\Model\ModelQueries::class)]
@@ -165,7 +185,7 @@ final class AnalyzerTest extends TestCase
      * @param list<string> $expected
      */
     #[DataProvider('providerIssetSqlFragments')]
-    public function testIssetSqlFragmentsKeepTheReachableStatements(string $source, array $expected): void
+    public function testIssetSqlFragmentsKeepBothSyntacticBranches(string $source, array $expected): void
     {
         $catalog = (new Analyzer())->analyzeSource(['a.php' => '<?php ' . $source]);
 
@@ -205,7 +225,7 @@ final class AnalyzerTest extends TestCase
             'empty and false values are set' => [
                 'function run(PDO $pdo, bool $on): void { $tail = $on ? "" : false;'
                     . ' $pdo->prepare("SELECT * FROM users" . (isset($tail) ? $tail : " WHERE active = 1")); }',
-                ['SELECT * FROM users'],
+                ['SELECT * FROM users', 'SELECT * FROM users WHERE active = 1'],
             ],
             'two optional fragments' => [
                 'function run(PDO $pdo, bool $filter, bool $sort): void { if ($filter) { $where = " WHERE active = 1"; }'
@@ -216,7 +236,7 @@ final class AnalyzerTest extends TestCase
             'correlated variables' => [
                 'function run(PDO $pdo, bool $on): void { if ($on) { $table = "admins"; $tail = " WHERE admin = 1"; } else { $table = "users"; }'
                     . ' $pdo->prepare("SELECT * FROM " . $table . (isset($tail) ? $tail : "")); }',
-                ['SELECT * FROM users', 'SELECT * FROM admins WHERE admin = 1'],
+                ['SELECT * FROM users', 'SELECT * FROM admins', 'SELECT * FROM admins WHERE admin = 1'],
             ],
             'nullable parameter supplied by callers' => [
                 'function run(PDO $pdo, ?string $tail): void { $pdo->prepare("SELECT * FROM users" . (isset($tail) ? $tail : "")); }'
@@ -549,6 +569,187 @@ final class AnalyzerTest extends TestCase
             $catalog->entries(),
         ));
     }
+    public function testAnalyzeSourceNormalizesPlaceholderListsThroughVariables(): void
+    {
+        $source = <<<'PHP'
+<?php
+function findUsers(PDO $db, array $ids) {
+    $size = count($ids);
+    $marker = '?';
+    $items = array_fill(0, $size, $marker);
+    $marks = implode(',', $items);
+    $db->prepare('SELECT * FROM users WHERE id IN (' . $marks . ')');
+}
+PHP;
+        $analyzer = new Analyzer();
+        self::assertSame('SELECT * FROM users WHERE id IN (?)', $analyzer->analyzeSource(['users.php' => $source])->entries()[0]->sql());
+    }
+
+    #[DataProvider('providerConfiguredPlaceholderLists')]
+    public function testAnalyzeSourceHandlesPlaceholderExpressions(string $expression, string $expected): void
+    {
+        $source = '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . ' . $expression . ' . ")"); }';
+        $catalog = (new Analyzer())->analyzeSource(['users.php' => $source]);
+        self::assertCount(1, $catalog->entries());
+        self::assertSame('SELECT * FROM users WHERE id IN (' . $expected . ')', $catalog->entries()[0]->sql());
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function providerConfiguredPlaceholderLists(): array
+    {
+        return [
+            'inline' => ["implode(',', array_fill(0, count(\$ids), '?'))", '?'],
+            'join alias' => ["join(',', array_fill(0, count(\$ids), '?'))", '?'],
+            'known count' => ["implode(',', array_fill(0, 10, '?'))", '?'],
+            'zero count is deliberately normalized' => ["implode(',', array_fill(0, 0, '?'))", '?'],
+            'different value is not normalized' => ["implode(',', array_fill(0, count(\$ids), 'x'))", '{$}'],
+            'external value is not normalized' => ["implode(',', array_fill(0, count(\$ids), \$_GET['value']))", '{$}'],
+        ];
+    }
+
+    public function testAnalyzeSourceAppliesRegisteredFunctionsAndFallsBackToSource(): void
+    {
+        $models = \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins();
+        $models->register('App\table', static fn (array $arguments): ?\SqlCatalog\Evaluation\Domain => ($arguments[0] ?? \SqlCatalog\Evaluation\Domain::unknown())->soleLiteral()?->value === 'override' ? \SqlCatalog\Evaluation\Domain::literal('modeled') : null);
+        $source = <<<'PHP'
+<?php
+namespace App;
+function table($which) { return 'original'; }
+function run(\PDO $db) {
+    $db->query('SELECT * FROM ' . table('override'));
+    $db->query('SELECT * FROM ' . table('fallback'));
+}
+PHP;
+        $entries = (new Analyzer(functionModels: $models))->analyzeSource(['app.php' => $source])->entries();
+        self::assertSame(['SELECT * FROM modeled', 'SELECT * FROM original'], array_map(static fn ($entry): string => $entry->sql(), $entries));
+    }
+
+    public function testAnalyzeSourceDistinguishesNamespacedFunctionsAndGlobalBuiltins(): void
+    {
+        $source = <<<'PHP'
+<?php
+namespace App;
+function strtoupper($value) { return 'local'; }
+function run(\PDO $db) {
+    $db->query('SELECT ' . strtoupper('foo'));
+    $db->query('SELECT ' . \strtoupper('foo'));
+}
+PHP;
+        $entries = (new Analyzer())->analyzeSource(['app.php' => $source])->entries();
+        self::assertSame(['SELECT local', 'SELECT FOO'], array_map(static fn ($entry): string => $entry->sql(), $entries));
+    }
+
+    public function testWithConfigurationOverridesTheBuiltinWithoutChangingTheOriginalAnalyzer(): void
+    {
+        $analyzer = new Analyzer();
+        $configured = $analyzer->withConfiguration(new \SqlCatalog\Configuration(functionModels: ['array_fill' => \Tests\Fake\PairModel::class]));
+        $source = '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . implode(",", array_fill(0, count($ids), "?")) . ")"); }';
+        self::assertSame('SELECT * FROM users WHERE id IN (?,?)', $configured->analyzeSource(['users.php' => $source])->entries()[0]->sql());
+        self::assertSame('SELECT * FROM users WHERE id IN (?)', $analyzer->analyzeSource(['users.php' => $source])->entries()[0]->sql());
+    }
+
+    #[DataProvider('providerUncertainWrites')]
+    public function testUncertainWritesRemainOpenInsteadOfBecomingEmpty(string $body): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function mutate(&$x) { $x = "tail"; } function fragment() { ' . $body
+                . ' return "SELECT * FROM users" . (isset($tail) ? $tail : ""); }'
+                . ' function run(PDO $pdo) { $pdo->query(fragment()); }',
+        ]);
+        self::assertEqualsCanonicalizing(['SELECT * FROM users', 'SELECT * FROM users{$}'], array_map(
+            static fn (CatalogEntry $entry): string => $entry->sql(),
+            $catalog->entries(),
+        ));
+        self::assertSame([false, false], array_map(static fn (CatalogEntry $entry): bool => $entry->searchClosed(), $catalog->entries()));
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function providerUncertainWrites(): array
+    {
+        return [
+            'include' => ['include "fragment.php";'],
+            'require' => ['require "fragment.php";'],
+            'eval' => ['eval($code);'],
+            'dynamic assignment' => ['$$name = "tail";'],
+            'dynamic element assignment' => ['$$name[0] = "tail";'],
+            'dynamic reference argument' => ['mutate($$name);'],
+            'dynamic call' => ['$call($data);'],
+            'builtin reference output' => ['str_replace("a", "b", "c", $tail);'],
+            'extract' => ['extract($data);'],
+            'known reference call' => ['mutate($tail);'],
+            'named reference call' => ['mutate(x: $tail);'],
+            'unknown reference call' => ['unknown($tail);'],
+            'static reference call' => ['Unknown::mutate($tail);'],
+            'method reference call' => ['$object->mutate($tail);'],
+            'later alias write' => ['$alias =& $tail; $tail = "before"; $alias = "after";'],
+            'escaped closure' => ['$callback = function () use (&$tail) { $tail = "after"; }; $tail = "before"; $callback();'],
+            'global changed by call' => ['global $tail; $tail = "before"; unknown();'],
+        ];
+    }
+
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerUnconditionalCandidates')]
+    public function testUnconditionalCandidatesNormalizeOnlyWhenStringified(string $body, array $expected): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function fragment() { ' . $body . ' } function run(PDO $pdo) { $pdo->query("SELECT " . fragment()); }',
+        ]);
+        self::assertEqualsCanonicalizing($expected, array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries()));
+    }
+
+    /**
+     * @return array<string, array{string, list<string>}>
+     */
+    public static function providerUnconditionalCandidates(): array
+    {
+        return [
+            'true ternary' => ['return true ? "1" : "2";', ['SELECT 1', 'SELECT 2']],
+            'false ternary' => ['return false ? "1" : "2";', ['SELECT 1', 'SELECT 2']],
+            'no reaching assignment' => ['return isset($tail) ? $tail : "";', ['SELECT ']],
+            'null and empty' => ['return true ? null : "";', ['SELECT ']],
+            'literal empty and unresolved' => ['return true ? "" : unknown();', ['SELECT ', 'SELECT {$}']],
+            'definite overwrite after include' => ['include "a.php"; $tail = "1"; return $tail;', ['SELECT 1']],
+            'unset after include' => ['include "a.php"; unset($tail); return $tail;', ['SELECT ']],
+            'ternary effects' => ['$tail = "0"; true ? ($tail = "1") : ($tail = "2"); return $tail;', ['SELECT 1', 'SELECT 2']],
+            'optional ternary effect' => ['$tail = "0"; true ? ($tail = "1") : "2"; return $tail;', ['SELECT 0', 'SELECT 1']],
+            'short circuit effect' => ['$tail = "0"; true && ($tail = "1"); return $tail;', ['SELECT 0', 'SELECT 1']],
+            'match effects' => ['match (1) { 1 => $tail = "1", default => $tail = "2" }; return $tail;', ['SELECT 1', 'SELECT 2']],
+        ];
+    }
+
+    public function testMixedExternalAndUnresolvedDependenciesDoNotCloseTheSearch(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function f(PDO $pdo) { $pdo->query("SELECT " . $_GET["x"] . unknown()); }',
+        ]);
+        self::assertSame(Resolution::IncompleteModel, $catalog->entries()[0]->resolution());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testFileScopeAliasesCannotHideLaterWrites(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php $alias =& $tail; $tail = "before"; $alias = "after"; $pdo = new PDO("sqlite::memory:"); $pdo->query("SELECT " . $tail);',
+        ]);
+        self::assertSame('SELECT {$}', $catalog->entries()[0]->sql());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAHelperReturnCutShortByTheLoopBudgetCannotCloseTheCaller(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function fragment() { $tail = ""; while (unknown()) { $tail .= "x"; } return $tail; } function run(PDO $pdo) { $pdo->query("SELECT " . fragment()); }',
+        ], new AnalysisOptions(budget: new EvaluationBudget(maxLoopPasses: 1)));
+        self::assertNotEmpty($catalog->entries());
+        self::assertNotContains(true, array_map(static fn (CatalogEntry $entry): bool => $entry->searchClosed(), $catalog->entries()));
+    }
+
 
     public function testAnalyzeSourceKeepsDirectBuilderArrayWritesOpen(): void
     {
@@ -626,14 +827,16 @@ final class AnalyzerTest extends TestCase
         self::assertCount(1, $catalog->entries());
         self::assertFalse($catalog->entries()[0]->searchClosed());
     }
-    public function testAnalyzeSourceHonorsShortCircuitConditionsOnTrackedBuilders(): void
-    {
-        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; $q = DB::table("users"); $q->where("a", 1) && $q->where("b", 2); false && $q->where("c", 3); $q ?? $q->where("d", 4); $q->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
-        self::assertCount(1, $catalog->entries());
-        self::assertSame('select * from "users" where "a" = ? and "b" = ?', $catalog->entries()[0]->sql());
-        self::assertTrue($catalog->entries()[0]->searchClosed());
-    }
 
+    public function testAnalyzeSourcePreservesShortCircuitAlternativesOnTrackedBuilders(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; $q = DB::table("users"); $q->where("a", 1); false && $q->where("b", 2); $q->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        $sql = array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries());
+        sort($sql);
+        self::assertSame(['select * from "users" where "a" = ?', 'select * from "users" where "a" = ? and "b" = ?'], $sql);
+        self::assertTrue($catalog->entries()[0]->searchClosed());
+        self::assertTrue($catalog->entries()[1]->searchClosed());
+    }
 
     public function testAnalyzeSourceKeepsCapturedScalarBindingsInNestedPredicates(): void
     {
@@ -673,6 +876,7 @@ final class AnalyzerTest extends TestCase
         self::assertFalse($catalog->entries()[0]->searchClosed());
         self::assertFalse($catalog->entries()[1]->searchClosed());
     }
+
     public function testAnalyzeSourceDoesNotLoseArgumentSideEffectsOnTheBuilderReceiver(): void
     {
         $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; function customize($q) { $q->where("tenant_id", 7); return 1; } $q = DB::table("users"); $q->where("active", customize($q))->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
@@ -801,6 +1005,15 @@ final class AnalyzerTest extends TestCase
         $catalog = (new Analyzer(new ExtensionRegistry([$extension])))->analyzeSource(['query.php' => '<?php run();'], new AnalysisOptions(['example']));
         self::assertCount(1, $catalog->entries());
         self::assertFalse($catalog->entries()[0]->searchClosed());
+    }    public function testAnalyzeSourceCombinesNamedFunctionModelsWithLaravelRegistrations(): void
+    {
+        $functions = \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins();
+        $functions->register('table_name', static fn (array $arguments): \SqlCatalog\Evaluation\Domain => \SqlCatalog\Evaluation\Domain::literal('accounts'));
+        $analyzer = new Analyzer(functionModels: $functions);
+        $catalog = $analyzer->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; DB::table(table_name())->where("id", 7)->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertSame('select * from "accounts" where "id" = ?', $catalog->entries()[0]->sql());
+        self::assertTrue($catalog->entries()[0]->searchClosed());
     }
 
 }

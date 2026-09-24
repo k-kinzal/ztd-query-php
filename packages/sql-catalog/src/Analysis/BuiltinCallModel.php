@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Analysis;
 
+use SqlCatalog\Analysis\FunctionModel\Registry;
+use SqlCatalog\Evaluation\ArrayEntry;
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\LiteralTerm;
@@ -39,62 +41,54 @@ final class BuiltinCallModel
     ];
 
     /**
-     * Whether the function is one the model knows how to evaluate.
+     * Registers every built-in interpretation through the same API as custom models.
      */
-    public function supports(string $name): bool
+    public function register(Registry $registry): void
     {
-        return in_array($this->normalize($name), [
-            'sprintf',
-            'vsprintf',
-            'implode',
-            'join',
-            'str_repeat',
-            'strtolower',
-            'strtoupper',
-            'ucfirst',
-            'lcfirst',
-            'trim',
-            'ltrim',
-            'rtrim',
-            'str_replace',
-            'strval',
-            'intval',
-            'count',
-            'strlen',
-        ], true) || isset(self::STRING_RESULTS[$this->normalize($name)]);
+        $registry->register('sprintf', fn (array $arguments): Domain => $this->sprintf(array_slice($arguments, 1), $arguments[0] ?? Domain::unknown()));
+        $registry->register('vsprintf', $this->vsprintf(...));
+        $registry->register('implode', $this->implode(...));
+        $registry->register('array_fill', $this->fill(...));
+        $registry->register('join', $this->implode(...));
+        $registry->register('str_repeat', $this->repeat(...));
+        $registry->register('str_replace', $this->replace(...));
+        $registry->register('strval', static fn (array $arguments): Domain => $arguments[0] ?? Domain::unknown());
+        foreach (['strtolower', 'strtoupper', 'ucfirst', 'lcfirst', 'trim', 'ltrim', 'rtrim'] as $function) {
+            $registry->register($function, fn (array $arguments): Domain => $this->transform($function, $arguments));
+        }
+        foreach (['intval', 'count', 'strlen'] as $function) {
+            $registry->register($function, static fn (array $arguments): Domain => Domain::opaque(TypeShape::of(['int']), Origin::Call, $function));
+        }
+        foreach (array_keys(self::STRING_RESULTS) as $function) {
+            $registry->register($function, static fn (array $arguments): Domain => Domain::opaque(TypeShape::of(['string']), Origin::Call, $function));
+        }
     }
 
     /**
-     * The result of calling the function with the given argument domains.
+     * Whether the standard registry models the function.
+     */
+    public function supports(string $name): bool
+    {
+        return Registry::withBuiltins()->supports($name);
+    }
+
+    /**
+     * The standard registry's interpretation of the given arguments.
      *
      * @param list<Domain> $arguments
      */
     public function evaluate(string $name, array $arguments): Domain
     {
-        $function = $this->normalize($name);
-
-        return match ($function) {
-            'sprintf' => $this->sprintf(array_slice($arguments, 1), $arguments[0] ?? Domain::unknown()),
-            'vsprintf' => $this->vsprintf($arguments),
-            'implode', 'join' => $this->implode($arguments),
-            'str_repeat' => $this->repeat($arguments),
-            'strtolower', 'strtoupper', 'ucfirst', 'lcfirst', 'trim', 'ltrim', 'rtrim'
-                => $this->transform($function, $arguments),
-            'str_replace' => $this->replace($arguments),
-            'strval' => $arguments[0] ?? Domain::unknown(),
-            'intval', 'count', 'strlen' => Domain::opaque(TypeShape::of(['int']), Origin::Call, $function),
-            default => Domain::opaque(TypeShape::of(['string']), Origin::Call, $function),
-        };
+        return Registry::withBuiltins()->evaluate($name, $arguments)
+            ?? Domain::opaque(TypeShape::of(['string']), Origin::Call, $name);
     }
 
     /**
-     * The function name without its namespace, in lower case.
+     * The case-insensitive fully qualified name.
      */
     public function normalize(string $name): string
     {
-        $parts = explode('\\', ltrim($name, '\\'));
-
-        return strtolower($parts[count($parts) - 1]);
+        return (new Registry())->normalize($name);
     }
 
     /**
@@ -233,6 +227,21 @@ final class BuiltinCallModel
         }
 
         return null;
+    }
+
+    /**
+     * A representative placeholder array, independent of its runtime length.
+     *
+     * @param list<Domain> $arguments
+     */
+    public function fill(array $arguments): ?Domain
+    {
+        $value = $arguments[2] ?? Domain::unknown();
+        if ($value->soleLiteral()?->value !== '?') {
+            return null;
+        }
+
+        return Domain::of(new ArrayTerm([new ArrayEntry(null, $value)]));
     }
 
     /**

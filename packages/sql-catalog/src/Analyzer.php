@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlCatalog;
 
+use RuntimeException;
 use SqlCatalog\Analysis\EntryFactory;
+use SqlCatalog\Analysis\FunctionModel\Registry;
 use SqlCatalog\Analysis\Interpreter;
 use SqlCatalog\Catalog\AnalysisProblem;
 use SqlCatalog\Catalog\Catalog;
@@ -41,6 +43,8 @@ use SqlCatalog\Source\SourceScanner;
  */
 final class Analyzer
 {
+    private Registry $functionModels;
+
     private ExtensionRegistry $extensions;
 
     private SourceParser $parser;
@@ -51,13 +55,27 @@ final class Analyzer
 
     /**
      * @param ExtensionRegistry|null $extensions The extensions available to the run, or null for the built-in ones
+     * @param Registry|null $functionModels The function interpretations, or null for the built-in models
      */
-    public function __construct(?ExtensionRegistry $extensions = null)
+    public function __construct(?ExtensionRegistry $extensions = null, ?Registry $functionModels = null)
     {
+        $this->functionModels = $functionModels ?? Registry::withBuiltins();
         $this->extensions = $extensions ?? ExtensionRegistry::withBuiltins();
         $this->parser = new SourceParser();
         $this->indexes = new ProgramIndexBuilder();
         $this->entries = new EntryFactory();
+    }
+
+    /**
+     * An independent analyzer with the function registrations from catalog settings.
+     *
+     * @throws RuntimeException When a configured function model cannot be resolved
+     */
+    public function withConfiguration(Configuration $configuration): self
+    {
+        $models = $configuration->apply($this->functionModels);
+
+        return new self($this->extensions, $models);
     }
 
     /**
@@ -141,6 +159,7 @@ final class Analyzer
             $sinks,
             $options->budget(),
             new DeclaredGlobals($this->extensions->globalsOf($options->extensions)),
+            $this->functionModels,
             $options->dialect,
             $this->extensions->modelProvidersOf($options->extensions),
         );

@@ -8,7 +8,10 @@ use RuntimeException;
 use SqlCatalog\AnalysisOptions;
 use SqlCatalog\Analyzer;
 use SqlCatalog\Catalog\Catalog;
+use SqlCatalog\Configuration;
+use SqlCatalog\InvalidConfigurationException;
 use SqlCatalog\Reporter\ReporterRegistry;
+use Throwable;
 
 /**
  * The `sql-catalog` command.
@@ -51,7 +54,7 @@ final class CatalogCommand
     {
         try {
             return $this->execute($this->parser->parse($arguments));
-        } catch (InvalidCommandLineException $exception) {
+        } catch (InvalidCommandLineException|InvalidConfigurationException $exception) {
             return CommandResult::failure(ExitCode::InvalidCommandLine, $exception->getMessage());
         } catch (RuntimeException $exception) {
             return CommandResult::failure(ExitCode::SourceUnreadable, $exception->getMessage());
@@ -61,6 +64,7 @@ final class CatalogCommand
     /**
      * Runs the command for an already parsed command line.
      *
+     * @throws InvalidConfigurationException When the requested configuration cannot be loaded
      * @throws InvalidCommandLineException When no path was given to analyze
      * @throws \SqlCatalog\Source\SourceScanException When a path cannot be read
      * @throws \SqlCatalog\Extension\UnknownExtensionException When an extension is not registered
@@ -77,7 +81,8 @@ final class CatalogCommand
             throw new InvalidCommandLineException('Name at least one file or directory to analyze.');
         }
 
-        $catalog = $command->filter->apply($this->analyzer->analyzePaths(
+        $analyzer = $this->configuredAnalyzer($command->configuration);
+        $catalog = $command->filter->apply($analyzer->analyzePaths(
             $command->paths,
             new AnalysisOptions($command->extensions, dialect: $command->dialect),
             $command->root,
@@ -85,6 +90,20 @@ final class CatalogCommand
         ));
 
         return $this->report($command, $catalog);
+    }
+
+    /**
+     * Loads the requested configuration, reporting failures as configuration errors.
+     *
+     * @throws InvalidConfigurationException When loading or applying the configuration fails
+     */
+    public function configuredAnalyzer(Configuration $configuration): Analyzer
+    {
+        try {
+            return $this->analyzer->withConfiguration($configuration);
+        } catch (Throwable $exception) {
+            throw new InvalidConfigurationException(sprintf('Cannot load configuration "%s": %s', $configuration->file ?? '(provided settings)', $exception->getMessage()), 0, $exception);
+        }
     }
 
     /**

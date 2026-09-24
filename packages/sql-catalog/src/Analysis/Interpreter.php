@@ -20,6 +20,7 @@ use SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer;
 use SqlCatalog\Analysis\Derivation\SliceExecutor;
 use SqlCatalog\Analysis\Derivation\Solution;
 use SqlCatalog\Analysis\Derivation\SourceTree;
+use SqlCatalog\Analysis\FunctionModel\Registry;
 use SqlCatalog\Analysis\Model\ModelQueries;
 use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Evaluation\Domain;
@@ -52,6 +53,8 @@ use SqlCatalog\Type\TypeShape;
  */
 final class Interpreter
 {
+    private Registry $functions;
+
     private ProgramIndex $index;
 
     /**
@@ -75,15 +78,18 @@ final class Interpreter
      * @param EvaluationBudget|null $budget How much work one call may cost
      * @param DeclaredGlobals|null $globals What the global variables the source declares are known to hold
      * @param list<ModelProviderInterface> $modelProviders Enabled extension providers, instantiated for each derivation engine
+     * @param Registry|null $functions The function interpretations shared by the derivation
      */
     public function __construct(
         ProgramIndex $index,
         array $sinks,
         ?EvaluationBudget $budget = null,
         ?DeclaredGlobals $globals = null,
+        ?Registry $functions = null,
         private readonly ?string $dialect = null,
         private readonly array $modelProviders = [],
     ) {
+        $this->functions = $functions ?? Registry::withBuiltins();
         $this->index = $index;
         $this->sinks = $sinks;
         $this->budget = $budget ?? new EvaluationBudget();
@@ -143,10 +149,14 @@ final class Interpreter
         $modified = new ModifiedNames($names, $effects ? new ObjectEffects($files) : null);
         $slicer = new BackwardSlicer($tree, $this->budget, $names, $modified);
         $executor = new SliceExecutor($this->globals, new TypeReader(), $modified, $this->text, $this->budget);
+        $functions = clone $this->functions;
         $this->models = null;
         foreach ($this->modelProviders as $provider) {
             $models = $provider->models(new ModelContext($this->index, new CallbackEffects($slicer, $executor), $this->dialect));
             $this->models = $this->models?->merge($models) ?? $models;
+        }
+        foreach ($this->models->calls ?? [] as $model) {
+            $functions->registerCall($model);
         }
         $external = new ExternalInput();
         $expressions = new ExpressionEvaluator(
@@ -154,15 +164,13 @@ final class Interpreter
             new CallEvaluator(
                 $this->index,
                 new SinkMatcher($this->sinks, $this->index, $this->models),
-                new BuiltinCallModel(),
+                $functions,
                 $external,
                 $this->text,
                 new CalleeReturns($slicer, $executor, $this->budget, $names),
-                $this->models,
             ),
             $this->budget,
             $this->text,
-            $effects,
         );
 
         return new Deriver(
