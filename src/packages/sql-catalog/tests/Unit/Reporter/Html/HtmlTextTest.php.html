@@ -56,7 +56,7 @@
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a></span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testChipCarriesItsRoleAndTitle</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a>    {</span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;chip k-select&quot; title=&quot;What it does&quot;&gt;SELECT&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chip</span>(<span class="tok-str">&#039;SELECT&#039;</span>, <span class="tok-str">&#039;k-select&#039;</span>, <span class="tok-str">&#039;What it does&#039;</span>));</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;chip tone-blue&quot; title=&quot;What it does&quot;&gt;SELECT&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chip</span>(<span class="tok-str">&#039;SELECT&#039;</span>, <span class="tok-str">&#039;tone-blue&#039;</span>, <span class="tok-str">&#039;What it does&#039;</span>));</span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;chip&quot;&gt;plain&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chip</span>(<span class="tok-str">&#039;plain&#039;</span>));</span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    }</span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a></span>
@@ -91,42 +91,52 @@
 <span class="src-line" id="L53"><a class="ln" href="#L53">53</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;0%&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">percent</span>(<span class="tok-num">1</span>, <span class="tok-num">0</span>));</span>
 <span class="src-line" id="L54"><a class="ln" href="#L54">54</a>    }</span>
 <span class="src-line" id="L55"><a class="ln" href="#L55">55</a></span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testBarShowsAShare</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testChipCountCarriesHowManyTheChipStandsFor</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L57"><a class="ln" href="#L57">57</a>    {</span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;bar bar-ok&quot;&gt;&lt;span style=&quot;--w:50%&quot;&gt;&lt;/span&gt;&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">bar</span>(<span class="tok-num">1</span>, <span class="tok-num">2</span>, <span class="tok-str">&#039;bar-ok&#039;</span>));</span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>    }</span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a></span>
-<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSlugIsWritableAsAnIdentifier</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>    {</span>
-<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;app-users-find&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">slug</span>(<span class="tok-str">&#039;App\\Users::find&#039;</span>));</span>
-<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>    }</span>
-<span class="src-line" id="L65"><a class="ln" href="#L65">65</a></span>
-<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCollapseWritesEveryRunOfWhitespaceAsOneSpace</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>    {</span>
-<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a b c&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">collapse</span>(<span class="tok-str">&quot;  a\n\t b   c &quot;</span>));</span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>            <span class="tok-str">&#039;&lt;a class=&quot;chip chip-ghost&quot; href=&quot;tables/posts.html&quot;&gt;posts&lt;span class=&quot;facet-count&quot;&gt;1,234&lt;/span&gt;&lt;/a&gt;&#039;</span>,</span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>            (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chipCount</span>(<span class="tok-str">&#039;posts&#039;</span>, <span class="tok-str">&#039;tables/posts.html&#039;</span>, <span class="tok-num">1234</span>, <span class="tok-str">&#039;chip-ghost&#039;</span>),</span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>        );</span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;a class=&quot;chip&quot; href=&quot;a.html&quot;&gt;A &amp;amp; B&lt;span class=&quot;facet-count&quot;&gt;0&lt;/span&gt;&lt;/a&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chipCount</span>(<span class="tok-str">&#039;A &amp; B&#039;</span>, <span class="tok-str">&#039;a.html&#039;</span>, <span class="tok-num">0</span>));</span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>    }</span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a></span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testNounAgreesWithTheCount</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>    {</span>
+<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;table&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">noun</span>(<span class="tok-num">1</span>, <span class="tok-str">&#039;table&#039;</span>));</span>
+<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;tables&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">noun</span>(<span class="tok-num">0</span>, <span class="tok-str">&#039;table&#039;</span>));</span>
 <span class="src-line" id="L69"><a class="ln" href="#L69">69</a>    }</span>
 <span class="src-line" id="L70"><a class="ln" href="#L70">70</a></span>
-<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTruncateCollapsesAndCuts</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSlugIsWritableAsAnIdentifier</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L72"><a class="ln" href="#L72">72</a>    {</span>
-<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT…&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">truncate</span>(<span class="tok-str">&quot;SELECT   1\nFROM t&quot;</span>, <span class="tok-num">7</span>));</span>
-<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">truncate</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>, <span class="tok-num">8</span>));</span>
-<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>    }</span>
-<span class="src-line" id="L76"><a class="ln" href="#L76">76</a></span>
-<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testMarkedMarksEveryGapInAName</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>    {</span>
-<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>            <span class="tok-str">&#039;&lt;span class=&quot;hole hole-open&quot; title=&quot;A part of this name the analysis could not pin down&quot;&gt;{$}&lt;/span&gt;posts &amp;amp; more&#039;</span>,</span>
-<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>            (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">marked</span>(<span class="tok-str">&#039;{$}posts &amp; more&#039;</span>),</span>
-<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>        );</span>
-<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>    }</span>
-<span class="src-line" id="L84"><a class="ln" href="#L84">84</a></span>
-<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCountIsWrittenBesideAHeading</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>    {</span>
-<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;count&quot;&gt;3 tables&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">count</span>(<span class="tok-num">3</span>, <span class="tok-str">&#039;table&#039;</span>));</span>
-<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;count&quot;&gt;3&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">count</span>(<span class="tok-num">3</span>));</span>
-<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>    }</span>
-<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>}</span>
-<span class="src-line" id="L91"><a class="ln" href="#L91">91</a></span>
+<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;app-users-find&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">slug</span>(<span class="tok-str">&#039;App\\Users::find&#039;</span>));</span>
+<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>    }</span>
+<span class="src-line" id="L75"><a class="ln" href="#L75">75</a></span>
+<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCollapseWritesEveryRunOfWhitespaceAsOneSpace</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>    {</span>
+<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a b c&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">collapse</span>(<span class="tok-str">&quot;  a\n\t b   c &quot;</span>));</span>
+<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>    }</span>
+<span class="src-line" id="L80"><a class="ln" href="#L80">80</a></span>
+<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTruncateCollapsesAndCuts</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>    {</span>
+<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT…&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">truncate</span>(<span class="tok-str">&quot;SELECT   1\nFROM t&quot;</span>, <span class="tok-num">7</span>));</span>
+<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">truncate</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>, <span class="tok-num">8</span>));</span>
+<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>    }</span>
+<span class="src-line" id="L86"><a class="ln" href="#L86">86</a></span>
+<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testMarkedMarksEveryGapInAName</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>    {</span>
+<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>            <span class="tok-str">&#039;&lt;span class=&quot;hole tone-warn&quot; title=&quot;A part of this name the analysis could not pin down&quot;&gt;{$}&lt;/span&gt;posts &amp;amp; more&#039;</span>,</span>
+<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>            (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">marked</span>(<span class="tok-str">&#039;{$}posts &amp; more&#039;</span>),</span>
+<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>        );</span>
+<span class="src-line" id="L93"><a class="ln" href="#L93">93</a>    }</span>
+<span class="src-line" id="L94"><a class="ln" href="#L94">94</a></span>
+<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCountIsWrittenBesideAHeading</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>    {</span>
+<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;count&quot;&gt;3 tables&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">count</span>(<span class="tok-num">3</span>, <span class="tok-str">&#039;table&#039;</span>));</span>
+<span class="src-line" id="L98"><a class="ln" href="#L98">98</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;count&quot;&gt;3&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">count</span>(<span class="tok-num">3</span>));</span>
+<span class="src-line" id="L99"><a class="ln" href="#L99">99</a>    }</span>
+<span class="src-line" id="L100"><a class="ln" href="#L100">100</a>}</span>
+<span class="src-line" id="L101"><a class="ln" href="#L101">101</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
