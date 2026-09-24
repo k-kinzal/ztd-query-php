@@ -9,8 +9,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Requirements\Config\Loader;
 use Requirements\Report\Analyzer;
-use Requirements\Report\Baseline;
 use Requirements\Report\Coverage;
+use Requirements\Report\Snapshot;
 use Requirements\Tests\Support\Workspace;
 
 final class TraceabilityTest extends TestCase
@@ -105,24 +105,23 @@ final class TraceabilityTest extends TestCase
         self::assertSame(100.0, $analysis->summary($analysis->scopes['overlap'])['percentage']);
     }
 
-    public function testBaselineDetectsChangedClaimsNewUnitsAndRemovedScope(): void
+    public function testSnapshotDetectsChangedClaimsNewUnitsAndRemovedScope(): void
     {
         $workspace = new Workspace();
         $loader = new Loader();
         $project = $loader->load($workspace->directory . '/requirements.yaml');
         $analysis = (new Analyzer())->analyze($project);
-        $report = (new Coverage())->report($project, $analysis);
-        $file = $workspace->directory . '/baseline.json';
-        file_put_contents($file, json_encode($report, JSON_THROW_ON_ERROR));
-        $baseline = (new Baseline())->read($file);
-        self::assertSame(['changed' => [], 'removed' => []], (new Baseline())->compare($analysis, $project, $baseline));
+        $file = $workspace->directory . '/snapshot.json';
+        file_put_contents($file, json_encode((new Snapshot())->create($analysis, $project), JSON_THROW_ON_ERROR));
+        $snapshot = (new Snapshot())->read($file);
+        self::assertSame(['changed' => [], 'removed' => []], (new Snapshot())->compare($analysis, $project, $snapshot));
         $definition = $loader->document($workspace->directory . '/definition.yaml');
         $item = Workspace::item();
         $item['statement'] = 'The parser shall reject names beginning with digits.';
         $definition['items'] = [$item];
         $workspace->write('definition.yaml', $definition);
         $changed = $loader->load($workspace->directory . '/requirements.yaml');
-        self::assertCount(1, (new Baseline())->compare((new Analyzer())->analyze($changed), $changed, $baseline)['changed']);
+        self::assertCount(1, (new Snapshot())->compare((new Analyzer())->analyze($changed), $changed, $snapshot)['changed']);
         $definition['source'] = ['id' => 'manual', 'uri' => 'source.html', 'format' => 'html', 'selector' => '#a'];
         $workspace->write('definition.yaml', $definition);
         $reduced = $loader->load($workspace->directory . '/requirements.yaml');

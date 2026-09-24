@@ -61,6 +61,9 @@ final class CommandTest extends TestCase
         $help = new Process([PHP_BINARY, $binary, 'coverage', '--help'], $workspace->directory);
         self::assertSame(0, $help->run());
         self::assertStringContainsString('--min-diff-coverage', $help->getOutput());
+        self::assertStringContainsString('--snapshot', $help->getOutput());
+        self::assertStringContainsString('--write-snapshot', $help->getOutput());
+        self::assertStringNotContainsString('baseline', $help->getOutput());
         self::assertStringNotContainsString('--without-source', $help->getOutput());
         $help = new Process([PHP_BINARY, $binary, 'spec', '--help'], $workspace->directory);
         self::assertSame(0, $help->run());
@@ -84,11 +87,32 @@ final class CommandTest extends TestCase
         self::assertStringContainsString('Statement', $list->getOutput());
     }
 
+    public function testCliWritesAndComparesCoverageSnapshots(): void
+    {
+        $workspace = new Workspace();
+        $binary = dirname(__DIR__, 2) . '/bin/requirements';
+        $write = new Process([PHP_BINARY, $binary, 'coverage', '--write-snapshot=snapshot.json', '--json'], $workspace->directory);
+        self::assertSame(0, $write->run(), $write->getOutput() . $write->getErrorOutput());
+        $snapshot = json_decode((string) file_get_contents($workspace->directory . '/snapshot.json'), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($snapshot);
+        self::assertSame('requirements-snapshot', $snapshot['type']);
+        self::assertSame(['version', 'type', 'units'], array_keys($snapshot));
+        $compare = new Process([PHP_BINARY, $binary, 'coverage', '--snapshot=snapshot.json', '--min-diff-coverage=100', '--json'], $workspace->directory);
+        self::assertSame(0, $compare->run(), $compare->getOutput() . $compare->getErrorOutput());
+        $report = json_decode($compare->getOutput(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($report);
+        self::assertSame(['total' => 0, 'accounted' => 0, 'supported' => 0, 'unsupported' => 0, 'uncovered' => 0, 'percentage' => null], $report['diff']);
+        self::assertSame([], $report['removed']);
+        $missing = new Process([PHP_BINARY, $binary, 'coverage', '--min-diff-coverage=100', '--no-ansi'], $workspace->directory);
+        self::assertSame(1, $missing->run());
+        self::assertStringContainsString('requires --snapshot', $missing->getOutput());
+    }
+
     public function testInvalidOptionsAndMissingConfigurationKeepJsonMachineReadable(): void
     {
         $workspace = new Workspace();
         $binary = dirname(__DIR__, 2) . '/bin/requirements';
-        foreach ([['coverage', '--unknown'], ['spec', '--live'], ['unknown'], ['--config', 'missing.yaml', 'lint']] as $arguments) {
+        foreach ([['coverage', '--unknown'], ['coverage', '--baseline=snapshot.json'], ['coverage', '--write-baseline=snapshot.json'], ['spec', '--live'], ['unknown'], ['--config', 'missing.yaml', 'lint']] as $arguments) {
             $process = new Process([PHP_BINARY, $binary, '--json', ...$arguments], $workspace->directory);
             self::assertSame(2, $process->run());
             $report = json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR);

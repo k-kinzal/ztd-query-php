@@ -9,7 +9,7 @@ use Requirements\Model\Project;
 final class Coverage
 {
     /** @return array<string, mixed> */
-    public function report(Project $project, Analysis $analysis, ?string $baselineFile = null, bool $allowRemoved = false, ?float $minimum = null, ?float $diffMinimum = null): array
+    public function report(Project $project, Analysis $analysis, ?string $snapshotFile = null, bool $allowRemoved = false, ?float $minimum = null, ?float $diffMinimum = null): array
     {
         $errors = $analysis->errors;
         $overall = $analysis->summary();
@@ -28,19 +28,19 @@ final class Coverage
         }
         $diff = null;
         $removed = [];
-        if ($baselineFile !== null) {
-            $baseline = new Baseline();
-            $comparison = $baseline->compare($analysis, $project, $baseline->read($baselineFile));
+        if ($snapshotFile !== null) {
+            $snapshot = new Snapshot();
+            $comparison = $snapshot->compare($analysis, $project, $snapshot->read($snapshotFile));
             $diff = $analysis->summary($comparison['changed']);
             $removed = $comparison['removed'];
             if ($diff['percentage'] !== null && $diff['percentage'] < $diffMinimum) {
                 $errors[] = "Differential source coverage is below $diffMinimum%.";
             }
             if ($removed !== [] && !$allowRemoved) {
-                $errors[] = 'Source units were removed. Review scope changes before using --allow-removed.';
+                $errors[] = 'Source units listed in the snapshot were removed. Review scope changes before using --allow-removed.';
             }
         } elseif ($diffMinimum > 0) {
-            $errors[] = 'A positive differential threshold requires --baseline.';
+            $errors[] = 'A positive differential threshold requires --snapshot.';
         }
         $units = [];
         foreach ($analysis->units as $key => $unit) {

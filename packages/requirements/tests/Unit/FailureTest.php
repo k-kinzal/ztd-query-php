@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Requirements\Config\Loader;
 use Requirements\Model\Source;
 use Requirements\Report\Analyzer;
-use Requirements\Report\Baseline;
 use Requirements\Report\Coverage;
+use Requirements\Report\Snapshot;
 use Requirements\Source\DomSource;
 use Requirements\Source\ResourceLoader;
 use Requirements\Test\JUnit;
@@ -80,21 +80,32 @@ final class FailureTest extends TestCase
         $workspace = new Workspace();
         $loader = new Loader();
         $project = $loader->load($workspace->directory . '/requirements.yaml');
-        $baseline = $workspace->directory . '/baseline.json';
-        file_put_contents($baseline, json_encode((new Coverage())->report($project, (new Analyzer())->analyze($project)), JSON_THROW_ON_ERROR));
+        $snapshot = $workspace->directory . '/snapshot.json';
+        file_put_contents($snapshot, json_encode((new Snapshot())->create((new Analyzer())->analyze($project), $project), JSON_THROW_ON_ERROR));
         file_put_contents($workspace->directory . '/source.html', '<main><p id="a">Names shall start with a letter.</p><p id="b">Names may contain digits.</p><p id="c">The generator shall produce C code.</p><p id="d">New unreviewed rule.</p></main>');
-        $report = (new Coverage())->report($project, (new Analyzer())->analyze($project), $baseline, diffMinimum: 100);
+        $report = (new Coverage())->report($project, (new Analyzer())->analyze($project), $snapshot, diffMinimum: 100);
         self::assertFalse($report['passed']);
         self::assertIsArray($report['diff']);
         self::assertSame(0.0, $report['diff']['percentage']);
     }
 
-    public function testMalformedBaselineIsRejected(): void
+    public function testMalformedSnapshotIsRejected(): void
     {
         $workspace = new Workspace();
-        file_put_contents($workspace->directory . '/bad.json', '{"version":1,"type":"requirements-coverage","units":{"x":{}}}');
+        file_put_contents($workspace->directory . '/bad.json', '{"version":1,"type":"requirements-snapshot","units":{"x":{}}}');
         $this->expectException(InvalidArgumentException::class);
-        (new Baseline())->read($workspace->directory . '/bad.json');
+        (new Snapshot())->read($workspace->directory . '/bad.json');
+    }
+
+    public function testCoverageReportIsNotAcceptedAsSnapshot(): void
+    {
+        $workspace = new Workspace();
+        $project = (new Loader())->load($workspace->directory . '/requirements.yaml');
+        $file = $workspace->directory . '/coverage.json';
+        file_put_contents($file, json_encode((new Coverage())->report($project, (new Analyzer())->analyze($project)), JSON_THROW_ON_ERROR));
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('--write-snapshot');
+        (new Snapshot())->read($file);
     }
 
     public function testMissingSnapshotIsFetchedAndVerifiedBeforeCaching(): void
@@ -126,21 +137,23 @@ final class FailureTest extends TestCase
         }
     }
 
-    public function testBaselineContainsOnlyFingerprintsAndDetectsDrift(): void
+    public function testSnapshotContainsOnlyFingerprintsAndDetectsDrift(): void
     {
         $workspace = new Workspace();
         $project = (new Loader())->load($workspace->directory . '/requirements.yaml');
         $analysis = (new Analyzer())->analyze($project);
-        $baseline = new Baseline();
-        $data = $baseline->create($analysis, $project);
+        $snapshot = new Snapshot();
+        $data = $snapshot->create($analysis, $project);
+        self::assertSame('requirements-snapshot', $data['type']);
+        self::assertCount(count($analysis->units), $data['units']);
         foreach ($data['units'] as $entry) {
             self::assertSame(['fingerprint'], array_keys($entry));
         }
-        $file = $workspace->directory . '/baseline.json';
+        $file = $workspace->directory . '/snapshot.json';
         file_put_contents($file, json_encode($data, JSON_THROW_ON_ERROR));
-        self::assertSame(['changed' => [], 'removed' => []], $baseline->compare($analysis, $project, $baseline->read($file)));
+        self::assertSame(['changed' => [], 'removed' => []], $snapshot->compare($analysis, $project, $snapshot->read($file)));
         file_put_contents($workspace->directory . '/source.html', '<main><p id="a">Changed source.</p></main>');
-        self::assertNotEmpty($baseline->compare((new Analyzer())->analyze($project), $project, $baseline->read($file))['changed']);
+        self::assertNotEmpty($snapshot->compare((new Analyzer())->analyze($project), $project, $snapshot->read($file))['changed']);
     }
 
 }

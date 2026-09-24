@@ -66,19 +66,20 @@ and specifications.
 
 The `Requirements` job in [the package CI](../../../.github/workflows/bison-parser.yml)
 enforces a 90% floor on overall accounted coverage and 100% accounted coverage
-of new or changed units compared with the baseline from the PR's base branch. The
-floor is a standard below the current 96.67%, not a copy of it, so a scope
-extension can lower the percentage without failing CI as long as the new units
-are accounted; per-source floors are not configured because the total is what
-matters. It also
-checks that the committed fingerprint-only baseline equals the current analysis, then runs the traced
-Behat scenarios. The same workflow runs on reader or requirements-tool changes;
-its test matrix also runs the complete BDD suite. Update the baseline:
+of new or changed units compared with the coverage snapshot from the PR's base
+branch. The floor is a standard below the current 96.67%, not a copy of it, so a
+scope extension can lower the percentage without failing CI as long as the new
+units are accounted; per-source floors are not configured because the total is
+what matters. It also checks that the committed snapshot equals the current
+analysis, then runs the traced Behat scenarios. The same workflow runs on reader
+or requirements-tool changes; its test matrix also runs the complete BDD suite.
+The snapshot lists every unit in scope with a fingerprint only, never source
+text; it is not a list of accepted failures. Update it:
 
 ```console
-php ../requirements/bin/requirements coverage --write-baseline requirements-baseline.json
+php ../requirements/bin/requirements coverage --write-snapshot requirements-snapshot.json
 ```
 
 Use `check --live` to compare against the public URLs. To update a source, download
 the resource into the ignored cache, update its SHA-256 and review quotation/scope changes before
-regenerating the baseline. Source changes or unavailability fail checks.
+regenerating the snapshot. Source changes or unavailability fail checks.

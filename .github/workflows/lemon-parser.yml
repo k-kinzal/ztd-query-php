@@ -87,20 +87,20 @@ jobs:
           php ../requirements/bin/requirements lint
           php ../requirements/bin/requirements format --check
           php ../requirements/bin/requirements check
-      - name: Enforce coverage and keep the checked-in baseline reproducible
+      - name: Enforce coverage and keep the checked-in coverage snapshot reproducible
         run: |
-          php ../requirements/bin/requirements coverage --write-baseline /tmp/current-coverage.json
-          cmp requirements-baseline.json /tmp/current-coverage.json
+          php ../requirements/bin/requirements coverage --write-snapshot /tmp/current-snapshot.json
+          cmp requirements-snapshot.json /tmp/current-snapshot.json
       - name: Enforce coverage of changed source units
         if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
           git fetch --no-tags origin "$BASE_REF"
-          baseline="origin/$BASE_REF:packages/lemon-parser/requirements-baseline.json"
-          if git cat-file -e "$baseline" 2>/dev/null; then
-            git show "$baseline" > /tmp/base-coverage.json
-            php ../requirements/bin/requirements coverage --baseline /tmp/base-coverage.json --min-diff-coverage 100
+          snapshot="origin/$BASE_REF:packages/lemon-parser/requirements-snapshot.json"
+          if git cat-file -e "$snapshot" 2>/dev/null; then
+            git show "$snapshot" > /tmp/base-snapshot.json
+            php ../requirements/bin/requirements coverage --snapshot /tmp/base-snapshot.json --min-diff-coverage 100
           else
             echo 'Initial adoption: review the scope and enforce the configured total coverage gate.'
           fi

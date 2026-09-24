@@ -60,7 +60,9 @@ executing tests. Data-provider cases and outline examples are counted separately
 in `--json` reports. Add `--json` for complete traceability records.
 See [CLI and CI gates](docs/cli.md) for options, filtering and exit codes. Source
 snapshots are optional untracked caches; add `.requirements-cache/` to `.gitignore`.
-Baselines contain fingerprints rather than copies of source documents.
+A coverage snapshot (`coverage --write-snapshot`) lists every unit in scope with a
+fingerprint rather than a copy of the source document; a later run compares itself
+with it to gate new or changed units.
 
 In this monorepo, run `composer install` in `packages/requirements` and use
 `php ../requirements/bin/requirements` from the consuming package. To develop this
