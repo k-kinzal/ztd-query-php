@@ -223,12 +223,37 @@ final class FilePageTest extends TestCase
 
     public function testProblemsExplainsWhyThisFileCouldNotBeParsed(): void
     {
-        $site = new ReportSite(new Catalog([], [new AnalysisProblem('broken.php', 'Unexpected <token>'), new AnalysisProblem('other.php', 'Other problem')]));
+        $site = new ReportSite(new Catalog([], [new AnalysisProblem('broken.php', 'Unexpected <token>'), new AnalysisProblem('other.php', 'Other problem'), new AnalysisProblem('broken.php', 'Another error')]));
         $page = new FilePage();
 
-        self::assertStringContainsString('Unexpected &lt;token&gt;', $page->problems($site, 'broken.php'));
+        self::assertSame(
+            '<div class="notice tone-warn"><p>This file could not be parsed.</p><ul><li>Unexpected &lt;token&gt;</li><li>Another error</li></ul></div>',
+            $page->problems($site, 'broken.php'),
+        );
         self::assertStringNotContainsString('Other problem', $page->problems($site, 'broken.php'));
         self::assertSame('', $page->problems($site, 'valid.php'));
     }
 
+
+    public function testRenderShowsTheParseErrorBeforeTheFileContents(): void
+    {
+        $site = new ReportSite(new Catalog([], [new AnalysisProblem('src/broken.php', 'Unexpected <token>')], ['src/broken.php' => '<?php function {']));
+        $page = (new FilePage())->render($site, 'src/broken.php');
+
+        self::assertStringContainsString('in this file.</p><div class="notice tone-warn"><p>This file could not be parsed.</p>', $page);
+        self::assertStringContainsString('<li>Unexpected &lt;token&gt;</li></ul></div><h2 id="tables">', $page);
+        self::assertStringContainsString('</div><section><h2 id="source">Source code</h2>', $page);
+        self::assertStringContainsString('<span class="source-text">&lt;?php function {</span>', $page);
+        self::assertStringEndsWith('</code></pre></section>', $page);
+    }
+
+    public function testContextLinksToTheSourceEvenWhenParsingFailed(): void
+    {
+        $site = new ReportSite(new Catalog([], [new AnalysisProblem('src/broken.php', 'Syntax error')], ['src/broken.php' => '<?php function {']));
+
+        self::assertSame(
+            ['On this page', [['Tables', '#tables', null, false], ['Source code', '#source', null, false]], null],
+            (new FilePage())->context($site, 'src/broken.php')[0],
+        );
+    }
 }

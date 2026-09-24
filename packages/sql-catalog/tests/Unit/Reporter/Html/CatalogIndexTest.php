@@ -7,6 +7,7 @@ namespace Tests\Unit\Reporter\Html;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlCatalog\Catalog\AnalysisProblem;
 use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Catalog\Catalog;
 use SqlCatalog\Catalog\CatalogEntry;
@@ -20,6 +21,7 @@ use SqlCatalog\Text\LiteralText;
 use SqlCatalog\Text\TextPattern;
 
 #[CoversClass(CatalogIndex::class)]
+#[UsesClass(AnalysisProblem::class)]
 #[UsesClass(CallSite::class)]
 #[UsesClass(Catalog::class)]
 #[UsesClass(CatalogEntry::class)]
@@ -107,6 +109,19 @@ final class CatalogIndexTest extends TestCase
         ]);
 
         self::assertSame(['' => ['index.php'], 'src' => ['src/a.php']], (new CatalogIndex($catalog))->byDirectory());
+    }
+
+    public function testByFileIncludesUnreadFilesOnlyWhenTheirSourceCanBeShown(): void
+    {
+        $catalog = new Catalog([], [
+            new AnalysisProblem('src/broken.php', 'Syntax error'),
+            new AnalysisProblem('missing.php', 'No snapshot'),
+            new AnalysisProblem('empty.php', 'Empty snapshot'),
+        ], ['src/broken.php' => '<?php function {', 'empty.php' => '']);
+        $index = new CatalogIndex($catalog);
+
+        self::assertSame(['empty.php' => [], 'src/broken.php' => []], $index->byFile());
+        self::assertSame(['' => ['empty.php'], 'src' => ['src/broken.php']], $index->byDirectory());
     }
 
     public function testByRuleListsTheMostReportedRuleFirst(): void

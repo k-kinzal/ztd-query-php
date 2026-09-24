@@ -320,4 +320,16 @@ final class OverviewPageTest extends TestCase
             (new OverviewPage())->render($site),
         );
     }
+
+    public function testProblemsLinksAvailableSourceAndKeepsEveryParsingError(): void
+    {
+        $site = new ReportSite(new Catalog([], [
+            new AnalysisProblem('a.php', 'Unexpected <token>'),
+            new AnalysisProblem('b.php', 'Source unavailable'),
+        ], ['a.php' => '<?php function {']));
+        $html = (new OverviewPage())->problems($site);
+
+        self::assertStringContainsString('<tr><td><a class="mono" href="files/a-php.html#source">a.php</a></td><td>Unexpected &lt;token&gt;</td></tr>', $html);
+        self::assertStringContainsString('<tr><td><code>b.php</code></td><td>Source unavailable</td></tr>', $html);
+    }
 }

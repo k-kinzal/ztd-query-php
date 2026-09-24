@@ -52,7 +52,7 @@ final class CatalogTest extends TestCase
     {
         $kept = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 's'), []);
         $dropped = new CatalogEntry('b', StatementKind::Insert, TextPattern::fromText('INSERT INTO t VALUES (1)'), [], [], new CallSite('a.php', 2, 'f', 's'), []);
-        $filtered = (new Catalog([$kept, $dropped]))->filter(
+        $filtered = (new Catalog([$dropped, $kept]))->filter(
             static fn (CatalogEntry $entry): bool => $entry->kind === StatementKind::Select,
         );
         self::assertSame([$kept], $filtered->entries());
