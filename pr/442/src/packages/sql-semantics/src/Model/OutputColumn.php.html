@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packages/sql-semantics/src/Model/OutputColumn.php — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/442/src/packages/sql-semantics/src/Model/OutputColumn.php.html">
+<meta name="description" content="The source of packages/sql-semantics/src/Model/OutputColumn.php.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="packages/sql-semantics/src/Model/OutputColumn.php — ZTD Query PHP">
+<meta property="og:description" content="The source of packages/sql-semantics/src/Model/OutputColumn.php.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/442/src/packages/sql-semantics/src/Model/OutputColumn.php.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/442/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../index.html">ZTD Query PHP</a></div><nav class="sidebar-section"><div class="sidebar-title">Packages</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../../k-kinzal/bison-parser/index.html">k-kinzal/bison-parser</a></li><li data-diff="same"><a href="../../../../../k-kinzal/container/index.html">k-kinzal/container</a></li><li data-diff="same"><a href="../../../../../k-kinzal/lemon-parser/index.html">k-kinzal/lemon-parser</a></li><li data-diff="same"><a href="../../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></li><li data-diff="same"><a href="../../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a></li><li data-diff="same"><a href="../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li data-diff="same"><a href="../../../../../k-kinzal/sql-fixture/index.html">k-kinzal/sql-fixture</a></li><li data-diff="same"><a href="../../../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a></li><li data-diff="same"><a href="../../../../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a></li><li data-diff="modified"><a href="../../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></li><li data-diff="modified"><a href="../../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></li><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-mysql/index.html">k-kinzal/ztd-query-mysql</a></li><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-mysqli-adapter/index.html">k-kinzal/ztd-query-mysqli-adapter</a></li><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a></li><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></li><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-postgres/index.html">k-kinzal/ztd-query-postgres</a></li><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../../index.html">src</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">packages/sql-semantics/src/Model/OutputColumn.php</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 1c683aeaca to working tree">1c683aeaca <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 1c683aeaca and working tree." data-off="This page documents what 1c683aeaca had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1 class="source-title">packages/sql-semantics/src/Model/OutputColumn.php</h1></div>
+<div class="notice diff-banner" data-diff="removed">Removed in working tree, compared to 1c683aeaca.</div>
+<pre class="code code-scroll source" data-diff="removed"><code><span class="src-line" data-diff="removed"><span class="ln">1</span>&lt;?php</span>
+<span class="src-line" data-diff="removed"><span class="ln">2</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">3</span><span class="tok-kw">declare</span>(<span class="tok-id">strict_types</span>=<span class="tok-num">1</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">4</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">5</span><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Model</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">6</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">7</span><span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">8</span><span class="tok-com"> * An ordered result column; duplicate output names remain separate positions.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">9</span><span class="tok-com"> *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-com"> * @example Reading semantic facts</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">11</span><span class="tok-com"> *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))-&gt;build(&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;);</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-com"> *     $statement = (new \SqlSemantics\Binder($schema))-&gt;bind(&#039;SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC&#039;);</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">13</span><span class="tok-com"> *     $statement-&gt;outputs[1]-&gt;ordinal // =&gt; 1</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-com"> *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-com"> */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">OutputColumn</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">18</span>{</span>
+<span class="src-line" data-diff="removed"><span class="ln">19</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com">     * @param int $ordinal Zero-based result position</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-com">     * @param string|null $name Explicit alias or direct column name; null for an engine-generated label</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-com">     * @param Expression $expression Typed result expression</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">24</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">25</span>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$ordinal</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">26</span>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">string</span> <span class="tok-var">$name</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">27</span>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Expression</span> <span class="tok-var">$expression</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">28</span>    ) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">29</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">30</span>}</span>
+<span class="src-line" data-diff="removed"><span class="ln">31</span></span>
+</code></pre>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../assets/app.js" defer></script>
+</body>
+</html>
