@@ -29,13 +29,13 @@
 <nav class="breadcrumbs" aria-label="Breadcrumb"><span class="breadcrumb-current">k-kinzal/sql-formatter</span></nav>
 <div class="topbar-tools">
 <input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing ae6334e320 to working tree">ae6334e320 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<span class="diff-range" title="Comparing 59d27abb73 to working tree">59d27abb73 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
 <button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content" id="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between ae6334e320 and working tree." data-off="This page documents what ae6334e320 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 59d27abb73 and working tree." data-off="This page documents what 59d27abb73 had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1><span class="chip chip-kind k-package">package</span>k-kinzal/sql-formatter</h1></div>
 <p class="lede">SQL formatting with Compact, Expanded, Tabular, and River layouts for MySQL, PostgreSQL, and SQLite</p>
 <div class="relation-row"><span class="relation-label">Repository</span> <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com/k-kinzal/ztd-query-php</a></div>
@@ -128,7 +128,7 @@ composer fuzz</code></pre>
 <h3>Architecture</h3>
 <p><code>Core</code> owns formatting, layout, syntax traversal, canonicalization, and the <code>Dialect</code> contract. It receives the sql-parser core interface and injected grammar roles, keyword declarations, reduction rules, and lexical callbacks. It contains no concrete parser references, database names, or database-selection branches.</p>
 <p>Each <code>Platform</code> implementation declares its own grammar and lexical behavior. The platforms depend only on core contracts and never on each other. Grammar role lists cover the symbols shipped across each platform&#039;s supported releases.</p>
-<p><code>Facade</code> selects built-in rules for an existing parser and preserves its version and lexical modes. A caller can supply a custom <code>Core\Dialect</code> through the optional third constructor argument. <code>Compatibility</code> retains the original <code>Formatter</code>, <code>FormatOptions</code>, <code>Style</code>, and <code>FormattingException</code> names.</p>
+<p><code>Facade</code> selects built-in rules for an existing parser and preserves its version and lexical modes. A caller can supply a custom <code>Core\Dialect</code> through the optional third constructor argument. Shared options, styles, and exceptions live in <code>Core</code>.</p>
 <p>Deptrac rejects both internal and sql-parser platform dependencies from Core. PHPStan rejects database words anywhere under <code>src/Core</code>, including comments, and other database names in each platform. Development scripts are not a CLI layer.</p>
 </section>
 </main>
