@@ -24,6 +24,7 @@ use SqlFaker\MySql\Generation\Rewrite\Query\QueryContextRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\WindowFrameRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\StartRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\TablePatternRule;
+use SqlFaker\MySql\Generation\Rewrite\Routine\BinlogRule;
 use SqlFaker\MySql\Generation\Rewrite\Routine\LanguageRule;
 use SqlFaker\MySql\Generation\Rewrite\Routine\ReturnRule;
 
@@ -70,6 +71,7 @@ final class RewriteDefinitions
             new AlterDatabaseRule($defaultTerminal),
             new AlterEventRule(),
             new ReturnRule(),
+            new BinlogRule(),
             new LanguageRule(),
             new OrderByRule(),
             new RoleGrantRule(),
