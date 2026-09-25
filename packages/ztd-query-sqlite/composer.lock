@@ -1370,7 +1370,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "cfe2c8731036b6e36b5d7c4576485283de886111"
+                "reference": "534778f975c34972cbf053fedce5ab67f4fe560b"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1380,8 +1380,10 @@
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
+                "k-kinzal/container": "dev-main",
+                "k-kinzal/lemon-parser": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "k-kinzal/testcontainers-php": "^0.5.1",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
@@ -1391,6 +1393,10 @@
                 "squizlabs/php_codesniffer": "^4.0.4",
                 "symfony/filesystem": "^6.4"
             },
+            "suggest": {
+                "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL grammar resources with bin/build-mysql.php and bin/build-pg.php",
+                "k-kinzal/lemon-parser": "To rebuild the SQLite grammar resources with bin/build-sqlite.php"
+            },
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1399,7 +1405,8 @@
                 "files": [
                     "src/MySql/StatementType.php",
                     "src/PostgreSql/StatementType.php",
-                    "src/Sqlite/StatementType.php"
+                    "src/Sqlite/StatementType.php",
+                    "src/Compatibility/ClassAliases.php"
                 ]
             },
             "autoload-dev": {
@@ -1410,6 +1417,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -1458,23 +1468,31 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:mysql",
-                    "@fuzz:pg",
-                    "@fuzz:sqlite"
+                    "@fuzz:smoke"
                 ],
                 "fuzz:mysql": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/"
                 ],
                 "fuzz:pg": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/pg') || mkdir('fuzz/corpus/pg', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:mysql --max-runs=100",
+                    "@fuzz:pg --max-runs=100",
+                    "@fuzz:sqlite --max-runs=100"
+                ],
                 "fuzz:sqlite": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/"
                 ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",

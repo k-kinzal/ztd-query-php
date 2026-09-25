@@ -1491,7 +1491,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "d8deed35a9e3659c14031f2aafcfff3f441789bd"
+                "reference": "534778f975c34972cbf053fedce5ab67f4fe560b"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1501,7 +1501,9 @@
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
                 "k-kinzal/container": "dev-main",
+                "k-kinzal/lemon-parser": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
@@ -1512,6 +1514,10 @@
                 "squizlabs/php_codesniffer": "^4.0.4",
                 "symfony/filesystem": "^6.4"
             },
+            "suggest": {
+                "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL grammar resources with bin/build-mysql.php and bin/build-pg.php",
+                "k-kinzal/lemon-parser": "To rebuild the SQLite grammar resources with bin/build-sqlite.php"
+            },
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1520,7 +1526,8 @@
                 "files": [
                     "src/MySql/StatementType.php",
                     "src/PostgreSql/StatementType.php",
-                    "src/Sqlite/StatementType.php"
+                    "src/Sqlite/StatementType.php",
+                    "src/Compatibility/ClassAliases.php"
                 ]
             },
             "autoload-dev": {
