@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Markdown;
+namespace Requirements\Config\Markdown;
 
-use InvalidArgumentException;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Image;
 use League\CommonMark\Node\Block\Paragraph;
 use League\CommonMark\Node\Inline\Newline;
 use League\CommonMark\Node\Inline\Text;
 use League\CommonMark\Node\Node;
+use Requirements\Input\InvalidInputException;
 use stdClass;
 
 final class Badges
@@ -29,23 +29,23 @@ final class Badges
                 continue;
             }
             if (!$image instanceof Image || $image->getUrl() === '') {
-                throw new InvalidArgumentException('The badge row must contain only images with nonempty destinations.');
+                throw new InvalidInputException('The badge row must contain only images with nonempty destinations.');
             }
             $value = Nodes::text($image);
             if (trim($value) === '') {
-                throw new InvalidArgumentException('Badge alt text must contain its attribute value.');
+                throw new InvalidInputException('Badge alt text must contain its attribute value.');
             }
             $field = self::field($image->getUrl(), $image->getTitle());
             self::validateStaticImage($image->getUrl(), $field, $value);
             if ($field === 'label') {
                 $labels = $item->labels ?? [];
                 if (!is_array($labels) || in_array($value, $labels, true)) {
-                    throw new InvalidArgumentException('Label badges must be unique.');
+                    throw new InvalidInputException('Label badges must be unique.');
                 }
                 $item->labels = [...$labels, $value];
             } else {
                 if (property_exists($item, $field)) {
-                    throw new InvalidArgumentException("Duplicate '$field' badge or field.");
+                    throw new InvalidInputException("Duplicate '$field' badge or field.");
                 }
                 $item->{$field} = $value;
             }
@@ -57,7 +57,7 @@ final class Badges
     {
         if ($title !== null) {
             if (!in_array($title, ['kind', 'status', 'origin', 'category', 'label'], true)) {
-                throw new InvalidArgumentException('A custom badge title must be kind, status, origin, category or label.');
+                throw new InvalidInputException('A custom badge title must be kind, status, origin, category or label.');
             }
             return $title;
         }
@@ -77,7 +77,7 @@ final class Badges
         $message = str_replace(["\0", '_'], ['-', ' '], str_replace('__', "\1", $parts[0]));
         $message = str_replace("\1", '_', $message);
         if (count($parts) !== 2 || $match[1] !== $field || $message !== $value) {
-            throw new InvalidArgumentException('Static badge image text and role must agree with its alt text and title.');
+            throw new InvalidInputException('Static badge image text and role must agree with its alt text and title.');
         }
     }
 

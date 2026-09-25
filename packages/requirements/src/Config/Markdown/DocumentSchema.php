@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Markdown;
+namespace Requirements\Config\Markdown;
 
-use InvalidArgumentException;
 use League\CommonMark\Extension\CommonMark\Node\Block\BlockQuote;
 use League\CommonMark\Extension\CommonMark\Node\Block\Heading;
 use League\CommonMark\Extension\CommonMark\Node\Block\HtmlBlock;
@@ -15,8 +14,9 @@ use League\CommonMark\Node\Block\Paragraph;
 use League\CommonMark\Node\Node;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Validator;
-use Requirements\Config\Fields;
 use Requirements\Config\SchemaValidator;
+use Requirements\Input\Fields;
+use Requirements\Input\InvalidInputException;
 use stdClass;
 use Symfony\Component\Yaml\Yaml;
 
@@ -31,15 +31,15 @@ final class DocumentSchema
         unset($header->{'$schema'});
         $frontSchema = json_decode(json_encode($schema['frontmatter'], JSON_THROW_ON_ERROR), false, 512, JSON_THROW_ON_ERROR);
         if (!$frontSchema instanceof stdClass) {
-            throw new InvalidArgumentException('The document profile needs an object frontmatter schema.');
+            throw new InvalidInputException('The document profile needs an object frontmatter schema.');
         }
         $error = (new Validator())->validate($header, $frontSchema)->error();
         if ($error !== null) {
-            throw new InvalidArgumentException("$file: document-schema frontmatter: " . json_encode((new ErrorFormatter())->format($error), JSON_THROW_ON_ERROR));
+            throw new InvalidInputException("$file: document-schema frontmatter: " . json_encode((new ErrorFormatter())->format($error), JSON_THROW_ON_ERROR));
         }
         $sections = Fields::sequence($schema['sections'], 'sections');
         if (count($sections) !== 1) {
-            throw new InvalidArgumentException('The bundled Markdown profile must have one repeating item section.');
+            throw new InvalidInputException('The bundled Markdown profile must have one repeating item section.');
         }
         $section = Fields::mapping($sections[0], 'section');
         Fields::keys($section, ['header', 'minContains', 'maxContains', 'blocks', 'additionalBlocks', 'additionalSections'], 'section');
@@ -50,10 +50,10 @@ final class DocumentSchema
                 if ($count > 0) {
                     $this->blocks($blocks, $section, $file);
                 } elseif ($blocks !== [] && ($schema['additionalBlocks'] ?? true) === false) {
-                    throw new InvalidArgumentException("$file: document-schema forbids content before the first heading.");
+                    throw new InvalidInputException("$file: document-schema forbids content before the first heading.");
                 }
                 if ($node->getLevel() !== ($schema['maxDepth'] ?? 1) || !$this->matches(Nodes::text($node), Fields::mapping($section['header'], 'header'))) {
-                    throw new InvalidArgumentException("$file: document-schema requires top-level item ID headings.");
+                    throw new InvalidInputException("$file: document-schema requires top-level item ID headings.");
                 }
                 ++$count;
                 $blocks = [];
@@ -77,7 +77,7 @@ final class DocumentSchema
             return;
         }
         if (!$node instanceof ListItem && !in_array($this->type($node), Fields::strings($schema['type'], 'allBlocks.type'), true)) {
-            throw new InvalidArgumentException("$file: document-schema forbids " . $this->type($node) . ' blocks; use quotations, paragraphs and bullet lists.');
+            throw new InvalidInputException("$file: document-schema forbids " . $this->type($node) . ' blocks; use quotations, paragraphs and bullet lists.');
         }
         if ($node instanceof BlockQuote || $node instanceof ListBlock || $node instanceof ListItem) {
             foreach ($node->children() as $child) {
@@ -109,7 +109,7 @@ final class DocumentSchema
                 }
             }
             if (!$found && ($schema['additionalBlocks'] ?? true) === false) {
-                throw new InvalidArgumentException("$file: unexpected document-schema block.");
+                throw new InvalidInputException("$file: unexpected document-schema block.");
             }
         }
         foreach ($entries as $i => $entry) {
@@ -123,7 +123,7 @@ final class DocumentSchema
         $minimum = $schema['minContains'] ?? 1;
         $maximum = $schema['maxContains'] ?? PHP_INT_MAX;
         if (!is_int($minimum) || !is_int($maximum) || $count < $minimum || $count > $maximum) {
-            throw new InvalidArgumentException("$context: document-schema occurrence constraint failed.");
+            throw new InvalidInputException("$context: document-schema occurrence constraint failed.");
         }
     }
 

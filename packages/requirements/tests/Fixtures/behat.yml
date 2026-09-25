@@ -4,4 +4,4 @@ default:
   suites:
     default:
       paths: [example.feature]
-      contexts: [Requirements\Tests\Fixtures\FeatureContext]
+      contexts: [Tests\Fixtures\FeatureContext]

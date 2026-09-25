@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Integration;
+namespace Tests\Integration;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +17,7 @@ final class RunnerTest extends TestCase
     {
         $package = dirname(__DIR__, 2);
         $config = new RunnerConfig('phpunit', [PHP_BINARY, $package . '/vendor/bin/phpunit', '--no-configuration', $package . '/tests/Fixtures/PassingTest.php'], $package);
-        $result = (new PhpUnitRunner())->run($config, 'Requirements\\Tests\\Fixtures\\PassingTest::' . $method);
+        $result = (new PhpUnitRunner())->run($config, 'Tests\\Fixtures\\PassingTest::' . $method);
         self::assertSame($status, $result->status, $result->message);
         self::assertSame($tests, $result->tests, $result->message);
     }

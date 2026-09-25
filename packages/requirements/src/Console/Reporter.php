@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Requirements\Console;
 
-use Requirements\Config\Fields;
+use Requirements\Input\Fields;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;

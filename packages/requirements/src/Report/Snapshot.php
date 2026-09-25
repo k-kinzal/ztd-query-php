@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Requirements\Report;
 
-use InvalidArgumentException;
-use Requirements\Config\Fields;
+use Requirements\Input\Fields;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Project;
 
 /**
@@ -33,18 +33,18 @@ final class Snapshot
     {
         $contents = is_file($file) ? file_get_contents($file) : false;
         if ($contents === false) {
-            throw new InvalidArgumentException("Cannot read coverage snapshot: $file");
+            throw new InvalidInputException("Cannot read coverage snapshot: $file");
         }
         $data = Fields::mapping(json_decode($contents, true, 512, JSON_THROW_ON_ERROR), 'snapshot');
         if (($data['version'] ?? null) !== 1 || ($data['type'] ?? null) !== self::TYPE) {
-            throw new InvalidArgumentException('Unsupported coverage snapshot. Write one with coverage --write-snapshot.');
+            throw new InvalidInputException('Unsupported coverage snapshot. Write one with coverage --write-snapshot.');
         }
         $result = [];
         foreach (Fields::mapping($data['units'] ?? null, 'snapshot.units') as $key => $entry) {
             $unit = Fields::mapping($entry, 'snapshot.unit');
             $fingerprint = Fields::text($unit, 'fingerprint');
             if (preg_match('/^[a-f0-9]{64}$/D', $key) !== 1 || preg_match('/^[a-f0-9]{64}$/D', $fingerprint) !== 1) {
-                throw new InvalidArgumentException('Invalid coverage snapshot unit.');
+                throw new InvalidInputException('Invalid coverage snapshot unit.');
             }
             $result[$key] = $fingerprint;
         }

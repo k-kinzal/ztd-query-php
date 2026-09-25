@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Requirements\Test;
 
-use InvalidArgumentException;
+use Requirements\Input\InvalidInputException;
 
 final class Registry
 {
@@ -17,7 +17,7 @@ final class Registry
         $this->extensions = ['phpunit' => new PhpUnitRunner(), 'behat' => new BehatRunner()];
         foreach ($classes as $name => $class) {
             if (!is_a($class, RunnerExtension::class, true)) {
-                throw new InvalidArgumentException("$class must implement RunnerExtension.");
+                throw new InvalidInputException("$class must implement RunnerExtension.");
             }
             $this->extensions[$name] = new $class();
         }
@@ -25,6 +25,6 @@ final class Registry
 
     public function get(string $name): RunnerExtension
     {
-        return $this->extensions[$name] ?? throw new InvalidArgumentException("Unknown runner extension: $name");
+        return $this->extensions[$name] ?? throw new InvalidInputException("Unknown runner extension: $name");
     }
 }

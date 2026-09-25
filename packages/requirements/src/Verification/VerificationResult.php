@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Test;
+namespace Requirements\Verification;
 
 final class VerificationResult
 {

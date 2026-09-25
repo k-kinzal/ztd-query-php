@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Markdown;
+namespace Requirements\Config\Markdown;
 
-use InvalidArgumentException;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Item;
 
 final class Reference
@@ -18,15 +18,15 @@ final class Reference
     {
         $parts = parse_url($this->url);
         if ($parts === false || isset($parts['scheme']) || isset($parts['host']) || isset($parts['query'])) {
-            throw new InvalidArgumentException("$this->file: reference '$this->id' must link to a local definition file.");
+            throw new InvalidInputException("$this->file: reference '$this->id' must link to a local definition file.");
         }
         $path = rawurldecode($parts['path'] ?? '');
         $file = $path === '' ? $this->file : dirname($this->file) . '/' . $path;
         if (!isset($items[$this->id]) || realpath($file) !== realpath($items[$this->id]->file)) {
-            throw new InvalidArgumentException("$this->file: link to '$this->id' does not point to its loaded definition file.");
+            throw new InvalidInputException("$this->file: link to '$this->id' does not point to its loaded definition file.");
         }
         if (isset($parts['fragment']) && strtolower(rawurldecode($parts['fragment'])) !== Nodes::anchor($this->id)) {
-            throw new InvalidArgumentException("$this->file: link to '$this->id' has the wrong heading fragment.");
+            throw new InvalidInputException("$this->file: link to '$this->id' has the wrong heading fragment.");
         }
     }
 }

@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Integration;
+namespace Tests\Integration;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Requirements\Config\DocumentReader;
 use Requirements\Config\Loader;
 use Requirements\Config\MarkdownDocument;
 use Requirements\Console\Formatter;
-use Requirements\Tests\Support\Workspace;
+use Requirements\Input\InvalidInputException;
 use stdClass;
 use Symfony\Component\Process\Process;
+use Tests\Support\Workspace;
 
 final class MarkdownTest extends TestCase
 {
@@ -110,7 +110,7 @@ Demonstrate the runner contract.
 
 **tests**
 
-- **unit:** Requirements\Tests\Fixtures\PassingTest::testPass
+- **unit:** Tests\Fixtures\PassingTest::testPass
 MD);
         foreach (['lint', 'check', 'spec', 'format'] as $command) {
             $process = new Process([PHP_BINARY, $package . '/bin/requirements', $command, '--json'], $workspace->directory, ['PATH' => '/nonexistent']);
@@ -124,7 +124,7 @@ MD);
     {
         $workspace = new Workspace();
         file_put_contents($workspace->directory . '/definition.md', "---\nversion: 1\nsource: null\n---\n\n" . $body);
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidInputException::class);
         (new DocumentReader())->read($workspace->directory . '/definition.md', 'definition', ['experimental' => true]);
     }
 
@@ -176,14 +176,14 @@ Avoid silent data loss.
 
 - [SPEC-001](other.md#spec-001)
 MD);
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('does not point to its loaded definition file');
         (new Loader())->load($workspace->directory . '/requirements.yaml');
     }
 
     public function testExperimentalOptInIsRequired(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('experimental');
         (new DocumentReader())->read('unread.md', 'definition');
     }

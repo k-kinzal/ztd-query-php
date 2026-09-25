@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Requirements\Model;
 
-use Requirements\Config\Fields;
+use Requirements\Input\Fields;
 
 final class TestReference
 {

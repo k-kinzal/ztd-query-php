@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Unit;
+namespace Tests\Unit;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Requirements\Ears\Validator;
+use Requirements\Input\InvalidInputException;
 
 final class EarsTest extends TestCase
 {
@@ -15,7 +15,7 @@ final class EarsTest extends TestCase
     public function testClauseOrder(string $statement, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(InvalidInputException::class);
             $this->expectExceptionMessage('EARS:');
         }
         (new Validator())->validate($statement);
@@ -37,7 +37,7 @@ final class EarsTest extends TestCase
     public function testSystemResponse(string $statement, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(InvalidInputException::class);
             $this->expectExceptionMessage('EARS:');
         }
         (new Validator())->validate($statement);
@@ -61,7 +61,7 @@ final class EarsTest extends TestCase
     public function testStateDriven(string $statement, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(InvalidInputException::class);
             $this->expectExceptionMessage('EARS:');
         }
         (new Validator())->validate($statement);
@@ -81,7 +81,7 @@ final class EarsTest extends TestCase
     public function testEventDriven(string $statement, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(InvalidInputException::class);
             $this->expectExceptionMessage('EARS:');
         }
         (new Validator())->validate($statement);
@@ -104,7 +104,7 @@ final class EarsTest extends TestCase
     public function testOptionalFeature(string $statement, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(InvalidInputException::class);
             $this->expectExceptionMessage('EARS:');
         }
         (new Validator())->validate($statement);
@@ -125,7 +125,7 @@ final class EarsTest extends TestCase
     public function testUnwantedBehaviour(string $statement, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(InvalidInputException::class);
             $this->expectExceptionMessage('EARS:');
         }
         (new Validator())->validate($statement);
@@ -148,7 +148,7 @@ final class EarsTest extends TestCase
     public function testComplex(string $statement, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(InvalidInputException::class);
             $this->expectExceptionMessage('EARS:');
         }
         (new Validator())->validate($statement);
@@ -169,7 +169,7 @@ final class EarsTest extends TestCase
     public function testCardinality(string $statement, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(InvalidInputException::class);
             $this->expectExceptionMessage('EARS:');
         }
         (new Validator())->validate($statement);
@@ -193,7 +193,7 @@ final class EarsTest extends TestCase
     public function testComplexUnwantedBehaviour(string $statement, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(InvalidInputException::class);
             $this->expectExceptionMessage('EARS:');
         }
         (new Validator())->validate($statement);
@@ -215,7 +215,7 @@ final class EarsTest extends TestCase
     public function testLiterals(string $statement, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(InvalidInputException::class);
             $this->expectExceptionMessage('EARS:');
         }
         (new Validator())->validate($statement);

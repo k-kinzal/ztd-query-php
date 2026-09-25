@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Unit;
+namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use Requirements\Config\Loader;
 use Requirements\Report\Analyzer;
-use Requirements\Test\Verifier;
-use Requirements\Tests\Support\CountingRunner;
-use Requirements\Tests\Support\MemorySource;
-use Requirements\Tests\Support\Workspace;
+use Requirements\Verification\Verifier;
 use Symfony\Component\Process\Process;
+use Tests\Support\CountingRunner;
+use Tests\Support\MemorySource;
+use Tests\Support\Workspace;
 
 final class ExtensionTest extends TestCase
 {

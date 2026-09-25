@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Test;
+namespace Requirements\Verification;
 
 use Requirements\Model\Item;
 use Requirements\Model\Project;
+use Requirements\Test\Registry;
 
 final class Verifier
 {

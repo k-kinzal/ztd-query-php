@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Integration;
+namespace Tests\Integration;
 
-use InvalidArgumentException;
 use League\CommonMark\CommonMarkConverter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -12,9 +11,10 @@ use Requirements\Config\DocumentReader;
 use Requirements\Config\Loader;
 use Requirements\Config\MarkdownDocument;
 use Requirements\Console\Formatter;
+use Requirements\Input\InvalidInputException;
 use Requirements\Report\Analyzer;
-use Requirements\Tests\Support\Workspace;
 use Symfony\Component\DomCrawler\Crawler;
+use Tests\Support\Workspace;
 
 final class MarkdownReadingTest extends TestCase
 {
@@ -177,7 +177,7 @@ MD);
     {
         $workspace = new Workspace();
         file_put_contents($workspace->directory . '/definition.md', "---\nversion: 1\nsource:\n  id: manual\n  uri: source.html\n  format: html\n  selector: main p\n---\n\n# SPEC-001\n\n" . $body);
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidInputException::class);
         (new DocumentReader())->read($workspace->directory . '/definition.md', 'definition', ['experimental' => true]);
     }
 

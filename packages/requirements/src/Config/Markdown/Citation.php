@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Markdown;
+namespace Requirements\Config\Markdown;
 
-use InvalidArgumentException;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Source;
 use Requirements\Source\TextFragment;
 use Requirements\Source\Unit;
@@ -23,31 +23,31 @@ final class Citation
             ? $resource === $source
             : $this->path(dirname($this->file) . '/' . rawurldecode($resource)) === $this->path($this->directory . '/' . $source);
         if ($resource === '' || !$matches) {
-            throw new InvalidArgumentException('An evidence citation must link to this definition\'s source resource.');
+            throw new InvalidInputException('An evidence citation must link to this definition\'s source resource.');
         }
         $fragment = '#' . (explode('#', $url, 2)[1] ?? '');
         if (TextFragment::isFragment($fragment)) {
             if ($this->source->format !== 'html' || TextFragment::text($fragment) !== Unit::normalize($quote)) {
-                throw new InvalidArgumentException('An exact Text Fragment citation must identify the complete quoted HTML unit.');
+                throw new InvalidInputException('An exact Text Fragment citation must identify the complete quoted HTML unit.');
             }
             return $selector ?? $fragment;
         }
         if ($selector !== null) {
             if (self::isId($selector) && $fragment !== '#' && rawurldecode($fragment) !== $selector) {
-                throw new InvalidArgumentException('The citation anchor disagrees with the evidence selector.');
+                throw new InvalidInputException('The citation anchor disagrees with the evidence selector.');
             }
             return $selector;
         }
         if (in_array($this->source->format, ['html', 'xml', 'ietf', 'markdown'], true) && self::isId(rawurldecode($fragment))) {
             return rawurldecode($fragment);
         }
-        throw new InvalidArgumentException('Supply a selector comment, an element-ID citation, or an exact Text Fragment citation.');
+        throw new InvalidInputException('Supply a selector comment, an element-ID citation, or an exact Text Fragment citation.');
     }
 
     public function validate(string $selector, string $quote): void
     {
         if (TextFragment::isFragment($selector) && ($this->source->format !== 'html' || TextFragment::text($selector) !== Unit::normalize($quote))) {
-            throw new InvalidArgumentException('An exact Text Fragment selector must identify the complete quoted HTML unit.');
+            throw new InvalidInputException('An exact Text Fragment selector must identify the complete quoted HTML unit.');
         }
     }
 

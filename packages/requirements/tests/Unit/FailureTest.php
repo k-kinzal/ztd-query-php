@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Unit;
+namespace Tests\Unit;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Requirements\Config\Loader;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Source;
 use Requirements\Report\Analyzer;
 use Requirements\Report\Coverage;
@@ -17,8 +17,8 @@ use Requirements\Source\ResourceLoader;
 use Requirements\Test\JUnit;
 use Requirements\Test\ProcessRunner;
 use Requirements\Test\RunnerConfig;
-use Requirements\Tests\Support\Workspace;
 use RuntimeException;
+use Tests\Support\Workspace;
 
 final class FailureTest extends TestCase
 {
@@ -93,7 +93,7 @@ final class FailureTest extends TestCase
     {
         $workspace = new Workspace();
         file_put_contents($workspace->directory . '/bad.json', '{"version":1,"type":"requirements-snapshot","units":{"x":{}}}');
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidInputException::class);
         (new Snapshot())->read($workspace->directory . '/bad.json');
     }
 
@@ -103,7 +103,7 @@ final class FailureTest extends TestCase
         $project = (new Loader())->load($workspace->directory . '/requirements.yaml');
         $file = $workspace->directory . '/coverage.json';
         file_put_contents($file, json_encode((new Coverage())->report($project, (new Analyzer())->analyze($project)), JSON_THROW_ON_ERROR));
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('--write-snapshot');
         (new Snapshot())->read($file);
     }

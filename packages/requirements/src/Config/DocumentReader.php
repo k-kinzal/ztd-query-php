@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Requirements\Config;
 
-use InvalidArgumentException;
+use Requirements\Input\InvalidInputException;
 use stdClass;
 use Symfony\Component\Yaml\Yaml;
 
@@ -22,7 +22,7 @@ final class DocumentReader
             : Yaml::parseFile($path, Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE | Yaml::PARSE_OBJECT_FOR_MAP);
         (new SchemaValidator())->validate($data, $kind, $path);
         if (!$data instanceof stdClass) {
-            throw new InvalidArgumentException("$path: expected a document mapping.");
+            throw new InvalidInputException("$path: expected a document mapping.");
         }
         return $data;
     }

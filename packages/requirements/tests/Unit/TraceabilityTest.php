@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Unit;
+namespace Tests\Unit;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Requirements\Config\Loader;
+use Requirements\Input\InvalidInputException;
 use Requirements\Report\Analyzer;
 use Requirements\Report\Coverage;
 use Requirements\Report\Snapshot;
-use Requirements\Tests\Support\Workspace;
+use Tests\Support\Workspace;
 
 final class TraceabilityTest extends TestCase
 {
@@ -140,7 +140,7 @@ final class TraceabilityTest extends TestCase
         $definition = (new Loader())->document($workspace->directory . '/definition.yaml');
         $definition['items'] = [array_replace(Workspace::item(), $changes)];
         $workspace->write('definition.yaml', $definition);
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage($message);
         (new Loader())->load($workspace->directory . '/requirements.yaml');
     }

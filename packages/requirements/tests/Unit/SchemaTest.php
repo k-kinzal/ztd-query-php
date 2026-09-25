@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Unit;
+namespace Tests\Unit;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Requirements\Config\Loader;
 use Requirements\Config\SchemaValidator;
 use Requirements\Console\Formatter;
-use Requirements\Tests\Support\Workspace;
+use Requirements\Input\InvalidInputException;
+use Tests\Support\Workspace;
 
 final class SchemaTest extends TestCase
 {
@@ -38,7 +38,7 @@ final class SchemaTest extends TestCase
         $data = (new Loader())->document($workspace->directory . '/definition.yaml');
         $data['$schema'] = './team.schema.json';
         $workspace->write('definition.yaml', $data);
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('category');
         (new Loader())->load($workspace->directory . '/requirements.yaml');
     }
@@ -48,7 +48,7 @@ final class SchemaTest extends TestCase
     {
         $workspace = new Workspace();
         file_put_contents($workspace->directory . '/definition.yaml', $yaml);
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage($message);
         (new Loader())->load($workspace->directory . '/requirements.yaml');
     }

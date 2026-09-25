@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Support;
+namespace Tests\Support;
 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;

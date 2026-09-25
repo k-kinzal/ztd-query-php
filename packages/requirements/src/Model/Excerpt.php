@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Requirements\Model;
 
-use Requirements\Config\Fields;
+use Requirements\Input\Fields;
 
-final class Evidence
+final class Excerpt
 {
     public function __construct(public readonly string $selector, public readonly string $quote)
     {

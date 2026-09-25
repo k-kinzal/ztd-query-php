@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Unit;
+namespace Tests\Unit;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Requirements\Config\Loader;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Source;
 use Requirements\Report\Analyzer;
 use Requirements\Source\Registry;
 use Requirements\Source\TextFragment;
-use Requirements\Tests\Support\Workspace;
 use RuntimeException;
+use Tests\Support\Workspace;
 
 final class TextFragmentTest extends TestCase
 {
@@ -61,7 +61,7 @@ final class TextFragmentTest extends TestCase
     #[DataProvider('unsupportedDirectives')]
     public function testUnsupportedOrMalformedDirectivesFailExplicitly(string $fragment): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidInputException::class);
         TextFragment::text($fragment);
     }
 

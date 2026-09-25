@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Requirements\Console;
 
-use InvalidArgumentException;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Item;
 use Requirements\Model\Project;
 use Requirements\Report\Analyzer;
 use Requirements\Report\Coverage;
 use Requirements\Report\Snapshot;
-use Requirements\Test\Verifier;
+use Requirements\Verification\Verifier;
 
 final class Executor
 {
@@ -36,7 +36,7 @@ final class Executor
             return ['passed' => $passed, 'no_test' => $options->flag('no-test'), 'specifications' => $rows, 'errors' => $results === [] ? ['No specifications or requirements selected.'] : []];
         }
         if (!in_array($options->command, ['check', 'coverage'], true)) {
-            throw new InvalidArgumentException('Unknown command: ' . $options->command);
+            throw new InvalidInputException('Unknown command: ' . $options->command);
         }
         $analysis = (new Analyzer())->analyze($project, $options->flag('live'));
         if ($options->command === 'check') {
@@ -47,10 +47,10 @@ final class Executor
         $snapshot = $options->text('write-snapshot');
         if ($snapshot !== null) {
             if ($analysis->errors !== []) {
-                throw new InvalidArgumentException('Cannot write a coverage snapshot with invalid source evidence.');
+                throw new InvalidInputException('Cannot write a coverage snapshot with invalid source evidence.');
             }
             if (file_put_contents($snapshot, json_encode((new Snapshot())->create($analysis, $project), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n") === false) {
-                throw new InvalidArgumentException("Cannot write coverage snapshot: $snapshot");
+                throw new InvalidInputException("Cannot write coverage snapshot: $snapshot");
             }
         }
         return $report;

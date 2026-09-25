@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Requirements\Test;
 
-use InvalidArgumentException;
-use Requirements\Config\Fields;
+use Requirements\Input\Fields;
+use Requirements\Input\InvalidInputException;
 
 final class RunnerConfig
 {
@@ -21,7 +21,7 @@ final class RunnerConfig
         $command = Fields::strings($data['command'] ?? [], 'runner.command', false);
         $timeout = $data['timeout'] ?? 60;
         if ($command === [] || (!is_int($timeout) && !is_float($timeout)) || !is_finite((float) $timeout) || $timeout <= 0) {
-            throw new InvalidArgumentException('Runners require a nonempty command and positive timeout.');
+            throw new InvalidInputException('Runners require a nonempty command and positive timeout.');
         }
         $cwd = Fields::text($data, 'cwd', '.');
         return new self(Fields::text($data, 'extension'), $command, str_starts_with($cwd, '/') ? $cwd : $directory . '/' . $cwd, (float) $timeout);

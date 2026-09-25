@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Config;
-
-use InvalidArgumentException;
+namespace Requirements\Input;
 
 final class Fields
 {
@@ -12,11 +10,11 @@ final class Fields
     public static function mapping(mixed $value, string $context): array
     {
         if (!is_array($value)) {
-            throw new InvalidArgumentException("$context must be a mapping.");
+            throw new InvalidInputException("$context must be a mapping.");
         }
         foreach ($value as $key => $_) {
             if (!is_string($key)) {
-                throw new InvalidArgumentException("$context must have string keys.");
+                throw new InvalidInputException("$context must have string keys.");
             }
         }
         return $value;
@@ -30,7 +28,7 @@ final class Fields
     {
         foreach (array_keys($data) as $key) {
             if (!in_array($key, $allowed, true)) {
-                throw new InvalidArgumentException("$context: unknown field '$key'.");
+                throw new InvalidInputException("$context: unknown field '$key'.");
             }
         }
     }
@@ -40,7 +38,7 @@ final class Fields
     {
         $value = $data[$key] ?? $default;
         if (!is_string($value) || trim($value) === '') {
-            throw new InvalidArgumentException("$key must be a nonempty string.");
+            throw new InvalidInputException("$key must be a nonempty string.");
         }
         return $value;
     }
@@ -49,7 +47,7 @@ final class Fields
     public static function sequence(mixed $value, string $context): array
     {
         if (!is_array($value) || !array_is_list($value)) {
-            throw new InvalidArgumentException("$context must be a list.");
+            throw new InvalidInputException("$context must be a list.");
         }
         return $value;
     }
@@ -60,12 +58,12 @@ final class Fields
         $result = [];
         foreach (self::sequence($value, $context) as $entry) {
             if (!is_string($entry) || trim($entry) === '') {
-                throw new InvalidArgumentException("$context must contain nonempty strings.");
+                throw new InvalidInputException("$context must contain nonempty strings.");
             }
             $result[] = $entry;
         }
         if ($unique && count(array_unique($result)) !== count($result)) {
-            throw new InvalidArgumentException("$context contains duplicates.");
+            throw new InvalidInputException("$context contains duplicates.");
         }
         return $result;
     }
@@ -73,7 +71,7 @@ final class Fields
     public static function percentage(mixed $value, string $context): float
     {
         if ((!is_int($value) && !is_float($value)) || !is_finite((float) $value) || $value < 0 || $value > 100) {
-            throw new InvalidArgumentException("$context must be a number from 0 to 100.");
+            throw new InvalidInputException("$context must be a number from 0 to 100.");
         }
         return (float) $value;
     }

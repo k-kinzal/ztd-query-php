@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Support;
+namespace Tests\Support;
 
 use Requirements\Test\RunnerConfig;
 use Requirements\Test\RunnerExtension;

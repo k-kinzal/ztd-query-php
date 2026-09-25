@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Requirements\Config;
 
-use InvalidArgumentException;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\CommonMark\Node\Block\BlockQuote;
@@ -13,14 +12,16 @@ use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
 use League\CommonMark\Node\Block\Paragraph;
 use League\CommonMark\Node\Node;
 use League\CommonMark\Parser\MarkdownParser;
-use Requirements\Markdown\Badges;
-use Requirements\Markdown\Citation;
-use Requirements\Markdown\DocumentSchema;
-use Requirements\Markdown\Fields as MarkdownFields;
-use Requirements\Markdown\Nodes;
-use Requirements\Markdown\Quotation;
-use Requirements\Markdown\Reference;
-use Requirements\Markdown\Writer;
+use Requirements\Config\Markdown\Badges;
+use Requirements\Config\Markdown\Citation;
+use Requirements\Config\Markdown\DocumentSchema;
+use Requirements\Config\Markdown\Fields as MarkdownFields;
+use Requirements\Config\Markdown\Nodes;
+use Requirements\Config\Markdown\Quotation;
+use Requirements\Config\Markdown\Reference;
+use Requirements\Config\Markdown\Writer;
+use Requirements\Input\Fields;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Source;
 use stdClass;
 use Symfony\Component\Yaml\Yaml;
@@ -45,7 +46,7 @@ final class MarkdownDocument
     public function read(string $file, array $options, ?string $directory = null): stdClass
     {
         if (($options['experimental'] ?? false) !== true) {
-            throw new InvalidArgumentException("$file: Markdown definitions require markdown.experimental: true.");
+            throw new InvalidInputException("$file: Markdown definitions require markdown.experimental: true.");
         }
         Fields::keys($options, ['experimental'], 'markdown');
         $this->links = [];
@@ -55,11 +56,11 @@ final class MarkdownDocument
         $this->source = null;
         $text = file_get_contents($file);
         if ($text === false || preg_match('/\A---\r?\n(.*?)\r?\n---\r?\n(.*)\z/s', $text, $parts) !== 1) {
-            throw new InvalidArgumentException("$file: expected YAML frontmatter delimited by ---.");
+            throw new InvalidInputException("$file: expected YAML frontmatter delimited by ---.");
         }
         $data = Yaml::parse($parts[1], Yaml::PARSE_OBJECT_FOR_MAP | Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE);
         if (!$data instanceof stdClass) {
-            throw new InvalidArgumentException("$file: frontmatter must be a mapping.");
+            throw new InvalidInputException("$file: frontmatter must be a mapping.");
         }
         Fields::keys(Fields::mapping(get_object_vars($data), 'frontmatter'), ['$schema', 'version', 'source'], "$file frontmatter");
         if (isset($data->source)) {
@@ -77,7 +78,7 @@ final class MarkdownDocument
         foreach ($document->children() as $node) {
             if ($node instanceof Heading) {
                 if (preg_match('/^ {0,3}#[ \t]+/', $lines[($node->getStartLine() ?? 0) - 1] ?? '') !== 1) {
-                    throw new InvalidArgumentException("$file: item headings must use ATX # ID syntax.");
+                    throw new InvalidInputException("$file: item headings must use ATX # ID syntax.");
                 }
                 if ($heading !== null) {
                     $items[] = $this->item($heading, $blocks, $file);
@@ -120,7 +121,7 @@ final class MarkdownDocument
         $this->badges[$id] = $badges->images;
         $statement = array_shift($blocks);
         if (!$statement instanceof Paragraph || Nodes::field($statement) !== null) {
-            throw new InvalidArgumentException("$file: $id needs a statement paragraph after its badges.");
+            throw new InvalidInputException("$file: $id needs a statement paragraph after its badges.");
         }
         $item->statement = preg_replace('/\s*\n\s*/', ' ', Nodes::text($statement, true));
         $evidence = [];
@@ -134,8 +135,8 @@ final class MarkdownDocument
             $reader = new Quotation();
             try {
                 $evidence[] = $reader->read($quote, $this->source, $attribution);
-            } catch (InvalidArgumentException $error) {
-                throw new InvalidArgumentException("$file: $id: " . $error->getMessage(), 0, $error);
+            } catch (InvalidInputException $error) {
+                throw new InvalidInputException("$file: $id: " . $error->getMessage(), 0, $error);
             }
             $this->citations[$id][] = $reader->link;
         }
@@ -156,7 +157,7 @@ final class MarkdownDocument
                 };
                 $values = [];
             } elseif ($name === null) {
-                throw new InvalidArgumentException("$file: $id expects a bold field heading after its statement.");
+                throw new InvalidInputException("$file: $id expects a bold field heading after its statement.");
             } else {
                 $values[] = $block;
             }
@@ -171,13 +172,13 @@ final class MarkdownDocument
     private function field(stdClass $item, string $name, array $nodes, string $file, string $id): void
     {
         if (property_exists($item, $name)) {
-            throw new InvalidArgumentException("$file: $id has duplicate field '$name'.");
+            throw new InvalidInputException("$file: $id has duplicate field '$name'.");
         }
         $reader = new MarkdownFields();
         try {
             $item->{$name} = $reader->read($name, $nodes);
-        } catch (InvalidArgumentException $error) {
-            throw new InvalidArgumentException("$file: $id.$name: " . $error->getMessage(), 0, $error);
+        } catch (InvalidInputException $error) {
+            throw new InvalidInputException("$file: $id.$name: " . $error->getMessage(), 0, $error);
         }
         $this->links[$id][$name] = $reader->links;
         foreach ($reader->links as $target => $url) {

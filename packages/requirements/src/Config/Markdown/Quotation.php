@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Markdown;
+namespace Requirements\Config\Markdown;
 
-use InvalidArgumentException;
 use League\CommonMark\Extension\CommonMark\Node\Block\BlockQuote;
 use League\CommonMark\Extension\CommonMark\Node\Block\HtmlBlock;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
 use League\CommonMark\Node\Block\Paragraph;
+use Requirements\Input\InvalidInputException;
 use stdClass;
 
 final class Quotation
@@ -19,7 +19,7 @@ final class Quotation
     public function read(BlockQuote $node, ?Citation $citation, ?Link $attribution = null): stdClass
     {
         if ($citation === null) {
-            throw new InvalidArgumentException('A quotation needs a declared source.');
+            throw new InvalidInputException('A quotation needs a declared source.');
         }
         $this->link = $attribution === null ? null : ['url' => $attribution->getUrl(), 'label' => Nodes::text($attribution)];
         $selector = null;
@@ -29,25 +29,25 @@ final class Quotation
                 $selector = self::annotation($child);
             } elseif ($child instanceof Paragraph && $child->firstChild() instanceof Link && $child->firstChild()->next() === null && $child->next() === null) {
                 if ($this->link !== null) {
-                    throw new InvalidArgumentException('An evidence quotation can have only one source citation.');
+                    throw new InvalidInputException('An evidence quotation can have only one source citation.');
                 }
                 $link = Nodes::link($child);
                 $this->link = ['url' => $link->getUrl(), 'label' => Nodes::text($link)];
             } elseif ($child instanceof Paragraph) {
                 $paragraphs[] = Nodes::text($child);
             } else {
-                throw new InvalidArgumentException('A quotation contains a selector comment, quoted prose, then an optional source link.');
+                throw new InvalidInputException('A quotation contains a selector comment, quoted prose, then an optional source link.');
             }
         }
         $quote = implode("\n\n", $paragraphs);
         if (trim($quote) === '') {
-            throw new InvalidArgumentException('Evidence needs quoted source text.');
+            throw new InvalidInputException('Evidence needs quoted source text.');
         }
         if ($this->link !== null) {
             $selector = $citation->selector($this->link['url'], $quote, $selector);
         }
         if ($selector === null || trim($selector) === '') {
-            throw new InvalidArgumentException('Evidence needs a selector comment or a source link identifying the quoted unit.');
+            throw new InvalidInputException('Evidence needs a selector comment or a source link identifying the quoted unit.');
         }
         $citation->validate($selector, $quote);
         return (object) ['selector' => $selector, 'quote' => $quote];
@@ -56,7 +56,7 @@ final class Quotation
     public static function annotation(HtmlBlock $node): string
     {
         if ($node->getType() !== HtmlBlock::TYPE_2_COMMENT || preg_match('/\A<!--\s*(?:\*\*selector:\*\*|selector:)\s*([^\r\n]+?)\s*-->\s*\z/', $node->getLiteral(), $parts) !== 1 || str_contains($parts[1], '-->')) {
-            throw new InvalidArgumentException('Only a selector comment is allowed at the start of an evidence quotation.');
+            throw new InvalidInputException('Only a selector comment is allowed at the start of an evidence quotation.');
         }
         $selector = html_entity_decode($parts[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
         return str_starts_with($selector, '\\#') ? substr($selector, 1) : $selector;
@@ -70,7 +70,7 @@ final class Quotation
         if ($citation !== null && $url !== null) {
             try {
                 $annotation = $citation->selector($url, $quote, null) !== $selector;
-            } catch (InvalidArgumentException) {
+            } catch (InvalidInputException) {
                 $annotation = true;
             }
         }

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Markdown;
+namespace Requirements\Config\Markdown;
 
-use InvalidArgumentException;
 use Requirements\Config\DocumentReader;
-use Requirements\Config\Fields;
+use Requirements\Input\Fields;
+use Requirements\Input\InvalidInputException;
 use stdClass;
 
 final class Writer
@@ -74,7 +74,7 @@ final class Writer
                 } elseif ($name === 'design') {
                     $rows[] = isset($record['url']) ? '- [' . Nodes::escape(Fields::text($record, 'text', Fields::text($record, 'url'))) . '](' . Nodes::destination(Fields::text($record, 'url')) . ')' : '- ' . Nodes::escape(Fields::text($record, 'text'));
                 } else {
-                    throw new InvalidArgumentException("Cannot render Markdown field '$name'.");
+                    throw new InvalidInputException("Cannot render Markdown field '$name'.");
                 }
             }
         }
@@ -111,7 +111,7 @@ final class Writer
     private function object(mixed $value): array
     {
         if (!$value instanceof stdClass) {
-            throw new InvalidArgumentException('Expected a Markdown record.');
+            throw new InvalidInputException('Expected a Markdown record.');
         }
         return Fields::mapping(get_object_vars($value), 'record');
     }

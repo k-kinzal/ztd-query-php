@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Fixtures;
+namespace Tests\Fixtures;
 
 use Behat\Behat\Context\Context;
 use RuntimeException;

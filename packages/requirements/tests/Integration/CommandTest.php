@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Integration;
+namespace Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
-use Requirements\Tests\Support\Workspace;
 use Symfony\Component\Process\Process;
+use Tests\Support\Workspace;
 
 final class CommandTest extends TestCase
 {

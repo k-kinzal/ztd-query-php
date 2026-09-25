@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Requirements\Config;
 
-use InvalidArgumentException;
+use Requirements\Input\Fields;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Item;
 use Requirements\Model\Project;
 use Requirements\Model\Source;
@@ -16,7 +17,7 @@ final class Loader
     {
         $path = realpath($file);
         if ($path === false) {
-            throw new InvalidArgumentException("Configuration does not exist: $file");
+            throw new InvalidInputException("Configuration does not exist: $file");
         }
         $directory = dirname($path);
         $data = $this->document($path, 'config');
@@ -24,7 +25,7 @@ final class Loader
         if (isset($data['bootstrap'])) {
             $bootstrap = $directory . '/' . Fields::text($data, 'bootstrap');
             if (!is_file($bootstrap)) {
-                throw new InvalidArgumentException("Bootstrap does not exist: $bootstrap");
+                throw new InvalidInputException("Bootstrap does not exist: $bootstrap");
             }
             require_once $bootstrap;
         }
@@ -42,7 +43,7 @@ final class Loader
         $thresholds = [];
         foreach (Fields::mapping($coverage['sources'] ?? [], 'coverage.sources') as $id => $threshold) {
             if (!isset($sources[$id])) {
-                throw new InvalidArgumentException("Unknown source threshold: $id");
+                throw new InvalidInputException("Unknown source threshold: $id");
             }
             $thresholds[$id] = Fields::percentage($threshold, "coverage.sources.$id");
         }
@@ -80,14 +81,14 @@ final class Loader
         foreach ($patterns as $pattern) {
             $matches = glob($directory . '/' . $pattern);
             if ($matches === false || $matches === []) {
-                throw new InvalidArgumentException("Definition pattern has no matches: $pattern");
+                throw new InvalidInputException("Definition pattern has no matches: $pattern");
             }
             array_push($files, ...$matches);
         }
         $files = array_values(array_unique($files));
         sort($files);
         if ($files === []) {
-            throw new InvalidArgumentException('At least one definition is required.');
+            throw new InvalidInputException('At least one definition is required.');
         }
         $items = [];
         $sources = [];
@@ -99,19 +100,19 @@ final class Loader
             array_push($references, ...$reader->markdown->references());
             Fields::keys($data, ['$schema', 'version', 'source', 'items'], $file);
             if (!array_key_exists('source', $data)) {
-                throw new InvalidArgumentException("$file: declare source or source: null explicitly.");
+                throw new InvalidInputException("$file: declare source or source: null explicitly.");
             }
             $source = $data['source'] === null ? null : Source::from($data['source']);
             if ($source !== null) {
                 if (isset($sources[$source->id])) {
-                    throw new InvalidArgumentException("Duplicate source ID: $source->id");
+                    throw new InvalidInputException("Duplicate source ID: $source->id");
                 }
                 $sources[$source->id] = $source;
             }
             foreach (Fields::sequence($data['items'] ?? [], "$file.items") as $entry) {
                 $item = Item::from($entry, $source, $file);
                 if (isset($items[$item->id])) {
-                    throw new InvalidArgumentException("Duplicate item ID: $item->id");
+                    throw new InvalidInputException("Duplicate item ID: $item->id");
                 }
                 $items[$item->id] = $item;
             }
@@ -131,17 +132,17 @@ final class Loader
         foreach ($items as $item) {
             foreach ([...$item->requirements, ...$item->related] as $id) {
                 if (!isset($items[$id]) || $id === $item->id) {
-                    throw new InvalidArgumentException("$item->id: missing or self reference '$id'.");
+                    throw new InvalidInputException("$item->id: missing or self reference '$id'.");
                 }
             }
             foreach ($item->requirements as $id) {
                 if ($items[$id]->kind !== 'requirement' || $items[$id]->origin !== 'sourced') {
-                    throw new InvalidArgumentException("$item->id: '$id' must be a sourced requirement.");
+                    throw new InvalidInputException("$item->id: '$id' must be a sourced requirement.");
                 }
             }
             foreach ($item->tests as $test) {
                 if (!isset($runners[$test->runner])) {
-                    throw new InvalidArgumentException("$item->id: unknown runner '$test->runner'.");
+                    throw new InvalidInputException("$item->id: unknown runner '$test->runner'.");
                 }
             }
         }

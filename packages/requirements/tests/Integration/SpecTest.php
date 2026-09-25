@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Tests\Integration;
+namespace Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
-use Requirements\Config\Fields;
-use Requirements\Tests\Support\Workspace;
+use Requirements\Input\Fields;
 use Symfony\Component\Process\Process;
+use Tests\Support\Workspace;
 
 final class SpecTest extends TestCase
 {
@@ -31,7 +31,7 @@ final class SpecTest extends TestCase
         ];
         $items = [];
         foreach ($targets as $id => $methods) {
-            $items[] = [...Workspace::item(), 'id' => $id, 'kind' => $id === 'REQ' ? 'requirement' : 'specification', 'status' => $id === 'UNSUPPORTED' ? 'unsupported' : 'supported', 'reason' => 'A documented decision.', 'tests' => array_map(static fn (string $method): array => ['runner' => 'unit', 'target' => 'Requirements\\Tests\\Fixtures\\PassingTest::' . $method], $methods)];
+            $items[] = [...Workspace::item(), 'id' => $id, 'kind' => $id === 'REQ' ? 'requirement' : 'specification', 'status' => $id === 'UNSUPPORTED' ? 'unsupported' : 'supported', 'reason' => 'A documented decision.', 'tests' => array_map(static fn (string $method): array => ['runner' => 'unit', 'target' => 'Tests\\Fixtures\\PassingTest::' . $method], $methods)];
         }
         $workspace->write('definition.yaml', ['version' => 1, 'source' => ['id' => 'manual', 'uri' => 'source.html', 'format' => 'html', 'selector' => 'main p'], 'items' => $items]);
         $process = new Process([PHP_BINARY, $package . '/bin/requirements', 'spec', '--json'], $workspace->directory);

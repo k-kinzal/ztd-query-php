@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Markdown;
+namespace Requirements\Config\Markdown;
 
-use InvalidArgumentException;
 use League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
 use League\CommonMark\Extension\CommonMark\Node\Block\ListItem;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Code;
@@ -15,6 +14,7 @@ use League\CommonMark\Node\Block\Paragraph;
 use League\CommonMark\Node\Inline\Newline;
 use League\CommonMark\Node\Inline\Text;
 use League\CommonMark\Node\Node;
+use Requirements\Input\InvalidInputException;
 
 final class Nodes
 {
@@ -32,7 +32,7 @@ final class Nodes
         $result = '';
         foreach ($node->children() as $child) {
             if (!$child instanceof Text && !$child instanceof Code && !$child instanceof Newline && !$child instanceof Strong && !$child instanceof Emphasis) {
-                throw new InvalidArgumentException('Unsupported inline Markdown; use text, emphasis or code spans. Put links in reference or design fields.');
+                throw new InvalidInputException('Unsupported inline Markdown; use text, emphasis or code spans. Put links in reference or design fields.');
             }
             $result .= self::text($child, $literals);
         }
@@ -43,12 +43,12 @@ final class Nodes
     public static function items(Node $node): array
     {
         if (!$node instanceof ListBlock || $node->getListData()->type !== ListBlock::TYPE_BULLET) {
-            throw new InvalidArgumentException('Expected a bullet list.');
+            throw new InvalidInputException('Expected a bullet list.');
         }
         $items = [];
         foreach ($node->children() as $item) {
             if (!$item instanceof ListItem) {
-                throw new InvalidArgumentException('Expected a list item.');
+                throw new InvalidInputException('Expected a list item.');
             }
             $items[] = $item;
         }
@@ -59,7 +59,7 @@ final class Nodes
     {
         $child = $node->firstChild();
         if (!$child instanceof Paragraph || $child->next() !== null) {
-            throw new InvalidArgumentException('Expected a single paragraph in this list item.');
+            throw new InvalidInputException('Expected a single paragraph in this list item.');
         }
         return $child;
     }
@@ -68,7 +68,7 @@ final class Nodes
     {
         $link = $node->firstChild();
         if (!$link instanceof Link || $link->next() !== null || $link->getUrl() === '') {
-            throw new InvalidArgumentException('Expected one Markdown link with a nonempty destination.');
+            throw new InvalidInputException('Expected one Markdown link with a nonempty destination.');
         }
         return $link;
     }
@@ -84,7 +84,7 @@ final class Nodes
     {
         $key = $node->firstChild();
         if (!$key instanceof Strong) {
-            throw new InvalidArgumentException('Expected a bold field name followed by a colon.');
+            throw new InvalidInputException('Expected a bold field name followed by a colon.');
         }
         $label = self::text($key);
         $text = substr(self::text($node), strlen($label));
@@ -92,7 +92,7 @@ final class Nodes
             return [substr($label, 0, -1), trim($text)];
         }
         if (!str_starts_with(ltrim($text), ':')) {
-            throw new InvalidArgumentException('Expected a colon after the bold field name.');
+            throw new InvalidInputException('Expected a colon after the bold field name.');
         }
         return [$label, trim(substr(ltrim($text), 1))];
     }

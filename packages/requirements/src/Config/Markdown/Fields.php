@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Requirements\Markdown;
+namespace Requirements\Config\Markdown;
 
-use InvalidArgumentException;
 use League\CommonMark\Extension\CommonMark\Node\Block\BlockQuote;
 use League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Image;
@@ -13,6 +12,7 @@ use League\CommonMark\Node\Block\Paragraph;
 use League\CommonMark\Node\Inline\Newline;
 use League\CommonMark\Node\Inline\Text;
 use League\CommonMark\Node\Node;
+use Requirements\Input\InvalidInputException;
 use stdClass;
 
 final class Fields
@@ -27,7 +27,7 @@ final class Fields
     public function read(string $name, array $nodes): mixed
     {
         if ($nodes === []) {
-            throw new InvalidArgumentException("Markdown field '$name' needs a value.");
+            throw new InvalidInputException("Markdown field '$name' needs a value.");
         }
         if (in_array($name, ['kind', 'status', 'origin', 'category', 'reason'], true)) {
             return $this->prose($nodes);
@@ -36,7 +36,7 @@ final class Fields
             return [];
         }
         if (count($nodes) !== 1) {
-            throw new InvalidArgumentException("Markdown field '$name' needs one list or badge paragraph.");
+            throw new InvalidInputException("Markdown field '$name' needs one list or badge paragraph.");
         }
         $node = $nodes[0];
         return match ($name) {
@@ -46,7 +46,7 @@ final class Fields
             'labels' => $this->labels($node),
             'design' => $this->design($node),
             'metadata' => $this->mapping($node),
-            default => throw new InvalidArgumentException("Unknown Markdown field '$name'."),
+            default => throw new InvalidInputException("Unknown Markdown field '$name'."),
         };
     }
 
@@ -56,7 +56,7 @@ final class Fields
         $parts = [];
         foreach ($nodes as $node) {
             if (!$node instanceof Paragraph) {
-                throw new InvalidArgumentException('Expected prose paragraphs.');
+                throw new InvalidInputException('Expected prose paragraphs.');
             }
             $parts[] = Nodes::text($node);
         }
@@ -70,12 +70,12 @@ final class Fields
         foreach (Nodes::items($node) as $item) {
             $selector = $item->firstChild();
             if (!$selector instanceof Paragraph) {
-                throw new InvalidArgumentException('Evidence needs a selector and a block quotation.');
+                throw new InvalidInputException('Evidence needs a selector and a block quotation.');
             }
             [$name, $value] = Nodes::pair($selector);
             $quote = $selector->next();
             if ($name !== 'selector' || !$quote instanceof BlockQuote || $quote->next() !== null) {
-                throw new InvalidArgumentException('Evidence must use a bold selector field followed by one block quotation.');
+                throw new InvalidInputException('Evidence must use a bold selector field followed by one block quotation.');
             }
             $paragraphs = [];
             foreach ($quote->children() as $paragraph) {
@@ -117,7 +117,7 @@ final class Fields
             return array_map(static fn (Node $item): string => Nodes::text(Nodes::paragraph($item)), Nodes::items($node));
         }
         if (!$node instanceof Paragraph) {
-            throw new InvalidArgumentException('Labels must be a bullet list or a paragraph of badge images.');
+            throw new InvalidInputException('Labels must be a bullet list or a paragraph of badge images.');
         }
         $result = [];
         foreach ($node->children() as $image) {
@@ -125,14 +125,14 @@ final class Fields
                 continue;
             }
             if (!$image instanceof Image || $image->getUrl() === '') {
-                throw new InvalidArgumentException('Use ![label](image-url) for each label badge.');
+                throw new InvalidInputException('Use ![label](image-url) for each label badge.');
             }
             $label = Nodes::text($image);
             $this->badges[$label] = $image->getUrl();
             $result[] = $label;
         }
         if ($result === []) {
-            throw new InvalidArgumentException('The badge paragraph must contain labels.');
+            throw new InvalidInputException('The badge paragraph must contain labels.');
         }
         return $result;
     }
@@ -145,7 +145,7 @@ final class Fields
             $paragraph = Nodes::paragraph($item);
             try {
                 $link = Nodes::link($paragraph);
-            } catch (InvalidArgumentException) {
+            } catch (InvalidInputException) {
                 $result[] = (object) ['text' => Nodes::text($paragraph)];
                 continue;
             }
@@ -163,7 +163,7 @@ final class Fields
     {
         $value = $node instanceof Paragraph ? $this->scalar(Nodes::text($node)) : $this->nested($node);
         if (!$value instanceof stdClass) {
-            throw new InvalidArgumentException('Metadata must be a list of bold keys and values.');
+            throw new InvalidInputException('Metadata must be a list of bold keys and values.');
         }
         return $value;
     }
@@ -177,18 +177,18 @@ final class Fields
         foreach (Nodes::items($node) as $item) {
             $paragraph = $item->firstChild();
             if (!$paragraph instanceof Paragraph) {
-                throw new InvalidArgumentException('Expected a metadata key or value.');
+                throw new InvalidInputException('Expected a metadata key or value.');
             }
             $isKey = $paragraph->firstChild() instanceof Strong;
             $mapping ??= $isKey;
             if ($mapping !== $isKey) {
-                throw new InvalidArgumentException('Do not mix mapping keys and sequence values in one metadata list.');
+                throw new InvalidInputException('Do not mix mapping keys and sequence values in one metadata list.');
             }
             [$key, $text] = $isKey ? Nodes::pair($paragraph) : ['', Nodes::text($paragraph)];
             $child = $paragraph->next();
             if ($child !== null) {
                 if (($text !== '' && ($isKey || $text !== '[]')) || $child->next() !== null) {
-                    throw new InvalidArgumentException('Nested metadata must have an empty parent value and one nested list.');
+                    throw new InvalidInputException('Nested metadata must have an empty parent value and one nested list.');
                 }
                 $value = $this->nested($child);
             } else {
@@ -196,7 +196,7 @@ final class Fields
             }
             if ($isKey) {
                 if ($key === '' || property_exists($object, $key)) {
-                    throw new InvalidArgumentException('Metadata keys must be nonempty and unique.');
+                    throw new InvalidInputException('Metadata keys must be nonempty and unique.');
                 }
                 $object->{$key} = $value;
             } else {
@@ -209,7 +209,7 @@ final class Fields
     private function scalar(string $text): mixed
     {
         if ($text === '') {
-            throw new InvalidArgumentException('Write "" for an empty string or supply a metadata value.');
+            throw new InvalidInputException('Write "" for an empty string or supply a metadata value.');
         }
         $value = json_decode($text, false);
         return json_last_error() === JSON_ERROR_NONE ? $value : $text;

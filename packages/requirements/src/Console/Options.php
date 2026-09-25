@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Requirements\Console;
 
-use InvalidArgumentException;
-use Requirements\Config\Fields;
+use Requirements\Input\Fields;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Item;
 use Symfony\Component\Console\Input\InputInterface;
 
@@ -75,7 +75,7 @@ final class Options
             return null;
         }
         if (!is_numeric($value)) {
-            throw new InvalidArgumentException("--$name requires a percentage.");
+            throw new InvalidInputException("--$name requires a percentage.");
         }
         return Fields::percentage((float) $value, $name);
     }
