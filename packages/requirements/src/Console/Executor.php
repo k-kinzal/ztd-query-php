@@ -4,17 +4,34 @@ declare(strict_types=1);
 
 namespace Requirements\Console;
 
+use JsonException;
 use Requirements\Input\InvalidInputException;
-use Requirements\Model\Item;
 use Requirements\Model\Project;
 use Requirements\Report\Analyzer;
 use Requirements\Report\Coverage;
 use Requirements\Report\Snapshot;
 use Requirements\Verification\Verifier;
+use RuntimeException;
 
+/**
+ * Executes a command against a loaded project and returns its report.
+ *
+ * Every report has "passed"; the other fields depend on the command.
+ */
 final class Executor
 {
-    /** @return array<string, mixed> */
+    /**
+     * Executes a command.
+     *
+     * @param Project $project The loaded project
+     * @param Options $options The command and its options
+     *
+     * @return array<string, mixed> The report
+     *
+     * @throws InvalidInputException When the command is unknown, an option is invalid or a coverage snapshot cannot be used
+     * @throws JsonException When a document or the snapshot cannot be encoded
+     * @throws RuntimeException When a definition cannot be formatted
+     */
     public function execute(Project $project, Options $options): array
     {
         if ($options->command === 'lint') {
@@ -31,7 +48,7 @@ final class Executor
             $rows = [];
             foreach ($results as $id => $result) {
                 $passed = $passed && in_array($result->status, ['passed', 'unsupported', 'not-applicable', 'not-run'], true);
-                $rows[$id] = [...$this->describe($items[$id]), ...$result->toArray()];
+                $rows[$id] = [...ItemRecord::describe($items[$id]), ...$result->toArray()];
             }
             return ['passed' => $passed, 'no_test' => $options->flag('no-test'), 'specifications' => $rows, 'errors' => $results === [] ? ['No specifications or requirements selected.'] : []];
         }
@@ -55,11 +72,4 @@ final class Executor
         }
         return $report;
     }
-
-    /** @return array<string, mixed> */
-    private function describe(Item $item): array
-    {
-        return ['id' => $item->id, 'kind' => $item->kind, 'statement' => $item->statement, 'support' => $item->status, 'source' => $item->source?->id, 'origin' => $item->origin, 'reason' => $item->reason, 'labels' => $item->labels, 'category' => $item->category, 'requirements' => $item->requirements, 'related' => $item->related, 'design' => $item->data['design'] ?? [], 'metadata' => $item->data['metadata'] ?? [], 'test_references' => $item->data['tests'] ?? []];
-    }
-
 }

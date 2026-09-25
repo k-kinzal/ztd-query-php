@@ -11,11 +11,30 @@ use League\CommonMark\Node\Block\Paragraph;
 use Requirements\Input\InvalidInputException;
 use stdClass;
 
+/**
+ * Reads and writes one evidence quotation of a card.
+ *
+ * A quotation may start with a selector comment and end with a paragraph holding its source
+ * link; its other paragraphs are the quoted text.
+ */
 final class Quotation
 {
-    /** @var array{url: string, label: string}|null */
+    /**
+     * @var array{url: string, label: string}|null The citation link read with the quotation
+     */
     public ?array $link = null;
 
+    /**
+     * Reads a quotation.
+     *
+     * @param BlockQuote $node The block quotation
+     * @param Citation|null $citation Resolves the citation against the definition's source
+     * @param Link|null $attribution The source link written after the quotation, if any
+     *
+     * @return stdClass The evidence entry with its selector and quote
+     *
+     * @throws InvalidInputException When the definition has no source, the quotation is malformed or no selector is given
+     */
     public function read(BlockQuote $node, ?Citation $citation, ?Link $attribution = null): stdClass
     {
         if ($citation === null) {
@@ -53,6 +72,15 @@ final class Quotation
         return (object) ['selector' => $selector, 'quote' => $quote];
     }
 
+    /**
+     * Reads the selector comment that may start a quotation.
+     *
+     * @param HtmlBlock $node The HTML block
+     *
+     * @return string The selector
+     *
+     * @throws InvalidInputException When the block is anything but a single selector comment
+     */
     public static function annotation(HtmlBlock $node): string
     {
         if ($node->getType() !== HtmlBlock::TYPE_2_COMMENT || preg_match('/\A<!--\s*(?:\*\*selector:\*\*|selector:)\s*([^\r\n]+?)\s*-->\s*\z/', $node->getLiteral(), $parts) !== 1 || str_contains($parts[1], '-->')) {
@@ -62,7 +90,16 @@ final class Quotation
         return str_starts_with($selector, '\\#') ? substr($selector, 1) : $selector;
     }
 
-    /** @param array{url: string, label: string}|null $link */
+    /**
+     * Writes a quotation, with a selector comment unless the citation link identifies the unit.
+     *
+     * @param string $selector The selector
+     * @param string $quote The quoted text
+     * @param Citation|null $citation Creates the citation link
+     * @param array{url: string, label: string}|null $link The citation link read with the quotation
+     *
+     * @return string The Markdown quotation
+     */
     public static function render(string $selector, string $quote, ?Citation $citation, ?array $link): string
     {
         $url = $link['url'] ?? $citation?->url($selector, $quote);

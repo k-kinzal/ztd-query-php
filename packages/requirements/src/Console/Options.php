@@ -9,13 +9,27 @@ use Requirements\Input\InvalidInputException;
 use Requirements\Model\Item;
 use Symfony\Component\Console\Input\InputInterface;
 
+/**
+ * The command and the option values given on the command line.
+ */
 final class Options
 {
-    /** @param array<string, string|bool> $values */
+    /**
+     * @param string $command The command name
+     * @param array<string, string|bool> $values Option values by option name
+     */
     public function __construct(public readonly string $command, public readonly array $values)
     {
     }
 
+    /**
+     * Reads the global options and the options of a command.
+     *
+     * @param string $command The command name
+     * @param InputInterface $input The parsed command line
+     *
+     * @return self The options
+     */
     public static function fromInput(string $command, InputInterface $input): self
     {
         $values = [];
@@ -28,7 +42,13 @@ final class Options
         return new self($command, $values);
     }
 
-    /** @return list<array{string, bool, string}> */
+    /**
+     * Declares the options of a command.
+     *
+     * @param string $command The command name
+     *
+     * @return list<array{string, bool, string}> The name, whether it is a flag, and the description of each option
+     */
     public static function definitions(string $command): array
     {
         return match ($command) {
@@ -57,17 +77,41 @@ final class Options
         };
     }
 
+    /**
+     * Returns a value option.
+     *
+     * @param string $name The option name
+     * @param string|null $default The value when the option is not given
+     *
+     * @return string|null The value
+     */
     public function text(string $name, ?string $default = null): ?string
     {
         $value = $this->values[$name] ?? $default;
         return is_string($value) ? $value : $default;
     }
 
+    /**
+     * Tells whether a flag is set.
+     *
+     * @param string $name The option name
+     *
+     * @return bool True when the flag was given
+     */
     public function flag(string $name): bool
     {
         return ($this->values[$name] ?? false) === true;
     }
 
+    /**
+     * Returns a percentage option.
+     *
+     * @param string $name The option name
+     *
+     * @return float|null The percentage, or null when the option is not given
+     *
+     * @throws InvalidInputException When the value is not a number from 0 to 100
+     */
     public function percentage(string $name): ?float
     {
         $value = $this->text($name);
@@ -80,6 +124,13 @@ final class Options
         return Fields::percentage((float) $value, $name);
     }
 
+    /**
+     * Tells whether an item passes the spec filters.
+     *
+     * @param Item $item The item
+     *
+     * @return bool True when the item has every given ID, category, status, kind, origin, source and label, and no source under --without-source
+     */
     public function matches(Item $item): bool
     {
         foreach (['id' => $item->id, 'category' => $item->category, 'status' => $item->status, 'kind' => $item->kind, 'origin' => $item->origin, 'source' => $item->source?->id] as $key => $actual) {

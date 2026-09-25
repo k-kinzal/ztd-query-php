@@ -7,13 +7,27 @@ namespace Requirements\Config\Markdown;
 use Requirements\Input\InvalidInputException;
 use Requirements\Model\Item;
 
+/**
+ * A Markdown link from one item to another, checked once every definition is loaded.
+ */
 final class Reference
 {
+    /**
+     * @param string $id The linked item ID
+     * @param string $url The link target
+     * @param string $file The Markdown file holding the link
+     */
     public function __construct(public readonly string $id, public readonly string $url, public readonly string $file)
     {
     }
 
-    /** @param array<string, Item> $items */
+    /**
+     * Checks that the link points to the file and heading defining the item.
+     *
+     * @param array<string, Item> $items Every loaded item by ID
+     *
+     * @throws InvalidInputException When the link is not local, points to another file or has the wrong fragment
+     */
     public function validate(array $items): void
     {
         $parts = parse_url($this->url);

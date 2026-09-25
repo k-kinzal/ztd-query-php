@@ -10,6 +10,11 @@ parameters:
         forbiddenNamespacePrefixes:
             - 'Tests\Fixture'
             - 'Tests\Fixtures'
+        broadCatchAllowedPaths:
+            # Reports every failure of a command as a JSON or console error with exit code 2.
+            - '*/src/Console/Application.php'
+            # Source extensions signal retrieval failures by throwing; the analysis reports each one.
+            - '*/src/Report/Analyzer.php'
     phpVersion: 80100
     level: max
     paths:

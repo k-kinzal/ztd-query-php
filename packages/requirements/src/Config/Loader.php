@@ -4,15 +4,35 @@ declare(strict_types=1);
 
 namespace Requirements\Config;
 
+use JsonException;
 use Requirements\Input\Fields;
 use Requirements\Input\InvalidInputException;
-use Requirements\Model\Item;
 use Requirements\Model\Project;
-use Requirements\Model\Source;
+use Requirements\Source\Registry as SourceRegistry;
+use Requirements\Test\Registry as RunnerRegistry;
 use Requirements\Test\RunnerConfig;
+use Symfony\Component\Yaml\Exception\ParseException;
 
+/**
+ * Loads a project from its requirements.yaml and the definition files it names.
+ *
+ * Every document is validated against its schema, every item against the definition rules,
+ * links between items and to runners are resolved, and each source format and runner
+ * extension must be registered.
+ */
 final class Loader
 {
+    /**
+     * Loads and validates a project.
+     *
+     * @param string $file The configuration file
+     *
+     * @return Project The project
+     *
+     * @throws InvalidInputException When the configuration, a definition or a link is invalid
+     * @throws JsonException When a document cannot be converted
+     * @throws ParseException When a YAML document is malformed
+     */
     public function load(string $file): Project
     {
         $path = realpath($file);
@@ -23,139 +43,48 @@ final class Loader
         $data = $this->document($path, 'config');
         Fields::keys($data, ['$schema', 'version', 'definitions', 'bootstrap', 'extensions', 'runners', 'coverage', 'markdown'], 'configuration');
         if (isset($data['bootstrap'])) {
-            $bootstrap = $directory . '/' . Fields::text($data, 'bootstrap');
-            if (!is_file($bootstrap)) {
-                throw new InvalidInputException("Bootstrap does not exist: $bootstrap");
-            }
-            require_once $bootstrap;
+            (new Bootstrap())->load($directory . '/' . Fields::text($data, 'bootstrap'));
         }
         $markdown = Fields::mapping($data['markdown'] ?? [], 'markdown');
-        [$items, $sources, $files] = $this->definitions($directory, Fields::strings($data['definitions'] ?? [], 'definitions'), $markdown);
+        $definitions = (new DefinitionReader())->read($directory, Fields::strings($data['definitions'] ?? [], 'definitions'), $markdown);
         $runners = [];
         foreach (Fields::mapping($data['runners'] ?? [], 'runners') as $name => $runner) {
             $runners[$name] = RunnerConfig::from($runner, $directory);
         }
-        $this->validateLinks($items, $runners);
+        (new LinkValidator())->validate($definitions->items, $runners);
         $extensions = Fields::mapping($data['extensions'] ?? [], 'extensions');
         Fields::keys($extensions, ['sources', 'runners'], 'extensions');
         $coverage = Fields::mapping($data['coverage'] ?? [], 'coverage');
         Fields::keys($coverage, ['minimum', 'diff_minimum', 'sources'], 'coverage');
-        $thresholds = [];
-        foreach (Fields::mapping($coverage['sources'] ?? [], 'coverage.sources') as $id => $threshold) {
-            if (!isset($sources[$id])) {
-                throw new InvalidInputException("Unknown source threshold: $id");
-            }
-            $thresholds[$id] = Fields::percentage($threshold, "coverage.sources.$id");
-        }
-        $sourceClasses = $this->classes($extensions['sources'] ?? []);
-        $runnerClasses = $this->classes($extensions['runners'] ?? []);
-        $sourceRegistry = new \Requirements\Source\Registry($sourceClasses);
-        $runnerRegistry = new \Requirements\Test\Registry($runnerClasses);
-        foreach ($sources as $source) {
+        $thresholds = (new CoverageThresholds())->read($coverage['sources'] ?? [], $definitions->sources);
+        $sourceClasses = ExtensionClasses::read($extensions['sources'] ?? []);
+        $runnerClasses = ExtensionClasses::read($extensions['runners'] ?? []);
+        $sourceRegistry = new SourceRegistry($sourceClasses);
+        $runnerRegistry = new RunnerRegistry($runnerClasses);
+        foreach ($definitions->sources as $source) {
             $sourceRegistry->get($source->format);
         }
         foreach ($runners as $runner) {
             $runnerRegistry->get($runner->extension);
         }
-        return new Project($directory, $items, $sources, $runners, $sourceClasses, $runnerClasses, Fields::percentage($coverage['minimum'] ?? 0, 'coverage.minimum'), Fields::percentage($coverage['diff_minimum'] ?? 0, 'coverage.diff_minimum'), $thresholds, [$path, ...$files], $markdown);
+        return new Project($directory, $definitions->items, $definitions->sources, $runners, $sourceClasses, $runnerClasses, Fields::percentage($coverage['minimum'] ?? 0, 'coverage.minimum'), Fields::percentage($coverage['diff_minimum'] ?? 0, 'coverage.diff_minimum'), $thresholds, [$path, ...$definitions->files], $markdown);
     }
 
     /**
-     * @param array<string, mixed> $markdown
-     * @return array<string, mixed>
+     * Reads and validates one document as a mapping.
+     *
+     * @param string $path The document file
+     * @param string $kind "config" or "definition", naming the schema
+     * @param array<string, mixed> $markdown The markdown options
+     *
+     * @return array<string, mixed> The document
+     *
+     * @throws InvalidInputException When the document breaks its schema or is not a mapping
+     * @throws JsonException When the document cannot be converted
+     * @throws ParseException When a YAML document is malformed
      */
     public function document(string $path, string $kind = 'definition', array $markdown = []): array
     {
-        $object = (new DocumentReader())->read($path, $kind, $markdown);
-        return Fields::mapping(json_decode(json_encode($object, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR), $path);
-    }
-
-    /**
-     * @param list<string> $patterns
-     * @param array<string, mixed> $markdown
-     * @return array{array<string, Item>, array<string, Source>, list<string>}
-     */
-    private function definitions(string $directory, array $patterns, array $markdown): array
-    {
-        $files = [];
-        foreach ($patterns as $pattern) {
-            $matches = glob($directory . '/' . $pattern);
-            if ($matches === false || $matches === []) {
-                throw new InvalidInputException("Definition pattern has no matches: $pattern");
-            }
-            array_push($files, ...$matches);
-        }
-        $files = array_values(array_unique($files));
-        sort($files);
-        if ($files === []) {
-            throw new InvalidInputException('At least one definition is required.');
-        }
-        $items = [];
-        $sources = [];
-        $references = [];
-        foreach ($files as $file) {
-            $reader = new DocumentReader();
-            $object = $reader->read($file, 'definition', $markdown, $directory);
-            $data = Fields::mapping(json_decode(json_encode($object, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR), $file);
-            array_push($references, ...$reader->markdown->references());
-            Fields::keys($data, ['$schema', 'version', 'source', 'items'], $file);
-            if (!array_key_exists('source', $data)) {
-                throw new InvalidInputException("$file: declare source or source: null explicitly.");
-            }
-            $source = $data['source'] === null ? null : Source::from($data['source']);
-            if ($source !== null) {
-                if (isset($sources[$source->id])) {
-                    throw new InvalidInputException("Duplicate source ID: $source->id");
-                }
-                $sources[$source->id] = $source;
-            }
-            foreach (Fields::sequence($data['items'] ?? [], "$file.items") as $entry) {
-                $item = Item::from($entry, $source, $file);
-                if (isset($items[$item->id])) {
-                    throw new InvalidInputException("Duplicate item ID: $item->id");
-                }
-                $items[$item->id] = $item;
-            }
-        }
-        foreach ($references as $reference) {
-            $reference->validate($items);
-        }
-        return [$items, $sources, $files];
-    }
-
-    /**
-     * @param array<string, Item> $items
-     * @param array<string, RunnerConfig> $runners
-     */
-    private function validateLinks(array $items, array $runners): void
-    {
-        foreach ($items as $item) {
-            foreach ([...$item->requirements, ...$item->related] as $id) {
-                if (!isset($items[$id]) || $id === $item->id) {
-                    throw new InvalidInputException("$item->id: missing or self reference '$id'.");
-                }
-            }
-            foreach ($item->requirements as $id) {
-                if ($items[$id]->kind !== 'requirement' || $items[$id]->origin !== 'sourced') {
-                    throw new InvalidInputException("$item->id: '$id' must be a sourced requirement.");
-                }
-            }
-            foreach ($item->tests as $test) {
-                if (!isset($runners[$test->runner])) {
-                    throw new InvalidInputException("$item->id: unknown runner '$test->runner'.");
-                }
-            }
-        }
-    }
-
-    /** @return array<string, string> */
-    private function classes(mixed $value): array
-    {
-        $result = [];
-        $data = Fields::mapping($value, 'extensions');
-        foreach (array_keys($data) as $name) {
-            $result[$name] = Fields::text($data, $name);
-        }
-        return $result;
+        return DocumentReader::mapping((new DocumentReader())->read($path, $kind, $markdown), $path);
     }
 }

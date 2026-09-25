@@ -4,190 +4,106 @@ declare(strict_types=1);
 
 namespace Requirements\Config;
 
+use JsonException;
 use League\CommonMark\Environment\Environment;
+use League\CommonMark\Exception\CommonMarkException;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
-use League\CommonMark\Extension\CommonMark\Node\Block\BlockQuote;
-use League\CommonMark\Extension\CommonMark\Node\Block\Heading;
-use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
-use League\CommonMark\Node\Block\Paragraph;
-use League\CommonMark\Node\Node;
 use League\CommonMark\Parser\MarkdownParser;
-use Requirements\Config\Markdown\Badges;
+use Requirements\Config\Markdown\CardReader;
 use Requirements\Config\Markdown\Citation;
-use Requirements\Config\Markdown\DocumentSchema;
-use Requirements\Config\Markdown\Fields as MarkdownFields;
-use Requirements\Config\Markdown\Nodes;
-use Requirements\Config\Markdown\Quotation;
+use Requirements\Config\Markdown\Frontmatter;
+use Requirements\Config\Markdown\Presentation;
+use Requirements\Config\Markdown\Profile\DocumentSchema;
 use Requirements\Config\Markdown\Reference;
-use Requirements\Config\Markdown\Writer;
+use Requirements\Config\Markdown\Render\CardWriter;
 use Requirements\Input\Fields;
 use Requirements\Input\InvalidInputException;
 use Requirements\Model\Source;
 use stdClass;
-use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\Yaml\Exception\ParseException;
 
+/**
+ * Reads a definition written as Markdown cards and writes it back in the same form.
+ *
+ * The YAML frontmatter holds the version and source; each top-level heading is an item ID
+ * followed by badges, a statement, quoted evidence and bold field sections. What the author
+ * chose beyond the data model, such as badge images and link targets, is remembered so that
+ * formatting reproduces it.
+ */
 final class MarkdownDocument
 {
-    /** @var array<string, array<string, array<string, string>>> */
-    private array $links = [];
-
-    /** @var array<string, array<string, array<string, array{url: string, title: ?string}>>> */
-    private array $badges = [];
-
-    /** @var array<string, list<array{url: string, label: string}|null>> */
-    private array $citations = [];
+    private Presentation $presentation;
 
     private ?Citation $source = null;
 
-    /** @var list<Reference> */
-    private array $references = [];
+    /**
+     * Starts with nothing remembered; each read replaces what the previous one remembered.
+     */
+    public function __construct()
+    {
+        $this->presentation = new Presentation();
+    }
 
-    /** @param array<string, mixed> $options */
+    /**
+     * Reads a Markdown definition into the same shape as a YAML definition.
+     *
+     * @param string $file The definition file
+     * @param array<string, mixed> $options The markdown options; experimental must be true
+     * @param string|null $directory The configuration directory that the source URI resolves against
+     *
+     * @return stdClass The definition with its items
+     *
+     * @throws InvalidInputException When Markdown is not enabled or the document breaks the card syntax
+     * @throws JsonException When the source cannot be converted
+     * @throws ParseException When the frontmatter is malformed YAML
+     */
     public function read(string $file, array $options, ?string $directory = null): stdClass
     {
         if (($options['experimental'] ?? false) !== true) {
             throw new InvalidInputException("$file: Markdown definitions require markdown.experimental: true.");
         }
         Fields::keys($options, ['experimental'], 'markdown');
-        $this->links = [];
-        $this->badges = [];
-        $this->references = [];
-        $this->citations = [];
+        $this->presentation = new Presentation();
         $this->source = null;
-        $text = file_get_contents($file);
-        if ($text === false || preg_match('/\A---\r?\n(.*?)\r?\n---\r?\n(.*)\z/s', $text, $parts) !== 1) {
-            throw new InvalidInputException("$file: expected YAML frontmatter delimited by ---.");
-        }
-        $data = Yaml::parse($parts[1], Yaml::PARSE_OBJECT_FOR_MAP | Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE);
-        if (!$data instanceof stdClass) {
-            throw new InvalidInputException("$file: frontmatter must be a mapping.");
-        }
-        Fields::keys(Fields::mapping(get_object_vars($data), 'frontmatter'), ['$schema', 'version', 'source'], "$file frontmatter");
+        [$data, $body] = (new Frontmatter())->read($file);
         if (isset($data->source)) {
             $source = Fields::mapping(json_decode(json_encode($data->source, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR), 'source');
             $this->source = new Citation(Source::from($source), $file, $directory ?? dirname($file));
         }
         $environment = new Environment();
         $environment->addExtension(new CommonMarkCoreExtension());
-        $document = (new MarkdownParser($environment))->parse($parts[2]);
+        try {
+            $document = (new MarkdownParser($environment))->parse($body);
+        } catch (CommonMarkException $error) {
+            throw new InvalidInputException($error->getMessage(), 0, $error);
+        }
         (new DocumentSchema())->validate($document, $data, $file);
-        $lines = explode("\n", $parts[2]);
-        $items = [];
-        $heading = null;
-        $blocks = [];
-        foreach ($document->children() as $node) {
-            if ($node instanceof Heading) {
-                if (preg_match('/^ {0,3}#[ \t]+/', $lines[($node->getStartLine() ?? 0) - 1] ?? '') !== 1) {
-                    throw new InvalidInputException("$file: item headings must use ATX # ID syntax.");
-                }
-                if ($heading !== null) {
-                    $items[] = $this->item($heading, $blocks, $file);
-                }
-                $heading = $node;
-                $blocks = [];
-            } else {
-                $blocks[] = $node;
-            }
-        }
-        if ($heading !== null) {
-            $items[] = $this->item($heading, $blocks, $file);
-        }
-        $data->items = $items;
+        $data->items = (new CardReader($this->presentation, $this->source))->cards($document, $body, $file);
         return $data;
     }
 
-    /** @return list<Reference> */
+    /**
+     * Returns the links to other items found by the last read.
+     *
+     * @return list<Reference> The links, checked once every definition is loaded
+     */
     public function references(): array
     {
-        return $this->references;
+        return $this->presentation->references;
     }
 
+    /**
+     * Writes a definition as Markdown cards, reusing what the last read remembered.
+     *
+     * @param stdClass $data The definition
+     *
+     * @return string The Markdown text
+     *
+     * @throws InvalidInputException When a record cannot be written as a card
+     * @throws JsonException When a metadata value cannot be encoded
+     */
     public function render(stdClass $data): string
     {
-        return (new Writer())->render($data, $this->links, $this->badges, $this->citations, $this->source);
-    }
-
-    /** @param list<Node> $blocks */
-    private function item(Heading $heading, array $blocks, string $file): stdClass
-    {
-        $id = Nodes::text($heading);
-        $item = new stdClass();
-        $item->id = $id;
-        $badges = new Badges();
-        while (isset($blocks[0]) && Badges::isParagraph($blocks[0])) {
-            $badge = array_shift($blocks);
-            $badges->read($badge, $item);
-        }
-        $this->badges[$id] = $badges->images;
-        $statement = array_shift($blocks);
-        if (!$statement instanceof Paragraph || Nodes::field($statement) !== null) {
-            throw new InvalidInputException("$file: $id needs a statement paragraph after its badges.");
-        }
-        $item->statement = preg_replace('/\s*\n\s*/', ' ', Nodes::text($statement, true));
-        $evidence = [];
-        while (isset($blocks[0]) && $blocks[0] instanceof BlockQuote) {
-            $quote = $blocks[0];
-            array_shift($blocks);
-            $attribution = null;
-            if (isset($blocks[0]) && $blocks[0] instanceof Paragraph && $blocks[0]->firstChild() instanceof Link && $blocks[0]->firstChild()->next() === null) {
-                $attribution = Nodes::link(array_shift($blocks));
-            }
-            $reader = new Quotation();
-            try {
-                $evidence[] = $reader->read($quote, $this->source, $attribution);
-            } catch (InvalidInputException $error) {
-                throw new InvalidInputException("$file: $id: " . $error->getMessage(), 0, $error);
-            }
-            $this->citations[$id][] = $reader->link;
-        }
-        if ($evidence !== []) {
-            $item->evidence = $evidence;
-        }
-        $name = null;
-        $values = [];
-        foreach ($blocks as $block) {
-            $field = Nodes::field($block);
-            if ($field !== null) {
-                if ($name !== null) {
-                    $this->field($item, $name, $values, $file, $id);
-                }
-                $name = match ($field) {
-                    'unsupport reason', 'unsupported reason', 'rationale' => 'reason',
-                    default => $field,
-                };
-                $values = [];
-            } elseif ($name === null) {
-                throw new InvalidInputException("$file: $id expects a bold field heading after its statement.");
-            } else {
-                $values[] = $block;
-            }
-        }
-        if ($name !== null) {
-            $this->field($item, $name, $values, $file, $id);
-        }
-        return $item;
-    }
-
-    /** @param list<Node> $nodes */
-    private function field(stdClass $item, string $name, array $nodes, string $file, string $id): void
-    {
-        if (property_exists($item, $name)) {
-            throw new InvalidInputException("$file: $id has duplicate field '$name'.");
-        }
-        $reader = new MarkdownFields();
-        try {
-            $item->{$name} = $reader->read($name, $nodes);
-        } catch (InvalidInputException $error) {
-            throw new InvalidInputException("$file: $id.$name: " . $error->getMessage(), 0, $error);
-        }
-        $this->links[$id][$name] = $reader->links;
-        foreach ($reader->links as $target => $url) {
-            $this->references[] = new Reference($target, $url, $file);
-        }
-        if ($name === 'labels') {
-            foreach ($reader->badges as $value => $url) {
-                $this->badges[$id]['label'][$value] = ['url' => $url, 'title' => null];
-            }
-        }
+        return (new CardWriter())->render($data, $this->presentation->links, $this->presentation->badges, $this->presentation->citations, $this->source);
     }
 }

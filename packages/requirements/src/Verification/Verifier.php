@@ -4,15 +4,30 @@ declare(strict_types=1);
 
 namespace Requirements\Verification;
 
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Item;
 use Requirements\Model\Project;
 use Requirements\Test\Registry;
 
+/**
+ * Runs the tests linked to specifications and decides each verdict.
+ *
+ * Each distinct runner and target pair runs once and its result is shared. A specification
+ * passes when every linked target passes with at least one executed test; requirements are
+ * not applicable, unsupported specifications are not run.
+ */
 final class Verifier
 {
     /**
-     * @param array<string, Item> $items
-     * @return array<string, VerificationResult>
+     * Verifies items.
+     *
+     * @param Project $project The loaded project with its runners
+     * @param array<string, Item> $items The items to verify by ID
+     * @param bool $noTest Whether to report linked targets without running them
+     *
+     * @return array<string, VerificationResult> The verdicts by item ID
+     *
+     * @throws InvalidInputException When a runner uses an unknown extension
      */
     public function verify(Project $project, array $items, bool $noTest = false): array
     {

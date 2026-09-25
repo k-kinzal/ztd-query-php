@@ -12,16 +12,39 @@ use League\CommonMark\Node\Node;
 use Requirements\Input\InvalidInputException;
 use stdClass;
 
+/**
+ * Reads and writes the badge rows that carry a card's kind, status, origin, category and labels.
+ *
+ * A badge is an image whose alt text is the value. Its role comes from the image title, or
+ * from the path of a static shields.io badge, and is a label otherwise.
+ */
 final class Badges
 {
-    /** @var array<string, array<string, array{url: string, title: ?string}>> */
+    /**
+     * @var array<string, array<string, array{url: string, title: ?string}>> The images read, by field and value
+     */
     public array $images = [];
 
+    /**
+     * Tells whether a block is a badge row.
+     *
+     * @param Node $node The block
+     *
+     * @return bool True for a paragraph starting with an image
+     */
     public static function isParagraph(Node $node): bool
     {
         return $node instanceof Paragraph && $node->firstChild() instanceof Image;
     }
 
+    /**
+     * Reads a badge row into the item.
+     *
+     * @param Node $node The badge row
+     * @param stdClass $item The item being read
+     *
+     * @throws InvalidInputException When the row holds anything but images, a value is empty, repeated or contradicts its static image
+     */
     public function read(Node $node, stdClass $item): void
     {
         foreach ($node->children() as $image) {
@@ -36,7 +59,7 @@ final class Badges
                 throw new InvalidInputException('Badge alt text must contain its attribute value.');
             }
             $field = self::field($image->getUrl(), $image->getTitle());
-            self::validateStaticImage($image->getUrl(), $field, $value);
+            StaticBadge::validate($image->getUrl(), $field, $value);
             if ($field === 'label') {
                 $labels = $item->labels ?? [];
                 if (!is_array($labels) || in_array($value, $labels, true)) {
@@ -53,6 +76,16 @@ final class Badges
         }
     }
 
+    /**
+     * Decides which field a badge sets.
+     *
+     * @param string $url The image URL
+     * @param string|null $title The image title
+     *
+     * @return string kind, status, origin, category or label
+     *
+     * @throws InvalidInputException When the title names another field
+     */
     public static function field(string $url, ?string $title): string
     {
         if ($title !== null) {
@@ -67,21 +100,15 @@ final class Badges
         return 'label';
     }
 
-    private static function validateStaticImage(string $url, string $field, string $value): void
-    {
-        $path = rawurldecode((string) parse_url($url, PHP_URL_PATH));
-        if (parse_url($url, PHP_URL_HOST) !== 'img.shields.io' || preg_match('~^/badge/(kind|status|origin|category|label)-(.*)$~', $path, $match) !== 1) {
-            return;
-        }
-        $parts = explode('-', str_replace('--', "\0", $match[2]));
-        $message = str_replace(["\0", '_'], ['-', ' '], str_replace('__', "\1", $parts[0]));
-        $message = str_replace("\1", '_', $message);
-        if (count($parts) !== 2 || $match[1] !== $field || $message !== $value) {
-            throw new InvalidInputException('Static badge image text and role must agree with its alt text and title.');
-        }
-    }
-
-    /** @param array{url: string, title: ?string}|null $image */
+    /**
+     * Writes a badge.
+     *
+     * @param string $field The field the badge sets
+     * @param string $value The value
+     * @param array{url: string, title: ?string}|null $image The image read for this value, or null for a new static badge
+     *
+     * @return string The Markdown image
+     */
     public static function render(string $field, string $value, ?array $image): string
     {
         $color = $field === 'status' && $value === 'unsupported' ? 'orange' : 'blue';

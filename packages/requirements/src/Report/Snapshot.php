@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Requirements\Report;
 
+use JsonException;
 use Requirements\Input\Fields;
 use Requirements\Input\InvalidInputException;
 use Requirements\Model\Project;
@@ -16,9 +17,21 @@ use Requirements\Model\Project;
  */
 final class Snapshot
 {
+    /**
+     * The type written in every coverage snapshot.
+     */
     public const TYPE = 'requirements-snapshot';
 
-    /** @return array{version: int, type: string, units: array<string, array{fingerprint: string}>} */
+    /**
+     * Creates the snapshot of an analysis.
+     *
+     * @param Analysis $analysis The analysis
+     * @param Project $project The analyzed project
+     *
+     * @return array{version: int, type: string, units: array<string, array{fingerprint: string}>} The snapshot document
+     *
+     * @throws JsonException When a record cannot be encoded
+     */
     public function create(Analysis $analysis, Project $project): array
     {
         $units = [];
@@ -28,7 +41,16 @@ final class Snapshot
         return ['version' => 1, 'type' => self::TYPE, 'units' => $units];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Reads a snapshot file.
+     *
+     * @param string $file The snapshot file
+     *
+     * @return array<string, string> The fingerprints by unit key
+     *
+     * @throws InvalidInputException When the file cannot be read, is not a coverage snapshot or lists an invalid unit
+     * @throws JsonException When the file is not JSON
+     */
     public function read(string $file): array
     {
         $contents = is_file($file) ? file_get_contents($file) : false;
@@ -52,8 +74,15 @@ final class Snapshot
     }
 
     /**
-     * @param array<string, string> $snapshot
-     * @return array{changed: list<string>, removed: list<string>}
+     * Compares an analysis with a snapshot.
+     *
+     * @param Analysis $analysis The current analysis
+     * @param Project $project The analyzed project
+     * @param array<string, string> $snapshot The fingerprints by unit key
+     *
+     * @return array{changed: list<string>, removed: list<string>} The new or changed unit keys and the unit keys no longer in scope
+     *
+     * @throws JsonException When a record cannot be encoded
      */
     public function compare(Analysis $analysis, Project $project, array $snapshot): array
     {

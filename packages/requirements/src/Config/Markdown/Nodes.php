@@ -16,8 +16,21 @@ use League\CommonMark\Node\Inline\Text;
 use League\CommonMark\Node\Node;
 use Requirements\Input\InvalidInputException;
 
+/**
+ * Reads the CommonMark nodes that cards are built from, and escapes text written back.
+ */
 final class Nodes
 {
+    /**
+     * Returns the text of a node.
+     *
+     * @param Node $node The node
+     * @param bool $literals Whether code spans keep their backticks
+     *
+     * @return string The text of the node and its inline children
+     *
+     * @throws InvalidInputException When the node holds inline Markdown other than text, emphasis and code
+     */
     public static function text(Node $node, bool $literals = false): string
     {
         if ($node instanceof Text) {
@@ -39,7 +52,15 @@ final class Nodes
         return $result;
     }
 
-    /** @return list<ListItem> */
+    /**
+     * Returns the items of a bullet list.
+     *
+     * @param Node $node The list
+     *
+     * @return list<ListItem> The items
+     *
+     * @throws InvalidInputException When the node is not a bullet list
+     */
     public static function items(Node $node): array
     {
         if (!$node instanceof ListBlock || $node->getListData()->type !== ListBlock::TYPE_BULLET) {
@@ -55,6 +76,15 @@ final class Nodes
         return $items;
     }
 
+    /**
+     * Returns the single paragraph of a list item.
+     *
+     * @param Node $node The list item
+     *
+     * @return Paragraph The paragraph
+     *
+     * @throws InvalidInputException When the item holds anything else
+     */
     public static function paragraph(Node $node): Paragraph
     {
         $child = $node->firstChild();
@@ -64,6 +94,15 @@ final class Nodes
         return $child;
     }
 
+    /**
+     * Returns the single link of a paragraph.
+     *
+     * @param Node $node The paragraph
+     *
+     * @return Link The link
+     *
+     * @throws InvalidInputException When the paragraph holds anything else or the destination is empty
+     */
     public static function link(Node $node): Link
     {
         $link = $node->firstChild();
@@ -73,13 +112,30 @@ final class Nodes
         return $link;
     }
 
+    /**
+     * Returns the name of a bold field heading.
+     *
+     * @param Node $node The block
+     *
+     * @return string|null The lowercase field name, or null when the block is not a field heading
+     *
+     * @throws InvalidInputException When the bold text holds unsupported inline Markdown
+     */
     public static function field(Node $node): ?string
     {
         $child = $node->firstChild();
         return $node instanceof Paragraph && $child instanceof Strong && $child->next() === null ? strtolower(self::text($child)) : null;
     }
 
-    /** @return array{string, string} */
+    /**
+     * Splits a "**name:** value" paragraph.
+     *
+     * @param Paragraph $node The paragraph
+     *
+     * @return array{string, string} The name and the trimmed value
+     *
+     * @throws InvalidInputException When the paragraph does not start with a bold name and a colon
+     */
     public static function pair(Paragraph $node): array
     {
         $key = $node->firstChild();
@@ -97,6 +153,13 @@ final class Nodes
         return [$label, trim(substr(ltrim($text), 1))];
     }
 
+    /**
+     * Escapes text so Markdown reads it back unchanged.
+     *
+     * @param string $text The text
+     *
+     * @return string The escaped text
+     */
     public static function escape(string $text): string
     {
         $text = preg_replace('/([\\\\`*_\[\]<>&!])/', '\\\\$1', $text) ?? $text;
@@ -104,6 +167,13 @@ final class Nodes
         return preg_replace('/^(\s*[0-9]+)([.)])/m', '$1\\\\$2', $text) ?? $text;
     }
 
+    /**
+     * Writes a link destination, in angle brackets when it contains spaces or brackets.
+     *
+     * @param string $url The destination
+     *
+     * @return string The Markdown destination
+     */
     public static function destination(string $url): string
     {
         if (preg_match('/[<>()\\s]/', $url) !== 1) {
@@ -112,6 +182,13 @@ final class Nodes
         return '<' . str_replace(['<', '>', "\n", "\r", ' '], ['%3C', '%3E', '%0A', '%0D', '%20'], $url) . '>';
     }
 
+    /**
+     * Returns the heading anchor of an item ID.
+     *
+     * @param string $id The item ID
+     *
+     * @return string The lowercase ID without dots
+     */
     public static function anchor(string $id): string
     {
         return strtolower(str_replace('.', '', $id));

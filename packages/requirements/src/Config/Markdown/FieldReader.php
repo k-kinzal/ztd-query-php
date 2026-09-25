@@ -7,7 +7,6 @@ namespace Requirements\Config\Markdown;
 use League\CommonMark\Extension\CommonMark\Node\Block\BlockQuote;
 use League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Image;
-use League\CommonMark\Extension\CommonMark\Node\Inline\Strong;
 use League\CommonMark\Node\Block\Paragraph;
 use League\CommonMark\Node\Inline\Newline;
 use League\CommonMark\Node\Inline\Text;
@@ -15,15 +14,35 @@ use League\CommonMark\Node\Node;
 use Requirements\Input\InvalidInputException;
 use stdClass;
 
-final class Fields
+/**
+ * Reads the value of one bold field section of a card.
+ *
+ * Prose fields are paragraphs; list fields are bullet lists, or "None." for an empty list;
+ * labels may also be a paragraph of badge images. Link targets and label badge images are
+ * kept so that writing the card back reproduces them.
+ */
+final class FieldReader
 {
-    /** @var array<string, string> */
+    /**
+     * @var array<string, string> Link targets of the requirements or related field by linked ID
+     */
     public array $links = [];
 
-    /** @var array<string, string> */
+    /**
+     * @var array<string, string> Badge image URLs of the labels field by label
+     */
     public array $badges = [];
 
-    /** @param list<Node> $nodes */
+    /**
+     * Reads a field value.
+     *
+     * @param string $name The field name
+     * @param list<Node> $nodes The blocks of the section
+     *
+     * @return mixed The value in the shape of the YAML field
+     *
+     * @throws InvalidInputException When the section is empty, has the wrong blocks or names an unknown field
+     */
     public function read(string $name, array $nodes): mixed
     {
         if ($nodes === []) {
@@ -45,13 +64,21 @@ final class Fields
             'requirements', 'related' => $this->references($node),
             'labels' => $this->labels($node),
             'design' => $this->design($node),
-            'metadata' => $this->mapping($node),
+            'metadata' => (new MetadataReader())->read($node),
             default => throw new InvalidInputException("Unknown Markdown field '$name'."),
         };
     }
 
-    /** @param list<Node> $nodes */
-    private function prose(array $nodes): string
+    /**
+     * Reads prose paragraphs, separated by blank lines.
+     *
+     * @param list<Node> $nodes The blocks
+     *
+     * @return string The text
+     *
+     * @throws InvalidInputException When a block is not a paragraph or has unsupported inline Markdown
+     */
+    public function prose(array $nodes): string
     {
         $parts = [];
         foreach ($nodes as $node) {
@@ -63,8 +90,16 @@ final class Fields
         return implode("\n\n", $parts);
     }
 
-    /** @return list<stdClass> */
-    private function evidence(Node $node): array
+    /**
+     * Reads an evidence list of bold selector fields, each followed by one block quotation.
+     *
+     * @param Node $node The list
+     *
+     * @return list<stdClass> The evidence entries
+     *
+     * @throws InvalidInputException When an entry lacks its selector or quotation
+     */
+    public function evidence(Node $node): array
     {
         $result = [];
         foreach (Nodes::items($node) as $item) {
@@ -86,8 +121,16 @@ final class Fields
         return $result;
     }
 
-    /** @return list<stdClass> */
-    private function tests(Node $node): array
+    /**
+     * Reads a tests list of "**runner:** target" entries.
+     *
+     * @param Node $node The list
+     *
+     * @return list<stdClass> The test references
+     *
+     * @throws InvalidInputException When an entry is not a bold runner and a target
+     */
+    public function tests(Node $node): array
     {
         $result = [];
         foreach (Nodes::items($node) as $item) {
@@ -97,8 +140,16 @@ final class Fields
         return $result;
     }
 
-    /** @return list<string> */
-    private function references(Node $node): array
+    /**
+     * Reads a list of links to other items and remembers their targets.
+     *
+     * @param Node $node The list
+     *
+     * @return list<string> The linked item IDs
+     *
+     * @throws InvalidInputException When an entry is not a single link
+     */
+    public function references(Node $node): array
     {
         $result = [];
         foreach (Nodes::items($node) as $item) {
@@ -110,8 +161,16 @@ final class Fields
         return $result;
     }
 
-    /** @return list<string> */
-    private function labels(Node $node): array
+    /**
+     * Reads labels from a bullet list or a paragraph of badge images.
+     *
+     * @param Node $node The list or paragraph
+     *
+     * @return list<string> The labels
+     *
+     * @throws InvalidInputException When the paragraph holds anything but badge images or no labels
+     */
+    public function labels(Node $node): array
     {
         if ($node instanceof ListBlock) {
             return array_map(static fn (Node $item): string => Nodes::text(Nodes::paragraph($item)), Nodes::items($node));
@@ -137,8 +196,16 @@ final class Fields
         return $result;
     }
 
-    /** @return list<stdClass> */
-    private function design(Node $node): array
+    /**
+     * Reads design references: links with optional text, or plain text.
+     *
+     * @param Node $node The list
+     *
+     * @return list<stdClass> The design references
+     *
+     * @throws InvalidInputException When an entry is not a single paragraph
+     */
+    public function design(Node $node): array
     {
         $result = [];
         foreach (Nodes::items($node) as $item) {
@@ -157,61 +224,5 @@ final class Fields
             $result[] = $entry;
         }
         return $result;
-    }
-
-    private function mapping(Node $node): stdClass
-    {
-        $value = $node instanceof Paragraph ? $this->scalar(Nodes::text($node)) : $this->nested($node);
-        if (!$value instanceof stdClass) {
-            throw new InvalidInputException('Metadata must be a list of bold keys and values.');
-        }
-        return $value;
-    }
-
-    /** @return stdClass|list<mixed> */
-    private function nested(Node $node): stdClass|array
-    {
-        $object = new stdClass();
-        $list = [];
-        $mapping = null;
-        foreach (Nodes::items($node) as $item) {
-            $paragraph = $item->firstChild();
-            if (!$paragraph instanceof Paragraph) {
-                throw new InvalidInputException('Expected a metadata key or value.');
-            }
-            $isKey = $paragraph->firstChild() instanceof Strong;
-            $mapping ??= $isKey;
-            if ($mapping !== $isKey) {
-                throw new InvalidInputException('Do not mix mapping keys and sequence values in one metadata list.');
-            }
-            [$key, $text] = $isKey ? Nodes::pair($paragraph) : ['', Nodes::text($paragraph)];
-            $child = $paragraph->next();
-            if ($child !== null) {
-                if (($text !== '' && ($isKey || $text !== '[]')) || $child->next() !== null) {
-                    throw new InvalidInputException('Nested metadata must have an empty parent value and one nested list.');
-                }
-                $value = $this->nested($child);
-            } else {
-                $value = $this->scalar($text);
-            }
-            if ($isKey) {
-                if ($key === '' || property_exists($object, $key)) {
-                    throw new InvalidInputException('Metadata keys must be nonempty and unique.');
-                }
-                $object->{$key} = $value;
-            } else {
-                $list[] = $value;
-            }
-        }
-        return $mapping === true ? $object : $list;
-    }
-
-    private function scalar(string $text): mixed
-    {
-        if ($text === '') {
-            throw new InvalidInputException('Write "" for an empty string or supply a metadata value.');
-        }
-        $value = json_decode($text, false);
-        return json_last_error() === JSON_ERROR_NONE ? $value : $text;
     }
 }
