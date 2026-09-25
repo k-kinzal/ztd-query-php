@@ -3,29 +3,49 @@ deptrac:
   analyser:
     types: [class, use]
   layers:
-    - name: API
+    - name: Core
       collectors:
-        - type: classNameRegex
-          value: '/^SqlFormatter\\Formatter$/'
-    - name: Options
+        - type: classLike
+          value: '^SqlFormatter\\Core\\.*'
+    - name: MySql
       collectors:
-        - type: classNameRegex
-          value: '/^SqlFormatter\\(Style|FormatOptions|FormattingException)$/'
-    - name: Syntax
+        - type: classLike
+          value: '^SqlFormatter\\Platform\\MySql\\.*'
+    - name: PostgreSql
       collectors:
-        - type: directory
-          value: 'src/Syntax/'
-    - name: Layout
+        - type: classLike
+          value: '^SqlFormatter\\Platform\\PostgreSql\\.*'
+    - name: Sqlite
       collectors:
-        - type: directory
-          value: 'src/Layout/'
-    - name: Parser
+        - type: classLike
+          value: '^SqlFormatter\\Platform\\Sqlite\\.*'
+    - name: Facade
       collectors:
-        - type: classNameRegex
-          value: '/^SqlParser\\/'
+        - type: classLike
+          value: '^SqlFormatter\\Facade\\.*'
+    - name: ParserCore
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\(Parser|Lexer)\\.*'
+    - name: ParserMySql
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\MySql\\.*'
+    - name: ParserPostgreSql
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\PostgreSql\\.*'
+    - name: ParserSqlite
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\Sqlite\\.*'
   ruleset:
-    API: [Options, Syntax, Layout, Parser]
-    Options: []
-    Syntax: [Parser]
-    Layout: [Options, Syntax, Parser]
-    Parser: []
+    Core: [ParserCore]
+    MySql: [Core, ParserCore]
+    PostgreSql: [Core, ParserCore]
+    Sqlite: [Core, ParserCore]
+    Facade: [Core, MySql, PostgreSql, Sqlite, ParserCore, ParserMySql, ParserPostgreSql, ParserSqlite]
+    ParserCore: []
+    ParserMySql: []
+    ParserPostgreSql: []
+    ParserSqlite: []

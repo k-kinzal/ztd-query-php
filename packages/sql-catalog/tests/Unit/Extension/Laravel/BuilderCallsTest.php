@@ -7,29 +7,29 @@ namespace Tests\Unit\Extension\Laravel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Analysis\FunctionScope;
-use SqlCatalog\Analysis\Interpreter;
-use SqlCatalog\Evaluation\ArrayEntry;
-use SqlCatalog\Evaluation\ArrayTerm;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\Environment;
-use SqlCatalog\Evaluation\LiteralTerm;
-use SqlCatalog\Evaluation\ObjectMemory;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Evaluation\OpaqueTerm;
-use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Core\Analysis\FunctionScope;
+use SqlCatalog\Core\Analysis\Interpreter;
+use SqlCatalog\Core\Evaluation\ArrayEntry;
+use SqlCatalog\Core\Evaluation\ArrayTerm;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\Environment;
+use SqlCatalog\Core\Evaluation\LiteralTerm;
+use SqlCatalog\Core\Evaluation\ObjectMemory;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Evaluation\OpaqueTerm;
+use SqlCatalog\Core\Evaluation\PatternTerm;
+use SqlCatalog\Core\Php\ProgramIndex;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\TextGeneralization;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Extension\Laravel\BuilderCalls;
 use SqlCatalog\Extension\Laravel\Clauses;
 use SqlCatalog\Extension\Laravel\Grammar;
 use SqlCatalog\Extension\Laravel\ModelMetadata;
 use SqlCatalog\Extension\Laravel\Predicates;
 use SqlCatalog\Extension\Laravel\QueryState;
-use SqlCatalog\Php\ProgramIndex;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\TextGeneralization;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(BuilderCalls::class)]
 #[UsesClass(Domain::class)]
@@ -54,35 +54,35 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(ObjectMemory::class)]
 #[UsesClass(Interpreter::class)]
 #[UsesClass(FunctionScope::class)]
-#[UsesClass(\SqlCatalog\Analysis\CallEvaluator::class)]
-#[UsesClass(\SqlCatalog\Analysis\ConstantReader::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\CalleeReturns::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\CallerIndex::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Callers::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Deriver::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\EntryBinder::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\FreeNames::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\ModifiedNames::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\PropertyWrites::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\SliceExecutor::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\AssignmentSteps::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\LoopPasses::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
-#[UsesClass(\SqlCatalog\Analysis\EvaluationBudget::class)]
-#[UsesClass(\SqlCatalog\Analysis\ExpressionEvaluator::class)]
-#[UsesClass(\SqlCatalog\Analysis\ReferenceEvaluator::class)]
-#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
-#[UsesClass(\SqlCatalog\Analysis\SinkMatcher::class)]
-#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
-#[UsesClass(\SqlCatalog\Php\NodeText::class)]
-#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
-#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\CallEvaluator::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ConstantReader::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\CalleeReturns::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\CallerIndex::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Callers::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Deriver::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\EntryBinder::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\FreeNames::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\ModifiedNames::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\PropertyWrites::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\SliceExecutor::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\AssignmentSteps::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\BackwardSlicer::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\LoopPasses::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\SourceTree::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\EvaluationBudget::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ExpressionEvaluator::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ReferenceEvaluator::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\SinkFinder::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\SinkMatcher::class)]
+#[UsesClass(\SqlCatalog\Core\Php\DeclaredGlobals::class)]
+#[UsesClass(\SqlCatalog\Core\Php\NodeText::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\FunctionModel\Registry::class)]
 final class BuilderCallsTest extends TestCase
 {
     public function testIsBuilderRecognizesSourceDeclaredModelsAndBothBuilderContracts(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         self::assertTrue($calls->isBuilder(BuilderCalls::QUERY));
         self::assertTrue($calls->isBuilder(ModelMetadata::BUILDER));
         self::assertTrue($calls->isBuilder(ModelMetadata::MODEL));
@@ -91,7 +91,7 @@ final class BuilderCallsTest extends TestCase
 
     public function testStaticCallCreatesFacadeQueriesAndDoesNotModelUnrelatedStatics(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex(), 'sqlite');
+        $calls = new BuilderCalls(new ProgramIndex(), 'sqlite', dialects: \SqlCatalog\Facade\Builtins::dialects());
         $env = new Environment();
         $value = $calls->staticCall(BuilderCalls::FACADE, 'table', [Domain::literal('users')], $env);
         self::assertNotNull($value?->soleObject());
@@ -102,7 +102,7 @@ final class BuilderCallsTest extends TestCase
 
     public function testMethodCallMutatesTheExistingIdentityAndLeavesOtherClassesAlone(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $env = new Environment();
         $query = $calls->allocate(BuilderCalls::QUERY, new QueryState(['dialect' => Domain::literal('sqlite')]));
         $result = $calls->methodCall(Domain::of($query), 'where', [Domain::literal('id'), Domain::literal(1)], $env)?->soleObject();
@@ -117,13 +117,13 @@ final class BuilderCallsTest extends TestCase
     public function testCallbackReturnsNullWithoutARegisteredRunner(): void
     {
         $index = new ProgramIndex();
-        $calls = new BuilderCalls($index);
+        $calls = new BuilderCalls($index, dialects: \SqlCatalog\Facade\Builtins::dialects());
         self::assertNull($calls->callback(new \PhpParser\Node\Expr\MethodCall(new \PhpParser\Node\Expr\Variable('q'), 'where'), new ObjectTerm(BuilderCalls::QUERY), 'where', [], new Environment(), new FunctionScope('test.php'), (new Interpreter($index, []))->evaluatorFor()));
     }
 
     public function testIsConnectionRecognizesConcreteGrammarContracts(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         self::assertTrue($calls->isConnection('Illuminate\Database\MySqlConnection'));
         self::assertTrue($calls->isConnection(BuilderCalls::CONNECTION));
         self::assertFalse($calls->isConnection('Unknown'));
@@ -131,16 +131,16 @@ final class BuilderCallsTest extends TestCase
 
     public function testConnectionDialectUsesConcreteConnectionsBeforeTheFallback(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex(), 'mysql');
+        $calls = new BuilderCalls(new ProgramIndex(), 'mysql', dialects: \SqlCatalog\Facade\Builtins::dialects());
         self::assertSame('sqlite', $calls->connectionDialect('Illuminate\Database\SQLiteConnection'));
         self::assertSame('pgsql', $calls->connectionDialect('Illuminate\Database\PostgresConnection'));
         self::assertSame('mysql', $calls->connectionDialect(BuilderCalls::CONNECTION));
-        self::assertNull((new BuilderCalls(new ProgramIndex()))->connectionDialect(null));
+        self::assertNull((new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects()))->connectionDialect(null));
     }
 
     public function testConnectionCallAllocatesIndependentQueriesAndExplicitRawExpressions(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $state = new QueryState(['dialect' => Domain::literal('pgsql')]);
         $env = new Environment();
         $a = $calls->connectionCall('table', [Domain::literal('users')], $state, $env)?->soleObject();
@@ -153,13 +153,13 @@ final class BuilderCallsTest extends TestCase
 
     public function testAllocateNeverReusesAnIdentityForTheSameState(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         self::assertNotSame($calls->allocate(BuilderCalls::QUERY, new QueryState())->identity, $calls->allocate(BuilderCalls::QUERY, new QueryState())->identity);
     }
 
     public function testMutateRetainsEarlierUnknownEffects(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $object = $calls->allocate(BuilderCalls::QUERY, new QueryState(['dialect' => Domain::literal('sqlite')]));
         $env = new Environment();
         $unknown = $calls->mutate($object, 'macro', [], $env)->soleObject();
@@ -172,7 +172,7 @@ final class BuilderCallsTest extends TestCase
 
     public function testPositionalRejectsNamedAndUnpackedArguments(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $value = new \PhpParser\Node\Scalar\String_('id');
         self::assertTrue($calls->positional([new \PhpParser\Node\Arg($value)]));
         self::assertFalse($calls->positional([new \PhpParser\Node\Arg($value, name: new \PhpParser\Node\Identifier('column'))]));
@@ -181,7 +181,7 @@ final class BuilderCallsTest extends TestCase
 
     public function testUnsupportedInvalidatesAliasesWithoutLosingTheirIdentity(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $object = $calls->allocate(BuilderCalls::QUERY, new QueryState());
         $env = new Environment(['alias' => Domain::of($object)]);
         $calls->unsupported(Domain::of($object), $env, 'unknown mutation');
@@ -193,7 +193,7 @@ final class BuilderCallsTest extends TestCase
 
     public function testExecutionPreservesFirstLimitAndReturnsACollectionForGet(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $object = $calls->allocate(BuilderCalls::QUERY, new QueryState());
         $env = new Environment(['q' => Domain::of($object)]);
         $calls->execution(Domain::of($object), 'first', [], $env);
@@ -206,7 +206,7 @@ final class BuilderCallsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerExecutionTypes')]
     public function testExecutionReturnsTheFrameworkTypeWithoutInventingAnotherQuery(string $method, string $type): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $object = $calls->allocate(BuilderCalls::QUERY, new QueryState(['key' => Domain::literal('id'), 'dialect' => Domain::literal('sqlite')]));
         $result = $calls->execution(Domain::of($object), $method, [Domain::literal(7)], new Environment());
         self::assertSame([$type], $result->type()->names);
@@ -233,7 +233,7 @@ final class BuilderCallsTest extends TestCase
 
     public function testExecutionFindRetainsItsPredicateAndTheModelReturnType(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $object = $calls->allocate(ModelMetadata::BUILDER, new QueryState(['key' => Domain::literal('users.id'), 'model' => Domain::literal('App\User'), 'dialect' => Domain::literal('sqlite')]));
         $env = new Environment(['q' => Domain::of($object)]);
         $result = $calls->execution(Domain::of($object), 'find', [Domain::literal(7)], $env);
@@ -246,7 +246,7 @@ final class BuilderCallsTest extends TestCase
 
     public function testMutateOnlyChangesSoftDeleteModesForModelsUsingTheTrait(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $object = $calls->allocate(ModelMetadata::BUILDER, new QueryState(['softDeletes' => Domain::literal(true)]));
         $env = new Environment();
         $with = $calls->mutate($object, 'withtrashed', [], $env)->soleObject();
@@ -263,7 +263,7 @@ final class BuilderCallsTest extends TestCase
 
     public function testConnectionCallPreservesRawSqlAndAnExplicitConnectionName(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex(), 'mysql');
+        $calls = new BuilderCalls(new ProgramIndex(), 'mysql', dialects: \SqlCatalog\Facade\Builtins::dialects());
         $env = new Environment();
         $raw = $calls->connectionCall('raw', [Domain::literal('count(*)')], new QueryState(), $env)?->soleObject();
         self::assertNotNull($raw);
@@ -274,7 +274,7 @@ final class BuilderCallsTest extends TestCase
 
     public function testMutateNamesTheUnmodelledOperationInItsDiagnostic(): void
     {
-        $calls = new BuilderCalls(new ProgramIndex());
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $object = $calls->allocate(BuilderCalls::QUERY, new QueryState());
         $updated = $calls->mutate($object, 'customFilter', [], new Environment())->soleObject();
         self::assertNotNull($updated);

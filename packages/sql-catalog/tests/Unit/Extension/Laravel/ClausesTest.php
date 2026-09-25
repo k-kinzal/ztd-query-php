@@ -7,21 +7,21 @@ namespace Tests\Unit\Extension\Laravel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Evaluation\ArrayEntry;
-use SqlCatalog\Evaluation\ArrayTerm;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\LiteralTerm;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Evaluation\OpaqueTerm;
-use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Core\Evaluation\ArrayEntry;
+use SqlCatalog\Core\Evaluation\ArrayTerm;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\LiteralTerm;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Evaluation\OpaqueTerm;
+use SqlCatalog\Core\Evaluation\PatternTerm;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\TextGeneralization;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Extension\Laravel\Clauses;
 use SqlCatalog\Extension\Laravel\Grammar;
 use SqlCatalog\Extension\Laravel\QueryState;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\TextGeneralization;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(Clauses::class)]
 #[UsesClass(Domain::class)]
@@ -42,7 +42,7 @@ final class ClausesTest extends TestCase
 {
     public function testApplyDispatchesModifiersAndRejectsUnknownOperations(): void
     {
-        $c = new Clauses(new Grammar('sqlite'));
+        $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         self::assertTrue($c->apply(new QueryState(), 'distinct', [])?->get('distinct')->soleLiteral()?->value);
         self::assertFalse($c->apply(new QueryState(), 'distinct', [Domain::literal(true)])?->get('problem')->isExact());
         self::assertNull($c->apply(new QueryState(), 'macro', []));
@@ -51,7 +51,7 @@ final class ClausesTest extends TestCase
 
     public function testSelectResetsBindingsAndAddSelectDeduplicatesColumns(): void
     {
-        $c = new Clauses(new Grammar('sqlite'));
+        $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         $state = $c->raw(new QueryState(), [Domain::literal('? as x'), QueryState::list([Domain::literal(1)])], 'columns', 'selectBindings');
         $state = $c->select($state, [Domain::literal('id')]);
         $state = $c->select($state, [Domain::literal('id'), Domain::literal('name')], true);
@@ -62,7 +62,7 @@ final class ClausesTest extends TestCase
 
     public function testColumnsRequiresCompletePositionalArrays(): void
     {
-        $c = new Clauses(new Grammar('sqlite'));
+        $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         $id = Domain::literal('id');
         self::assertSame([$id], $c->columns([QueryState::list([$id])]));
         self::assertNull($c->columns([Domain::of(new ArrayTerm([], false))]));
@@ -71,7 +71,7 @@ final class ClausesTest extends TestCase
 
     public function testRawKeepsBindingsInTheirComponent(): void
     {
-        $c = new Clauses(new Grammar('sqlite'));
+        $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         $state = $c->raw(new QueryState(), [Domain::literal('id + ?'), QueryState::list([Domain::literal(2)])], 'orders', 'orderBindings');
         self::assertSame(2, $state->items('orderBindings')[0]->soleLiteral()?->value);
         self::assertSame('id + ?', $state->items('orders')[0]->soleLiteral()?->value);
@@ -80,7 +80,7 @@ final class ClausesTest extends TestCase
 
     public function testOrderValidatesDirectionAndHonorsDescending(): void
     {
-        $c = new Clauses(new Grammar('mysql'));
+        $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('mysql')));
         self::assertSame('`id` desc', $c->order(new QueryState(), [Domain::literal('id')], true)->items('orders')[0]->soleLiteral()?->value);
         self::assertSame('`id` asc', $c->order(new QueryState(), [Domain::literal('id'), Domain::literal('ASC')], false)->items('orders')[0]->soleLiteral()?->value);
         self::assertFalse($c->order(new QueryState(), [Domain::literal('id'), Domain::literal('random')], false)->get('problem')->isExact());
@@ -88,14 +88,14 @@ final class ClausesTest extends TestCase
 
     public function testGroupAppendsIdentifiersAndRetainsUnknownColumns(): void
     {
-        $c = new Clauses(new Grammar('sqlite'));
+        $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         self::assertSame('"team"', $c->group(new QueryState(), [Domain::literal('team')])->items('groups')[0]->soleLiteral()?->value);
         self::assertFalse($c->group(new QueryState(), [Domain::of(new ArrayTerm([], false))])->get('problem')->isExact());
     }
 
     public function testNumberRejectsUnknownAndNegativeLimits(): void
     {
-        $c = new Clauses(new Grammar('sqlite'));
+        $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         self::assertSame(0, $c->number(new QueryState(), [Domain::literal(0)], 'limit')->get('limit')->soleLiteral()?->value);
         self::assertFalse($c->number(new QueryState(), [Domain::literal(-1)], 'limit')->get('problem')->isExact());
         self::assertFalse($c->number(new QueryState(), [Domain::unknown()], 'limit')->get('problem')->isExact());
@@ -103,7 +103,7 @@ final class ClausesTest extends TestCase
 
     public function testJoinQuotesBothColumnOperandsWithoutBindings(): void
     {
-        $c = new Clauses(new Grammar('sqlite'));
+        $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         $state = $c->join(new QueryState(), array_map(Domain::literal(...), ['posts as p', 'p.user_id', '=', 'u.id']), 'leftjoin');
         self::assertSame('left join "posts" as "p" on "p"."user_id" = "u"."id"', $state->items('joins')[0]->soleLiteral()?->value);
         self::assertFalse($c->join(new QueryState(), [], 'join')->get('problem')->isExact());
@@ -116,7 +116,7 @@ final class ClausesTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerClauseDispatch')]
     public function testApplySelectsTheCorrectClause(string $method, array $arguments, string $field, string|int $expected): void
     {
-        $state = (new Clauses(new Grammar('sqlite')))->apply(new QueryState(), $method, array_map(Domain::literal(...), $arguments));
+        $state = (new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite'))))->apply(new QueryState(), $method, array_map(Domain::literal(...), $arguments));
         self::assertNotNull($state);
         $value = $state->get($field);
         self::assertSame($expected, ($value->soleArray()?->positional()[0] ?? $value)->soleLiteral()?->value);

@@ -8,17 +8,17 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\TextPattern;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\TextPattern;
 
 #[CoversClass(ReportSite::class)]
 #[UsesClass(CallSite::class)]
@@ -40,7 +40,7 @@ final class ReportSiteTest extends TestCase
             new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
 
-        self::assertSame(['a', 'b'], array_column((new ReportSite($catalog))->catalog()->entries(), 'id'));
+        self::assertSame(['a', 'b'], array_column((new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->catalog()->entries(), 'id'));
     }
 
     public function testIndexGroupsTheCatalog(): void
@@ -49,7 +49,7 @@ final class ReportSiteTest extends TestCase
             new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
 
-        self::assertSame(['users'], array_keys((new ReportSite($catalog))->index()->byTable()));
+        self::assertSame(['users'], array_keys((new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->index()->byTable()));
     }
 
     public function testStatisticsCountTheCatalog(): void
@@ -58,20 +58,20 @@ final class ReportSiteTest extends TestCase
             new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
 
-        self::assertSame(1, (new ReportSite($catalog))->statistics()->statements());
+        self::assertSame(1, (new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->statistics()->statements());
     }
 
     public function testPagesForKeepsNamesApartWhenTheySlugAlike(): void
     {
         self::assertSame(
             ['wp_posts' => 'tables/wp-posts.html', 'wp-posts' => 'tables/wp-posts-2.html', '' => 'tables/unnamed.html'],
-            (new ReportSite(new Catalog()))->pagesFor(['wp_posts', 'wp-posts', ''], 'tables/'),
+            (new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->pagesFor(['wp_posts', 'wp-posts', ''], 'tables/'),
         );
     }
 
     public function testStatementPageIsNamedAfterTheIdentifier(): void
     {
-        self::assertSame('statements/abc123.html', (new ReportSite(new Catalog()))->statementPage('abc123'));
+        self::assertSame('statements/abc123.html', (new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->statementPage('abc123'));
     }
 
     public function testTablePageFallsBackToTheListingForAnUnknownTable(): void
@@ -79,7 +79,7 @@ final class ReportSiteTest extends TestCase
         $catalog = new Catalog([
             new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['app.users'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame('tables/app-users.html', $site->tablePage('app.users'));
         self::assertSame('tables.html', $site->tablePage('none'));
@@ -90,7 +90,7 @@ final class ReportSiteTest extends TestCase
         $catalog = new Catalog([
             new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'App\\Users::find', 'pdo.query'), []),
         ]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame('classes/app-users.html', $site->classPage('App\\Users'));
         self::assertSame('namespaces.html', $site->classPage('None'));
@@ -101,7 +101,7 @@ final class ReportSiteTest extends TestCase
         $catalog = new Catalog([
             new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('src/a.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame('files/src-a-php.html', $site->filePage('src/a.php'));
         self::assertSame('files.html', $site->filePage('none.php'));
@@ -109,14 +109,14 @@ final class ReportSiteTest extends TestCase
 
     public function testFunctionAnchorIsWhatAFunctionsStatementsAreGroupedUnder(): void
     {
-        self::assertSame('fn-app-users-find', (new ReportSite(new Catalog()))->functionAnchor('\\App\\Users::find'));
+        self::assertSame('fn-app-users-find', (new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->functionAnchor('\\App\\Users::find'));
     }
 
     public function testFunctionUrlLeadsToTheClassPageForAMethodAndTheFilePageOtherwise(): void
     {
         $method = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('src/a.php', 1, 'App\\Users::find', 'pdo.query'), []);
         $function = new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('src/b.php', 1, 'helper', 'pdo.query'), []);
-        $site = new ReportSite(new Catalog([$method, $function]));
+        $site = new ReportSite(new Catalog([$method, $function]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame('classes/app-users.html#fn-app-users-find', $site->functionUrl($method));
         self::assertSame('files/src-b-php.html#fn-helper', $site->functionUrl($function));
@@ -129,7 +129,7 @@ final class ReportSiteTest extends TestCase
             new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), ['posts'], [], new CallSite('a.php', 2, 'f', 'pdo.query'), []),
         ]);
 
-        self::assertSame(['posts', 'users'], (new ReportSite($catalog))->tables());
+        self::assertSame(['posts', 'users'], (new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->tables());
     }
 
     public function testClassesAreInNameOrder(): void
@@ -139,7 +139,7 @@ final class ReportSiteTest extends TestCase
             new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 2, 'A::f', 'pdo.query'), []),
         ]);
 
-        self::assertSame(['A', 'B'], (new ReportSite($catalog))->classes());
+        self::assertSame(['A', 'B'], (new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->classes());
     }
 
     public function testFilesAreInPathOrder(): void
@@ -149,7 +149,7 @@ final class ReportSiteTest extends TestCase
             new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
 
-        self::assertSame(['a.php', 'b.php'], (new ReportSite($catalog))->files());
+        self::assertSame(['a.php', 'b.php'], (new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->files());
     }
 
     /**
@@ -163,6 +163,6 @@ final class ReportSiteTest extends TestCase
     #[DataProvider('providerPrefixOf')]
     public function testPrefixOfIsWhatALinkFromThatPageGoesThrough(string $page, string $expected): void
     {
-        self::assertSame($expected, (new ReportSite(new Catalog()))->prefixOf($page));
+        self::assertSame($expected, (new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->prefixOf($page));
     }
 }

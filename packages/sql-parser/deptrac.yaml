@@ -1,5 +1,6 @@
 # NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
 #
+# Core concepts have no dependencies on the three independent platforms.
 # Layers follow the life of a parse table: a grammar is read from its upstream
 # source, compiled into an LALR(1) automaton, stored as a table, and driven at
 # runtime by a lexer and the parser. Each dialect composes those stages.

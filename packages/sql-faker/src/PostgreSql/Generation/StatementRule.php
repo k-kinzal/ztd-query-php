@@ -12,8 +12,6 @@ namespace SqlFaker\PostgreSql\Generation;
  * @visibility public
  * @example Enumerate the supported statement choices
  *     array_column(\SqlFaker\PostgreSql\Generation\StatementRule::cases(), 'name') // => ['Select', 'Insert', 'Update', 'Delete', 'CreateTable', 'CreateTableAs', 'CreateDomain', 'AlterTable', 'DropTable', 'SimpleStatement']
- * @example Use the existing StatementType alias
- *     \SqlFaker\PostgreSql\StatementType::Select === \SqlFaker\PostgreSql\Generation\StatementRule::Select // => true
  */
 enum StatementRule: string
 {

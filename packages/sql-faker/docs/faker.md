@@ -10,8 +10,8 @@ Create a Faker instance and register a provider. The following Common examples u
 
 ```php
 use Faker\Factory;
-use SqlFaker\MySqlProvider;
-use SqlFaker\MySql\StatementType;
+use SqlFaker\MySql\MySqlProvider;
+use SqlFaker\MySql\Generation\StatementRule;
 
 require 'vendor/autoload.php';
 
@@ -34,10 +34,10 @@ $update = $faker->updateStatement(maxDepth: 6);
 $delete = $faker->deleteStatement(maxDepth: 6);
 ```
 
-Pass the dialect's `StatementType` to `sql()` when the statement choice is stored in a variable. `StatementRule` is another name for the same enum. Calling the provider directly uses the same generation behavior.
+Pass the dialect's `StatementRule` to `sql()` when the statement choice is stored in a variable. Calling the provider directly uses the same generation behavior.
 
 ```php
-$type = StatementType::Select;
+$type = StatementRule::Select;
 $sql = $faker->sql($type, maxDepth: 6);
 $direct = $provider->sql($type, maxDepth: 6);
 $any = $faker->sql(maxDepth: 6);
@@ -105,7 +105,7 @@ Other Faker calls consume random values too, so preserve their order when replay
 Call `generate()` directly on the provider to use a [generation plan](plan.md):
 
 ```php
-$plan = \SqlFaker\Generation\Plan\GenerationPlan::fromRule(StatementType::Select->value)
+$plan = \SqlFaker\Generation\Plan\GenerationPlan::fromRule(StatementRule::Select->value)
     ->requiringNonEmpty()
     ->withMaxDepth(6)
     ->withExpansionBudget(100);
@@ -123,10 +123,10 @@ Use an exact tag from the README's [version table](../README.md#mysql). The defa
 
 ```php
 $mysqlFaker = \Faker\Factory::create();
-$mysql = new \SqlFaker\MySqlProvider($mysqlFaker, 'mysql-8.4.7');
+$mysql = new \SqlFaker\MySql\MySqlProvider($mysqlFaker, 'mysql-8.4.7');
 $mysqlFaker->seed(7);
 
-$sql = $mysql->sql(\SqlFaker\MySql\StatementType::Insert, maxDepth: 6);
+$sql = $mysql->sql(\SqlFaker\MySql\Generation\StatementRule::Insert, maxDepth: 6);
 ```
 
 The first argument to MySQL's `sql()` is named `startRule`. With no type, it starts from the selected grammar's entry point. Explicit statement rules have aliases for older versions; some older aliases cover a broader statement family.
@@ -152,7 +152,7 @@ Use `sqlWithoutEmptyRows()` when every generated row-value list must contain a v
 
 ```php
 $sql = $mysql->sqlWithoutEmptyRows(
-    \SqlFaker\MySql\StatementType::Insert,
+    \SqlFaker\MySql\Generation\StatementRule::Insert,
     maxDepth: 6,
 );
 ```
@@ -176,10 +176,10 @@ The default version is `pg-17.2`. PostgreSQL names the first `sql()` argument `t
 
 ```php
 $pgFaker = \Faker\Factory::create();
-$postgres = new \SqlFaker\PostgreSqlProvider($pgFaker, 'pg-17.2');
+$postgres = new \SqlFaker\PostgreSql\PostgreSqlProvider($pgFaker, 'pg-17.2');
 $pgFaker->seed(7);
 
-$sql = $postgres->sql(type: \SqlFaker\PostgreSql\StatementType::Select, maxDepth: 6);
+$sql = $postgres->sql(type: \SqlFaker\PostgreSql\Generation\StatementRule::Select, maxDepth: 6);
 $createAs = $postgres->createTableAsStatement(maxDepth: 6);
 ```
 
@@ -216,10 +216,10 @@ The default version is `sqlite-3.47.2`. SQLite names the first `sql()` argument 
 
 ```php
 $sqliteFaker = \Faker\Factory::create();
-$sqlite = new \SqlFaker\SqliteProvider($sqliteFaker, 'sqlite-3.47.2');
+$sqlite = new \SqlFaker\Sqlite\SqliteProvider($sqliteFaker, 'sqlite-3.47.2');
 $sqliteFaker->seed(7);
 
-$sql = $sqlite->sql(type: \SqlFaker\Sqlite\StatementType::Select, maxDepth: 6);
+$sql = $sqlite->sql(type: \SqlFaker\Sqlite\Generation\StatementRule::Select, maxDepth: 6);
 ```
 
 The SELECT family also includes VALUES, and the INSERT family can include REPLACE.

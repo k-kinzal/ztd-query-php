@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html\Page;
 
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Placeholder;
-use SqlCatalog\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Placeholder;
+use SqlCatalog\Core\Catalog\Resolution;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\Palette;
 use SqlCatalog\Reporter\Html\ReportSite;
@@ -78,7 +78,7 @@ final class StatementPage
         return '<h1>' . $this->text->chip(strtoupper($entry->kind->value), $this->palette->kind($entry->kind->value))
             . '<span>' . $this->text->escape($this->title($entry)) . '</span></h1>'
             . '<p class="lede">' . $this->where($site, $entry) . '</p>'
-            . $this->body($entry)
+            . $this->body($entry, $site->formatter)
             . $this->caveats($entry)
             . (new SourceCode($this->text))->excerpt($site, $entry)
             . ($entry->placeholders === []
@@ -131,7 +131,7 @@ final class StatementPage
      * The copy button takes what the block shows, so what is copied is what
      * was read: expanded SQL, with named gaps where PHP variables are known.
      */
-    public function body(CatalogEntry $entry): string
+    public function body(CatalogEntry $entry, ?SqlFormatter $formatter = null): string
     {
         if ($entry->resolution() === Resolution::NotAnalyzed) {
             $written = $entry->firstGap()?->expression;
@@ -142,7 +142,7 @@ final class StatementPage
 
         return '<div class="code-block">'
             . '<button type="button" class="btn copy" data-dd-copy title="Copy the statement">Copy</button>'
-            . '<pre class="code code-lead">' . $this->sql->render($this->formatter->format($entry->parts())) . '</pre>'
+            . '<pre class="code code-lead">' . $this->sql->render(($formatter ?? $this->formatter)->format($entry->parts())) . '</pre>'
             . '<details class="as-written"><summary>As written in the source</summary><pre class="code">'
             . $this->sql->render($entry->parts()) . '</pre></details></div>';
     }

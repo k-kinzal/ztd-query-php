@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html\Page;
 
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Resolution;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\Palette;
 use SqlCatalog\Reporter\Html\ReportSite;

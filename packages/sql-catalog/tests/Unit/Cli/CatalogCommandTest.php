@@ -7,10 +7,6 @@ namespace Tests\Unit\Cli;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\AnalysisOptions;
-use SqlCatalog\Analyzer;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\Severity;
 use SqlCatalog\Cli\ArtifactWriter;
 use SqlCatalog\Cli\CatalogCommand;
 use SqlCatalog\Cli\CommandLine;
@@ -19,11 +15,15 @@ use SqlCatalog\Cli\CommandResult;
 use SqlCatalog\Cli\ExitCode;
 use SqlCatalog\Cli\InvalidCommandLineException;
 use SqlCatalog\Cli\UsageText;
-use SqlCatalog\Filter\CatalogFilter;
-use SqlCatalog\Reporter\CatalogArtifacts;
-use SqlCatalog\Reporter\JsonReporter;
-use SqlCatalog\Reporter\ReporterRegistry;
-use SqlCatalog\Reporter\TextReporter;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Filter\CatalogFilter;
+use SqlCatalog\Core\Reporter\CatalogArtifacts;
+use SqlCatalog\Core\Reporter\ReporterRegistry;
+use SqlCatalog\Facade\AnalysisOptions;
+use SqlCatalog\Facade\Analyzer;
+use SqlCatalog\Reporter\Json\JsonReporter;
+use SqlCatalog\Reporter\Text\TextReporter;
 
 #[CoversClass(CatalogCommand::class)]
 #[UsesClass(AnalysisOptions::class)]
@@ -39,96 +39,96 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(JsonReporter::class)]
 #[UsesClass(ReporterRegistry::class)]
 #[UsesClass(TextReporter::class)]
-#[UsesClass(\SqlCatalog\Analysis\CallEvaluator::class)]
-#[UsesClass(\SqlCatalog\Analysis\EntryFactory::class)]
-#[UsesClass(\SqlCatalog\Analysis\EvaluationBudget::class)]
-#[UsesClass(\SqlCatalog\Analysis\ExpressionEvaluator::class)]
-#[UsesClass(\SqlCatalog\Analysis\ExternalInput::class)]
-#[UsesClass(\SqlCatalog\Analysis\FunctionScope::class)]
-#[UsesClass(\SqlCatalog\Analysis\Interpreter::class)]
-#[UsesClass(\SqlCatalog\Analysis\QueryRecord::class)]
-#[UsesClass(\SqlCatalog\Analysis\ReferenceEvaluator::class)]
-#[UsesClass(\SqlCatalog\Analysis\SinkMatcher::class)]
-#[UsesClass(\SqlCatalog\Analysis\StatementRecorder::class)]
-#[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
-#[UsesClass(\SqlCatalog\Catalog\CallSite::class)]
-#[UsesClass(\SqlCatalog\Catalog\CatalogEntry::class)]
-#[UsesClass(\SqlCatalog\Catalog\EntryIdentity::class)]
-#[UsesClass(\SqlCatalog\Catalog\Finding::class)]
-#[UsesClass(\SqlCatalog\Catalog\FindingRule::class)]
-#[UsesClass(\SqlCatalog\Catalog\Placeholder::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\CallEvaluator::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\EntryFactory::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\EvaluationBudget::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ExpressionEvaluator::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ExternalInput::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\FunctionScope::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Interpreter::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\QueryRecord::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ReferenceEvaluator::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\SinkMatcher::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\StatementRecorder::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ValueBinder::class)]
+#[UsesClass(\SqlCatalog\Core\Catalog\CallSite::class)]
+#[UsesClass(\SqlCatalog\Core\Catalog\CatalogEntry::class)]
+#[UsesClass(\SqlCatalog\Core\Catalog\EntryIdentity::class)]
+#[UsesClass(\SqlCatalog\Core\Catalog\Finding::class)]
+#[UsesClass(\SqlCatalog\Core\Catalog\FindingRule::class)]
+#[UsesClass(\SqlCatalog\Core\Catalog\Placeholder::class)]
 #[UsesClass(Severity::class)]
-#[UsesClass(\SqlCatalog\Catalog\ValueDomain::class)]
+#[UsesClass(\SqlCatalog\Core\Catalog\ValueDomain::class)]
 #[UsesClass(InvalidCommandLineException::class)]
-#[UsesClass(\SqlCatalog\Evaluation\ArrayEntry::class)]
-#[UsesClass(\SqlCatalog\Evaluation\ArrayTerm::class)]
-#[UsesClass(\SqlCatalog\Evaluation\Domain::class)]
-#[UsesClass(\SqlCatalog\Evaluation\Environment::class)]
-#[UsesClass(\SqlCatalog\Evaluation\LiteralTerm::class)]
-#[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
-#[UsesClass(\SqlCatalog\Evaluation\OpaqueTerm::class)]
-#[UsesClass(\SqlCatalog\Evaluation\PatternTerm::class)]
-#[UsesClass(\SqlCatalog\Extension\DoctrineExtension::class)]
-#[UsesClass(\SqlCatalog\Extension\ExtensionRegistry::class)]
-#[UsesClass(\SqlCatalog\Extension\LaravelExtension::class)]
-#[UsesClass(\SqlCatalog\Extension\MysqliExtension::class)]
-#[UsesClass(\SqlCatalog\Extension\PdoExtension::class)]
-#[UsesClass(\SqlCatalog\Extension\SinkSpec::class)]
-#[UsesClass(\SqlCatalog\Php\FunctionShape::class)]
-#[UsesClass(\SqlCatalog\Php\NodeText::class)]
-#[UsesClass(\SqlCatalog\Php\ParameterShape::class)]
-#[UsesClass(\SqlCatalog\Php\ParsedFile::class)]
-#[UsesClass(\SqlCatalog\Php\ProgramIndex::class)]
-#[UsesClass(\SqlCatalog\Php\ProgramIndexBuilder::class)]
-#[UsesClass(\SqlCatalog\Php\SourceParser::class)]
-#[UsesClass(\SqlCatalog\Php\TypeReader::class)]
-#[UsesClass(\SqlCatalog\Reporter\HtmlReporter::class)]
-#[UsesClass(\SqlCatalog\Source\SourceFile::class)]
-#[UsesClass(\SqlCatalog\Source\SourceScanner::class)]
-#[UsesClass(\SqlCatalog\Sql\PlaceholderRef::class)]
-#[UsesClass(\SqlCatalog\Sql\PlaceholderScanner::class)]
-#[UsesClass(\SqlCatalog\Sql\SqlLexer::class)]
-#[UsesClass(\SqlCatalog\Sql\SqlToken::class)]
-#[UsesClass(\SqlCatalog\Sql\StatementKindReader::class)]
-#[UsesClass(\SqlCatalog\Sql\TableReader::class)]
-#[UsesClass(\SqlCatalog\Text\LiteralText::class)]
-#[UsesClass(\SqlCatalog\Text\Origin::class)]
-#[UsesClass(\SqlCatalog\Text\TextHole::class)]
-#[UsesClass(\SqlCatalog\Text\TextPattern::class)]
-#[UsesClass(\SqlCatalog\Type\TypeShape::class)]
-#[UsesClass(\SqlCatalog\Source\SourceScanException::class)]
-#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
-#[UsesClass(\SqlCatalog\Catalog\Resolution::class)]
-#[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
-#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
-#[UsesClass(\SqlCatalog\Analysis\ConstantReader::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Binding::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\CalleeReturns::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\CallerIndex::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Callers::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Deriver::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\EntryBinder::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\FreeNames::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\ModifiedNames::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\PropertyWrites::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\SliceExecutor::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Arrival::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\AssignmentSteps::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\LoopPasses::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Pending::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
-#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
-#[UsesClass(\SqlCatalog\Configuration::class)]
-#[UsesClass(\SqlCatalog\InvalidConfigurationException::class)]
-#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
-#[UsesClass(\SqlCatalog\Analysis\FunctionModel\NamedModel::class)]
-#[UsesClass(\SqlCatalog\ConfigurationSchema::class)]
-#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
-#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
-#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
+#[UsesClass(\SqlCatalog\Core\Evaluation\ArrayEntry::class)]
+#[UsesClass(\SqlCatalog\Core\Evaluation\ArrayTerm::class)]
+#[UsesClass(\SqlCatalog\Core\Evaluation\Domain::class)]
+#[UsesClass(\SqlCatalog\Core\Evaluation\Environment::class)]
+#[UsesClass(\SqlCatalog\Core\Evaluation\LiteralTerm::class)]
+#[UsesClass(\SqlCatalog\Core\Evaluation\ObjectTerm::class)]
+#[UsesClass(\SqlCatalog\Core\Evaluation\OpaqueTerm::class)]
+#[UsesClass(\SqlCatalog\Core\Evaluation\PatternTerm::class)]
+#[UsesClass(\SqlCatalog\Extension\Doctrine\DoctrineExtension::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\ExtensionRegistry::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\LaravelExtension::class)]
+#[UsesClass(\SqlCatalog\Extension\Mysqli\MysqliExtension::class)]
+#[UsesClass(\SqlCatalog\Extension\Pdo\PdoExtension::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\SinkSpec::class)]
+#[UsesClass(\SqlCatalog\Core\Php\FunctionShape::class)]
+#[UsesClass(\SqlCatalog\Core\Php\NodeText::class)]
+#[UsesClass(\SqlCatalog\Core\Php\ParameterShape::class)]
+#[UsesClass(\SqlCatalog\Core\Php\ParsedFile::class)]
+#[UsesClass(\SqlCatalog\Core\Php\ProgramIndex::class)]
+#[UsesClass(\SqlCatalog\Core\Php\ProgramIndexBuilder::class)]
+#[UsesClass(\SqlCatalog\Core\Php\SourceParser::class)]
+#[UsesClass(\SqlCatalog\Core\Php\TypeReader::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\HtmlReporter::class)]
+#[UsesClass(\SqlCatalog\Core\Source\SourceFile::class)]
+#[UsesClass(\SqlCatalog\Core\Source\SourceScanner::class)]
+#[UsesClass(\SqlCatalog\Core\Sql\PlaceholderRef::class)]
+#[UsesClass(\SqlCatalog\Core\Sql\PlaceholderScanner::class)]
+#[UsesClass(\SqlCatalog\Core\Sql\SqlLexer::class)]
+#[UsesClass(\SqlCatalog\Core\Sql\SqlToken::class)]
+#[UsesClass(\SqlCatalog\Core\Sql\StatementKindReader::class)]
+#[UsesClass(\SqlCatalog\Core\Sql\TableReader::class)]
+#[UsesClass(\SqlCatalog\Core\Text\LiteralText::class)]
+#[UsesClass(\SqlCatalog\Core\Text\Origin::class)]
+#[UsesClass(\SqlCatalog\Core\Text\TextHole::class)]
+#[UsesClass(\SqlCatalog\Core\Text\TextPattern::class)]
+#[UsesClass(\SqlCatalog\Core\Type\TypeShape::class)]
+#[UsesClass(\SqlCatalog\Core\Source\SourceScanException::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\SinkFinder::class)]
+#[UsesClass(\SqlCatalog\Core\Catalog\Resolution::class)]
+#[UsesClass(\SqlCatalog\Extension\WordPress\WordPressExtension::class)]
+#[UsesClass(\SqlCatalog\Core\Php\DeclaredGlobals::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ConstantReader::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Binding::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\CalleeReturns::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\CallerIndex::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Callers::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Deriver::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\EntryBinder::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\FreeNames::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\ModifiedNames::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\PropertyWrites::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\SliceExecutor::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\Arrival::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\AssignmentSteps::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\BackwardSlicer::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\LoopPasses::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\Pending::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Solution::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\SourceTree::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Facade\Configuration::class)]
+#[UsesClass(\SqlCatalog\Facade\InvalidConfigurationException::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\FunctionModel\NamedModel::class)]
+#[UsesClass(\SqlCatalog\Facade\ConfigurationSchema::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\Model\CallContext::class)]
 final class CatalogCommandTest extends TestCase
 {
     public function testRunAnswersTheHelp(): void
@@ -187,7 +187,7 @@ final class CatalogCommandTest extends TestCase
             null,
             'text',
             ['pdo'],
-            new CatalogFilter(kinds: [\SqlCatalog\Sql\StatementKind::Delete]),
+            new CatalogFilter(kinds: [\SqlCatalog\Core\Sql\StatementKind::Delete]),
             [],
             $directory,
         );
@@ -236,10 +236,10 @@ final class CatalogCommandTest extends TestCase
     public function testConfiguredAnalyzerOverridesModelsWithoutLeakingThem(): void
     {
         $command = new CatalogCommand();
-        $configured = $command->configuredAnalyzer(new \SqlCatalog\Configuration(functionModels: ['array_fill' => \Tests\Fake\PairModel::class]));
+        $configured = $command->configuredAnalyzer(new \SqlCatalog\Facade\Configuration(functionModels: ['array_fill' => \Tests\Fake\PairModel::class]));
         $source = '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . implode(",", array_fill(0, count($ids), "?")) . ")"); }';
         self::assertSame('SELECT * FROM users WHERE id IN (?,?)', $configured->analyzeSource(['query.php' => $source])->entries()[0]->sql());
-        self::assertSame('SELECT * FROM users WHERE id IN (?)', $command->configuredAnalyzer(new \SqlCatalog\Configuration())->analyzeSource(['query.php' => $source])->entries()[0]->sql());
+        self::assertSame('SELECT * FROM users WHERE id IN (?)', $command->configuredAnalyzer(new \SqlCatalog\Facade\Configuration())->analyzeSource(['query.php' => $source])->entries()[0]->sql());
     }
 
     public function testRunLoadsCatalogSettingsAndAllowsCliOverrides(): void

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9028044c804b7db6d44b529638655e8b",
+    "content-hash": "decd1d748c9cf8c8e1ed5cee51292866",
     "packages": [
         {
             "name": "k-kinzal/sql-parser",
@@ -1516,7 +1516,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "bc601271f0c8e718d6d698495f19383cad7f2368"
+                "reference": "3abb12ca287d64843fff42dbb2a31c1e4483be77"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1547,12 +1547,7 @@
             "autoload": {
                 "psr-4": {
                     "SqlFaker\\": "src/"
-                },
-                "files": [
-                    "src/MySql/StatementType.php",
-                    "src/PostgreSql/StatementType.php",
-                    "src/Sqlite/StatementType.php"
-                ]
+                }
             },
             "autoload-dev": {
                 "psr-4": {
@@ -6459,7 +6454,9 @@
     "platform": {
         "php": "^8.1"
     },
-    "platform-dev": {},
+    "platform-dev": {
+        "ext-pdo_sqlite": "*"
+    },
     "platform-overrides": {
         "php": "8.1.0"
     },

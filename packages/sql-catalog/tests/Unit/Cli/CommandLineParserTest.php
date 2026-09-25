@@ -7,20 +7,20 @@ namespace Tests\Unit\Cli;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\Severity;
 use SqlCatalog\Cli\CommandLine;
 use SqlCatalog\Cli\CommandLineParser;
 use SqlCatalog\Cli\InvalidCommandLineException;
-use SqlCatalog\Filter\CatalogFilter;
-use SqlCatalog\Sql\StatementKind;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Filter\CatalogFilter;
+use SqlCatalog\Core\Sql\StatementKind;
 
 #[CoversClass(CommandLineParser::class)]
 #[UsesClass(CommandLine::class)]
 #[UsesClass(CatalogFilter::class)]
 #[UsesClass(InvalidCommandLineException::class)]
-#[UsesClass(\SqlCatalog\Configuration::class)]
-#[UsesClass(\SqlCatalog\ConfigurationSchema::class)]
-#[UsesClass(\SqlCatalog\InvalidConfigurationException::class)]
+#[UsesClass(\SqlCatalog\Facade\Configuration::class)]
+#[UsesClass(\SqlCatalog\Facade\ConfigurationSchema::class)]
+#[UsesClass(\SqlCatalog\Facade\InvalidConfigurationException::class)]
 final class CommandLineParserTest extends TestCase
 {
     public function testParseReadsPathsAndOptions(): void
@@ -253,7 +253,7 @@ final class CommandLineParserTest extends TestCase
     public function testConfigurationIsOptionalAndExplicitFilesMustExist(): void
     {
         self::assertNull((new CommandLineParser())->configuration(null)->file);
-        $this->expectException(\SqlCatalog\InvalidConfigurationException::class);
+        $this->expectException(\SqlCatalog\Facade\InvalidConfigurationException::class);
         (new CommandLineParser())->configuration('/missing/.catalog.yaml');
     }
 

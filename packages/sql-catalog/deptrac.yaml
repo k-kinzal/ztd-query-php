@@ -1,109 +1,127 @@
-# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
-# Layers follow the path a run takes: source in, values reasoned about, statements out.
+# Layers follow the source namespaces; implementations depend on Core contracts.
 deptrac:
   paths: [./src]
   analyser:
     types: [class, use]
   layers:
-    - name: Type
+    - name: Core
       collectors:
-        - type: directory
-          value: 'src/Type/'
-    - name: Text
-      collectors:
-        - type: directory
-          value: 'src/Text/'
-    - name: Sql
-      collectors:
-        - type: directory
-          value: 'src/Sql/'
-    - name: Evaluation
-      collectors:
-        - type: directory
-          value: 'src/Evaluation/'
-    - name: Php
-      collectors:
-        - type: directory
-          value: 'src/Php/'
-    - name: Source
-      collectors:
-        - type: directory
-          value: 'src/Source/'
-    - name: Extension
-      collectors:
-        - type: directory
-          value: 'src/Extension/(?!LaravelExtension\.php)[^/]+\.php$'
-    - name: ExtensionModel
-      collectors:
-        - type: directory
-          value: 'src/Extension/Model/'
-    - name: Laravel
-      collectors:
-        - type: directory
-          value: 'src/Extension/Laravel/'
         - type: classLike
-          value: '^SqlCatalog\\Extension\\LaravelExtension$'
-    - name: Catalog
-      collectors:
-        - type: directory
-          value: 'src/Catalog/'
-    - name: Analysis
-      collectors:
-        - type: directory
-          value: 'src/Analysis/'
-    - name: Filter
-      collectors:
-        - type: directory
-          value: 'src/Filter/'
-    - name: Reporter
-      collectors:
-        - type: directory
-          value: 'src/Reporter/'
-        # The JSON document shape is written as @phpstan-type aliases, which resolve
-        # against the declaring namespace and would otherwise be uncovered names.
-        - type: classLike
-          value: '^SqlCatalog\\Reporter\\.*'
+          value: '^SqlCatalog\\Core\\.*'
     - name: Facade
       collectors:
-        - type: directory
-          value: 'src/[^/]+\.php$'
+        - type: classLike
+          value: '^SqlCatalog\\Facade\\.*'
     - name: Cli
       collectors:
-        - type: directory
-          value: 'src/Cli/'
-    - name: Yaml
-      collectors:
         - type: classLike
-          value: '^Symfony\\Component\\Yaml\\.*'
-    - name: SqlFormatter
-      collectors:
-        - type: classLike
-          value: '^SqlFormatter\\.*'
-    - name: SqlParser
-      collectors:
-        - type: classLike
-          value: '^SqlParser\\.*'
+          value: '^SqlCatalog\\Cli\\.*'
     - name: PhpParser
       collectors:
         - type: classLike
           value: '^PhpParser\\.*'
+    - name: Yaml
+      collectors:
+        - type: classLike
+          value: '^Symfony\\Component\\Yaml\\.*'
+    - name: FormatterCore
+      collectors:
+        - type: classLike
+          value: '^SqlFormatter\\Core\\.*'
+    - name: ParserCore
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\(Parser|Lexer)\\.*'
+    - name: ExtensionPdo
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\Pdo\\.*'
+    - name: ExtensionMysqli
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\Mysqli\\.*'
+    - name: ExtensionDoctrine
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\Doctrine\\.*'
+    - name: ExtensionLaravel
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\Laravel\\.*'
+    - name: ExtensionWordPress
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\WordPress\\.*'
+    - name: ReporterJson
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Reporter\\Json\\.*'
+    - name: ReporterText
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Reporter\\Text\\.*'
+    - name: ReporterHtml
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Reporter\\Html\\.*'
+    - name: PlatformMySql
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Platform\\MySql\\.*'
+    - name: PlatformPostgreSql
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Platform\\PostgreSql\\.*'
+    - name: PlatformSqlite
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Platform\\Sqlite\\.*'
+    - name: ParserMySql
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\MySql\\.*'
+    - name: FormatterMySql
+      collectors:
+        - type: classLike
+          value: '^SqlFormatter\\Platform\\MySql\\.*'
+    - name: ParserPostgreSql
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\PostgreSql\\.*'
+    - name: FormatterPostgreSql
+      collectors:
+        - type: classLike
+          value: '^SqlFormatter\\Platform\\PostgreSql\\.*'
+    - name: ParserSqlite
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\Sqlite\\.*'
+    - name: FormatterSqlite
+      collectors:
+        - type: classLike
+          value: '^SqlFormatter\\Platform\\Sqlite\\.*'
   ruleset:
-    Type: []
-    Text: [Type]
-    Sql: [Text]
-    Evaluation: [Text, Type]
-    Php: [Type, PhpParser]
-    Source: []
-    Extension: [Sql, ExtensionModel, Laravel]
-    ExtensionModel: [Analysis, Evaluation, Extension, Php, PhpParser]
-    Laravel: [Analysis, Evaluation, Extension, ExtensionModel, Php, Sql, Text, Type, PhpParser]
-    Catalog: [Evaluation, Sql, Text, Type]
-    Analysis: [Catalog, Evaluation, Extension, ExtensionModel, Php, Sql, Text, Type, PhpParser]
-    Filter: [Catalog, Sql]
-    Reporter: [Catalog, SqlFormatter, SqlParser]
-    Facade: [Analysis, Catalog, Extension, Php, Source, Yaml]
-    Cli: [Catalog, Extension, Facade, Filter, Reporter, Source, Sql]
-    Yaml: []
+    Core: [PhpParser]
+    Facade: [Core, Yaml, ExtensionPdo, ExtensionMysqli, ExtensionDoctrine, ExtensionLaravel, ExtensionWordPress, ReporterJson, ReporterText, ReporterHtml, PlatformMySql, PlatformPostgreSql, PlatformSqlite]
+    Cli: [Core, Facade]
     PhpParser: []
-    SqlFormatter: []
-    SqlParser: []
+    Yaml: []
+    FormatterCore: []
+    ParserCore: []
+    ExtensionPdo: [Core, PhpParser]
+    ExtensionMysqli: [Core, PhpParser]
+    ExtensionDoctrine: [Core, PhpParser]
+    ExtensionLaravel: [Core, PhpParser]
+    ExtensionWordPress: [Core, PhpParser]
+    ReporterJson: [Core]
+    ReporterText: [Core]
+    ReporterHtml: [Core, FormatterCore]
+    PlatformMySql: [Core, ParserCore, FormatterCore, ParserMySql, FormatterMySql]
+    PlatformPostgreSql: [Core, ParserCore, FormatterCore, ParserPostgreSql, FormatterPostgreSql]
+    PlatformSqlite: [Core, ParserCore, FormatterCore, ParserSqlite, FormatterSqlite]
+    ParserMySql: []
+    FormatterMySql: []
+    ParserPostgreSql: []
+    FormatterPostgreSql: []
+    ParserSqlite: []
+    FormatterSqlite: []

@@ -7,17 +7,23 @@ namespace Tests\Unit\Reporter\Html\Page;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\AnalysisProblem;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Finding;
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Placeholder;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Catalog\StatementPart;
-use SqlCatalog\Catalog\ValueDomain;
+use SqlCatalog\Core\Catalog\AnalysisProblem;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Finding;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Placeholder;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\ValueDomain;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
@@ -30,12 +36,6 @@ use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
 use SqlCatalog\Reporter\Html\StatementRow;
 use SqlCatalog\Reporter\Html\TableName;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(OverviewPage::class)]
 #[UsesClass(AnalysisProblem::class)]
@@ -75,7 +75,7 @@ final class OverviewPageTest extends TestCase
                 Finding::of(FindingRule::DynamicSql, 'spliced'),
             ]),
         ], [new AnalysisProblem('b.php', 'broken')]);
-        $page = (new OverviewPage())->render(new ReportSite($catalog));
+        $page = (new OverviewPage())->render(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()));
 
         self::assertStringContainsString('<h1>Overview</h1>', $page);
         self::assertStringContainsString('<div class="cards">', $page);
@@ -99,7 +99,7 @@ final class OverviewPageTest extends TestCase
             . '<a class="stat" href="tables.html"><b class="stat-fig">1</b><span class="stat-label">table</span></a>'
             . '<a class="stat" href="namespaces.html"><b class="stat-fig">1</b><span class="stat-label">function</span></a>'
             . '<a class="stat" href="files.html"><b class="stat-fig">1</b><span class="stat-label">file</span></a></div>',
-            (new OverviewPage())->facts(new ReportSite($catalog)),
+            (new OverviewPage())->facts(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())),
         );
     }
 
@@ -109,7 +109,7 @@ final class OverviewPageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
             new CatalogEntry('a2', StatementKind::Insert, TextPattern::fromText('INSERT'), ['users'], [], new CallSite('a.php', 2, 'f', 'pdo.query'), []),
         ]);
-        $route = (new OverviewPage())->tableRoute(new ReportSite($catalog));
+        $route = (new OverviewPage())->tableRoute(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()));
 
         self::assertStringContainsString('<li><a class="mono" href="tables/users.html">users</a><span class="usage-kind">2 · 1 read · 1 write</span></li>', $route);
         self::assertStringContainsString('<a href="tables.html">All 1 table</a>', $route);
@@ -125,8 +125,8 @@ final class OverviewPageTest extends TestCase
         ]);
         $page = new OverviewPage();
 
-        self::assertStringContainsString('<a class="mono" href="classes/app-r.html">App\\R</a>', $page->namespaceRoute(new ReportSite($withClass)));
-        self::assertStringContainsString('<a class="mono" href="statements.html?function=helper">helper</a>', $page->namespaceRoute(new ReportSite($withoutClass)));
+        self::assertStringContainsString('<a class="mono" href="classes/app-r.html">App\\R</a>', $page->namespaceRoute(new ReportSite($withClass, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())));
+        self::assertStringContainsString('<a class="mono" href="statements.html?function=helper">helper</a>', $page->namespaceRoute(new ReportSite($withoutClass, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())));
     }
 
     public function testFileRouteListsTheFilesWithTheMostStatements(): void
@@ -139,7 +139,7 @@ final class OverviewPageTest extends TestCase
 
         self::assertStringContainsString(
             '<li><a class="mono" href="files/b-php.html">b.php</a><span class="usage-kind">2 statements</span></li><li><a class="mono" href="files/a-php.html">a.php</a>',
-            (new OverviewPage())->fileRoute(new ReportSite($catalog)),
+            (new OverviewPage())->fileRoute(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())),
         );
     }
 
@@ -151,7 +151,7 @@ final class OverviewPageTest extends TestCase
 
         self::assertStringContainsString(
             '<li><a class="chip tone-pink" href="statements.html?kind=delete">DELETE</a><span class="usage-kind">1 statement</span></li>',
-            (new OverviewPage())->kindRoute(new ReportSite($catalog)),
+            (new OverviewPage())->kindRoute(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())),
         );
     }
 
@@ -171,11 +171,11 @@ final class OverviewPageTest extends TestCase
                 Finding::of(FindingRule::ExternalInput, 'spliced'),
             ]),
         ]);
-        $attention = (new OverviewPage())->attention(new ReportSite($catalog));
+        $attention = (new OverviewPage())->attention(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()));
 
         self::assertStringContainsString('<a class="mono" href="findings.html#rule-external-input">external-input</a>', $attention);
         self::assertStringContainsString('<a class="mono" href="findings.html#hotspots">f</a><span class="usage-kind">a.php · 1 high</span>', $attention);
-        self::assertStringContainsString('Nothing was reported', (new OverviewPage())->attention(new ReportSite(new Catalog())));
+        self::assertStringContainsString('Nothing was reported', (new OverviewPage())->attention(new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())));
     }
 
     public function testCoverageLeadsFromEverySegmentToTheStatementsItCounts(): void
@@ -184,22 +184,22 @@ final class OverviewPageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
             new CatalogEntry('a2', StatementKind::Select, TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown())), [], [], new CallSite('a.php', 2, 'f', 'pdo.query'), []),
         ]);
-        $coverage = (new OverviewPage())->coverage(new ReportSite($catalog));
+        $coverage = (new OverviewPage())->coverage(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()));
 
         self::assertStringContainsString('<a class="meter-part tone-ok" style="--dd-part:50%" href="statements.html?resolution=resolved"', $coverage);
         self::assertStringNotContainsString('class="meter-part tone-neutral"', $coverage);
         self::assertStringContainsString('<a href="statements.html?open=open">1 statement</a> are lower bounds', $coverage);
-        self::assertStringContainsString('Every search closed', (new OverviewPage())->coverage(new ReportSite(new Catalog())));
+        self::assertStringContainsString('Every search closed', (new OverviewPage())->coverage(new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())));
     }
 
     public function testProblemsAreListedOnlyWhenThereAreSome(): void
     {
         $page = new OverviewPage();
 
-        self::assertSame('', $page->problems(new ReportSite(new Catalog())));
+        self::assertSame('', $page->problems(new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())));
         self::assertStringContainsString(
             '<tr><td><code>b.php</code></td><td>broken</td></tr>',
-            $page->problems(new ReportSite(new Catalog([], [new AnalysisProblem('b.php', 'broken')]))),
+            $page->problems(new ReportSite(new Catalog([], [new AnalysisProblem('b.php', 'broken')]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())),
         );
     }
 
@@ -245,7 +245,7 @@ final class OverviewPageTest extends TestCase
             ]),
         ];
         $catalog = new Catalog($entries, [new AnalysisProblem('src/broken.php', 'broken')]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<h1>Overview</h1><p class="lede">Every statement this source can issue, read back from the calls that receive it. Start from the table, class or file '
@@ -326,7 +326,7 @@ final class OverviewPageTest extends TestCase
         $site = new ReportSite(new Catalog([], [
             new AnalysisProblem('a.php', 'Unexpected <token>'),
             new AnalysisProblem('b.php', 'Source unavailable'),
-        ], ['a.php' => '<?php function {']));
+        ], ['a.php' => '<?php function {']), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
         $html = (new OverviewPage())->problems($site);
 
         self::assertStringContainsString('<tr><td><a class="mono" href="files/a-php.html#source">a.php</a></td><td>Unexpected &lt;token&gt;</td></tr>', $html);

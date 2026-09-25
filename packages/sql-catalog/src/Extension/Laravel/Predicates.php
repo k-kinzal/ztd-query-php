@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Extension\Laravel;
 
-use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\Domain;
 
 /**
  * Predicate effects, retaining Laravel's clause and binding order.
@@ -108,7 +108,7 @@ final class Predicates
         if ($array !== null && !$array->complete) {
             return $state->reject('Laravel null predicate columns are incomplete');
         }
-        $columns = $array === null ? [$arguments[0]] : array_map(static fn (\SqlCatalog\Evaluation\ArrayEntry $entry): Domain => $entry->value, $array->entries);
+        $columns = $array === null ? [$arguments[0]] : array_map(static fn (\SqlCatalog\Core\Evaluation\ArrayEntry $entry): Domain => $entry->value, $array->entries);
         foreach ($columns as $column) {
             $state = $this->add($state, $this->grammar->wrap($column)->concat(Domain::literal($not ? ' is not null' : ' is null')), [], $boolean);
         }
@@ -125,7 +125,7 @@ final class Predicates
         if (count($arguments) !== 2 || $values === null || !$values->complete) {
             return $state->reject('Laravel IN values are not a complete array');
         }
-        $items = array_map(static fn (\SqlCatalog\Evaluation\ArrayEntry $entry): Domain => $entry->value, $values->entries);
+        $items = array_map(static fn (\SqlCatalog\Core\Evaluation\ArrayEntry $entry): Domain => $entry->value, $values->entries);
         if (array_filter($items, static fn (Domain $value): bool => $value->soleArray() !== null) !== []) {
             return $state->reject('Nested Laravel IN values are invalid');
         }
@@ -142,7 +142,7 @@ final class Predicates
     public function between(QueryState $state, array $arguments, string $boolean, bool $not): QueryState
     {
         $values = ($arguments[1] ?? Domain::unknown())->soleArray();
-        $items = $values === null ? [] : array_map(static fn (\SqlCatalog\Evaluation\ArrayEntry $entry): Domain => $entry->value, $values->entries);
+        $items = $values === null ? [] : array_map(static fn (\SqlCatalog\Core\Evaluation\ArrayEntry $entry): Domain => $entry->value, $values->entries);
         if (count($arguments) !== 2 || $values === null || !$values->complete || count($items) !== 2) {
             return $state->reject('Laravel BETWEEN bounds are incomplete');
         }
@@ -179,6 +179,6 @@ final class Predicates
             return $state->reject('Laravel raw predicate bindings are incomplete');
         }
 
-        return $this->add($state, $arguments[0], array_map(static fn (\SqlCatalog\Evaluation\ArrayEntry $entry): Domain => $entry->value, $values->entries), $boolean);
+        return $this->add($state, $arguments[0], array_map(static fn (\SqlCatalog\Core\Evaluation\ArrayEntry $entry): Domain => $entry->value, $values->entries), $boolean);
     }
 }

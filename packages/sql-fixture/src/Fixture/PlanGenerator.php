@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture\Fixture;
 
 use Faker\Generator;
-use SqlFixture\FixtureGenerator;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Schema\SchemaResolverInterface;
 
@@ -31,7 +30,7 @@ final class PlanGenerator
      */
     public function __construct(
         private readonly SchemaResolverInterface $schemas,
-        private readonly FixtureGenerator $generator,
+        private readonly RowGeneration $generator,
         private readonly Generator $faker,
     ) {
     }

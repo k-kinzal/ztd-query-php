@@ -55,12 +55,7 @@
     "autoload": {
         "psr-4": {
             "SqlFaker\\": "src/"
-        },
-        "files": [
-            "src/MySql/StatementType.php",
-            "src/PostgreSql/StatementType.php",
-            "src/Sqlite/StatementType.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

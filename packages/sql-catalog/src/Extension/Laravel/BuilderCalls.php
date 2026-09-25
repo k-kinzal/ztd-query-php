@@ -6,12 +6,12 @@ namespace SqlCatalog\Extension\Laravel;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr;
-use SqlCatalog\Analysis\ExpressionEvaluator;
-use SqlCatalog\Analysis\FunctionScope;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\Environment;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Php\ProgramIndex;
+use SqlCatalog\Core\Analysis\ExpressionEvaluator;
+use SqlCatalog\Core\Analysis\FunctionScope;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\Environment;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Php\ProgramIndex;
 
 /**
  * Laravel factories and mutations executed by the ordinary expression evaluator.
@@ -40,7 +40,7 @@ final class BuilderCalls
     /**
      * Configures the source metadata and SQL grammar used by this model.
      */
-    public function __construct(private readonly ProgramIndex $index, private readonly ?string $dialect = null, private readonly ?CallbackModel $callbacks = null)
+    public function __construct(private readonly ProgramIndex $index, private readonly ?string $dialect = null, private readonly ?CallbackModel $callbacks = null, private readonly \SqlCatalog\Core\Sql\Dialects $dialects = new \SqlCatalog\Core\Sql\Dialects())
     {
     }
 
@@ -126,7 +126,7 @@ final class BuilderCalls
      */
     public function isConnection(?string $class): bool
     {
-        return $this->index->isInstanceOf($class, self::CONNECTION) || in_array($class, ['Illuminate\\Database\\MySqlConnection', 'Illuminate\\Database\\PostgresConnection', 'Illuminate\\Database\\SQLiteConnection'], true);
+        return $this->index->isInstanceOf($class, self::CONNECTION) || $this->dialects->hasConnection($class);
     }
 
     /**
@@ -134,12 +134,7 @@ final class BuilderCalls
      */
     public function connectionDialect(?string $class): ?string
     {
-        return match ($class) {
-            'Illuminate\\Database\\MySqlConnection' => 'mysql',
-            'Illuminate\\Database\\PostgresConnection' => 'pgsql',
-            'Illuminate\\Database\\SQLiteConnection' => 'sqlite',
-            default => $this->dialect,
-        };
+        return $this->dialects->connection($class, $this->dialect);
     }
 
     /**
@@ -179,7 +174,7 @@ final class BuilderCalls
     public function mutate(ObjectTerm $object, string $method, array $arguments, Environment $environment): Domain
     {
         $state = QueryState::from($object);
-        $grammar = new Grammar($state->string('dialect'));
+        $grammar = new Grammar($this->dialects->find($state->string('dialect')));
         if ($method === 'query' && $arguments === []) {
             $updated = $state;
         } elseif (in_array($method, ['withtrashed', 'onlytrashed'], true) && $arguments === [] && $state->get('softDeletes')->soleLiteral()?->value === true) {
@@ -211,7 +206,7 @@ final class BuilderCalls
             if (in_array($method, ['first', 'firstorfail', 'find'], true)) {
                 $state = $state->with('limit', Domain::literal(1));
                 if ($method === 'find') {
-                    $state = (new Predicates(new Grammar($state->string('dialect'))))->basic($state, [$state->get('key'), $arguments[0] ?? Domain::unknown()], 'and');
+                    $state = (new Predicates(new Grammar($this->dialects->find($state->string('dialect')))))->basic($state, [$state->get('key'), $arguments[0] ?? Domain::unknown()], 'and');
                 }
                 $snapshots[] = $state->object($term);
             } elseif (!in_array($method, ['get', 'all', 'pluck', 'count', 'sum', 'avg', 'min', 'max', 'exists', 'doesntexist', 'insert', 'insertorignore', 'update', 'delete'], true)) {
@@ -228,7 +223,7 @@ final class BuilderCalls
             default => 'mixed',
         };
 
-        return Domain::opaque(\SqlCatalog\Type\TypeShape::of([$type]), \SqlCatalog\Text\Origin::Call, 'Laravel ' . $method);
+        return Domain::opaque(\SqlCatalog\Core\Type\TypeShape::of([$type]), \SqlCatalog\Core\Text\Origin::Call, 'Laravel ' . $method);
     }
 
     /**
@@ -256,8 +251,8 @@ final class BuilderCalls
                 $term = QueryState::from($term)->reject($reason)->object($term);
                 $environment->objects()->remember($term);
             }
-            if ($term instanceof \SqlCatalog\Evaluation\ArrayTerm) {
-                $term = new \SqlCatalog\Evaluation\ArrayTerm(array_map(fn (\SqlCatalog\Evaluation\ArrayEntry $entry): \SqlCatalog\Evaluation\ArrayEntry => new \SqlCatalog\Evaluation\ArrayEntry($entry->key, $this->unsupported($entry->value, $environment, $reason)), $term->entries), $term->complete);
+            if ($term instanceof \SqlCatalog\Core\Evaluation\ArrayTerm) {
+                $term = new \SqlCatalog\Core\Evaluation\ArrayTerm(array_map(fn (\SqlCatalog\Core\Evaluation\ArrayEntry $entry): \SqlCatalog\Core\Evaluation\ArrayEntry => new \SqlCatalog\Core\Evaluation\ArrayEntry($entry->key, $this->unsupported($entry->value, $environment, $reason)), $term->entries), $term->complete);
             }
             $terms[] = $term;
         }

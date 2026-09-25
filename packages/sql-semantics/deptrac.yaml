@@ -3,46 +3,49 @@ deptrac:
   analyser:
     types: [class, use]
   layers:
-    - name: API
+    - name: Core
       collectors:
-        - type: classNameRegex
-          value: '/^SqlSemantics\\(Binder|SchemaBuilder)$/'
-    - name: Foundation
+        - type: classLike
+          value: '^SqlSemantics\\Core\\.*'
+    - name: MySql
       collectors:
-        - type: classNameRegex
-          value: '/^SqlSemantics\\(Dialect|SemanticException)$/'
-    - name: Syntax
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\MySql\\.*'
+    - name: PostgreSql
       collectors:
-        - type: directory
-          value: 'src/Ast/'
-    - name: Binding
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\PostgreSql\\.*'
+    - name: Sqlite
       collectors:
-        - type: directory
-          value: 'src/Binding/'
-    - name: Model
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\Sqlite\\.*'
+    - name: Facade
       collectors:
-        - type: directory
-          value: 'src/Model/'
-    - name: Schema
+        - type: classLike
+          value: '^SqlSemantics\\Facade\\.*'
+    - name: ParserCore
       collectors:
-        - type: classNameRegex
-          value: '/^SqlSemantics\\Schema$/'
-        - type: directory
-          value: 'src/Schema/'
-    - name: Types
+        - type: classLike
+          value: '^SqlParser\\(Parser|Lexer)\\.*'
+    - name: ParserMySql
       collectors:
-        - type: directory
-          value: 'src/Type/'
-    - name: Parser
+        - type: classLike
+          value: '^SqlParser\\MySql\\.*'
+    - name: ParserPostgreSql
       collectors:
-        - type: classNameRegex
-          value: '/^SqlParser\\/'
+        - type: classLike
+          value: '^SqlParser\\PostgreSql\\.*'
+    - name: ParserSqlite
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\Sqlite\\.*'
   ruleset:
-    API: [Foundation, Syntax, Binding, Schema, Model, Parser]
-    Foundation: [Parser]
-    Syntax: [Foundation, Schema, Types, Parser]
-    Binding: [Foundation, Syntax, Schema, Model, Types, Parser]
-    Model: [Schema, Types, Parser]
-    Schema: [Foundation, Types, Parser]
-    Types: [Foundation]
-    Parser: []
+    Core: [ParserCore]
+    MySql: [Core, ParserCore, ParserMySql]
+    PostgreSql: [Core, ParserCore, ParserPostgreSql]
+    Sqlite: [Core, ParserCore, ParserSqlite]
+    Facade: [Core, MySql, PostgreSql, Sqlite]
+    ParserCore: []
+    ParserMySql: []
+    ParserPostgreSql: []
+    ParserSqlite: []

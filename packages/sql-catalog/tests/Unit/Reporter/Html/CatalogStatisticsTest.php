@@ -7,19 +7,19 @@ namespace Tests\Unit\Reporter\Html;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Finding;
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Finding;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(CatalogStatistics::class)]
 #[UsesClass(CallSite::class)]
@@ -34,7 +34,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
 #[UsesClass(StatementKind::class)]
-#[UsesClass(\SqlCatalog\Text\LiteralText::class)]
+#[UsesClass(\SqlCatalog\Core\Text\LiteralText::class)]
 final class CatalogStatisticsTest extends TestCase
 {
     public function testStatementsCountsWhatTheCatalogHolds(): void

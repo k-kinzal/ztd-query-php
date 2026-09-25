@@ -17,7 +17,7 @@ use Fuzz\Target\ParseTarget;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\SqliteProvider;
+use SqlFaker\Sqlite\SqliteProvider;
 use SqlParser\Sqlite\SqliteParser;
 
 $grammarVersion = 'sqlite-3.47.2';

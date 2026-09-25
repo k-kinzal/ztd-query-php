@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html;
 
-use SqlCatalog\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\StatementPart;
 
 /**
  * Renders a reconstructed statement as marked-up SQL.

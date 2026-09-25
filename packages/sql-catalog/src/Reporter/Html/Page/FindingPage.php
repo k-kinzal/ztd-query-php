@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html\Page;
 
-use SqlCatalog\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\FindingRule;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\Palette;
 use SqlCatalog\Reporter\Html\ReportSite;
@@ -88,7 +88,7 @@ final class FindingPage
     /**
      * One rule, with everything it reported.
      *
-     * @param list<\SqlCatalog\Catalog\CatalogEntry> $entries
+     * @param list<\SqlCatalog\Core\Catalog\CatalogEntry> $entries
      */
     public function section(ReportSite $site, FindingRule $rule, array $entries): string
     {

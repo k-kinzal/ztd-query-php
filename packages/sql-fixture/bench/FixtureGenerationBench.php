@@ -6,8 +6,8 @@ namespace Bench;
 
 use Faker\Factory;
 use PhpBench\Attributes as Bench;
-use SqlFixture\FixtureProvider;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Provider\FixtureProvider;
 
 /**
  * Measures warm row generation separately from relational-plan materialization.

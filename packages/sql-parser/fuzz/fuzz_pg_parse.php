@@ -17,7 +17,7 @@ use Fuzz\Target\ParseTarget;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSql\PostgreSqlProvider;
 use SqlParser\PostgreSql\PostgreSqlParser;
 
 $grammarVersion = 'pg-17.2';

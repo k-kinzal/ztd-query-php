@@ -17,6 +17,10 @@ parameters:
             'src/Grammar/*': [mysql, postgres, pgsql, sqlite, mariadb]
             'src/Lexer/*': [mysql, postgres, pgsql, sqlite, mariadb]
             'src/Parser/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Resource/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/MySql/*': [postgres, pgsql, sqlite]
+            'src/PostgreSql/*': [mysql, mariadb, sqlite]
+            'src/Sqlite/*': [mysql, mariadb, postgres, pgsql]
             'src/Table/*': [mysql, postgres, pgsql, sqlite, mariadb]
         forbiddenNamespacePrefixes:
             - 'Tests\Fixture'
