@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verification — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/443/k-kinzal/sql-formatter/doc/docs/verification.md.html">
+<meta name="description" content="Verification, a document of the k-kinzal/sql-formatter package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Verification — ZTD Query PHP">
+<meta property="og:description" content="Verification, a document of the k-kinzal/sql-formatter package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/443/k-kinzal/sql-formatter/doc/docs/verification.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/443/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/Core/index.html" title="SqlFormatter\Core">SqlFormatter\Core</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/Core/Compact/index.html" title="SqlFormatter\Core\Compact">SqlFormatter\Core\Compact</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/Core/Layout/index.html" title="SqlFormatter\Core\Layout">SqlFormatter\Core\Layout</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/Core/Syntax/index.html" title="SqlFormatter\Core\Syntax">SqlFormatter\Core\Syntax</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/Facade/index.html" title="SqlFormatter\Facade">SqlFormatter\Facade</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/Platform/MySql/index.html" title="SqlFormatter\Platform\MySql">SqlFormatter\Platform\MySql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/Platform/PostgreSql/index.html" title="SqlFormatter\Platform\PostgreSql">SqlFormatter\Platform\PostgreSql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/Platform/Sqlite/index.html" title="SqlFormatter\Platform\Sqlite">SqlFormatter\Platform\Sqlite</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/verification.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 5e5fcfb555 to working tree">5e5fcfb555 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 5e5fcfb555 and working tree." data-off="This page documents what 5e5fcfb555 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Verification</h1><div class="symbol-meta"><span class="source-link">docs/verification.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Verification</h2>
+</div><div class="doc-block" data-diff="same"><p>The checks serve different purposes:</p>
+</div><div class="doc-block" data-diff="same"><ul><li>Exact expected outputs compare all four presets across every supported grammar release. These catch visually wrong layouts that still parse correctly.</li><li>Preservation and idempotence datasets cover queries, nested queries, CTEs, joins, aggregates, CASE, range predicates, writes, DDL, comments, placeholders, strings, quoted identifiers, and dialect-specific syntax.</li><li>Deterministic sql-faker generation exercises complete statements from all 11 grammar releases with all four presets. The generator starts at each dialect&#039;s statement rule; parser and formatter failures fail the test. Generated cases do not replace the exact layout expectations.</li><li>Unit tests exercise lexical spacing, block widths, comment handling, grammar annotations, and syntax signatures independently.</li><li>Compact has exact canonical-output cases across all 11 grammar releases, including equivalent spellings, keyword-shaped identifiers, mandatory syntax, operator association, executable comments, hints, nested comments, placeholders, and MySQL lexical modes. SQLite execution tests compare rows and explicit column aliases before and after compaction, including NULLs and precedence-sensitive arithmetic and predicates.</li><li>The deterministic generated cases also require identical Compact output from each multiline layout. This checks the normal form used for generated-versus- serialized SQL comparisons without introducing a dependency on sql-semantics.</li><li>Runtime reparsing verifies the selected grammar derivation and every token&#039;s kind and spelling. This is a structural check, not a database execution test or a proof of semantic equivalence for an arbitrary transformation. Compact uses canonical terminal and operand-nesting signatures instead of exact original grammar alternatives, and checks each parenthesis removal separately.</li><li>PHPDoc examples run as doctests. ParaTest exercises independent worker processes.</li><li>PHP-Fuzzer targets under <code>fuzz/</code> run nightly. The format targets hand the formatter arbitrary bytes behind a layout selector and accept only the parser&#039;s rejection, a verified result, and an idempotent second pass. The equivalence targets format statements sql-faker generates, per database and preset, and require MySQL, PostgreSQL, and SQLite to answer the original and the formatted text alike, rows and errors included; they replay sql-faker&#039;s seed corpora first, so every statement form of the default grammars is covered on each run. See <code>fuzz/README.md</code>.</li><li>CI installs the locked development graph and tests PHP 8.1–8.5. Lint runs on PHP 8.3; Infection checks changed source lines on pull requests and the whole package on main.</li></ul>
+</div><div class="doc-block" data-diff="same"><p>Run <code>composer lint</code> and <code>composer test</code>. <code>composer test:unit</code> is available for single-process debugging. <code>composer bench:quick</code> measures the full formatting pipeline, including both parses, after parser tables have been loaded.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>

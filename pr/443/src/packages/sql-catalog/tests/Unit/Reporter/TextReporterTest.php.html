@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packages/sql-catalog/tests/Unit/Reporter/TextReporterTest.php — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/443/src/packages/sql-catalog/tests/Unit/Reporter/TextReporterTest.php.html">
+<meta name="description" content="The source of packages/sql-catalog/tests/Unit/Reporter/TextReporterTest.php.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="packages/sql-catalog/tests/Unit/Reporter/TextReporterTest.php — ZTD Query PHP">
+<meta property="og:description" content="The source of packages/sql-catalog/tests/Unit/Reporter/TextReporterTest.php.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/443/src/packages/sql-catalog/tests/Unit/Reporter/TextReporterTest.php.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/443/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../../index.html">ZTD Query PHP</a></div><nav class="sidebar-section"><div class="sidebar-title">Packages</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../../../k-kinzal/bison-parser/index.html">k-kinzal/bison-parser</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/container/index.html">k-kinzal/container</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/lemon-parser/index.html">k-kinzal/lemon-parser</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/sql-fixture/index.html">k-kinzal/sql-fixture</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-mysql/index.html">k-kinzal/ztd-query-mysql</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-mysqli-adapter/index.html">k-kinzal/ztd-query-mysqli-adapter</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-postgres/index.html">k-kinzal/ztd-query-postgres</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../../../index.html">src</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">packages/sql-catalog/tests/Unit/Reporter/TextReporterTest.php</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 5e5fcfb555 to working tree">5e5fcfb555 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 5e5fcfb555 and working tree." data-off="This page documents what 5e5fcfb555 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1 class="source-title">packages/sql-catalog/tests/Unit/Reporter/TextReporterTest.php</h1></div>
+<div class="notice diff-banner" data-diff="removed">Removed in working tree, compared to 5e5fcfb555.</div>
+<pre class="code code-scroll source" data-diff="removed"><code><span class="src-line" data-diff="removed"><span class="ln">1</span>&lt;?php</span>
+<span class="src-line" data-diff="removed"><span class="ln">2</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">3</span><span class="tok-kw">declare</span>(<span class="tok-id">strict_types</span>=<span class="tok-num">1</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">4</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">5</span><span class="tok-kw">namespace</span> <span class="tok-id">Tests\Unit\Reporter</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">6</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">7</span><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversClass</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">8</span><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\UsesClass</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">9</span><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\AnalysisOptions</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">11</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Analyzer</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Catalog\AnalysisProblem</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">13</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Catalog\CallSite</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Catalog\Catalog</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Catalog\CatalogEntry</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Reporter\CatalogArtifacts</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Reporter\TextReporter</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">18</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Sql\StatementKind</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">19</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Text\Origin</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Text\TextHole</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Text\TextPattern</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Type\TypeShape</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">24</span>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">TextReporter</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">25</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">AnalysisOptions</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">26</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">Analyzer</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">27</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">AnalysisProblem</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">28</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">Catalog</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">29</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">CallSite</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">30</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">CatalogEntry</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">31</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Catalog\Resolution</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">32</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">TextHole</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">33</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">TextPattern</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">34</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">TypeShape</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">35</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">CatalogArtifacts</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">36</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\CallEvaluator</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">37</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\EntryFactory</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">38</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\EvaluationBudget</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">39</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\ExpressionEvaluator</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">40</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\ExternalInput</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">41</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\FunctionScope</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">42</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Interpreter</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">43</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\QueryRecord</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">44</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\ReferenceEvaluator</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">45</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\SinkMatcher</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">46</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\StatementRecorder</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">47</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\ValueBinder</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">48</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">CallSite</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">49</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">CatalogEntry</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">50</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Catalog\EntryIdentity</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">51</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Catalog\Placeholder</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">52</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Catalog\ValueDomain</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">53</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Evaluation\ArrayEntry</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">54</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Evaluation\ArrayTerm</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">55</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Evaluation\Domain</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">56</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Evaluation\Environment</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">57</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Evaluation\LiteralTerm</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">58</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Evaluation\ObjectTerm</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">59</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Evaluation\OpaqueTerm</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">60</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Extension\DoctrineExtension</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">61</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Extension\ExtensionRegistry</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">62</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Extension\LaravelExtension</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">63</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Extension\MysqliExtension</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">64</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Extension\PdoExtension</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">65</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Extension\SinkSpec</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">66</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Php\FunctionShape</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">67</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Php\NodeText</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">68</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Php\ParameterShape</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">69</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Php\ParsedFile</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">70</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Php\ProgramIndex</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">71</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Php\ProgramIndexBuilder</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">72</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Php\SourceParser</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">73</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Php\TypeReader</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">74</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Source\SourceFile</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">75</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Sql\PlaceholderRef</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">76</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Sql\PlaceholderScanner</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">77</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Sql\SqlLexer</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">78</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Sql\SqlToken</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">79</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Sql\StatementKindReader</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">80</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Sql\TableReader</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">81</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Text\LiteralText</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">82</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">TextPattern</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">83</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">TypeShape</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">84</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Catalog\Finding</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">85</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Catalog\FindingRule</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">86</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Evaluation\PatternTerm</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">87</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">Origin</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">88</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">TextHole</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">89</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\SinkFinder</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">90</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Extension\WordPressExtension</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">91</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Php\DeclaredGlobals</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">92</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\ConstantReader</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">93</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\Binding</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">94</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\CalleeReturns</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">95</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\CallerIndex</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">96</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\Callers</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">97</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\Deriver</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">98</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\EntryBinder</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">99</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\FreeNames</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">100</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\ModifiedNames</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">101</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\PropertyWrites</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">102</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\SliceExecutor</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">103</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\Slice\Arrival</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">104</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\Slice\AssignmentSteps</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">105</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">106</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\Slice\LoopPasses</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">107</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\Slice\Pending</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">108</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\Slice\SliceStep</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">109</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\Solution</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">110</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\SourceTree</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">111</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Derivation\CallerSet</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">112</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\FunctionModel\Registry</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">113</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\BuiltinCallModel</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">114</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Effect\WriteEffects</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">115</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Analysis\Effect\ReferenceEffects</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">116</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlCatalog\Extension\Model\CallContext</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">117</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">TextReporterTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">118</span>{</span>
+<span class="src-line" data-diff="removed"><span class="ln">119</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testNameIsHowTheCommandLineSelectsIt</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">120</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">121</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;text&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">name</span>());</span>
+<span class="src-line" data-diff="removed"><span class="ln">122</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">123</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">124</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDescriptionMentionsWhatItProduces</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">125</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">126</span>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;terminal&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">description</span>());</span>
+<span class="src-line" data-diff="removed"><span class="ln">127</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">128</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">129</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderWritesOneTextFile</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">130</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">131</span>        <span class="tok-var">$artifacts</span> = (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">render</span>(<span class="tok-kw">new</span> <span class="tok-id">Catalog</span>());</span>
+<span class="src-line" data-diff="removed"><span class="ln">132</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-id">TextReporter</span>::<span class="tok-id">FILE</span>], <span class="tok-var">$artifacts</span>-&gt;<span class="tok-id">names</span>());</span>
+<span class="src-line" data-diff="removed"><span class="ln">133</span>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;0 statement(s)&#039;</span>, (string) <span class="tok-var">$artifacts</span>-&gt;<span class="tok-id">sole</span>());</span>
+<span class="src-line" data-diff="removed"><span class="ln">134</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">135</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">136</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderReportsTheFilesThatCouldNotBeRead</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">137</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">138</span>        <span class="tok-var">$rendered</span> = (string) (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">render</span>(<span class="tok-kw">new</span> <span class="tok-id">Catalog</span>([], [<span class="tok-kw">new</span> <span class="tok-id">AnalysisProblem</span>(<span class="tok-str">&#039;a.php&#039;</span>, <span class="tok-str">&#039;broken&#039;</span>)]))-&gt;<span class="tok-id">sole</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">139</span>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;! a.php: broken&#039;</span>, <span class="tok-var">$rendered</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">140</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">141</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">142</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testEntryLinesShowTheStatementAndItsParameters</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">143</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">144</span>        <span class="tok-var">$catalog</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">analyzeSource</span>([</span>
+<span class="src-line" data-diff="removed"><span class="ln">145</span>            <span class="tok-str">&#039;a.php&#039;</span> =&gt; <span class="tok-str">&#039;&lt;?php function f(PDO $d) { $s = $d-&gt;prepare(&quot;SELECT id FROM users WHERE id = ?&quot;); $s-&gt;execute([7]); }&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">146</span>        ]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">147</span>        <span class="tok-var">$lines</span> = (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">entryLines</span>(<span class="tok-var">$catalog</span>-&gt;<span class="tok-id">entries</span>()[<span class="tok-num">0</span>]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">148</span>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;a.php:1&#039;</span>, <span class="tok-var">$lines</span>[<span class="tok-num">0</span>]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">149</span>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;SELECT&#039;</span>, <span class="tok-var">$lines</span>[<span class="tok-num">2</span>]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">150</span>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;? = 7&#039;</span>, <span class="tok-var">$lines</span>[<span class="tok-num">4</span>]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">151</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">152</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">153</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testEntryLinesShowTheFindings</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">154</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">155</span>        <span class="tok-var">$catalog</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">analyzeSource</span>([</span>
+<span class="src-line" data-diff="removed"><span class="ln">156</span>            <span class="tok-str">&#039;a.php&#039;</span> =&gt; <span class="tok-str">&#039;&lt;?php function f(PDO $d) { $d-&gt;query(&quot;SELECT &quot; . $_GET[&quot;x&quot;]); }&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">157</span>        ]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">158</span>        <span class="tok-var">$lines</span> = (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">entryLines</span>(<span class="tok-var">$catalog</span>-&gt;<span class="tok-id">entries</span>()[<span class="tok-num">0</span>]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">159</span>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;[HIGH]&#039;</span>, <span class="tok-id">implode</span>(<span class="tok-str">&quot;\n&quot;</span>, <span class="tok-var">$lines</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">160</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">161</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">162</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderWritesTheWholeReportExactly</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">163</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">164</span>        <span class="tok-var">$catalog</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">analyzeSource</span>([</span>
+<span class="src-line" data-diff="removed"><span class="ln">165</span>            <span class="tok-str">&#039;a.php&#039;</span> =&gt; <span class="tok-str">&#039;&lt;?php function f(PDO $d) { $s = $d-&gt;prepare(&quot;SELECT id FROM users WHERE id = ?&quot;); $s-&gt;execute([7]); }&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">166</span>        ]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">167</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">168</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">169</span>            <span class="tok-str">&#039;a.php:1  SELECT  &#039;</span> . <span class="tok-var">$catalog</span>-&gt;<span class="tok-id">entries</span>()[<span class="tok-num">0</span>]-&gt;<span class="tok-id">id</span> . <span class="tok-str">&quot;\n&quot;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">170</span>            . <span class="tok-str">&#039;  in f via pdo.prepare&#039;</span> . <span class="tok-str">&quot;\n&quot;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">171</span>            . <span class="tok-str">&#039;  SELECT id FROM users WHERE id = ?&#039;</span> . <span class="tok-str">&quot;\n&quot;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">172</span>            . <span class="tok-str">&#039;  resolved&#039;</span> . <span class="tok-str">&quot;\n&quot;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">173</span>            . <span class="tok-str">&#039;  ? = 7&#039;</span> . <span class="tok-str">&quot;\n&quot;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">174</span>            . <span class="tok-str">&quot;\n&quot;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">175</span>            . <span class="tok-str">&#039;Conditions are not evaluated; runtime reachability is not assessed.&#039;</span> . <span class="tok-str">&quot;\n&quot;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">176</span>            . <span class="tok-str">&#039;1 statement(s), 1 fully resolved, 0 finding(s), 0 unreadable file(s).&#039;</span> . <span class="tok-str">&quot;\n&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">177</span>            (string) (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">render</span>(<span class="tok-var">$catalog</span>)-&gt;<span class="tok-id">sole</span>(),</span>
+<span class="src-line" data-diff="removed"><span class="ln">178</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">179</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">180</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">181</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testEntryLinesAreWrittenExactly</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">182</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">183</span>        <span class="tok-var">$catalog</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">analyzeSource</span>([</span>
+<span class="src-line" data-diff="removed"><span class="ln">184</span>            <span class="tok-str">&#039;a.php&#039;</span> =&gt; <span class="tok-str">&#039;&lt;?php function f(PDO $d) { $d-&gt;query(&quot;SELECT &quot; . $_GET[&quot;x&quot;]); }&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">185</span>        ]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">186</span>        <span class="tok-var">$entry</span> = <span class="tok-var">$catalog</span>-&gt;<span class="tok-id">entries</span>()[<span class="tok-num">0</span>];</span>
+<span class="src-line" data-diff="removed"><span class="ln">187</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">188</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">189</span>            [</span>
+<span class="src-line" data-diff="removed"><span class="ln">190</span>                <span class="tok-str">&#039;a.php:1  SELECT  &#039;</span> . <span class="tok-var">$entry</span>-&gt;<span class="tok-id">id</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">191</span>                <span class="tok-str">&#039;  in f via pdo.query&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">192</span>                <span class="tok-str">&#039;  SELECT {$}&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">193</span>                <span class="tok-str">&#039;  external-input&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">194</span>                <span class="tok-str">&#039;  [MEDIUM] dynamic-sql 1 value(s) are spliced into the statement text rather than bound.&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">195</span>                <span class="tok-str">&#039;  [HIGH] external-input A value from external input reaches the statement text.&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">196</span>            ],</span>
+<span class="src-line" data-diff="removed"><span class="ln">197</span>            (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">entryLines</span>(<span class="tok-var">$entry</span>),</span>
+<span class="src-line" data-diff="removed"><span class="ln">198</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">199</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">200</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">201</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testStatusLineSaysHowFarTheAnalyzerGot</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">202</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">203</span>        <span class="tok-var">$catalog</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">analyzeSource</span>([</span>
+<span class="src-line" data-diff="removed"><span class="ln">204</span>            <span class="tok-str">&#039;a.php&#039;</span> =&gt; <span class="tok-str">&#039;&lt;?php function f(PDO $d, string $s): void { $d-&gt;query(&quot;SELECT &quot; . $s); }&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">205</span>        ]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">206</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">207</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;incomplete-model; search did not close&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">statusLine</span>(<span class="tok-var">$catalog</span>-&gt;<span class="tok-id">entries</span>()[<span class="tok-num">0</span>]));</span>
+<span class="src-line" data-diff="removed"><span class="ln">208</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">209</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">210</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testStatusLineWarnsWhenTheSearchDidNotClose</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">211</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">212</span>        <span class="tok-var">$entry</span> = <span class="tok-kw">new</span> <span class="tok-id">CatalogEntry</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">213</span>            <span class="tok-str">&#039;id&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">214</span>            <span class="tok-id">StatementKind</span>::<span class="tok-id">Select</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">215</span>            <span class="tok-id">TextPattern</span>::<span class="tok-id">fromHole</span>(<span class="tok-kw">new</span> <span class="tok-id">TextHole</span>(<span class="tok-id">Origin</span>::<span class="tok-id">Budget</span>, <span class="tok-id">TypeShape</span>::<span class="tok-id">unknown</span>())),</span>
+<span class="src-line" data-diff="removed"><span class="ln">216</span>            [],</span>
+<span class="src-line" data-diff="removed"><span class="ln">217</span>            [],</span>
+<span class="src-line" data-diff="removed"><span class="ln">218</span>            <span class="tok-kw">new</span> <span class="tok-id">CallSite</span>(<span class="tok-str">&#039;a.php&#039;</span>, <span class="tok-num">1</span>, <span class="tok-str">&#039;f&#039;</span>, <span class="tok-str">&#039;unreached&#039;</span>),</span>
+<span class="src-line" data-diff="removed"><span class="ln">219</span>            [],</span>
+<span class="src-line" data-diff="removed"><span class="ln">220</span>            <span class="tok-id">false</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">221</span>            [<span class="tok-str">&#039;App\\R::find&#039;</span>, <span class="tok-str">&#039;App\\R::run&#039;</span>],</span>
+<span class="src-line" data-diff="removed"><span class="ln">222</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">223</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">224</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">225</span>            <span class="tok-str">&#039;incomplete; search did not close; alternatives may be unreachable; via App\\R::find -&gt; App\\R::run&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">226</span>            (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">statusLine</span>(<span class="tok-var">$entry</span>),</span>
+<span class="src-line" data-diff="removed"><span class="ln">227</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">228</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">229</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">230</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSummaryLineCountsWhatWasFound</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">231</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">232</span>        <span class="tok-var">$catalog</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">analyzeSource</span>([</span>
+<span class="src-line" data-diff="removed"><span class="ln">233</span>            <span class="tok-str">&#039;a.php&#039;</span> =&gt; <span class="tok-str">&#039;&lt;?php function f(PDO $d) { $d-&gt;query(&quot;SELECT 1&quot;); }&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">234</span>        ]);</span>
+<span class="src-line" data-diff="removed"><span class="ln">235</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">236</span>            <span class="tok-str">&#039;1 statement(s), 1 fully resolved, 0 finding(s), 0 unreadable file(s).&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">237</span>            (<span class="tok-kw">new</span> <span class="tok-id">TextReporter</span>())-&gt;<span class="tok-id">summaryLine</span>(<span class="tok-var">$catalog</span>),</span>
+<span class="src-line" data-diff="removed"><span class="ln">238</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">239</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">240</span>}</span>
+<span class="src-line" data-diff="removed"><span class="ln">241</span></span>
+</code></pre>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../../assets/app.js" defer></script>
+</body>
+</html>
