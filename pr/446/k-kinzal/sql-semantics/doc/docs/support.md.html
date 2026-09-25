@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supported language and confidence contract — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/446/k-kinzal/sql-semantics/doc/docs/support.md.html">
+<meta name="description" content="Supported language and confidence contract, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Supported language and confidence contract — ZTD Query PHP">
+<meta property="og:description" content="Supported language and confidence contract, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/446/k-kinzal/sql-semantics/doc/docs/support.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/446/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/index.html" title="SqlSemantics\Core">SqlSemantics\Core</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Ast/index.html" title="SqlSemantics\Core\Ast">SqlSemantics\Core\Ast</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Binding/index.html" title="SqlSemantics\Core\Binding">SqlSemantics\Core\Binding</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Model/index.html" title="SqlSemantics\Core\Model">SqlSemantics\Core\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Policy/index.html" title="SqlSemantics\Core\Policy">SqlSemantics\Core\Policy</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Schema/index.html" title="SqlSemantics\Core\Schema">SqlSemantics\Core\Schema</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Type/index.html" title="SqlSemantics\Core\Type">SqlSemantics\Core\Type</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Facade/index.html" title="SqlSemantics\Facade">SqlSemantics\Facade</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Platform/MySql/index.html" title="SqlSemantics\Platform\MySql">SqlSemantics\Platform\MySql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Platform/PostgreSql/index.html" title="SqlSemantics\Platform\PostgreSql">SqlSemantics\Platform\PostgreSql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Platform/Sqlite/index.html" title="SqlSemantics\Platform\Sqlite">SqlSemantics\Platform\Sqlite</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/support.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing f93d0df444 to working tree">f93d0df444 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between f93d0df444 and working tree." data-off="This page documents what f93d0df444 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Supported language and confidence contract</h1><div class="symbol-meta"><span class="source-link">docs/support.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Supported language and confidence contract</h2>
+</div><div class="doc-block" data-diff="same"><p>Semantic rules target the default parser releases (PostgreSQL 17.2, MySQL 8.4.7, SQLite 3.47.2) with standard server defaults. The tree does not encode every server/session setting; alternate behaviors such as MySQL REAL_AS_FLOAT need a future explicit semantic environment.</p>
+</div><div class="doc-block" data-diff="same"><p>The parser accepts far more syntax than the semantic binder. Parsing success does not imply semantic support. Unsupported behavior raises <code>SemanticException</code> with <code>reason = unsupported-syntax</code> (or <code>unsupported-coercion</code> for a type rule). There is no success flag that can conceal a skipped clause.</p>
+</div><div class="doc-block" data-diff="same"><h3>Declarations</h3>
+</div><div class="doc-block" data-diff="same"><p>Supported inputs are ordinary CREATE TABLE statements with named columns, modeled built-in types, NOT NULL/NULL, DEFAULT syntax, and primary, unique, foreign-key, or CHECK constraints. Primary key tuples imply NOT NULL in PostgreSQL and MySQL. In SQLite, only the modeled INTEGER PRIMARY KEY rowid case implies NOT NULL: ordinary primary keys can still contain NULL, including the inline INTEGER PRIMARY KEY DESC exception. See <a href="https://www.sqlite.org/lang_createtable.html">SQLite&#039;s constraint rules</a>.</p>
+</div><div class="doc-block" data-diff="same"><p>Columns and key tuples preserve declaration order. CHECK, DEFAULT, foreign-key actions, and deferrability retain their original syntax; they are not executed or fully validated. Column modifiers such as collation, identity/generated expressions, table options, STRICT/WITHOUT ROWID, inheritance, CREATE AS/LIKE, ALTER, and DROP are unsupported. Named SQLite constraints whose grammar separates the name from its constraint body are also currently rejected.</p>
+</div><div class="doc-block" data-diff="same"><p>The schema is an explicit snapshot, not a database reflection service. It validates duplicate declarations and local constraint columns, but does not validate all server-specific DDL legality or foreign reference targets.</p>
+</div><div class="doc-block" data-diff="same"><h3>Name resolution</h3>
+</div><div class="doc-block" data-diff="same"><p>Default schemas are <code>public</code> (PostgreSQL), <code>main</code> (SQLite), and an unnamed database (MySQL). Pass <code>defaultSchema</code> to <code>SchemaBuilder</code> for a different context. Unqualified names use that one schema; PostgreSQL search paths, temporary-schema precedence, three-part table qualification, and server-specific schema search are not modeled.</p>
+</div><div class="doc-block" data-diff="same"><p>PostgreSQL folds unquoted names and preserves quoted case. SQLite column and table matching is case-insensitive. MySQL table/database matching assumes a case-sensitive schema (<code>lower_case_table_names=0</code>); table aliases follow the same case-sensitive policy, while column names and output aliases are case-insensitive. Alternate MySQL table name case policies and collation-sensitive identifier rules need an explicit resolution policy before they can be supported.</p>
+</div><div class="doc-block" data-diff="same"><p>Nested scopes, CTEs, derived tables, lateral/correlated references, table functions, column alias lists, and aliases on join results are unsupported. An alias hides the original relation name. Duplicate correlation names, ambiguous columns, and missing declarations are errors.</p>
+</div><div class="doc-block" data-diff="same"><h3>Queries and expressions</h3>
+</div><div class="doc-block" data-diff="same"><p>Supported query stages are FROM, ON, WHERE, projection, DISTINCT, ORDER BY, LIMIT, and OFFSET. Join precedence comes from the syntax tree. Table aliases, qualified references, stars, duplicate result labels, and order aliases/positions are preserved. Full joins apply to PostgreSQL and SQLite; the MySQL parser rejects them. An engine-generated result label is returned as <code>null</code> instead of invented.</p>
+</div><div class="doc-block" data-diff="same"><p>Scalar support includes:</p>
+</div><div class="doc-block" data-diff="same"><ul><li>Column references and decimal integer/string/NULL literals; supported boolean terminals and numeric literal categories from each lexer.</li><li>Parameters with unknown type/nullability when no declaration is available.</li><li>Parentheses, integer <code>+</code>, <code>-</code>, <code>*</code>, comparisons, AND/OR/NOT, and NULL tests.</li><li>COALESCE with modeled common types and NULLIF with compatible input types.</li></ul>
+</div><div class="doc-block" data-diff="same"><p>Non-decimal numeric literals and unsupported coercions are rejected. Arbitrary operator overloads, non-integer arithmetic, division, explicit casts, CASE, collations, string functions, user-defined functions, and aggregates/windows require additional semantic rules. SQLite arithmetic returns a dynamic type; affinity is not a guarantee of a runtime integer.</p>
+</div><div class="doc-block" data-diff="same"><p>GROUP BY, HAVING, set operations, DISTINCT ON, locks, SELECT INTO, and DML are unsupported. PostgreSQL ON and WHERE require boolean-compatible expressions. No semantic facts imply successful execution: conversion failures, overflow, constraint violations, and other runtime errors are separate concerns.</p>
+</div><div class="doc-block" data-diff="same"><h3>Confidence and consumers</h3>
+</div><div class="doc-block" data-diff="same"><p>Unknown parameters remain visible as <code>ExpressionKind::Parameter</code> with their original token spelling. This version does not infer a complete parameter signature across occurrences. NULL facts are conservative and do not incorporate WHERE refinements or data statistics. Cardinality, uniqueness preservation, and row existence are not proved. Rejected syntax is never downgraded to a columnless or dependency-free successful query.</p>
+</div><div class="doc-block" data-diff="same"><p>Literal spellings are preserved, not decoded into PHP values. COALESCE operands can include inserted PostgreSQL implicit-cast nodes, which retain their original source object. Consumers should traverse the semantic operands rather than assume that every COALESCE child is a direct column.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
