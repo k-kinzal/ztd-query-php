@@ -21,13 +21,13 @@ final class MarkdownReadingTest extends TestCase
     public function testReadableCardsPreserveTheYamlModelAndRenderOnlyReaderFacingInformation(): void
     {
         $package = dirname(__DIR__, 2);
-        $yaml = (new Loader())->load($package . '/examples/requirements.yaml');
-        $markdown = (new Loader())->load($package . '/examples/markdown/requirements.yaml');
+        $yaml = (new Loader())->load($package . '/tests/Fixtures/Examples/requirements.yaml');
+        $markdown = (new Loader())->load($package . '/tests/Fixtures/Examples/Markdown/requirements.yaml');
         foreach ($yaml->items as $id => $item) {
             self::assertEquals($item->data, $markdown->items[$id]->data);
         }
         self::assertSame([], (new Analyzer())->analyze($markdown)->errors);
-        $text = file_get_contents($package . '/examples/markdown/grammar.md');
+        $text = file_get_contents($package . '/tests/Fixtures/Examples/Markdown/grammar.md');
         self::assertIsString($text);
         $body = preg_replace('/\A---\n.*?\n---\n/s', '', $text);
         self::assertIsString($body);

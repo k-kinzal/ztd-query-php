@@ -42,13 +42,14 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/container/README.md](packages/container/README.md) - Container definitions for testcontainers-php used across the repository, their image versions, and how to use them
 - [packages/lemon-parser/README.md](packages/lemon-parser/README.md) - Reading Lemon grammar files into a lossless syntax tree, and printing it back
 - [packages/requirements/README.md](packages/requirements/README.md) - Linking source text, EARS specifications, and tests; installation and usage
-- [packages/requirements/docs/cli.md](packages/requirements/docs/cli.md) - Command line interface: commands, options, and report output
-- [packages/requirements/docs/extensions.md](packages/requirements/docs/extensions.md) - Source extensions that retrieve reference material and runner extensions that run tests
-- [packages/requirements/docs/format.md](packages/requirements/docs/format.md) - Configuration and definition document format (version 1), including the Markdown profile
-- [packages/requirements/docs/lint.md](packages/requirements/docs/lint.md) - Validation rules applied to every document before other commands run
-- [packages/requirements/docs/traceability.md](packages/requirements/docs/traceability.md) - Design of source traceability: problem, goals, and model
-- [packages/requirements/examples/markdown/decisions.md](packages/requirements/examples/markdown/decisions.md) - Example definition document in the Markdown profile, without a source
-- [packages/requirements/examples/markdown/grammar.md](packages/requirements/examples/markdown/grammar.md) - Example definition document in the Markdown profile, traced to an HTML source
+- [packages/requirements/docs/cli.md](packages/requirements/docs/cli.md) - Commands, options, exit codes, coverage and test results, and CI gates
+- [packages/requirements/docs/configuration.md](packages/requirements/docs/configuration.md) - The configuration file (version 1): definition files, bootstrap, extensions, runners and coverage gates
+- [packages/requirements/docs/definitions.md](packages/requirements/docs/definitions.md) - Definition documents (version 1): sources, items, selectors and the experimental Markdown profile
+- [packages/requirements/docs/extensions.md](packages/requirements/docs/extensions.md) - Writing and registering source and runner extensions
+- [packages/requirements/docs/lint.md](packages/requirements/docs/lint.md) - What lint checks, and the EARS patterns specifications must follow
+- [packages/requirements/docs/traceability.md](packages/requirements/docs/traceability.md) - What requirements traces: the model, the workflow, and what it does not prove
+- [packages/requirements/tests/Fixtures/Examples/Markdown/decisions.md](packages/requirements/tests/Fixtures/Examples/Markdown/decisions.md) - Test fixture: a definition document in the Markdown profile, without a source
+- [packages/requirements/tests/Fixtures/Examples/Markdown/grammar.md](packages/requirements/tests/Fixtures/Examples/Markdown/grammar.md) - Test fixture: a definition document in the Markdown profile, traced to an HTML source
 - [packages/requirements/tests/Fixtures/source.md](packages/requirements/tests/Fixtures/source.md) - Test fixture: a minimal Markdown source
 - [packages/sql-catalog/README.md](packages/sql-catalog/README.md) - Cataloging the SQL a PHP application can issue: usage, statuses, extensions, and reporters
 - [packages/sql-catalog/docs/analysis.md](packages/sql-catalog/docs/analysis.md) - How the analysis reconstructs the SQL a PHP application issues

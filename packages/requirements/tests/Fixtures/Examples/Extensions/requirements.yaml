@@ -5,9 +5,9 @@ definitions:
   - catalog.yaml
 extensions:
   sources:
-    catalog: RequirementsExample\CatalogSource
+    catalog: Requirements\Tests\Fixtures\Examples\Extensions\CatalogSource
   runners:
-    scenario: RequirementsExample\ScenarioRunner
+    scenario: Requirements\Tests\Fixtures\Examples\Extensions\ScenarioRunner
 runners:
   acceptance:
     extension: scenario

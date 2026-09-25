@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace RequirementsExample;
+namespace Requirements\Tests\Fixtures\Examples\Extensions;
 
 use Requirements\Test\ProcessRunner;
 use Requirements\Test\RunnerConfig;

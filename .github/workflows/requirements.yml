@@ -44,23 +44,23 @@ jobs:
         if: matrix.php == '8.3'
       - name: Check the documented example
         run: |
-          php bin/requirements lint --config examples/requirements.yaml
-          php bin/requirements format --check --config examples/requirements.yaml
-          php bin/requirements check --config examples/requirements.yaml
-          php bin/requirements coverage --config examples/requirements.yaml
+          php bin/requirements lint --config tests/Fixtures/Examples/requirements.yaml
+          php bin/requirements format --check --config tests/Fixtures/Examples/requirements.yaml
+          php bin/requirements check --config tests/Fixtures/Examples/requirements.yaml
+          php bin/requirements coverage --config tests/Fixtures/Examples/requirements.yaml
       - name: Check the experimental Markdown example
         run: |
-          php bin/requirements lint --config examples/markdown/requirements.yaml
-          php bin/requirements format --check --config examples/markdown/requirements.yaml
-          php bin/requirements check --config examples/markdown/requirements.yaml
-          php bin/requirements coverage --config examples/markdown/requirements.yaml
+          php bin/requirements lint --config tests/Fixtures/Examples/Markdown/requirements.yaml
+          php bin/requirements format --check --config tests/Fixtures/Examples/Markdown/requirements.yaml
+          php bin/requirements check --config tests/Fixtures/Examples/Markdown/requirements.yaml
+          php bin/requirements coverage --config tests/Fixtures/Examples/Markdown/requirements.yaml
       - name: Check custom source and test extensions
         run: |
-          php bin/requirements lint --config examples/extensions/requirements.yaml
-          php bin/requirements format --check --config examples/extensions/requirements.yaml
-          php bin/requirements check --config examples/extensions/requirements.yaml
-          php bin/requirements coverage --config examples/extensions/requirements.yaml
-          php bin/requirements spec --config examples/extensions/requirements.yaml
+          php bin/requirements lint --config tests/Fixtures/Examples/Extensions/requirements.yaml
+          php bin/requirements format --check --config tests/Fixtures/Examples/Extensions/requirements.yaml
+          php bin/requirements check --config tests/Fixtures/Examples/Extensions/requirements.yaml
+          php bin/requirements coverage --config tests/Fixtures/Examples/Extensions/requirements.yaml
+          php bin/requirements spec --config tests/Fixtures/Examples/Extensions/requirements.yaml
       - name: Verify EARS acceptance specifications
         run: |
           php bin/requirements lint
