@@ -21,7 +21,7 @@ final class MarkdownReadingTest extends TestCase
     public function testReadableCardsPreserveTheYamlModelAndRenderOnlyReaderFacingInformation(): void
     {
         $package = dirname(__DIR__, 2);
-        $yaml = (new Loader())->load($package . '/examples/requirements.yaml');
+        $yaml = (new Loader())->load($package . '/examples/yaml/requirements.yaml');
         $markdown = (new Loader())->load($package . '/examples/markdown/requirements.yaml');
         foreach ($yaml->items as $id => $item) {
             self::assertEquals($item->data, $markdown->items[$id]->data);
@@ -35,7 +35,7 @@ final class MarkdownReadingTest extends TestCase
         $document = new Crawler($html);
         self::assertSame(['requirement', 'lexical', 'grammar', 'unsupported'], $document->filter('img')->extract(['alt']));
         self::assertSame(['A name starts with a letter.', 'The generator produces C code.'], $document->filter('blockquote p')->each(static fn (Crawler $node): string => $node->text()));
-        self::assertSame(['../source.html#names', '#req-001', '../source.html#generation'], $document->filter('a')->extract(['href']));
+        self::assertSame(['source.html#names', '#req-001', 'source.html#generation'], $document->filter('a')->extract(['href']));
         self::assertStringNotContainsString('selector:', $document->text());
         self::assertStringNotContainsString('**kind**', $body);
         self::assertStringNotContainsString('**evidence**', $body);

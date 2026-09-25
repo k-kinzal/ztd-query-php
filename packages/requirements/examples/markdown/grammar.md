@@ -2,7 +2,7 @@
 version: 1
 source:
   id: example-grammar
-  uri: ../source.html
+  uri: source.html
   format: html
   selector: 'main p'
 $schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.document.yaml'
@@ -16,7 +16,7 @@ A name starts with a letter.
 
 > A name starts with a letter.
 
-[Source](../source.html#names)
+[Source](source.html#names)
 
 # SPEC-001
 
@@ -37,7 +37,7 @@ The generator shall produce C code.
 
 > The generator produces C code.
 
-[Source](../source.html#generation)
+[Source](source.html#generation)
 
 **unsupported reason**
 

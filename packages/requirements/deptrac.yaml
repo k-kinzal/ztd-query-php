@@ -1,0 +1,103 @@
+# Layers follow the path from definition files to a verdict: input values are
+# narrowed, statements are checked against EARS, definitions become the model,
+# sources are selected into units, documents are read and written, coverage
+# and verification are computed, and the console reports them.
+deptrac:
+  paths:
+    - ./src
+  analyser:
+    types:
+      - class
+      - use
+  layers:
+    # Narrows decoded configuration, definition and option values; the error raised for invalid input.
+    - name: Input
+      collectors:
+        - type: directory
+          value: 'src/Input/'
+    # The EARS clause grammar that specification statements follow.
+    - name: Ears
+      collectors:
+        - type: directory
+          value: 'src/Ears/'
+    # The runner contract, the built-in PHPUnit and Behat runners and JUnit reading.
+    - name: Test
+      collectors:
+        - type: directory
+          value: 'src/Test/'
+    # The loaded project: items, sources, quoted excerpts and test references.
+    - name: Model
+      collectors:
+        - type: directory
+          value: 'src/Model/'
+    # The source contract and the built-in readers that select source units.
+    - name: Source
+      collectors:
+        - type: directory
+          value: 'src/Source/'
+    # Reads, validates and writes YAML and Markdown documents and loads the project.
+    - name: Config
+      collectors:
+        - type: directory
+          value: 'src/Config/'
+    # Source coverage of the declared scopes and coverage snapshots.
+    - name: Report
+      collectors:
+        - type: directory
+          value: 'src/Report/'
+    # Runs the tests linked to specifications and records their verdicts.
+    - name: Verification
+      collectors:
+        - type: directory
+          value: 'src/Verification/'
+    # The command-line application and its reports.
+    - name: Console
+      collectors:
+        - type: directory
+          value: 'src/Console/'
+    # Third-party libraries, each allowed only where its responsibility lives.
+    - name: CommonMark
+      collectors:
+        - type: classLike
+          value: '^League\\CommonMark\\.*'
+    - name: JsonSchema
+      collectors:
+        - type: classLike
+          value: '^Opis\\JsonSchema\\.*'
+    - name: Yaml
+      collectors:
+        - type: classLike
+          value: '^Symfony\\Component\\Yaml\\.*'
+    - name: DomCrawler
+      collectors:
+        - type: classLike
+          value: '^Symfony\\Component\\DomCrawler\\.*'
+    - name: HttpClient
+      collectors:
+        - type: classLike
+          value: '^Symfony\\(Component|Contracts)\\HttpClient\\.*'
+    - name: Process
+      collectors:
+        - type: classLike
+          value: '^Symfony\\Component\\Process\\.*'
+    - name: SymfonyConsole
+      collectors:
+        - type: classLike
+          value: '^Symfony\\Component\\Console\\.*'
+  ruleset:
+    Input: []
+    Ears: [Input]
+    Test: [Input, Process]
+    Model: [Input, Ears, Test]
+    Source: [Input, Model, CommonMark, DomCrawler, HttpClient]
+    Config: [Input, Model, Source, Test, CommonMark, JsonSchema, Yaml]
+    Report: [Input, Model, Source]
+    Verification: [Input, Model, Test]
+    Console: [Input, Model, Config, Report, Verification, SymfonyConsole]
+    CommonMark: []
+    JsonSchema: []
+    Yaml: []
+    DomCrawler: []
+    HttpClient: []
+    Process: []
+    SymfonyConsole: []

@@ -41,7 +41,7 @@ composer require --dev k-kinzal/requirements
 ## Usage
 
 Create `requirements.yaml` and definition files following the
-[complete example](examples/requirements.yaml), then run:
+[complete example](examples/yaml/requirements.yaml), then run:
 
 ```bash
 vendor/bin/requirements --help
