@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Benchmark;
-use SqlSemantics\Binder;
-use SqlSemantics\Dialect;
-use SqlSemantics\SchemaBuilder;
+use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\SchemaBuilder;
+use SqlSemantics\Facade\Dialect;
 
 /**
  * Measures the public SQL-to-bound-statement pipeline with a reusable schema.
