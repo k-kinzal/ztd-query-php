@@ -20,6 +20,13 @@ use SqlSemantics\Type\Identity;
 final class StandardTypeReader
 {
     /**
+     * The PostgreSQL catalog type names the model knows as built-in types; the server finds them under a quoted name
+     * or in pg_catalog as it finds their unquoted spelling, while the SQL keyword spellings (integer, boolean, ...)
+     * are not type names once quoted.
+     */
+    public const CATALOG_TYPES = ['int2', 'int4', 'int8', 'float4', 'float8', 'numeric', 'bool', 'text', 'varchar', 'bpchar', 'date', 'time', 'timetz', 'timestamp', 'timestamptz', 'interval', 'bit', 'varbit', 'bytea', 'json', 'jsonb', 'uuid', 'xml'];
+
+    /**
      * Shares built-in alias resolution with the declaration reader.
      */
     public function __construct(public readonly TypeReader $types)
@@ -35,14 +42,13 @@ final class StandardTypeReader
             ModifierReader::validate($source);
         }
         $generic = Tree::outer($source, ['GenericType'])[0] ?? null;
-        if ($this->types->dialect === Dialect::PostgreSql && $generic !== null) {
-            $name = Tree::child($generic, ['type_function_name']);
-            $spelling = $name === null ? '' : strtoupper(Tree::text($name));
-            if (Tree::child($generic, ['attrs']) !== null || $this->types->canonical($spelling) === null && Identity\BuiltinIdentity::tryFrom(strtolower($spelling)) === null) {
-                return $this->named($generic);
-            }
+        $catalog = $this->types->dialect === Dialect::PostgreSql && $generic !== null ? self::catalogName($generic) : null;
+        $userType = $catalog === null ? $this->userType($generic) : null;
+        if ($userType !== null) {
+            return $userType;
         }
         $parts = TypeWords::read($source, $this->types->dialect);
+        $parts = $catalog === null ? $parts : new TypeWords([strtoupper($catalog)], $parts->parameters, false, null, false);
         $name = strtoupper(implode(' ', $parts->words));
         $canonical = $this->types->canonical($name) ?? strtolower($name);
         if (str_starts_with($name, 'INTERVAL')) {
@@ -61,6 +67,43 @@ final class StandardTypeReader
             throw new UnclassifiedSql('Unclassified type declaration: ' . $source->toString());
         }
         return TypeFamilies::make($base, $parts, $this->types->dialect, $source);
+    }
+
+    /**
+     * Returns the named type a PostgreSQL generic type name declares: a qualified name, or a name that is no built-in
+     * spelling; null for another dialect, another type syntax, or a built-in name.
+     */
+    public function userType(?Node $generic): ?Identity\NamedIdentity
+    {
+        if ($this->types->dialect !== Dialect::PostgreSql || $generic === null) {
+            return null;
+        }
+        $name = Tree::child($generic, ['type_function_name']);
+        $spelling = $name === null ? '' : strtoupper(Tree::text($name));
+        return Tree::child($generic, ['attrs']) !== null || $this->types->canonical($spelling) === null && Identity\BuiltinIdentity::tryFrom(strtolower($spelling)) === null ? $this->named($generic) : null;
+    }
+
+    /**
+     * Returns the built-in catalog type a PostgreSQL generic type name reaches, written unqualified or in pg_catalog,
+     * quoted or not; null for any other name.
+     */
+    public static function catalogName(Node $generic): ?string
+    {
+        $identifiers = new Identifiers(Dialect::PostgreSql);
+        $name = Tree::child($generic, ['type_function_name']);
+        if ($name === null) {
+            return null;
+        }
+        $parts = $identifiers->parts($name);
+        foreach (Tree::outer($generic, ['attr_name']) as $attribute) {
+            array_push($parts, ...$identifiers->parts($attribute));
+        }
+        $type = match (count($parts)) {
+            1 => $parts[0],
+            2 => $parts[0] === 'pg_catalog' ? $parts[1] : null,
+            default => null,
+        };
+        return in_array($type, self::CATALOG_TYPES, true) ? $type : null;
     }
 
     /**

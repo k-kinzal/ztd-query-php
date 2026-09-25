@@ -336,7 +336,8 @@ final class OptionReaderTest extends TestCase
 
     public function testColumnReadsSerialDefaultValueAsAutoIncrement(): void
     {
-        $columns = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT SERIAL DEFAULT VALUE, b INT AUTO_INCREMENT UNIQUE)')->tables[0]->columns;
+        $tables = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT SERIAL DEFAULT VALUE)', 'CREATE TABLE u(b INT AUTO_INCREMENT UNIQUE)')->tables;
+        $columns = [$tables[0]->columns[0], $tables[1]->columns[0]];
         self::assertInstanceOf(\SqlSemantics\Schema\Column\AutoIncrementColumn::class, $columns[0]->generation);
         self::assertInstanceOf(\SqlSemantics\Schema\Column\AutoIncrementColumn::class, $columns[1]->generation);
         self::assertSame([true, false], [$columns[0]->generation->serialDefault, $columns[1]->generation->serialDefault]);

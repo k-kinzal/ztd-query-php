@@ -53,12 +53,13 @@ final class IndexEvolution
     }
 
     /**
-
-     * Adds one index while respecting IF NOT EXISTS.
-
+     * Adds one index while respecting IF NOT EXISTS; an unnamed PostgreSQL index takes the name the server gives it.
      */
     public function add(TableDefinition $table, IndexDefinition $index, bool $ifNotExists = false): TableDefinition
     {
+        if ($this->tables->identifiers->dialect === \SqlSemantics\Dialect::PostgreSql) {
+            $index = Constraint\PostgreSqlIndexNames::assign($index, $table, $this->tables->schema->tables);
+        }
         foreach ($table->indexes as $existing) {
             if ($index->name !== null && $existing->name === $index->name) {
                 if ($ifNotExists) {
@@ -103,8 +104,9 @@ final class IndexEvolution
 
     /**
      * Applies a MySQL DROP INDEX as ALTER TABLE DROP INDEX does: the name reaches an index, a unique key, or, as
-     * PRIMARY, the primary key of the named table.
+     * PRIMARY, the primary key of the named table; dropping the key an AUTO_INCREMENT column needs is rejected.
      *
+     * @throws \SqlSemantics\InvalidSql
      * @param list<Node> $names
      * @return list<TableDefinition>
      */
@@ -119,6 +121,7 @@ final class IndexEvolution
             }
         }
         $replacement = new TableDefinition($target->schema, $target->name, $target->columns, $keys->constraints, $target->source, $target->resolved, $keys->indexes, $target->properties);
+        Constraint\MySqlCounterKeys::check($replacement, $names[0] ?? $target->source);
         return array_map(static fn (TableDefinition $table): TableDefinition => $table === $target ? $replacement : $table, $this->tables->schema->tables);
     }
 }

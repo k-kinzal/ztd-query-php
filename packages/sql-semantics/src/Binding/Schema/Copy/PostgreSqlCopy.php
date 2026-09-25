@@ -75,16 +75,21 @@ final class PostgreSqlCopy
     }
 
     /**
-     * Lays out columns in catalog order, inherited parent columns first and then declared columns with each LIKE template expanded where it is written, and returns them with the constraints the declaration receives from its parents and templates; a name already laid out merges with its first occurrence.
+     * Lays out columns in catalog order, inherited parent columns first and then declared columns with each LIKE template expanded where it is written, and returns them with the constraints the declaration receives from its parents and templates and the template indexes it copies; a name already laid out merges with its first occurrence.
+     * A LIKE template gives what its options include, as {@see TemplateOptions} copies it.
      *
      * @param list<ColumnDefinition> $declared
      * @param list<TableConstraint> $constraints
-     * @return array{list<ColumnDefinition>, list<TableConstraint>}
+     * @return array{list<ColumnDefinition>, list<TableConstraint>, list<\SqlSemantics\Schema\IndexDefinition>, list<TableDefinition>}
      * @throws SemanticException
+     * @throws \SqlSemantics\InvalidSql
+     * @throws \SqlSemantics\Binding\Statement\UnclassifiedSql
      */
     public static function layout(Node $source, array $declared, array $constraints, TableResolver $resolver): array
     {
         $columns = [];
+        $indexes = [];
+        $templates = [];
         $inherits = Tree::child($source, ['OptInherit']);
         $parents = $inherits === null ? [] : Tree::outer($inherits, ['qualified_name']);
         $names = array_values(array_filter($source->children, static fn ($child): bool => $child instanceof Node && $child->name === 'qualified_name'));
@@ -104,10 +109,13 @@ final class PostgreSqlCopy
             }
             $template = Tree::child($element, ['qualified_name']) ?? $element;
             $base = $resolver->resolve($resolver->identifiers->parts($template), $template);
-            $columns = self::merge($columns, $base->columns);
-            array_push($constraints, ...\SqlSemantics\Binding\Schema\Constraint\PostgreSqlConstraintNames::copied($base->constraints, false));
+            $included = TemplateOptions::included($element, $resolver);
+            $columns = self::merge($columns, array_map(static fn (ColumnDefinition $column): ColumnDefinition => TemplateOptions::column($column, $included, $base, $resolver), $base->columns));
+            array_push($constraints, ...TemplateOptions::constraints($base->constraints, $included));
+            array_push($indexes, ...(in_array(\SqlSemantics\Model\Definition\Relation\Foreign\TemplateProperty::Indexes, $included, true) ? $base->indexes : []));
+            $templates[] = $base;
         }
-        return [self::merge($columns, $pending), $constraints];
+        return [self::merge($columns, $pending), $constraints, $indexes, $templates];
     }
 
     /**

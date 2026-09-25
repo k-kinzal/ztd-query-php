@@ -62,7 +62,31 @@ final class AlterTables
         $validations = array_merge($statement->find('with_validation'), $statement->find('alter_opt_validation'));
         $validation = $validations === [] ? null : PartitionValidation::from(strtoupper(Tree::text($validations[count($validations) - 1])));
         $ignore = array_filter($statement->find('opt_ignore'), Tree::hasTokens(...)) !== [];
+        self::counters($declaration, $statement, $context);
         return new AlterTableStatement($origin, $table, $alterations, $algorithm, AlterPolicies::lock($statement, $identifiers), $validation, $ignore);
+    }
+
+    /**
+     * Rejects an alteration of a known table that leaves it with two AUTO_INCREMENT columns or with one no key begins
+     * with, applying the statement to the schema snapshot as SchemaBuilder does; a statement the snapshot cannot apply
+     * is left to the other checks.
+     * @throws InvalidSql
+     * @throws UnclassifiedSql
+     */
+    public static function counters(TableDefinition $declaration, Node $statement, QueryContext $context): void
+    {
+        if (!$declaration->resolved || !in_array($declaration, $context->tables->schema->tables, true)) {
+            return;
+        }
+        try {
+            (new \SqlSemantics\Binding\Schema\TableAlteration($context->tables))->apply($statement);
+        } catch (InvalidSql $invalid) {
+            if ($invalid->violation === InputViolation::AutoIncrementKey) {
+                throw $invalid;
+            }
+        } catch (\SqlSemantics\SemanticException) {
+            return;
+        }
     }
 
     /**

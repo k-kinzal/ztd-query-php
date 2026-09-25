@@ -283,7 +283,8 @@ final class ColumnReaderTest extends TestCase
 
     #[TestWith(['mysql', 'CREATE TABLE t (c INT NOT NULL NULL, d INT NULL NOT NULL)', 'CREATE TABLE `t`(`c` integer NULL, `d` integer NOT NULL)'])]
     #[TestWith(['mysql', 'CREATE TABLE t (c INT AUTO_INCREMENT NULL, KEY (c))', 'CREATE TABLE `t`(`c` integer AUTO_INCREMENT NULL, INDEX(`c`))'])]
-    #[TestWith(['mysql', 'CREATE TABLE t (c SERIAL NULL, d SERIAL)', 'CREATE TABLE `t`(`c` serial NULL, `d` serial NOT NULL)'])]
+    #[TestWith(['mysql', 'CREATE TABLE t (c SERIAL NULL)', 'CREATE TABLE `t`(`c` SERIAL NULL)'])]
+    #[TestWith(['mysql', 'CREATE TABLE t (d SERIAL)', 'CREATE TABLE `t`(`d` SERIAL)'])]
     #[TestWith(['postgresql', 'CREATE TABLE t (c int NULL NULL, d serial)', 'CREATE TABLE "public"."t"("c" integer NULL, "d" serial)'])]
     #[TestWith(['postgresql', 'CREATE TABLE t (c int NULL, d int NULL, CONSTRAINT pk PRIMARY KEY (c, d))', 'CREATE TABLE "public"."t"("c" integer NOT NULL, "d" integer NOT NULL, CONSTRAINT "pk" PRIMARY KEY("c", "d"))'])]
     #[TestWith(['sqlite', 'CREATE TABLE t (c int NOT NULL NULL)', 'CREATE TABLE "main"."t"("c" "int" NOT NULL)'])]
@@ -316,5 +317,65 @@ final class ColumnReaderTest extends TestCase
         self::assertSame($type, $column->type->name);
         self::assertSame(Nullability::MaybeNull, $column->nullability);
         self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $column->generation);
+    }
+
+    #[TestWith(['mysql-5.6.51'])]
+    #[TestWith(['mysql-5.7.44'])]
+    #[TestWith(['mysql-8.4.7'])]
+    public function testReadBindsTheMySqlSerialTypeAsAnUnsignedCounterWithAUniqueKey(string $version): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t (a SERIAL, b INT)')->tables[0];
+        $column = $table->columns[0];
+        self::assertSame('bigint unsigned', $column->type->name);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\IntegerStorage::class, $column->type->identity);
+        self::assertTrue($column->type->identity->unsigned);
+        self::assertSame(Nullability::NotNull, $column->nullability);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\AutoIncrementColumn::class, $column->generation);
+        self::assertTrue($column->generation->serialType);
+        self::assertCount(1, $table->constraints);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $table->constraints[0]);
+        self::assertSame(['a'], $table->constraints[0]->localColumns());
+    }
+
+    #[TestWith(['CREATE TABLE t (a SERIAL, b INT)', 'CREATE TABLE `t`(`a` SERIAL, `b` integer)'])]
+    #[TestWith(['CREATE TABLE t (a SERIAL UNIQUE)', 'CREATE TABLE `t`(`a` SERIAL)'])]
+    #[TestWith(['CREATE TABLE t (a SERIAL PRIMARY KEY)', 'CREATE TABLE `t`(`a` SERIAL, PRIMARY KEY(`a`))'])]
+    #[TestWith(['CREATE TABLE t (a SERIAL SERIAL DEFAULT VALUE)', 'CREATE TABLE `t`(`a` SERIAL)'])]
+    #[TestWith(['CREATE TABLE t (a INT UNIQUE UNIQUE KEY)', 'CREATE TABLE `t`(`a` integer, UNIQUE(`a`))'])]
+    #[TestWith(['CREATE TABLE t (a INT PRIMARY KEY KEY)', 'CREATE TABLE `t`(`a` integer NOT NULL, PRIMARY KEY(`a`))'])]
+    public function testReadWritesTheMySqlSerialTypeBackAsDeclared(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build());
+        $statement = $binder->bind($sql);
+        self::assertSame($sql, $statement->toString());
+        $written = (new \SqlSemantics\SimpleSerializer())->serialize($statement);
+        self::assertSame($expected, $written);
+        self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($written)));
+    }
+
+    public function testColumnKeysKeepsOneKeyOfEachKindForAMySqlColumn(): void
+    {
+        $source = new \SqlParser\Parser\Node('column', 0, []);
+        $unique = new \SqlSemantics\Ast\Declaration\TableConstraint(\SqlSemantics\Schema\ConstraintKind::Unique, ['a'], $source);
+        $primary = new \SqlSemantics\Ast\Declaration\TableConstraint(\SqlSemantics\Schema\ConstraintKind::PrimaryKey, ['a'], $source);
+        $check = new \SqlSemantics\Ast\Declaration\TableConstraint(\SqlSemantics\Schema\ConstraintKind::Check, [], $source);
+        self::assertSame([$unique, $check, $primary, $check], \SqlSemantics\Ast\ColumnReader::columnKeys([$unique, $check, $primary, $unique, $primary, $check]));
+    }
+
+    public function testTypeReadsSerialTypelessAndWrittenTypes(): void
+    {
+        $postgres = new \SqlSemantics\Ast\ColumnReader(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql));
+        $sqlite = new \SqlSemantics\Ast\ColumnReader(new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite));
+        $typename = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('CREATE TABLE t (a text)'), ['Typename'])[0];
+        self::assertSame(['bigint', '', 'text'], [$postgres->type(null, \SqlSemantics\Type\Identity\BuiltinIdentity::BigInt)->name, $sqlite->type(null, null)->name, $postgres->type($typename, null)->name]);
+    }
+
+    public function testConstraintsReadsKeysAndTheGenerationAttribute(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('CREATE TABLE t (a int UNIQUE GENERATED ALWAYS AS (1) STORED NOT NULL)');
+        $groups = (new \SqlSemantics\Ast\ConstraintGroups())->read(\SqlSemantics\Ast\Tree::outer($tree, ['ColConstraint']));
+        [$constraints, $generated] = (new \SqlSemantics\Ast\ColumnReader(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)))->constraints($groups, 'a', null);
+        self::assertSame([\SqlSemantics\Schema\ConstraintKind::Unique], array_map(static fn (\SqlSemantics\Ast\Declaration\TableConstraint $constraint): \SqlSemantics\Schema\ConstraintKind => $constraint->kind, $constraints));
+        self::assertSame('1', trim(\SqlSemantics\Ast\Tree::text($generated ?? new \SqlParser\Parser\Node('none', 0, []))));
     }
 }

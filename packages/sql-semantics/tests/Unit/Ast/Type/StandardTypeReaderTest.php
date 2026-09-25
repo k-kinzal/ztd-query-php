@@ -19,16 +19,42 @@ final class StandardTypeReaderTest extends TestCase
 {
     public function testReadClassifiesPostgresNamedTypesWithTheirOperands(): void
     {
-        $table = (new SchemaBuilder(Dialect::PostgreSql))->build("CREATE TABLE t(a app.measure(currency, 'USD', 12), b pg_catalog.int4)")->tables[0];
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build("CREATE TABLE t(a app.measure(currency, 'USD', 12), b pg_catalog.serial)")->tables[0];
         $measure = $table->columns[0]->type->identity;
         self::assertInstanceOf(Identity\NamedIdentity::class, $measure);
         self::assertSame(['app', 'measure'], $measure->reference->parts);
         self::assertCount(3, $measure->arguments);
         self::assertSame('app.measure', $table->columns[0]->type->name);
-        $int4 = $table->columns[1]->type->identity;
-        self::assertInstanceOf(Identity\NamedIdentity::class, $int4);
-        self::assertSame(['pg_catalog', 'int4'], $int4->reference->parts);
-        self::assertSame([], $int4->arguments);
+        $serial = $table->columns[1]->type->identity;
+        self::assertInstanceOf(Identity\NamedIdentity::class, $serial);
+        self::assertSame(['pg_catalog', 'serial'], $serial->reference->parts);
+        self::assertSame([], $serial->arguments);
+    }
+
+    public function testReadBindsQuotedAndCatalogQualifiedTypeNamesToBuiltinTypes(): void
+    {
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a "int4", b pg_catalog.int4, c pg_catalog."varchar"(3), d "timestamptz", e pg_catalog.int8[], f "float8", g pg_catalog.bool)')->tables[0];
+        self::assertSame(['integer', 'integer', 'varchar', 'timestamptz', 'bigint[]', 'double precision', 'boolean'], array_map(static fn ($column): string => $column->type->name, $table->columns));
+        self::assertInstanceOf(Identity\Numeric\IntegerStorage::class, $table->columns[1]->type->identity);
+        self::assertInstanceOf(Identity\StringStorage::class, $table->columns[2]->type->identity);
+        $length = $table->columns[2]->type->identity->length;
+        self::assertInstanceOf(Identity\Numeric\NumericParameter::class, $length);
+        self::assertSame('3', $length->spelling);
+    }
+
+    public function testReadKeepsQuotedKeywordSpellingsAndOtherSchemasAsNamedTypes(): void
+    {
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a "integer", b "INT4", c public.int4, d "char")')->tables[0];
+        self::assertSame([['integer'], ['INT4'], ['public', 'int4'], ['char']], array_map(static fn ($column): array => $column->type->identity instanceof Identity\NamedIdentity ? $column->type->identity->reference->parts : [], $table->columns));
+    }
+
+    public function testCatalogNameReadsUnqualifiedAndPgCatalogNamesOnly(): void
+    {
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a pg_catalog.int4)')->tables[0];
+        $generic = \SqlSemantics\Ast\Tree::outer($table->columns[0]->source, ['GenericType'])[0];
+        self::assertSame('int4', StandardTypeReader::catalogName($generic));
+        $other = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a app.int4)')->tables[0];
+        self::assertNull(StandardTypeReader::catalogName(\SqlSemantics\Ast\Tree::outer($other->columns[0]->source, ['GenericType'])[0]));
     }
 
     public function testReadClassifiesIntervalFieldsAndPrecision(): void
@@ -119,5 +145,17 @@ final class StandardTypeReaderTest extends TestCase
     {
         $this->expectException(\SqlSemantics\InvalidSql::class);
         (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int4(5))');
+    }
+
+    public function testUserTypeNamesOnlyPostgreSqlNamesThatAreNoBuiltinSpelling(): void
+    {
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a app.measure, b money, c int4)')->tables[0];
+        $reader = new StandardTypeReader(new \SqlSemantics\Ast\TypeReader(Dialect::PostgreSql));
+        $generics = array_map(static fn ($column): ?\SqlParser\Parser\Node => \SqlSemantics\Ast\Tree::outer($column->source, ['GenericType'])[0] ?? null, $table->columns);
+        self::assertSame(['app', 'measure'], $reader->userType($generics[0])?->reference->parts);
+        self::assertSame(['money'], $reader->userType($generics[1])?->reference->parts);
+        self::assertNull($reader->userType($generics[2]));
+        self::assertNull($reader->userType(null));
+        self::assertNull((new StandardTypeReader(new \SqlSemantics\Ast\TypeReader(Dialect::MySql)))->userType($generics[0]));
     }
 }

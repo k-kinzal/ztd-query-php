@@ -35,7 +35,8 @@ final class TableAlteration
     /**
      * Applies the statement's column declarations and actions in SQL order; the constraints written on an added or
      * redeclared column join the table, table-level keys, constraints, and indexes are added after the ones the
-     * statement drops, and every primary key column outside SQLite becomes NOT NULL.
+     * statement drops, and every primary key column outside SQLite becomes NOT NULL; a MySQL table keeps the rule for
+     * AUTO_INCREMENT columns that {@see Constraint\MySqlCounterKeys} checks.
      * @return list<TableDefinition>
      * @throws SemanticException
      * @throws \SqlSemantics\InvalidSql
@@ -81,6 +82,9 @@ final class TableAlteration
         }
         [$constraints, $indexes] = $keys->add($scope, $context);
         $replacement = new TableDefinition($table->schema, $name, $this->primaryKeys($columns, $constraints), $constraints, $statement, indexes: $indexes, properties: $table->properties);
+        if ($mysql) {
+            Constraint\MySqlCounterKeys::check($replacement, $statement);
+        }
         return array_map(static fn (TableDefinition $candidate): TableDefinition => $candidate === $table ? $replacement : $candidate, $this->tables->schema->tables);
     }
 

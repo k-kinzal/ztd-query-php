@@ -39,15 +39,31 @@ final class ColumnReader
         }
         $name = $this->identifiers->parts($nameNode)[0];
         $serial = $typeNode === null || $this->identifiers->dialect !== Dialect::PostgreSql ? null : $this->serial($typeNode);
-        $type = match (true) {
-            $serial !== null => new TypeDescriptor(Dialect::PostgreSql, new \SqlSemantics\Type\Identity\Numeric\IntegerStorage($serial)),
-            $typeNode === null => new TypeDescriptor($this->identifiers->dialect, new \SqlSemantics\Type\Identity\SqliteDeclaration('', \SqlSemantics\Type\Identity\StorageAffinity::Blob)),
-            default => (new TypeReader($this->identifiers->dialect))->read($typeNode),
-        };
-        $default = null;
-        $constraints = [];
-        $generated = self::generatedExpression($node);
+        $type = $this->type($typeNode, $serial);
+        $counter = $this->identifiers->dialect === Dialect::MySql && $type->identity === \SqlSemantics\Type\Identity\BuiltinIdentity::Serial;
+        $type = $counter ? new TypeDescriptor(Dialect::MySql, new \SqlSemantics\Type\Identity\Numeric\IntegerStorage(\SqlSemantics\Type\Identity\BuiltinIdentity::BigInt, null, true)) : $type;
         $groups = (new ConstraintGroups())->read($attributes);
+        [$constraints, $generated] = $this->constraints($groups, $name, self::generatedExpression($node));
+        $default = Definition\ValueSources::default($this->identifiers->dialect, $groups, self::generatedExpression($node) !== null, $counter);
+        $nullability = self::nullability($type, $groups, $serial !== null || $counter);
+        $options = [...Definition\OptionReader::column($node, $attributes, $this->identifiers), ...($serial === null ? [] : ['serial' => true]), ...($counter ? ['auto_increment' => true, 'serial_type' => true] : [])];
+        if ($counter && $typeNode !== null) {
+            $constraints[] = new TableConstraint(\SqlSemantics\Schema\ConstraintKind::Unique, [$name], $typeNode);
+        }
+
+        return [new ColumnDefinition($name, $type, $nullability, $node, $default, $attributes, $generated, $options), $this->identifiers->dialect === Dialect::MySql ? self::columnKeys($constraints) : $constraints];
+    }
+
+    /**
+     * Reads the constraints the column attributes write and the generation expression, which a generation attribute
+     * gives when the type is not followed by one.
+     *
+     * @param list<Node> $groups Column attributes grouped with their constraint names, in SQL order
+     * @return array{list<TableConstraint>, ?Node}
+     */
+    public function constraints(array $groups, string $name, ?Node $generated): array
+    {
+        $constraints = [];
         foreach ($groups as $attribute) {
             $constraint = (new ConstraintReader($this->identifiers))->read($attribute, $name);
             if ($constraint !== null) {
@@ -55,16 +71,49 @@ final class ColumnReader
                 continue;
             }
             $words = self::attributeWords($attribute);
-            if (($words[0] ?? '') === 'DEFAULT') {
-                $default = $attribute;
-            } elseif (in_array('GENERATED', $words, true) || ($words[0] ?? '') === 'AS') {
+            if (($words[0] ?? '') !== 'DEFAULT' && (in_array('GENERATED', $words, true) || ($words[0] ?? '') === 'AS')) {
                 $generated = Tree::outer($attribute, ['a_expr', 'expr'])[0] ?? $attribute;
             }
         }
-        $nullability = self::nullability($type, $groups, $serial !== null);
-        $options = Definition\OptionReader::column($node, $attributes, $this->identifiers);
+        return [$constraints, $generated];
+    }
 
-        return [new ColumnDefinition($name, $type, $nullability, $node, $default, $attributes, $generated, $serial === null ? $options : [...$options, 'serial' => true]), $constraints];
+    /**
+     * Reads the declared type: the integer type of a PostgreSQL serial type, SQLite's typeless declaration, or the
+     * written type.
+     */
+    public function type(?Node $typeNode, ?\SqlSemantics\Type\Identity\BuiltinIdentity $serial): TypeDescriptor
+    {
+        return match (true) {
+            $serial !== null => new TypeDescriptor(Dialect::PostgreSql, new \SqlSemantics\Type\Identity\Numeric\IntegerStorage($serial)),
+            $typeNode === null => new TypeDescriptor($this->identifiers->dialect, new \SqlSemantics\Type\Identity\SqliteDeclaration('', \SqlSemantics\Type\Identity\StorageAffinity::Blob)),
+            default => (new TypeReader($this->identifiers->dialect))->read($typeNode),
+        };
+    }
+
+    /**
+     * Keeps one primary key and one unique key among the keys a MySQL column declaration writes, the first of each: the
+     * server records PRIMARY KEY, UNIQUE, SERIAL DEFAULT VALUE and the SERIAL type as flags of the column and creates
+     * one key for each flag set.
+     *
+     * @param list<TableConstraint> $constraints Constraints of one column declaration in SQL order
+     * @return list<TableConstraint>
+     */
+    public static function columnKeys(array $constraints): array
+    {
+        $seen = [];
+        $result = [];
+        foreach ($constraints as $constraint) {
+            $key = in_array($constraint->kind, [\SqlSemantics\Schema\ConstraintKind::PrimaryKey, \SqlSemantics\Schema\ConstraintKind::Unique], true) ? $constraint->kind->name : null;
+            if ($key !== null && isset($seen[$key])) {
+                continue;
+            }
+            if ($key !== null) {
+                $seen[$key] = true;
+            }
+            $result[] = $constraint;
+        }
+        return $result;
     }
 
     /**
@@ -94,13 +143,12 @@ final class ColumnReader
      * rejects NULL written beside NOT NULL, an identity, or a serial type.
      *
      * @param list<Node> $attributes Column attributes in SQL order
-     * @param bool $serial Whether a PostgreSQL serial type declared the column
+     * @param bool $serial Whether a PostgreSQL serial type or the MySQL SERIAL type declared the column
      * @throws \SqlSemantics\InvalidSql
      */
     public static function nullability(TypeDescriptor $type, array $attributes, bool $serial = false): Nullability
     {
         $dialect = $type->dialect;
-        $serial = $serial || $dialect === Dialect::MySql && $type->name === 'serial';
         $notNull = $serial;
         $declaredNull = null;
         $declaredNotNull = $serial;

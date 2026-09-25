@@ -99,4 +99,27 @@ final class AlterTablesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT); CREATE TABLE u(a INT)')))->bind($sql, strict: false);
         self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
+
+    #[TestWith(['ALTER TABLE t MODIFY a INT AUTO_INCREMENT'])]
+    #[TestWith(['ALTER TABLE u ADD c INT AUTO_INCREMENT UNIQUE'])]
+    #[TestWith(['ALTER TABLE u DROP KEY a'])]
+    #[TestWith(['ALTER TABLE u ADD COLUMN c SERIAL'])]
+    public function testCountersRejectsAnAlterationThatBreaksTheAutoIncrementRule(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT, KEY (b))', 'CREATE TABLE u (a INT AUTO_INCREMENT, b INT, KEY (a, b))'));
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::AutoIncrementKey->message());
+        $binder->bind($sql);
+    }
+
+    #[TestWith(['ALTER TABLE t MODIFY b INT AUTO_INCREMENT'])]
+    #[TestWith(['ALTER TABLE u DROP KEY a, ADD KEY (a)'])]
+    #[TestWith(['ALTER TABLE missing MODIFY a INT AUTO_INCREMENT'])]
+    public function testCountersAcceptsAnAlterationThatKeepsTheRuleOrAnUnknownTable(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT, KEY (b))', 'CREATE TABLE u (a INT AUTO_INCREMENT, b INT, KEY (a, b))'));
+        $statement = $binder->bind($sql, strict: false);
+        self::assertInstanceOf(AlterTableStatement::class, $statement);
+        self::assertSame($sql, $statement->toString());
+    }
 }

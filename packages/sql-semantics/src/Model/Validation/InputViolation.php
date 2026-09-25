@@ -80,6 +80,7 @@ enum InputViolation: string
     case ConflictingNullability = 'conflicting-nullability';
     case AutoIncrementKey = 'autoincrement-key';
     case SerialDefault = 'serial-default';
+    case ValueSources = 'column-value-sources';
     case QueryBlockOption = 'query-block-option';
     case OutputPosition = 'invalid-output-position';
     case ExplainOption = 'invalid-explain-option';

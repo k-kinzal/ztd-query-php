@@ -146,7 +146,7 @@ final class IndexReaderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE app.t(id INTEGER); CREATE INDEX ON app.t(id)');
         $index = $schema->tables[0]->indexes[0];
-        self::assertNull($index->name);
+        self::assertSame('t_id_idx', $index->name);
         self::assertSame('app', $index->schema);
         self::assertSame(['app', 't'], $index->table);
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE aux.t(id INTEGER); CREATE INDEX aux.ix ON t(id)');
@@ -196,7 +196,7 @@ final class IndexReaderTest extends TestCase
 
     public function testTableRetainsNamedConstraintsAfterAnUnrelatedConstraint(): void
     {
-        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(id integer, foreign key(id) references p(id), constraint uq unique(id), constraint pk primary key(id))')->tables[0];
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(id integer, code integer, foreign key(id) references p(id), constraint uq unique(code), constraint pk primary key(id))')->tables[0];
         self::assertSame(['uq', 'pk'], [$table->constraints[1]->name, $table->constraints[2]->name]);
         self::assertInstanceOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $table->constraints[1]);
         self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $table->constraints[2]);

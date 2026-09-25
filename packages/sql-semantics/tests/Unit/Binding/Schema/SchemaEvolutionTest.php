@@ -266,4 +266,13 @@ final class SchemaEvolutionTest extends TestCase
         self::assertSame('ALTER FOREIGN TABLE "f" ADD COLUMN "c" integer', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER FOREIGN TABLE f ADD COLUMN c INT')));
         self::assertSame('ALTER FOREIGN TABLE "g" RENAME COLUMN "x" TO "y"', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER FOREIGN TABLE g RENAME COLUMN x TO y')));
     }
+
+    public function testIndexNamesNamesCopiedIndexesInCreationOrder(): void
+    {
+        $tables = (new SchemaBuilder(Dialect::PostgreSql, grammarVersion: 'pg-17.2'))->build('CREATE TABLE t (a int, b int)', 'CREATE INDEX ON t (a)', 'CREATE INDEX x ON t (a)', 'CREATE INDEX ON t ((a + b))', 'CREATE TABLE u (LIKE t INCLUDING INDEXES)')->tables;
+        self::assertSame(['u_a_idx', 'u_a_idx1', 'u_expr_idx'], array_column($tables[1]->indexes, 'name'));
+        $unnamed = array_map(static fn (\SqlSemantics\Schema\IndexDefinition $index): \SqlSemantics\Schema\IndexDefinition => new \SqlSemantics\Schema\IndexDefinition($index->schema, null, $index->table, $index->elements, $index->unique, $index->method, $index->include, $index->predicate, $index->source, $index->properties), $tables[1]->indexes);
+        $table = new \SqlSemantics\Schema\TableDefinition($tables[1]->schema, $tables[1]->name, $tables[1]->columns, [], $tables[1]->source, indexes: $unnamed);
+        self::assertSame(['u_a_idx', 'u_a_idx1', 'u_expr_idx'], array_column(\SqlSemantics\Binding\Schema\SchemaEvolution::indexNames($table, [$tables[0]])->indexes, 'name'));
+    }
 }

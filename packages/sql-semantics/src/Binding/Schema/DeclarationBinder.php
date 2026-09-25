@@ -20,7 +20,8 @@ final class DeclarationBinder
 {
     /**
      * Resolves expressions using symbols so declarations never contain reference cycles.
-     * A declaration cannot build a key on an existing index; only ALTER TABLE can.
+     * A declaration cannot build a key on an existing index; only ALTER TABLE can. A MySQL declaration keeps the rule
+     * for AUTO_INCREMENT columns that {@see Constraint\MySqlCounterKeys} checks.
      * @throws \SqlSemantics\InvalidSql
      */
     public static function bind(ParsedTable $table, QueryContext $context): TableDefinition
@@ -39,7 +40,7 @@ final class DeclarationBinder
         if (count(array_filter($constraints, static fn ($constraint): bool => $constraint instanceof \SqlSemantics\Schema\Constraint\PrimaryKey)) > 1) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::MultiplePrimaryKeys, $table->source);
         }
-        return new TableDefinition(
+        $definition = new TableDefinition(
             $table->schema,
             $table->name,
             array_map(static fn ($column): ColumnDefinition => ColumnBinder::bind($column, $scope), $table->columns),
@@ -49,5 +50,9 @@ final class DeclarationBinder
             array_map(static fn ($index): \SqlSemantics\Schema\IndexDefinition => IndexBinder::definition($index, $scope), $table->indexes),
             TablePropertiesBinder::bind($table, $scope),
         );
+        if ($context->tables->identifiers->dialect === \SqlSemantics\Dialect::MySql) {
+            Constraint\MySqlCounterKeys::check($definition, $table->source);
+        }
+        return $definition;
     }
 }

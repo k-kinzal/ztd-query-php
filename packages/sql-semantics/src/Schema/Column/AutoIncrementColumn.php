@@ -16,6 +16,9 @@ use Override;
  *     $mysql->columns[0]->generation instanceof \SqlSemantics\Schema\Column\AutoIncrementColumn // => true
  *     $serial = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE s(id INT SERIAL DEFAULT VALUE)')->tables[0];
  *     $serial->columns[0]->generation->serialDefault // => true
+ *     $type = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE s(id SERIAL)')->tables[0];
+ *     $type->columns[0]->generation->serialType // => true
+ *     $type->columns[0]->type->name // => 'bigint unsigned'
  */
 final class AutoIncrementColumn implements Generation
 {
@@ -24,10 +27,17 @@ final class AutoIncrementColumn implements Generation
      *
      * @param bool $serialDefault Whether MySQL SERIAL DEFAULT VALUE declared the column, which also declares it NOT
      *                            NULL and gives it a unique key, rather than AUTO_INCREMENT
+     * @param bool $serialType Whether the MySQL SERIAL type declared the column, which stands for BIGINT UNSIGNED NOT
+     *                         NULL AUTO_INCREMENT UNIQUE
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
     public function __construct(
         public readonly bool $serialDefault = false,
+        public readonly bool $serialType = false,
     ) {
+        if ($serialDefault && $serialType) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('A counter column is declared by one spelling: AUTO_INCREMENT, SERIAL DEFAULT VALUE, or the SERIAL type.');
+        }
     }
 
     /**

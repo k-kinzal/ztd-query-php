@@ -284,6 +284,6 @@ final class ConstraintReaderTest extends TestCase
         self::assertCount(1, $table->constraints);
         self::assertSame(\SqlSemantics\Schema\ConstraintKind::Unique, $table->constraints[0]->kind);
         self::assertSame(['a'], $table->constraints[0]->localColumns());
-        self::assertNull($table->constraints[0]->name);
+        self::assertSame('a', $table->constraints[0]->name);
     }
 }

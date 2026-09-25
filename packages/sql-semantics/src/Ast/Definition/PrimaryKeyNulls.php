@@ -112,7 +112,8 @@ final class PrimaryKeyNulls
 
     /**
      * Returns the DEFAULT NULL attribute of a declaration that ends NOT NULL, or null: the last of NULL, NOT NULL and a
-     * column PRIMARY KEY decides, the last DEFAULT clause is the default, and AUTO_INCREMENT exempts the column.
+     * column PRIMARY KEY decides, the last literal DEFAULT clause is the literal default, which a DEFAULT expression
+     * does not replace, and AUTO_INCREMENT exempts the column.
      */
     public static function nullDefault(ColumnDefinition $column): ?Node
     {
@@ -124,7 +125,7 @@ final class PrimaryKeyNulls
             if (in_array($words, [['NOT', 'NULL'], ['NULL'], ['PRIMARY', 'KEY'], ['KEY']], true)) {
                 $notNull = $words !== ['NULL'];
             } elseif (($words[0] ?? '') === 'DEFAULT') {
-                $default = $words === ['DEFAULT', 'NULL'] ? $attribute : null;
+                $default = $words === ['DEFAULT', 'NULL'] ? $attribute : (\SqlSemantics\Ast\Tree::child($attribute, ['expr']) === null ? null : $default);
             }
             $counter = $counter || in_array($words, [['AUTO_INCREMENT'], ['SERIAL', 'DEFAULT', 'VALUE']], true);
         }

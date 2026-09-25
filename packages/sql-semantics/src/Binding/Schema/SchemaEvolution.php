@@ -42,7 +42,11 @@ final class SchemaEvolution
         foreach ($trees as $tree) {
             foreach (StatementList::read($tree, $schema->dialect) as $statement) {
                 $tables = $this->apply($schema, $statement);
-                $tables = $schema->dialect === Dialect::PostgreSql ? Constraint\PostgreSqlConstraintNames::assign($tables) : $tables;
+                $tables = match ($schema->dialect) {
+                    Dialect::PostgreSql => Constraint\PostgreSqlConstraintNames::assign($tables),
+                    Dialect::MySql => Constraint\MySqlKeyNames::assign($tables),
+                    Dialect::Sqlite => $tables,
+                };
                 $schema = new Schema($schema->dialect, $tables, $schema->defaultSchema, $schema->grammarVersion, [...$schema->statements, $statement], $schema->functions, $schema->variables);
             }
         }
@@ -113,9 +117,12 @@ final class SchemaEvolution
         $name = $table->name;
         $columns = $table->columns;
         $constraints = $table->constraints;
+        $indexes = $table->indexes;
+        $templates = [];
         $copies = $schema->dialect === Dialect::PostgreSql ? [] : Tree::outer($source, ['TableLikeClause', 'OptInherit']);
         if ($schema->dialect === Dialect::PostgreSql && in_array($source->name, ['CreateStmt', 'CreateForeignTableStmt'], true)) {
-            [$columns, $constraints] = Copy\PostgreSqlCopy::layout($source, $columns, $constraints, $resolver);
+            [$columns, $constraints, $copied, $templates] = Copy\PostgreSqlCopy::layout($source, $columns, Constraint\PostgreSqlKeyMerges::merge($constraints), $resolver);
+            array_push($indexes, ...array_map(static fn (Schema\IndexDefinition $index): Schema\IndexDefinition => new Schema\IndexDefinition($namespace, null, [$namespace, $name], $index->elements, $index->unique, $index->method, $index->include, $index->predicate, $index->source, $index->properties), $copied));
         }
         foreach ($copies as $copy) {
             foreach (Tree::outer($copy, ['qualified_name', 'table_ident']) as $reference) {
@@ -134,6 +141,25 @@ final class SchemaEvolution
         if ($schema->dialect !== Dialect::PostgreSql && $columns === [] && $queryNode === null) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::TableColumns, $source);
         }
-        return new TableDefinition($namespace, $name, $columns, $constraints, $source, indexes: $table->indexes, properties: $table->properties);
+        $created = new TableDefinition($namespace, $name, $columns, $constraints, $source, indexes: $indexes, properties: $table->properties);
+        foreach ($templates as $template) {
+            $created = Copy\DeclarationReferences::rebind($created, $template);
+        }
+        return $templates === [] ? $created : self::indexNames($created, $schema->tables);
+    }
+
+    /**
+     * Names the indexes a PostgreSQL table copies from its LIKE templates in the order it creates them.
+     *
+     * @param list<TableDefinition> $tables The tables of the schema before the new table
+     */
+    public static function indexNames(TableDefinition $table, array $tables): TableDefinition
+    {
+        $indexes = [];
+        foreach ($table->indexes as $index) {
+            $current = new TableDefinition($table->schema, $table->name, $table->columns, $table->constraints, $table->source, $table->resolved, $indexes, $table->properties);
+            $indexes[] = Constraint\PostgreSqlIndexNames::assign($index, $table, [...$tables, $current]);
+        }
+        return new TableDefinition($table->schema, $table->name, $table->columns, $table->constraints, $table->source, $table->resolved, $indexes, $table->properties);
     }
 }
