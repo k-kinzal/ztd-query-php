@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zero Table Dependency (ZTD) Mechanism — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/439/k-kinzal/ztd-query-php/doc/docs/ztd-mechanism.md.html">
+<meta name="description" content="Zero Table Dependency (ZTD) Mechanism, a document of the k-kinzal/ztd-query-php package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Zero Table Dependency (ZTD) Mechanism — ZTD Query PHP">
+<meta property="og:description" content="Zero Table Dependency (ZTD) Mechanism, a document of the k-kinzal/ztd-query-php package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/439/k-kinzal/ztd-query-php/doc/docs/ztd-mechanism.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/439/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/ztd-mechanism.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 3cfa895983 to working tree">3cfa895983 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 3cfa895983 and working tree." data-off="This page documents what 3cfa895983 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Zero Table Dependency (ZTD) Mechanism</h1><div class="symbol-meta"><span class="source-link">docs/ztd-mechanism.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Zero Table Dependency (ZTD) Mechanism</h2>
+</div><div class="doc-block" data-diff="same"><h3>Overview</h3>
+</div><div class="doc-block" data-diff="same"><p><strong>Zero Table Dependency (ZTD)</strong> is a SQL testing methodology that eliminates table dependencies. It uses a real database engine while replacing all physical table reads and writes with shadow tables implemented as CTEs (Common Table Expressions).</p>
+</div><div class="doc-block" data-diff="same"><p>ZTD enables SQL unit testing without migrations, seeding, or cleanup operations.</p>
+</div><div class="doc-block" data-diff="same"><h3>References</h3>
+</div><div class="doc-block" data-diff="same"><ul><li><a href="https://zenn.dev/mkmonaka/articles/c2413d99ae67bb">Ultra-fast SQL Unit Testing with rawsql-ts/pg-testkit</a></li><li><a href="https://github.com/mk3008/rawsql-ts">rawsql-ts GitHub Repository</a></li><li><a href="https://github.com/mk3008/rawsql-ts/tree/main/packages/drivers/pg-testkit">pg-testkit Package</a></li></ul>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Core Philosophy: SQL as Pure Functions</h3>
+</div><div class="doc-block" data-diff="same"><p>ZTD treats SQL queries as pure functions:</p>
+</div><div class="doc-block" data-diff="same"><ul><li><strong>Input</strong>: Fixture data (the state of tables before query execution)</li><li><strong>Output</strong>: Query result set</li><li><strong>No Side Effects</strong>: Physical tables are never modified</li></ul>
+</div><div class="doc-block" data-diff="same"><p>This functional approach enables deterministic, isolated, and parallelizable tests.</p>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Core Mechanisms</h3>
+</div><div class="doc-block" data-diff="same"><p>ZTD operates through two primary mechanisms:</p>
+</div><div class="doc-block" data-diff="same"><h4>1. CTE Shadowing</h4>
+</div><div class="doc-block" data-diff="same"><p>CTE Shadowing replaces physical tables with CTEs of the same name. Since <strong>CTEs take precedence over physical tables</strong> in query resolution, actual table references are intercepted and replaced with test data.</p>
+</div><div class="doc-block" data-diff="same"><p>The real database engine still handles:</p>
+</div><div class="doc-block" data-diff="same"><ul><li>SQL parsing</li><li>Type inference</li><li>Query planning</li><li>Parameter binding</li></ul>
+</div><div class="doc-block" data-diff="same"><p>But physical table access is blocked by the CTE.</p>
+</div><div class="doc-block" data-diff="same"><h5>Transformation Example</h5>
+</div><div class="doc-block" data-diff="same"><p><strong>Before (original query):</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>SELECT email FROM users WHERE id = $1</code></pre>
+</div><div class="doc-block" data-diff="same"><p><strong>After (with CTE Shadowing):</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>WITH users AS (
+  SELECT 1 AS id, &#039;alice@example.com&#039; AS email
+  UNION ALL
+  SELECT 2 AS id, &#039;bob@example.com&#039; AS email
+)
+SELECT email FROM users WHERE id = $1</code></pre>
+</div><div class="doc-block" data-diff="same"><h4>2. Result Select Query (RSQ)</h4>
+</div><div class="doc-block" data-diff="same"><p>Result Select Query transforms INSERT, UPDATE, DELETE, and MERGE operations into equivalent SELECT statements that simulate their outcomes.</p>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Query Transformation Details</h3>
+</div><div class="doc-block" data-diff="same"><p>The rawsql-ts library implements query transformation through dedicated converter classes in <code>packages/core/src/transformers/</code>.</p>
+</div><div class="doc-block" data-diff="same"><h4>INSERT Conversion (InsertResultSelectConverter)</h4>
+</div><div class="doc-block" data-diff="same"><p><strong>Transformation Process:</strong></p>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Query Preparation</strong>: VALUES-based inserts are rewritten into <code>INSERT ... SELECT</code> format via <code>InsertQuerySelectValuesConverter.toSelectUnion()</code> before further processing.</li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Column Resolution</strong>: Resolves columns through:<ul><li>Explicit column lists from the INSERT statement</li><li>Table definition metadata when columns are omitted</li><li>Validates column counts match SELECT output</li></ul></li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>CTE Construction</strong>: Generates CTEs to wrap the source SELECT query and include fixture tables.</li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Sequence Defaults</strong>: Defaults invoking <code>nextval</code> are rewritten into deterministic expressions (e.g., <code>row_number() over ()</code>).</li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Output Generation</strong>: Produces a result-select query (SELECT that returns the rows that would be inserted). RETURNING clauses MUST NOT be used (DR-10) -- they execute actual DML, violating ZTD&#039;s zero-write principle.</li></ol>
+</div><div class="doc-block" data-diff="same"><p><strong>Example:</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Before
+INSERT INTO users (name, email) VALUES (&#039;Alice&#039;, &#039;alice@example.com&#039;)
+
+-- After (result-select)
+WITH users AS (... existing fixture data ...)
+SELECT
+  row_number() OVER () AS id,
+  &#039;Alice&#039; AS name,
+  &#039;alice@example.com&#039; AS email</code></pre>
+</div><div class="doc-block" data-diff="same"><h4>UPDATE Conversion (UpdateResultSelectConverter)</h4>
+</div><div class="doc-block" data-diff="same"><p><strong>Transformation Process:</strong></p>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Target Table Extraction</strong>: Extracts target table from UPDATE clause (must be a <code>TableSource</code>, not derived expression).</li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>FROM Clause Handling</strong>: When explicit FROM clause exists, cross-joins with target table to maintain column accessibility. Joins within FROM are preserved.</li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Column Expression Building</strong>: For each column in the target table:<ul><li>Checks SET expressions for column overrides</li><li>Preserves original column references if not updated</li></ul></li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Output Generation</strong>: Produces a result-select query (SELECT reflecting updated columns with WHERE filter). RETURNING clauses MUST NOT be used (DR-10).</li></ol>
+</div><div class="doc-block" data-diff="same"><p><strong>Example:</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Before
+UPDATE users SET email = &#039;new@example.com&#039; WHERE id = 1
+
+-- After (result-select)
+WITH users AS (... existing fixture data ...)
+SELECT
+  id,
+  CASE WHEN id = 1 THEN &#039;new@example.com&#039; ELSE email END AS email,
+  name
+FROM users
+WHERE id = 1</code></pre>
+</div><div class="doc-block" data-diff="same"><h4>DELETE Conversion (DeleteResultSelectConverter)</h4>
+</div><div class="doc-block" data-diff="same"><p><strong>Transformation Process:</strong></p>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>FROM/JOIN Construction</strong>: Preserves DELETE target table. USING clause sources become CROSS JOINs.</li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Column Reference Resolution</strong>: Parses namespaces, builds context maps for aliases, validates column existence.</li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Output Generation</strong>: Produces a result-select query (SELECT returning the rows that would be deleted). RETURNING clauses MUST NOT be used (DR-10).</li></ol>
+</div><div class="doc-block" data-diff="same"><p><strong>Example:</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Before
+DELETE FROM users WHERE id = 1
+
+-- After (result-select)
+WITH users AS (... existing fixture data ...)
+SELECT * FROM users WHERE id = 1</code></pre>
+</div><div class="doc-block" data-diff="same"><h4>MERGE Conversion (MergeResultSelectConverter)</h4>
+</div><div class="doc-block" data-diff="same"><p>Converts MERGE queries into SELECT statements that count affected rows by modeling each WHEN clause as a separate action.</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Action-Specific Conversions:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><strong>MATCHED (UPDATE/DELETE)</strong>: Creates INNER JOIN between target and source using ON condition</li><li><strong>NOT MATCHED (INSERT)</strong>: Uses NOT EXISTS subquery to detect missing matches</li><li><strong>NOT MATCHED BY SOURCE (DELETE)</strong>: Inverted NOT EXISTS against source</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Process:</strong></p>
+</div><div class="doc-block" data-diff="same"><ol><li>Build individual SELECT for each WHEN clause</li><li>Combine via UNION ALL</li><li>Wrap in <code>COUNT(*)</code> query</li></ol>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>CTE Injection Mechanism</h3>
+</div><div class="doc-block" data-diff="same"><h4>CTEInjector</h4>
+</div><div class="doc-block" data-diff="same"><p>The <code>CTEInjector</code> class handles inserting CTEs into queries:</p>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Validation</strong>: Returns original query unchanged if CTE array is empty</li><li><strong>Collection</strong>: Gathers existing CTEs via <code>CTECollector</code>, merges with provided CommonTables</li><li><strong>Resolution</strong>: <code>CTEBuilder</code> eliminates duplicates and arranges in dependency order</li><li><strong>Injection</strong>: Assigns resolved WithClause to query</li></ol>
+</div><div class="doc-block" data-diff="same"><h4>CTEBuilder</h4>
+</div><div class="doc-block" data-diff="same"><p>Manages CTE construction through:</p>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Duplicate Resolution</strong>: Validates CTEs with same names have identical definitions</li><li><strong>Dependency Graph Construction</strong>: Maps table references and identifies recursive CTEs (self-referencing)</li><li><strong>Topological Sorting</strong>: Orders CTEs so recursive CTEs come first, then remaining tables sorted by dependency depth</li><li><strong>Circular Reference Detection</strong>: Throws error if circular reference detected</li></ol>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>ResultSelectRewriter</h3>
+</div><div class="doc-block" data-diff="same"><p>The main orchestrator (<code>packages/testkit-core/src/rewriter/ResultSelectRewriter.ts</code>) transforms queries through a pipeline:</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Statement Type Routing:</strong></p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Statement Type</th><th>Handler</th></tr></thead><tbody><tr><td>INSERT</td><td><code>InsertResultSelectConverter.toSelectQuery()</code></td></tr><tr><td>UPDATE</td><td><code>UpdateResultSelectConverter.toSelectQuery()</code></td></tr><tr><td>DELETE</td><td><code>DeleteResultSelectConverter.toSelectQuery()</code></td></tr><tr><td>MERGE</td><td><code>MergeResultSelectConverter.toSelectQuery()</code></td></tr><tr><td>SELECT</td><td>Direct fixture injection</td></tr><tr><td>Complex SELECT</td><td>Normalized via <code>QueryBuilder.buildSimpleQuery()</code></td></tr><tr><td>CREATE TEMP...AS SELECT</td><td>Inner query receives fixture injection</td></tr><tr><td>Other DDL</td><td>Returns null (ignored)</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Post-Processing:</strong></p>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Schema Qualifier Rewriting</strong>: Traverses table references, updates to use fixture aliases</li><li><strong>Column Reference Updates</strong>: Recursively processes subqueries, CTEs, window functions</li><li><strong>Alias Sanitization</strong>: Normalizes table names, replaces dots with underscores</li></ol>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Fixture System</h3>
+</div><div class="doc-block" data-diff="same"><h4>Fixture Architecture</h4>
+</div><div class="doc-block" data-diff="same"><p>Located in <code>packages/testkit-core/src/fixtures/</code>:</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>File</th><th>Purpose</th></tr></thead><tbody><tr><td>DdlFixtureLoader.ts</td><td>Loads DDL files from directories</td></tr><tr><td>FixtureProvider.ts</td><td>Provides and merges fixtures</td></tr><tr><td>FixtureStore.ts</td><td>Stores fixture data</td></tr><tr><td>TableDefinitionSchemaRegistry.ts</td><td>Manages table schemas</td></tr><tr><td>TableNameResolver.ts</td><td>Resolves table names</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>DdlFixtureLoader</h4>
+</div><div class="doc-block" data-diff="same"><p><strong>File Discovery:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li>Recursively scans configured directories for SQL files</li><li>Default extension: <code>.sql</code></li><li>Validates directories exist before scanning</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Conversion Process:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li>Uses <code>DDLToFixtureConverter.convert()</code> to process CREATE TABLE and INSERT statements</li><li>Extracts column metadata (name, type, default values)</li><li>Extracts fixture rows from INSERT data</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Caching Strategy:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li>Static cache avoids reprocessing identical configurations</li><li>Cache key: normalized paths + extensions + resolver settings</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Deduplication:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li>Compares canonical table keys to prevent duplicate fixtures</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>FixtureProvider (DefaultFixtureProvider)</h4>
+</div><div class="doc-block" data-diff="same"><p><strong>Core Functions:</strong></p>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Fixture Resolution</strong>: Merges table definitions with baseline and runtime override fixtures</li><li><strong>Row Validation</strong>: Ensures required columns without defaults are provided</li><li><strong>Type Coercion</strong>: Converts values to database-compatible types:<ul><li>strings, numbers, bigints, buffers</li><li>JSON-serialized objects</li><li>Booleans as 0/1</li></ul></li><li><strong>Name Normalization</strong>: Handles schema-qualified identifiers via <code>TableNameResolver</code></li></ol>
+</div><div class="doc-block" data-diff="same"><h4>Fixture Layering (Priority Order)</h4>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>DDL files</strong> - Parsed at client construction</li><li><strong>Manual tableDefinitions/tableRows</strong> - Merged after DDL</li><li><strong>withFixtures()</strong> - Overlays scenario-specific data (highest priority)</li></ol>
+</div><div class="doc-block" data-diff="same"><p>Later layers override earlier ones.</p>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>API Usage (pg-testkit)</h3>
+</div><div class="doc-block" data-diff="same"><h4>Three Primary APIs</h4>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>// 1. Create isolated client with lazy connection
+const client = createPgTestkitClient({
+  connectionFactory: () =&gt; new Client({ connectionString: process.env.PG_URL! }),
+  tableDefinitions: [...],
+  tableRows: [...]
+});
+
+// 2. Wrap pg.Pool (transactions/savepoints execute on raw client)
+const pool = createPgTestkitPool(process.env.PG_URL!, {
+  tableDefinitions: [...],
+  tableRows: [...]
+});
+
+// 3. Wrap existing connection
+const raw = new Client({ connectionString: process.env.PG_URL! });
+await raw.connect();
+const wrapped = wrapPgClient(raw, { tableDefinitions, tableRows });</code></pre>
+</div><div class="doc-block" data-diff="same"><h4>Scoped Fixtures</h4>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>const scoped = client.withFixtures([{
+  tableName: &#039;users&#039;,
+  rows: [{ id: 2, email: &#039;bob@example.com&#039; }]
+}]);</code></pre>
+</div><div class="doc-block" data-diff="same"><h4>DDL-Based Configuration</h4>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>ddl: {
+  directories: [path.join(__dirname, &#039;..&#039;, &#039;ztd&#039;, &#039;ddl&#039;)],
+  extensions: [&#039;.sql&#039;]
+}</code></pre>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Implementation Characteristics</h3>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Feature</th><th>Description</th></tr></thead><tbody><tr><td>Lazy Connection</td><td>Opens database connection only on first query execution</td></tr><tr><td>Parallel Test Safety</td><td>No shared schema state; each client has independent fixtures</td></tr><tr><td>Transaction Support</td><td>Raw transaction/savepoint commands preserved</td></tr><tr><td>Temporary Table Support</td><td><code>CREATE TEMPORARY ... AS SELECT</code> survives rewrite pipeline</td></tr><tr><td>Parameter Handling</td><td><code>$1</code>-style placeholders normalized before rewriting, restored before execution</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Benefits</h3>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>No Migration Required</strong><ul><li>Rapidly iterate on table definitions during development</li><li>SQL logic correctness guaranteed through unit tests</li></ul></li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>No Cleanup Required</strong><ul><li>Each test execution is independent</li><li>No residual data left in the database</li></ul></li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Parallel Test Execution</strong><ul><li>No persistent tables or shared schema state</li><li>Each query works against isolated dataset</li></ul></li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Low Adoption Cost</strong><ul><li>Self-contained test kit</li><li>Dynamically modifies existing SQL resources</li><li>Production code remains unaware of testing infrastructure</li></ul></li></ol>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Real Database Engine</strong><ul><li>Unlike mocks, uses actual database for SQL parsing and type inference</li></ul></li></ol>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Limitations</h3>
+</div><div class="doc-block" data-diff="same"><p>ZTD is <strong>not suitable</strong> for testing:</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Category</th><th>Reason</th></tr></thead><tbody><tr><td>Stored Procedures</td><td>Executed inside database, not subject to CTE shadowing</td></tr><tr><td>Triggers</td><td>INSERT/UPDATE/DELETE triggers do not fire</td></tr><tr><td>Views</td><td>Existing views may not be replaceable with CTEs</td></tr><tr><td>Performance/Tuning</td><td>No actual table access, I/O and index effects cannot be measured</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Execution Modes</h3>
+</div><div class="doc-block" data-diff="same"><h4>Default Mode (Fixture-based)</h4>
+</div><div class="doc-block" data-diff="same"><p>Rewrites operations as SELECT queries without touching real tables.</p>
+</div><div class="doc-block" data-diff="same"><h4>Traditional Mode</h4>
+</div><div class="doc-block" data-diff="same"><p>Set <code>ZTD_EXECUTION_MODE=traditional</code> to execute actual PostgreSQL behavior including locks and isolation levels, with schema isolation and automatic cleanup.</p>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Summary</h3>
+</div><div class="doc-block" data-diff="same"><p>Zero Table Dependency (ZTD) is a SQL testing methodology with the following characteristics:</p>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>No physical table dependency</strong> - Tables are shadowed with CTEs</li><li><strong>Uses real database engine</strong> - Not mocks, but actual SQL processing</li><li><strong>Tests SQL as pure functions</strong> - Focus only on input (fixtures) and output (query results)</li><li><strong>Fast and parallelizable</strong> - No migration or cleanup required</li><li><strong>Low adoption cost</strong> - Can be introduced without modifying existing code</li></ol>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
