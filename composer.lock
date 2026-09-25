@@ -1149,7 +1149,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics",
-                "reference": "d7c32fcf95740ec4caf77a7cbc3826e7d1e341ee"
+                "reference": "6ef716489a0674b9d3c9011e868b89ef65e584e3"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",

@@ -25,9 +25,9 @@ strings; parsing is handled inside the package.
 ## Usage
 
 ```php
-use SqlSemantics\Binder;
-use SqlSemantics\Dialect;
-use SqlSemantics\SchemaBuilder;
+use SqlSemantics\Core\Binder;
+use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Core\SchemaBuilder;
 
 $schema = (new SchemaBuilder(Dialect::PostgreSql))->build(<<<'SQL'
 CREATE TABLE users (
@@ -150,3 +150,8 @@ conventions.
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Architecture
+
+See [dependency layers](docs/layers.md) for the Core contracts, independent
+platform implementations, composition facade, and enforced boundaries.
