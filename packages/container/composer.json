@@ -1,6 +1,6 @@
 {
     "name": "k-kinzal/container",
-    "description": "Shared container definitions for ZTD Query integration and fuzz testing",
+    "description": "Container definitions for testcontainers-php used across k-kinzal/ztd-query-php",
     "type": "library",
     "license": "MIT",
     "require": {
@@ -9,70 +9,18 @@
         "k-kinzal/testcontainers-php": "^0.5.1"
     },
     "require-dev": {
-        "brianium/paratest": "^7.3",
-        "deptrac/deptrac": "^3.0",
-        "friendsofphp/php-cs-fixer": "^3.95.25",
-        "k-kinzal/php-ai-toolkit": "dev-main",
-        "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
-        "phpstan/phpstan": "^2.1",
-        "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^10.5",
-        "squizlabs/php_codesniffer": "^4.0.4"
+        "friendsofphp/php-cs-fixer": "^3.95.25"
     },
-    "repositories": [
-        {
-            "name": "php-ai-toolkit",
-            "type": "vcs",
-            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
-        }
-    ],
     "autoload": {
         "psr-4": {
             "Container\\": "src/"
         }
     },
-    "autoload-dev": {
-        "psr-4": {
-            "Tests\\": "tests/"
-        }
-    },
     "scripts": {
-        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
-        "compat": "phpcs",
-        "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-        "docgen": "docgen --packages=. --title=k-kinzal/container",
-        "docgen:diff": [
-            "Composer\\Config::disableProcessTimeout",
-            "@docgen --diff=origin/main --serve"
-        ],
-        "docgen:fresh": "@docgen --no-cache",
-        "docgen:serve": [
-            "Composer\\Config::disableProcessTimeout",
-            "@docgen --serve"
-        ],
-        "doctest": "phpunit --testsuite doctest",
         "format": "php-cs-fixer fix --allow-risky=yes",
-        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "lint": [
-            "@autoload:check",
-            "@format:check",
-            "@phpstan",
-            "@compat",
-            "@loc-guard",
-            "@tree-guard",
-            "@deptrac"
-        ],
-        "loc-guard": "loc-guard --config=loc.yaml",
-        "phpstan": "phpstan analyse --memory-limit=512M",
-        "test": "paratest --processes=auto",
-        "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
-        "test:unit": "phpunit --testsuite unit",
-        "tree-guard": "tree-guard --config=tree.yaml"
+        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
     },
     "config": {
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        },
         "platform": {
             "php": "8.1.0"
         },

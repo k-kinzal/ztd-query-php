@@ -39,7 +39,7 @@ The repository is also an experiment in how AI agents can build something this c
 ## Documents
 
 - [packages/bison-parser/README.md](packages/bison-parser/README.md) - Reading GNU Bison grammar files into a lossless syntax tree, and printing it back
-- [packages/container/README.md](packages/container/README.md) - Shared container definitions, image versions, and how to use them in tests
+- [packages/container/README.md](packages/container/README.md) - Container definitions for testcontainers-php used across the repository, their image versions, and how to use them
 - [packages/lemon-parser/README.md](packages/lemon-parser/README.md) - Reading Lemon grammar files into a lossless syntax tree, and printing it back
 - [packages/lemon-parser/requirements/README.md](packages/lemon-parser/requirements/README.md) - Traceability of the Lemon manual's input file syntax sections to the Behat suite
 - [packages/requirements/README.md](packages/requirements/README.md) - Linking source text, EARS specifications, and tests; installation and usage
