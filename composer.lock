@@ -769,7 +769,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-formatter",
-                "reference": "da21b05441ffcc7685dd719cb48b286e04755a31"
+                "reference": "6b1acbf73075f0b8bbf19607f235a0e29411d14d"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -780,8 +780,10 @@
                 "deptrac/deptrac": "^3.0",
                 "fakerphp/faker": "^1.23",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/container": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",

@@ -1,0 +1,288 @@
+name: Fuzz (sql-formatter)
+
+on:
+  schedule:
+    - cron: '11 4 * * *'
+  workflow_dispatch:
+    inputs:
+      max_runs:
+        description: Maximum mutation iterations after the seeded corpus is replayed
+        required: true
+        default: '10000'
+        type: string
+      mysql_version:
+        description: MySQL release the MySQL targets parse with and, for equivalence, run against
+        required: true
+        default: '8.4.7'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
+  MYSQL_VERSION: ${{ inputs.mysql_version || '8.4.7' }}
+  FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+
+jobs:
+  format:
+    name: Format / ${{ matrix.database }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      issues: write
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [mysql, pg, sqlite]
+    env:
+      FUZZ_TARGET: format-${{ matrix.database }}
+      FUZZ_SCRIPT: fuzz_${{ matrix.database }}_format.php
+    defaults:
+      run:
+        working-directory: packages/sql-formatter
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pcntl, zlib
+          coverage: none
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/sql-formatter
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check runtime platform requirements
+        run: composer check-platform-reqs --no-dev
+      - name: Validate the manual run budget
+        run: |
+          case "$FUZZ_MAX_RUNS" in
+            ''|*[!0-9]*) echo 'max_runs must be a positive integer.' >&2; exit 2 ;;
+          esac
+          if [ "${#FUZZ_MAX_RUNS}" -gt 8 ] || [ "$FUZZ_MAX_RUNS" -lt 1 ]; then
+            echo 'max_runs must be between 1 and 99999999.' >&2
+            exit 2
+          fi
+      - name: Restore the evolving corpus
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/sql-formatter/fuzz/corpus/${{ env.FUZZ_TARGET }}
+          key: sql-formatter-corpus-v1-${{ env.FUZZ_TARGET }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: sql-formatter-corpus-v1-${{ env.FUZZ_TARGET }}-
+      - name: Run PHP-Fuzzer
+        run: |
+          set -euo pipefail
+          mkdir -p build/fuzz
+          composer "fuzz:$FUZZ_TARGET" -- "--max-runs=$FUZZ_MAX_RUNS" 2>&1 | tee "build/fuzz/$FUZZ_TARGET.log"
+      - name: Open an issue for a finding
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const crypto = require('node:crypto');
+            const target = process.env.FUZZ_TARGET;
+            const script = process.env.FUZZ_SCRIPT;
+            const root = path.resolve('packages/sql-formatter');
+            const log = fs.readFileSync(path.join(root, `build/fuzz/${target}.log`), 'utf8');
+            const finding = log.match(/^(?:CORPUS )?CRASH in (.+)!$/m);
+            if (!finding) return;
+            const input = fs.readFileSync(path.resolve(root, finding[1]));
+            const hash = crypto.createHash('sha256').update(input).digest('hex');
+            const marker = `<!-- sql-formatter-fuzz:${target}:${hash} -->`;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo, state: 'open', per_page: 100
+            });
+            if (issues.some(issue => !issue.pull_request && issue.body?.includes(marker))) return;
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              marker,
+              `PHP-Fuzzer found text the ${target} target does not format cleanly.`,
+              `Commit: ${context.sha}`,
+              `Workflow and input artifact: ${run} (sql-formatter-fuzz-${target})`,
+              'Run from packages/sql-formatter after extracting the artifact:',
+              '```sh',
+              `vendor/bin/php-fuzzer run-single fuzz/${script} '${finding[1]}'`,
+              '```',
+              `Input SHA-256: ${hash}`,
+              '<details><summary>PHP-Fuzzer output</summary>',
+              '', '```text', log.slice(-45000), '```', '</details>'
+            ].join('\n\n');
+            await github.rest.issues.create({
+              ...context.repo,
+              title: `[sql-formatter fuzz] ${target}: ${hash.slice(0, 12)}`,
+              body
+            });
+      - name: Save the evolving corpus
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/sql-formatter/fuzz/corpus/${{ env.FUZZ_TARGET }}
+          key: sql-formatter-corpus-v1-${{ env.FUZZ_TARGET }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Upload PHP-Fuzzer inputs and output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sql-formatter-fuzz-${{ env.FUZZ_TARGET }}
+          path: |
+            packages/sql-formatter/crash-*
+            packages/sql-formatter/build/fuzz/${{ env.FUZZ_TARGET }}.log
+            packages/sql-formatter/fuzz/corpus/${{ env.FUZZ_TARGET }}/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  equivalence:
+    name: Equivalence / ${{ matrix.database }} / ${{ matrix.style }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      issues: write
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [mysql, pg, sqlite]
+        style: [compact, expanded, tabular, river]
+        include:
+          - database: mysql
+            extensions: mbstring, pcntl, zlib, pdo_mysql
+          - database: pg
+            extensions: mbstring, pcntl, zlib, pgsql
+          - database: sqlite
+            extensions: mbstring, pcntl, zlib, pdo_sqlite
+    env:
+      FUZZ_TARGET: equivalence-${{ matrix.database }}
+      FUZZ_NAME: equivalence-${{ matrix.database }}-${{ matrix.style }}
+      FUZZ_SCRIPT: fuzz_${{ matrix.database }}_equivalence.php
+      SQLFORMATTER_STYLE: ${{ matrix.style }}
+    defaults:
+      run:
+        working-directory: packages/sql-formatter
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.5'
+          extensions: ${{ matrix.extensions }}
+          coverage: none
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/sql-formatter
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check runtime platform requirements
+        run: composer check-platform-reqs --no-dev
+      - name: Validate the manual run budget
+        run: |
+          case "$FUZZ_MAX_RUNS" in
+            ''|*[!0-9]*) echo 'max_runs must be a positive integer.' >&2; exit 2 ;;
+          esac
+          if [ "${#FUZZ_MAX_RUNS}" -gt 8 ] || [ "$FUZZ_MAX_RUNS" -lt 1 ]; then
+            echo 'max_runs must be between 1 and 99999999.' >&2
+            exit 2
+          fi
+      - name: Restore the evolving corpus
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/sql-formatter/fuzz/corpus/${{ env.FUZZ_TARGET }}
+          key: sql-formatter-corpus-v1-${{ env.FUZZ_NAME }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: sql-formatter-corpus-v1-${{ env.FUZZ_NAME }}-
+      - name: Restore grammar coverage snapshots independently of the corpus
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/sql-formatter/fuzz/coverage/${{ matrix.database }}
+          key: sql-formatter-coverage-v1-${{ env.FUZZ_NAME }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: sql-formatter-coverage-v1-${{ env.FUZZ_NAME }}-
+      - name: Copy the sql-faker seeds into the corpus
+        env:
+          SEEDS: ${{ matrix.database == 'mysql' && format('mysql/mysql-{0}', env.MYSQL_VERSION) || matrix.database == 'pg' && 'pg/pg-17.2' || 'sqlite/sqlite-3.47.2' }}
+        run: |
+          mkdir -p "fuzz/corpus/$FUZZ_TARGET"
+          if [ -d "../sql-faker/seeds/$SEEDS" ]; then
+            cp "../sql-faker/seeds/$SEEDS"/*.txt "fuzz/corpus/$FUZZ_TARGET/"
+          else
+            echo "sql-faker ships no seeds for $SEEDS; fuzzing from the restored corpus only."
+          fi
+      - name: Run PHP-Fuzzer
+        run: |
+          set -euo pipefail
+          mkdir -p build/fuzz
+          composer "fuzz:$FUZZ_TARGET:$SQLFORMATTER_STYLE" -- "--max-runs=$FUZZ_MAX_RUNS" 2>&1 | tee "build/fuzz/$FUZZ_NAME.log"
+      - name: Open an issue for a finding
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const crypto = require('node:crypto');
+            const name = process.env.FUZZ_NAME;
+            const script = process.env.FUZZ_SCRIPT;
+            const style = process.env.SQLFORMATTER_STYLE;
+            const root = path.resolve('packages/sql-formatter');
+            const log = fs.readFileSync(path.join(root, `build/fuzz/${name}.log`), 'utf8');
+            const finding = log.match(/^(?:CORPUS )?CRASH in (.+)!$/m);
+            if (!finding) return;
+            const input = fs.readFileSync(path.resolve(root, finding[1]));
+            const hash = crypto.createHash('sha256').update(input).digest('hex');
+            const marker = `<!-- sql-formatter-fuzz:${name}:${hash} -->`;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo, state: 'open', per_page: 100
+            });
+            if (issues.some(issue => !issue.pull_request && issue.body?.includes(marker))) return;
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              marker,
+              `PHP-Fuzzer found a statement the database answers differently after ${name} formatting.`,
+              `Commit: ${context.sha}`,
+              `Workflow and input artifact: ${run} (sql-formatter-fuzz-${name})`,
+              'Run from packages/sql-formatter after extracting the artifact:',
+              '```sh',
+              `SQLFORMATTER_STYLE=${style} vendor/bin/php-fuzzer run-single fuzz/${script} '${finding[1]}'`,
+              '```',
+              `Input SHA-256: ${hash}`,
+              '<details><summary>PHP-Fuzzer output</summary>',
+              '', '```text', log.slice(-45000), '```', '</details>'
+            ].join('\n\n');
+            await github.rest.issues.create({
+              ...context.repo,
+              title: `[sql-formatter fuzz] ${name}: ${hash.slice(0, 12)}`,
+              body
+            });
+      - name: Save the evolving corpus
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/sql-formatter/fuzz/corpus/${{ env.FUZZ_TARGET }}
+          key: sql-formatter-corpus-v1-${{ env.FUZZ_NAME }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Save grammar coverage history
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/sql-formatter/fuzz/coverage/${{ matrix.database }}
+          key: sql-formatter-coverage-v1-${{ env.FUZZ_NAME }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Upload PHP-Fuzzer inputs, output and grammar coverage
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sql-formatter-fuzz-${{ env.FUZZ_NAME }}
+          path: |
+            packages/sql-formatter/crash-*
+            packages/sql-formatter/build/fuzz/${{ env.FUZZ_NAME }}.log
+            packages/sql-formatter/fuzz/corpus/${{ env.FUZZ_TARGET }}/
+            packages/sql-formatter/fuzz/coverage/${{ matrix.database }}/
+          if-no-files-found: ignore
+          retention-days: 14
