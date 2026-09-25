@@ -1,0 +1,134 @@
+name: Mutation (ztd-query-core)
+
+on:
+  schedule:
+    - cron: '34 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: mutation-ztd-query-core
+  cancel-in-progress: false
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
+
+defaults:
+  run:
+    shell: bash
+    working-directory: packages/ztd-query-core
+
+jobs:
+  mutation:
+    name: Mutation Testing
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.5'
+          extensions: ctype, date, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          coverage: pcov
+          tools: infection:0.35.4
+          ini-values: memory_limit=1G
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install package dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/ztd-query-core
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        run: |
+          composer check-platform-reqs --no-dev
+          infection --version
+      - name: Mutation testing on the whole source tree
+        run: >-
+          php -d memory_limit=4G "$(command -v infection)"
+          --configuration=infection.json5 --with-uncovered
+          --threads=4
+          --only-covering-test-cases
+          --min-msi=0 --min-covered-msi=0 --no-progress
+          --logger-github
+      - name: Reject skipped whole-tree mutants
+        run: |
+          php -d memory_limit=4G -r '
+            $report = json_decode(file_get_contents("build/infection/infection.json"), true, 512, JSON_THROW_ON_ERROR);
+            if (($report["stats"]["skippedCount"] ?? null) !== 0) {
+                fwrite(STDERR, "Infection skipped mutants before execution; review the timeout against test durations.\n");
+                exit(1);
+            }
+          '
+      - name: Create or update the package MSI issue
+        if: success()
+        continue-on-error: true
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        env:
+          # Keep these alert thresholds aligned with this package's infection.json5.
+          MIN_MSI: '80'
+          MIN_COVERED_MSI: '80'
+        with:
+          script: |
+            const fs = require('node:fs');
+            const stats = JSON.parse(fs.readFileSync('packages/ztd-query-core/build/infection/infection.json', 'utf8')).stats;
+            const minMsi = Number(process.env.MIN_MSI);
+            const minCoveredMsi = Number(process.env.MIN_COVERED_MSI);
+            for (const value of [stats.msi, stats.coveredCodeMsi, minMsi, minCoveredMsi]) {
+              if (!Number.isFinite(value) || value < 0 || value > 100) {
+                throw new Error('Infection must report valid MSI percentages and thresholds.');
+              }
+            }
+            const belowThreshold = stats.msi < minMsi || stats.coveredCodeMsi < minCoveredMsi;
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const marker = '<!-- mutation-msi:ztd-query-core -->';
+            const title = '[ztd-query-core] Mutation testing MSI below threshold';
+            const body = [
+              marker,
+              'Daily mutation testing on `main` is below the required score for `ztd-query-core`.',
+              '',
+              '| Metric | Actual | Required |',
+              '| --- | ---: | ---: |',
+              `| MSI | ${stats.msi}% | ${minMsi}% |`,
+              `| Covered MSI | ${stats.coveredCodeMsi}% | ${minCoveredMsi}% |`,
+              '',
+              `Commit: ${context.sha}`,
+              `Run and mutation reports: ${run}`,
+              `Run attempt: ${process.env.GITHUB_RUN_ATTEMPT}`,
+              '',
+              'MSI thresholds are reported here without failing the workflow.'
+            ].join('\n');
+            await core.summary
+              .addHeading('Mutation testing: ztd-query-core')
+              .addRaw(`MSI: ${stats.msi}% (required: ${minMsi}%). Covered MSI: ${stats.coveredCodeMsi}% (required: ${minCoveredMsi}%).`)
+              .write();
+            if (!belowThreshold) return;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo, state: 'all', per_page: 100
+            });
+            const existing = issues.find(issue => !issue.pull_request && (
+              issue.body?.includes(marker) || issue.title === title
+            ));
+            if (existing) {
+              await github.rest.issues.update({ ...context.repo, issue_number: existing.number, body });
+            } else {
+              await github.rest.issues.create({ ...context.repo, title, body });
+            }
+      - name: Upload mutation reports
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ztd-query-core-infection
+          path: packages/ztd-query-core/build/infection/
+          if-no-files-found: ignore
