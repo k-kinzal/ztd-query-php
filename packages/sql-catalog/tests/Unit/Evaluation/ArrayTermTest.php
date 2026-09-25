@@ -12,6 +12,7 @@ use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\LiteralTerm;
 use SqlCatalog\Evaluation\OpaqueTerm;
+use SqlCatalog\Text\Origin;
 use SqlCatalog\Text\TextHole;
 use SqlCatalog\Text\TextPattern;
 use SqlCatalog\Type\TypeShape;
@@ -44,6 +45,57 @@ final class ArrayTermTest extends TestCase
             new ArrayEntry(null, Domain::literal('a')),
         ]);
         self::assertSame([':x'], array_keys($term->named()));
+    }
+
+    public function testElementFindsAnElementByItsKey(): void
+    {
+        $term = new ArrayTerm([
+            new ArrayEntry(null, Domain::literal('first')),
+            new ArrayEntry(Domain::literal('k'), Domain::literal('keyed')),
+            new ArrayEntry(null, Domain::literal('second')),
+        ]);
+        self::assertSame('first', $term->element(0)?->soleLiteral()?->value);
+        self::assertSame('first', $term->element('0')?->soleLiteral()?->value);
+        self::assertSame('second', $term->element(1)?->soleLiteral()?->value);
+        self::assertSame('keyed', $term->element('k')?->soleLiteral()?->value);
+        self::assertNull($term->element('missing'));
+    }
+
+    public function testElementNeverReadsAnElementUnderABooleanOrANullKey(): void
+    {
+        $term = new ArrayTerm([
+            new ArrayEntry(null, Domain::literal('first')),
+            new ArrayEntry(null, Domain::literal('second')),
+            new ArrayEntry(Domain::literal(''), Domain::literal('empty')),
+        ]);
+        self::assertNull($term->element(true));
+        self::assertNull($term->element(false));
+        self::assertNull($term->element(null));
+    }
+
+    public function testAnyValueIsTheUnionOfEveryElement(): void
+    {
+        $term = new ArrayTerm([
+            new ArrayEntry(Domain::literal('u'), Domain::literal('users')),
+            new ArrayEntry(Domain::literal('a'), Domain::literal('admins')),
+            new ArrayEntry(null, Domain::literal('users')),
+        ]);
+        self::assertSame('literal:string:admins|literal:string:users', $term->anyValue(Origin::Unresolved)?->signature());
+    }
+
+    public function testAnyValueOfAnArrayWithNoElementsIsNothing(): void
+    {
+        self::assertNull((new ArrayTerm([]))->anyValue(Origin::Unresolved));
+        self::assertNull((new ArrayTerm([], false))->anyValue(Origin::Unresolved));
+    }
+
+    public function testAnyValueOfAnArrayKnownOnlyInPartKeepsAGapWhereItWasRead(): void
+    {
+        $term = new ArrayTerm([new ArrayEntry(null, Domain::literal('users'))], false);
+        $values = $term->anyValue(Origin::Loop, 'iterated value');
+
+        self::assertSame('literal:string:users|opaque:mixed:loop', $values?->signature());
+        self::assertEquals(new OpaqueTerm(TypeShape::unknown(), Origin::Loop, 'iterated value'), $values->terms[1]);
     }
 
     public function testToPatternLeavesAGap(): void

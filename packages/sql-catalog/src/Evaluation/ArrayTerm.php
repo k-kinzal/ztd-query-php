@@ -72,6 +72,47 @@ final class ArrayTerm implements Term
     }
 
     /**
+     * The element stored under a key, or null when the array does not hold one.
+     */
+    public function element(string|int|float|bool|null $key): ?Domain
+    {
+        if (is_bool($key) || $key === null) {
+            return null;
+        }
+        $wanted = (string) $key;
+        $position = 0;
+        foreach ($this->entries as $entry) {
+            $entryKey = $entry->key === null ? $position++ : $entry->scalarKey();
+            if ($entryKey !== null && (string) $entryKey === $wanted) {
+                return $entry->value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Whatever one element can be, or null when the array holds none.
+     *
+     * The union of every element covers the value whichever key selects it,
+     * which is what turns `self::TABLES[$kind]` with an unknown `$kind` into
+     * one statement per table instead of a gap. An array known only in part
+     * may hold elements the walk never saw, so the union keeps a gap for them.
+     */
+    public function anyValue(Origin $origin, ?string $expression = null): ?Domain
+    {
+        $values = null;
+        foreach ($this->entries as $entry) {
+            $values = $values === null ? $entry->value : $values->union($entry->value);
+        }
+        if ($values === null || $this->complete) {
+            return $values;
+        }
+
+        return $values->union(Domain::opaque(TypeShape::unknown(), $origin, $expression));
+    }
+
+    /**
      * An array never resolves to text, so it becomes a gap.
      */
     #[Override]

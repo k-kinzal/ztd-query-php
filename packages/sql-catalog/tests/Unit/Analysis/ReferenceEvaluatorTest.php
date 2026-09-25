@@ -125,6 +125,8 @@ final class ReferenceEvaluatorTest extends TestCase
             ['<?php class C {} $result = C::class;', 'C'],
             ['<?php $result = ["a", "b"][1];', 'b'],
             ['<?php $result = ["k" => "v"]["k"];', 'v'],
+            ['<?php $result = ["k" => "v"][$_GET["k"]];', 'v'],
+            ['<?php class C { public static array $t = ["k" => "v"]; } $result = C::$t["k"];', 'v'],
             ['<?php $result = new \\PDO("sqlite::memory:");', '{$}'],
             ['<?php $result = static function (): void {};', '{$}'],
             ['<?php $result = UNDEFINED_CONSTANT;', '{$}'],
@@ -239,17 +241,46 @@ final class ReferenceEvaluatorTest extends TestCase
         self::assertSame(Origin::External, $environment->read('result')->patterns()[0]->holes()[0]->origin);
     }
 
-    public function testLookupFindsAnElementByItsKey(): void
+    public function testReadElementUnderAKeyThatDidNotResolveReadsEveryElement(): void
     {
-        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $array = new ArrayTerm([
-            new ArrayEntry(null, Domain::literal('first')),
-            new ArrayEntry(Domain::literal('k'), Domain::literal('keyed')),
-        ]);
-        self::assertSame('first', $evaluator->lookup($array, 0)?->soleLiteral()?->value);
-        self::assertSame('keyed', $evaluator->lookup($array, 'k')?->soleLiteral()?->value);
-        self::assertNull($evaluator->lookup($array, 'missing'));
-        self::assertNull($evaluator->lookup($array, true));
+        $file = (new SourceParser())->parse(
+            't.php',
+            '<?php class C { const T = ["u" => "users", "a" => "admins"]; } $result = C::T[$_GET["kind"]];',
+        );
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
+
+        self::assertSame('literal:string:admins|literal:string:users', $environment->read('result')->signature());
+    }
+
+    public function testReadElementUnderAKeyThatDidNotResolveQuotesTheGapOfAnArrayKnownOnlyInPart(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php $result = [...$_POST, "u" => "users"][$_GET["kind"]];');
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
+
+        self::assertSame('literal:string:users|opaque:mixed:unresolved', $environment->read('result')->signature());
+        self::assertEquals(
+            new OpaqueTerm(TypeShape::unknown(), Origin::Unresolved, '[...$_POST, "u" => "users"][$_GET["kind"]]'),
+            $environment->read('result')->terms[1],
+        );
     }
 
     public function testOriginOfReportsExternalInputWhenAnyTermCarriesIt(): void
@@ -619,17 +650,81 @@ final class ReferenceEvaluatorTest extends TestCase
         self::assertSame(['a'], array_map(static fn (ArrayEntry $entry): string|int|float|bool|null => $entry->value->soleLiteral()?->value, $array->entries));
     }
 
-    public function testLookupNeverReadsAnElementUnderABooleanOrANullKey(): void
+    public function testReadElementLeavesAGapForAnElementTheArrayDoesNotHold(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php $result = ["u" => "users"]["missing"];');
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
+
+        self::assertEquals(
+            new OpaqueTerm(TypeShape::unknown(), Origin::Unresolved, '["u" => "users"]["missing"]'),
+            $environment->read('result')->terms[0],
+        );
+    }
+
+    public function testReadPropertyReadsTheSettledDefaultOfAStaticProperty(): void
+    {
+        $file = (new SourceParser())->parse(
+            't.php',
+            '<?php class C { private static array $t = ["u" => "users", "a" => "admins"]; }'
+            . ' $byKey = C::$t["a"]; $result = self::$t[$_GET["kind"]];',
+        );
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php', 'C::m', 'C'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
+
+        self::assertSame('admins', $environment->read('byKey')->soleLiteral()?->value);
+        self::assertSame('literal:string:admins|literal:string:users', $environment->read('result')->signature());
+    }
+
+    public function testReadPropertyFallsBackToTheDeclaredTypeOfAStaticPropertyTheClassAssigns(): void
+    {
+        $file = (new SourceParser())->parse(
+            't.php',
+            '<?php class C { public static array $t = ["u"]; public static function reset(): void { self::$t = []; } } $result = C::$t;',
+        );
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
+
+        self::assertEquals(new OpaqueTerm(TypeShape::of(['array']), Origin::Property, '\\C::$t'), $environment->read('result')->terms[0]);
+    }
+
+    public function testReadPropertyQuotesAStaticPropertyWhoseClassItCannotName(): void
     {
         $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $array = new ArrayTerm([
-            new ArrayEntry(null, Domain::literal('first')),
-            new ArrayEntry(null, Domain::literal('second')),
-            new ArrayEntry(Domain::literal(''), Domain::literal('empty')),
-        ]);
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $scope = new FunctionScope('t.php');
 
-        self::assertNull($evaluator->lookup($array, true));
-        self::assertNull($evaluator->lookup($array, null));
+        $expression = $evaluator->readProperty(new Expr\StaticPropertyFetch(new Variable('c'), 't'), new Environment(), $scope, $expressions);
+        $dynamic = $evaluator->readProperty(new Expr\StaticPropertyFetch(new Name('C'), new Variable('n')), new Environment(), $scope, $expressions);
+
+        self::assertEquals(new OpaqueTerm(TypeShape::unknown(), Origin::Property, '$c::$t'), $expression->terms[0]);
+        self::assertEquals(new OpaqueTerm(TypeShape::unknown(), Origin::Property, 'C::${$n}'), $dynamic->terms[0]);
     }
 
     public function testOriginOfIsTheOriginOfTheFirstGapUnlessAnyGapIsExternalInput(): void

@@ -335,16 +335,8 @@ final class SliceExecutor
      */
     public function anyElement(Domain $iterable): Domain
     {
-        $array = $iterable->soleArray();
-        if ($array === null || $array->entries === []) {
-            return Domain::opaque(TypeShape::unknown(), Origin::Loop, 'iterated value');
-        }
-        $values = $array->entries[0]->value;
-        foreach (array_slice($array->entries, 1) as $entry) {
-            $values = $values->union($entry->value);
-        }
-
-        return $array->complete ? $values : $values->union(Domain::opaque(TypeShape::unknown(), Origin::Loop, 'iterated value'));
+        return $iterable->soleArray()?->anyValue(Origin::Loop, 'iterated value')
+            ?? Domain::opaque(TypeShape::unknown(), Origin::Loop, 'iterated value');
     }
 
     /**

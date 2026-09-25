@@ -316,11 +316,17 @@ injected SQL. A cast to `string` does not.
 
 - String and number literals, interpolated strings and heredocs.
 - Global constants, class constants, `::class`, and enum cases.
+- An element of an array written out in full, whether or not the key
+  resolved. `self::TABLES[$kind]` with `$kind` coming from a request is one of
+  the values written in `TABLES`, so it gives one statement per table rather
+  than a gap. A key that resolved reads its own element; an element the array
+  does not hold, or an alternative that is not an array, stays a gap.
 - `->value` and `->name` on an enum. A value typed as a backed enum resolves to
   the union of that enum's cases, which turns a parameter typed `Status` into the
   handful of strings a column can hold.
 - Properties: a declared default, a promoted constructor parameter, and what
-  the class's own methods assign.
+  the class's own methods assign. A static property nothing in the class
+  assigns holds its declared default, and is read like a constant.
 - `sprintf`, `vsprintf`, `implode`, `str_repeat`, `str_replace`, the trim and
   case functions, and the casts.
 - Parameters, through the callers the analyzed source contains, up to

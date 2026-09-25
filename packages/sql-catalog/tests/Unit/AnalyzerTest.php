@@ -394,6 +394,39 @@ final class AnalyzerTest extends TestCase
         self::assertSame(['SELECT admin_id FROM admins', 'SELECT user_id FROM users'], $found);
     }
 
+    public function testAnElementReadUnderAnUnknownKeyGivesOneStatementPerElement(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php class R { private const TABLES = ["u" => "users", "a" => "admins"];'
+                . ' public function f(PDO $d, string $kind): void { $d->query("SELECT * FROM " . self::TABLES[$kind]); } }',
+        ]);
+
+        $found = array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries());
+        sort($found);
+
+        self::assertSame(['SELECT * FROM admins', 'SELECT * FROM users'], $found);
+        self::assertSame(
+            ['resolved:closed', 'resolved:closed'],
+            array_map(
+                static fn (CatalogEntry $entry): string => $entry->resolution()->value . ($entry->searchClosed() ? ':closed' : ':open'),
+                $catalog->entries(),
+            ),
+        );
+    }
+
+    public function testAStaticPropertyNothingAssignsReadsLikeAConstant(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php class R { private static array $tables = ["u" => "users", "a" => "admins"];'
+                . ' public function f(PDO $d, string $kind): void { $d->query("SELECT * FROM " . static::$tables[$kind]); } }',
+        ]);
+
+        $found = array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries());
+        sort($found);
+
+        self::assertSame(['SELECT * FROM admins', 'SELECT * FROM users'], $found);
+    }
+
     public function testValuesDecidedByNestedBranchesStayTogether(): void
     {
         $catalog = (new Analyzer())->analyzeSource([
