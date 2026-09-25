@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-formatter",
-                "reference": "9054b946a9eecc64d8aba7fbabb6a59e357f3280"
+                "reference": "80a6e053138960142be443d8f72b74d994c8a2a0"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -39,10 +39,7 @@
             "autoload": {
                 "psr-4": {
                     "SqlFormatter\\": "src/"
-                },
-                "files": [
-                    "src/Compatibility/ClassAliases.php"
-                ]
+                }
             },
             "autoload-dev": {
                 "psr-4": {

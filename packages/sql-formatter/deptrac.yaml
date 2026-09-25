@@ -23,10 +23,6 @@ deptrac:
       collectors:
         - type: classLike
           value: '^SqlFormatter\\Facade\\.*'
-    - name: Compatibility
-      collectors:
-        - type: classLike
-          value: '^SqlFormatter\\Compatibility\\.*'
     - name: ParserCore
       collectors:
         - type: classLike
@@ -49,7 +45,6 @@ deptrac:
     PostgreSql: [Core, ParserCore]
     Sqlite: [Core, ParserCore]
     Facade: [Core, MySql, PostgreSql, Sqlite, ParserCore, ParserMySql, ParserPostgreSql, ParserSqlite]
-    Compatibility: [Core, Facade]
     ParserCore: []
     ParserMySql: []
     ParserPostgreSql: []

@@ -221,8 +221,7 @@ role lists cover the symbols shipped across each platform's supported releases.
 
 `Facade` selects built-in rules for an existing parser and preserves its version
 and lexical modes. A caller can supply a custom `Core\Dialect` through the optional
-third constructor argument. `Compatibility` retains the original `Formatter`,
-`FormatOptions`, `Style`, and `FormattingException` names.
+third constructor argument. Shared options, styles, and exceptions live in `Core`.
 
 Deptrac rejects both internal and sql-parser platform dependencies from Core.
 PHPStan rejects database words anywhere under `src/Core`, including comments,

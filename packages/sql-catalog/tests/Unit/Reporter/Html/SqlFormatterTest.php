@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Catalog\StatementPart;
 use SqlCatalog\Reporter\Html\SqlFormatter;
-use SqlFormatter\FormattingException;
+use SqlFormatter\Core\FormattingException;
 
 #[CoversClass(SqlFormatter::class)]
 #[UsesClass(StatementPart::class)]
