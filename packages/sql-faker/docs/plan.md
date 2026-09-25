@@ -14,7 +14,7 @@ Choose a statement or fragment by its rule name. The following Common examples u
 use Faker\Factory;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\Plan\ProductionPattern;
-use SqlFaker\SqliteProvider;
+use SqlFaker\Sqlite\SqliteProvider;
 
 require 'vendor/autoload.php';
 
@@ -316,7 +316,7 @@ Use `withoutEmptyRows()` to constrain every row-value list reached during genera
 
 ```php
 $mysqlFaker = \Faker\Factory::create();
-$mysql = new \SqlFaker\MySqlProvider($mysqlFaker, 'mysql-8.4.7');
+$mysql = new \SqlFaker\MySql\MySqlProvider($mysqlFaker, 'mysql-8.4.7');
 $mysqlFaker->seed(7);
 
 $rowsPlan = \SqlFaker\MySql\Generation\GenerationPlans::withoutEmptyRows(
@@ -349,7 +349,7 @@ Use PostgreSQL's preset to select a SELECT expression with the `@@` operator:
 
 ```php
 $pgFaker = \Faker\Factory::create();
-$postgres = new \SqlFaker\PostgreSqlProvider($pgFaker, 'pg-17.2');
+$postgres = new \SqlFaker\PostgreSql\PostgreSqlProvider($pgFaker, 'pg-17.2');
 $pgFaker->seed(7);
 
 $fullTextPlan = \SqlFaker\PostgreSql\Generation\GenerationPlans::fullTextSearchStatement()

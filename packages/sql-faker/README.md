@@ -52,7 +52,7 @@ composer require --dev k-kinzal/sql-faker
 
 ```php
 use Faker\Factory;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\MySqlProvider;
 
 $faker = Factory::create();
 $faker->addProvider(new MySqlProvider($faker));
@@ -75,3 +75,23 @@ php bin/seeds.php check
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+## Architecture
+
+The core consists of `Grammar` (the grammar model and resources), `Generation`
+(the planning and generation engine and its lexical/rewrite contracts), and
+`Compiler` (upstream grammar readers). These concepts contain no database names
+and do not depend on database implementations.
+
+`MySql`, `PostgreSql`, and `Sqlite` each own their provider, grammar declarations,
+lexical behavior, rewrites, and generator factory. Each implementation depends
+on core contracts; implementations never depend on one another. Build utilities
+in `bin/` are development tools, not a shipped CLI layer.
+
+`Compatibility` preserves the original provider names and convenience factory
+as inward-facing adapters. New code should use the providers and factories in
+the database namespaces. Core and platform code cannot depend on compatibility.
+
+`composer deptrac` enforces dependency direction without exceptions or uncovered
+classes. `composer phpstan` also rejects database terms anywhere in core source,
+including strings and PHPDoc, and rejects other database names in each platform.

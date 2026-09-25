@@ -59,7 +59,8 @@
         "files": [
             "src/MySql/StatementType.php",
             "src/PostgreSql/StatementType.php",
-            "src/Sqlite/StatementType.php"
+            "src/Sqlite/StatementType.php",
+            "src/Compatibility/ClassAliases.php"
         ]
     },
     "autoload-dev": {

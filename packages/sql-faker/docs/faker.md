@@ -10,7 +10,7 @@ Create a Faker instance and register a provider. The following Common examples u
 
 ```php
 use Faker\Factory;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\MySqlProvider;
 use SqlFaker\MySql\StatementType;
 
 require 'vendor/autoload.php';
@@ -123,7 +123,7 @@ Use an exact tag from the README's [version table](../README.md#mysql). The defa
 
 ```php
 $mysqlFaker = \Faker\Factory::create();
-$mysql = new \SqlFaker\MySqlProvider($mysqlFaker, 'mysql-8.4.7');
+$mysql = new \SqlFaker\MySql\MySqlProvider($mysqlFaker, 'mysql-8.4.7');
 $mysqlFaker->seed(7);
 
 $sql = $mysql->sql(\SqlFaker\MySql\StatementType::Insert, maxDepth: 6);
@@ -176,7 +176,7 @@ The default version is `pg-17.2`. PostgreSQL names the first `sql()` argument `t
 
 ```php
 $pgFaker = \Faker\Factory::create();
-$postgres = new \SqlFaker\PostgreSqlProvider($pgFaker, 'pg-17.2');
+$postgres = new \SqlFaker\PostgreSql\PostgreSqlProvider($pgFaker, 'pg-17.2');
 $pgFaker->seed(7);
 
 $sql = $postgres->sql(type: \SqlFaker\PostgreSql\StatementType::Select, maxDepth: 6);
@@ -216,7 +216,7 @@ The default version is `sqlite-3.47.2`. SQLite names the first `sql()` argument 
 
 ```php
 $sqliteFaker = \Faker\Factory::create();
-$sqlite = new \SqlFaker\SqliteProvider($sqliteFaker, 'sqlite-3.47.2');
+$sqlite = new \SqlFaker\Sqlite\SqliteProvider($sqliteFaker, 'sqlite-3.47.2');
 $sqliteFaker->seed(7);
 
 $sql = $sqlite->sql(type: \SqlFaker\Sqlite\StatementType::Select, maxDepth: 6);

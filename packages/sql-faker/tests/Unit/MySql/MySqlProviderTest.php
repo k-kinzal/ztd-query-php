@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\MySql;
 
 use Faker\Factory;
 use Override;
@@ -27,8 +27,8 @@ use SqlFaker\Grammar\Resource\SqlVersion;
 use SqlFaker\MySql\Generation\GenerationPlans;
 use SqlFaker\MySql\Generation\LexicalGrammar;
 use SqlFaker\MySql\Generation\Value\LiteralGenerator;
+use SqlFaker\MySql\MySqlProvider;
 use SqlFaker\MySql\StatementType;
-use SqlFaker\MySqlProvider;
 
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(LiteralGenerator::class)]
@@ -47,7 +47,7 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
 #[Medium]
-#[UsesClass(\SqlFaker\Provider\SqlGeneratorFactory::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\SqlGeneratorFactory::class)]
 #[UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
 #[UsesClass(\SqlFaker\Generation\Derivation\Derivation::class)]
 #[UsesClass(\SqlFaker\Generation\Derivation\DerivationTrace::class)]

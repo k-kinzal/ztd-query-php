@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker;
+namespace SqlFaker\PostgreSql;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use SqlFaker\Generation;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\PostgreSql\Generation\GenerationPlans;
+use SqlFaker\PostgreSql\Generation\SqlGeneratorFactory;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
-use SqlFaker\PostgreSql\StatementType;
-use SqlFaker\Provider\SqlGeneratorFactory;
 
 /**
  * Faker Provider for generating syntactically valid PostgreSQL SQL statements.
@@ -29,7 +29,7 @@ use SqlFaker\Provider\SqlGeneratorFactory;
  *
  * @example Register the provider with Faker
  *     $faker = \Faker\Factory::create();
- *     $faker->addProvider(new \SqlFaker\PostgreSqlProvider($faker));
+ *     $faker->addProvider(new \SqlFaker\PostgreSql\PostgreSqlProvider($faker));
  *     $faker->parameterMarker(min: 2, max: 2) // => '$2'
  */
 final class PostgreSqlProvider extends Base
@@ -44,10 +44,10 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Choose a supported database version
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker, 'pg-17.2');
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker, 'pg-17.2');
      *     $provider->integerLiteral(min: 42, max: 42) // => '42'
      * @example Reject an unsupported database version
-     *     new \SqlFaker\PostgreSqlProvider(\Faker\Factory::create(), 'missing-version') // throws \RuntimeException: Unsupported
+     *     new \SqlFaker\PostgreSql\PostgreSqlProvider(\Faker\Factory::create(), 'missing-version') // throws \RuntimeException: Unsupported
      */
     public function __construct(Generator $generator, ?string $version = null, ?GrammarCoverage $coverage = null)
     {
@@ -55,14 +55,14 @@ final class PostgreSqlProvider extends Base
 
         $generator->addProvider($this);
         $resolvedVersion = PgGrammar::resolveVersion($version);
-        $this->sql = SqlGeneratorFactory::forPostgreSql($generator, PgGrammar::load($resolvedVersion), $resolvedVersion, $coverage);
+        $this->sql = SqlGeneratorFactory::create($generator, PgGrammar::load($resolvedVersion), $resolvedVersion, $coverage);
     }
 
     /**
      * Prepares grammar analysis for constructing concrete generation plans.
      * @visibility public
      * @example Compile input before generating SQL
-     *     $provider = new \SqlFaker\PostgreSqlProvider(\Faker\Factory::create());
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider(\Faker\Factory::create());
      *     $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile('', $provider->planner());
      *     $provider->generate($plan) === $provider->generate($plan) // => true
      */
@@ -82,7 +82,7 @@ final class PostgreSqlProvider extends Base
      * @return (TRequiresNonEmpty is true ? non-empty-string : string)
      * @visibility public
      * @example Generate a statement from deterministic choice bytes
-     *     $provider = new \SqlFaker\SqliteProvider(\Faker\Factory::create());
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider(\Faker\Factory::create());
      *     $plan = \SqlFaker\Generation\Plan\GenerationPlan::all()->requiringNonEmpty()->withExpansionBudget(100);
      *     $provider->generate($plan) !== '' // => true
      */
@@ -100,7 +100,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Select a statement type explicitly
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->sql(\SqlFaker\PostgreSql\StatementType::Select, maxDepth: 0);
      *     preg_match('/\bSELECT\b/i', $sql) // => 1
@@ -118,7 +118,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate select statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->selectStatement(maxDepth: 0);
      *     preg_match('/\bSELECT\b/is', $sql) // => 1
@@ -136,7 +136,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate insert statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->insertStatement(maxDepth: 0);
      *     preg_match('/\bINSERT\b/is', $sql) // => 1
@@ -154,7 +154,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate update statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->updateStatement(maxDepth: 0);
      *     preg_match('/\bUPDATE\b/is', $sql) // => 1
@@ -172,7 +172,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate delete statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->deleteStatement(maxDepth: 0);
      *     preg_match('/\bDELETE\b/is', $sql) // => 1
@@ -190,7 +190,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate create table statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->createTableStatement(maxDepth: 0);
      *     preg_match('/\bCREATE\b.*\bTABLE\b/is', $sql) // => 1
@@ -208,7 +208,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate create table as statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->createTableAsStatement(maxDepth: 0);
      *     preg_match('/\bCREATE\b.*\bTABLE\b.*\bAS\b/is', $sql) // => 1
@@ -226,7 +226,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate create domain statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->createDomainStatement(maxDepth: 0);
      *     preg_match('/\bCREATE\b.*\bDOMAIN\b/is', $sql) // => 1
@@ -246,7 +246,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate alter table statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->alterTableStatement(maxDepth: 0);
      *     preg_match('/\bALTER\b.*\bTABLE\b/is', $sql) // => 1
@@ -264,7 +264,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate drop table statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->dropTableStatement(maxDepth: 0);
      *     preg_match('/\bDROP\b.*\bTABLE\b/is', $sql) // => 1
@@ -282,7 +282,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate simple statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->simpleStatement(maxDepth: 0);
      *     $sql !== '' // => true
@@ -300,7 +300,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate truncate statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->truncateStatement(maxDepth: 0);
      *     preg_match('/\bTRUNCATE\b/is', $sql) // => 1
@@ -318,7 +318,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate copy statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->copyStatement(maxDepth: 0);
      *     preg_match('/\bCOPY\b/is', $sql) // => 1
@@ -336,7 +336,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate create index statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->createIndexStatement(maxDepth: 0);
      *     preg_match('/\bCREATE\b.*\bINDEX\b/is', $sql) // => 1
@@ -354,7 +354,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate transaction statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->transactionStatement(maxDepth: 0);
      *     preg_match('/\b(?:ABORT|BEGIN|COMMIT|ROLLBACK|START|SAVEPOINT|RELEASE|PREPARE)\b/is', $sql) // => 1
@@ -372,7 +372,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate expr at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->expr(maxDepth: 0);
      *     $sql !== '' // => true
@@ -390,7 +390,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate simple expr at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->simpleExpr(maxDepth: 0);
      *     $sql !== '' // => true
@@ -408,7 +408,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate literal at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->literal(maxDepth: 0);
      *     $sql !== '' // => true
@@ -424,7 +424,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example An optional clause can be empty at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $provider->whereClause(maxDepth: 0) // => ''
      */
@@ -441,7 +441,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate sort clause at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->sortClause(maxDepth: 0);
      *     preg_match('/\bORDER\b.*\bBY\b/is', $sql) // => 1
@@ -459,7 +459,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate select limit at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->selectLimit(maxDepth: 0);
      *     preg_match('/\b(?:LIMIT|OFFSET|FETCH)\b/is', $sql) // => 1
@@ -477,7 +477,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate table ref at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->tableRef(maxDepth: 0);
      *     $sql !== '' // => true
@@ -495,7 +495,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate joined table at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->joinedTable(maxDepth: 0);
      *     preg_match('/\bJOIN\b/is', $sql) // => 1
@@ -513,7 +513,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate qualified name at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->qualifiedName(maxDepth: 0);
      *     $sql !== '' // => true
@@ -531,7 +531,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate subquery at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->subquery(maxDepth: 0);
      *     preg_match('/\(.*\bSELECT\b.*\)/is', $sql) // => 1
@@ -549,7 +549,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate with clause at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->withClause(maxDepth: 0);
      *     preg_match('/\bWITH\b.*\bAS\b/is', $sql) // => 1
@@ -567,7 +567,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate foreign key constraint at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->foreignKeyConstraint(maxDepth: 0);
      *     preg_match('/\bCONSTRAINT\b.*\bFOREIGN\b.*\bREFERENCES\b/is', $sql) // => 1
@@ -585,7 +585,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate identifier at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->identifier(maxDepth: 0);
      *     $sql !== '' // => true
@@ -603,7 +603,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->quotedIdentifier(minLength: 4, maxLength: 4);
      *     preg_match('/^"[a-z_][a-z0-9_]{3}"$/', $token) // => 1
@@ -621,7 +621,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->stringLiteral(minLength: 4, maxLength: 4);
      *     preg_match('/^\'[A-Za-z0-9_]{4}\'$/', $token) // => 1
@@ -639,7 +639,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Fix both bounds to obtain one value
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $provider->integerLiteral(min: 42, max: 42) // => '42'
      */
     public function integerLiteral(int $min = 1, int $max = 2147483647): string
@@ -655,7 +655,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->decimalLiteral(precision: 5, scale: 2);
      *     preg_match('/^[0-9]{1,3}\.[0-9]{2}$/', $token) // => 1
@@ -673,7 +673,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->floatLiteral(precision: 5, scale: 2, minExponent: 3, maxExponent: 3);
      *     preg_match('/^[0-9]{1,3}\.[0-9]{2}e3$/', $token) // => 1
@@ -693,7 +693,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->hexLiteral(minLength: 4, maxLength: 4);
      *     preg_match('/^X\'[0-9a-f]{4}\'$/', $token) // => 1
@@ -711,7 +711,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->binaryLiteral(minLength: 4, maxLength: 4);
      *     preg_match('/^B\'[01]{4}\'$/', $token) // => 1
@@ -729,7 +729,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->dollarQuotedString(minLength: 4, maxLength: 4);
      *     preg_match('/^\$\$[A-Za-z0-9_]{4}\$\$$/', $token) // => 1
@@ -747,7 +747,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Fix both bounds to obtain one value
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $provider->parameterMarker(min: 42, max: 42) // => '$42'
      */
     public function parameterMarker(int $min = 1, int $max = 99): string
@@ -762,7 +762,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate insert function upsert statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->insertFunctionUpsertStatement(maxDepth: 0);
      *     preg_match('/\bINSERT\b.*\bCONFLICT\b.*\bUPDATE\b.*\(/is', $sql) // => 1
@@ -781,7 +781,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate partial index upsert statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->partialIndexUpsertStatement(maxDepth: 0);
      *     preg_match('/\bCONFLICT\b.*\bWHERE\b.*\bUPDATE\b/is', $sql) // => 1
@@ -800,7 +800,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate domain dml statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->domainDmlStatement(maxDepth: 0);
      *     preg_match('/\b(?:INSERT|UPDATE|DELETE)\b/is', $sql) // => 1
@@ -822,7 +822,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate full text search statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->fullTextSearchStatement(maxDepth: 0);
      *     preg_match('/\bSELECT\b.*@@/is', $sql) // => 1
@@ -839,7 +839,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate temporary table statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->temporaryTableStatement(maxDepth: 0);
      *     preg_match('/\bCREATE\b.*\bTEMP(?:ORARY)?\b.*\bTABLE\b/is', $sql) // => 1
@@ -858,7 +858,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate view statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->viewStatement(maxDepth: 0);
      *     preg_match('/\bCREATE\b.*\bVIEW\b.*\bAS\b/is', $sql) // => 1
@@ -875,7 +875,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate generated column statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->generatedColumnStatement(maxDepth: 0);
      *     preg_match('/\bGENERATED\b.*\bALWAYS\b.*\bAS\b/is', $sql) // => 1
@@ -892,7 +892,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate foreign key cascade statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->foreignKeyCascadeStatement(maxDepth: 0);
      *     preg_match('/\bREFERENCES\b.*\bCASCADE\b.*\bCASCADE\b/is', $sql) // => 1
@@ -909,7 +909,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate partition of statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->partitionOfStatement(maxDepth: 0);
      *     preg_match('/\bPARTITION\b.*\bOF\b.*\bVALUES\b/is', $sql) // => 1
@@ -926,7 +926,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate table sample statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->tableSampleStatement(maxDepth: 0);
      *     preg_match('/\bTABLESAMPLE\b/is', $sql) // => 1
@@ -943,7 +943,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate do statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->doStatement(maxDepth: 0);
      *     preg_match('/\bDO\b/is', $sql) // => 1
@@ -960,7 +960,7 @@ final class PostgreSqlProvider extends Base
      * @visibility public
      * @example Generate merge statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\PostgreSqlProvider($faker);
+     *     $provider = new \SqlFaker\PostgreSql\PostgreSqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->mergeStatement(maxDepth: 0);
      *     preg_match('/\bMERGE\b.*\bMATCHED\b/is', $sql) // => 1

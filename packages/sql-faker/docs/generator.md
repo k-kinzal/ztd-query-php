@@ -13,14 +13,14 @@ use Faker\Factory;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySql\Grammar\MySqlGrammar;
 use SqlFaker\MySql\StatementType;
-use SqlFaker\Provider\SqlGeneratorFactory;
+use SqlFaker\MySql\Generation\SqlGeneratorFactory;
 
 require 'vendor/autoload.php';
 
 $faker = Factory::create();
 $version = MySqlGrammar::resolveVersion('mysql-8.4.7');
 $grammar = MySqlGrammar::load($version);
-$generator = SqlGeneratorFactory::forMySql($faker, $grammar, $version);
+$generator = SqlGeneratorFactory::create($faker, $grammar, $version);
 $faker->seed(12345);
 ```
 
@@ -136,7 +136,7 @@ Use the version's grammar and the same version tag when creating the generator:
 $mysqlFaker = \Faker\Factory::create();
 $mysqlVersion = \SqlFaker\MySql\Grammar\MySqlGrammar::resolveVersion('mysql-5.7.44');
 $mysqlGrammar = \SqlFaker\MySql\Grammar\MySqlGrammar::load($mysqlVersion);
-$mysqlGenerator = SqlGeneratorFactory::forMySql($mysqlFaker, $mysqlGrammar, $mysqlVersion);
+$mysqlGenerator = SqlGeneratorFactory::create($mysqlFaker, $mysqlGrammar, $mysqlVersion);
 $mysqlFaker->seed(7);
 
 $sql = $mysqlGenerator->generate(
@@ -152,13 +152,13 @@ The MySQL generator resolves common statement-rule aliases across releases. For 
 
 ### Generate with the PostgreSQL grammar
 
-Use `PgGrammar` and `forPostgreSql()` with PostgreSQL's rule names:
+Use `PgGrammar` and its platform `SqlGeneratorFactory::create()` with PostgreSQL's rule names:
 
 ```php
 $pgFaker = \Faker\Factory::create();
 $pgVersion = \SqlFaker\PostgreSql\Grammar\PgGrammar::resolveVersion('pg-17.2');
 $pgGrammar = \SqlFaker\PostgreSql\Grammar\PgGrammar::load($pgVersion);
-$pgGenerator = SqlGeneratorFactory::forPostgreSql($pgFaker, $pgGrammar, $pgVersion);
+$pgGenerator = \SqlFaker\PostgreSql\Generation\SqlGeneratorFactory::create($pgFaker, $pgGrammar, $pgVersion);
 $pgFaker->seed(7);
 
 $sql = $pgGenerator->generate(
@@ -178,13 +178,13 @@ Use `fromRule('stmt')` for a general PostgreSQL statement. `all()` starts at the
 
 ### Generate with the SQLite grammar
 
-Use `SqliteGrammar` and `forSqlite()`. SQLite's preset plans apply `withStepBudget()`, which prefers fewer remaining expansions when the depth threshold is reached:
+Use `SqliteGrammar` and its platform `SqlGeneratorFactory::create()`. SQLite's preset plans apply `withStepBudget()`, which prefers fewer remaining expansions when the depth threshold is reached:
 
 ```php
 $sqliteFaker = \Faker\Factory::create();
 $sqliteVersion = \SqlFaker\Sqlite\Grammar\SqliteGrammar::resolveVersion('sqlite-3.47.2');
 $sqliteGrammar = \SqlFaker\Sqlite\Grammar\SqliteGrammar::load($sqliteVersion);
-$sqliteGenerator = SqlGeneratorFactory::forSqlite($sqliteFaker, $sqliteGrammar, $sqliteVersion);
+$sqliteGenerator = \SqlFaker\Sqlite\Generation\SqlGeneratorFactory::create($sqliteFaker, $sqliteGrammar, $sqliteVersion);
 $sqliteFaker->seed(7);
 
 $sql = $sqliteGenerator->generate(

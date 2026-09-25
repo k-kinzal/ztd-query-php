@@ -24,9 +24,9 @@ use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\Grammar\Model\NonTerminal;
 use SqlFaker\Grammar\Model\Production;
 use SqlFaker\Grammar\Resource\SqlVersion;
-use SqlFaker\MySqlProvider;
-use SqlFaker\PostgreSqlProvider;
-use SqlFaker\SqliteProvider;
+use SqlFaker\MySql\MySqlProvider;
+use SqlFaker\PostgreSql\PostgreSqlProvider;
+use SqlFaker\Sqlite\SqliteProvider;
 
 /**
  * Builds or checks the grammar coverage seed corpora.

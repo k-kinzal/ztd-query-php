@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Provider;
+namespace Tests\Unit\Compatibility;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Compatibility\SqlGeneratorFactory;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\Grammar\Model\Production;
 use SqlFaker\Grammar\Model\ProductionRule;
 use SqlFaker\Grammar\Model\Terminal;
-use SqlFaker\Provider\SqlGeneratorFactory;
 
 #[CoversClass(SqlGeneratorFactory::class)]
 #[UsesClass(\SqlFaker\Generation\SqlGenerator::class)]
@@ -222,6 +222,9 @@ use SqlFaker\Provider\SqlGeneratorFactory;
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\LexicalDefinition::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\LexicalDefinition::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\SqlGeneratorFactory::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\SqlGeneratorFactory::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\SqlGeneratorFactory::class)]
 final class SqlGeneratorFactoryTest extends TestCase
 {
     public function testForMySqlPreservesTheGrammarEntryPointAndBindsLexicalDefinitions(): void
