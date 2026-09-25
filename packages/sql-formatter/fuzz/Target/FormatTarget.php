@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Error;
-use SqlFormatter\FormatOptions;
-use SqlFormatter\Formatter;
-use SqlFormatter\FormattingException;
-use SqlFormatter\Style;
+use SqlFormatter\Core\FormatOptions;
+use SqlFormatter\Core\FormattingException;
+use SqlFormatter\Core\Style;
+use SqlFormatter\Facade\Formatter;
 use SqlParser\Lexer\SourceException;
 use SqlParser\MySql\MySqlParser;
 use SqlParser\PostgreSql\PostgreSqlParser;

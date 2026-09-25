@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-formatter",
-                "reference": "7081e401cdf3833364baf05d4815beb1c6840db6"
+                "reference": "80a6e053138960142be443d8f72b74d994c8a2a0"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -21,10 +21,13 @@
             "require-dev": {
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
+                "ext-pdo_sqlite": "*",
                 "fakerphp/faker": "^1.23",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/container": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -41,6 +44,7 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/",
                     "Bench\\": "bench/"
                 }
             },
@@ -85,6 +89,106 @@
                 ],
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:equivalence:mysql": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/equivalence-mysql') || mkdir('fuzz/corpus/equivalence-mysql', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_equivalence.php fuzz/corpus/equivalence-mysql/ --timeout=60"
+                ],
+                "fuzz:equivalence:mysql:compact": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=compact",
+                    "@fuzz:equivalence:mysql"
+                ],
+                "fuzz:equivalence:mysql:expanded": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=expanded",
+                    "@fuzz:equivalence:mysql"
+                ],
+                "fuzz:equivalence:mysql:river": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=river",
+                    "@fuzz:equivalence:mysql"
+                ],
+                "fuzz:equivalence:mysql:tabular": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=tabular",
+                    "@fuzz:equivalence:mysql"
+                ],
+                "fuzz:equivalence:pg": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/equivalence-pg') || mkdir('fuzz/corpus/equivalence-pg', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_equivalence.php fuzz/corpus/equivalence-pg/ --timeout=60"
+                ],
+                "fuzz:equivalence:pg:compact": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=compact",
+                    "@fuzz:equivalence:pg"
+                ],
+                "fuzz:equivalence:pg:expanded": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=expanded",
+                    "@fuzz:equivalence:pg"
+                ],
+                "fuzz:equivalence:pg:river": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=river",
+                    "@fuzz:equivalence:pg"
+                ],
+                "fuzz:equivalence:pg:tabular": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=tabular",
+                    "@fuzz:equivalence:pg"
+                ],
+                "fuzz:equivalence:sqlite": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/equivalence-sqlite') || mkdir('fuzz/corpus/equivalence-sqlite', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_equivalence.php fuzz/corpus/equivalence-sqlite/ --timeout=60"
+                ],
+                "fuzz:equivalence:sqlite:compact": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=compact",
+                    "@fuzz:equivalence:sqlite"
+                ],
+                "fuzz:equivalence:sqlite:expanded": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=expanded",
+                    "@fuzz:equivalence:sqlite"
+                ],
+                "fuzz:equivalence:sqlite:river": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=river",
+                    "@fuzz:equivalence:sqlite"
+                ],
+                "fuzz:equivalence:sqlite:tabular": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=tabular",
+                    "@fuzz:equivalence:sqlite"
+                ],
+                "fuzz:format:mysql": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/format-mysql') || mkdir('fuzz/corpus/format-mysql', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_format.php fuzz/corpus/format-mysql/"
+                ],
+                "fuzz:format:pg": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/format-pg') || mkdir('fuzz/corpus/format-pg', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_format.php fuzz/corpus/format-pg/"
+                ],
+                "fuzz:format:sqlite": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/format-sqlite') || mkdir('fuzz/corpus/format-sqlite', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_format.php fuzz/corpus/format-sqlite/"
+                ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:format:mysql --max-runs=100",
+                    "@fuzz:format:pg --max-runs=100",
+                    "@fuzz:format:sqlite --max-runs=100",
+                    "@fuzz:equivalence:sqlite --max-runs=100"
                 ],
                 "lint": [
                     "@autoload:check",

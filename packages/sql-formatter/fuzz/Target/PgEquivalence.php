@@ -6,9 +6,9 @@ namespace Fuzz\Target;
 
 use Error;
 use PgSql\Connection;
-use SqlFormatter\Formatter;
-use SqlFormatter\FormattingException;
-use SqlFormatter\Style;
+use SqlFormatter\Core\FormattingException;
+use SqlFormatter\Core\Style;
+use SqlFormatter\Facade\Formatter;
 use SqlParser\Lexer\SourceException;
 
 /**
