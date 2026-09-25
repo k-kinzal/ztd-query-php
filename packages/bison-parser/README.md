@@ -5,7 +5,7 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-Bison Parser reads GNU Bison grammar files (`.y`, `.yy`) into a syntax tree that keeps everything the file says: every declaration, every rule and alternative, actions and predicates as text, type tags, token numbers and aliases, named references, precedence modifiers, and the position of each of them. It reads the language the GNU Bison manual defines, so a file Bison accepts is read as Bison reads it and a file Bison rejects raises an error at the same place. The manual is the specification, and [spec/features](spec/features) states it clause by clause as scenarios that run the parser.
+Bison Parser reads GNU Bison grammar files (`.y`, `.yy`) into a syntax tree that keeps everything the file says, with the position of each part. It reads the language the GNU Bison manual defines, so a file Bison accepts is read as Bison reads it and a file Bison rejects raises an error at the same place. The manual is the specification, and [spec/features](spec/features) states it clause by clause as scenarios that run the parser.
 
 It reads grammars; it does not generate parsers. The tree is for tools that analyse, transform, document or generate from Bison grammars.
 
