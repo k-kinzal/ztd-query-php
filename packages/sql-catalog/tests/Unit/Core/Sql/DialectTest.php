@@ -41,4 +41,18 @@ final class DialectTest extends TestCase
         [$sql] = (new \SqlCatalog\Extension\Laravel\WriteCompiler(new \SqlCatalog\Extension\Laravel\Grammar($policy)))->insert($state, $values, true);
         self::assertSame('insert into "items" ("id") values (?) custom conflict policy', $sql->soleLiteral()?->value);
     }
+
+
+    public function testReturningSuffixComesFromThePolicy(): void
+    {
+        $policy = self::createStub(\SqlCatalog\Core\Sql\Dialect::class);
+        $policy->method('identifierQuote')->willReturn('"');
+        $policy->method('insertPrefix')->willReturn('insert into ');
+        $policy->method('insertSuffix')->willReturn('');
+        $policy->method('returningSuffix')->willReturn(' custom returning ');
+        $state = new \SqlCatalog\Extension\Laravel\QueryState(['table' => \SqlCatalog\Core\Evaluation\Domain::literal('items')]);
+        $values = new \SqlCatalog\Core\Evaluation\ArrayTerm([new \SqlCatalog\Core\Evaluation\ArrayEntry(\SqlCatalog\Core\Evaluation\Domain::literal('id'), \SqlCatalog\Core\Evaluation\Domain::literal(1))]);
+        [$sql] = (new \SqlCatalog\Extension\Laravel\WriteCompiler(new \SqlCatalog\Extension\Laravel\Grammar($policy)))->insertGetId($state, $values, \SqlCatalog\Core\Evaluation\Domain::literal(null));
+        self::assertSame('insert into "items" ("id") values (?) custom returning "id"', $sql->soleLiteral()?->value);
+    }
 }

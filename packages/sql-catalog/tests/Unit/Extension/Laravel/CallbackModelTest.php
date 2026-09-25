@@ -165,4 +165,54 @@ final class CallbackModelTest extends TestCase
         self::assertFalse(QueryState::from($result)->get('problem')->isExact());
         self::assertSame($object, $model->checked(Domain::of($object), $object)->soleObject());
     }
+
+
+    public function testConditionalKeepsBothOutcomesOfWhenAndUnless(): void
+    {
+
+        $budget = new EvaluationBudget();
+        $names = new FreeNames();
+        $modified = new ModifiedNames($names, new ObjectEffects());
+        $effects = new CallbackEffects(new BackwardSlicer(new SourceTree([]), $budget, $names, $modified), new SliceExecutor(modified: $modified, budget: $budget));
+
+        $file = (new SourceParser())->parse('query.php', '<?php $q->when($x, fn ($q, $v) => $q->where("a", $v)); $q->unless($x, function ($q) { $q->where("b", 1); }, fn ($q) => $q->where("c", 2)); $q->when($x, "not a closure");');
+        $calls = array_values(array_filter((new \PhpParser\NodeFinder())->findInstanceOf($file->statements, \PhpParser\Node\Expr\MethodCall::class), static fn (\PhpParser\Node\Expr\MethodCall $node): bool => $node->name instanceof \PhpParser\Node\Identifier && in_array($node->name->toString(), ['when', 'unless'], true)));
+        $index = new ProgramIndex();
+        $model = new CallbackModel($index, $effects, dialects: \SqlCatalog\Facade\Builtins::dialects());
+        $evaluator = (new Interpreter($index, (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->sinks(), modelProviders: [new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects())]))->evaluatorFor([$file]);
+        $object = (new BuilderCalls($index, dialects: \SqlCatalog\Facade\Builtins::dialects()))->allocate(BuilderCalls::QUERY, new QueryState(['dialect' => Domain::literal('sqlite')]));
+        $unknown = [Domain::unknown(), Domain::unknown(), Domain::unknown()];
+        $when = $model->apply($calls[0], $object, 'when', array_slice($unknown, 0, 2), new Environment(), new FunctionScope('query.php'), $evaluator);
+        self::assertNotNull($when);
+        self::assertSame(['"a" = ?', null], array_map(static fn (\SqlCatalog\Core\Evaluation\Term $term): mixed => $term instanceof ObjectTerm ? (QueryState::from($term)->items('where')[0] ?? null)?->soleLiteral()?->value : false, $when->terms));
+        $unless = $model->apply($calls[1], $object, 'unless', $unknown, new Environment(), new FunctionScope('query.php'), $evaluator);
+        self::assertNotNull($unless);
+        self::assertSame(['"b" = ?', '"c" = ?'], array_map(static fn (\SqlCatalog\Core\Evaluation\Term $term): mixed => $term instanceof ObjectTerm ? QueryState::from($term)->items('where')[0]->soleLiteral()?->value : false, $unless->terms));
+        $literal = $model->apply($calls[2], $object, 'when', array_slice($unknown, 0, 2), new Environment(), new FunctionScope('query.php'), $evaluator)?->soleObject();
+        self::assertNotNull($literal);
+        self::assertFalse(QueryState::from($literal)->get('problem')->isExact());
+    }
+
+    public function testClosedRejectsWidenedResultsAndForeignIdentities(): void
+    {
+
+        $budget = new EvaluationBudget();
+        $names = new FreeNames();
+        $modified = new ModifiedNames($names, new ObjectEffects());
+        $effects = new CallbackEffects(new BackwardSlicer(new SourceTree([]), $budget, $names, $modified), new SliceExecutor(modified: $modified, budget: $budget));
+
+        $object = new ObjectTerm(BuilderCalls::QUERY, identity: 'a', state: new ArrayTerm([]));
+        $model = new CallbackModel(new ProgramIndex(), $effects, dialects: \SqlCatalog\Facade\Builtins::dialects());
+        self::assertSame([$object], $model->closed(Domain::of($object), $object, 'lost')->terms);
+        $widened = $model->closed(Domain::fromTerms([$object], true), $object, 'lost')->soleObject();
+        $foreign = $model->closed(Domain::of(new ObjectTerm(BuilderCalls::QUERY, identity: 'b')), $object, 'lost')->soleObject();
+        $lost = $model->closed(Domain::unknown(), $object, 'lost')->soleObject();
+        self::assertSame(['a', 'a', 'a'], [$widened?->identity, $foreign?->identity, $lost?->identity]);
+        self::assertNotNull($widened);
+        self::assertNotNull($foreign);
+        self::assertNotNull($lost);
+        self::assertFalse(QueryState::from($widened)->get('problem')->isExact());
+        self::assertFalse(QueryState::from($foreign)->get('problem')->isExact());
+        self::assertFalse(QueryState::from($lost)->get('problem')->isExact());
+    }
 }

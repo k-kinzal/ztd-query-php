@@ -47,6 +47,7 @@ use SqlCatalog\Extension\Laravel\QueryState;
 #[UsesClass(QueryState::class)]
 #[UsesClass(Grammar::class)]
 #[UsesClass(Clauses::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\SelectCompiler::class)]
 #[UsesClass(Predicates::class)]
 #[UsesClass(ModelMetadata::class)]
 #[UsesClass(ProgramIndex::class)]
@@ -284,5 +285,75 @@ final class BuilderCallsTest extends TestCase
         $result = $calls->execution(Domain::of($object), 'get', [], new Environment())->terms[0];
         self::assertInstanceOf(OpaqueTerm::class, $result);
         self::assertSame('Laravel get', $result->expression);
+    }
+
+
+    public function testBoundedMarksTooManyAlternativesAsOneOpenStateInsteadOfLosingEffects(): void
+    {
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
+        $terms = array_map(static fn (int $i): ObjectTerm => new ObjectTerm(BuilderCalls::QUERY, identity: 'a', state: (new QueryState(['limit' => Domain::literal($i)]))->array()), range(0, BuilderCalls::MAX_ALTERNATIVES));
+        $bounded = $calls->bounded($terms, Domain::unknown());
+        self::assertTrue($bounded->widened);
+        self::assertNotNull($bounded->soleObject());
+        self::assertFalse(QueryState::from($bounded->soleObject())->get('problem')->isExact());
+        $kept = $calls->bounded(array_slice($terms, 0, BuilderCalls::MAX_ALTERNATIVES), Domain::unknown());
+        self::assertCount(BuilderCalls::MAX_ALTERNATIVES, $kept->terms);
+        self::assertFalse($kept->widened);
+        self::assertCount(1, $calls->bounded(array_fill(0, BuilderCalls::MAX_ALTERNATIVES + 1, new LiteralTerm(1)), Domain::unknown())->terms);
+    }
+
+    public function testIsConnectionRecognizesInjectedConnectionContracts(): void
+    {
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
+        self::assertTrue($calls->isConnection('Illuminate\\Database\\ConnectionInterface'));
+        self::assertTrue($calls->isConnection('Illuminate\\Database\\DatabaseManager'));
+        self::assertTrue($calls->isConnection('Illuminate\\Database\\ConnectionResolverInterface'));
+        self::assertFalse($calls->isConnection('Illuminate\\Support\\Collection'));
+    }
+
+    public function testConnectionCallAliasesTheTableAndKeepsUnknownTablesOpen(): void
+    {
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
+        $state = new QueryState(['dialect' => Domain::literal('sqlite')]);
+        $aliased = $calls->connectionCall('table', [Domain::literal('users'), Domain::literal('u')], $state, new Environment())?->soleObject();
+        self::assertNotNull($aliased);
+        self::assertSame('users as u', QueryState::from($aliased)->get('table')->soleLiteral()?->value);
+        $sub = $calls->connectionCall('table', [Domain::of(new ObjectTerm(BuilderCalls::QUERY))], $state, new Environment())?->soleObject();
+        self::assertNotNull($sub);
+        self::assertFalse(QueryState::from($sub)->get('problem')->isExact());
+    }
+
+    public function testMutateTreatsIdentityCallsAndEagerLoadsWithoutOpeningTheQuery(): void
+    {
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
+        $env = new Environment();
+        $query = $calls->allocate(BuilderCalls::QUERY, new QueryState(['dialect' => Domain::literal('sqlite'), 'model' => Domain::literal('User'), 'softDeletes' => Domain::literal(true)]));
+        $identities = array_map(static fn (string $method): array => QueryState::from($calls->mutate($query, $method, [], $env)->soleObject() ?? $query)->fields, ['tobase', 'newquery', 'getquery']);
+        self::assertSame([$query->state?->named(), $query->state?->named(), $query->state?->named()], $identities);
+        $eager = $calls->mutate($query, 'with', [Domain::literal('posts')], $env)->soleObject();
+        self::assertNotNull($eager);
+        self::assertTrue(QueryState::from($eager)->get('eager')->soleLiteral()?->value);
+        $plain = $calls->mutate($calls->allocate(BuilderCalls::QUERY, new QueryState(['dialect' => Domain::literal('sqlite')])), 'with', [Domain::literal('posts')], $env)->soleObject();
+        self::assertNotNull($plain);
+        self::assertFalse(QueryState::from($plain)->get('problem')->isExact());
+        $restored = $calls->mutate($calls->mutate($query, 'onlytrashed', [], $env)->soleObject() ?? $query, 'withouttrashed', [], $env)->soleObject();
+        self::assertNotNull($restored);
+        self::assertNull(QueryState::from($restored)->string('trashed'));
+    }
+
+    public function testExecutionRetainsTheWindowOfSingleRowReadsAndTheirReturnTypes(): void
+    {
+        $calls = new BuilderCalls(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
+        $env = new Environment();
+        $query = $calls->allocate(BuilderCalls::QUERY, new QueryState(['dialect' => Domain::literal('sqlite'), 'key' => Domain::literal('id')]));
+        $env->objects()->remember($query);
+        self::assertSame('mixed', $calls->execution(Domain::of($query), 'value', [Domain::literal('email')], $env)->type()->display());
+        self::assertSame(1, QueryState::from($env->objects()->read(Domain::of($query))->soleObject() ?? $query)->get('limit')->soleLiteral()?->value);
+        $calls->execution(Domain::of($query), 'sole', [], $env);
+        self::assertSame(2, QueryState::from($env->objects()->read(Domain::of($query))->soleObject() ?? $query)->get('limit')->soleLiteral()->value);
+        self::assertSame('stdClass', $calls->execution(Domain::of($query), 'findorfail', [QueryState::list([Domain::literal(1)])], $env)->type()->display());
+        self::assertSame('"id" in (?)', QueryState::from($env->objects()->read(Domain::of($query))->soleObject() ?? $query)->items('where')[0]->soleLiteral()?->value);
+        self::assertSame('Illuminate\\Pagination\\LengthAwarePaginator', $calls->execution(Domain::of($query), 'paginate', [], $env)->type()->display());
+        self::assertArrayNotHasKey('problem', QueryState::from($env->objects()->read(Domain::of($query))->soleObject() ?? $query)->fields);
     }
 }

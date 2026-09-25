@@ -67,7 +67,10 @@ final class PredicatesTest extends TestCase
         $null = $p->basic(new QueryState(), [Domain::literal('id'), Domain::literal('!='), Domain::literal(null)], 'and');
         self::assertSame('"id" is not null', $null->items('where')[0]->soleLiteral()?->value);
         self::assertSame([], $null->items('whereBindings'));
-        self::assertFalse($p->basic(new QueryState(), [Domain::literal('id'), Domain::unknown()], 'and')->get('problem')->isExact());
+        $open = $p->basic(new QueryState(), [Domain::literal('id'), Domain::unknown()], 'and');
+        self::assertSame('"id" = ?', $open->items('where')[0]->soleLiteral()?->value);
+        self::assertFalse($open->items('whereBindings')[0]->isExact());
+        self::assertArrayNotHasKey('problem', $open->fields);
         self::assertFalse($p->basic(new QueryState(), [], 'and')->get('problem')->isExact());
         self::assertFalse($p->basic(new QueryState(), [Domain::literal('id'), Domain::literal('bad'), Domain::literal(1)], 'and')->get('problem')->isExact());
     }
@@ -90,7 +93,12 @@ final class PredicatesTest extends TestCase
         $state = $p->in(new QueryState(), [Domain::literal('id'), QueryState::list([Domain::literal(2), Domain::literal(1)])], 'and', true);
         self::assertSame('"id" not in (?, ?)', $state->items('where')[0]->soleLiteral()?->value);
         self::assertSame(2, $state->items('whereBindings')[0]->soleLiteral()?->value);
-        self::assertFalse($p->in(new QueryState(), [Domain::literal('id'), Domain::unknown()], 'and', false)->get('problem')->isExact());
+        $open = $p->in(new QueryState(), [Domain::literal('id'), Domain::unknown()], 'and', false);
+        self::assertArrayNotHasKey('problem', $open->fields);
+        self::assertFalse($open->items('where')[0]->isExact());
+        self::assertSame('"id" in ({$})', $open->items('where')[0]->patterns()[0]->display());
+        self::assertSame([], $open->items('whereBindings'));
+        self::assertFalse($p->in(new QueryState(), [Domain::literal('id')], 'and', false)->get('problem')->isExact());
     }
 
     public function testBetweenKeepsBothBoundsInOrder(): void
@@ -118,7 +126,11 @@ final class PredicatesTest extends TestCase
         $state = $p->raw(new QueryState(), [Domain::literal('id > ?'), QueryState::list([Domain::literal(2)])], 'and');
         self::assertSame('id > ?', $state->items('where')[0]->soleLiteral()?->value);
         self::assertSame(2, $state->items('whereBindings')[0]->soleLiteral()?->value);
-        self::assertFalse($p->raw(new QueryState(), [Domain::literal('x'), Domain::of(new ArrayTerm([], false))], 'and')->get('problem')->isExact());
+        $counted = $p->raw(new QueryState(), [Domain::literal('a = ? and b = ?'), Domain::of(new ArrayTerm([], false))], 'and');
+        self::assertArrayNotHasKey('problem', $counted->fields);
+        self::assertCount(2, $counted->items('whereBindings'));
+        self::assertFalse($p->raw(new QueryState(), [Domain::unknown(), Domain::of(new ArrayTerm([], false))], 'and')->get('problem')->isExact());
+        self::assertFalse($p->raw(new QueryState(), [], 'and')->get('problem')->isExact());
     }
 
     public function testInPreservesValuesFromAssociativeArraysAndRejectsNestedArrays(): void
@@ -177,5 +189,42 @@ final class PredicatesTest extends TestCase
             yield [$method, $args, 'and "id"'.$suffix, $count];
             yield ['or'.$method, $args, 'or "id"'.$suffix, $count];
         }
+    }
+
+
+    public function testBasicCompilesUnresolvedAndNullableValuesAsPlaceholders(): void
+    {
+        $p = new Predicates(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('mysql')));
+        $nullable = Domain::opaque(TypeShape::of(['int', 'null']), \SqlCatalog\Core\Text\Origin::Parameter, '$id');
+        $state = $p->basic(new QueryState(), [Domain::literal('id'), $nullable], 'and');
+        self::assertSame('`id` = ?', $state->items('where')[0]->soleLiteral()?->value);
+        self::assertSame('int|null', $state->items('whereBindings')[0]->type()->display());
+        $or = $p->basic($state, [Domain::literal('a'), Domain::literal('>'), Domain::literal(1), Domain::literal('OR')], 'and');
+        self::assertSame('or `a` > ?', $or->items('where')[1]->soleLiteral()?->value);
+        self::assertFalse($p->basic($state, [Domain::literal('a'), Domain::literal('>'), Domain::literal(1), Domain::unknown()], 'and')->get('problem')->isExact());
+        self::assertFalse($p->basic(new QueryState(), [Domain::literal('id'), QueryState::list([Domain::literal(1)])], 'and')->get('problem')->isExact());
+    }
+
+    public function testGroupNestsArrayEntriesInParenthesesWithTheOuterBoolean(): void
+    {
+        $p = new Predicates(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
+        $entries = new ArrayTerm([new ArrayEntry(Domain::literal('a'), Domain::literal(1)), new ArrayEntry(Domain::literal('b'), Domain::literal(null)), new ArrayEntry(null, QueryState::list([Domain::literal('c'), Domain::literal('>'), Domain::literal(2)]))]);
+        $state = $p->basic(new QueryState(), [Domain::literal('x'), Domain::literal(0)], 'and');
+        $state = $p->group($state, $entries, 'or');
+        self::assertSame('or ("a" = ? or "b" is null and "c" > ?)', $state->items('where')[1]->soleLiteral()?->value);
+        self::assertSame([0, 1, 2], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $state->items('whereBindings')));
+        self::assertSame($state, $p->group($state, new ArrayTerm([]), 'and'));
+        self::assertFalse($p->group(new QueryState(), new ArrayTerm([], false), 'and')->get('problem')->isExact());
+        self::assertFalse($p->group(new QueryState(), new ArrayTerm([new ArrayEntry(Domain::literal('a'), QueryState::list([]))]), 'and')->get('problem')->isExact());
+    }
+
+    public function testEntryReadsKeyedComparisonsAndPositionalArgumentLists(): void
+    {
+        $p = new Predicates(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
+        self::assertSame('"a" = ?', $p->entry(new QueryState(), new ArrayEntry(Domain::literal('a'), Domain::literal(1)), 'and')->items('where')[0]->soleLiteral()?->value);
+        self::assertSame('"a" < ?', $p->entry(new QueryState(), new ArrayEntry(Domain::literal(0), QueryState::list([Domain::literal('a'), Domain::literal('<'), Domain::literal(1)])), 'and')->items('where')[0]->soleLiteral()?->value);
+        self::assertFalse($p->entry(new QueryState(), new ArrayEntry(null, Domain::literal('a')), 'and')->get('problem')->isExact());
+        self::assertFalse($p->entry(new QueryState(), new ArrayEntry(null, Domain::of(new ArrayTerm([], false))), 'and')->get('problem')->isExact());
+        self::assertFalse($p->entry(new QueryState(), new ArrayEntry(Domain::unknown(), Domain::literal(1)), 'and')->get('problem')->isExact());
     }
 }

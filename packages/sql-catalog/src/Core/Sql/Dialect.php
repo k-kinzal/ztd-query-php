@@ -25,4 +25,9 @@ interface Dialect
      * The trailing conflict clause, if any.
      */
     public function insertSuffix(bool $ignore): string;
+
+    /**
+     * The clause introducing the generated key an insert returns, or empty when the driver reads it afterwards.
+     */
+    public function returningSuffix(): string;
 }

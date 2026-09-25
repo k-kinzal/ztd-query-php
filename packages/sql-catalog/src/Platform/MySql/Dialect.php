@@ -36,4 +36,12 @@ final class Dialect implements Contract
     {
         return '';
     }
+
+    /**
+     * The generated key clause of an insert.
+     */
+    public function returningSuffix(): string
+    {
+        return '';
+    }
 }

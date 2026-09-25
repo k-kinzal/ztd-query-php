@@ -25,4 +25,9 @@ final class DialectTest extends TestCase
         self::assertSame('', (new \SqlCatalog\Platform\Sqlite\Dialect())->insertSuffix(false));
         self::assertSame('', (new \SqlCatalog\Platform\Sqlite\Dialect())->insertSuffix(true));
     }
+
+    public function testReturningSuffixNamesHowTheGeneratedKeyIsRead(): void
+    {
+        self::assertSame('', (new \SqlCatalog\Platform\Sqlite\Dialect())->returningSuffix());
+    }
 }

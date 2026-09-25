@@ -110,7 +110,8 @@ final class LaravelExtensionTest extends TestCase
     public function testBuilderMethodsDeclareReadsWritesAndCompoundExecutions(): void
     {
         $methods = (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->builderMethods();
-        self::assertCount(36, $methods);
+        self::assertCount(37, $methods);
+        self::assertSame(StatementKind::Select, $methods['sole']);
         self::assertSame(StatementKind::Select, $methods['get']);
         self::assertSame(StatementKind::Insert, $methods['insert']);
         self::assertSame(StatementKind::Update, $methods['update']);

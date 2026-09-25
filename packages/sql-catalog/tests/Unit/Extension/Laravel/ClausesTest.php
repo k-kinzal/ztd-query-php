@@ -65,8 +65,10 @@ final class ClausesTest extends TestCase
         $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         $id = Domain::literal('id');
         self::assertSame([$id], $c->columns([QueryState::list([$id])]));
-        self::assertNull($c->columns([Domain::of(new ArrayTerm([], false))]));
+        $partial = Domain::of(new ArrayTerm([], false));
+        self::assertSame([$partial], $c->columns([$partial]));
         self::assertNull($c->columns([Domain::of(new ArrayTerm([new ArrayEntry(Domain::literal('alias'), $id)]))]));
+        self::assertSame([$id, $id], $c->columns([$id, $id]));
     }
 
     public function testRawKeepsBindingsInTheirComponent(): void
@@ -84,21 +86,37 @@ final class ClausesTest extends TestCase
         self::assertSame('`id` desc', $c->order(new QueryState(), [Domain::literal('id')], true)->items('orders')[0]->soleLiteral()?->value);
         self::assertSame('`id` asc', $c->order(new QueryState(), [Domain::literal('id'), Domain::literal('ASC')], false)->items('orders')[0]->soleLiteral()?->value);
         self::assertFalse($c->order(new QueryState(), [Domain::literal('id'), Domain::literal('random')], false)->get('problem')->isExact());
+        $open = $c->order(new QueryState(), [Domain::literal('id'), Domain::unknown()], false);
+        self::assertArrayNotHasKey('problem', $open->fields);
+        self::assertFalse($open->items('orders')[0]->isExact());
+        self::assertFalse($c->order(new QueryState(), [Domain::literal('id'), QueryState::list([])], false)->get('problem')->isExact());
+        self::assertFalse($c->order(new QueryState(), [], false)->get('problem')->isExact());
     }
 
     public function testGroupAppendsIdentifiersAndRetainsUnknownColumns(): void
     {
         $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         self::assertSame('"team"', $c->group(new QueryState(), [Domain::literal('team')])->items('groups')[0]->soleLiteral()?->value);
-        self::assertFalse($c->group(new QueryState(), [Domain::of(new ArrayTerm([], false))])->get('problem')->isExact());
+        $open = $c->group(new QueryState(), [Domain::of(new ArrayTerm([], false))]);
+        self::assertArrayNotHasKey('problem', $open->fields);
+        self::assertFalse($open->items('groups')[0]->isExact());
+        self::assertFalse($c->group(new QueryState(), [Domain::of(new ArrayTerm([new ArrayEntry(Domain::literal('alias'), Domain::literal('id'))]))])->get('problem')->isExact());
     }
 
-    public function testNumberRejectsUnknownAndNegativeLimits(): void
+    public function testNumberKeepsUnknownLimitsOpenAndIgnoresNegativeOnes(): void
     {
         $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         self::assertSame(0, $c->number(new QueryState(), [Domain::literal(0)], 'limit')->get('limit')->soleLiteral()?->value);
-        self::assertFalse($c->number(new QueryState(), [Domain::literal(-1)], 'limit')->get('problem')->isExact());
-        self::assertFalse($c->number(new QueryState(), [Domain::unknown()], 'limit')->get('problem')->isExact());
+        self::assertSame(10, $c->number(new QueryState(), [Domain::literal('10')], 'limit')->get('limit')->soleLiteral()?->value);
+        $kept = $c->number(new QueryState(['limit' => Domain::literal(5)]), [Domain::literal(-1)], 'limit');
+        self::assertSame(5, $kept->get('limit')->soleLiteral()?->value);
+        self::assertNull($c->number($kept, [Domain::literal(null)], 'limit')->get('limit')->soleLiteral()?->value);
+        $open = $c->number(new QueryState(), [Domain::unknown()], 'limit');
+        self::assertArrayNotHasKey('problem', $open->fields);
+        self::assertFalse($open->get('limit')->isExact());
+        self::assertFalse($c->number(new QueryState(), [Domain::literal('ten')], 'limit')->get('problem')->isExact());
+        self::assertFalse($c->number(new QueryState(), [QueryState::list([])], 'limit')->get('problem')->isExact());
+        self::assertFalse($c->number(new QueryState(), [], 'limit')->get('problem')->isExact());
     }
 
     public function testJoinQuotesBothColumnOperandsWithoutBindings(): void
@@ -136,6 +154,12 @@ final class ClausesTest extends TestCase
         yield ['orderbyraw', ['id desc'], 'orders', 'id desc'];
         yield ['groupby', ['id'], 'groups', '"id"'];
         yield ['havingraw', ['count(*) > 0'], 'having', 'count(*) > 0'];
+        yield ['orhavingraw', ['count(*) > 0'], 'having', 'count(*) > 0'];
+        yield ['having', ['total', '>', 1], 'having', '"total" > ?'];
+        yield ['orhaving', ['total', 1], 'having', '"total" = ?'];
+        yield ['latest', [], 'orders', '"created_at" desc'];
+        yield ['oldest', ['id'], 'orders', '"id" asc'];
+        yield ['from', ['posts'], 'table', 'posts'];
         yield ['limit', [0], 'limit', 0];
         yield ['take', [2], 'limit', 2];
         yield ['offset', [0], 'offset', 0];
@@ -143,5 +167,29 @@ final class ClausesTest extends TestCase
         yield ['join', ['p', 'p.id', '=', 'u.id'], 'joins', 'inner join "p" on "p"."id" = "u"."id"'];
         yield ['leftjoin', ['p', 'p.id', '=', 'u.id'], 'joins', 'left join "p" on "p"."id" = "u"."id"'];
         yield ['rightjoin', ['p', 'p.id', '=', 'u.id'], 'joins', 'right join "p" on "p"."id" = "u"."id"'];
+    }
+
+
+    public function testFromSetsTheTableWithAnOptionalAlias(): void
+    {
+        $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
+        self::assertSame('posts', $c->from(new QueryState(), [Domain::literal('posts')])->get('table')->soleLiteral()?->value);
+        self::assertSame('posts as p', $c->from(new QueryState(), [Domain::literal('posts'), Domain::literal('p')])->get('table')->soleLiteral()?->value);
+        self::assertSame('posts', $c->from(new QueryState(), [Domain::literal('posts'), Domain::literal(null)])->get('table')->soleLiteral()?->value);
+        self::assertFalse($c->from(new QueryState(), [Domain::literal('posts'), Domain::unknown()])->get('table')->isExact());
+        self::assertFalse($c->from(new QueryState(), [])->get('problem')->isExact());
+        self::assertFalse($c->from(new QueryState(), [Domain::of(new ObjectTerm('Builder'))])->get('problem')->isExact());
+        self::assertFalse($c->apply(new QueryState(), 'latest', [Domain::literal('a'), Domain::literal('b')])?->get('problem')->isExact());
+    }
+
+    public function testHavingCompilesComparisonsWithTheirBooleans(): void
+    {
+        $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('mysql')));
+        $state = $c->having(new QueryState(), [Domain::literal('total'), Domain::literal('>'), Domain::literal(100)], 'and');
+        $state = $c->having($state, [Domain::literal('count'), Domain::literal(null)], 'or');
+        self::assertSame(['`total` > ?', 'or `count` is null'], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $state->items('having')));
+        self::assertSame([100], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $state->items('havingBindings')));
+        self::assertFalse($c->having(new QueryState(), [], 'and')->get('problem')->isExact());
+        self::assertFalse($c->having(new QueryState(), [QueryState::list([Domain::literal(1), Domain::literal(2)])], 'and')->get('problem')->isExact());
     }
 }

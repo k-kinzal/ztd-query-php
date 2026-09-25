@@ -175,4 +175,42 @@ final class BuilderQueriesTest extends TestCase
         self::assertSame([], $queries->inputs(new \PhpParser\Node\Expr\FuncCall(new \PhpParser\Node\Name('other'))));
     }
 
+
+    public function testOutputsListsEveryStatementAPaginatedOrEagerReadIssues(): void
+    {
+        $queries = new BuilderQueries(new ProgramIndex(), \SqlCatalog\Facade\Builtins::dialects());
+        $state = new QueryState(['dialect' => Domain::literal('sqlite'), 'table' => Domain::literal('users'), 'where' => QueryState::list([Domain::literal('"a" = ?')]), 'whereBindings' => QueryState::list([Domain::literal(1)])]);
+        $outputs = $queries->outputs($state, 'paginate', [Domain::literal(10)]);
+        self::assertCount(2, $outputs);
+        self::assertSame('select count(*) as "aggregate" from "users" where "a" = ?', $outputs[0][0]->soleLiteral()?->value);
+        self::assertSame('select * from "users" where "a" = ? limit 10 offset {$}', $outputs[1][0]->patterns()[0]->display());
+        $eager = $queries->outputs($state->with('eager', Domain::literal(true)), 'get', []);
+        self::assertCount(2, $eager);
+        self::assertSame('select * from "users" where "a" = ?', $eager[0][0]->soleLiteral()?->value);
+        self::assertFalse($eager[1][0]->isExact());
+        self::assertCount(1, $queries->outputs($state->with('eager', Domain::literal(true)), 'delete', []));
+        $problem = $queries->outputs($state->reject('macro'), 'paginate', []);
+        self::assertCount(1, $problem);
+        self::assertFalse($problem[0][0]->isExact());
+    }
+
+    public function testPrepareAppliesScopesAndMarksUnmodelledWrites(): void
+    {
+        $queries = new BuilderQueries(new ProgramIndex(), \SqlCatalog\Facade\Builtins::dialects());
+        $state = new QueryState(['dialect' => Domain::literal('sqlite'), 'table' => Domain::literal('users'), 'softDeletes' => Domain::literal(true), 'deletedColumn' => Domain::literal('deleted_at'), 'timestamps' => Domain::literal(true)]);
+        self::assertSame('"users"."deleted_at" is null', $queries->prepare($state, 'get')->items('where')[0]->soleLiteral()?->value);
+        self::assertArrayNotHasKey('problem', $queries->prepare($state, 'get')->fields);
+        self::assertFalse($queries->prepare($state, 'increment')->get('problem')->isExact());
+        self::assertFalse($queries->prepare($state, 'delete')->get('problem')->isExact());
+        self::assertFalse($queries->prepare(new QueryState(['table' => Domain::literal('users')]), 'get')->get('problem')->isExact());
+    }
+
+    public function testDispatchRoutesReadsAndWritesToTheirCompilers(): void
+    {
+        $queries = new BuilderQueries(new ProgramIndex(), \SqlCatalog\Facade\Builtins::dialects());
+        $grammar = new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite'));
+        $state = new QueryState(['dialect' => Domain::literal('sqlite'), 'table' => Domain::literal('users')]);
+        self::assertSame('select * from "users"', $queries->dispatch($state, 'cursor', [], $grammar)[0]->soleLiteral()?->value);
+        self::assertSame('delete from "users"', $queries->dispatch($state, 'delete', [], $grammar)[0]->soleLiteral()?->value);
+    }
 }

@@ -25,4 +25,9 @@ final class DialectTest extends TestCase
         self::assertSame('', (new \SqlCatalog\Platform\MySql\Dialect())->insertSuffix(false));
         self::assertSame('', (new \SqlCatalog\Platform\MySql\Dialect())->insertSuffix(true));
     }
+
+    public function testReturningSuffixNamesHowTheGeneratedKeyIsRead(): void
+    {
+        self::assertSame('', (new \SqlCatalog\Platform\MySql\Dialect())->returningSuffix());
+    }
 }
