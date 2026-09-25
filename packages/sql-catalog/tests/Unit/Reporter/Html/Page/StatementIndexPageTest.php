@@ -151,147 +151,146 @@ final class StatementIndexPageTest extends TestCase
                 . 'pan><button type="button" class="btn facet-clear" hidden>Clear</button></div><div class="active-filters" hidden></div><ol class="rows"><li c'
                 . 'lass="row" data-kind="select" data-resolution="incomplete" data-severity="low" data-rule="analysis-incomplete" data-sink="mysqli.query" data'
                 . '-open="open" data-table="" data-namespace="" data-class="" data-function="helper" data-file="lib/c.php"><a class="row-main" href="statements'
-                . '/c1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="hole tone-warn" title="This is a gap: a dependency t'
-                . 'he analyzer stopped following fills it.">{$}</span></span></a><p class="row-meta"><a href="files/lib-c-php.html">lib/c.php:2</a><a href="fil'
-                . 'es/lib-c-php.html#fn-helper">helper</a><span class="chip chip-ghost" title="A cycle or an analysis budget stopped the search before it close'
-                . 'd.">incomplete</span></p></li><li class="row" data-kind="unknown" data-resolution="not-analyzed" data-severity="low" data-rule="call-not-ana'
-                . 'lyzed" data-sink="unmatched" data-open="open" data-table="" data-namespace="" data-class="" data-function="{main}" data-file="lib/c.php"><a '
-                . 'class="row-main" href="statements/c2.html"><span class="chip tone-slate">UNKNOWN</span><span class="row-body"><span class="tok-com">no state'
-                . 'ment was read from this call</span> $db-&gt;query($sql)</span></a><p class="row-meta"><a href="files/lib-c-php.html">lib/c.php:6</a><span cl'
-                . 'ass="chip tone-neutral" title="The call was found but never examined, so nothing was read from it.">not-analyzed</span></p></li><li class="r'
-                . 'ow" data-kind="select" data-resolution="external-input" data-severity="high" data-rule="external-input" data-sink="pdo.query" data-open="" d'
-                . 'ata-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/a.php"><a class="row-main" href="statem'
-                . 'ents/a1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
+                . '/c1.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="hole tone-warn" title="This is a gap: a dependency the an'
+                . 'alyzer stopped following fills it.">{$}</span></pre></a><p class="row-meta"><a href="files/lib-c-php.html">lib/c.php:2</a><a href="files/lib'
+                . '-c-php.html#fn-helper">helper</a><span class="chip chip-ghost" title="A cycle or an analysis budget stopped the search before it closed.">in'
+                . 'complete</span></p></li><li class="row" data-kind="unknown" data-resolution="not-analyzed" data-severity="low" data-rule="call-not-analyzed"'
+                . ' data-sink="unmatched" data-open="open" data-table="" data-namespace="" data-class="" data-function="{main}" data-file="lib/c.php"><a class='
+                . '"row-main" href="statements/c2.html"><span class="chip tone-slate">UNKNOWN</span><pre class="code"><span class="tok-com">no statement was re'
+                . 'ad from this call</span> $db-&gt;query($sql)</pre></a><p class="row-meta"><a href="files/lib-c-php.html">lib/c.php:6</a><span class="chip to'
+                . 'ne-neutral" title="The call was found but never examined, so nothing was read from it.">not-analyzed</span></p></li><li class="row" data-kin'
+                . 'd="select" data-resolution="external-input" data-severity="high" data-rule="external-input" data-sink="pdo.query" data-open="" data-table="p'
+                . 'osts" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/a.php"><a class="row-main" href="statements/a1.html'
+                . '"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
     id
-<span class="tok-kw'
-                . '">FROM</span>
-    posts
+<span class="tok-kw">FROM</span>
+   '
+                . ' posts
 <span class="tok-kw">WHERE</span>
-    slug = <span class="hole tone-danger" title="This is a gap: external input fil'
-                . 'ls it. Written as $_GET[&quot;s&quot;].">{$}</span></span></a><p class="row-meta"><a href="files/src-a-php.html">src/a.php:4</a><a href="cla'
-                . 'sses/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="tables/posts.html">posts</a><span class="chip tone-danger" title='
-                . '"The values were followed to runtime input, so the text cannot be fixed.">external-input</span><span class="chip tone-danger" title="The mos'
-                . 't serious finding on this statement">high</span></p></li><li class="row" data-kind="insert" data-resolution="resolved" data-severity="" data'
-                . '-rule="" data-sink="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-file='
-                . '"src/a.php"><a class="row-main" href="statements/a2.html"><span class="chip tone-teal">INSERT</span><span class="row-body"><span class="tok-'
-                . 'kw">INSERT</span> <span class="tok-kw">INTO</span>
+    slug = <span class="hole tone-danger" title="This is a gap: external input fills it. Written as'
+                . ' $_GET[&quot;s&quot;].">{$}</span></pre></a><p class="row-meta"><a href="files/src-a-php.html">src/a.php:4</a><a href="classes/app-r.html#fn'
+                . '-app-r-find">R::find</a><a class="chip chip-ghost" href="tables/posts.html">posts</a><span class="chip tone-danger" title="The values were f'
+                . 'ollowed to runtime input, so the text cannot be fixed.">external-input</span><span class="chip tone-danger" title="The most serious finding '
+                . 'on this statement">high</span></p></li><li class="row" data-kind="insert" data-resolution="resolved" data-severity="" data-rule="" data-sink'
+                . '="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-file="src/a.php"><a cla'
+                . 'ss="row-main" href="statements/a2.html"><span class="chip tone-teal">INSERT</span><pre class="code"><span class="tok-kw">INSERT</span> <span'
+                . ' class="tok-kw">INTO</span>
     posts (id)
 <span class="tok-kw">VALUES</span>
-    (<span class="tok-num">1</span>)</s'
-                . 'pan></a><p class="row-meta"><a href="files/src-a-php.html">src/a.php:9</a><a href="classes/app-r.html#fn-app-r-add">R::add</a><a class="chip'
-                . ' chip-ghost" href="tables/posts.html">posts</a></p></li><li class="row" data-kind="update" data-resolution="resolved" data-severity="medium"'
-                . ' data-rule="placeholder-count-mismatch" data-sink="pdo.prepare" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data'
-                . '-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="statements/a3.html"><span class="chip tone-violet">UPDATE</span><span'
-                . ' class="row-body"><span class="tok-kw">UPDATE</span>
+    (<span class="tok-num">1</span>)</pre></a><p class="row-me'
+                . 'ta"><a href="files/src-a-php.html">src/a.php:9</a><a href="classes/app-r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="table'
+                . 's/posts.html">posts</a></p></li><li class="row" data-kind="update" data-resolution="resolved" data-severity="medium" data-rule="placeholder-'
+                . 'count-mismatch" data-sink="pdo.prepare" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" d'
+                . 'ata-file="src/a.php"><a class="row-main" href="statements/a3.html"><span class="chip tone-violet">UPDATE</span><pre class="code"><span class'
+                . '="tok-kw">UPDATE</span>
     posts
 <span class="tok-kw">SET</span>
     title = <span class="tok-var">?</span>
-<s'
-                . 'pan class="tok-kw">WHERE</span>
-    id = <span class="tok-var">?</span></span></a><p class="row-meta"><a href="files/src-a-php.html">src/a.p'
-                . 'hp:14</a><a href="classes/app-r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="tables/posts.html">posts</a><span class="chip '
-                . 'tone-warn" title="The most serious finding on this statement">medium</span></p></li><li class="row" data-kind="delete" data-resolution="reso'
-                . 'lved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="users" data-namespace="App\\Admin" data-class="App\\Admin\\U'
-                . '" data-function="App\\Admin\\U::drop" data-file="src/b.php"><a class="row-main" href="statements/b1.html"><span class="chip tone-pink">DELETE<'
-                . '/span><span class="row-body"><span class="tok-kw">DELETE</span> <span class="tok-kw">FROM</span>
+<span class="tok-kw">WHERE</spa'
+                . 'n>
+    id = <span class="tok-var">?</span></pre></a><p class="row-meta"><a href="files/src-a-php.html">src/a.php:14</a><a href="classes/app-'
+                . 'r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="tables/posts.html">posts</a><span class="chip tone-warn" title="The most ser'
+                . 'ious finding on this statement">medium</span></p></li><li class="row" data-kind="delete" data-resolution="resolved" data-severity="" data-ru'
+                . 'le="" data-sink="pdo.query" data-open="" data-table="users" data-namespace="App\\Admin" data-class="App\\Admin\\U" data-function="App\\Admin\\U::'
+                . 'drop" data-file="src/b.php"><a class="row-main" href="statements/b1.html"><span class="chip tone-pink">DELETE</span><pre class="code"><span '
+                . 'class="tok-kw">DELETE</span> <span class="tok-kw">FROM</span>
     users
-<span class="tok-kw">WHERE</span>'
-                . '
-    id = <span class="tok-num">1</span></span></a><p class="row-meta"><a href="files/src-b-php.html">src/b.php:3</a><a href="classes/app-ad'
-                . 'min-u.html#fn-app-admin-u-drop">U::drop</a><a class="chip chip-ghost" href="tables/users.html">users</a></p></li><li class="row" data-kind="'
-                . 'alter" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.exec" data-open="" data-table="users" data-namespace="App\\Adm'
-                . 'in" data-class="App\\Admin\\U" data-function="App\\Admin\\U::migrate" data-file="src/b.php"><a class="row-main" href="statements/b2.html"><span '
-                . 'class="chip tone-indigo">ALTER</span><span class="row-body"><span class="tok-kw">ALTER</span> <span class="tok-kw">TABLE</span> users <span '
-                . 'class="tok-kw">ADD</span> x INT</span></a><p class="row-meta"><a href="files/src-b-php.html">src/b.php:8</a><a href="classes/app-admin-u.htm'
-                . 'l#fn-app-admin-u-migrate">U::migrate</a><a class="chip chip-ghost" href="tables/users.html">users</a></p></li><li class="row" data-kind="sel'
-                . 'ect" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-open="" data-table="posts users" d'
-                . 'ata-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/d.php"><a class="row-main" href="statements/d1.html"><span'
-                . ' class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
+<span class="tok-kw">WHERE</span>
+    id = <span class="tok-num">1</'
+                . 'span></pre></a><p class="row-meta"><a href="files/src-b-php.html">src/b.php:3</a><a href="classes/app-admin-u.html#fn-app-admin-u-drop">U::d'
+                . 'rop</a><a class="chip chip-ghost" href="tables/users.html">users</a></p></li><li class="row" data-kind="alter" data-resolution="resolved" da'
+                . 'ta-severity="" data-rule="" data-sink="pdo.exec" data-open="" data-table="users" data-namespace="App\\Admin" data-class="App\\Admin\\U" data-fu'
+                . 'nction="App\\Admin\\U::migrate" data-file="src/b.php"><a class="row-main" href="statements/b2.html"><span class="chip tone-indigo">ALTER</span'
+                . '><pre class="code"><span class="tok-kw">ALTER</span> <span class="tok-kw">TABLE</span> users <span class="tok-kw">ADD</span> x INT</pre></a>'
+                . '<p class="row-meta"><a href="files/src-b-php.html">src/b.php:8</a><a href="classes/app-admin-u.html#fn-app-admin-u-migrate">U::migrate</a><a'
+                . ' class="chip chip-ghost" href="tables/users.html">users</a></p></li><li class="row" data-kind="select" data-resolution="resolved" data-sever'
+                . 'ity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-open="" data-table="posts users" data-namespace="App" data-class="App\\R" dat'
+                . 'a-function="App\\R::find" data-file="src/d.php"><a class="row-main" href="statements/d1.html"><span class="chip tone-blue">SELECT</span><pre '
+                . 'class="code"><span class="tok-kw">SELECT</span>
     *
 <span class="tok-kw">FROM</span>
-    po'
-                . 'sts p
+    posts p
 <span class="tok-kw">JOIN</span>
-    users u
+    user'
+                . 's u
 <span class="tok-kw">ON</span>
-    u.id = p.author</span></a><p class="row-meta"><a href='
-                . '"files/src-d-php.html">src/d.php:1</a><a href="classes/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="tables/posts.ht'
-                . 'ml">posts</a><a class="chip chip-ghost" href="tables/users.html">users</a><span class="chip tone-warn" title="The most serious finding on th'
-                . 'is statement">medium</span></p></li><li class="row" data-kind="show" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo'
-                . '.query" data-open="" data-table="" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/e.php"><a class="row-m'
-                . 'ain" href="statements/e1.html"><span class="chip tone-slate">SHOW</span><span class="row-body"><span class="tok-kw">SHOW</span> TABLES</span'
-                . '></a><p class="row-meta"><a href="files/src-e-php.html">src/e.php:1</a><a href="classes/app-r.html#fn-app-r-find">R::find</a></p></li><li cl'
-                . 'ass="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="t1" dat'
-                . 'a-namespace="App" data-class="App\\F" data-function="App\\F::a" data-file="src/f.php"><a class="row-main" href="statements/f1.html"><span clas'
-                . 's="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
+    u.id = p.author</pre></a><p class="row-meta"><a href="files/src-d-php.html">src/d.php:1</a><a href="c'
+                . 'lasses/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="tables/posts.html">posts</a><a class="chip chip-ghost" href="ta'
+                . 'bles/users.html">users</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li><li class="r'
+                . 'ow" data-kind="show" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="" data-namespac'
+                . 'e="App" data-class="App\\R" data-function="App\\R::find" data-file="src/e.php"><a class="row-main" href="statements/e1.html"><span class="chip'
+                . ' tone-slate">SHOW</span><pre class="code"><span class="tok-kw">SHOW</span> TABLES</pre></a><p class="row-meta"><a href="files/src-e-php.html'
+                . '">src/e.php:1</a><a href="classes/app-r.html#fn-app-r-find">R::find</a></p></li><li class="row" data-kind="select" data-resolution="resolved'
+                . '" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="t1" data-namespace="App" data-class="App\\F" data-function="Ap'
+                . 'p\\F::a" data-file="src/f.php"><a class="row-main" href="statements/f1.html"><span class="chip tone-blue">SELECT</span><pre class="code"><spa'
+                . 'n class="tok-kw">SELECT</span>
     <span class="tok-num">1</span>
-<span class="to'
-                . 'k-kw">FROM</span>
-    t1</span></a><p class="row-meta"><a href="files/src-f-php.html">src/f.php:1</a><a href="classes/app-f.html#fn-app-f-a"'
-                . '>F::a</a><a class="chip chip-ghost" href="tables/t1.html">t1</a></p></li><li class="row" data-kind="select" data-resolution="resolved" data-'
-                . 'severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="t2" data-namespace="App" data-class="App\\F" data-function="App\\F::b"'
-                . ' data-file="src/f.php"><a class="row-main" href="statements/f2.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span '
-                . 'class="tok-kw">SELECT</span>
+<span class="tok-kw">FROM</span>
+    t1</pre></a><p class="row-meta"><a hr'
+                . 'ef="files/src-f-php.html">src/f.php:1</a><a href="classes/app-f.html#fn-app-f-a">F::a</a><a class="chip chip-ghost" href="tables/t1.html">t1'
+                . '</a></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" '
+                . 'data-table="t2" data-namespace="App" data-class="App\\F" data-function="App\\F::b" data-file="src/f.php"><a class="row-main" href="statements/'
+                . 'f2.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
     <span class="tok-num">2</span>
+<'
+                . 'span class="tok-kw">FROM</span>
+    t2</pre></a><p class="row-meta"><a href="files/src-f-php.html">src/f.php:2</a><a href="classes/app-f.htm'
+                . 'l#fn-app-f-b">F::b</a><a class="chip chip-ghost" href="tables/t2.html">t2</a></p></li><li class="row" data-kind="select" data-resolution="re'
+                . 'solved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="t3" data-namespace="App" data-class="App\\G" data-functi'
+                . 'on="App\\G::a" data-file="src/f.php"><a class="row-main" href="statements/f3.html"><span class="chip tone-blue">SELECT</span><pre class="code'
+                . '"><span class="tok-kw">SELECT</span>
+    <span class="tok-num">3</span>
 <span class="tok-kw">FROM</span>
-    t2</span></a><p class="row-meta"><a hre'
-                . 'f="files/src-f-php.html">src/f.php:2</a><a href="classes/app-f.html#fn-app-f-b">F::b</a><a class="chip chip-ghost" href="tables/t2.html">t2<'
-                . '/a></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" d'
-                . 'ata-table="t3" data-namespace="App" data-class="App\\G" data-function="App\\G::a" data-file="src/f.php"><a class="row-main" href="statements/f'
-                . '3.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
-    <span class="tok-num">3</spa'
-                . 'n>
+    t3</pre></a><p class="row-meta"'
+                . '><a href="files/src-f-php.html">src/f.php:3</a><a href="classes/app-g.html#fn-app-g-a">G::a</a><a class="chip chip-ghost" href="tables/t3.ht'
+                . 'ml">t3</a></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-op'
+                . 'en="" data-table="t4" data-namespace="App" data-class="App\\H" data-function="App\\H::a" data-file="src/f.php"><a class="row-main" href="state'
+                . 'ments/f4.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
+    <span class="tok-num">4</s'
+                . 'pan>
 <span class="tok-kw">FROM</span>
-    t3</span></a><p class="row-meta"><a href="files/src-f-php.html">src/f.php:3</a><a href="classes/app-'
-                . 'g.html#fn-app-g-a">G::a</a><a class="chip chip-ghost" href="tables/t3.html">t3</a></p></li><li class="row" data-kind="select" data-resolutio'
-                . 'n="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="t4" data-namespace="App" data-class="App\\H" data-f'
-                . 'unction="App\\H::a" data-file="src/f.php"><a class="row-main" href="statements/f4.html"><span class="chip tone-blue">SELECT</span><span class'
-                . '="row-body"><span class="tok-kw">SELECT</span>
-    <span class="tok-num">4</span>
+    t4</pre></a><p class="row-meta"><a href="files/src-f-php.html">src/f.php:4</a><a href="classes/app'
+                . '-h.html#fn-app-h-a">H::a</a><a class="chip chip-ghost" href="tables/t4.html">t4</a></p></li><li class="row" data-kind="select" data-resoluti'
+                . 'on="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="t5" data-namespace="App" data-class="App\\I" data-'
+                . 'function="App\\I::a" data-file="src/g.php"><a class="row-main" href="statements/f5.html"><span class="chip tone-blue">SELECT</span><pre class'
+                . '="code"><span class="tok-kw">SELECT</span>
+    <span class="tok-num">5</span>
 <span class="tok-kw">FROM</span>
-    t4</span></a><p class'
-                . '="row-meta"><a href="files/src-f-php.html">src/f.php:4</a><a href="classes/app-h.html#fn-app-h-a">H::a</a><a class="chip chip-ghost" href="t'
-                . 'ables/t4.html">t4</a></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.que'
-                . 'ry" data-open="" data-table="t5" data-namespace="App" data-class="App\\I" data-function="App\\I::a" data-file="src/g.php"><a class="row-main" '
-                . 'href="statements/f5.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
-    <span clas'
-                . 's="tok-num">5</span>
+    t5</pre></a><p class="row'
+                . '-meta"><a href="files/src-g-php.html">src/g.php:1</a><a href="classes/app-i.html#fn-app-i-a">I::a</a><a class="chip chip-ghost" href="tables'
+                . '/t5.html">t5</a></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" d'
+                . 'ata-open="" data-table="t6" data-namespace="App" data-class="App\\J" data-function="App\\J::a" data-file="src/h.php"><a class="row-main" href='
+                . '"statements/f6.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
+    <span class="tok-num'
+                . '">6</span>
 <span class="tok-kw">FROM</span>
-    t5</span></a><p class="row-meta"><a href="files/src-g-php.html">src/g.php:1</a><a '
-                . 'href="classes/app-i.html#fn-app-i-a">I::a</a><a class="chip chip-ghost" href="tables/t5.html">t5</a></p></li><li class="row" data-kind="sele'
-                . 'ct" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="t6" data-namespace="App" data-cl'
-                . 'ass="App\\J" data-function="App\\J::a" data-file="src/h.php"><a class="row-main" href="statements/f6.html"><span class="chip tone-blue">SELECT'
-                . '</span><span class="row-body"><span class="tok-kw">SELECT</span>
-    <span class="tok-num">6</span>
-<span class="tok-kw">FROM</span>
-    t6<'
-                . '/span></a><p class="row-meta"><a href="files/src-h-php.html">src/h.php:1</a><a href="classes/app-j.html#fn-app-j-a">J::a</a><a class="chip c'
-                . 'hip-ghost" href="tables/t6.html">t6</a></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-ru'
-                . 'le="dynamic-sql" data-sink="pdo.query" data-open="" data-table="t7" data-namespace="App" data-class="App\\K" data-function="App\\K::a" data-fi'
-                . 'le="src/i.php"><a class="row-main" href="statements/f7.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="t'
-                . 'ok-kw">SELECT</span>
+    t6</pre></a><p class="row-meta"><a href="files/src-h-php.html">src/h.php:1</a><a href="class'
+                . 'es/app-j.html#fn-app-j-a">J::a</a><a class="chip chip-ghost" href="tables/t6.html">t6</a></p></li><li class="row" data-kind="select" data-re'
+                . 'solution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-open="" data-table="t7" data-namespace="App" d'
+                . 'ata-class="App\\K" data-function="App\\K::a" data-file="src/i.php"><a class="row-main" href="statements/f7.html"><span class="chip tone-blue">'
+                . 'SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
     <span class="tok-num">7</span>
 <span class="tok-kw">FROM</span>
-    t7</span></a><p class="row-meta"><a href="files'
-                . '/src-i-php.html">src/i.php:1</a><a href="classes/app-k.html#fn-app-k-a">K::a</a><a class="chip chip-ghost" href="tables/t7.html">t7</a><span'
-                . ' class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li><li class="row" data-kind="select" data-res'
-                . 'olution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-open="" data-table="t8" data-namespace="App" da'
-                . 'ta-class="App\\L" data-function="App\\L::a" data-file="src/j.php"><a class="row-main" href="statements/f8.html"><span class="chip tone-blue">S'
-                . 'ELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
-    <span class="tok-num">8</span>
+    t7'
+                . '</pre></a><p class="row-meta"><a href="files/src-i-php.html">src/i.php:1</a><a href="classes/app-k.html#fn-app-k-a">K::a</a><a class="chip c'
+                . 'hip-ghost" href="tables/t7.html">t7</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li'
+                . '><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-ope'
+                . 'n="" data-table="t8" data-namespace="App" data-class="App\\L" data-function="App\\L::a" data-file="src/j.php"><a class="row-main" href="statem'
+                . 'ents/f8.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
+    <span class="tok-num">8</sp'
+                . 'an>
 <span class="tok-kw">FROM</span>
-  '
-                . '  t8</span></a><p class="row-meta"><a href="files/src-j-php.html">src/j.php:1</a><a href="classes/app-l.html#fn-app-l-a">L::a</a><a class="c'
-                . 'hip chip-ghost" href="tables/t8.html">t8</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p'
-                . '></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" dat'
-                . 'a-open="" data-table="t9" data-namespace="App" data-class="App\\M" data-function="App\\M::a" data-file="src/k.php"><a class="row-main" href="s'
-                . 'tatements/f9.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
-    <span class="tok-'
-                . 'num">9</span>
+    t8</pre></a><p class="row-meta"><a href="files/src-j-php.html">src/j.php:1</a><a href="classes/app-'
+                . 'l.html#fn-app-l-a">L::a</a><a class="chip chip-ghost" href="tables/t8.html">t8</a><span class="chip tone-warn" title="The most serious findi'
+                . 'ng on this statement">medium</span></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="'
+                . 'dynamic-sql" data-sink="pdo.query" data-open="" data-table="t9" data-namespace="App" data-class="App\\M" data-function="App\\M::a" data-file="'
+                . 'src/k.php"><a class="row-main" href="statements/f9.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SE'
+                . 'LECT</span>
+    <span class="tok-num">9</span>
 <span class="tok-kw">FROM</span>
-    t9</span></a><p class="row-meta"><a href="files/src-k-php.html">src/k.php:1</a><a href="c'
-                . 'lasses/app-m.html#fn-app-m-a">M::a</a><a class="chip chip-ghost" href="tables/t9.html">t9</a><span class="chip tone-warn" title="The most se'
-                . 'rious finding on this statement">medium</span></p></li></ol></div>',
+    t9</pre></a><p class="row-meta"><a href="files/src-k-php'
+                . '.html">src/k.php:1</a><a href="classes/app-m.html#fn-app-m-a">M::a</a><a class="chip chip-ghost" href="tables/t9.html">t9</a><span class="ch'
+                . 'ip tone-warn" title="The most serious finding on this statement">medium</span></p></li></ol></div>',
             (new StatementIndexPage())->render($site),
         );
     }

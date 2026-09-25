@@ -187,86 +187,86 @@ final class FindingPageTest extends TestCase
                 . 's spliced into the statement text instead of being bound.</p><ol class="rows"><li class="row" data-kind="select" data-resolution="resolved" '
                 . 'data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-open="" data-table="posts users" data-namespace="App" data-class="'
                 . 'App\\R" data-function="App\\R::find" data-file="src/d.php"><a class="row-main" href="statements/d1.html"><span class="chip tone-blue">SELECT</'
-                . 'span><span class="row-body"><span class="tok-kw">SELECT</span>
+                . 'span><pre class="code"><span class="tok-kw">SELECT</span>
     *
 <span class="tok-kw">FROM</span>
     posts p
-<span class="tok-kw">JOIN<'
-                . '/span>
+<span class="tok-kw">JOIN</span'
+                . '>
     users u
 <span class="tok-kw">ON</span>
-    u.id = p.author</span></a><p class="row-meta"><a href="files/src-d-php.html">src/d.php'
-                . ':1</a><a href="classes/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="tables/posts.html">posts</a><a class="chip chip'
-                . '-ghost" href="tables/users.html">users</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p><'
-                . '/li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-'
-                . 'open="" data-table="t7" data-namespace="App" data-class="App\\K" data-function="App\\K::a" data-file="src/i.php"><a class="row-main" href="sta'
-                . 'tements/f7.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
-    <span class="tok-nu'
-                . 'm">7</span>
+    u.id = p.author</pre></a><p class="row-meta"><a href="files/src-d-php.html">src/d.php:1</a>'
+                . '<a href="classes/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="tables/posts.html">posts</a><a class="chip chip-ghost'
+                . '" href="tables/users.html">users</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li><l'
+                . 'i class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-open="'
+                . '" data-table="t7" data-namespace="App" data-class="App\\K" data-function="App\\K::a" data-file="src/i.php"><a class="row-main" href="statement'
+                . 's/f7.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
+    <span class="tok-num">7</span>'
+                . '
 <span class="tok-kw">FROM</span>
-    t7</span></a><p class="row-meta"><a href="files/src-i-php.html">src/i.php:1</a><a href="cla'
-                . 'sses/app-k.html#fn-app-k-a">K::a</a><a class="chip chip-ghost" href="tables/t7.html">t7</a><span class="chip tone-warn" title="The most seri'
-                . 'ous finding on this statement">medium</span></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" da'
-                . 'ta-rule="dynamic-sql" data-sink="pdo.query" data-open="" data-table="t8" data-namespace="App" data-class="App\\L" data-function="App\\L::a" da'
-                . 'ta-file="src/j.php"><a class="row-main" href="statements/f8.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span cla'
-                . 'ss="tok-kw">SELECT</span>
+    t7</pre></a><p class="row-meta"><a href="files/src-i-php.html">src/i.php:1</a><a href="classes/app-k.h'
+                . 'tml#fn-app-k-a">K::a</a><a class="chip chip-ghost" href="tables/t7.html">t7</a><span class="chip tone-warn" title="The most serious finding '
+                . 'on this statement">medium</span></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dyn'
+                . 'amic-sql" data-sink="pdo.query" data-open="" data-table="t8" data-namespace="App" data-class="App\\L" data-function="App\\L::a" data-file="src'
+                . '/j.php"><a class="row-main" href="statements/f8.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELEC'
+                . 'T</span>
     <span class="tok-num">8</span>
 <span class="tok-kw">FROM</span>
-    t8</span></a><p class="row-meta"><a href="'
-                . 'files/src-j-php.html">src/j.php:1</a><a href="classes/app-l.html#fn-app-l-a">L::a</a><a class="chip chip-ghost" href="tables/t8.html">t8</a>'
-                . '<span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li><li class="row" data-kind="select" dat'
-                . 'a-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-open="" data-table="t9" data-namespace="Ap'
-                . 'p" data-class="App\\M" data-function="App\\M::a" data-file="src/k.php"><a class="row-main" href="statements/f9.html"><span class="chip tone-bl'
-                . 'ue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
+    t8</pre></a><p class="row-meta"><a href="files/src-j-php.ht'
+                . 'ml">src/j.php:1</a><a href="classes/app-l.html#fn-app-l-a">L::a</a><a class="chip chip-ghost" href="tables/t8.html">t8</a><span class="chip '
+                . 'tone-warn" title="The most serious finding on this statement">medium</span></p></li><li class="row" data-kind="select" data-resolution="reso'
+                . 'lved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-open="" data-table="t9" data-namespace="App" data-class="App'
+                . '\\M" data-function="App\\M::a" data-file="src/k.php"><a class="row-main" href="statements/f9.html"><span class="chip tone-blue">SELECT</span><'
+                . 'pre class="code"><span class="tok-kw">SELECT</span>
     <span class="tok-num">9</span>
-<span class="tok-kw">FROM</spa'
-                . 'n>
-    t9</span></a><p class="row-meta"><a href="files/src-k-php.html">src/k.php:1</a><a href="classes/app-m.html#fn-app-m-a">M::a</a><a cla'
-                . 'ss="chip chip-ghost" href="tables/t9.html">t9</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</spa'
-                . 'n></p></li></ol></section><section class="group" id="rule-analysis-incomplete"><h2><code>analysis-incomplete</code><span class="chip tone-ne'
-                . 'utral">low</span><span class="count">1 statement</span><a class="anchor" href="#rule-analysis-incomplete">#</a></h2><p class="lede">A cycle '
-                . 'or an analysis budget stopped the search before it closed.</p><ol class="rows"><li class="row" data-kind="select" data-resolution="incomplet'
-                . 'e" data-severity="low" data-rule="analysis-incomplete" data-sink="mysqli.query" data-open="open" data-table="" data-namespace="" data-class='
-                . '"" data-function="helper" data-file="lib/c.php"><a class="row-main" href="statements/c1.html"><span class="chip tone-blue">SELECT</span><spa'
-                . 'n class="row-body"><span class="hole tone-warn" title="This is a gap: a dependency the analyzer stopped following fills it.">{$}</span></spa'
-                . 'n></a><p class="row-meta"><a href="files/lib-c-php.html">lib/c.php:2</a><a href="files/lib-c-php.html#fn-helper">helper</a><span class="chip'
-                . ' chip-ghost" title="A cycle or an analysis budget stopped the search before it closed.">incomplete</span></p></li></ol></section><section cl'
-                . 'ass="group" id="rule-call-not-analyzed"><h2><code>call-not-analyzed</code><span class="chip tone-neutral">low</span><span class="count">1 st'
-                . 'atement</span><a class="anchor" href="#rule-call-not-analyzed">#</a></h2><p class="lede">A call that carries a statement was found but never'
-                . ' examined.</p><ol class="rows"><li class="row" data-kind="unknown" data-resolution="not-analyzed" data-severity="low" data-rule="call-not-an'
-                . 'alyzed" data-sink="unmatched" data-open="open" data-table="" data-namespace="" data-class="" data-function="{main}" data-file="lib/c.php"><a'
-                . ' class="row-main" href="statements/c2.html"><span class="chip tone-slate">UNKNOWN</span><span class="row-body"><span class="tok-com">no stat'
-                . 'ement was read from this call</span> $db-&gt;query($sql)</span></a><p class="row-meta"><a href="files/lib-c-php.html">lib/c.php:6</a><span c'
-                . 'lass="chip tone-neutral" title="The call was found but never examined, so nothing was read from it.">not-analyzed</span></p></li></ol></sect'
-                . 'ion><section class="group" id="rule-external-input"><h2><code>external-input</code><span class="chip tone-danger">high</span><span class="co'
-                . 'unt">1 statement</span><a class="anchor" href="#rule-external-input">#</a></h2><p class="lede">A value spliced into the statement text comes'
-                . ' from external input.</p><ol class="rows"><li class="row" data-kind="select" data-resolution="external-input" data-severity="high" data-rule'
-                . '="external-input" data-sink="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::find" '
-                . 'data-file="src/a.php"><a class="row-main" href="statements/a1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span c'
-                . 'lass="tok-kw">SELECT</span>
-    id
 <span class="tok-kw">FROM</span>
+    t9</pre></a><p c'
+                . 'lass="row-meta"><a href="files/src-k-php.html">src/k.php:1</a><a href="classes/app-m.html#fn-app-m-a">M::a</a><a class="chip chip-ghost" hre'
+                . 'f="tables/t9.html">t9</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li></ol></sectio'
+                . 'n><section class="group" id="rule-analysis-incomplete"><h2><code>analysis-incomplete</code><span class="chip tone-neutral">low</span><span c'
+                . 'lass="count">1 statement</span><a class="anchor" href="#rule-analysis-incomplete">#</a></h2><p class="lede">A cycle or an analysis budget st'
+                . 'opped the search before it closed.</p><ol class="rows"><li class="row" data-kind="select" data-resolution="incomplete" data-severity="low" d'
+                . 'ata-rule="analysis-incomplete" data-sink="mysqli.query" data-open="open" data-table="" data-namespace="" data-class="" data-function="helper'
+                . '" data-file="lib/c.php"><a class="row-main" href="statements/c1.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span clas'
+                . 's="hole tone-warn" title="This is a gap: a dependency the analyzer stopped following fills it.">{$}</span></pre></a><p class="row-meta"><a h'
+                . 'ref="files/lib-c-php.html">lib/c.php:2</a><a href="files/lib-c-php.html#fn-helper">helper</a><span class="chip chip-ghost" title="A cycle or'
+                . ' an analysis budget stopped the search before it closed.">incomplete</span></p></li></ol></section><section class="group" id="rule-call-not-'
+                . 'analyzed"><h2><code>call-not-analyzed</code><span class="chip tone-neutral">low</span><span class="count">1 statement</span><a class="anchor'
+                . '" href="#rule-call-not-analyzed">#</a></h2><p class="lede">A call that carries a statement was found but never examined.</p><ol class="rows"'
+                . '><li class="row" data-kind="unknown" data-resolution="not-analyzed" data-severity="low" data-rule="call-not-analyzed" data-sink="unmatched" '
+                . 'data-open="open" data-table="" data-namespace="" data-class="" data-function="{main}" data-file="lib/c.php"><a class="row-main" href="statem'
+                . 'ents/c2.html"><span class="chip tone-slate">UNKNOWN</span><pre class="code"><span class="tok-com">no statement was read from this call</span'
+                . '> $db-&gt;query($sql)</pre></a><p class="row-meta"><a href="files/lib-c-php.html">lib/c.php:6</a><span class="chip tone-neutral" title="The '
+                . 'call was found but never examined, so nothing was read from it.">not-analyzed</span></p></li></ol></section><section class="group" id="rule-'
+                . 'external-input"><h2><code>external-input</code><span class="chip tone-danger">high</span><span class="count">1 statement</span><a class="anc'
+                . 'hor" href="#rule-external-input">#</a></h2><p class="lede">A value spliced into the statement text comes from external input.</p><ol class="'
+                . 'rows"><li class="row" data-kind="select" data-resolution="external-input" data-severity="high" data-rule="external-input" data-sink="pdo.que'
+                . 'ry" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/a.php"><a class="row-'
+                . 'main" href="statements/a1.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
+    id
+<span '
+                . 'class="tok-kw">FROM</span>
     posts
 <span class="tok-kw">WHERE</span>
-    slug = <span class="hole'
-                . ' tone-danger" title="This is a gap: external input fills it. Written as $_GET[&quot;s&quot;].">{$}</span></span></a><p class="row-meta"><a h'
-                . 'ref="files/src-a-php.html">src/a.php:4</a><a href="classes/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="tables/post'
-                . 's.html">posts</a><span class="chip tone-danger" title="The values were followed to runtime input, so the text cannot be fixed.">external-inp'
-                . 'ut</span><span class="chip tone-danger" title="The most serious finding on this statement">high</span></p></li></ol></section><section class'
-                . '="group" id="rule-placeholder-count-mismatch"><h2><code>placeholder-count-mismatch</code><span class="chip tone-warn">medium</span><span cla'
-                . 'ss="count">1 statement</span><a class="anchor" href="#rule-placeholder-count-mismatch">#</a></h2><p class="lede">The statement binds a diffe'
-                . 'rent number of values than it has placeholders.</p><ol class="rows"><li class="row" data-kind="update" data-resolution="resolved" data-sever'
-                . 'ity="medium" data-rule="placeholder-count-mismatch" data-sink="pdo.prepare" data-open="" data-table="posts" data-namespace="App" data-class='
-                . '"App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="statements/a3.html"><span class="chip tone-violet">UPDATE'
-                . '</span><span class="row-body"><span class="tok-kw">UPDATE</span>
+    slug = <span class="hole tone-danger" title="This is a gap: exter'
+                . 'nal input fills it. Written as $_GET[&quot;s&quot;].">{$}</span></pre></a><p class="row-meta"><a href="files/src-a-php.html">src/a.php:4</a>'
+                . '<a href="classes/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="tables/posts.html">posts</a><span class="chip tone-da'
+                . 'nger" title="The values were followed to runtime input, so the text cannot be fixed.">external-input</span><span class="chip tone-danger" ti'
+                . 'tle="The most serious finding on this statement">high</span></p></li></ol></section><section class="group" id="rule-placeholder-count-mismat'
+                . 'ch"><h2><code>placeholder-count-mismatch</code><span class="chip tone-warn">medium</span><span class="count">1 statement</span><a class="anc'
+                . 'hor" href="#rule-placeholder-count-mismatch">#</a></h2><p class="lede">The statement binds a different number of values than it has placehol'
+                . 'ders.</p><ol class="rows"><li class="row" data-kind="update" data-resolution="resolved" data-severity="medium" data-rule="placeholder-count-'
+                . 'mismatch" data-sink="pdo.prepare" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-fi'
+                . 'le="src/a.php"><a class="row-main" href="statements/a3.html"><span class="chip tone-violet">UPDATE</span><pre class="code"><span class="tok-'
+                . 'kw">UPDATE</span>
     posts
 <span class="tok-kw">SET</span>
-    title = <span class="tok-var"'
-                . '>?</span>
+    title = <span class="tok-var">?</span>
 <span class="tok-kw">WHERE</span>
-    id = <span class="tok-var">?</span></span></a><p class="row-meta"><a href="files/src-a-php.h'
-                . 'tml">src/a.php:14</a><a href="classes/app-r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="tables/posts.html">posts</a><span '
-                . 'class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li></ol></section>',
+   '
+                . ' id = <span class="tok-var">?</span></pre></a><p class="row-meta"><a href="files/src-a-php.html">src/a.php:14</a><a href="classes/app-r.html'
+                . '#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="tables/posts.html">posts</a><span class="chip tone-warn" title="The most serious f'
+                . 'inding on this statement">medium</span></p></li></ol></section>',
             (new FindingPage())->render($site),
         );
     }

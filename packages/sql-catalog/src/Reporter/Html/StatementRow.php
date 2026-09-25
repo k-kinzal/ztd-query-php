@@ -12,7 +12,7 @@ use SqlCatalog\Catalog\Severity;
  * One statement as a row of a listing.
  *
  * A row is a doc-ui listing row. A listing is for scanning, so a row shows
- * the statement itself first — the SQL, formatted across multiple lines — and
+ * the statement itself first — the SQL in doc-ui's multiline code block — and
  * then where it is issued, with every place it names linked to the page for
  * it. What the analyzer thinks of
  * the statement is shown only when it is not the ordinary case: a resolved
@@ -54,7 +54,7 @@ final class StatementRow
         return '<li class="row"' . $this->attributes($entry) . '>'
             . '<a class="row-main" href="' . $this->text->escape($prefix . $site->statementPage($entry->id)) . '">'
             . $this->text->chip(strtoupper($entry->kind->value), $this->palette->kind($entry->kind->value))
-            . '<span class="row-body">' . $this->sql($entry) . '</span></a>'
+            . '<pre class="code">' . $this->sql($entry) . '</pre></a>'
             . '<p class="row-meta">' . $this->meta($site, $prefix, $entry, $omit) . '</p>'
             . '</li>';
     }

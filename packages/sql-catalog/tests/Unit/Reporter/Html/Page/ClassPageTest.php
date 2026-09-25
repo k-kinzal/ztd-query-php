@@ -198,54 +198,53 @@ final class ClassPageTest extends TestCase
                 . 'find"><h3><code>R::find</code><span class="count">3</span><span class="muted">src/a.php:4</span><a class="anchor" href="#fn-app-r-find">#</a'
                 . '></h3><ol class="rows"><li class="row" data-kind="select" data-resolution="external-input" data-severity="high" data-rule="external-input" d'
                 . 'ata-sink="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/a.ph'
-                . 'p"><a class="row-main" href="../statements/a1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SE'
-                . 'LECT</span>
+                . 'p"><a class="row-main" href="../statements/a1.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT<'
+                . '/span>
     id
 <span class="tok-kw">FROM</span>
     posts
 <span class="tok-kw">WHERE</span>
-    slug = <span class="hole tone-danger" ti'
-                . 'tle="This is a gap: external input fills it. Written as $_GET[&quot;s&quot;].">{$}</span></span></a><p class="row-meta"><a href="../files/sr'
-                . 'c-a-php.html">src/a.php:4</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a><span class="chip tone-danger" title="The value'
-                . 's were followed to runtime input, so the text cannot be fixed.">external-input</span><span class="chip tone-danger" title="The most serious '
-                . 'finding on this statement">high</span></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rul'
-                . 'e="dynamic-sql" data-sink="pdo.query" data-open="" data-table="posts users" data-namespace="App" data-class="App\\R" data-function="App\\R::fi'
-                . 'nd" data-file="src/d.php"><a class="row-main" href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><span class="row-body">'
-                . '<span class="tok-kw">SELECT</span>
+    slug = <span class="hole tone-danger" title="'
+                . 'This is a gap: external input fills it. Written as $_GET[&quot;s&quot;].">{$}</span></pre></a><p class="row-meta"><a href="../files/src-a-ph'
+                . 'p.html">src/a.php:4</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a><span class="chip tone-danger" title="The values were'
+                . ' followed to runtime input, so the text cannot be fixed.">external-input</span><span class="chip tone-danger" title="The most serious findin'
+                . 'g on this statement">high</span></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dyn'
+                . 'amic-sql" data-sink="pdo.query" data-open="" data-table="posts users" data-namespace="App" data-class="App\\R" data-function="App\\R::find" da'
+                . 'ta-file="src/d.php"><a class="row-main" href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class'
+                . '="tok-kw">SELECT</span>
     *
 <span class="tok-kw">FROM</span>
     posts p
 <span class="tok-kw">JOIN</span>
     users u
-<span cla'
-                . 'ss="tok-kw">ON</span>
-    u.id = p.author</span></a><p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a class="chip chip'
-                . '-ghost" href="../tables/posts.html">posts</a><a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-warn" ti'
-                . 'tle="The most serious finding on this statement">medium</span></p></li><li class="row" data-kind="show" data-resolution="resolved" data-seve'
-                . 'rity="" data-rule="" data-sink="pdo.query" data-open="" data-table="" data-namespace="App" data-class="App\\R" data-function="App\\R::find" da'
-                . 'ta-file="src/e.php"><a class="row-main" href="../statements/e1.html"><span class="chip tone-slate">SHOW</span><span class="row-body"><span c'
-                . 'lass="tok-kw">SHOW</span> TABLES</span></a><p class="row-meta"><a href="../files/src-e-php.html">src/e.php:1</a></p></li></ol></section><sec'
-                . 'tion class="group" id="fn-app-r-add"><h3><code>R::add</code><span class="count">2</span><span class="muted">src/a.php:9</span><a class="anch'
-                . 'or" href="#fn-app-r-add">#</a></h3><ol class="rows"><li class="row" data-kind="insert" data-resolution="resolved" data-severity="" data-rule'
-                . '="" data-sink="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-file="src/'
-                . 'a.php"><a class="row-main" href="../statements/a2.html"><span class="chip tone-teal">INSERT</span><span class="row-body"><span class="tok-kw'
-                . '">INSERT</span> <span class="tok-kw">INTO</span>
+<span class="tok-kw"'
+                . '>ON</span>
+    u.id = p.author</pre></a><p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a class="chip chip-ghost" href'
+                . '="../tables/posts.html">posts</a><a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-warn" title="The mos'
+                . 't serious finding on this statement">medium</span></p></li><li class="row" data-kind="show" data-resolution="resolved" data-severity="" data'
+                . '-rule="" data-sink="pdo.query" data-open="" data-table="" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src'
+                . '/e.php"><a class="row-main" href="../statements/e1.html"><span class="chip tone-slate">SHOW</span><pre class="code"><span class="tok-kw">SHO'
+                . 'W</span> TABLES</pre></a><p class="row-meta"><a href="../files/src-e-php.html">src/e.php:1</a></p></li></ol></section><section class="group"'
+                . ' id="fn-app-r-add"><h3><code>R::add</code><span class="count">2</span><span class="muted">src/a.php:9</span><a class="anchor" href="#fn-app-'
+                . 'r-add">#</a></h3><ol class="rows"><li class="row" data-kind="insert" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo'
+                . '.query" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="r'
+                . 'ow-main" href="../statements/a2.html"><span class="chip tone-teal">INSERT</span><pre class="code"><span class="tok-kw">INSERT</span> <span c'
+                . 'lass="tok-kw">INTO</span>
     posts (id)
 <span class="tok-kw">VALUES</span>
-    (<span class="tok-num">1</span>)</spa'
-                . 'n></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:9</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a><'
-                . '/p></li><li class="row" data-kind="update" data-resolution="resolved" data-severity="medium" data-rule="placeholder-count-mismatch" data-sin'
-                . 'k="pdo.prepare" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-file="src/a.php"><a '
-                . 'class="row-main" href="../statements/a3.html"><span class="chip tone-violet">UPDATE</span><span class="row-body"><span class="tok-kw">UPDATE'
-                . '</span>
+    (<span class="tok-num">1</span>)</pre></a><p class="row-meta'
+                . '"><a href="../files/src-a-php.html">src/a.php:9</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a></p></li><li class="row" '
+                . 'data-kind="update" data-resolution="resolved" data-severity="medium" data-rule="placeholder-count-mismatch" data-sink="pdo.prepare" data-ope'
+                . 'n="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href=".'
+                . './statements/a3.html"><span class="chip tone-violet">UPDATE</span><pre class="code"><span class="tok-kw">UPDATE</span>
     posts
-<span class="tok-kw">SET</span>
+<span class'
+                . '="tok-kw">SET</span>
     title = <span class="tok-var">?</span>
 <span class="tok-kw">WHERE</span>
-    id = <spa'
-                . 'n class="tok-var">?</span></span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:14</a><a class="chip chip-ghost" href="'
-                . '../tables/posts.html">posts</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li></ol></'
-                . 'section></div>',
+    id = <span class="tok-var">?</span></p'
+                . 're></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:14</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a'
+                . '><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li></ol></section></div>',
             (new ClassPage())->render($site, 'App\\R'),
         );
     }

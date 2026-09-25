@@ -136,7 +136,6 @@ as the routes to a statement rather than as one long listing:
 | `findings.html` | The functions flagged most, then every finding under the rule that reported it |
 | `statements/*.html` | One page per statement: the SQL laid out a clause per line, where it is issued and through what, its tables, bound values and findings, and the other statements of the same function and on the same table |
 | `assets/document-design-v1.0.0.css`, `assets/document-design-v1.0.0.js`, `assets/document-design-LICENSE.txt` | The design the pages are written in: the unmodified [document-design](https://k-kinzal.github.io/document-design/) doc-ui release, its script, and the notice naming the release, its license and the SHA-256 of each file |
-| `assets/report.css` | Keeps multiline SQL listings fully visible without changing the pinned doc-ui stylesheet |
 | `assets/report.js` | The ranking of a search over statements and the narrowing of a listing by the facts a page arrives with, written once beside the pages |
 | `assets/search-index.js` | Every statement and its page, so the search box on every page finds a statement by its SQL, table, function or file |
 
@@ -161,8 +160,10 @@ narrowing, sorting, copying, the theme switch and search.
 
 SQL in listings and statement pages uses [sql-formatter](../../sql-formatter/)'s
 Expanded layout, with clause bodies and list items on separate lines, without
-clipping listings to a fixed number of lines. Gaps and client placeholders are preserved through formatting. The report tries the
-supported MySQL, PostgreSQL and SQLite grammars; text none accepts is kept as
+clipping listings to a fixed number of lines. Listings use doc-ui's existing
+`pre.code` component. Gaps and client placeholders are preserved through
+formatting. The report tries the supported MySQL, PostgreSQL and SQLite grammars;
+text none accepts is kept as
 written. Statement pages also retain the original layout under **As written in
 the source**, while **Copy** copies the displayed, formatted SQL.
 

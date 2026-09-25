@@ -121,7 +121,6 @@ final class HtmlReporterTest extends TestCase
                 'assets/document-design-LICENSE.txt',
                 'assets/document-design-v1.0.0.css',
                 'assets/document-design-v1.0.0.js',
-                'assets/report.css',
                 'assets/report.js',
                 'assets/search-index.js',
                 'classes/app-r.html',

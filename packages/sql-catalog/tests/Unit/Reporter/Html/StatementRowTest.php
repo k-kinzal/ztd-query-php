@@ -64,12 +64,12 @@ final class StatementRowTest extends TestCase
         self::assertSame(
             '<li class="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="u'
                 . 'sers" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/a.php"><a class="row-main" href="../statements/a1.h'
-                . 'tml"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
+                . 'tml"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
     <span class="tok-num">1</span>
-'
-                . '<span class="tok-kw">FROM</span>
-    users</span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:4</a><a href="../classe'
-                . 's/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="../tables/users.html">users</a></p></li>',
+<span'
+                . ' class="tok-kw">FROM</span>
+    users</pre></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:4</a><a href="../classes/app-'
+                . 'r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="../tables/users.html">users</a></p></li>',
             (new StatementRow())->render($site, 'tables/users.html', $entry),
         );
     }

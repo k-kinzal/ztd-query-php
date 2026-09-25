@@ -349,55 +349,55 @@ final class StatementPageTest extends TestCase
                 . '/code> spliced</span></li></ul><section><h2 id="same-function">Also issued by <code>R::find</code><span class="count">2</span></h2><ol class'
                 . '="rows"><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" d'
                 . 'ata-open="" data-table="posts users" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/d.php"><a class="row'
-                . '-main" href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
-    '
-                . '*
-<span class="tok-kw">FROM</span>
+                . '-main" href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
+    *
+<sp'
+                . 'an class="tok-kw">FROM</span>
     posts p
 <span class="tok-kw">JOIN</span>
     users u
 <span class="tok-kw">ON</span>
-    u.id = p.auth'
-                . 'or</span></a><p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a class="chip chip-ghost" href="../tables/posts.html">pos'
-                . 'ts</a><a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-warn" title="The most serious finding on this s'
-                . 'tatement">medium</span></p></li><li class="row" data-kind="show" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.que'
-                . 'ry" data-open="" data-table="" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/e.php"><a class="row-main"'
-                . ' href="../statements/e1.html"><span class="chip tone-slate">SHOW</span><span class="row-body"><span class="tok-kw">SHOW</span> TABLES</span>'
-                . '</a><p class="row-meta"><a href="../files/src-e-php.html">src/e.php:1</a></p></li></ol></section><section><h2 id="same-table-posts">Also on '
-                . '<a class="chip chip-ghost" href="../tables/posts.html">posts</a><span class="count">3</span></h2><ol class="rows"><li class="row" data-kind='
-                . '"insert" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="posts" data-namespace="App"'
-                . ' data-class="App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="../statements/a2.html"><span class="chip tone'
-                . '-teal">INSERT</span><span class="row-body"><span class="tok-kw">INSERT</span> <span class="tok-kw">INTO</span>
+    u.id = p.author</p'
+                . 're></a><p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a>'
+                . '<a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-warn" title="The most serious finding on this stateme'
+                . 'nt">medium</span></p></li><li class="row" data-kind="show" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" da'
+                . 'ta-open="" data-table="" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/e.php"><a class="row-main" href='
+                . '"../statements/e1.html"><span class="chip tone-slate">SHOW</span><pre class="code"><span class="tok-kw">SHOW</span> TABLES</pre></a><p class'
+                . '="row-meta"><a href="../files/src-e-php.html">src/e.php:1</a></p></li></ol></section><section><h2 id="same-table-posts">Also on <a class="ch'
+                . 'ip chip-ghost" href="../tables/posts.html">posts</a><span class="count">3</span></h2><ol class="rows"><li class="row" data-kind="insert" dat'
+                . 'a-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class='
+                . '"App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="../statements/a2.html"><span class="chip tone-teal">INSER'
+                . 'T</span><pre class="code"><span class="tok-kw">INSERT</span> <span class="tok-kw">INTO</span>
     posts (id)
-<span class="t'
-                . 'ok-kw">VALUES</span>
-    (<span class="tok-num">1</span>)</span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:9</a><a '
-                . 'href="../classes/app-r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a></p></li><li class="row"'
-                . ' data-kind="update" data-resolution="resolved" data-severity="medium" data-rule="placeholder-count-mismatch" data-sink="pdo.prepare" data-op'
-                . 'en="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="'
-                . '../statements/a3.html"><span class="chip tone-violet">UPDATE</span><span class="row-body"><span class="tok-kw">UPDATE</span>
+<span class="tok-kw">VALUES</sp'
+                . 'an>
+    (<span class="tok-num">1</span>)</pre></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:9</a><a href="../classes/a'
+                . 'pp-r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a></p></li><li class="row" data-kind="update'
+                . '" data-resolution="resolved" data-severity="medium" data-rule="placeholder-count-mismatch" data-sink="pdo.prepare" data-open="" data-table="'
+                . 'posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="../statements/a3.h'
+                . 'tml"><span class="chip tone-violet">UPDATE</span><pre class="code"><span class="tok-kw">UPDATE</span>
     posts
-<span'
-                . ' class="tok-kw">SET</span>
+<span class="tok-kw">SET</sp'
+                . 'an>
     title = <span class="tok-var">?</span>
 <span class="tok-kw">WHERE</span>
-    id = <span class="tok-var">?</sp'
-                . 'an></span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:14</a><a href="../classes/app-r.html#fn-app-r-add">R::add</a><'
-                . 'a class="chip chip-ghost" href="../tables/posts.html">posts</a><span class="chip tone-warn" title="The most serious finding on this statemen'
-                . 't">medium</span></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-s'
-                . 'ink="pdo.query" data-open="" data-table="posts users" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/d.p'
-                . 'hp"><a class="row-main" href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">S'
-                . 'ELECT</span>
+    id = <span class="tok-var">?</span></pre></a><p class="'
+                . 'row-meta"><a href="../files/src-a-php.html">src/a.php:14</a><a href="../classes/app-r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost'
+                . '" href="../tables/posts.html">posts</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li'
+                . '><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-ope'
+                . 'n="" data-table="posts users" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/d.php"><a class="row-main" '
+                . 'href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
     *
-<span class="tok-kw">FROM</span>
+<span clas'
+                . 's="tok-kw">FROM</span>
     posts p
 <span class="tok-kw">JOIN</span>
     users u
 <span class="tok-kw">ON</span>
-'
-                . '    u.id = p.author</span></a><p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a href="../classes/app-r.html#fn-app-r-f'
-                . 'ind">R::find</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a><a class="chip chip-ghost" href="../tables/users.html">users'
-                . '</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li></ol></section>',
+    u.id = p.author</pre></a>'
+                . '<p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a href="../classes/app-r.html#fn-app-r-find">R::find</a><a class="chip'
+                . ' chip-ghost" href="../tables/posts.html">posts</a><a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-war'
+                . 'n" title="The most serious finding on this statement">medium</span></p></li></ol></section>',
             (new StatementPage())->render($site, $entries[0]),
         );
     }

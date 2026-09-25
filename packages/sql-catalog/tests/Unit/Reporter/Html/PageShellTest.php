@@ -150,17 +150,16 @@ final class PageShellTest extends TestCase
         self::assertSame([['On this page', [['Reads', '#reads', null, false]], null]], (new PageShell())->onThisPage([['Reads', 'reads']]));
     }
 
-    public function testHeadLoadsDocUiAndTheReportLayoutStylesheet(): void
+    public function testHeadLoadsOnlyTheDocUiStylesheet(): void
     {
         $head = (new PageShell())->head('../', 'A & B');
 
         self::assertStringStartsWith('<!DOCTYPE html>' . "\n" . '<html lang="en" data-dd-theme-key="sql-catalog-theme">' . "\n" . '<head>', $head);
         self::assertStringContainsString('<meta name="color-scheme" content="light dark">', $head);
         self::assertStringContainsString('<title>A &amp; B</title>', $head);
-        self::assertSame(2, substr_count($head, 'rel="stylesheet"'));
+        self::assertSame(1, substr_count($head, 'rel="stylesheet"'));
         self::assertStringNotContainsString('<style', $head);
         self::assertStringContainsString('<link rel="stylesheet" href="../assets/document-design-v1.0.0.css">', $head);
-        self::assertStringContainsString('<link rel="stylesheet" href="../assets/report.css">', $head);
         self::assertStringEndsWith((new PageShell())->bootstrap() . "\n" . '</head>' . "\n", $head);
     }
 
@@ -235,7 +234,6 @@ final class PageShellTest extends TestCase
 <title>posts</title>
 <link rel="stylesheet" href="../assets/document-design-v1.0.0'
                 . '.css">
-<link rel="stylesheet" href="../assets/report.css">
 <script>try{var t=localStorage.getItem("sql-catalog-theme");if(t){document.documentElement.'
                 . 'dataset.ddTheme=t}}catch(e){}</script>
 </head>
