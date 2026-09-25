@@ -22,16 +22,15 @@ use SqlFormatter\Core\FormatOptions;
 use SqlFormatter\Core\Style;
 use SqlFormatter\Facade\Formatter;
 use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Core\Binder;
-use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Facade\Semantics;
 
 $grammarVersion = 'pg-17.2';
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg');
 $provider = new PostgreSqlProvider(Factory::create(), $grammarVersion, $coverage);
 $parser = new PostgreSqlParser($grammarVersion);
 $target = new RoundTripTarget(
-    new Binder((new SchemaBuilder(Dialect::PostgreSql, grammarVersion: $grammarVersion))->build()),
+    new Semantics(Dialect::PostgreSql, $grammarVersion),
     new Formatter($parser, new FormatOptions(Style::Compact)),
     $grammarVersion,
 );

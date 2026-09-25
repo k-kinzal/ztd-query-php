@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0655f1d031b3d3e9a8609201e7d3853f",
+    "content-hash": "a80be9dc3de4e6835a1db7e6f8b045e5",
     "packages": [
         {
             "name": "k-kinzal/sql-parser",
@@ -1248,6 +1248,250 @@
                 "source": "https://github.com/Jean85/pretty-package-versions/tree/2.1.1"
             },
             "time": "2025-03-19T14:43:43+00:00"
+        },
+        {
+            "name": "k-kinzal/bison-parser",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../bison-parser",
+                "reference": "5e42d42627354e869c5e2be156a97a03fdb4c842"
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "behat/behat": "^3.14",
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "BisonParser\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/bison-parser"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Parser for GNU Bison grammar files, producing a lossless syntax tree",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/bison-parser",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/bison-parser/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "k-kinzal/lemon-parser",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../lemon-parser",
+                "reference": "cbd9866b7fde50756437535ec3485f1d11110953"
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "behat/behat": "^3.14",
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "LemonParser\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/lemon-parser"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict --no-interaction --no-snippets"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Parser for Lemon grammar files, producing a lossless syntax tree",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/lemon-parser",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/lemon-parser/"
+            },
+            "transport-options": {
+                "relative": true
+            }
         },
         {
             "name": "k-kinzal/php-ai-toolkit",
@@ -6506,6 +6750,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "k-kinzal/bison-parser": 20,
+        "k-kinzal/lemon-parser": 20,
         "k-kinzal/php-ai-toolkit": 20,
         "k-kinzal/sql-faker": 20,
         "k-kinzal/sql-formatter": 20,

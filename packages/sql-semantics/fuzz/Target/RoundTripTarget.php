@@ -6,7 +6,7 @@ namespace Fuzz\Target;
 
 use Error;
 use SqlFormatter\Facade\Formatter;
-use SqlSemantics\Core\Binder;
+use SqlSemantics\Facade\Semantics;
 use Throwable;
 
 /**
@@ -15,7 +15,7 @@ use Throwable;
 final class RoundTripTarget
 {
     public function __construct(
-        private readonly Binder $semantics,
+        private readonly Semantics $semantics,
         private readonly Formatter $compact,
         private readonly string $grammarVersion,
     ) {
@@ -30,20 +30,14 @@ final class RoundTripTarget
         if ($sql === '') {
             throw new Error("Statement generation returned an empty string\n{$context}");
         }
+        $printed = null;
         try {
-            $statement = $this->semantics->bind($sql);
-            $serialize = [$statement, 'toString'];
-            if (!is_callable($serialize)) {
-                throw new Error('The semantic result does not implement toString()');
-            }
-            $printed = $serialize();
-            if (!is_string($printed)) {
-                throw new Error('Statement::toString() must return SQL text');
-            }
+            $statement = $this->semantics->analyze($sql);
+            $printed = $statement->toString();
             $expected = $this->compact->format($sql);
             $actual = $this->compact->format($printed);
         } catch (Throwable $failure) {
-            throw new Error("Semantic round trip failed\n{$context}\nError: {$failure->getMessage()}", 0, $failure);
+            throw new Error("Semantic round trip failed\n{$context}\nPrinted: {$printed}\nError: {$failure->getMessage()}", 0, $failure);
         }
         if ($actual !== $expected) {
             throw new Error("Semantic round trip changed the statement\n{$context}\nPrinted: {$printed}\nExpected: {$expected}\nActual: {$actual}");

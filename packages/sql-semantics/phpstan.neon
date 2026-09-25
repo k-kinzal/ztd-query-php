@@ -14,4 +14,4 @@ parameters:
         forbiddenNamespacePrefixes: ['Tests\Fixture', 'Tests\Fixtures']
     phpVersion: 80100
     level: max
-    paths: [src, tests, bench]
+    paths: [src, resources/models, tests, bench]

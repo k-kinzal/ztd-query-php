@@ -1,6 +1,6 @@
 {
     "name": "k-kinzal/sql-semantics",
-    "description": "SQL semantic binding: schema declarations, bound statements, types, nullability, and value provenance",
+    "description": "Typed SQL statement analysis and reconstruction, with schema-dependent binding and value provenance",
     "type": "library",
     "license": "MIT",
     "require": {
@@ -12,6 +12,8 @@
         "deptrac/deptrac": "^3.0",
         "fakerphp/faker": "^1.23",
         "friendsofphp/php-cs-fixer": "^3.95.25",
+        "k-kinzal/bison-parser": "dev-main",
+        "k-kinzal/lemon-parser": "dev-main",
         "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "dev-main",
         "k-kinzal/sql-formatter": "dev-main",
@@ -55,11 +57,30 @@
                     "k-kinzal/sql-formatter": "dev-main"
                 }
             }
+        },
+        {
+            "type": "path",
+            "url": "../bison-parser",
+            "options": {
+                "versions": {
+                    "k-kinzal/bison-parser": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../lemon-parser",
+            "options": {
+                "versions": {
+                    "k-kinzal/lemon-parser": "dev-main"
+                }
+            }
         }
     ],
     "autoload": {
         "psr-4": {
-            "SqlSemantics\\": "src/"
+            "SqlSemantics\\": "src/",
+            "SqlSemantics\\Statement\\Model\\": "resources/models/"
         }
     },
     "autoload-dev": {
@@ -83,6 +104,8 @@
         "bench": "phpbench run --report=aggregate",
         "bench:full": "@bench",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
+        "build:models": "@php -d memory_limit=1G bin/build-models.php",
+        "build:models:check": "@build:models --check",
         "compat": "phpcs",
         "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
         "docgen": "docgen --packages=. --title=k-kinzal/sql-semantics",
@@ -102,12 +125,12 @@
         "fuzz:mysql": [
             "Composer\\Config::disableProcessTimeout",
             "@fuzz:seeds:mysql --",
-            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_roundtrip.php fuzz/corpus/mysql/ --timeout=60"
+            "@php fuzz/run.php mysql"
         ],
         "fuzz:pg": [
             "Composer\\Config::disableProcessTimeout",
             "@fuzz:seeds:pg --",
-            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_roundtrip.php fuzz/corpus/pg/ --timeout=60"
+            "@php fuzz/run.php pg"
         ],
         "fuzz:seeds": [
             "@fuzz:seeds:mysql",
@@ -126,7 +149,7 @@
         "fuzz:sqlite": [
             "Composer\\Config::disableProcessTimeout",
             "@fuzz:seeds:sqlite --",
-            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_roundtrip.php fuzz/corpus/sqlite/ --timeout=60"
+            "@php fuzz/run.php sqlite"
         ],
         "lint": [
             "@autoload:check",

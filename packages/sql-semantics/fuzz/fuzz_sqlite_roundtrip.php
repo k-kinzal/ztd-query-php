@@ -22,16 +22,15 @@ use SqlFormatter\Core\FormatOptions;
 use SqlFormatter\Core\Style;
 use SqlFormatter\Facade\Formatter;
 use SqlParser\Sqlite\SqliteParser;
-use SqlSemantics\Core\Binder;
-use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Facade\Semantics;
 
 $grammarVersion = 'sqlite-3.47.2';
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/sqlite');
 $provider = new SqliteProvider(Factory::create(), $grammarVersion, $coverage);
 $parser = new SqliteParser($grammarVersion);
 $target = new RoundTripTarget(
-    new Binder((new SchemaBuilder(Dialect::Sqlite, grammarVersion: $grammarVersion))->build()),
+    new Semantics(Dialect::Sqlite, $grammarVersion),
     new Formatter($parser, new FormatOptions(Style::Compact)),
     $grammarVersion,
 );

@@ -1,8 +1,12 @@
 deptrac:
-  paths: [./src]
+  paths: [./src, ./resources/models]
   analyser:
     types: [class, use]
   layers:
+    - name: Statements
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Statement\\.*'
     - name: Core
       collectors:
         - type: classLike
@@ -40,11 +44,12 @@ deptrac:
         - type: classLike
           value: '^SqlParser\\Sqlite\\.*'
   ruleset:
-    Core: [ParserCore]
+    Statements: []
+    Core: [ParserCore, Statements]
     MySql: [Core, ParserCore, ParserMySql]
     PostgreSql: [Core, ParserCore, ParserPostgreSql]
     Sqlite: [Core, ParserCore, ParserSqlite]
-    Facade: [Core, MySql, PostgreSql, Sqlite]
+    Facade: [Core, Statements, MySql, PostgreSql, Sqlite]
     ParserCore: []
     ParserMySql: []
     ParserPostgreSql: []

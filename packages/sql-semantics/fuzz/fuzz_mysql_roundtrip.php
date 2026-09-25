@@ -24,9 +24,8 @@ use SqlFormatter\Core\FormatOptions;
 use SqlFormatter\Core\Style;
 use SqlFormatter\Facade\Formatter;
 use SqlParser\MySql\MySqlParser;
-use SqlSemantics\Core\Binder;
-use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Facade\Semantics;
 
 $mysqlVersion = getenv('MYSQL_VERSION') !== false ? getenv('MYSQL_VERSION') : '8.4.7';
 
@@ -57,7 +56,7 @@ $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__D
 $provider = new MySqlProvider(Factory::create(), $grammarVersion, $coverage);
 $parser = new MySqlParser($grammarVersion);
 $target = new RoundTripTarget(
-    new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $grammarVersion))->build()),
+    new Semantics(Dialect::MySql, $grammarVersion),
     new Formatter($parser, new FormatOptions(Style::Compact)),
     $grammarVersion,
 );

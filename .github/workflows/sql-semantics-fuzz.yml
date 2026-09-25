@@ -101,12 +101,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build/fuzz "fuzz/corpus/${{ matrix.target.database }}"
-          php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz \
-            "fuzz/${{ matrix.target.script }}" \
-            "fuzz/corpus/${{ matrix.target.database }}/" \
-            --timeout=60 "--max-runs=$FUZZ_MAX_RUNS" 2>&1 | tee "build/fuzz/${{ matrix.target.database }}.log"
+          php fuzz/run.php "${{ matrix.target.database }}" \
+            "--max-runs=$FUZZ_MAX_RUNS" 2>&1 | tee "build/fuzz/${{ matrix.target.database }}.log"
       - name: Open an issue for a finding
-        if: github.event_name != 'pull_request'
+        if: always() && github.event_name != 'pull_request'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           FUZZ_DATABASE: ${{ matrix.target.database }}
@@ -119,7 +117,9 @@ jobs:
             const database = process.env.FUZZ_DATABASE;
             const script = process.env.FUZZ_SCRIPT;
             const root = path.resolve('packages/sql-semantics');
-            const log = fs.readFileSync(path.join(root, `build/fuzz/${database}.log`), 'utf8');
+            const logPath = path.join(root, `build/fuzz/${database}.log`);
+            if (!fs.existsSync(logPath)) return;
+            const log = fs.readFileSync(logPath, 'utf8');
             const finding = log.match(/^(?:CORPUS )?CRASH in (.+)!$/m);
             if (!finding) return;
             const input = fs.readFileSync(path.resolve(root, finding[1]));

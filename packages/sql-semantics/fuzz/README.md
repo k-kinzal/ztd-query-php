@@ -7,12 +7,10 @@ with sql-formatter's Compact preset. An empty generated statement, a rejection,
 a missing serializer, a serialization failure, a formatting failure, or a
 difference is a finding. No statement category or exception is skipped.
 
-**Implementation status:** the current SELECT-only `Binder` does not satisfy this
-contract. It rejects generated DDL and DML, requires declarations for named tables,
-and returns `BoundSelect`, which has no `toString()` method. These targets expose
-those gaps and currently fail. They must pass against a complete statement model
-before this change is ready to merge. Keeping the source SQL or parser tree in a
-result and printing it back is not an implementation of the contract.
+The target calls `Facade\Semantics::analyze()`, which needs no schema. Its
+`Statement` stores typed model arguments and finite choices, not source SQL or a
+parser tree. SQL is reconstructed by the model writers. The schema-dependent
+`Binder` API is separate from this property.
 
 ## Run
 
@@ -58,8 +56,10 @@ SQLFAKER_COVERAGE=0 php -d memory_limit=-1 vendor/bin/php-fuzzer run-single \
 The report includes the grammar release, the raw plan in hexadecimal, and the
 generated SQL. A mutated finding is saved as `crash-<hash>.txt`; an initial corpus
 failure names the original seed. Replay it with the same target and MySQL release.
-PHP-Fuzzer 0.0.11 can exit successfully after reporting a crash; inspect its output.
-The workflow explicitly fails when the log contains a finding.
+PHP-Fuzzer 0.0.11 can exit successfully after reporting a crash. The Composer
+commands and CI use `fuzz/run.php`, which streams its output and returns failure
+for every reported crash or timeout, including initial corpus failures. When
+invoking PHP-Fuzzer directly, inspect its output as well as its exit status.
 
 ## Continuous integration
 

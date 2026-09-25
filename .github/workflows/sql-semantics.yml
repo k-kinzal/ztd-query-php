@@ -87,6 +87,8 @@ jobs:
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
+      - name: Verify generated statement models
+        run: composer build:models:check
       - name: Check PSR-4 paths and ambiguous classes
         run: composer autoload:check
       - name: Check the formatting

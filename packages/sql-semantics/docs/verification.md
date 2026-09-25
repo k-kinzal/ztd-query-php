@@ -1,6 +1,13 @@
 # Verification
 
-The SQL-string public API is tested with PostgreSQL, MySQL, and SQLite. Tests
+Structural analysis is tested with MySQL, PostgreSQL, and SQLite, including
+stored programs, CTEs, windows, DML, DDL, transaction commands, and administrative
+commands. Round-trip tests compare Compact output. Separate tests construct
+models without a parser, vary their data, and verify the resulting SQL. Weak
+references verify that lowering releases parser nodes and tokens. Deptrac checks
+the entire generated model namespace and prohibits parser dependencies there.
+
+The schema-dependent binding API is also tested with all three databases. Tests
 cover schema construction and reuse, default namespaces and grammar context,
 binding and alias visibility, self joins, nested outer joins, NULL provenance,
 ON versus WHERE stages, stars and duplicate names, ordering, pagination,
@@ -27,12 +34,19 @@ separately, as in the other packages) and a coverage driver:
 infection --configuration=infection.json5 --with-uncovered --threads=4 --only-covering-test-cases
 ```
 
-The CI workflow checks PHP 8.1 through 8.5 and runs lint, mutation testing, and the
-benchmark smoke test. The library and these checks require no live database.
+The CI workflow checks PHP 8.1 through 8.5 and runs lint, generated-resource
+verification, and the benchmark smoke test. The library and these checks require no live database.
 
 The [round-trip fuzz targets](../fuzz/README.md) reuse all three sql-faker seed
 corpora and compare original and reconstructed SQL with the Compact formatter.
-This is a stricter contract than the current binder implements: all three targets
-currently find rejected statements, and `BoundSelect` cannot yet serialize its
-own data. The fuzz workflow fails on these findings. Passing the existing unit
-suite does not establish full-language structural coverage or round-trip support.
+Every generated statement must succeed; analysis, printing, formatting, and
+equality failures are findings. The default corpora contain 2,135 MySQL, 2,639
+PostgreSQL, and 294 SQLite plans. PR checks replay these plans and add mutations;
+nightly and manual runs extend the mutation budget. Finite runs provide evidence
+for the property; exhaustive structural coverage comes from compiling a model
+for every alternative in each shipped grammar, without fallback values.
+
+`composer build:models` regenerates the checked-in model classes and construction
+maps from the official grammar releases. CI verifies that regeneration produces
+no changed or additional resources. PHPStan checks the generated models as well
+as handwritten source; generation is not an exemption from type checking.
