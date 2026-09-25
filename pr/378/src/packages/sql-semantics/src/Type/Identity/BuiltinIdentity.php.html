@@ -71,55 +71,56 @@
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-kw">case</span> <span class="tok-id">DoublePrecision</span> = <span class="tok-str">&#039;double precision&#039;</span>;</span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">case</span> <span class="tok-id">Float</span> = <span class="tok-str">&#039;float&#039;</span>;</span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">case</span> <span class="tok-id">Char</span> = <span class="tok-str">&#039;char&#039;</span>;</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">case</span> <span class="tok-id">Varchar</span> = <span class="tok-str">&#039;varchar&#039;</span>;</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-kw">case</span> <span class="tok-id">Text</span> = <span class="tok-str">&#039;text&#039;</span>;</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">case</span> <span class="tok-id">TinyText</span> = <span class="tok-str">&#039;tinytext&#039;</span>;</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">case</span> <span class="tok-id">MediumText</span> = <span class="tok-str">&#039;mediumtext&#039;</span>;</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">case</span> <span class="tok-id">LongText</span> = <span class="tok-str">&#039;longtext&#039;</span>;</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">case</span> <span class="tok-id">Binary</span> = <span class="tok-str">&#039;binary&#039;</span>;</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">case</span> <span class="tok-id">Varbinary</span> = <span class="tok-str">&#039;varbinary&#039;</span>;</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-kw">case</span> <span class="tok-id">Blob</span> = <span class="tok-str">&#039;blob&#039;</span>;</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-kw">case</span> <span class="tok-id">TinyBlob</span> = <span class="tok-str">&#039;tinyblob&#039;</span>;</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-kw">case</span> <span class="tok-id">MediumBlob</span> = <span class="tok-str">&#039;mediumblob&#039;</span>;</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">case</span> <span class="tok-id">LongBlob</span> = <span class="tok-str">&#039;longblob&#039;</span>;</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    <span class="tok-kw">case</span> <span class="tok-id">Bytea</span> = <span class="tok-str">&#039;bytea&#039;</span>;</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-kw">case</span> <span class="tok-id">Bit</span> = <span class="tok-str">&#039;bit&#039;</span>;</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">case</span> <span class="tok-id">Varbit</span> = <span class="tok-str">&#039;varbit&#039;</span>;</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    <span class="tok-kw">case</span> <span class="tok-id">Date</span> = <span class="tok-str">&#039;date&#039;</span>;</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-kw">case</span> <span class="tok-id">Time</span> = <span class="tok-str">&#039;time&#039;</span>;</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-kw">case</span> <span class="tok-id">Timetz</span> = <span class="tok-str">&#039;timetz&#039;</span>;</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    <span class="tok-kw">case</span> <span class="tok-id">Timestamp</span> = <span class="tok-str">&#039;timestamp&#039;</span>;</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-kw">case</span> <span class="tok-id">Timestamptz</span> = <span class="tok-str">&#039;timestamptz&#039;</span>;</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-kw">case</span> <span class="tok-id">Datetime</span> = <span class="tok-str">&#039;datetime&#039;</span>;</span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    <span class="tok-kw">case</span> <span class="tok-id">Year</span> = <span class="tok-str">&#039;year&#039;</span>;</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    <span class="tok-kw">case</span> <span class="tok-id">Interval</span> = <span class="tok-str">&#039;interval&#039;</span>;</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    <span class="tok-kw">case</span> <span class="tok-id">Json</span> = <span class="tok-str">&#039;json&#039;</span>;</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-kw">case</span> <span class="tok-id">Jsonb</span> = <span class="tok-str">&#039;jsonb&#039;</span>;</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    <span class="tok-kw">case</span> <span class="tok-id">Uuid</span> = <span class="tok-str">&#039;uuid&#039;</span>;</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>    <span class="tok-kw">case</span> <span class="tok-id">Xml</span> = <span class="tok-str">&#039;xml&#039;</span>;</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-kw">case</span> <span class="tok-id">Geometry</span> = <span class="tok-str">&#039;geometry&#039;</span>;</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    <span class="tok-kw">case</span> <span class="tok-id">Point</span> = <span class="tok-str">&#039;point&#039;</span>;</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    <span class="tok-kw">case</span> <span class="tok-id">LineString</span> = <span class="tok-str">&#039;linestring&#039;</span>;</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">case</span> <span class="tok-id">Polygon</span> = <span class="tok-str">&#039;polygon&#039;</span>;</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    <span class="tok-kw">case</span> <span class="tok-id">MultiPoint</span> = <span class="tok-str">&#039;multipoint&#039;</span>;</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    <span class="tok-kw">case</span> <span class="tok-id">MultiLineString</span> = <span class="tok-str">&#039;multilinestring&#039;</span>;</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    <span class="tok-kw">case</span> <span class="tok-id">MultiPolygon</span> = <span class="tok-str">&#039;multipolygon&#039;</span>;</span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>    <span class="tok-kw">case</span> <span class="tok-id">GeometryCollection</span> = <span class="tok-str">&#039;geometrycollection&#039;</span>;</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    <span class="tok-kw">case</span> <span class="tok-id">Vector</span> = <span class="tok-str">&#039;vector&#039;</span>;</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    <span class="tok-kw">case</span> <span class="tok-id">Serial</span> = <span class="tok-str">&#039;serial&#039;</span>;</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    <span class="tok-kw">case</span> <span class="tok-id">SmallSerial</span> = <span class="tok-str">&#039;smallserial&#039;</span>;</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">case</span> <span class="tok-id">BigSerial</span> = <span class="tok-str">&#039;bigserial&#039;</span>;</span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a></span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a><span class="tok-com">     * Returns the canonical database type name represented by this identity.</span></span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">name</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    {</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">value</span>;</span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    }</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>}</span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">case</span> <span class="tok-id">Bpchar</span> = <span class="tok-str">&#039;bpchar&#039;</span>;</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-kw">case</span> <span class="tok-id">Varchar</span> = <span class="tok-str">&#039;varchar&#039;</span>;</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">case</span> <span class="tok-id">Text</span> = <span class="tok-str">&#039;text&#039;</span>;</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">case</span> <span class="tok-id">TinyText</span> = <span class="tok-str">&#039;tinytext&#039;</span>;</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">case</span> <span class="tok-id">MediumText</span> = <span class="tok-str">&#039;mediumtext&#039;</span>;</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">case</span> <span class="tok-id">LongText</span> = <span class="tok-str">&#039;longtext&#039;</span>;</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">case</span> <span class="tok-id">Binary</span> = <span class="tok-str">&#039;binary&#039;</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-kw">case</span> <span class="tok-id">Varbinary</span> = <span class="tok-str">&#039;varbinary&#039;</span>;</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-kw">case</span> <span class="tok-id">Blob</span> = <span class="tok-str">&#039;blob&#039;</span>;</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-kw">case</span> <span class="tok-id">TinyBlob</span> = <span class="tok-str">&#039;tinyblob&#039;</span>;</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">case</span> <span class="tok-id">MediumBlob</span> = <span class="tok-str">&#039;mediumblob&#039;</span>;</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    <span class="tok-kw">case</span> <span class="tok-id">LongBlob</span> = <span class="tok-str">&#039;longblob&#039;</span>;</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-kw">case</span> <span class="tok-id">Bytea</span> = <span class="tok-str">&#039;bytea&#039;</span>;</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">case</span> <span class="tok-id">Bit</span> = <span class="tok-str">&#039;bit&#039;</span>;</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    <span class="tok-kw">case</span> <span class="tok-id">Varbit</span> = <span class="tok-str">&#039;varbit&#039;</span>;</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-kw">case</span> <span class="tok-id">Date</span> = <span class="tok-str">&#039;date&#039;</span>;</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-kw">case</span> <span class="tok-id">Time</span> = <span class="tok-str">&#039;time&#039;</span>;</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    <span class="tok-kw">case</span> <span class="tok-id">Timetz</span> = <span class="tok-str">&#039;timetz&#039;</span>;</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-kw">case</span> <span class="tok-id">Timestamp</span> = <span class="tok-str">&#039;timestamp&#039;</span>;</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-kw">case</span> <span class="tok-id">Timestamptz</span> = <span class="tok-str">&#039;timestamptz&#039;</span>;</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    <span class="tok-kw">case</span> <span class="tok-id">Datetime</span> = <span class="tok-str">&#039;datetime&#039;</span>;</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    <span class="tok-kw">case</span> <span class="tok-id">Year</span> = <span class="tok-str">&#039;year&#039;</span>;</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    <span class="tok-kw">case</span> <span class="tok-id">Interval</span> = <span class="tok-str">&#039;interval&#039;</span>;</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-kw">case</span> <span class="tok-id">Json</span> = <span class="tok-str">&#039;json&#039;</span>;</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    <span class="tok-kw">case</span> <span class="tok-id">Jsonb</span> = <span class="tok-str">&#039;jsonb&#039;</span>;</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>    <span class="tok-kw">case</span> <span class="tok-id">Uuid</span> = <span class="tok-str">&#039;uuid&#039;</span>;</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-kw">case</span> <span class="tok-id">Xml</span> = <span class="tok-str">&#039;xml&#039;</span>;</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    <span class="tok-kw">case</span> <span class="tok-id">Geometry</span> = <span class="tok-str">&#039;geometry&#039;</span>;</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    <span class="tok-kw">case</span> <span class="tok-id">Point</span> = <span class="tok-str">&#039;point&#039;</span>;</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">case</span> <span class="tok-id">LineString</span> = <span class="tok-str">&#039;linestring&#039;</span>;</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    <span class="tok-kw">case</span> <span class="tok-id">Polygon</span> = <span class="tok-str">&#039;polygon&#039;</span>;</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    <span class="tok-kw">case</span> <span class="tok-id">MultiPoint</span> = <span class="tok-str">&#039;multipoint&#039;</span>;</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    <span class="tok-kw">case</span> <span class="tok-id">MultiLineString</span> = <span class="tok-str">&#039;multilinestring&#039;</span>;</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>    <span class="tok-kw">case</span> <span class="tok-id">MultiPolygon</span> = <span class="tok-str">&#039;multipolygon&#039;</span>;</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    <span class="tok-kw">case</span> <span class="tok-id">GeometryCollection</span> = <span class="tok-str">&#039;geometrycollection&#039;</span>;</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    <span class="tok-kw">case</span> <span class="tok-id">Vector</span> = <span class="tok-str">&#039;vector&#039;</span>;</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    <span class="tok-kw">case</span> <span class="tok-id">Serial</span> = <span class="tok-str">&#039;serial&#039;</span>;</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">case</span> <span class="tok-id">SmallSerial</span> = <span class="tok-str">&#039;smallserial&#039;</span>;</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>    <span class="tok-kw">case</span> <span class="tok-id">BigSerial</span> = <span class="tok-str">&#039;bigserial&#039;</span>;</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a></span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a><span class="tok-com">     * Returns the canonical database type name represented by this identity.</span></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">name</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    {</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">value</span>;</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    }</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>}</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
