@@ -51,10 +51,7 @@
     "autoload": {
         "psr-4": {
             "SqlFixture\\": "src/"
-        },
-        "files": [
-            "src/Compatibility/ClassAliases.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

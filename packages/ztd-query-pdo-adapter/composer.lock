@@ -1652,7 +1652,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-fixture",
-                "reference": "c179ff4718a3412bdee8215579358c36ddd10cab"
+                "reference": "fc6309d5ad85e62eb47738c41cb26285ac3c391b"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1678,10 +1678,7 @@
             "autoload": {
                 "psr-4": {
                     "SqlFixture\\": "src/"
-                },
-                "files": [
-                    "src/Compatibility/ClassAliases.php"
-                ]
+                }
             },
             "autoload-dev": {
                 "psr-4": {

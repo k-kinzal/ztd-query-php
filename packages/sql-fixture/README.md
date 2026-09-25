@@ -266,8 +266,8 @@ database names and never chooses an implementation.
 can participate in linked fixture generation without provider dependencies.
 
 `Provider` owns the Faker entry points, driver selection, and default collaborator
-assembly. `Compatibility` preserves old entry-point names and deprecated wrappers
-outside core. Deptrac enforces these directions with one collector per namespace;
+assembly. Providers and platform implementations are used through their own
+namespaces. Deptrac enforces these directions with one collector per namespace;
 PHPStan's file-term rule protects all core directories and rejects references to
 other databases inside each platform. Build and fuzz scripts are development tools,
 not a public CLI layer.
