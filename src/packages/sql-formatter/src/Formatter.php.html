@@ -53,8 +53,8 @@
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com"> * Formats SQL with the dialect, release, and lexical settings of a supplied parser.</span></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> * Tokens, identifiers, literals, comments, and explicit parentheses are preserved.</span></span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> * Output is parsed again to verify that formatting preserves the grammar derivation.</span></span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> * Compact canonicalizes optional syntax and keywords; other styles preserve tokens.</span></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> * Output is parsed again to verify the selected style&#039;s preservation contract.</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> * @example Formatting a query</span></span>
@@ -62,7 +62,7 @@
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $formatter-&gt;format(&#039;SELECT id,name FROM users&#039;) // =&gt; &quot;SELECT\n    id,\n    name\nFROM\n    users&quot;</span></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com"> * @example Selecting compact output</span></span>
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com"> *     $formatter = new \SqlFormatter\Formatter(new \SqlParser\MySql\MySqlParser(), new \SqlFormatter\FormatOptions(\SqlFormatter\Style::Compact));</span></span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com"> *     $formatter-&gt;format(&quot;SELECT  id, name\nFROM users&quot;) // =&gt; &#039;SELECT id, name FROM users&#039;</span></span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com"> *     $formatter-&gt;format(&quot;SELECT  id, name\nFROM users&quot;) // =&gt; &#039;SELECT id,name FROM users&#039;</span></span>
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Formatter</span></span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a>{</span>
@@ -82,19 +82,22 @@
 <span class="src-line" id="L44"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">format</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-id">string</span></span>
 <span class="src-line" id="L45"><a class="ln" href="#L45">45</a>    {</span>
 <span class="src-line" id="L46"><a class="ln" href="#L46">46</a>        <span class="tok-var">$tree</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">parser</span>-&gt;<span class="tok-id">parse</span>(<span class="tok-var">$sql</span>);</span>
-<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>        <span class="tok-var">$result</span> = (<span class="tok-kw">new</span> <span class="tok-id">Renderer</span>(<span class="tok-id">Document</span>::<span class="tok-id">from</span>(<span class="tok-var">$tree</span>), <span class="tok-var">$this</span>-&gt;<span class="tok-id">options</span>))-&gt;<span class="tok-id">render</span>();</span>
-<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>        <span class="tok-kw">try</span> {</span>
-<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>            <span class="tok-var">$formatted</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">parser</span>-&gt;<span class="tok-id">parse</span>(<span class="tok-var">$result</span>);</span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">SourceException</span> <span class="tok-var">$exception</span>) {</span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">FormattingException</span>(<span class="tok-str">&#039;Formatted SQL could not be parsed with the original grammar.&#039;</span>, <span class="tok-num">0</span>, <span class="tok-var">$exception</span>);</span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        }</span>
-<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>        <span class="tok-kw">if</span> (<span class="tok-id">Fingerprint</span>::<span class="tok-id">of</span>(<span class="tok-var">$tree</span>) !== <span class="tok-id">Fingerprint</span>::<span class="tok-id">of</span>(<span class="tok-var">$formatted</span>)) {</span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">FormattingException</span>(<span class="tok-str">&#039;Formatting changed the SQL syntax tree.&#039;</span>);</span>
+<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">options</span>-&gt;<span class="tok-id">style</span> === <span class="tok-id">Style</span>::<span class="tok-id">Compact</span>) {</span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>            <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">Compact\Renderer</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">parser</span>))-&gt;<span class="tok-id">render</span>(<span class="tok-var">$tree</span>);</span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>        }</span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>        <span class="tok-var">$result</span> = (<span class="tok-kw">new</span> <span class="tok-id">Renderer</span>(<span class="tok-id">Document</span>::<span class="tok-id">from</span>(<span class="tok-var">$tree</span>), <span class="tok-var">$this</span>-&gt;<span class="tok-id">options</span>))-&gt;<span class="tok-id">render</span>();</span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>        <span class="tok-kw">try</span> {</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>            <span class="tok-var">$formatted</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">parser</span>-&gt;<span class="tok-id">parse</span>(<span class="tok-var">$result</span>);</span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">SourceException</span> <span class="tok-var">$exception</span>) {</span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">FormattingException</span>(<span class="tok-str">&#039;Formatted SQL could not be parsed with the original grammar.&#039;</span>, <span class="tok-num">0</span>, <span class="tok-var">$exception</span>);</span>
 <span class="src-line" id="L55"><a class="ln" href="#L55">55</a>        }</span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>        <span class="tok-kw">return</span> <span class="tok-var">$result</span>;</span>
-<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>    }</span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>}</span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a></span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>        <span class="tok-kw">if</span> (<span class="tok-id">Fingerprint</span>::<span class="tok-id">of</span>(<span class="tok-var">$tree</span>) !== <span class="tok-id">Fingerprint</span>::<span class="tok-id">of</span>(<span class="tok-var">$formatted</span>)) {</span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">FormattingException</span>(<span class="tok-str">&#039;Formatting changed the SQL syntax tree.&#039;</span>);</span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>        }</span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>        <span class="tok-kw">return</span> <span class="tok-var">$result</span>;</span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>    }</span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>}</span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
