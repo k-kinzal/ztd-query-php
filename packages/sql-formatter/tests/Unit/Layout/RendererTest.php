@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFormatter\FormatOptions;
 use SqlFormatter\Layout\Renderer;
-use SqlFormatter\Style;
 use SqlFormatter\Syntax\Document;
 use SqlParser\Sqlite\SqliteParser;
 
@@ -30,9 +29,9 @@ use SqlParser\Sqlite\SqliteParser;
 #[CoversClass(\SqlFormatter\Syntax\Lists::class)]
 final class RendererTest extends TestCase
 {
-    public function testRenderCompactPreservesSpelling(): void
+    public function testRenderExpandedPreservesSpelling(): void
     {
         $document = Document::from((new SqliteParser())->parse('select a,b from t'));
-        self::assertSame('select a, b from t', (new Renderer($document, new FormatOptions(Style::Compact)))->render());
+        self::assertSame("select\n    a,\n    b\nfrom\n    t", (new Renderer($document, new FormatOptions()))->render());
     }
 }

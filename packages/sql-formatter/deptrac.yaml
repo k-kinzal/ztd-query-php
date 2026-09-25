@@ -23,8 +23,13 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '/^SqlParser\\/'
+    - name: Compact
+      collectors:
+        - type: directory
+          value: 'src/Compact/'
   ruleset:
-    API: [Options, Syntax, Layout, Parser]
+    API: [Options, Syntax, Layout, Compact, Parser]
+    Compact: [Options, Parser]
     Options: []
     Syntax: [Parser]
     Layout: [Options, Syntax, Parser]

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9028044c804b7db6d44b529638655e8b",
+    "content-hash": "decd1d748c9cf8c8e1ed5cee51292866",
     "packages": [
         {
             "name": "k-kinzal/sql-parser",
@@ -6459,7 +6459,9 @@
     "platform": {
         "php": "^8.1"
     },
-    "platform-dev": {},
+    "platform-dev": {
+        "ext-pdo_sqlite": "*"
+    },
     "platform-overrides": {
         "php": "8.1.0"
     },
