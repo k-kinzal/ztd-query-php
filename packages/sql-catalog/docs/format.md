@@ -158,7 +158,19 @@ index is a script rather than data fetched at runtime, nothing is loaded over
 the network, and every page reads without the scripts — they only add
 narrowing, sorting, copying, the theme switch and search.
 
-A gap is rendered as a marked `{$}` that says, when pointed at, where the value
-filling it comes from — and a call that no statement was read from is not
-dressed up as a statement at all, but shown as the call it is, with the reason
+SQL in listings and statement pages uses [sql-formatter](../../sql-formatter/)'s
+Expanded layout, with clause bodies and list items on separate lines, without
+clipping listings to a fixed number of lines. Listings use doc-ui's existing
+`pre.code` component. Gaps and client placeholders are preserved through
+formatting. The report tries the supported MySQL, PostgreSQL and SQLite grammars;
+text none accepts is kept as
+written. Statement pages also retain the original layout under **As written in
+the source**, while **Copy** copies the displayed, formatted SQL.
+
+A gap uses the PHP variable name when known, such as `{$sql}` for an unresolved
+`$pdo->prepare($sql)` or `{$table}` in a concatenated query. When the variable
+cannot be identified, it remains `{$}`. This is a display annotation: the JSON
+and text SQL markers and statement identities remain unchanged. Each marked gap
+says, when pointed at, where the value filling it comes from. A call that no
+statement was read from is not dressed up as a statement at all, but shown as the call it is, with the reason
 the analysis has nothing to say about it.

@@ -21,11 +21,13 @@ final class OpaqueTerm implements Term
      * @param TypeShape $type The static type of the value
      * @param Origin $origin Where the value enters the analyzed code
      * @param string|null $expression The source expression, when short enough to quote
+     * @param string|null $variable The PHP variable read at the use site, when known
      */
     public function __construct(
         public readonly TypeShape $type,
         public readonly Origin $origin,
         public readonly ?string $expression = null,
+        public readonly ?string $variable = null,
     ) {
     }
 
@@ -43,7 +45,7 @@ final class OpaqueTerm implements Term
     #[Override]
     public function toPattern(): TextPattern
     {
-        return TextPattern::fromHole(new TextHole($this->origin, $this->type, $this->expression));
+        return TextPattern::fromHole(new TextHole($this->origin, $this->type, $this->expression, $this->variable));
     }
 
     /**

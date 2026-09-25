@@ -319,12 +319,15 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-catalog",
-                "reference": "fb17a8f4b2b822eee7b63cc2f78654d08d6bedb2"
+                "reference": "20f06efa517de3c1159599a6800a8f4c12def6fb"
             },
             "require": {
                 "ext-json": "*",
+                "k-kinzal/sql-formatter": "dev-main",
+                "k-kinzal/sql-parser": "dev-main",
                 "nikic/php-parser": "^5.0",
-                "php": "^8.1"
+                "php": "^8.1",
+                "symfony/yaml": "^6.4"
             },
             "require-dev": {
                 "brianium/paratest": "^7.3",

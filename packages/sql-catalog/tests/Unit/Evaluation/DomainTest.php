@@ -177,4 +177,35 @@ final class DomainTest extends TestCase
         self::assertTrue(Domain::literal('a')->equals(Domain::literal('a')));
         self::assertFalse(Domain::literal('a')->equals(Domain::literal('b')));
     }
+    public function testWithVariableNamesOnlyOpaqueAlternativesWithoutChangingTheirMeaning(): void
+    {
+        $value = Domain::fromTerms([
+            new OpaqueTerm(TypeShape::of(['string']), Origin::Call, 'buildSql()'),
+            new LiteralTerm('SELECT 1'),
+        ], true, true);
+        $named = $value->withVariable('$sql');
+        $hole = $named->patterns()[0]->holes()[0];
+
+        self::assertSame('$sql', $hole->variable);
+        self::assertSame('buildSql()', $hole->expression);
+        self::assertSame(Origin::Call, $hole->origin);
+        self::assertSame('string', $hole->type->display());
+        self::assertSame('SELECT 1', $named->patterns()[1]->text());
+        self::assertTrue($named->widened);
+        self::assertTrue($named->combined);
+        self::assertSame($value->signature(), $named->signature());
+        self::assertNull($value->patterns()[0]->holes()[0]->variable);
+    }
+
+    public function testWithVariablePreservesResolvedDomainsAndExistingFragmentNames(): void
+    {
+        $resolved = Domain::literal('SELECT 1');
+        $fragment = Domain::of(new PatternTerm(TextPattern::fromText('SELECT * FROM ')->concat(
+            TextPattern::fromHole(new TextHole(Origin::Parameter, TypeShape::of(['string']), '$table', '$table')),
+        )));
+
+        self::assertSame($resolved, $resolved->withVariable('$sql'));
+        self::assertSame($fragment, $fragment->withVariable('$sql'));
+    }
+
 }

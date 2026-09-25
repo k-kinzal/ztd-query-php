@@ -79,7 +79,7 @@ final class StatementPageTest extends TestCase
         $page = (new StatementPage())->render(new ReportSite(new Catalog([$entry, $other])), $entry);
 
         self::assertStringContainsString('<h1><span class="chip tone-blue">SELECT</span><span>on users</span></h1>', $page);
-        self::assertStringContainsString('<pre class="code code-lead"><span class="tok-kw">SELECT</span> id' . "\n" . '<span class="tok-kw">FROM</span> users', $page);
+        self::assertStringContainsString('<pre class="code code-lead"><span class="tok-kw">SELECT</span>' . "\n    " . 'id' . "\n" . '<span class="tok-kw">FROM</span>' . "\n    " . 'users', $page);
         self::assertStringContainsString('<div class="split"><section><h2 id="facts">About this statement</h2>', $page);
         self::assertStringContainsString('<h2 id="values">Bound values</h2>', $page);
         self::assertStringContainsString('<h2 id="findings">Findings</h2>', $page);
@@ -125,7 +125,7 @@ final class StatementPageTest extends TestCase
         $body = (new StatementPage())->body($entry);
 
         self::assertStringContainsString('<button type="button" class="btn copy" data-dd-copy title="Copy the statement">Copy</button>', $body);
-        self::assertStringContainsString('<pre class="code code-lead"><span class="tok-kw">SELECT</span> <span class="tok-num">1</span>' . "\n" . '<span class="tok-kw">FROM</span> t</pre>', $body);
+        self::assertStringContainsString('<pre class="code code-lead"><span class="tok-kw">SELECT</span>' . "\n    " . '<span class="tok-num">1</span>' . "\n" . '<span class="tok-kw">FROM</span>' . "\n    " . 't</pre>', $body);
         self::assertStringContainsString(
             '<details class="as-written"><summary>As written in the source</summary><pre class="code"><span class="tok-kw">SELECT</span> <span class="tok-num">1</span>' . "\n" . '  <span class="tok-kw">FROM</span> t</pre></details>',
             $body,
@@ -322,53 +322,82 @@ final class StatementPageTest extends TestCase
         $site = new ReportSite($catalog);
 
         self::assertSame(
-            '<h1><span class="chip tone-blue">SELECT</span><span>on posts</span></h1><p class="lede">Issued at <a class="mono" href="../files/src-a-php.html">src/a'
-                . '.php:4</a> in <a class="mono" href="../classes/app-r.html#fn-app-r-find">App\\R::find</a> through <span class="chip chip-sm chip-ghost" title="The dat'
-                . 'abase call that was matched">pdo.query</span>, reached by way of <code>App\\R::run → App\\R::find</code>.</p><div class="code-block"><button type="but'
-                . 'ton" class="btn copy" data-dd-copy title="Copy the statement">Copy</button><pre class="code code-lead"><span class="tok-kw">SELECT</span> id
-<span cla'
-                . 'ss="tok-kw">FROM</span> posts
-<span class="tok-kw">WHERE</span> slug = <span class="hole tone-danger" title="This is a gap: external input fills it. W'
-                . 'ritten as $_GET[&quot;s&quot;].">{$}</span></pre><details class="as-written"><summary>As written in the source</summary><pre class="code"><span class='
-                . '"tok-kw">SELECT</span> id <span class="tok-kw">FROM</span> posts <span class="tok-kw">WHERE</span> slug = <span class="hole tone-danger" title="This i'
-                . 's a gap: external input fills it. Written as $_GET[&quot;s&quot;].">{$}</span></pre></details></div><div class="notice tone-warn"><ul><li>Assembled fr'
-                . 'om parts that vary independently, so some of the alternatives at this call may be unreachable.</li></ul></div><div class="split"><section><h2 id="fact'
-                . 's">About this statement</h2><dl class="facts"><div><dt>Resolution</dt><dd><span class="chip tone-danger">external-input</span> <span class="muted">The'
-                . ' values were followed to runtime input, so the text cannot be fixed.</span></dd></div><div><dt>Search</dt><dd><span class="muted">closed: every depend'
-                . 'ency was followed to its end</span></dd></div><div><dt>Reachability</dt><dd><span class="muted">not assessed: both branches are retained, including constant conditions</span></dd></div><div><dt>Tables</dt><dd><a class="chip chip-ghost" href="../tables/posts.html">posts</a> </dd></div><div'
-                . '><dt>Kind</dt><dd><span class="chip tone-blue">SELECT</span></dd></div><div><dt>Identifier</dt><dd><code>a1</code> <span class="muted">stable across r'
-                . 'uns while the statement is unchanged</span></dd></div></dl></section><section><h2 id="values">Bound values</h2><div class="table-wrap"><table><thead><'
-                . 'tr><th scope="col" class="tight">Parameter</th><th scope="col" class="tight">Type</th><th scope="col">Bound to</th></tr></thead><tbody><tr><td class="'
-                . 'tight"><code>?</code></td><td class="tight"><code>int</code></td><td><code>7</code></td></tr></tbody></table></div></section></div><h2 id="findings">F'
-                . 'indings</h2><ul class="finding-list"><li><span class="chip tone-danger">high</span><span><code>external-input</code> spliced</span></li></ul><section>'
-                . '<h2 id="same-function">Also issued by <code>R::find</code><span class="count">2</span></h2><ol class="rows"><li class="row" data-kind="select" data-re'
-                . 'solution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-open="" data-table="posts users" data-namespace="App" da'
-                . 'ta-class="App\\R" data-function="App\\R::find" data-file="src/d.php"><a class="row-main" href="../statements/d1.html"><span class="chip tone-blue">SEL'
-                . 'ECT</span><span class="row-body"><span class="tok-kw">SELECT</span> * <span class="tok-kw">FROM</span> posts p <span class="tok-kw">JOIN</span> users '
-                . 'u <span class="tok-kw">ON</span> u.id = p.author</span></a><p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a class="chip chip-gh'
-                . 'ost" href="../tables/posts.html">posts</a><a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-warn" title="The most'
-                . ' serious finding on this statement">medium</span></p></li><li class="row" data-kind="show" data-resolution="resolved" data-severity="" data-rule="" da'
-                . 'ta-sink="pdo.query" data-open="" data-table="" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/e.php"><a class="r'
-                . 'ow-main" href="../statements/e1.html"><span class="chip tone-slate">SHOW</span><span class="row-body"><span class="tok-kw">SHOW</span> TABLES</span></'
-                . 'a><p class="row-meta"><a href="../files/src-e-php.html">src/e.php:1</a></p></li></ol></section><section><h2 id="same-table-posts">Also on <a class="ch'
-                . 'ip chip-ghost" href="../tables/posts.html">posts</a><span class="count">3</span></h2><ol class="rows"><li class="row" data-kind="insert" data-resoluti'
-                . 'on="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-functi'
-                . 'on="App\\R::add" data-file="src/a.php"><a class="row-main" href="../statements/a2.html"><span class="chip tone-teal">INSERT</span><span class="row-bod'
-                . 'y"><span class="tok-kw">INSERT</span> <span class="tok-kw">INTO</span> posts (id) <span class="tok-kw">VALUES</span> (<span class="tok-num">1</span>)<'
-                . '/span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:9</a><a href="../classes/app-r.html#fn-app-r-add">R::add</a><a class="chip c'
-                . 'hip-ghost" href="../tables/posts.html">posts</a></p></li><li class="row" data-kind="update" data-resolution="resolved" data-severity="medium" data-rul'
-                . 'e="placeholder-count-mismatch" data-sink="pdo.prepare" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R:'
-                . ':add" data-file="src/a.php"><a class="row-main" href="../statements/a3.html"><span class="chip tone-violet">UPDATE</span><span class="row-body"><span '
-                . 'class="tok-kw">UPDATE</span> posts <span class="tok-kw">SET</span> title = <span class="tok-var">?</span> <span class="tok-kw">WHERE</span> id = <span'
-                . ' class="tok-var">?</span></span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:14</a><a href="../classes/app-r.html#fn-app-r-add"'
-                . '>R::add</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a><span class="chip tone-warn" title="The most serious finding on this statem'
-                . 'ent">medium</span></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo'
-                . '.query" data-open="" data-table="posts users" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/d.php"><a class="ro'
-                . 'w-main" href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span> * <span class'
-                . '="tok-kw">FROM</span> posts p <span class="tok-kw">JOIN</span> users u <span class="tok-kw">ON</span> u.id = p.author</span></a><p class="row-meta"><a'
-                . ' href="../files/src-d-php.html">src/d.php:1</a><a href="../classes/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="../tables/pos'
-                . 'ts.html">posts</a><a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-warn" title="The most serious finding on this'
-                . ' statement">medium</span></p></li></ol></section>',
+            '<h1><span class="chip tone-blue">SELECT</span><span>on posts</span></h1><p class="lede">Issued at <a class="mono" href="../files/src-a-php.h'
+                . 'tml">src/a.php:4</a> in <a class="mono" href="../classes/app-r.html#fn-app-r-find">App\\R::find</a> through <span class="chip chip-sm chip-gh'
+                . 'ost" title="The database call that was matched">pdo.query</span>, reached by way of <code>App\\R::run → App\\R::find</code>.</p><div class="'
+                . 'code-block"><button type="button" class="btn copy" data-dd-copy title="Copy the statement">Copy</button><pre class="code code-lead"><span cl'
+                . 'ass="tok-kw">SELECT</span>
+    id
+<span class="tok-kw">FROM</span>
+    posts
+<span class="tok-kw">WHERE</span>
+    slug = <span class="hole '
+                . 'tone-danger" title="This is a gap: external input fills it. Written as $_GET[&quot;s&quot;].">{$}</span></pre><details class="as-written"><s'
+                . 'ummary>As written in the source</summary><pre class="code"><span class="tok-kw">SELECT</span> id <span class="tok-kw">FROM</span> posts <spa'
+                . 'n class="tok-kw">WHERE</span> slug = <span class="hole tone-danger" title="This is a gap: external input fills it. Written as $_GET[&quot;s&'
+                . 'quot;].">{$}</span></pre></details></div><div class="notice tone-warn"><ul><li>Assembled from parts that vary independently, so some of the '
+                . 'alternatives at this call may be unreachable.</li></ul></div><div class="split"><section><h2 id="facts">About this statement</h2><dl class="'
+                . 'facts"><div><dt>Resolution</dt><dd><span class="chip tone-danger">external-input</span> <span class="muted">The values were followed to runt'
+                . 'ime input, so the text cannot be fixed.</span></dd></div><div><dt>Search</dt><dd><span class="muted">closed: every dependency was followed t'
+                . 'o its end</span></dd></div><div><dt>Reachability</dt><dd><span class="muted">not assessed: both branches are retained, including constant co'
+                . 'nditions</span></dd></div><div><dt>Tables</dt><dd><a class="chip chip-ghost" href="../tables/posts.html">posts</a> </dd></div><div><dt>Kind<'
+                . '/dt><dd><span class="chip tone-blue">SELECT</span></dd></div><div><dt>Identifier</dt><dd><code>a1</code> <span class="muted">stable across r'
+                . 'uns while the statement is unchanged</span></dd></div></dl></section><section><h2 id="values">Bound values</h2><div class="table-wrap"><tabl'
+                . 'e><thead><tr><th scope="col" class="tight">Parameter</th><th scope="col" class="tight">Type</th><th scope="col">Bound to</th></tr></thead><t'
+                . 'body><tr><td class="tight"><code>?</code></td><td class="tight"><code>int</code></td><td><code>7</code></td></tr></tbody></table></div></sec'
+                . 'tion></div><h2 id="findings">Findings</h2><ul class="finding-list"><li><span class="chip tone-danger">high</span><span><code>external-input<'
+                . '/code> spliced</span></li></ul><section><h2 id="same-function">Also issued by <code>R::find</code><span class="count">2</span></h2><ol class'
+                . '="rows"><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" d'
+                . 'ata-open="" data-table="posts users" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/d.php"><a class="row'
+                . '-main" href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
+    *
+<sp'
+                . 'an class="tok-kw">FROM</span>
+    posts p
+<span class="tok-kw">JOIN</span>
+    users u
+<span class="tok-kw">ON</span>
+    u.id = p.author</p'
+                . 're></a><p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a>'
+                . '<a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-warn" title="The most serious finding on this stateme'
+                . 'nt">medium</span></p></li><li class="row" data-kind="show" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" da'
+                . 'ta-open="" data-table="" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/e.php"><a class="row-main" href='
+                . '"../statements/e1.html"><span class="chip tone-slate">SHOW</span><pre class="code"><span class="tok-kw">SHOW</span> TABLES</pre></a><p class'
+                . '="row-meta"><a href="../files/src-e-php.html">src/e.php:1</a></p></li></ol></section><section><h2 id="same-table-posts">Also on <a class="ch'
+                . 'ip chip-ghost" href="../tables/posts.html">posts</a><span class="count">3</span></h2><ol class="rows"><li class="row" data-kind="insert" dat'
+                . 'a-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class='
+                . '"App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="../statements/a2.html"><span class="chip tone-teal">INSER'
+                . 'T</span><pre class="code"><span class="tok-kw">INSERT</span> <span class="tok-kw">INTO</span>
+    posts (id)
+<span class="tok-kw">VALUES</sp'
+                . 'an>
+    (<span class="tok-num">1</span>)</pre></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:9</a><a href="../classes/a'
+                . 'pp-r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a></p></li><li class="row" data-kind="update'
+                . '" data-resolution="resolved" data-severity="medium" data-rule="placeholder-count-mismatch" data-sink="pdo.prepare" data-open="" data-table="'
+                . 'posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="../statements/a3.h'
+                . 'tml"><span class="chip tone-violet">UPDATE</span><pre class="code"><span class="tok-kw">UPDATE</span>
+    posts
+<span class="tok-kw">SET</sp'
+                . 'an>
+    title = <span class="tok-var">?</span>
+<span class="tok-kw">WHERE</span>
+    id = <span class="tok-var">?</span></pre></a><p class="'
+                . 'row-meta"><a href="../files/src-a-php.html">src/a.php:14</a><a href="../classes/app-r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost'
+                . '" href="../tables/posts.html">posts</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li'
+                . '><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.query" data-ope'
+                . 'n="" data-table="posts users" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/d.php"><a class="row-main" '
+                . 'href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><pre class="code"><span class="tok-kw">SELECT</span>
+    *
+<span clas'
+                . 's="tok-kw">FROM</span>
+    posts p
+<span class="tok-kw">JOIN</span>
+    users u
+<span class="tok-kw">ON</span>
+    u.id = p.author</pre></a>'
+                . '<p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a href="../classes/app-r.html#fn-app-r-find">R::find</a><a class="chip'
+                . ' chip-ghost" href="../tables/posts.html">posts</a><a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-war'
+                . 'n" title="The most serious finding on this statement">medium</span></p></li></ol></section>',
             (new StatementPage())->render($site, $entries[0]),
         );
     }
@@ -444,4 +473,15 @@ $db-&gt;query($sql)</pre><div class="notice tone-warn"><ul><'
         self::assertStringContainsString('</code></pre></section><section><h2 id="facts">About this statement</h2>', $page);
         self::assertSame(['Source code', '#source', null, false], (new StatementPage())->context($site, $entry)[0][1][0]);
     }
+    public function testBodyUsesTheSameNamedGapInTheCopyableAndSourceBlocks(): void
+    {
+        $entry = new CatalogEntry('q', StatementKind::Unknown, TextPattern::fromHole(
+            new TextHole(Origin::Parameter, TypeShape::unknown(), '$sql'),
+        ), [], [], new CallSite('query.php', 4, 'f', 'pdo.prepare'), []);
+        $body = (new StatementPage())->body($entry);
+
+        self::assertSame(2, substr_count($body, '>{$sql}</span>'));
+        self::assertStringContainsString('data-dd-copy', $body);
+    }
+
 }

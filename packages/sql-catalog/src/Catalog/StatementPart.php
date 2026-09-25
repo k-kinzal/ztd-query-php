@@ -27,6 +27,7 @@ final class StatementPart
      * @param string $origin Where the value filling a gap comes from, empty for a known run
      * @param string $reason What fills the gap, written for a reader, empty for a known run
      * @param string|null $expression The source expression of a gap, when it is short enough to quote
+     * @param string|null $variable The PHP variable read at the use site, when known
      */
     public function __construct(
         public readonly string $text,
@@ -34,6 +35,7 @@ final class StatementPart
         public readonly string $origin = '',
         public readonly string $reason = '',
         public readonly ?string $expression = null,
+        public readonly ?string $variable = null,
     ) {
     }
 
@@ -51,7 +53,7 @@ final class StatementPart
                 continue;
             }
             $parts[] = $segment instanceof TextHole
-                ? new self('', true, $segment->origin->value, $segment->origin->describe(), $segment->expression)
+                ? new self('', true, $segment->origin->value, $segment->origin->describe(), $segment->expression, $segment->variable)
                 : new self($segment->display());
         }
 

@@ -34,6 +34,11 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(StatementKind::class)]
 #[UsesClass(LiteralText::class)]
 #[UsesClass(TextPattern::class)]
+#[UsesClass(\SqlCatalog\Catalog\StatementPart::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\SqlHighlighter::class)]
+#[UsesClass(\SqlCatalog\Text\TextHole::class)]
+#[UsesClass(\SqlCatalog\Text\Origin::class)]
+#[UsesClass(\SqlCatalog\Type\TypeShape::class)]
 final class SearchIndexTest extends TestCase
 {
     public function testRenderWritesTheIndexAsAScriptThePagesLoad(): void
@@ -58,4 +63,13 @@ final class SearchIndexTest extends TestCase
             (new SearchIndex())->entryToArray(new ReportSite(new Catalog([$entry])), $entry),
         );
     }
+    public function testEntryToArrayMakesTheVariableNameSearchable(): void
+    {
+        $entry = new CatalogEntry('q', StatementKind::Unknown, TextPattern::fromHole(
+            new \SqlCatalog\Text\TextHole(\SqlCatalog\Text\Origin::Parameter, \SqlCatalog\Type\TypeShape::unknown(), '$sql'),
+        ), [], [], new CallSite('query.php', 4, 'f', 'pdo.prepare'), []);
+
+        self::assertSame('{$sql}', (new SearchIndex())->entryToArray(new ReportSite(new Catalog([$entry])), $entry)['q']);
+    }
+
 }

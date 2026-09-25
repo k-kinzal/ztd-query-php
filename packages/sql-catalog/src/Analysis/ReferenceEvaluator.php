@@ -102,7 +102,7 @@ final class ReferenceEvaluator
             return Domain::opaque(TypeShape::unknown(), Origin::External, '$' . $node->name);
         }
 
-        return $environment->read($node->name);
+        return $environment->read($node->name)->withVariable('$' . $node->name);
     }
 
     /**

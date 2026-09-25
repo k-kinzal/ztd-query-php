@@ -294,6 +294,9 @@ The HTML embeds source captured during analysis and works after the original fil
 are changed or removed. The report therefore contains application source code;
 share it with the same care as the source itself. Catalogs constructed manually
 without source snapshots keep their statement listings but have no source blocks.
+SQL in HTML listings and detail pages uses sql-formatter's multiline Expanded
+layout. Unresolved values show their PHP variable names when known (`{$sql}`),
+with `{$}` as the fallback. See [the report format](docs/format.md#the-html-report).
 
 `html` writes a directory, so give it `--output`: printed to standard output it
 is the overview page alone, without the pages it links to. The pages are written

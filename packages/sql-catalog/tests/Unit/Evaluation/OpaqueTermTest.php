@@ -29,9 +29,11 @@ final class OpaqueTermTest extends TestCase
 
     public function testToPatternLeavesAGapCarryingTheOrigin(): void
     {
-        $pattern = (new OpaqueTerm(TypeShape::of(['string']), Origin::External))->toPattern();
+        $pattern = (new OpaqueTerm(TypeShape::of(['string']), Origin::External, 'readInput()', '$sql'))->toPattern();
         self::assertSame('{$}', $pattern->display());
         self::assertSame(Origin::External, $pattern->holes()[0]->origin);
+        self::assertSame('readInput()', $pattern->holes()[0]->expression);
+        self::assertSame('$sql', $pattern->holes()[0]->variable);
     }
 
     public function testTypeIsTheDeclaredOne(): void
