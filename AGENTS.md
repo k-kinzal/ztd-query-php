@@ -48,16 +48,18 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/requirements/docs/extensions.md](packages/requirements/docs/extensions.md) - Writing and registering source and runner extensions
 - [packages/requirements/docs/lint.md](packages/requirements/docs/lint.md) - What lint checks, and the EARS patterns specifications must follow
 - [packages/requirements/docs/traceability.md](packages/requirements/docs/traceability.md) - What requirements traces: the model, the workflow, and what it does not prove
-- [packages/requirements/tests/Fixtures/Examples/Markdown/decisions.md](packages/requirements/tests/Fixtures/Examples/Markdown/decisions.md) - Test fixture: a definition document in the Markdown profile, without a source
-- [packages/requirements/tests/Fixtures/Examples/Markdown/grammar.md](packages/requirements/tests/Fixtures/Examples/Markdown/grammar.md) - Test fixture: a definition document in the Markdown profile, traced to an HTML source
-- [packages/requirements/tests/Fixtures/source.md](packages/requirements/tests/Fixtures/source.md) - Test fixture: a minimal Markdown source
-- [packages/sql-catalog/README.md](packages/sql-catalog/README.md) - Cataloging the SQL a PHP application can issue: usage, statuses, extensions, and reporters
-- [packages/sql-catalog/docs/analysis.md](packages/sql-catalog/docs/analysis.md) - How the analysis reconstructs the SQL a PHP application issues
-- [packages/sql-catalog/docs/extensions.md](packages/sql-catalog/docs/extensions.md) - Source models that extensions provide for framework database APIs
-- [packages/sql-catalog/docs/format.md](packages/sql-catalog/docs/format.md) - The catalog file format written by the JSON reporter, and the HTML report
-- [packages/sql-catalog/docs/laravel.md](packages/sql-catalog/docs/laravel.md) - Laravel support: enabling the extension and what it recognizes
-- [packages/sql-catalog/docs/verification.md](packages/sql-catalog/docs/verification.md) - How the analyzer's accuracy is checked and what it measures
-- [packages/sql-catalog/fuzz/README.md](packages/sql-catalog/fuzz/README.md) - Fuzz targets and how to run them
+- [packages/sql-catalog/README.md](packages/sql-catalog/README.md) - Cataloging the SQL a PHP application can issue: requirements and getting started
+- [packages/sql-catalog/docs/analysis.md](packages/sql-catalog/docs/analysis.md) - What the analysis reports: statements, resolution, origins, findings and limits
+- [packages/sql-catalog/docs/api.md](packages/sql-catalog/docs/api.md) - The PHP API: Analyzer, options, the catalog model and reporters
+- [packages/sql-catalog/docs/cli.md](packages/sql-catalog/docs/cli.md) - Command line options, filters, exit codes and CI usage
+- [packages/sql-catalog/docs/configuration.md](packages/sql-catalog/docs/configuration.md) - The .catalog.yaml configuration file and function models
+- [packages/sql-catalog/docs/extensions.md](packages/sql-catalog/docs/extensions.md) - Built-in extensions, writing extensions, and source models
+- [packages/sql-catalog/docs/format.md](packages/sql-catalog/docs/format.md) - The text, JSON and HTML reports
+- [packages/sql-catalog/docs/extensions/doctrine.md](packages/sql-catalog/docs/extensions/doctrine.md) - Doctrine DBAL support: recognised calls and limits
+- [packages/sql-catalog/docs/extensions/laravel.md](packages/sql-catalog/docs/extensions/laravel.md) - Laravel support: the dialect and the supported operations
+- [packages/sql-catalog/docs/extensions/mysqli.md](packages/sql-catalog/docs/extensions/mysqli.md) - mysqli support: recognised calls and limits
+- [packages/sql-catalog/docs/extensions/pdo.md](packages/sql-catalog/docs/extensions/pdo.md) - PDO support: recognised calls, bindings and limits
+- [packages/sql-catalog/docs/extensions/wordpress.md](packages/sql-catalog/docs/extensions/wordpress.md) - WordPress support: wpdb calls, wpdb::prepare(), the $wpdb global and limits
 - [packages/sql-faker/README.md](packages/sql-faker/README.md) - Grammar-based SQL generation: installation, providers, and supported versions
 - [packages/sql-faker/docs/algorithm.md](packages/sql-faker/docs/algorithm.md) - How SQL is derived from the official grammars, and its limitations
 - [packages/sql-faker/docs/faker.md](packages/sql-faker/docs/faker.md) - The FakerPHP provider interface

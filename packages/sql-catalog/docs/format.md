@@ -1,23 +1,31 @@
-# The catalog file format
+# Reports
 
-`--reporter json` writes two files into the output directory:
+| Reporter | Writes | Use |
+|----------|--------|-----|
+| `text` | `catalog.txt` | Reading in a terminal. The default on standard output. |
+| `json` | `catalog.json`, `catalog-schema.json` | Committing and diffing. The default with `--output`. |
+| `html` | `index.html` and the pages it links to | Browsing and sharing. |
 
-| File | What it is |
-|------|------------|
-| `catalog.json` | The catalog |
-| `catalog-schema.json` | The JSON Schema the catalog declares itself against |
+Select one with `--reporter`. `json` and `html` write several files, so give them `--output`; on standard output they print only their main file.
 
-The schema is written beside the document rather than pointed at over the
-network, so a catalog that has been committed, copied or archived stays readable
-without asking anything else for the shape of it. The same schema ships in the
-package at `resources/catalog-schema.json`, and a rendered document is validated
-against it by the test suite, so the two cannot drift apart.
+## Text
 
-The document is ordered by where each statement is issued and holds nothing that
-changes between runs of the same source — no timestamps, no paths outside the
-analysis root, no identifiers derived from line numbers. Two runs of the same
-source produce the same bytes, so the artifact can be committed and the diff of a
-pull request read as the change in the SQL an application issues.
+One block per statement, followed by a summary:
+
+```
+src/Search.php:17  SELECT  742968908c6b
+  in App\Search::run via pdo.query
+  SELECT id FROM users WHERE name = '{$}'
+  external-input
+  [MEDIUM] dynamic-sql 1 value(s) are spliced into the statement text rather than bound.
+  [HIGH] external-input A value from external input reaches the statement text.
+```
+
+The lines are the call site with the statement kind and ID, the enclosing function and the sink, the SQL, the [resolution](analysis.md#resolution), the bound values, and the [findings](analysis.md#findings).
+
+## JSON
+
+`catalog.json` is validated by `catalog-schema.json`, which is written next to it and also ships in the package as `resources/catalog-schema.json`. The document contains no timestamps, absolute paths or line-based identifiers, so the same source always produces the same bytes.
 
 ```json
 {
@@ -35,9 +43,9 @@ pull request read as the change in the SQL an application issues.
     },
     "statements": [
         {
-            "id": "c80ddc2f2643",
+            "id": "eea410b914be",
             "kind": "select",
-            "sql": "SELECT id FROM users WHERE id = ?",
+            "sql": "SELECT id FROM users WHERE status = :status",
             "exact": true,
             "resolution": "resolved",
             "searchClosed": true,
@@ -45,19 +53,19 @@ pull request read as the change in the SQL an application issues.
             "tables": ["users"],
             "site": {
                 "file": "src/UserRepository.php",
-                "line": 18,
-                "function": "App\\UserRepository::byId",
+                "line": 23,
+                "function": "App\\UserRepository::findByStatus",
                 "sink": "pdo.prepare"
             },
-            "through": [],
+            "through": ["App\\UserRepository::findByStatus"],
             "placeholders": [
                 {
-                    "token": "?",
+                    "token": ":status",
                     "position": 0,
-                    "name": null,
+                    "name": "status",
                     "value": {
-                        "type": "int",
-                        "values": [7],
+                        "type": "string",
+                        "values": ["active", "banned"],
                         "exhaustive": true,
                         "origins": []
                     }
@@ -70,107 +78,51 @@ pull request read as the change in the SQL an application issues.
 }
 ```
 
-## Fields
+| Field | Description |
+|-------|-------------|
+| `version` | The format version, `2`. Do not read a version you do not know. |
+| `analysis` | Always `conditions: not-evaluated` and `reachability: not-assessed`. See [analysis](analysis.md#statements). |
+| `summary` | Counts of statements, of statements without gaps (`resolved`) and with gaps (`undetermined`), and of findings. |
+| `statements[].id` | A stable identifier: a hash of the file, the enclosing function, the sink and the statement shape. It does not change when unrelated lines move. |
+| `statements[].kind` | `select`, `insert`, `update`, `delete`, `replace`, `merge`, `truncate`, `create`, `alter`, `drop`, `call`, `show`, `explain`, `transaction`, `other` or `unknown`. |
+| `statements[].sql` | The SQL text, with `{$}` for each unknown value. |
+| `statements[].exact`, `resolution`, `searchClosed`, `correlated` | How complete the statement is. See [resolution](analysis.md#resolution). |
+| `statements[].tables` | The tables named, in order and without repeats. A partly known name contains `{$}`; an unknown name is left out. |
+| `statements[].site` | The `file` relative to the root, the `line`, the enclosing `function` (`Class::method`, a function name, or `{main}`), and the `sink` ID. |
+| `statements[].through` | The functions followed to reach this reading, from the body the search started in to the one holding the call. |
+| `statements[].placeholders[]` | Each placeholder in order: its `token`, zero-based `position`, `name` for named placeholders, and bound `value`, or `null` when no binding was found. |
+| `…value.type` | The PHP type of the bound value. |
+| `…value.values`, `exhaustive` | The possible values. When `exhaustive` is false, only `type` is known. |
+| `…value.origins` | Where the unknown parts come from. See [origins](analysis.md#where-unknown-values-come-from). |
+| `statements[].findings[]` | Each finding's `rule`, `severity` and `message`. |
+| `problems[]` | Files that could not be analyzed, with `file` and `message`. |
 
-| Field | Meaning |
-|-------|---------|
-| `version` | The format version. A reader that does not know this number should not guess. |
-| `analysis` | Conditions are not evaluated and runtime reachability is not assessed, for every candidate. |
-| `summary` | How many statements were found, how many resolved fully, how many did not, and how many findings were reported. |
-| `statements[].id` | The identifier the statement keeps across runs: a hash of the file, the enclosing function, the database call and the statement shape. Deliberately not of the line number, so editing unrelated lines does not renumber the catalog. |
-| `statements[].kind` | What the statement does: `select`, `insert`, `update`, `delete`, `replace`, `merge`, `truncate`, `create`, `alter`, `drop`, `call`, `show`, `explain`, `transaction`, `other` or `unknown`. |
-| `statements[].sql` | The statement text. Every value the analyzer could not pin down is written as `{$}`. |
-| `statements[].exact` | Whether the text holds no gaps. |
-| `statements[].resolution` | How far the analyzer got and why it got no further: `resolved`, `external-input`, `incomplete-model`, `incomplete` or `not-analyzed`. |
-| `statements[].searchClosed` | Whether every candidate at this call site has closed dependencies (`resolved` or `external-input`) and no bound cut the search short. An exact candidate remains open when a sibling has an unresolved dependency. When false, the statements listed for this call site may not be all of them. |
-| `statements[].correlated` | Whether the alternatives retained their structural pairing. False means independent parts or joined branch states may have introduced combinations. Neither value guarantees reachability. |
-| `statements[].tables` | The tables the statement names, in order and without repeats. A name the analyzer knows only part of — a prefix read from configuration, say — is written with `{$}` in place of the unknown part; a name nothing is known of is not listed. |
-| `statements[].site` | The file and line, the enclosing function, and which database call was matched. A `sink` of `unmatched` means the call is written the way a database call is written but what it is called on could not be worked out. A call with a `not-analyzed` resolution is one nothing was read from, which is how a gap in the analysis is told apart from a statement whose text did not resolve. |
-| `statements[].through` | The calls that were followed to reach this reading, outermost first. Empty when the statement was read from the body it is written in. |
-| `statements[].placeholders[].value` | What the parameter is bound to, or `null` when no binding was found. `exhaustive` says whether `values` is all of them; when it is false, only `type` is a statement about the value. |
-| `statements[].findings` | What is worth reporting: `unresolved-sql`, `dynamic-sql`, `external-input`, `placeholder-count-mismatch`, `analysis-incomplete` or `call-not-analyzed`. |
-| `problems` | Files that could not be analyzed at all, with the reason. |
+### Reading a diff
 
-## Reading it
+In a pull request, look for:
 
-Format v2 separates three facts:
+- statements added or removed;
+- `resolution` changing from `resolved`: the statement now depends on something the analyzer cannot follow;
+- new findings, especially `external-input`;
+- `searchClosed` becoming `false`: the call site may now send statements the catalog does not list.
 
-- `exact` says every character of this candidate is known.
-- `searchClosed` says the modeled dependency search for this call site completed.
-  False means dependencies or additional candidates remain unknown. Mixed external
-  input and unresolved dependencies do not close the search.
-- `analysis.reachability` is always `not-assessed`. Conditions never select branches,
-  so even exact, closed, correlated candidates can be infeasible at runtime.
+A statement with the same `id` and a different `site.line` is unchanged; only the code above it moved.
 
-`correlated` describes structural pairing only. The listing is not a lower bound
-or an exact enumeration of runtime statements. Version 1 readers must not infer
-reachability from version 2's `correlated` field.
+## HTML
 
-## Reading a diff
+`--reporter html --output DIR` writes a static site. Open `DIR/index.html` in a browser; it works from the file system, without a server or network access.
 
-Three changes are worth looking for in a pull request:
+| Page | Contents |
+|------|----------|
+| `index.html` | Overview: the most used tables, classes and files, findings by rule, and how far the analysis got. Every count links to its statements. |
+| `statements.html` | Every statement, filterable by kind, resolution, severity and text. |
+| `tables.html`, `tables/` | Every table, and a page per table with the functions that use it, related tables, and its reads, writes and schema changes. |
+| `namespaces.html`, `classes/` | Every namespace, and a page per class with its statements by method. |
+| `files.html`, `files/` | Every file by directory, and a page per file with its statements by function. |
+| `findings.html` | The functions with the most findings, and every finding by rule. |
+| `statements/` | A page per statement: the formatted SQL, the SQL as written, the call site and path, tables, bound values, findings, related statements, and the PHP source around the call. |
+| `assets/` | The stylesheet, scripts and search index. |
 
-- a statement **added or removed** — the analysis found a different set of SQL candidates;
-- `resolution` moving away from `resolved` — a statement that used to be fixed is
-  now assembled from something the analyzer cannot follow;
-- a finding appearing, especially `external-input`.
+Every page has a search box that finds statements by SQL, table, function or file. SQL is formatted with [sql-formatter](../../sql-formatter/) when a MySQL, PostgreSQL or SQLite grammar accepts it, and shown as written otherwise. In the HTML, a gap shows the PHP variable it comes from, such as `{$sql}`, when that is known.
 
-A statement whose `id` is unchanged but whose `site.line` moved is the same
-statement in a file that was edited above it.
-
-## The HTML report
-
-`--reporter html` writes a site rather than a page. A reader comes to a catalog
-to find a statement and decide something about it — which queries a column
-rename will break, what a class issues before it is refactored, where SQL is
-assembled from values the program does not control — so the site is laid out
-as the routes to a statement rather than as one long listing:
-
-| File | What it is |
-|------|------------|
-| `index.html` | The overview: the routes to a statement, with the most used tables, classes and files on each; what needs attention, by rule and by the functions flagged most; and how far the analysis got, with every count a link to the statements it counts |
-| `statements.html` | Every statement, to narrow down on the page by kind, resolution, severity and text. Links from elsewhere in the report arrive here with the narrowing in the query string, as `?kind=delete` or `?resolution=external-input&namespace=App` |
-| `tables.html`, `tables/*.html` | Every table the statements name, grouped by schema when any is qualified; and one page per table with the functions that use it, the tables named alongside it, and its statements as writes, reads and schema changes |
-| `namespaces.html`, `classes/*.html` | Every namespace with the classes and functions declared in it; and one page per class with its statements method by method |
-| `files.html`, `files/*.html` | Every file by directory; and one page per file with its statements function by function |
-| `findings.html` | The functions flagged most, then every finding under the rule that reported it |
-| `statements/*.html` | One page per statement: the SQL laid out a clause per line, where it is issued and through what, its tables, bound values and findings, and the other statements of the same function and on the same table |
-| `assets/document-design-v1.0.0.css`, `assets/document-design-v1.0.0.js`, `assets/document-design-LICENSE.txt` | The design the pages are written in: the unmodified [document-design](https://k-kinzal.github.io/document-design/) doc-ui release, its script, and the notice naming the release, its license and the SHA-256 of each file |
-| `assets/report.js` | The ranking of a search over statements and the narrowing of a listing by the facts a page arrives with, written once beside the pages |
-| `assets/search-index.js` | Every statement and its page, so the search box on every page finds a statement by its SQL, table, function or file |
-
-The pages are written in doc-ui, document-design's design system for
-documentation and reports, in its `.doc` layout for catalogs and its components:
-the sidebar, topbar and breadcrumbs, listing rows and facets, chips and tones,
-tables, code, facts, the meter, stats and cards. Source excerpts use doc-ui's
-`code-scroll`, `code-line`, `ln` and `is-target` classes for line numbers, horizontal
-scrolling and highlighted calls. All styling comes from doc-ui; the report has no
-custom stylesheet. The stylesheet and script are
-the v1.0.0 release, bundled unmodified and pinned to that version — a report is
-read long after it is written, and has to look then the way it looked when it
-was checked — so no floating version is ever loaded from a CDN. Colour is
-doc-ui's: identity tones for what a statement does, state tones for how far the
-analysis got and how much attention a finding wants, and both themes follow the
-reader's system unless the switch in the topbar says otherwise.
-
-The pages are read from the file system as readily as from a server: the search
-index is a script rather than data fetched at runtime, nothing is loaded over
-the network, and every page reads without the scripts — they only add
-narrowing, sorting, copying, the theme switch and search.
-
-SQL in listings and statement pages uses [sql-formatter](../../sql-formatter/)'s
-Expanded layout, with clause bodies and list items on separate lines, without
-clipping listings to a fixed number of lines. Listings use doc-ui's existing
-`pre.code` component. Gaps and client placeholders are preserved through
-formatting. The report tries the supported MySQL, PostgreSQL and SQLite grammars;
-text none accepts is kept as
-written. Statement pages also retain the original layout under **As written in
-the source**, while **Copy** copies the displayed, formatted SQL.
-
-A gap uses the PHP variable name when known, such as `{$sql}` for an unresolved
-`$pdo->prepare($sql)` or `{$table}` in a concatenated query. When the variable
-cannot be identified, it remains `{$}`. This is a display annotation: the JSON
-and text SQL markers and statement identities remain unchanged. Each marked gap
-says, when pointed at, where the value filling it comes from. A call that no
-statement was read from is not dressed up as a statement at all, but shown as the call it is, with the reason
-the analysis has nothing to say about it.
+The report embeds the source code around each database call and the full text of each analyzed file. Share it only where you would share the source.
