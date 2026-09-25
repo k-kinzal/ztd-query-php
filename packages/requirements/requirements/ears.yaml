@@ -19,7 +19,10 @@ items:
     tests:
       -
         runner: unit
-        target: 'Tests\Unit\EarsTest::testClauseOrder'
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsClauseOrder'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsClauseOrder'
   -
     id: EARS-002
     statement: 'The EARS validator shall accept a system name followed by `shall` and a nonempty response.'
@@ -33,7 +36,10 @@ items:
     tests:
       -
         runner: unit
-        target: 'Tests\Unit\EarsTest::testSystemResponse'
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsSystemResponse'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsSystemResponse'
   -
     id: EARS-003
     statement: 'When a state driven statement is validated, the EARS validator shall require a nonempty While clause before the system response.'
@@ -47,7 +53,10 @@ items:
     tests:
       -
         runner: unit
-        target: 'Tests\Unit\EarsTest::testStateDriven'
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsStateDriven'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsStateDriven'
   -
     id: EARS-004
     statement: 'When an event driven statement is validated, the EARS validator shall require a nonempty When clause before the system response.'
@@ -61,7 +70,10 @@ items:
     tests:
       -
         runner: unit
-        target: 'Tests\Unit\EarsTest::testEventDriven'
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsEventDriven'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsEventDriven'
   -
     id: EARS-005
     statement: 'When an optional feature statement is validated, the EARS validator shall require a nonempty Where clause before the system response.'
@@ -75,7 +87,10 @@ items:
     tests:
       -
         runner: unit
-        target: 'Tests\Unit\EarsTest::testOptionalFeature'
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsOptionalFeature'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsOptionalFeature'
   -
     id: EARS-006
     statement: 'When an unwanted behaviour statement is validated, the EARS validator shall require If followed by a nonempty trigger and then the system response.'
@@ -89,7 +104,10 @@ items:
     tests:
       -
         runner: unit
-        target: 'Tests\Unit\EarsTest::testUnwantedBehaviour'
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsUnwantedBehaviour'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsUnwantedBehaviour'
   -
     id: EARS-007
     statement: 'When a complex statement is validated, the EARS validator shall accept a While clause followed by a When clause and the system response.'
@@ -103,7 +121,10 @@ items:
     tests:
       -
         runner: unit
-        target: 'Tests\Unit\EarsTest::testComplex'
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsComplex'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsComplex'
   -
     id: EARS-008
     statement: 'The EARS validator shall accept zero or multiple preconditions and responses and require one system and at most one trigger.'
@@ -117,7 +138,10 @@ items:
     tests:
       -
         runner: unit
-        target: 'Tests\Unit\EarsTest::testCardinality'
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsCardinality'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsCardinality'
   -
     id: EARS-009
     statement: 'When a complex unwanted behaviour statement is validated, the EARS validator shall require If and Then around its trigger.'
@@ -131,4 +155,7 @@ items:
     tests:
       -
         runner: unit
-        target: 'Tests\Unit\EarsTest::testComplexUnwantedBehaviour'
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsComplexUnwantedBehaviour'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsComplexUnwantedBehaviour'
