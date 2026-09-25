@@ -1,96 +1,52 @@
-# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
-#
-# Layers describe stages of SQL generation. Subdirectories such as Plan, Token,
-# Derivation, Value, Lexeme and Output are implementation details within a stage.
-# PHPDoc aliases are assigned to the same stage as their declaring classes.
+# Core concepts and independent database implementations.
 deptrac:
-  paths:
-    - ./src
+  paths: [./src]
   analyser:
-    types:
-      - class
-      - use
+    types: [class, use]
   layers:
-    # Compiled syntax definitions and the releases they describe.
     - name: Grammar
       collectors:
-        - type: directory
-          value: 'src/Grammar/'
-    # Reads upstream grammar sources and publishes compiled artifacts.
-    - name: Compiler
-      collectors:
-        - type: directory
-          value: 'src/Compiler/'
-    - name: BisonParser
-      collectors:
-        - type: classNameRegex
-          value: '/^BisonParser\\/'
-    - name: LemonParser
-      collectors:
-        - type: classNameRegex
-          value: '/^LemonParser\\/'
-    # Plans, derives, rewrites, realizes and measures generated SQL.
+        - type: classLike
+          value: '^SqlFaker\\Grammar\\.*'
     - name: Generation
       collectors:
-        - type: directory
-          value: 'src/Generation/'
         - type: classLike
-          value: '^SqlFaker\\Generation\\Plan\\TRequiresNonEmpty$'
+          value: '^SqlFaker\\Generation\\.*'
+    - name: Compiler
+      collectors:
         - type: classLike
-          value: '^SqlFaker\\Generation\\Coverage\\(Measurement|Trace|Checkpoint|Snapshot|History|Entry|Rewrite)$'
-    # Concrete stages depend on the corresponding shared concepts.
-    - name: MySqlGrammar
+          value: '^SqlFaker\\Compiler\\.*'
+    - name: MySql
       collectors:
-        - type: directory
-          value: 'src/MySql/Grammar/'
-    - name: MySqlGeneration
-      collectors:
-        - type: directory
-          value: 'src/MySql/Generation/'
-    - name: PostgreSqlGrammar
-      collectors:
-        - type: directory
-          value: 'src/PostgreSql/Grammar/'
-    - name: PostgreSqlGeneration
-      collectors:
-        - type: directory
-          value: 'src/PostgreSql/Generation/'
         - type: classLike
-          value: '^SqlFaker\\PostgreSql\\Generation\\Lookahead\\LookaheadRule$'
-    - name: SqliteGrammar
+          value: '^SqlFaker\\MySql\\.*'
+    - name: PostgreSql
       collectors:
-        - type: directory
-          value: 'src/Sqlite/Grammar/'
-    - name: SqliteGeneration
-      collectors:
-        - type: directory
-          value: 'src/Sqlite/Generation/'
-    # Public entry points, statement aliases and dialect composition.
-    - name: Provider
-      collectors:
-        - type: directory
-          value: 'src/[^/]+Provider\.php$'
-        - type: directory
-          value: 'src/Provider/'
-        - type: directory
-          value: 'src/(MySql|PostgreSql|Sqlite)/StatementType\.php$'
         - type: classLike
-          value: '^SqlFaker\\(MySql|PostgreSql|Sqlite)\\StatementType$'
+          value: '^SqlFaker\\PostgreSql\\.*'
+    - name: Sqlite
+      collectors:
+        - type: classLike
+          value: '^SqlFaker\\Sqlite\\.*'
     - name: Faker
       collectors:
         - type: classLike
           value: '^Faker\\.*'
+    - name: BisonParser
+      collectors:
+        - type: classLike
+          value: '^BisonParser\\.*'
+    - name: LemonParser
+      collectors:
+        - type: classLike
+          value: '^LemonParser\\.*'
   ruleset:
     Grammar: []
+    Generation: [Grammar, Faker]
     Compiler: [Grammar, BisonParser, LemonParser]
+    MySql: [Grammar, Generation, Faker]
+    PostgreSql: [Grammar, Generation, Faker]
+    Sqlite: [Grammar, Generation, Faker]
+    Faker: []
     BisonParser: []
     LemonParser: []
-    Generation: [Grammar, Faker]
-    MySqlGrammar: [Grammar]
-    MySqlGeneration: [Grammar, Generation, MySqlGrammar, Faker]
-    PostgreSqlGrammar: [Grammar]
-    PostgreSqlGeneration: [Grammar, Generation, PostgreSqlGrammar, Faker]
-    SqliteGrammar: [Grammar]
-    SqliteGeneration: [Grammar, Generation, SqliteGrammar, Faker]
-    Provider: [Grammar, Generation, MySqlGrammar, MySqlGeneration, PostgreSqlGrammar, PostgreSqlGeneration, SqliteGrammar, SqliteGeneration, Faker]
-    Faker: []

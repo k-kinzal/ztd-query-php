@@ -1491,6 +1491,11 @@ final class PlanGeneratorTest extends TestCase
 
     public function testGenerateSeededCaseSelectionIsReproducible(): void
     {
+        /**
+         * Destructors of earlier Faker instances reset the shared random seed.
+         * Collect them before starting the seeded generation below.
+         */
+        gc_collect_cycles();
 
         $schemas = new StaticSchemaResolver([
             new TableSchema('comments', [

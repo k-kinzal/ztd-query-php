@@ -19,7 +19,7 @@ use Fuzz\Target\SqliteSyntaxCheck;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\SqliteProvider;
+use SqlFaker\Sqlite\SqliteProvider;
 
 $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 $version = $pdo->query('SELECT sqlite_version()');

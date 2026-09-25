@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Sqlite;
 
 use Faker\Factory;
 use Faker\Generator;
@@ -25,10 +25,10 @@ use SqlFaker\Grammar\Model\TerminalInventory;
 use SqlFaker\Grammar\Resource\SqlVersion;
 use SqlFaker\Sqlite\Generation\GenerationPlans;
 use SqlFaker\Sqlite\Generation\LexicalGrammar;
+use SqlFaker\Sqlite\Generation\StatementRule;
 use SqlFaker\Sqlite\Generation\Value\LiteralGenerator;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
-use SqlFaker\Sqlite\StatementType;
-use SqlFaker\SqliteProvider;
+use SqlFaker\Sqlite\SqliteProvider;
 use UnexpectedValueException;
 
 #[CoversClass(SqliteProvider::class)]
@@ -41,7 +41,7 @@ use UnexpectedValueException;
 #[CoversClass(ProductionRule::class)]
 #[CoversClass(Terminal::class)]
 #[CoversClass(TerminationAnalyzer::class)]
-#[CoversClass(StatementType::class)]
+#[CoversClass(StatementRule::class)]
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
@@ -49,7 +49,7 @@ use UnexpectedValueException;
 #[UsesClass(TerminalInventory::class)]
 #[UsesClass(GenerationPlans::class)]
 #[Medium]
-#[UsesClass(\SqlFaker\Provider\SqlGeneratorFactory::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\SqlGeneratorFactory::class)]
 #[UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
 #[UsesClass(\SqlFaker\Generation\Derivation\Derivation::class)]
 #[UsesClass(\SqlFaker\Generation\Derivation\DerivationTrace::class)]
@@ -449,13 +449,13 @@ final class SqliteProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
-    public function testSqlWithStatementType(): void
+    public function testSqlWithStatementRule(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
         $provider = new SqliteProvider($faker);
 
-        $result = $provider->sql(StatementType::Select, maxDepth: 6);
+        $result = $provider->sql(StatementRule::Select, maxDepth: 6);
 
         self::assertTrue(
             str_contains($result, 'SELECT') || str_contains($result, 'VALUES'),
@@ -463,7 +463,7 @@ final class SqliteProviderTest extends TestCase
         );
     }
 
-    public function testSqlWithNullStatementTypeUsesRandom(): void
+    public function testSqlWithNullStatementRuleUsesRandom(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -866,8 +866,8 @@ final class SqliteProviderTest extends TestCase
         self::assertSame($sql1, $sql2, 'Same seed should produce same output');
     }
 
-    #[DataProvider('providerStatementTypeValue')]
-    public function testSqlWithAllStatementTypes(StatementType $type): void
+    #[DataProvider('providerStatementRuleValue')]
+    public function testSqlWithAllStatementRules(StatementRule $type): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1024,17 +1024,17 @@ final class SqliteProviderTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{StatementType}>
+     * @return iterable<string, array{StatementRule}>
      */
-    public static function providerStatementTypeValue(): iterable
+    public static function providerStatementRuleValue(): iterable
     {
-        yield 'Select' => [StatementType::Select];
-        yield 'Insert' => [StatementType::Insert];
-        yield 'Update' => [StatementType::Update];
-        yield 'Delete' => [StatementType::Delete];
-        yield 'CreateTable' => [StatementType::CreateTable];
-        yield 'AlterTable' => [StatementType::AlterTable];
-        yield 'DropTable' => [StatementType::DropTable];
+        yield 'Select' => [StatementRule::Select];
+        yield 'Insert' => [StatementRule::Insert];
+        yield 'Update' => [StatementRule::Update];
+        yield 'Delete' => [StatementRule::Delete];
+        yield 'CreateTable' => [StatementRule::CreateTable];
+        yield 'AlterTable' => [StatementRule::AlterTable];
+        yield 'DropTable' => [StatementRule::DropTable];
     }
 
     public function testPlannerCompilesReusableInstructionsWithoutChangingTheDefaultStart(): void

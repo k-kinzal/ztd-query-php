@@ -12,15 +12,15 @@ Load the grammar and pass it to the matching factory with the same version tag. 
 use Faker\Factory;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySql\Grammar\MySqlGrammar;
-use SqlFaker\MySql\StatementType;
-use SqlFaker\Provider\SqlGeneratorFactory;
+use SqlFaker\MySql\Generation\StatementRule;
+use SqlFaker\MySql\Generation\SqlGeneratorFactory;
 
 require 'vendor/autoload.php';
 
 $faker = Factory::create();
 $version = MySqlGrammar::resolveVersion('mysql-8.4.7');
 $grammar = MySqlGrammar::load($version);
-$generator = SqlGeneratorFactory::forMySql($faker, $grammar, $version);
+$generator = SqlGeneratorFactory::create($faker, $grammar, $version);
 $faker->seed(12345);
 ```
 
@@ -31,14 +31,14 @@ $faker->seed(12345);
 Pass the desired rule to `GenerationPlan::fromRule()`, then call `generate()`:
 
 ```php
-$plan = GenerationPlan::fromRule(StatementType::Select->value)
+$plan = GenerationPlan::fromRule(StatementRule::Select->value)
     ->requiringNonEmpty()
     ->withMaxDepth(6);
 
 $sql = $generator->generate($plan);
 ```
 
-The return value is SQL text. `StatementType::Insert`, `Update`, and `Delete` select other statement families. `requiringNonEmpty()` requires a non-empty result; a rule for a fragment still produces a fragment.
+The return value is SQL text. `StatementRule::Insert`, `Update`, and `Delete` select other statement families. `requiringNonEmpty()` requires a non-empty result; a rule for a fragment still produces a fragment.
 
 ### Generate SQL without selecting a statement family
 
@@ -79,7 +79,7 @@ $string = $generator->generate(
 The same plan can be used for a series of generated inputs:
 
 ```php
-$selectPlan = GenerationPlan::fromRule(StatementType::Select->value)
+$selectPlan = GenerationPlan::fromRule(StatementRule::Select->value)
     ->requiringNonEmpty()
     ->withMaxDepth(3)
     ->withExpansionBudget(100);
@@ -136,11 +136,11 @@ Use the version's grammar and the same version tag when creating the generator:
 $mysqlFaker = \Faker\Factory::create();
 $mysqlVersion = \SqlFaker\MySql\Grammar\MySqlGrammar::resolveVersion('mysql-5.7.44');
 $mysqlGrammar = \SqlFaker\MySql\Grammar\MySqlGrammar::load($mysqlVersion);
-$mysqlGenerator = SqlGeneratorFactory::forMySql($mysqlFaker, $mysqlGrammar, $mysqlVersion);
+$mysqlGenerator = SqlGeneratorFactory::create($mysqlFaker, $mysqlGrammar, $mysqlVersion);
 $mysqlFaker->seed(7);
 
 $sql = $mysqlGenerator->generate(
-    GenerationPlan::fromRule(\SqlFaker\MySql\StatementType::Select->value)
+    GenerationPlan::fromRule(\SqlFaker\MySql\Generation\StatementRule::Select->value)
         ->requiringNonEmpty()
         ->withMaxDepth(3),
 );
@@ -152,17 +152,17 @@ The MySQL generator resolves common statement-rule aliases across releases. For 
 
 ### Generate with the PostgreSQL grammar
 
-Use `PgGrammar` and `forPostgreSql()` with PostgreSQL's rule names:
+Use `PgGrammar` and its platform `SqlGeneratorFactory::create()` with PostgreSQL's rule names:
 
 ```php
 $pgFaker = \Faker\Factory::create();
 $pgVersion = \SqlFaker\PostgreSql\Grammar\PgGrammar::resolveVersion('pg-17.2');
 $pgGrammar = \SqlFaker\PostgreSql\Grammar\PgGrammar::load($pgVersion);
-$pgGenerator = SqlGeneratorFactory::forPostgreSql($pgFaker, $pgGrammar, $pgVersion);
+$pgGenerator = \SqlFaker\PostgreSql\Generation\SqlGeneratorFactory::create($pgFaker, $pgGrammar, $pgVersion);
 $pgFaker->seed(7);
 
 $sql = $pgGenerator->generate(
-    GenerationPlan::fromRule(\SqlFaker\PostgreSql\StatementType::Select->value)
+    GenerationPlan::fromRule(\SqlFaker\PostgreSql\Generation\StatementRule::Select->value)
         ->requiringNonEmpty()
         ->withMaxDepth(3),
 );
@@ -178,18 +178,18 @@ Use `fromRule('stmt')` for a general PostgreSQL statement. `all()` starts at the
 
 ### Generate with the SQLite grammar
 
-Use `SqliteGrammar` and `forSqlite()`. SQLite's preset plans apply `withStepBudget()`, which prefers fewer remaining expansions when the depth threshold is reached:
+Use `SqliteGrammar` and its platform `SqlGeneratorFactory::create()`. SQLite's preset plans apply `withStepBudget()`, which prefers fewer remaining expansions when the depth threshold is reached:
 
 ```php
 $sqliteFaker = \Faker\Factory::create();
 $sqliteVersion = \SqlFaker\Sqlite\Grammar\SqliteGrammar::resolveVersion('sqlite-3.47.2');
 $sqliteGrammar = \SqlFaker\Sqlite\Grammar\SqliteGrammar::load($sqliteVersion);
-$sqliteGenerator = SqlGeneratorFactory::forSqlite($sqliteFaker, $sqliteGrammar, $sqliteVersion);
+$sqliteGenerator = \SqlFaker\Sqlite\Generation\SqlGeneratorFactory::create($sqliteFaker, $sqliteGrammar, $sqliteVersion);
 $sqliteFaker->seed(7);
 
 $sql = $sqliteGenerator->generate(
     \SqlFaker\Sqlite\GenerationPlans::statement(
-        \SqlFaker\Sqlite\StatementType::Select->value,
+        \SqlFaker\Sqlite\Generation\StatementRule::Select->value,
         maxDepth: 3,
     ),
 );

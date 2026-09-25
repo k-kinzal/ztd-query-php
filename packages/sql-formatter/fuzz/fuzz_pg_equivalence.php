@@ -34,7 +34,7 @@ use Fuzz\Target\PgEquivalence;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSql\PostgreSqlProvider;
 use SqlFormatter\FormatOptions;
 use SqlFormatter\Formatter;
 use SqlFormatter\Style;

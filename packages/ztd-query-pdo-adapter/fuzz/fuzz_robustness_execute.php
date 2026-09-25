@@ -12,7 +12,7 @@ use Faker\Factory;
 use Fuzz\Robustness\ExecutionCheck;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\MySqlProvider;
 
 [$host, $port] = Fuzz\Container\DatabaseEndpoint::mysql();
 $dsn = "mysql:host=$host;port=$port;charset=utf8mb4";

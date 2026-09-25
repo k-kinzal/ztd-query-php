@@ -11,7 +11,7 @@ use SqlCatalog\Analyzer;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Choice\PlanBuilder;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\MySqlProvider;
 
 /**
  * Checks that a statement written into PHP comes back out of the catalog.

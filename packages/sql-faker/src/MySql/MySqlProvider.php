@@ -2,18 +2,19 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker;
+namespace SqlFaker\MySql;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use SqlFaker\Generation;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\MySql\Generation\GenerationPlans;
+use SqlFaker\MySql\Generation\SqlGeneratorFactory;
+use SqlFaker\MySql\Generation\StatementRule;
 use SqlFaker\MySql\Grammar\MySqlGrammar;
-use SqlFaker\MySql\StatementType;
-use SqlFaker\Provider\SqlGeneratorFactory;
 
 /**
  * Faker Provider for generating syntactically valid MySQL SQL statements.
@@ -41,7 +42,7 @@ use SqlFaker\Provider\SqlGeneratorFactory;
  *
  * @example Register the provider with Faker
  *     $faker = \Faker\Factory::create();
- *     $faker->addProvider(new \SqlFaker\MySqlProvider($faker));
+ *     $faker->addProvider(new \SqlFaker\MySql\MySqlProvider($faker));
  *     $faker->integerLiteral(min: 42, max: 42) // => '42'
  */
 final class MySqlProvider extends Base
@@ -57,10 +58,10 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Choose a supported database version
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker, 'mysql-5.7.44');
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker, 'mysql-5.7.44');
      *     $provider->integerLiteral(min: 42, max: 42) // => '42'
      * @example Reject an unsupported database version
-     *     new \SqlFaker\MySqlProvider(\Faker\Factory::create(), 'missing-version') // throws \RuntimeException: Unsupported
+     *     new \SqlFaker\MySql\MySqlProvider(\Faker\Factory::create(), 'missing-version') // throws \RuntimeException: Unsupported
      */
     public function __construct(Generator $generator, ?string $version = null, ?GrammarCoverage $coverage = null)
     {
@@ -69,14 +70,14 @@ final class MySqlProvider extends Base
         $generator->addProvider($this);
         $resolvedVersion = MySqlGrammar::resolveVersion($version);
         $this->grammar = MySqlGrammar::load($resolvedVersion);
-        $this->sql = SqlGeneratorFactory::forMySql($generator, $this->grammar, $resolvedVersion, $coverage);
+        $this->sql = SqlGeneratorFactory::create($generator, $this->grammar, $resolvedVersion, $coverage);
     }
 
     /**
      * Prepares grammar analysis for constructing concrete generation plans.
      * @visibility public
      * @example Compile input before generating SQL
-     *     $provider = new \SqlFaker\MySqlProvider(\Faker\Factory::create());
+     *     $provider = new \SqlFaker\MySql\MySqlProvider(\Faker\Factory::create());
      *     $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile('', $provider->planner());
      *     $provider->generate($plan) === $provider->generate($plan) // => true
      */
@@ -96,7 +97,7 @@ final class MySqlProvider extends Base
      * @return (TRequiresNonEmpty is true ? non-empty-string : string)
      * @visibility public
      * @example Generate a statement from deterministic choice bytes
-     *     $provider = new \SqlFaker\SqliteProvider(\Faker\Factory::create());
+     *     $provider = new \SqlFaker\MySql\MySqlProvider(\Faker\Factory::create());
      *     $plan = \SqlFaker\Generation\Plan\GenerationPlan::all()->requiringNonEmpty()->withExpansionBudget(100);
      *     $provider->generate($plan) !== '' // => true
      */
@@ -108,17 +109,17 @@ final class MySqlProvider extends Base
     /**
      * Generate a syntactically valid SQL statement.
      *
-     * @param StatementType|null $startRule Start rule (null for default)
+     * @param StatementRule|null $startRule Start rule (null for default)
      *
      * @visibility public
      * @example Select a statement type explicitly
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
-     *     $sql = $provider->sql(\SqlFaker\MySql\StatementType::Select, maxDepth: 0);
+     *     $sql = $provider->sql(\SqlFaker\MySql\Generation\StatementRule::Select, maxDepth: 0);
      *     preg_match('/\bSELECT\b/i', $sql) // => 1
      */
-    public function sql(?StatementType $startRule = null, int $maxDepth = PHP_INT_MAX): string
+    public function sql(?StatementRule $startRule = null, int $maxDepth = PHP_INT_MAX): string
     {
         return $this->generate(GenerationPlan::statement($startRule?->value, $maxDepth));
     }
@@ -129,13 +130,13 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Select a statement type explicitly
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
-     *     $sql = $provider->sqlWithoutEmptyRows(\SqlFaker\MySql\StatementType::Select, maxDepth: 0);
+     *     $sql = $provider->sqlWithoutEmptyRows(\SqlFaker\MySql\Generation\StatementRule::Select, maxDepth: 0);
      *     preg_match('/\bSELECT\b/i', $sql) // => 1
      */
     public function sqlWithoutEmptyRows(
-        ?StatementType $startRule = null,
+        ?StatementRule $startRule = null,
         int $maxDepth = PHP_INT_MAX,
     ): string {
         return $this->generate(
@@ -149,14 +150,14 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate select statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->selectStatement(maxDepth: 0);
      *     preg_match('/\bSELECT\b/is', $sql) // => 1
      */
     public function selectStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::statement(StatementType::Select->value, $maxDepth));
+        return $this->generate(GenerationPlan::statement(StatementRule::Select->value, $maxDepth));
     }
 
     /**
@@ -165,14 +166,14 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate insert statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->insertStatement(maxDepth: 0);
      *     preg_match('/\bINSERT\b/is', $sql) // => 1
      */
     public function insertStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::statement(StatementType::Insert->value, $maxDepth));
+        return $this->generate(GenerationPlan::statement(StatementRule::Insert->value, $maxDepth));
     }
 
     /**
@@ -181,14 +182,14 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate update statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->updateStatement(maxDepth: 0);
      *     preg_match('/\bUPDATE\b/is', $sql) // => 1
      */
     public function updateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::statement(StatementType::Update->value, $maxDepth));
+        return $this->generate(GenerationPlan::statement(StatementRule::Update->value, $maxDepth));
     }
 
     /**
@@ -197,14 +198,14 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate delete statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->deleteStatement(maxDepth: 0);
      *     preg_match('/\bDELETE\b/is', $sql) // => 1
      */
     public function deleteStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::statement(StatementType::Delete->value, $maxDepth));
+        return $this->generate(GenerationPlan::statement(StatementRule::Delete->value, $maxDepth));
     }
 
     /**
@@ -213,7 +214,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate load data statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->loadDataStatement(maxDepth: 0);
      *     preg_match('/\bLOAD\b.*\bDATA\b.*\bINFILE\b/is', $sql) // => 1
@@ -229,7 +230,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate multi table update statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->multiTableUpdateStatement(maxDepth: 0);
      *     preg_match('/\bUPDATE\b.*,.*\bSET\b/is', $sql) // => 1
@@ -245,7 +246,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate multi table delete statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->multiTableDeleteStatement(maxDepth: 0);
      *     preg_match('/\bDELETE\b.*,.*\bFROM\b/is', $sql) // => 1
@@ -261,14 +262,14 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate create table statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->createTableStatement(maxDepth: 0);
      *     preg_match('/\bCREATE\b.*\bTABLE\b/is', $sql) // => 1
      */
     public function createTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::statement(StatementType::CreateTable->value, $maxDepth));
+        return $this->generate(GenerationPlan::statement(StatementRule::CreateTable->value, $maxDepth));
     }
 
     /**
@@ -277,14 +278,14 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate alter table statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->alterTableStatement(maxDepth: 0);
      *     preg_match('/\bALTER\b.*\bTABLE\b/is', $sql) // => 1
      */
     public function alterTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::statement(StatementType::AlterTable->value, $maxDepth));
+        return $this->generate(GenerationPlan::statement(StatementRule::AlterTable->value, $maxDepth));
     }
 
     /**
@@ -293,14 +294,14 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate drop table statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->dropTableStatement(maxDepth: 0);
      *     preg_match('/\bDROP\b.*\bTABLE\b/is', $sql) // => 1
      */
     public function dropTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::statement(StatementType::DropTable->value, $maxDepth));
+        return $this->generate(GenerationPlan::statement(StatementRule::DropTable->value, $maxDepth));
     }
 
     /**
@@ -312,14 +313,14 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate simple statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->simpleStatement(maxDepth: 0);
      *     $sql !== '' // => true
      */
     public function simpleStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::statement(StatementType::SimpleStatement->value, $maxDepth));
+        return $this->generate(GenerationPlan::statement(StatementRule::SimpleStatement->value, $maxDepth));
     }
 
     /**
@@ -328,7 +329,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate identifier at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->identifier(maxDepth: 0);
      *     $sql !== '' // => true
@@ -344,7 +345,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->quotedIdentifier(minLength: 4, maxLength: 4);
      *     preg_match('/^`[a-z_][a-z0-9_]{3}`$/', $token) // => 1
@@ -360,7 +361,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->stringLiteral(minLength: 4, maxLength: 4);
      *     preg_match('/^\'[A-Za-z0-9_]{4}\'$/', $token) // => 1
@@ -376,7 +377,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->nationalStringLiteral(minLength: 4, maxLength: 4);
      *     preg_match('/^N\'[A-Za-z0-9_]{4}\'$/', $token) // => 1
@@ -392,7 +393,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->dollarQuotedString(minLength: 4, maxLength: 4);
      *     preg_match('/^\$\$[A-Za-z0-9_]{4}\$\$$/', $token) // => 1
@@ -408,7 +409,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Fix both bounds to obtain one value
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $provider->integerLiteral(min: 42, max: 42) // => '42'
      */
     public function integerLiteral(int $min = 1, int $max = 2147483647): string
@@ -422,7 +423,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Fix both bounds to obtain one value
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $provider->longIntegerLiteral(min: 42, max: 42) // => '42'
      */
     public function longIntegerLiteral(int $min = 0, int $max = 2147483647): string
@@ -437,7 +438,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->unsignedBigIntLiteral(minLength: 4, maxLength: 4);
      *     preg_match('/^(0|[1-9][0-9]{0,3})$/', $token) // => 1
@@ -453,7 +454,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->decimalLiteral(precision: 5, scale: 2);
      *     preg_match('/^[0-9]{1,3}\.[0-9]{2}$/', $token) // => 1
@@ -469,7 +470,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->floatLiteral(precision: 5, scale: 2, minExponent: 3, maxExponent: 3);
      *     preg_match('/^[0-9]{1,3}\.[0-9]{2}e3$/', $token) // => 1
@@ -487,7 +488,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->hexLiteral(minLength: 4, maxLength: 4);
      *     preg_match('/^0x[0-9a-f]{4}$/', $token) // => 1
@@ -503,7 +504,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->quotedHexLiteral(minBytes: 2, maxBytes: 2);
      *     preg_match('/^X\'[0-9a-f]{4}\'$/', $token) // => 1
@@ -519,7 +520,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->binaryLiteral(minLength: 4, maxLength: 4);
      *     preg_match('/^0b[01]{4}$/', $token) // => 1
@@ -535,7 +536,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Constrain the generated token shape
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $token = $provider->hostname(minParts: 2, maxParts: 2, maxPartLength: 4);
      *     preg_match('/^[a-z0-9]{1,4}\.[a-z0-9]{1,4}$/', $token) // => 1
@@ -551,7 +552,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate replace statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->replaceStatement(maxDepth: 0);
      *     preg_match('/\bREPLACE\b/is', $sql) // => 1
@@ -567,7 +568,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate truncate statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->truncateStatement(maxDepth: 0);
      *     preg_match('/\bTRUNCATE\b/is', $sql) // => 1
@@ -583,7 +584,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate create index statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->createIndexStatement(maxDepth: 0);
      *     preg_match('/\bCREATE\b.*\bINDEX\b/is', $sql) // => 1
@@ -599,7 +600,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate drop index statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->dropIndexStatement(maxDepth: 0);
      *     preg_match('/\bDROP\b.*\bINDEX\b/is', $sql) // => 1
@@ -615,7 +616,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate begin statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->beginStatement(maxDepth: 0);
      *     preg_match('/\bBEGIN\b/is', $sql) // => 1
@@ -631,7 +632,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate commit statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->commitStatement(maxDepth: 0);
      *     preg_match('/\bCOMMIT\b/is', $sql) // => 1
@@ -647,7 +648,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate rollback statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->rollbackStatement(maxDepth: 0);
      *     preg_match('/\bROLLBACK\b/is', $sql) // => 1
@@ -663,7 +664,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate expr at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->expr(maxDepth: 0);
      *     $sql !== '' // => true
@@ -679,7 +680,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate simple expr at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->simpleExpr(maxDepth: 0);
      *     $sql !== '' // => true
@@ -695,7 +696,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate literal at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->literal(maxDepth: 0);
      *     $sql !== '' // => true
@@ -711,7 +712,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate predicate at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->predicate(maxDepth: 0);
      *     $sql !== '' // => true
@@ -727,7 +728,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate where clause at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->whereClause(maxDepth: 0);
      *     preg_match('/\bWHERE\b/is', $sql) // => 1
@@ -743,7 +744,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate order clause at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->orderClause(maxDepth: 0);
      *     preg_match('/\bORDER\b.*\bBY\b/is', $sql) // => 1
@@ -759,7 +760,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate limit clause at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->limitClause(maxDepth: 0);
      *     preg_match('/\bLIMIT\b/is', $sql) // => 1
@@ -775,7 +776,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate table reference at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->tableReference(maxDepth: 0);
      *     $sql !== '' // => true
@@ -791,7 +792,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate joined table at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->joinedTable(maxDepth: 0);
      *     preg_match('/\bJOIN\b/is', $sql) // => 1
@@ -807,7 +808,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate table ident at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->tableIdent(maxDepth: 0);
      *     $sql !== '' // => true
@@ -823,7 +824,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate subquery at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->subquery(maxDepth: 0);
      *     preg_match('/\(.*\bSELECT\b.*\)/is', $sql) // => 1
@@ -839,7 +840,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate with clause at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->withClause(maxDepth: 0);
      *     preg_match('/\bWITH\b.*\bAS\b/is', $sql) // => 1
@@ -857,7 +858,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate foreign key constraint at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->foreignKeyConstraint(maxDepth: 0);
      *     preg_match('/\bCONSTRAINT\b.*\bFOREIGN\b.*\bREFERENCES\b/is', $sql) // => 1
@@ -877,7 +878,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate update join derived statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->updateJoinDerivedStatement(maxDepth: 0);
      *     preg_match('/\bUPDATE\b.*\bJOIN\b.*\bSELECT\b.*\bSET\b/is', $sql) // => 1
@@ -897,7 +898,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate insert select compound statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->insertSelectCompoundStatement(maxDepth: 0);
      *     preg_match('/\bINSERT\b.*\bSELECT\b.*\bUNION\b.*\bALL\b/is', $sql) // => 1
@@ -917,7 +918,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate insert row alias upsert statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->insertRowAliasUpsertStatement(maxDepth: 0);
      *     preg_match('/\bINSERT\b.*\bAS\b.*\bDUPLICATE\b.*\bUPDATE\b/is', $sql) // => 1
@@ -935,7 +936,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate insert function upsert statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->insertFunctionUpsertStatement(maxDepth: 0);
      *     preg_match('/\bINSERT\b.*\bDUPLICATE\b.*\bUPDATE\b.*\bIF\b/is', $sql) // => 1
@@ -953,7 +954,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate full text search statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->fullTextSearchStatement(maxDepth: 0);
      *     preg_match('/\bSELECT\b.*\bMATCH\b.*\bAGAINST\b/is', $sql) // => 1
@@ -970,7 +971,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate temporary table statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->temporaryTableStatement(maxDepth: 0);
      *     preg_match('/\bCREATE\b.*\bTEMP(?:ORARY)?\b.*\bTABLE\b/is', $sql) // => 1
@@ -988,7 +989,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate view statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->viewStatement(maxDepth: 0);
      *     preg_match('/\bCREATE\b.*\bVIEW\b.*\bAS\b/is', $sql) // => 1
@@ -1004,7 +1005,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate generated column statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->generatedColumnStatement(maxDepth: 0);
      *     preg_match('/\bGENERATED\b.*\bALWAYS\b.*\bAS\b/is', $sql) // => 1
@@ -1020,7 +1021,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate foreign key cascade statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->foreignKeyCascadeStatement(maxDepth: 0);
      *     preg_match('/\bREFERENCES\b.*\bCASCADE\b.*\bCASCADE\b/is', $sql) // => 1
@@ -1036,7 +1037,7 @@ final class MySqlProvider extends Base
      * @visibility public
      * @example Generate partition select statement at the shortest depth
      *     $faker = \Faker\Factory::create();
-     *     $provider = new \SqlFaker\MySqlProvider($faker);
+     *     $provider = new \SqlFaker\MySql\MySqlProvider($faker);
      *     $faker->seed(7);
      *     $sql = $provider->partitionSelectStatement(maxDepth: 0);
      *     preg_match('/\bSELECT\b.*\bPARTITION\b/is', $sql) // => 1
