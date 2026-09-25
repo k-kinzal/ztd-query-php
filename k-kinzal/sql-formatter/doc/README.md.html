@@ -100,8 +100,10 @@ ORDER BY name;</code></pre>
 composer lint
 composer test:unit
 composer test
-composer bench:quick</code></pre>
+composer bench:quick
+composer fuzz</code></pre>
 <p>The package uses the monorepo&#039;s PHP-AI-Toolkit reporter and executable PHPDoc examples, PHPStan at maximum level, PHP-CS-Fixer, PHPCompatibility, LOC and tree guards, Deptrac, ParaTest, and PHPBench. CI runs tests on PHP 8.1 through 8.5 and mutation testing with Infection.</p>
+<p>PHP-Fuzzer targets under <span class="md-target" title="fuzz/"><code>fuzz/</code></span> feed the formatter raw bytes and, per database and layout preset, statements sql-faker generates whose original and formatted texts must draw the same answer from MySQL, PostgreSQL, and SQLite. <code>composer fuzz</code> runs a smoke set, the equivalence targets replay sql-faker&#039;s seed corpora, and a nightly workflow runs every target. See <a href="../../../k-kinzal/sql-formatter/doc/fuzz/README.md.html"><code>fuzz/README.md</code></a>.</p>
 <h3>License</h3>
 <p>MIT. See <span class="md-target" title="LICENSE">LICENSE</span>.</p>
 </section>
