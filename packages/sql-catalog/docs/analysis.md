@@ -382,6 +382,12 @@ the paths kept apart through a body, `SliceExecutor::MAX_RUNS` the runs, and
 into a stated gap, a `correlated: false`, or a `searchClosed: false` — never into
 silence.
 
+When one step writes several variables with alternative values, the run bound
+is applied after each variable is split. Each expansion produces at most
+`MAX_RUNS × MAX_TERMS` candidate environments instead of materializing the Cartesian
+product of every variable's alternatives. Excess runs are joined, preserving
+their candidate values and marking the lost pairing as `correlated: false`.
+
 ## Measured on WordPress
 
 The 93 WordPress files that name `$wpdb` take about 20 seconds and yield 774

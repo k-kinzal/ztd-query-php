@@ -369,6 +369,10 @@ final class SliceExecutor
     /**
      * The environment split into one per value of the names just written, when any has several.
      *
+     * Bound each name's expansion before splitting the next one. Waiting until
+     * every name has been split materializes their full Cartesian product,
+     * even though only a handful of runs will survive the bound.
+     *
      * @param array<string, true> $names
      * @return list<Environment>
      */
@@ -394,7 +398,7 @@ final class SliceExecutor
                     $split[] = $one;
                 }
             }
-            $environments = $split;
+            $environments = $this->bound($split, $limit);
         }
 
         return $this->bound($environments, $limit);
