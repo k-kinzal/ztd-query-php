@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lemon Parser — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/435/k-kinzal/lemon-parser/doc/README.md.html">
+<meta name="description" content="Lemon Parser, a document of the k-kinzal/lemon-parser package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Lemon Parser — ZTD Query PHP">
+<meta property="og:description" content="Lemon Parser, a document of the k-kinzal/lemon-parser package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/435/k-kinzal/lemon-parser/doc/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/435/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../k-kinzal/lemon-parser/index.html">k-kinzal/lemon-parser</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../k-kinzal/lemon-parser/all-items.html">All items</a></li><li data-diff="same"><a href="../../../k-kinzal/lemon-parser/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../k-kinzal/lemon-parser/LemonParser/index.html" title="LemonParser">LemonParser</a></li><li data-diff="same"><a href="../../../k-kinzal/lemon-parser/LemonParser/Ast/index.html" title="LemonParser\Ast">LemonParser\Ast</a></li><li data-diff="same"><a href="../../../k-kinzal/lemon-parser/LemonParser/Ast/Declaration/index.html" title="LemonParser\Ast\Declaration">LemonParser\Ast\Declaration</a></li><li data-diff="same"><a href="../../../k-kinzal/lemon-parser/LemonParser/Preprocessor/index.html" title="LemonParser\Preprocessor">LemonParser\Preprocessor</a></li><li data-diff="same"><a href="../../../k-kinzal/lemon-parser/LemonParser/Printer/index.html" title="LemonParser\Printer">LemonParser\Printer</a></li><li data-diff="same"><a href="../../../k-kinzal/lemon-parser/LemonParser/Scanner/index.html" title="LemonParser\Scanner">LemonParser\Scanner</a></li><li data-diff="same"><a href="../../../k-kinzal/lemon-parser/LemonParser/Syntax/index.html" title="LemonParser\Syntax">LemonParser\Syntax</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../k-kinzal/lemon-parser/index.html">k-kinzal/lemon-parser</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">README.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 849fef1ff0 to working tree">849fef1ff0 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 849fef1ff0 and working tree." data-off="This page documents what 849fef1ff0 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Lemon Parser</h1><div class="symbol-meta"><span class="source-link">README.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Lemon Parser</h2>
+</div><div class="doc-block" data-diff="same"><p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/lemon-parser/"><span class="md-target" title="https://img.shields.io/badge/docs-lemon--parser-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+</div><div class="doc-block" data-diff="same"><p>Lemon Parser reads grammar files of the <a href="https://sqlite.org/lemon.html">Lemon parser generator</a>, the one SQLite is built with, into a syntax tree that keeps everything the file says: every rule with its aliases, multi-terminal positions, precedence mark and action, and every declaration from <code>%token_prefix</code> to <code>%token_class</code>, each with its position. It reads the language the Lemon manual defines, so a file Lemon accepts is read as Lemon reads it and a file Lemon rejects raises an error with Lemon&#039;s message. The manual is the specification, and <span class="md-target" title="spec/features">spec/features</span> states it clause by clause as scenarios that run the parser. <code>%ifdef</code> regions are settled with the names you pass, as Lemon&#039;s <code>-D</code> option does.</p>
+</div><div class="doc-block" data-diff="same"><p>It reads grammars; it does not generate parsers. The tree is for tools that analyse, transform, document or generate from Lemon grammars.</p>
+</div><div class="doc-block" data-diff="same"><h3>Requirements</h3>
+</div><div class="doc-block" data-diff="same"><ul><li>PHP 8.1 or higher</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>Installation</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>composer require k-kinzal/lemon-parser</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>Usage</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">LemonParser\Parser</span>;
+
+<span class="tok-var">$file</span> = (<span class="tok-kw">new</span> <span class="tok-id">Parser</span>())-&gt;<span class="tok-id">parse</span>(<span class="tok-id">file_get_contents</span>(<span class="tok-str">&#039;parse.y&#039;</span>), [<span class="tok-str">&#039;SQLITE_OMIT_WINDOWFUNC&#039;</span>]);
+
+<span class="tok-kw">foreach</span> (<span class="tok-var">$file</span>-&gt;<span class="tok-id">rules</span>() <span class="tok-kw">as</span> <span class="tok-var">$rule</span>) {
+    <span class="tok-kw">echo</span> <span class="tok-var">$rule</span>-&gt;<span class="tok-id">lhs</span>-&gt;<span class="tok-id">name</span>, <span class="tok-str">&#039; ::=&#039;</span>;
+    <span class="tok-kw">foreach</span> (<span class="tok-var">$rule</span>-&gt;<span class="tok-id">items</span> <span class="tok-kw">as</span> <span class="tok-var">$item</span>) {
+        <span class="tok-kw">echo</span> <span class="tok-str">&#039; &#039;</span>, <span class="tok-id">implode</span>(<span class="tok-str">&#039;|&#039;</span>, <span class="tok-id">array_map</span>(<span class="tok-kw">fn</span> (<span class="tok-var">$symbol</span>) =&gt; <span class="tok-var">$symbol</span>-&gt;<span class="tok-id">name</span>, <span class="tok-var">$item</span>-&gt;<span class="tok-id">symbols</span>));
+    }
+    <span class="tok-kw">echo</span> <span class="tok-var">$rule</span>-&gt;<span class="tok-id">precedence</span> === <span class="tok-id">null</span> ? <span class="tok-str">&#039;&#039;</span> : &quot;<span class="tok-str"> [</span>{<span class="tok-var">$rule</span>-&gt;<span class="tok-id">precedence</span>-&gt;<span class="tok-id">name</span>}<span class="tok-str">]</span>&quot;, <span class="tok-str">&quot;\n&quot;</span>;
+}
+<span class="tok-kw">foreach</span> (<span class="tok-var">$file</span>-&gt;<span class="tok-id">declarations</span>() <span class="tok-kw">as</span> <span class="tok-var">$declaration</span>) {
+    <span class="tok-kw">echo</span> <span class="tok-var">$declaration</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039; at &#039;</span>, <span class="tok-var">$declaration</span>-&gt;<span class="tok-id">location</span>(), <span class="tok-str">&quot;\n&quot;</span>;
+}</code></pre>
+</div><div class="doc-block" data-diff="same"><p>A tree prints back as a grammar file, and printing is stable, which is how a tree can be checked:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">LemonParser\Printer\Printer</span>;
+
+<span class="tok-var">$text</span> = (<span class="tok-kw">new</span> <span class="tok-id">Printer</span>())-&gt;<span class="tok-id">print</span>(<span class="tok-var">$file</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>Every node of the tree is described in the <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/lemon-parser/">API documentation</a>, and what &quot;as Lemon reads it&quot; covers is stated by the specification below.</p>
+</div><div class="doc-block" data-diff="same"><h3>What is kept</h3>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Written in the file</th><th>In the tree</th></tr></thead><tbody><tr><td><code>expr(A) ::= expr(B) PLUS|MINUS expr(C). [STAR] { A = B + C; }</code></td><td><code>Rule</code> with <code>RhsItem</code>s, the precedence mark and the <code>CodeBlock</code></td></tr><tr><td><code>{NEVER-REDUCE}</code> after a rule</td><td><code>Rule::$neverReduce</code></td></tr><tr><td><code>%name</code>, <code>%include</code>, <code>%code</code>, <code>%token_prefix</code>, <code>%token_type</code>, <code>%extra_argument</code>, <code>%syntax_error</code>, <code>%stack_size</code>, <code>%start_symbol</code> and the other one-argument keywords</td><td><code>Directive</code> with the keyword, the argument and whether it was braced code, a string or a word</td></tr><tr><td><code>%left</code>, <code>%right</code>, <code>%nonassoc</code></td><td><code>PrecedenceDeclaration</code>, in file order so levels can be counted</td></tr><tr><td><code>%destructor</code>, <code>%type</code></td><td><code>Destructor</code>, <code>TypeDeclaration</code></td></tr><tr><td><code>%fallback</code>, <code>%token</code>, <code>%wildcard</code>, <code>%token_class</code></td><td><code>Fallback</code>, <code>TokenDeclaration</code>, <code>Wildcard</code>, <code>TokenClass</code></td></tr><tr><td><code>%ifdef</code> / <code>%ifndef</code> / <code>%if</code> / <code>%else</code> / <code>%endif</code></td><td>settled before reading; blanked lines keep their line breaks, so positions still point into the original file</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>Host code is kept as written and never interpreted.</p>
+</div><div class="doc-block" data-diff="same"><h3>Specification</h3>
+</div><div class="doc-block" data-diff="same"><p>The language is specified in <span class="md-target" title="spec/features">spec/features</span>: one feature per section of &quot;The Lemon Parser Generator&quot; (doc/lemon.html of SQLite 3.47.2) that defines the grammar-file language, one scenario per clause. Every feature opens with its source, and every scenario is tagged with the section it states (<code>@manual:4.2</code>). Where the manual is silent, <code>tool/lemon.c</code> of the same release is read as the reference, never run: those scenarios are tagged with the function they follow (<code>@source:parseonetoken</code>), cite its line, and state Lemon&#039;s error message. The three places where this reader is stricter than Lemon, a rule or a list cut off by the end of the file and an unclosed parenthesis in a <code>%if</code> expression, stand in their own feature (<code>@reader</code>). Every scenario gives a grammar file and, when needed, the names defined for its <code>%ifdef</code> regions, parses it with <code>Parser</code>, and states either the whole tree or the position and message of the error.</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>composer spec                                   # the whole specification
+vendor/bin/behat --tags=@manual:4.4.8           # one section of the manual
+vendor/bin/behat --tags=@source:Parse           # the clauses taken from one function of lemon.c</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The specification covers the language of grammar files. What Lemon checks on the grammar the file describes, such as an alias unused in its action, conflicts, or a start symbol that has no rule, is not part of reading the file and is out of scope.</p>
+</div><div class="doc-block" data-diff="same"><h3>License</h3>
+</div><div class="doc-block" data-diff="same"><p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
+</div><div class="doc-block" data-diff="same"><h3>Source traceability</h3>
+</div><div class="doc-block" data-diff="same"><p><a href="../../../k-kinzal/lemon-parser/doc/requirements/README.md.html">Requirements definitions</a> trace selected sections of the SQLite 3.47.2 Lemon manual to Behat scenarios and keep this reader&#039;s independent strictness decisions explicit. Run <code>php ../requirements/bin/requirements coverage</code>, <code>spec</code> or <code>spec --no-test --without-source</code> from this directory after installing <code>../requirements</code> in the monorepo.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../assets/search-index.js" defer></script>
+<script src="../../../assets/app.js" defer></script>
+</body>
+</html>
