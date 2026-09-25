@@ -38,9 +38,9 @@ use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Extension\Laravel\BuilderCalls;
 use SqlCatalog\Extension\Laravel\CallbackModel;
 use SqlCatalog\Extension\Laravel\Grammar;
+use SqlCatalog\Extension\Laravel\LaravelExtension;
 use SqlCatalog\Extension\Laravel\Predicates;
 use SqlCatalog\Extension\Laravel\QueryState;
-use SqlCatalog\Facade\LaravelExtension;
 
 #[CoversClass(CallbackModel::class)]
 #[UsesClass(Domain::class)]
@@ -124,7 +124,7 @@ final class CallbackModelTest extends TestCase
         $model = new CallbackModel($index, $effects, dialects: \SqlCatalog\Facade\Builtins::dialects());
         $object = (new BuilderCalls($index, dialects: \SqlCatalog\Facade\Builtins::dialects()))->allocate('Illuminate\Database\Eloquent\Builder', new QueryState(['model' => Domain::literal('User'), 'dialect' => Domain::literal('sqlite')]));
         $call = new \PhpParser\Node\Expr\MethodCall(new \PhpParser\Node\Expr\Variable('q'), 'active');
-        $result = $model->apply($call, $object, 'active', [], new Environment(), new FunctionScope('query.php'), (new Interpreter($index, (new LaravelExtension())->sinks(), modelProviders: [new LaravelExtension()]))->evaluatorFor([$file]))?->soleObject();
+        $result = $model->apply($call, $object, 'active', [], new Environment(), new FunctionScope('query.php'), (new Interpreter($index, (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->sinks(), modelProviders: [new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects())]))->evaluatorFor([$file]))?->soleObject();
         self::assertNotNull($result);
         self::assertSame('"active" = ?', QueryState::from($result)->items('where')[0]->soleLiteral()?->value);
         self::assertNull($model->apply($call, $object, 'missing', [], new Environment(), new FunctionScope('query.php'), (new Interpreter($index, []))->evaluatorFor()));
@@ -142,7 +142,7 @@ final class CallbackModelTest extends TestCase
         $index = new ProgramIndex();
         $state = new QueryState(['dialect' => Domain::literal('sqlite'), 'limit' => Domain::literal(10), 'where' => QueryState::list([Domain::literal('active = 1')])]);
         $object = (new BuilderCalls($index, dialects: \SqlCatalog\Facade\Builtins::dialects()))->allocate(BuilderCalls::QUERY, $state);
-        $result = (new CallbackModel($index, $effects, dialects: \SqlCatalog\Facade\Builtins::dialects()))->nested($callback, $object, 'orwhere', new Environment(), new FunctionScope('query.php'), (new Interpreter($index, (new LaravelExtension())->sinks(), modelProviders: [new LaravelExtension()]))->evaluatorFor())->soleObject();
+        $result = (new CallbackModel($index, $effects, dialects: \SqlCatalog\Facade\Builtins::dialects()))->nested($callback, $object, 'orwhere', new Environment(), new FunctionScope('query.php'), (new Interpreter($index, (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->sinks(), modelProviders: [new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects())]))->evaluatorFor())->soleObject();
         self::assertNotNull($result);
         $after = QueryState::from($result);
         self::assertSame('or ("id" = ?)', $after->items('where')[1]->soleLiteral()?->value);

@@ -12,6 +12,7 @@ use SqlCatalog\Core\Analysis\SinkMatcher;
 use SqlCatalog\Core\Evaluation\Domain;
 use SqlCatalog\Core\Evaluation\ObjectTerm;
 use SqlCatalog\Core\Evaluation\OpaqueTerm;
+use SqlCatalog\Core\Extension\ExtensionRegistry;
 use SqlCatalog\Core\Extension\SinkCallKind;
 use SqlCatalog\Core\Extension\SinkSpec;
 use SqlCatalog\Core\Php\ParsedFile;
@@ -22,7 +23,6 @@ use SqlCatalog\Core\Php\TypeReader;
 use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Extension\Mysqli\MysqliExtension;
 use SqlCatalog\Extension\Pdo\PdoExtension;
-use SqlCatalog\Facade\ExtensionRegistry;
 
 #[CoversClass(SinkMatcher::class)]
 #[UsesClass(Domain::class)]

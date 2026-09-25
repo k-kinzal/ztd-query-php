@@ -10,9 +10,9 @@ use PHPUnit\Framework\TestCase;
 use SqlCatalog\Core\Extension\ExtensionInterface;
 use SqlCatalog\Core\Extension\SinkSpec;
 use SqlCatalog\Extension\Doctrine\DoctrineExtension;
+use SqlCatalog\Extension\Laravel\LaravelExtension;
 use SqlCatalog\Extension\Mysqli\MysqliExtension;
 use SqlCatalog\Extension\Pdo\PdoExtension;
-use SqlCatalog\Facade\LaravelExtension;
 
 #[CoversClass(ExtensionInterface::class)]
 #[UsesClass(DoctrineExtension::class)]
@@ -26,7 +26,7 @@ final class ExtensionInterfaceTest extends TestCase
     {
         $names = array_map(
             static fn (ExtensionInterface $extension): string => $extension->name(),
-            [new PdoExtension(), new MysqliExtension(), new DoctrineExtension(), new LaravelExtension()],
+            [new PdoExtension(), new MysqliExtension(), new DoctrineExtension(), new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects())],
         );
         self::assertSame($names, array_values(array_unique($names)));
     }
@@ -35,7 +35,7 @@ final class ExtensionInterfaceTest extends TestCase
     {
         $descriptions = array_map(
             static fn (ExtensionInterface $extension): string => $extension->description(),
-            [new PdoExtension(), new MysqliExtension(), new DoctrineExtension(), new LaravelExtension()],
+            [new PdoExtension(), new MysqliExtension(), new DoctrineExtension(), new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects())],
         );
         self::assertNotContains('', $descriptions);
     }
@@ -50,7 +50,7 @@ final class ExtensionInterfaceTest extends TestCase
     {
         $globals = array_map(
             static fn (ExtensionInterface $extension): array => $extension->globals(),
-            [new PdoExtension(), new MysqliExtension(), new DoctrineExtension(), new LaravelExtension()],
+            [new PdoExtension(), new MysqliExtension(), new DoctrineExtension(), new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects())],
         );
         self::assertSame([[], [], [], []], $globals);
     }

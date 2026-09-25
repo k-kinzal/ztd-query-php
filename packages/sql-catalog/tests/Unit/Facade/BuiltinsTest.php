@@ -16,8 +16,22 @@ use PHPUnit\Framework\TestCase;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlCatalog\Platform\PostgreSql\SqlFormatter::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlCatalog\Platform\Sqlite\Dialect::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlCatalog\Platform\Sqlite\SqlFormatter::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlCatalog\Core\Extension\ExtensionRegistry::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlCatalog\Core\Reporter\ReporterRegistry::class)]
 final class BuiltinsTest extends TestCase
 {
+    public function testExtensionsRegistersTheShippedImplementationsAndDefaults(): void
+    {
+        $extensions = \SqlCatalog\Facade\Builtins::extensions();
+        self::assertSame(['doctrine', 'laravel', 'mysqli', 'pdo', 'wordpress'], $extensions->names());
+        self::assertSame(['pdo', 'mysqli'], $extensions->defaultNames());
+    }
+
+    public function testReportersRegistersTheShippedFormats(): void
+    {
+        self::assertSame(['html', 'json', 'text'], \SqlCatalog\Facade\Builtins::reporters()->names());
+    }
+
     public function testDialectsSelectsIndependentPolicies(): void
     {
         $dialects = \SqlCatalog\Facade\Builtins::dialects();

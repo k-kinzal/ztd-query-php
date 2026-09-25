@@ -12,10 +12,10 @@ use SqlCatalog\Core\Extension\ExtensionRegistry;
 use SqlCatalog\Core\Extension\SinkSpec;
 use SqlCatalog\Core\Extension\UnknownExtensionException;
 use SqlCatalog\Extension\Doctrine\DoctrineExtension;
+use SqlCatalog\Extension\Laravel\LaravelExtension;
 use SqlCatalog\Extension\Mysqli\MysqliExtension;
 use SqlCatalog\Extension\Pdo\PdoExtension;
 use SqlCatalog\Extension\WordPress\WordPressExtension;
-use SqlCatalog\Facade\LaravelExtension;
 
 #[CoversClass(ExtensionRegistry::class)]
 #[UsesClass(DoctrineExtension::class)]
@@ -29,7 +29,7 @@ final class ExtensionRegistryTest extends TestCase
 {
     public function testWithBuiltinsRegistersEverythingThatShips(): void
     {
-        self::assertSame(['doctrine', 'laravel', 'mysqli', 'pdo', 'wordpress'], \SqlCatalog\Facade\ExtensionRegistry::withBuiltins()->names());
+        self::assertSame(['doctrine', 'laravel', 'mysqli', 'pdo', 'wordpress'], \SqlCatalog\Facade\Builtins::extensions()->names());
     }
 
     public function testRegisterReplacesAnExtensionOfTheSameName(): void
@@ -64,13 +64,13 @@ final class ExtensionRegistryTest extends TestCase
 
     public function testDefaultNamesAreTheDriverExtensionsThatAreRegistered(): void
     {
-        self::assertSame(['pdo', 'mysqli'], \SqlCatalog\Facade\ExtensionRegistry::withBuiltins()->defaultNames());
+        self::assertSame(['pdo', 'mysqli'], \SqlCatalog\Facade\Builtins::extensions()->defaultNames());
         self::assertSame(['pdo'], (new ExtensionRegistry([new PdoExtension()], ['pdo']))->defaultNames());
     }
 
     public function testSinksOfCollectsTheCallsOfEveryNamedExtension(): void
     {
-        $sinks = \SqlCatalog\Facade\ExtensionRegistry::withBuiltins()->sinksOf(['pdo', 'mysqli']);
+        $sinks = \SqlCatalog\Facade\Builtins::extensions()->sinksOf(['pdo', 'mysqli']);
         $ids = array_map(static fn (SinkSpec $sink): string => $sink->id, $sinks);
         self::assertContains('pdo.query', $ids);
         self::assertContains('mysqli.query', $ids);
@@ -79,14 +79,14 @@ final class ExtensionRegistryTest extends TestCase
     public function testSinksOfRefusesAnUnknownName(): void
     {
         $this->expectException(UnknownExtensionException::class);
-        \SqlCatalog\Facade\ExtensionRegistry::withBuiltins()->sinksOf(['symfony']);
+        \SqlCatalog\Facade\Builtins::extensions()->sinksOf(['symfony']);
     }
 
     public function testAllReturnsTheExtensionsAlphabetically(): void
     {
         $names = array_map(
             static fn (ExtensionInterface $extension): string => $extension->name(),
-            \SqlCatalog\Facade\ExtensionRegistry::withBuiltins()->all(),
+            \SqlCatalog\Facade\Builtins::extensions()->all(),
         );
         self::assertSame(['doctrine', 'laravel', 'mysqli', 'pdo', 'wordpress'], $names);
     }
@@ -95,18 +95,18 @@ final class ExtensionRegistryTest extends TestCase
     {
         self::assertSame(
             ['wpdb' => 'wpdb'],
-            \SqlCatalog\Facade\ExtensionRegistry::withBuiltins()->globalsOf(['pdo', 'wordpress']),
+            \SqlCatalog\Facade\Builtins::extensions()->globalsOf(['pdo', 'wordpress']),
         );
     }
 
     public function testGlobalsOfRefusesAnUnknownName(): void
     {
         $this->expectException(UnknownExtensionException::class);
-        \SqlCatalog\Facade\ExtensionRegistry::withBuiltins()->globalsOf(['symfony']);
+        \SqlCatalog\Facade\Builtins::extensions()->globalsOf(['symfony']);
     }
     public function testModelProvidersOfSelectsEnabledProvidersAndKeepsRawExtensionsCompatible(): void
     {
-        $registry = \SqlCatalog\Facade\ExtensionRegistry::withBuiltins();
+        $registry = \SqlCatalog\Facade\Builtins::extensions();
         self::assertSame([], $registry->modelProvidersOf(['pdo', 'wordpress']));
         self::assertSame([$registry->get('laravel')], $registry->modelProvidersOf(['pdo', 'laravel']));
     }

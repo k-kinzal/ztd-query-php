@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Cli\UsageText;
+use SqlCatalog\Core\Extension\ExtensionRegistry;
+use SqlCatalog\Core\Reporter\ReporterRegistry;
 use SqlCatalog\Extension\Doctrine\DoctrineExtension;
+use SqlCatalog\Extension\Laravel\LaravelExtension;
 use SqlCatalog\Extension\Mysqli\MysqliExtension;
 use SqlCatalog\Extension\Pdo\PdoExtension;
-use SqlCatalog\Facade\ExtensionRegistry;
-use SqlCatalog\Facade\HtmlReporter;
-use SqlCatalog\Facade\LaravelExtension;
-use SqlCatalog\Facade\ReporterRegistry;
+use SqlCatalog\Reporter\Html\HtmlReporter;
 use SqlCatalog\Reporter\Json\JsonReporter;
 use SqlCatalog\Reporter\Text\TextReporter;
 
@@ -33,7 +33,7 @@ final class UsageTextTest extends TestCase
 {
     public function testHelpDocumentsEveryOptionTheParserTakes(): void
     {
-        $help = (new UsageText(ExtensionRegistry::withBuiltins(), ReporterRegistry::withBuiltins()))->help();
+        $help = (new UsageText(\SqlCatalog\Facade\Builtins::extensions(), \SqlCatalog\Facade\Builtins::reporters()))->help();
         self::assertStringContainsString('--output', $help);
         self::assertStringContainsString('--reporter', $help);
         self::assertStringContainsString('--extension', $help);
@@ -50,14 +50,14 @@ final class UsageTextTest extends TestCase
 
     public function testExtensionsAreListedWithTheirDescriptions(): void
     {
-        $listed = (new UsageText(ExtensionRegistry::withBuiltins(), ReporterRegistry::withBuiltins()))->extensions();
+        $listed = (new UsageText(\SqlCatalog\Facade\Builtins::extensions(), \SqlCatalog\Facade\Builtins::reporters()))->extensions();
         self::assertStringContainsString('pdo', $listed);
         self::assertStringContainsString('laravel', $listed);
     }
 
     public function testReportersAreListedWithTheirDescriptions(): void
     {
-        $listed = (new UsageText(ExtensionRegistry::withBuiltins(), ReporterRegistry::withBuiltins()))->reporters();
+        $listed = (new UsageText(\SqlCatalog\Facade\Builtins::extensions(), \SqlCatalog\Facade\Builtins::reporters()))->reporters();
         self::assertStringContainsString('json', $listed);
         self::assertStringContainsString('html', $listed);
     }

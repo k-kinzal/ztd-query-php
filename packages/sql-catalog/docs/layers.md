@@ -11,7 +11,6 @@ collector per concept, without filename exclusions or per-class exceptions.
 | Platform/MySql, PostgreSql, Sqlite | SQL spelling and report formatting for one database | Core contracts, matching parser/formatter platform, generic parser/formatter APIs |
 | Facade | Configure and compose the built-in implementations; preserve convenient defaults | Core and concrete implementations |
 | Cli | Parse arguments, run analysis, and write artifacts | Core and Facade |
-| Compatibility | Preserve original public class names | Core, Facade, Extension, Reporter |
 
 Core has no dependency on an extension, reporter, database implementation, Facade,
 or CLI. Implementations do not depend on peer implementations. In Core, the
@@ -19,8 +18,8 @@ existing Analysis, Catalog, Evaluation, Php, Source, Sql, Text, Type, Filter,
 Extension, and Reporter directories retain their distinct responsibilities.
 
 Core registries contain supplied implementations and supplied default names.
-`Facade/ExtensionRegistry::withBuiltins()` and
-`Facade/ReporterRegistry::withBuiltins()` perform concrete registration.
+`Facade/\SqlCatalog\Facade\Builtins::extensions()` and
+`Facade/\SqlCatalog\Facade\Builtins::reporters()` perform concrete registration.
 
 Laravel's `Grammar` accepts `Core/Sql/Dialect`, and its models receive
 `Core/Sql/Dialects`. Both SQL spelling and connection-to-dialect associations are
@@ -31,7 +30,7 @@ built-in identities it composes.
 HTML's gap-preserving formatter accepts a list of `Core/Reporter/SqlFormatter`
 policies. Each platform can decline unsupported text. The chosen formatter is
 passed through `ReportSite`, so listing pages and statement pages share the same
-presentation policy. The default facade still renders expanded SQL and preserves
+presentation policy. The built-in composition renders expanded SQL and preserves
 the JSON schema and HTML artifact formats.
 
 PHPStan's `forbiddenTermsByPath` rejects database words throughout `src/Core`,

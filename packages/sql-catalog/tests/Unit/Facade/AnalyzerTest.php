@@ -15,6 +15,7 @@ use SqlCatalog\Core\Catalog\Catalog;
 use SqlCatalog\Core\Catalog\CatalogEntry;
 use SqlCatalog\Core\Catalog\FindingRule;
 use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Extension\ExtensionRegistry;
 use SqlCatalog\Core\Extension\UnknownExtensionException;
 use SqlCatalog\Core\Php\ParsedFile;
 use SqlCatalog\Core\Source\SourceFile;
@@ -22,7 +23,6 @@ use SqlCatalog\Core\Source\SourceScanException;
 use SqlCatalog\Extension\Pdo\PdoExtension;
 use SqlCatalog\Facade\AnalysisOptions;
 use SqlCatalog\Facade\Analyzer;
-use SqlCatalog\Facade\ExtensionRegistry;
 
 #[CoversClass(Analyzer::class)]
 #[UsesClass(AnalysisOptions::class)]
@@ -1098,7 +1098,7 @@ SOURCE;
         $policy = self::createStub(\SqlCatalog\Core\Sql\Dialect::class);
         $policy->method('identifierQuote')->willReturn('!');
         $dialects = new \SqlCatalog\Core\Sql\Dialects(['application' => $policy]);
-        $extensions = new \SqlCatalog\Core\Extension\ExtensionRegistry([new \SqlCatalog\Extension\Laravel\LaravelExtension($dialects)]);
+        $extensions = new ExtensionRegistry([new \SqlCatalog\Extension\Laravel\LaravelExtension($dialects)]);
         $catalog = (new Analyzer($extensions))->analyzeSource([
             'app.php' => '<?php \Illuminate\Support\Facades\DB::table("items")->get();',
         ], new AnalysisOptions(['laravel'], dialect: 'application'));

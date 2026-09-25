@@ -36,8 +36,8 @@ use SqlCatalog\Core\Text\TextHole;
 use SqlCatalog\Core\Text\TextPattern;
 use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Extension\Laravel\BuilderCalls;
+use SqlCatalog\Extension\Laravel\LaravelExtension;
 use SqlCatalog\Extension\Laravel\QueryState;
-use SqlCatalog\Facade\LaravelExtension;
 
 #[CoversClass(CallbackEffects::class)]
 #[UsesClass(Domain::class)]
@@ -116,7 +116,7 @@ final class CallbackEffectsTest extends TestCase
         $callback = new \PhpParser\Node\Expr\ArrowFunction(['params' => [new \PhpParser\Node\Param(new \PhpParser\Node\Expr\Variable('q'))], 'expr' => new \PhpParser\Node\Expr\MethodCall(new \PhpParser\Node\Expr\Variable('q'), 'limit', [new \PhpParser\Node\Arg(new \PhpParser\Node\Scalar\Int_(2))])]);
         $index = new ProgramIndex();
         $object = (new BuilderCalls($index, dialects: \SqlCatalog\Facade\Builtins::dialects()))->allocate(BuilderCalls::QUERY, new QueryState());
-        $expressions = (new Interpreter($index, (new LaravelExtension())->sinks(), modelProviders: [new LaravelExtension()]))->evaluatorFor();
+        $expressions = (new Interpreter($index, (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->sinks(), modelProviders: [new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects())]))->evaluatorFor();
         $result = $effects->apply($callback, [Domain::of($object)], new Environment(), new FunctionScope('query.php'), $expressions)->soleObject();
         self::assertNotNull($result);
         self::assertSame(2, QueryState::from($result)->get('limit')->soleLiteral()?->value);
@@ -174,7 +174,7 @@ final class CallbackEffectsTest extends TestCase
         $index = new ProgramIndex();
         $object = (new BuilderCalls($index, dialects: \SqlCatalog\Facade\Builtins::dialects()))->allocate(BuilderCalls::QUERY, new QueryState(['dialect' => Domain::literal('sqlite')]));
         $outer = new Environment(['alias' => Domain::of($object), 'id' => Domain::literal(7)]);
-        $result = $effects->apply($callback, [Domain::of($object)], $outer, new FunctionScope('query.php'), (new Interpreter($index, (new LaravelExtension())->sinks(), modelProviders: [new LaravelExtension()]))->evaluatorFor([$file]))->soleObject();
+        $result = $effects->apply($callback, [Domain::of($object)], $outer, new FunctionScope('query.php'), (new Interpreter($index, (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->sinks(), modelProviders: [new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects())]))->evaluatorFor([$file]))->soleObject();
         self::assertNotNull($result);
         self::assertSame('"id" = ?', QueryState::from($result)->items('where')[0]->soleLiteral()?->value);
         self::assertSame(7, QueryState::from($result)->items('whereBindings')[0]->soleLiteral()?->value);

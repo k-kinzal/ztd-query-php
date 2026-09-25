@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Facade;
 
+use SqlCatalog\Core\Extension\ExtensionRegistry;
+use SqlCatalog\Core\Reporter\ReporterRegistry;
 use SqlCatalog\Core\Reporter\SqlFormatter as FormatterContract;
 use SqlCatalog\Core\Sql\Dialects;
+use SqlCatalog\Extension;
 use SqlCatalog\Platform;
+use SqlCatalog\Reporter;
 use SqlCatalog\Reporter\Html\SqlFormatter;
 
 /**
@@ -16,6 +20,32 @@ use SqlCatalog\Reporter\Html\SqlFormatter;
  */
 final class Builtins
 {
+    /**
+     * The shipped extensions and their default selection.
+     */
+    public static function extensions(): ExtensionRegistry
+    {
+        return new ExtensionRegistry([
+            new Extension\Pdo\PdoExtension(),
+            new Extension\Mysqli\MysqliExtension(),
+            new Extension\Doctrine\DoctrineExtension(),
+            new Extension\Laravel\LaravelExtension(self::dialects()),
+            new Extension\WordPress\WordPressExtension(),
+        ], ['pdo', 'mysqli']);
+    }
+
+    /**
+     * The shipped reporters with their presentation policies.
+     */
+    public static function reporters(): ReporterRegistry
+    {
+        return new ReporterRegistry([
+            new Reporter\Json\JsonReporter(),
+            new Reporter\Html\HtmlReporter(self::sqlFormatter()),
+            new Reporter\Text\TextReporter(),
+        ]);
+    }
+
     /**
      * The built-in SQL policies and known framework connection classes.
      */

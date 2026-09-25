@@ -9,7 +9,7 @@ namespace SqlCatalog\Core\Reporter;
  *
  * @visibility root
  */
-class ReporterRegistry
+final class ReporterRegistry
 {
     /**
      * @var array<string, ReporterInterface>

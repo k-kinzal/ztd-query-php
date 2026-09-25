@@ -31,7 +31,7 @@ use SqlCatalog\Reporter\Html\Page\TablePage;
  *
  * @visibility root
  */
-class HtmlReporter implements ReporterInterface
+final class HtmlReporter implements ReporterInterface
 {
     /**
      * Supplies SQL presentation independently of page rendering.

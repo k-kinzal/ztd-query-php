@@ -40,7 +40,7 @@ final class CatalogCommand
     public function __construct(?Analyzer $analyzer = null, ?ReporterRegistry $reporters = null)
     {
         $this->analyzer = $analyzer ?? new Analyzer();
-        $this->reporters = $reporters ?? \SqlCatalog\Facade\ReporterRegistry::withBuiltins();
+        $this->reporters = $reporters ?? \SqlCatalog\Facade\Builtins::reporters();
         $this->parser = new CommandLineParser();
         $this->writer = new ArtifactWriter();
     }

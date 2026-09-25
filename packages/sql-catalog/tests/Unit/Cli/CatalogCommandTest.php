@@ -19,9 +19,9 @@ use SqlCatalog\Core\Catalog\Catalog;
 use SqlCatalog\Core\Catalog\Severity;
 use SqlCatalog\Core\Filter\CatalogFilter;
 use SqlCatalog\Core\Reporter\CatalogArtifacts;
+use SqlCatalog\Core\Reporter\ReporterRegistry;
 use SqlCatalog\Facade\AnalysisOptions;
 use SqlCatalog\Facade\Analyzer;
-use SqlCatalog\Facade\ReporterRegistry;
 use SqlCatalog\Reporter\Json\JsonReporter;
 use SqlCatalog\Reporter\Text\TextReporter;
 
@@ -69,7 +69,7 @@ use SqlCatalog\Reporter\Text\TextReporter;
 #[UsesClass(\SqlCatalog\Core\Evaluation\OpaqueTerm::class)]
 #[UsesClass(\SqlCatalog\Core\Evaluation\PatternTerm::class)]
 #[UsesClass(\SqlCatalog\Extension\Doctrine\DoctrineExtension::class)]
-#[UsesClass(\SqlCatalog\Facade\ExtensionRegistry::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\ExtensionRegistry::class)]
 #[UsesClass(\SqlCatalog\Extension\Laravel\LaravelExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\Mysqli\MysqliExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\Pdo\PdoExtension::class)]
@@ -82,7 +82,7 @@ use SqlCatalog\Reporter\Text\TextReporter;
 #[UsesClass(\SqlCatalog\Core\Php\ProgramIndexBuilder::class)]
 #[UsesClass(\SqlCatalog\Core\Php\SourceParser::class)]
 #[UsesClass(\SqlCatalog\Core\Php\TypeReader::class)]
-#[UsesClass(\SqlCatalog\Facade\HtmlReporter::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\HtmlReporter::class)]
 #[UsesClass(\SqlCatalog\Core\Source\SourceFile::class)]
 #[UsesClass(\SqlCatalog\Core\Source\SourceScanner::class)]
 #[UsesClass(\SqlCatalog\Core\Sql\PlaceholderRef::class)]

@@ -319,7 +319,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-catalog",
-                "reference": "567da099883d686bd37ffefcef491b93bd82357d"
+                "reference": "2784df2e2214c79b7f49827f0ef897c61610def0"
             },
             "require": {
                 "ext-json": "*",
@@ -354,10 +354,7 @@
             "autoload": {
                 "psr-4": {
                     "SqlCatalog\\": "src/"
-                },
-                "files": [
-                    "src/Compatibility/ClassAliases.php"
-                ]
+                }
             },
             "autoload-dev": {
                 "psr-4": {

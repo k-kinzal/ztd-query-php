@@ -63,7 +63,7 @@ use SqlCatalog\Extension\Laravel\CallModel;
 #[UsesClass(\SqlCatalog\Core\Evaluation\ObjectMemory::class)]
 #[UsesClass(\SqlCatalog\Core\Evaluation\ObjectTerm::class)]
 #[UsesClass(\SqlCatalog\Extension\Doctrine\DoctrineExtension::class)]
-#[UsesClass(\SqlCatalog\Facade\ExtensionRegistry::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\ExtensionRegistry::class)]
 #[UsesClass(\SqlCatalog\Extension\Laravel\LaravelExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\Laravel\BuilderCalls::class)]
 #[UsesClass(\SqlCatalog\Extension\Laravel\BuilderQueries::class)]

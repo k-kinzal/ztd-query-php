@@ -25,9 +25,9 @@ use SqlCatalog\Core\Text\Origin;
 use SqlCatalog\Core\Text\TextHole;
 use SqlCatalog\Core\Text\TextPattern;
 use SqlCatalog\Core\Type\TypeShape;
-use SqlCatalog\Facade\HtmlReporter;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
+use SqlCatalog\Reporter\Html\HtmlReporter;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\Page\ClassPage;
 use SqlCatalog\Reporter\Html\Page\FileIndexPage;
@@ -99,12 +99,12 @@ final class HtmlReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void
     {
-        self::assertSame('html', (new HtmlReporter())->name());
+        self::assertSame('html', (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->name());
     }
 
     public function testDescriptionMentionsWhatItProduces(): void
     {
-        self::assertStringContainsString('HTML', (new HtmlReporter())->description());
+        self::assertStringContainsString('HTML', (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->description());
     }
 
     public function testRenderWritesTheWholeSiteOfPages(): void
@@ -114,7 +114,7 @@ final class HtmlReporterTest extends TestCase
                 Finding::of(FindingRule::ExternalInput, 'spliced'),
             ]),
         ]);
-        $artifacts = (new HtmlReporter())->render($catalog);
+        $artifacts = (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->render($catalog);
 
         self::assertSame(
             [
@@ -140,7 +140,7 @@ final class HtmlReporterTest extends TestCase
 
     public function testRenderNamesThePageAReaderOpensFirst(): void
     {
-        $artifacts = (new HtmlReporter())->render(new Catalog());
+        $artifacts = (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->render(new Catalog());
 
         self::assertSame($artifacts->get(HtmlReporter::FILE), $artifacts->primary());
         self::assertStringContainsString('<title>Overview</title>', (string) $artifacts->primary());
@@ -153,7 +153,7 @@ final class HtmlReporterTest extends TestCase
                 Finding::of(FindingRule::ExternalInput, 'spliced'),
             ]),
         ]);
-        $artifacts = (new HtmlReporter())->render($catalog);
+        $artifacts = (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->render($catalog);
 
         self::assertStringContainsString('href="../statements/a1.html"', (string) $artifacts->get('tables/posts.html'));
         self::assertStringContainsString('href="../statements/a1.html"', (string) $artifacts->get('classes/app-r.html'));
@@ -167,7 +167,7 @@ final class HtmlReporterTest extends TestCase
         $catalog = new Catalog([
             new CatalogEntry('a1', StatementKind::Unknown, TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown(), '$db->query($sql)')), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $page = (string) (new HtmlReporter())->render($catalog)->get('statements/a1.html');
+        $page = (string) (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->render($catalog)->get('statements/a1.html');
 
         self::assertStringContainsString('no statement was read from this call', $page);
         self::assertStringContainsString('<span class="chip tone-neutral">not-analyzed</span>', $page);
@@ -175,7 +175,7 @@ final class HtmlReporterTest extends TestCase
 
     public function testRenderCarriesTheFilesThatCouldNotBeRead(): void
     {
-        $overview = (string) (new HtmlReporter())->render(new Catalog([], [new AnalysisProblem('b.php', 'broken')]))->get('index.html');
+        $overview = (string) (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->render(new Catalog([], [new AnalysisProblem('b.php', 'broken')]))->get('index.html');
 
         self::assertStringContainsString('<tr><td><code>b.php</code></td><td>broken</td></tr>', $overview);
     }
@@ -185,7 +185,7 @@ final class HtmlReporterTest extends TestCase
         $catalog = new Catalog([
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users', 'posts'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $pages = (new HtmlReporter())->tablePages(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), new PageShell());
+        $pages = (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->tablePages(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), new PageShell());
 
         self::assertSame(['tables/posts.html', 'tables/users.html'], array_keys($pages));
         self::assertStringContainsString('<title>posts</title>', $pages['tables/posts.html']);
@@ -197,7 +197,7 @@ final class HtmlReporterTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'App\\R::find', 'pdo.query'), []),
             new CatalogEntry('a2', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 2, 'helper', 'pdo.query'), []),
         ]);
-        $pages = (new HtmlReporter())->classPages(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), new PageShell());
+        $pages = (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->classPages(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), new PageShell());
 
         self::assertSame(['classes/app-r.html'], array_keys($pages));
         self::assertStringContainsString('<span class="breadcrumb-current">R</span>', $pages['classes/app-r.html']);
@@ -208,7 +208,7 @@ final class HtmlReporterTest extends TestCase
         $catalog = new Catalog([
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('src/a.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $pages = (new HtmlReporter())->filePages(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), new PageShell());
+        $pages = (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->filePages(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), new PageShell());
 
         self::assertSame(['files/src-a-php.html'], array_keys($pages));
         self::assertStringContainsString('<title>src/a.php</title>', $pages['files/src-a-php.html']);
@@ -220,7 +220,7 @@ final class HtmlReporterTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
             new CatalogEntry('b1', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('b.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $pages = (new HtmlReporter())->statementPages(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), new PageShell());
+        $pages = (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->statementPages(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), new PageShell());
 
         self::assertSame(['statements/a1.html', 'statements/b1.html'], array_keys($pages));
         self::assertStringContainsString('<title>SELECT at b.php:1</title>', $pages['statements/b1.html']);
@@ -231,7 +231,7 @@ final class HtmlReporterTest extends TestCase
         $catalog = new Catalog([
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT * FROM posts'), ['posts'], [], new CallSite('src/a.php', 1, 'App\\R::find', 'pdo.query'), []),
         ]);
-        $artifacts = (new HtmlReporter())->render($catalog);
+        $artifacts = (new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()))->render($catalog);
         $home = '<a href="../index.html">Overview</a><span class="breadcrumb-sep">/</span>';
 
         self::assertStringContainsString('<nav class="breadcrumbs" aria-label="Breadcrumb"><span class="breadcrumb-current">Overview</span></nav>', (string) $artifacts->get('index.html'));
@@ -259,7 +259,7 @@ final class HtmlReporterTest extends TestCase
             'src/query.php' => "<?php\n\$sql = buildQuery();\n\$db->query(\$sql);",
             'src/broken.php' => '<?php function { <script>alert(1)</script>',
         ]);
-        $reporter = new HtmlReporter();
+        $reporter = new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter());
         $artifacts = $reporter->render($catalog->filter(static fn (CatalogEntry $entry): bool => true));
         $page = (string) $artifacts->get('statements/' . $entry->id . '.html');
         self::assertStringContainsString('$sql = buildQuery();', $page);

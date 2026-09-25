@@ -41,11 +41,11 @@ use SqlCatalog\Extension\Laravel\BuilderCalls;
 use SqlCatalog\Extension\Laravel\BuilderQueries;
 use SqlCatalog\Extension\Laravel\Clauses;
 use SqlCatalog\Extension\Laravel\Grammar;
+use SqlCatalog\Extension\Laravel\LaravelExtension;
 use SqlCatalog\Extension\Laravel\Predicates;
 use SqlCatalog\Extension\Laravel\QueryState;
 use SqlCatalog\Extension\Laravel\SelectCompiler;
 use SqlCatalog\Extension\Laravel\WriteCompiler;
-use SqlCatalog\Facade\LaravelExtension;
 
 #[CoversClass(BuilderQueries::class)]
 #[UsesClass(Domain::class)]
@@ -125,7 +125,7 @@ final class BuilderQueriesTest extends TestCase
         $file = (new SourceParser())->parse('query.php', '<?php use Illuminate\\Support\\Facades\\DB; $q = DB::table("users"); $q->where("id", 7)->get();');
         $index = (new ProgramIndexBuilder())->build([$file]);
         $calls = (new \PhpParser\NodeFinder())->findInstanceOf($file->statements, \PhpParser\Node\Expr\MethodCall::class);
-        $deriver = (new Interpreter($index, (new LaravelExtension())->sinks(), dialect: 'sqlite', modelProviders: [new LaravelExtension()]))->deriverFor([$file]);
+        $deriver = (new Interpreter($index, (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->sinks(), dialect: 'sqlite', modelProviders: [new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects())]))->deriverFor([$file]);
         $solutions = (new \SqlCatalog\Core\Analysis\Model\ModelQueries())->solve($calls[0], new BuilderQueries($index, dialects: \SqlCatalog\Facade\Builtins::dialects()), $deriver);
         self::assertCount(1, $solutions);
         self::assertSame('select * from "users" where "id" = ?', $solutions[0]->values[0]->soleLiteral()?->value);

@@ -62,7 +62,7 @@ final class Analyzer
     public function __construct(?ExtensionRegistry $extensions = null, ?Registry $functionModels = null)
     {
         $this->functionModels = $functionModels ?? Registry::withBuiltins();
-        $this->extensions = $extensions ?? \SqlCatalog\Facade\ExtensionRegistry::withBuiltins();
+        $this->extensions = $extensions ?? Builtins::extensions();
         $this->parser = new SourceParser();
         $this->indexes = new ProgramIndexBuilder();
         $this->entries = new EntryFactory();

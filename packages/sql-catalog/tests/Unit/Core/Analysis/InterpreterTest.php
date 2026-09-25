@@ -18,13 +18,13 @@ use SqlCatalog\Core\Analysis\SinkMatcher;
 use SqlCatalog\Core\Analysis\StatementRecorder;
 use SqlCatalog\Core\Analysis\ValueBinder;
 use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Extension\ExtensionRegistry;
 use SqlCatalog\Core\Php\DeclaredGlobals;
 use SqlCatalog\Core\Php\ProgramIndex;
 use SqlCatalog\Core\Php\ProgramIndexBuilder;
 use SqlCatalog\Core\Php\SourceParser;
 use SqlCatalog\Core\Text\Origin;
 use SqlCatalog\Extension\Pdo\PdoExtension;
-use SqlCatalog\Facade\ExtensionRegistry;
 
 #[CoversClass(Interpreter::class)]
 #[UsesClass(QueryRecord::class)]
@@ -282,7 +282,7 @@ final class InterpreterTest extends TestCase
     public function testAnalyzeWithATinyBudgetStillReportsTheCall(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $a = 1; $b = 2; $d->query("SELECT 1"); }');
-        $sinks = ExtensionRegistry::withBuiltins()->sinksOf(['pdo']);
+        $sinks = \SqlCatalog\Facade\Builtins::extensions()->sinksOf(['pdo']);
 
         $records = (new Interpreter((new ProgramIndexBuilder())->build([$file]), $sinks, new EvaluationBudget(1)))->analyze([$file]);
 
@@ -352,7 +352,7 @@ final class InterpreterTest extends TestCase
         $file = (new SourceParser())->parse('t.php', '<?php function f(): void { global $wpdb; $wpdb->query($wpdb->prepare("SELECT %d", 1)); }');
         $interpreter = new Interpreter(
             (new ProgramIndexBuilder())->build([$file]),
-            ExtensionRegistry::withBuiltins()->sinksOf(['pdo', 'wordpress']),
+            \SqlCatalog\Facade\Builtins::extensions()->sinksOf(['pdo', 'wordpress']),
             null,
             new DeclaredGlobals(['wpdb' => 'wpdb']),
         );

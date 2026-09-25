@@ -17,7 +17,7 @@ use SqlCatalog\Extension\Laravel;
  *
  * @visibility root
  */
-class LaravelExtension implements Model\ModelProviderInterface
+final class LaravelExtension implements Model\ModelProviderInterface
 {
     /**
      * Supplies SQL policies independently of the framework model.

@@ -9,7 +9,7 @@ namespace SqlCatalog\Core\Extension;
  *
  * @visibility root
  */
-class ExtensionRegistry
+final class ExtensionRegistry
 {
     /**
      * @var array<string, ExtensionInterface>

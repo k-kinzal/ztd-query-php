@@ -19,12 +19,12 @@ use SqlCatalog\Core\Catalog\CallSite;
 use SqlCatalog\Core\Evaluation\Domain;
 use SqlCatalog\Core\Evaluation\Environment;
 use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Extension\ExtensionRegistry;
 use SqlCatalog\Core\Php\ProgramIndex;
 use SqlCatalog\Core\Php\ProgramIndexBuilder;
 use SqlCatalog\Core\Php\SourceParser;
 use SqlCatalog\Core\Text\TextPattern;
 use SqlCatalog\Extension\Pdo\PdoExtension;
-use SqlCatalog\Facade\ExtensionRegistry;
 
 #[CoversClass(CallEvaluator::class)]
 #[UsesClass(Interpreter::class)]
@@ -333,7 +333,7 @@ final class CallEvaluatorTest extends TestCase
             't.php',
             '<?php function f(mysqli $m): void { $s = $m->prepare("SELECT ?"); $s->bind_param("s", "a"); }',
         );
-        $sinks = ExtensionRegistry::withBuiltins()->sinksOf(['mysqli']);
+        $sinks = \SqlCatalog\Facade\Builtins::extensions()->sinksOf(['mysqli']);
         $records = (new Interpreter((new ProgramIndexBuilder())->build([$file]), $sinks))->analyze([$file]);
         self::assertSame('a', $records[0]->positional()[0]->soleLiteral()?->value);
     }

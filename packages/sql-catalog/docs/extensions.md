@@ -32,7 +32,7 @@ For example, this extension models an application's `today_sql()` helper:
 use SqlCatalog\Facade\AnalysisOptions;
 use SqlCatalog\Facade\Analyzer;
 use SqlCatalog\Core\Evaluation\Domain;
-use SqlCatalog\Facade\ExtensionRegistry;
+use SqlCatalog\Core\Extension\ExtensionRegistry;
 use SqlCatalog\Core\Extension\Model\CallContext;
 use SqlCatalog\Core\Extension\Model\ModelContext;
 use SqlCatalog\Core\Extension\Model\ModelProviderInterface;

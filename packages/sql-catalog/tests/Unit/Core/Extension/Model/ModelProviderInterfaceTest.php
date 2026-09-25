@@ -10,14 +10,14 @@ use PHPUnit\Framework\TestCase;
 use SqlCatalog\Core\Extension\Model\ModelProviderInterface;
 
 #[CoversClass(ModelProviderInterface::class)]
-#[UsesClass(\SqlCatalog\Facade\ExtensionRegistry::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\ExtensionRegistry::class)]
 final class ModelProviderInterfaceTest extends TestCase
 {
     public function testModelsCanBeProvidedOutsideTheBuiltins(): void
     {
         $extension = self::createStub(ModelProviderInterface::class);
         $extension->method('name')->willReturn('custom');
-        $registry = new \SqlCatalog\Facade\ExtensionRegistry([$extension]);
+        $registry = new \SqlCatalog\Core\Extension\ExtensionRegistry([$extension]);
         self::assertSame([$extension], $registry->modelProvidersOf(['custom']));
         self::assertSame([], $registry->modelProvidersOf([]));
     }

@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlCatalog\Core\Extension\SinkCallKind;
 use SqlCatalog\Core\Extension\SinkSpec;
 use SqlCatalog\Core\Sql\StatementKind;
-use SqlCatalog\Facade\LaravelExtension;
+use SqlCatalog\Extension\Laravel\LaravelExtension;
 
 #[CoversClass(LaravelExtension::class)]
 #[UsesClass(SinkSpec::class)]
@@ -36,31 +36,31 @@ final class LaravelExtensionTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void
     {
-        self::assertSame('laravel', (new LaravelExtension())->name());
+        self::assertSame('laravel', (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->name());
     }
 
     public function testDescriptionMentionsWhatItCovers(): void
     {
-        self::assertStringContainsString('Laravel', (new LaravelExtension())->description());
+        self::assertStringContainsString('Laravel', (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->description());
     }
 
     public function testSinksCoverBothTheFacadeAndTheConnection(): void
     {
-        $kinds = array_map(static fn (SinkSpec $sink): SinkCallKind => $sink->callKind, (new LaravelExtension())->sinks());
+        $kinds = array_map(static fn (SinkSpec $sink): SinkCallKind => $sink->callKind, (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->sinks());
         self::assertContains(SinkCallKind::StaticCall, $kinds);
         self::assertContains(SinkCallKind::Method, $kinds);
     }
 
     public function testSinksTakeTheStatementFirstAndTheBindingsSecond(): void
     {
-        $sinks = (new LaravelExtension())->sinks();
+        $sinks = (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->sinks();
         self::assertSame(0, $sinks[0]->sqlParameter);
         self::assertSame(1, $sinks[0]->valuesParameter);
     }
 
     public function testMethodsNameTheKindEachOneImplies(): void
     {
-        $methods = (new LaravelExtension())->methods();
+        $methods = (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->methods();
         self::assertSame(StatementKind::Select, $methods['select']);
         self::assertSame(StatementKind::Insert, $methods['insert']);
         self::assertNull($methods['statement']);
@@ -81,7 +81,7 @@ final class LaravelExtensionTest extends TestCase
                 $sink->valueParameter ?? '-',
                 ($sink->kind === null ? '-' : $sink->kind->value) . '/' . ($sink->handleType ?? '-'),
             ]),
-            array_values(array_filter((new LaravelExtension())->sinks(), static fn (SinkSpec $sink): bool => $sink->role === \SqlCatalog\Core\Extension\SinkRole::Query)),
+            array_values(array_filter((new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->sinks(), static fn (SinkSpec $sink): bool => $sink->role === \SqlCatalog\Core\Extension\SinkRole::Query)),
         );
 
         self::assertSame(
@@ -109,20 +109,20 @@ final class LaravelExtensionTest extends TestCase
 
     public function testBuilderMethodsDeclareReadsWritesAndCompoundExecutions(): void
     {
-        $methods = (new LaravelExtension())->builderMethods();
+        $methods = (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->builderMethods();
         self::assertCount(36, $methods);
         self::assertSame(StatementKind::Select, $methods['get']);
         self::assertSame(StatementKind::Insert, $methods['insert']);
         self::assertSame(StatementKind::Update, $methods['update']);
         self::assertSame(StatementKind::Delete, $methods['delete']);
         self::assertNull($methods['save']);
-        $builders = array_filter((new LaravelExtension())->sinks(), static fn (SinkSpec $sink): bool => $sink->role === \SqlCatalog\Core\Extension\SinkRole::Modelled);
+        $builders = array_filter((new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->sinks(), static fn (SinkSpec $sink): bool => $sink->role === \SqlCatalog\Core\Extension\SinkRole::Modelled);
         self::assertCount(count($methods) * 4, $builders);
     }
 
     public function testGlobalsAreEmptyBecauseTheHandleIsNotReachedThroughOne(): void
     {
-        self::assertSame([], (new LaravelExtension())->globals());
+        self::assertSame([], (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->globals());
     }
     public function testModelsRegistersLaravelSemanticsThroughTheOptionalContract(): void
     {
@@ -132,7 +132,7 @@ final class LaravelExtensionTest extends TestCase
         $modified = new \SqlCatalog\Core\Analysis\Derivation\ModifiedNames($names);
         $callbacks = new \SqlCatalog\Core\Analysis\Derivation\Objects\CallbackEffects(new \SqlCatalog\Core\Analysis\Derivation\Slice\BackwardSlicer(new \SqlCatalog\Core\Analysis\Derivation\SourceTree([]), $budget, $names, $modified), new \SqlCatalog\Core\Analysis\Derivation\SliceExecutor(new \SqlCatalog\Core\Php\DeclaredGlobals(), new \SqlCatalog\Core\Php\TypeReader(), $modified, new \SqlCatalog\Core\Php\NodeText(), $budget));
         $context = new \SqlCatalog\Core\Extension\Model\ModelContext($index, $callbacks, 'sqlite');
-        $models = (new LaravelExtension())->models($context);
+        $models = (new LaravelExtension(\SqlCatalog\Facade\Builtins::dialects()))->models($context);
         self::assertCount(1, $models->calls);
         self::assertArrayHasKey('laravel.builder', $models->queries);
         self::assertTrue($models->matchesClass('Illuminate\\Database\\MySqlConnection', 'Illuminate\\Database\\Connection'));

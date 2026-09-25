@@ -12,10 +12,6 @@ deptrac:
       collectors:
         - type: classLike
           value: '^SqlCatalog\\Facade\\.*'
-    - name: Compatibility
-      collectors:
-        - type: classLike
-          value: '^SqlCatalog\\Compatibility\\.*'
     - name: Cli
       collectors:
         - type: classLike
@@ -107,7 +103,6 @@ deptrac:
   ruleset:
     Core: [PhpParser]
     Facade: [Core, Yaml, ExtensionPdo, ExtensionMysqli, ExtensionDoctrine, ExtensionLaravel, ExtensionWordPress, ReporterJson, ReporterText, ReporterHtml, PlatformMySql, PlatformPostgreSql, PlatformSqlite]
-    Compatibility: [Core, Facade, ExtensionPdo, ExtensionMysqli, ExtensionDoctrine, ExtensionLaravel, ExtensionWordPress, ReporterJson, ReporterText, ReporterHtml]
     Cli: [Core, Facade]
     PhpParser: []
     Yaml: []

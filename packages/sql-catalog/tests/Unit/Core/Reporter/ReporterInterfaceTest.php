@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlCatalog\Core\Catalog\Catalog;
 use SqlCatalog\Core\Reporter\CatalogArtifacts;
 use SqlCatalog\Core\Reporter\ReporterInterface;
-use SqlCatalog\Facade\HtmlReporter;
+use SqlCatalog\Reporter\Html\HtmlReporter;
 use SqlCatalog\Reporter\Json\JsonReporter;
 use SqlCatalog\Reporter\Text\TextReporter;
 
@@ -51,7 +51,7 @@ final class ReporterInterfaceTest extends TestCase
     {
         $names = array_map(
             static fn (ReporterInterface $reporter): string => $reporter->name(),
-            [new JsonReporter(), new HtmlReporter(), new TextReporter()],
+            [new JsonReporter(), new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()), new TextReporter()],
         );
         self::assertSame($names, array_values(array_unique($names)));
     }
@@ -60,7 +60,7 @@ final class ReporterInterfaceTest extends TestCase
     {
         $descriptions = array_map(
             static fn (ReporterInterface $reporter): string => $reporter->description(),
-            [new JsonReporter(), new HtmlReporter(), new TextReporter()],
+            [new JsonReporter(), new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()), new TextReporter()],
         );
         self::assertNotContains('', $descriptions);
     }
@@ -69,7 +69,7 @@ final class ReporterInterfaceTest extends TestCase
     {
         $primary = array_map(
             static fn (ReporterInterface $reporter): bool => $reporter->render(new Catalog())->primary() !== null,
-            [new JsonReporter(), new HtmlReporter(), new TextReporter()],
+            [new JsonReporter(), new HtmlReporter(\SqlCatalog\Facade\Builtins::sqlFormatter()), new TextReporter()],
         );
 
         self::assertSame([true, true, true], $primary);

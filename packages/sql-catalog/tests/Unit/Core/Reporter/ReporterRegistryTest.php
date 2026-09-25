@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlCatalog\Core\Reporter\ReporterInterface;
 use SqlCatalog\Core\Reporter\ReporterRegistry;
 use SqlCatalog\Core\Reporter\UnknownReporterException;
-use SqlCatalog\Facade\HtmlReporter;
+use SqlCatalog\Reporter\Html\HtmlReporter;
 use SqlCatalog\Reporter\Json\JsonReporter;
 use SqlCatalog\Reporter\Text\TextReporter;
 
@@ -23,7 +23,7 @@ final class ReporterRegistryTest extends TestCase
 {
     public function testWithBuiltinsRegistersEverythingThatShips(): void
     {
-        self::assertSame(['html', 'json', 'text'], \SqlCatalog\Facade\ReporterRegistry::withBuiltins()->names());
+        self::assertSame(['html', 'json', 'text'], \SqlCatalog\Facade\Builtins::reporters()->names());
     }
 
     public function testRegisterReplacesAReporterOfTheSameName(): void
@@ -60,7 +60,7 @@ final class ReporterRegistryTest extends TestCase
     {
         $names = array_map(
             static fn (ReporterInterface $reporter): string => $reporter->name(),
-            \SqlCatalog\Facade\ReporterRegistry::withBuiltins()->all(),
+            \SqlCatalog\Facade\Builtins::reporters()->all(),
         );
         self::assertSame(['html', 'json', 'text'], $names);
     }

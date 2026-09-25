@@ -55,7 +55,7 @@ use SqlCatalog\Reporter\Json\JsonReporter;
 #[UsesClass(\SqlCatalog\Core\Evaluation\OpaqueTerm::class)]
 #[UsesClass(\SqlCatalog\Core\Evaluation\PatternTerm::class)]
 #[UsesClass(\SqlCatalog\Extension\Doctrine\DoctrineExtension::class)]
-#[UsesClass(\SqlCatalog\Facade\ExtensionRegistry::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\ExtensionRegistry::class)]
 #[UsesClass(\SqlCatalog\Extension\Laravel\LaravelExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\Mysqli\MysqliExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\Pdo\PdoExtension::class)]
