@@ -34,7 +34,7 @@ final class IdentityOverrideTest extends TestCase
         self::assertInstanceOf(InsertStatement::class, $statement);
         self::assertInstanceOf(PostgreSqlInsertion::class, $statement->policy);
         self::assertSame($overriding, $statement->policy->overriding);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

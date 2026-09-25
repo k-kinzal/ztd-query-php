@@ -29,8 +29,9 @@ final class CteBinder
     }
 
     /**
-     * Binds result aliases and materialization to this particular definition.
+     * Binds result aliases, materialization, and the SEARCH and CYCLE clauses to this particular definition.
      * @throws \SqlSemantics\InvalidSql
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
     public static function definition(Node $node, BoundStatement $query, QueryContext $context): Query\CommonTableExpression
     {
@@ -49,7 +50,13 @@ final class CteBinder
         $policy = Tree::child($node, ['opt_materialized', 'wqas']);
         $text = $policy === null ? '' : strtoupper(Tree::text($policy));
         $mode = str_contains($text, 'NOT MATERIALIZED') ? Query\Materialization::Inline : (str_contains($text, 'MATERIALIZED') ? Query\Materialization::Materialized : Query\Materialization::Default);
-        return new Query\CommonTableExpression($name, $query, $columns, $mode);
+        $search = Recursion\RecursionClauses::search($node, $context);
+        $cycle = Recursion\RecursionClauses::cycle($node, $context);
+        try {
+            return new Query\CommonTableExpression($name, $query, $columns, $mode, $search, $cycle);
+        } catch (\SqlSemantics\Model\Validation\InvalidStructure $error) {
+            throw $search === null && $cycle === null ? $error : new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::RecursiveQueryClause, $node);
+        }
     }
 
     /**

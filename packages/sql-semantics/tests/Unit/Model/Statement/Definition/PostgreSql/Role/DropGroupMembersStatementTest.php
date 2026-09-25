@@ -32,16 +32,16 @@ final class DropGroupMembersStatementTest extends TestCase
     public function testToStringQuotesTheGroupAndEachNamedMember(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER GROUP staff DROP USER alice, CURRENT_USER');
-        self::assertSame('ALTER GROUP "staff" DROP USER "alice", CURRENT_USER', $statement->toString());
+        self::assertSame('ALTER GROUP "staff" DROP USER "alice", CURRENT_USER', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRebindingTheOutputReachesAFixedPoint(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('ALTER GROUP staff DROP USER alice, CURRENT_USER');
-        $again = $binder->bind($statement->toString());
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(DropGroupMembersStatement::class, $again);
-        self::assertSame($statement->toString(), $again->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithGroupReplacesTheGroupWithoutMutatingTheOriginal(): void
@@ -53,7 +53,7 @@ final class DropGroupMembersStatementTest extends TestCase
         self::assertEquals(new NamedRole('staff'), $statement->group);
         self::assertSame(SessionRole::SessionUser, $changed->group);
         self::assertEquals($statement->members, $changed->members);
-        self::assertSame('ALTER GROUP SESSION_USER DROP USER "alice", CURRENT_USER', $changed->toString());
+        self::assertSame('ALTER GROUP SESSION_USER DROP USER "alice", CURRENT_USER', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithMembersReplacesAndQuotesTheCompleteSelection(): void
@@ -65,7 +65,7 @@ final class DropGroupMembersStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new NamedRole('alice'), SessionRole::CurrentUser], $statement->members);
         self::assertEquals($members, $changed->members);
-        self::assertSame('ALTER GROUP "staff" DROP USER "x""y", CURRENT_ROLE', $changed->toString());
+        self::assertSame('ALTER GROUP "staff" DROP USER "x""y", CURRENT_ROLE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheGroupAndTheMembers(): void
@@ -76,7 +76,7 @@ final class DropGroupMembersStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertEquals($statement->group, $copy->group);
         self::assertEquals($statement->members, $copy->members);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

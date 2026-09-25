@@ -41,7 +41,7 @@ final class ViewBinder
             return null;
         }
         if ($query->name === 'view_query_block') {
-            $query = Tree::outer($query, ['query_expression'])[0] ?? $query;
+            $query = Tree::outer($query, ['query_expression_with_opt_locking_clauses', 'query_expression'])[0] ?? $query;
         }
         $text = implode(' ', $words);
         $option = array_values(array_filter(Tree::outer($source, ['opt_check_option', 'view_check_option']), Tree::hasTokens(...)))[0] ?? null;
@@ -67,9 +67,10 @@ final class ViewBinder
     }
 
     /**
-     * Reads the algorithm, definer, and privilege context of a MySQL view.
+     * Reads the algorithm, definer, and privilege context of a MySQL view; an ALTER VIEW that omits SQL SECURITY
+     * keeps the view's current one, so the alteration leaves it null rather than DEFINER.
      */
-    public static function mysql(Node $source, QueryContext $context): MySqlViewProperties
+    public static function mysql(Node $source, QueryContext $context, bool $alteration = false): MySqlViewProperties
     {
         $algorithm = Tree::outer($source, ['view_algorithm'])[0] ?? null;
         $definer = Tree::outer($source, ['definer'])[0] ?? null;
@@ -79,7 +80,7 @@ final class ViewBinder
         return new MySqlViewProperties(
             $algorithmTokens === [] ? ViewAlgorithm::Undefined : ViewAlgorithm::from(strtoupper($algorithmTokens[count($algorithmTokens) - 1]->text)),
             $definer === null ? null : MySqlRemovals::accounts($definer, $context->tables->identifiers)[0],
-            $securityTokens === [] ? ViewSecurity::Definer : ViewSecurity::from(strtoupper($securityTokens[count($securityTokens) - 1]->text)),
+            $securityTokens === [] ? ($alteration ? null : ViewSecurity::Definer) : ViewSecurity::from(strtoupper($securityTokens[count($securityTokens) - 1]->text)),
         );
     }
 }

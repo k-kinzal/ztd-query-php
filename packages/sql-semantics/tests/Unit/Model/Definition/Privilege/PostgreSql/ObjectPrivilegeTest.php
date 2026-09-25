@@ -33,7 +33,7 @@ final class ObjectPrivilegeTest extends TestCase
         $statement = $binder->bind('GRANT CONNECT, TEMP ON DATABASE d TO a');
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertEquals([new ObjectPrivilege(Privilege::Connect), new ObjectPrivilege(Privilege::Temporary)], $statement->privileges);
-        self::assertSame('GRANT CONNECT, TEMPORARY ON DATABASE "d" TO "a"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('GRANT CONNECT, TEMPORARY ON DATABASE "d" TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

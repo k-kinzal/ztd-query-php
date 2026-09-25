@@ -55,6 +55,7 @@ use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
+use SqlSemantics\SimpleSerializer;
 
 $schema = (new SchemaBuilder(Dialect::PostgreSql))->build(
     'CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER DEFAULT 0)',
@@ -68,10 +69,11 @@ if ($statement instanceof BoundSelect) {
     $statement->outputs[1]->expression->type->name;                // integer
     $statement->where?->inputs()[0]->lineage()[0]->column->name;    // score
 }
-$statement->toString(); // SQL generated from the semantic operands
+$statement->toString(); // the bound SQL text, exactly as written
+(new SimpleSerializer())->serialize($statement); // compact SQL from the semantic operands
 ```
 
-`SchemaBuilder::build()` reads table and index definitions. Register function signatures through `Schema::withFunctions()` or the builder's `functions` argument to supply application-specific argument types, return types, and NULL behavior. `Binder::bind()` reads one statement against that schema; `bindAll()` reads a sequence of statements. Pass `strict: false` to collect semantic diagnostics on each returned statement. See [schema.md](docs/schema.md) and [binder.md](docs/binder.md) for responsibilities and result fields, and [statement-forms.md](docs/statement-forms.md) for the Statement class and structure of every SQL form. Statements expose immutable transformations that validate the complete result and refresh dependent facts. `Serializer` defines SQL output; `SimpleSerializer` and `BoundStatement::toString()` provide the default compact layout. `StatementFactory` also constructs validated statements from structure without original SQL.
+`SchemaBuilder::build()` reads table and index definitions. Register function signatures through `Schema::withFunctions()` or the builder's `functions` argument to supply application-specific argument types, return types, and NULL behavior. `Binder::bind()` reads one statement against that schema; `bindAll()` reads a sequence of statements. Pass `strict: false` to collect semantic diagnostics on each returned statement. See [schema.md](docs/schema.md) and [binder.md](docs/binder.md) for responsibilities and result fields, and [statement-forms.md](docs/statement-forms.md) for the Statement class and structure of every SQL form. Statements expose immutable transformations that validate the complete result and refresh dependent facts. `BoundStatement::toString()` returns the exact SQL text of a bound statement; after a transformation, or for a statement that `StatementFactory` constructs from structure without original SQL, it writes the compact layout of `SimpleSerializer`. `Serializer` defines SQL output from semantic operands, and `SimpleSerializer` provides the default compact layout for any statement.
 
 Development checks are `composer lint`, `composer test`, and `composer bench:quick`. Run `XDEBUG_MODE=off composer fuzz:smoke` for a bounded run of each dialect. The [fuzz instructions](fuzz/README.md) describe the unrestricted grammar property and all-release runs.
 

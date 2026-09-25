@@ -26,7 +26,7 @@ final class ProcedureParameterTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p(a INT, OUT b INT, INOUT c INT) BEGIN END');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertSame([ParameterMode::Input, ParameterMode::Output, ParameterMode::InputOutput], array_column($statement->parameters, 'mode'));
-        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer, OUT `b` integer, INOUT `c` integer) BEGIN END', $statement->toString());
+        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer, OUT `b` integer, INOUT `c` integer) BEGIN END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAVariadicParameter(): void

@@ -29,7 +29,7 @@ final class InsertDefaultValuesStatementTest extends TestCase
         self::assertSame([], $statement->outputs);
         self::assertFalse(property_exists($statement, 'rows'));
         self::assertFalse(property_exists($statement, 'query'));
-        self::assertSame('INSERT INTO "main"."t" DEFAULT VALUES', $statement->toString());
+        self::assertSame('INSERT INTO "main"."t" DEFAULT VALUES', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheDestination(): void
@@ -41,7 +41,7 @@ final class InsertDefaultValuesStatementTest extends TestCase
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->insertion, $copy->insertion);
         self::assertSame($statement->outputs, $copy->outputs);
-        self::assertSame('INSERT INTO "public"."t" DEFAULT VALUES RETURNING "id" AS "id"', $copy->toString());
+        self::assertSame('INSERT INTO "public"."t" DEFAULT VALUES RETURNING "id" AS "id"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithReturningAddsAndRemovesTheProjection(): void
@@ -51,7 +51,7 @@ final class InsertDefaultValuesStatementTest extends TestCase
         $changed = $statement->withReturning([new OutputColumn(0, 'saved', Expression::reference(['id'], Dialect::PostgreSql))]);
         self::assertSame('saved', $changed->outputs[0]->name);
         self::assertSame('id', $changed->outputs[0]->expression->columnBinding()?->column->name);
-        self::assertSame('INSERT INTO "public"."t" DEFAULT VALUES RETURNING "id" AS "saved"', $changed->toString());
+        self::assertSame('INSERT INTO "public"."t" DEFAULT VALUES RETURNING "id" AS "saved"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame([], $changed->withReturning([])->outputs);
         self::assertSame([], $statement->outputs);
     }

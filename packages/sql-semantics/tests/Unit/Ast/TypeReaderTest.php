@@ -304,7 +304,7 @@ final class TypeReaderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $type->identity->length);
         self::assertSame('12', $type->identity->length->spelling);
         $statement = (new Binder($schema))->bind('DROP FUNCTION f(' . $declaration . ')');
-        self::assertSame('DROP FUNCTION "f"(' . $family . '(12))', $statement->toString());
+        self::assertSame('DROP FUNCTION "f"(' . $family . '(12))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testPostgresqlAliasUsesDeclaredStorageFamilies(): void

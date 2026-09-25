@@ -32,8 +32,8 @@ final class KeyIndexBinderTest extends TestCase
         $statement = $binder->bind("CREATE TABLE u (a INT, b INT, CONSTRAINT pk PRIMARY KEY USING BTREE (a) COMMENT 'c' KEY_BLOCK_SIZE = 8, CONSTRAINT c UNIQUE KEY uk (b), UNIQUE INDEX u2 TYPE HASH (a, b))");
         self::assertInstanceOf(CreateTableStatement::class, $statement);
         $expected = "CREATE TABLE `u`(`a` integer NOT NULL, `b` integer, CONSTRAINT `pk` PRIMARY KEY USING BTREE(`a`) KEY_BLOCK_SIZE = 8 COMMENT 'c', CONSTRAINT `c` UNIQUE KEY `uk`(`b`), UNIQUE KEY `u2` USING HASH(`a`, `b`))";
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testBindKeepsPostgreSqlColumnKeyOptions(): void
@@ -41,8 +41,8 @@ final class KeyIndexBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(id INTEGER)'));
         $statement = $binder->bind('ALTER TABLE p ADD COLUMN z INT UNIQUE NULLS NOT DISTINCT WITH (fillfactor = 70) USING INDEX TABLESPACE ts');
         $expected = 'ALTER TABLE "p" ADD COLUMN "z" integer UNIQUE NULLS NOT DISTINCT WITH ("fillfactor" = 70) USING INDEX TABLESPACE "ts"';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['CREATE TABLE u (a INT, UNIQUE KEY uk (a))', 'uk'])]

@@ -22,7 +22,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Removing a receive function and changing the storage
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER TYPE app.box3d SET (RECEIVE = NONE, STORAGE = extended)');
  *     $statement->options[0]->value // => null
- *     $statement->toString() // => 'ALTER TYPE "app"."box3d" SET (RECEIVE = NONE, STORAGE = \'extended\')'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER TYPE "app"."box3d" SET (RECEIVE = NONE, STORAGE = \'extended\')'
  * @example Rejecting a change of the input function
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER TYPE box3d SET (SEND = NONE)');
  *     $statement->withOptions([new \SqlSemantics\Model\Definition\TypeSystem\Definition\DefinitionOption(\SqlSemantics\Model\Definition\TypeSystem\Definition\BaseTypeAttribute::Input, null)]); // throws \SqlSemantics\Model\Validation\InvalidStructure

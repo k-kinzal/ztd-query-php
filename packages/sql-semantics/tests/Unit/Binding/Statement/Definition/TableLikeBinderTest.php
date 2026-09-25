@@ -29,8 +29,8 @@ final class TableLikeBinderTest extends TestCase
         self::assertFalse($statement->template->declaration->resolved);
         self::assertSame(['app','original'], $statement->template->name->parts);
         self::assertSame('unknown-table', $statement->diagnostics[0]->reason);
-        self::assertSame('CREATE TABLE `copied` LIKE `app`.`original`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('CREATE TABLE `copied` LIKE `app`.`original`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)));
     }
 
     public function testBindDoesNotConfuseACheckPredicateWithATableCopy(): void
@@ -49,7 +49,7 @@ final class TableLikeBinderTest extends TestCase
     public function testBindReadsEveryCopyForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -72,6 +72,6 @@ final class TableLikeBinderTest extends TestCase
     public function testBindQualifiesAnUnqualifiedTargetWithTheDefaultDatabase(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, defaultSchema: 'app'))->build('CREATE TABLE t (a INT)'));
-        self::assertSame($expected, $binder->bind($sql, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql, strict: false)));
     }
 }

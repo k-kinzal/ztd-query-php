@@ -37,6 +37,6 @@ final class FrameUnitTest extends TestCase
         self::assertInstanceOf(WindowCall::class, $call);
         self::assertInstanceOf(WindowSpecification::class, $call->window);
         self::assertSame($expected, $call->window->frame?->unit);
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 }

@@ -19,7 +19,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Dropping a transform
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('DROP TRANSFORM IF EXISTS FOR hstore LANGUAGE plpython3u CASCADE');
  *     $statement->transform->type->name // => 'hstore'
- *     $statement->toString() // => 'DROP TRANSFORM IF EXISTS FOR "hstore" LANGUAGE "plpython3u" CASCADE'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'DROP TRANSFORM IF EXISTS FOR "hstore" LANGUAGE "plpython3u" CASCADE'
  */
 final class DropTransformStatement extends BoundStatement
 {

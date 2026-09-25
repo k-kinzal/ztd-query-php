@@ -24,26 +24,26 @@ final class IndexCachesTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)'));
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testTargetPreservesQuotedPartitionAndIndexIdentifiers(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('CACHE INDEX t PARTITION (`a``b`) KEY (`c``d`) IN DEFAULT');
-        self::assertSame('CACHE INDEX `t` PARTITION(`a``b`) INDEX(`c``d`) IN DEFAULT', $statement->toString());
+        self::assertSame('CACHE INDEX `t` PARTITION(`a``b`) INDEX(`c``d`) IN DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testPreloadKeepsEachLeafSelectionNextToItsTable(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)', 'CREATE TABLE u(id INT)')))->bind('LOAD INDEX INTO CACHE t IGNORE LEAVES, u');
-        self::assertSame('LOAD INDEX INTO CACHE `t` IGNORE LEAVES, `u`', $statement->toString());
+        self::assertSame('LOAD INDEX INTO CACHE `t` IGNORE LEAVES, `u`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testNamesAllowsAnExplicitEmptyIndexRequest(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('CACHE INDEX t INDEX () IN DEFAULT');
-        self::assertSame('CACHE INDEX `t` INDEX() IN DEFAULT', $statement->toString());
+        self::assertSame('CACHE INDEX `t` INDEX() IN DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
 }

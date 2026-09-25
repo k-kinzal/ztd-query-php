@@ -22,6 +22,6 @@ final class CopyClientTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('COPY t FROM STDOUT');
         self::assertInstanceOf(CopyFromStatement::class, $statement);
         self::assertInstanceOf(CopyClient::class, $statement->input);
-        self::assertSame('COPY "public"."t" FROM STDIN', $statement->toString());
+        self::assertSame('COPY "public"."t" FROM STDIN', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

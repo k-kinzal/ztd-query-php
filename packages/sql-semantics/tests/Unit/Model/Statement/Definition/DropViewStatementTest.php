@@ -31,7 +31,7 @@ final class DropViewStatementTest extends TestCase
         self::assertTrue($statement->ifExists);
         self::assertSame(DropBehavior::Cascade, $statement->behavior);
         self::assertSame(StatementKind::Drop, $statement->kind);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheNamesAndPolicy(): void
@@ -43,7 +43,7 @@ final class DropViewStatementTest extends TestCase
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->names, $copy->names);
         self::assertFalse($copy->ifExists);
-        self::assertSame('DROP VIEW "v"', $copy->toString());
+        self::assertSame('DROP VIEW "v"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAnEmptyTargetList(): void

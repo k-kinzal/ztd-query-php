@@ -25,7 +25,7 @@ final class InstallComponentStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame($statement->components, $copy->components);
-        self::assertSame("INSTALL COMPONENT 'a', 'b' SET GLOBAL `x`.`y` = 1, PERSIST `z` = ON", $copy->toString());
+        self::assertSame("INSTALL COMPONENT 'a', 'b' SET GLOBAL `x`.`y` = 1, PERSIST `z` = ON", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithComponentsReplacesTheUrnsImmutably(): void
@@ -35,8 +35,8 @@ final class InstallComponentStatementTest extends TestCase
         $other = $binder->bind("INSTALL COMPONENT 'b', 'c'");
         self::assertInstanceOf(InstallComponentStatement::class, $statement);
         self::assertInstanceOf(InstallComponentStatement::class, $other);
-        self::assertSame("INSTALL COMPONENT 'b', 'c'", $statement->withComponents($other->components)->toString());
-        self::assertSame("INSTALL COMPONENT 'a'", $statement->toString());
+        self::assertSame("INSTALL COMPONENT 'b', 'c'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withComponents($other->components)));
+        self::assertSame("INSTALL COMPONENT 'a'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithSettingsReplacesTheAssignmentsImmutably(): void
@@ -44,7 +44,7 @@ final class InstallComponentStatementTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $statement = $binder->bind("INSTALL COMPONENT 'a' SET PERSIST v = 2");
         self::assertInstanceOf(InstallComponentStatement::class, $statement);
-        self::assertSame("INSTALL COMPONENT 'a'", $statement->withSettings([])->toString());
+        self::assertSame("INSTALL COMPONENT 'a'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withSettings([])));
         self::assertCount(1, $statement->settings);
     }
 
@@ -102,6 +102,6 @@ final class InstallComponentStatementTest extends TestCase
         self::assertInstanceOf(InstallComponentStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $set);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $set->settings[0]);
-        self::assertSame("INSTALL COMPONENT 'a' SET GLOBAL `k`.`v` = 2", $statement->withSettings([$set->settings[0]])->toString());
+        self::assertSame("INSTALL COMPONENT 'a' SET GLOBAL `k`.`v` = 2", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withSettings([$set->settings[0]])));
     }
 }

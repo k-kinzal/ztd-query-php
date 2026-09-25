@@ -35,7 +35,7 @@ final class ConstraintBinderTest extends TestCase
         $key = $statement->definition->table->constraints[0];
         self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $key);
         self::assertSame(\SqlSemantics\Schema\Constraint\MatchMode::Simple, $key->match);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testKeysBindColumnsInDeclarationOrder(): void
@@ -135,7 +135,7 @@ final class ConstraintBinderTest extends TestCase
         $response = \SqlSemantics\Model\Write\Policy\ConstraintResponse::class;
         self::assertSame([$response::Replace, $response::Fail, $response::Rollback, $response::Ignore, $response::Default], $resolutions);
         $expected = 'CREATE TABLE "main"."u"("id" "integer" NOT NULL PRIMARY KEY ON CONFLICT REPLACE AUTOINCREMENT, "a" "int", "b" "int", UNIQUE("a") ON CONFLICT FAIL, UNIQUE("a", "b") ON CONFLICT ROLLBACK, CHECK (("a" > 1)) ON CONFLICT IGNORE, CHECK (("b" > 0)))';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

@@ -35,13 +35,13 @@ final class DeclarationsTest extends TestCase
         self::assertInstanceOf(ConditionDeclaration::class, $condition);
         self::assertInstanceOf(CursorDeclaration::class, $cursor);
         self::assertInstanceOf(HandlerDeclaration::class, $handler);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindReadsLowerCaseDeclarations(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)')))->bind("create procedure p() begin declare x, y int default 1; declare e condition for sqlstate '45000'; declare c cursor for select a from t; declare continue handler for e set x = 2; end");
-        self::assertSame("CREATE PROCEDURE `p`() BEGIN DECLARE `x`, `y` integer DEFAULT 1; DECLARE `e` CONDITION FOR SQLSTATE '45000'; DECLARE `c` CURSOR FOR SELECT `a` AS `a` FROM `t`; DECLARE CONTINUE HANDLER FOR `e` SET `x` = 2; END", $statement->toString());
+        self::assertSame("CREATE PROCEDURE `p`() BEGIN DECLARE `x`, `y` integer DEFAULT 1; DECLARE `e` CONDITION FOR SQLSTATE '45000'; DECLARE `c` CURSOR FOR SELECT `a` AS `a` FROM `t`; DECLARE CONTINUE HANDLER FOR `e` SET `x` = 2; END", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['create procedure p() begin declare x, X int; end'])]

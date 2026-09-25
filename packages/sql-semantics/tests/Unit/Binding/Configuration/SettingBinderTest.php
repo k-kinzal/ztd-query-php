@@ -201,7 +201,7 @@ final class SettingBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $all = $binder->bind('RESET PERSIST');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ResetAllPersistedVariablesStatement::class, $all);
-        self::assertSame('RESET PERSIST', $all->toString());
+        self::assertSame('RESET PERSIST', (new \SqlSemantics\SimpleSerializer())->serialize($all));
         $statement = $binder->bind('RESET PERSIST IF EXISTS max_connections');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ResetSettingStatement::class, $statement);
         $named = $statement->setting;
@@ -235,7 +235,7 @@ final class SettingBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         self::assertSame(['timezone'], $statement->settings[0]->name);
-        self::assertSame("SET LOCAL TIME ZONE INTERVAL '1' HOUR TO MINUTE", $statement->toString());
+        self::assertSame("SET LOCAL TIME ZONE INTERVAL '1' HOUR TO MINUTE", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testSettingRejectsAScopePrefixedSystemVariable(): void
@@ -279,7 +279,7 @@ final class SettingBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
-        self::assertSame($expected, [$statement->toString(), array_map(static fn (object $setting): string => $setting::class, $statement->settings)]);
+        self::assertSame($expected, [(new \SqlSemantics\SimpleSerializer())->serialize($statement), array_map(static fn (object $setting): string => $setting::class, $statement->settings)]);
     }
 
     public function testPragmaBindsADatabaseSettingFromEachSpelling(): void

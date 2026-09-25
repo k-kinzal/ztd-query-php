@@ -39,10 +39,10 @@ final class MaintenanceTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INT)', 'CREATE TABLE u(id INT)'));
         $statement = $binder->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected, strict: false);
         self::assertSame($statement::class, $rebound::class);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteKeepsTruncateIdentityAndReferencePolicies(): void
@@ -50,7 +50,7 @@ final class MaintenanceTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INT)', 'CREATE TABLE u(id INT)'));
         $statement = $binder->bind('TRUNCATE ONLY t, u RESTART IDENTITY CASCADE');
         self::assertInstanceOf(TruncateRelationsStatement::class, $statement);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(TruncateRelationsStatement::class, $rebound);
         self::assertSame($statement->identities, $rebound->identities);
         self::assertSame($statement->references, $rebound->references);
@@ -62,8 +62,8 @@ final class MaintenanceTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
         $statement = $binder->bind("ATTACH 'x.db' AS other KEY 'k'", strict: false);
         self::assertInstanceOf(AttachDatabaseStatement::class, $statement);
-        self::assertSame("ATTACH DATABASE 'x.db' AS \"other\" KEY 'k'", $statement->toString());
-        self::assertSame("ATTACH DATABASE 'x.db' AS \"other\"", $binder->bind("ATTACH 'x.db' AS other", strict: false)->toString());
+        self::assertSame("ATTACH DATABASE 'x.db' AS \"other\" KEY 'k'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame("ATTACH DATABASE 'x.db' AS \"other\"", (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind("ATTACH 'x.db' AS other", strict: false)));
     }
 
     public function testReindexWritesObjectAndDatabaseTargets(): void
@@ -84,7 +84,7 @@ final class MaintenanceTest extends TestCase
     public function testWriteSpellsReindexOptions(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     #[TestWith(['VACUUM main INTO \'f\'', \SqlSemantics\Model\Statement\Maintenance\VacuumIntoStatement::class, 'VACUUM "main" INTO \'f\''])]
@@ -93,6 +93,6 @@ final class MaintenanceTest extends TestCase
     public function testWriteSpellsSqliteVacuumTargets(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

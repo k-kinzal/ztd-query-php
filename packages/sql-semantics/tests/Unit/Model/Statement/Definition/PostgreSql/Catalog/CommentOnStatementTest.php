@@ -27,8 +27,8 @@ final class CommentOnStatementTest extends TestCase
         self::assertInstanceOf(CommentOnStatement::class, $statement);
         self::assertEquals(new Catalog\RelationIdentity(Kind\RelationKind::Table, new QualifiedName(['app', 'users'])), $statement->object);
         self::assertSame("'people'", $statement->comment?->text);
-        self::assertSame('COMMENT ON TABLE "app"."users" IS \'people\'', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('COMMENT ON TABLE "app"."users" IS \'people\'', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -37,7 +37,7 @@ final class CommentOnStatementTest extends TestCase
         self::assertInstanceOf(CommentOnStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -57,7 +57,7 @@ final class CommentOnStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new Catalog\RelationIdentity(Kind\RelationKind::Table, new QualifiedName(['app', 'users'])), $statement->object);
         self::assertEquals(new Catalog\NamedIdentity(Kind\NamedObjectKind::Schema, 'app'), $changed->object);
-        self::assertStringContainsString('COMMENT ON SCHEMA "app"', $changed->toString());
+        self::assertStringContainsString('COMMENT ON SCHEMA "app"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithCommentReplacesTheOperand(): void
@@ -68,7 +68,7 @@ final class CommentOnStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals($statement->comment, $statement->comment);
         self::assertEquals(null, $changed->comment);
-        self::assertStringContainsString('IS NULL', $changed->toString());
+        self::assertStringContainsString('IS NULL', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsANonTextComment(): void
@@ -93,6 +93,6 @@ final class CommentOnStatementTest extends TestCase
     #[TestWith(['COMMENT ON TABLE t IS $$x$$', 'COMMENT ON TABLE "t" IS $$x$$'])]
     public function testKeepsTheOriginalSpellingOfTheText(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 }

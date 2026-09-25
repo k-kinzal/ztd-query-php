@@ -22,7 +22,7 @@ final class TransactionBinderTest extends TestCase
         $sqlite = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('BEGIN IMMEDIATE');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Transaction\BeginTransactionStatement::class, $sqlite);
         self::assertSame(\SqlSemantics\Model\Transaction\Mode::Immediate, $sqlite->mode);
-        self::assertSame('BEGIN IMMEDIATE', $sqlite->toString());
+        self::assertSame('BEGIN IMMEDIATE', (new \SqlSemantics\SimpleSerializer())->serialize($sqlite));
         $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Transaction\BeginTransactionStatement::class, $mysql);
         self::assertNull($mysql->mode);
@@ -55,7 +55,7 @@ final class TransactionBinderTest extends TestCase
         self::assertSame('s', $release->name);
         $rollback = $binder->bind('ROLLBACK TO SAVEPOINT s');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Transaction\RollbackToSavepointStatement::class, $rollback);
-        self::assertSame('ROLLBACK TO SAVEPOINT "s"', $rollback->toString());
+        self::assertSame('ROLLBACK TO SAVEPOINT "s"', (new \SqlSemantics\SimpleSerializer())->serialize($rollback));
     }
 
     public function testBindReadsChainingAndReleasePoliciesOnBoundaries(): void
@@ -73,7 +73,7 @@ final class TransactionBinderTest extends TestCase
         $end = $postgres->bind('END');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Transaction\CommitTransactionStatement::class, $end);
         self::assertSame(\SqlSemantics\Model\Transaction\Chaining::Default, $end->chaining);
-        self::assertSame('COMMIT', $end->toString());
+        self::assertSame('COMMIT', (new \SqlSemantics\SimpleSerializer())->serialize($end));
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Transaction\RollbackTransactionStatement::class, $postgres->bind('ABORT'));
     }
 
@@ -88,7 +88,7 @@ final class TransactionBinderTest extends TestCase
         self::assertSame("'tx'", $commit->transactionId->text);
         $rollback = $binder->bind("ROLLBACK PREPARED 'tx'");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Transaction\RollbackPreparedStatement::class, $rollback);
-        self::assertSame("ROLLBACK PREPARED 'tx'", $rollback->toString());
+        self::assertSame("ROLLBACK PREPARED 'tx'", (new \SqlSemantics\SimpleSerializer())->serialize($rollback));
     }
 
     #[TestWith(["PREPARE TRANSACTION E'a\\nb'", \SqlSemantics\Model\Statement\Transaction\PrepareTransactionStatement::class])]
@@ -100,7 +100,7 @@ final class TransactionBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertSame($class, $statement::class);
-        self::assertSame($sql, $statement->toString());
-        self::assertSame($sql, $binder->bind($statement->toString())->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

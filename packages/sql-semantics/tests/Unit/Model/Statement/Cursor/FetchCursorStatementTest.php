@@ -24,6 +24,6 @@ final class FetchCursorStatementTest extends TestCase
         $changed = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $changed);
         self::assertSame($statement->toString(), $changed->toString());
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\FetchCursorStatement::class, $binder->bind($changed->toString()));
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\FetchCursorStatement::class, $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($changed)));
     }
 }

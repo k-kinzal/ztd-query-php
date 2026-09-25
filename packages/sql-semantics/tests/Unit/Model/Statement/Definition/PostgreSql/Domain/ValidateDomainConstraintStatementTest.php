@@ -23,28 +23,28 @@ final class ValidateDomainConstraintStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN app.d VALIDATE CONSTRAINT c');
         self::assertInstanceOf(ValidateDomainConstraintStatement::class, $statement);
         self::assertSame('c', $statement->constraint);
-        self::assertSame('ALTER DOMAIN "app"."d" VALIDATE CONSTRAINT "c"', $statement->toString());
+        self::assertSame('ALTER DOMAIN "app"."d" VALIDATE CONSTRAINT "c"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d VALIDATE CONSTRAINT c');
         self::assertInstanceOf(ValidateDomainConstraintStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithDomainReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d VALIDATE CONSTRAINT c');
         self::assertInstanceOf(ValidateDomainConstraintStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "e" VALIDATE CONSTRAINT "c"', $statement->withDomain(new QualifiedName(['e']))->toString());
+        self::assertSame('ALTER DOMAIN "e" VALIDATE CONSTRAINT "c"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDomain(new QualifiedName(['e']))));
     }
 
     public function testWithConstraintReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d VALIDATE CONSTRAINT c');
         self::assertInstanceOf(ValidateDomainConstraintStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "d" VALIDATE CONSTRAINT "x"', $statement->withConstraint('x')->toString());
+        self::assertSame('ALTER DOMAIN "d" VALIDATE CONSTRAINT "x"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withConstraint('x')));
     }
 
     public function testRejectsAnEmptyConstraintName(): void

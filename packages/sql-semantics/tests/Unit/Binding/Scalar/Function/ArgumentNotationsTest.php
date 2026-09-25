@@ -37,7 +37,7 @@ final class ArgumentNotationsTest extends TestCase
         self::assertInstanceOf(FunctionCall::class, $inner);
         self::assertInstanceOf(NamedArgument::class, $inner->arguments[0]);
         self::assertSame('y', $inner->arguments[0]->name);
-        self::assertSame('SELECT "f"("x" => "g"("y" => 1), VARIADIC "z" => ARRAY[2])', $statement->toString());
+        self::assertSame('SELECT "f"("x" => "g"("y" => 1), VARIADIC "z" => ARRAY[2])', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testApplyLeavesPositionalCallsUnchanged(): void
@@ -72,6 +72,6 @@ final class ArgumentNotationsTest extends TestCase
     #[TestWith(['SELECT f(1, x => 2)', 'SELECT "f"(1, "x" => 2)'])]
     public function testApplySpellsTheWrittenNotation(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 }

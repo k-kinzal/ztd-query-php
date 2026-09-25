@@ -21,7 +21,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('DROP OPERATOR IF EXISTS app.~ (NONE, text), === (integer, integer) CASCADE');
  *     $statement->operators[0]->left // => null
  *     $statement->operators[1]->name->parts // => ['===']
- *     $statement->toString() // => 'DROP OPERATOR IF EXISTS "app".~ (NONE, text), === (integer, integer) CASCADE'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'DROP OPERATOR IF EXISTS "app".~ (NONE, text), === (integer, integer) CASCADE'
  * @example Rejecting an empty operator list
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('DROP OPERATOR === (integer, integer)');
  *     $statement->withOperators([]); // throws \SqlSemantics\Model\Validation\InvalidStructure

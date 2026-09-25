@@ -25,7 +25,7 @@ final class PublicationsTest extends TestCase
     #[TestWith(['ALTER PUBLICATION "p" SET TABLES IN SCHEMA CURRENT_SCHEMA'])]
     public function testWriteIsAFixedPoint(string $sql): void
     {
-        self::assertSame($sql, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)')))->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)')))->bind($sql)));
     }
 
     public function testWriteReturnsNullForOtherStatements(): void

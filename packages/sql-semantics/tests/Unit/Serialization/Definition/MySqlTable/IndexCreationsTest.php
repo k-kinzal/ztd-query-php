@@ -29,8 +29,8 @@ final class IndexCreationsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(id INT)'));
         $statement = $binder->bind('CREATE UNIQUE INDEX ix USING HASH ON t (id) COMMENT \'c\' ALGORITHM = COPY LOCK = EXCLUSIVE');
         self::assertInstanceOf(CreateIndexStatement::class, $statement);
-        self::assertSame('CREATE UNIQUE INDEX `ix` ON `t`(`id`) USING HASH COMMENT \'c\' ALGORITHM = COPY LOCK = EXCLUSIVE', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE UNIQUE INDEX `ix` ON `t`(`id`) USING HASH COMMENT \'c\' ALGORITHM = COPY LOCK = EXCLUSIVE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testMethodIsEmptyWithoutAnIndexType(): void

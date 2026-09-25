@@ -41,6 +41,6 @@ final class ChangeReactionsTest extends TestCase
     #[TestWith(['create event trigger e on ddl_command_start execute function f()', 'CREATE EVENT TRIGGER "e" ON "ddl_command_start" EXECUTE FUNCTION "f"()'])]
     public function testBindRoutesPublicationsSubscriptionsAndEventTriggers(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)')))->bind($sql)));
     }
 }

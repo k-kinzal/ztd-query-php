@@ -31,6 +31,6 @@ final class OrdinalityTest extends TestCase
         self::assertSame('n', $column->name);
         self::assertSame('integer', $statement->outputs[0]->expression->type->name);
         self::assertSame(Nullability::NotNull, $statement->outputs[0]->expression->nullability);
-        self::assertSame('SELECT "x"."n" AS "n" FROM XMLTABLE(\'/rows/row\' PASSING \'<rows/>\' COLUMNS "n" FOR ORDINALITY) AS "x"', $statement->toString());
+        self::assertSame('SELECT "x"."n" AS "n" FROM XMLTABLE(\'/rows/row\' PASSING \'<rows/>\' COLUMNS "n" FOR ORDINALITY) AS "x"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -214,8 +214,8 @@ final class QueryNodesTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $query = $binder->bind('SELECT * FROM ((SELECT 1) UNION (SELECT 2 LIMIT 5) ORDER BY 1 LIMIT 1) d');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
-        self::assertSame('SELECT `d`.`?column?` AS `?column?` FROM(SELECT 1 UNION (SELECT 2 LIMIT 5) ORDER BY 1 ASC LIMIT 1) AS `d`', $query->toString());
-        self::assertSame('SELECT 1 UNION SELECT 2 ORDER BY 1 ASC LIMIT 2 OFFSET 1', $binder->bind('SELECT 1 UNION SELECT 2 ORDER BY 1 LIMIT 2 OFFSET 1')->toString());
+        self::assertSame('SELECT `d`.`?column?` AS `?column?` FROM(SELECT 1 UNION (SELECT 2 LIMIT 5) ORDER BY 1 ASC LIMIT 1) AS `d`', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame('SELECT 1 UNION SELECT 2 ORDER BY 1 ASC LIMIT 2 OFFSET 1', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('SELECT 1 UNION SELECT 2 ORDER BY 1 LIMIT 2 OFFSET 1')));
     }
 
     public function testCompoundTailIsEmptyWhenTheBodyIsTheWholeSource(): void
@@ -229,7 +229,7 @@ final class QueryNodesTest extends TestCase
     public function testModifierScopeStopsAtTheParenthesizedOperand(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        self::assertSame('(SELECT 1 LIMIT 1) UNION SELECT 2 LIMIT 3', $binder->bind('(SELECT 1 LIMIT 1) UNION (SELECT 2) LIMIT 3')->toString());
+        self::assertSame('(SELECT 1 LIMIT 1) UNION SELECT 2 LIMIT 3', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('(SELECT 1 LIMIT 1) UNION (SELECT 2) LIMIT 3')));
         $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT 1 LIMIT 1');
         $body = \SqlSemantics\Binding\Query\QueryNodes::body($tree);
         self::assertSame('select_no_parens', \SqlSemantics\Binding\Query\QueryNodes::modifierScope($tree, $body)->name);
@@ -301,9 +301,9 @@ final class QueryNodesTest extends TestCase
     public function testParenthesizedQueryUnwrapsLegacyDerivedTables(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build('CREATE TABLE t (a INT)'));
-        self::assertSame('SELECT `d`.`?column?` AS `?column?` FROM(SELECT 1 LIMIT 1) AS `d`', $binder->bind('SELECT * FROM ((SELECT 1 LIMIT 1)) d')->toString());
-        self::assertSame('SELECT `d`.`?column?` AS `?column?` FROM(SELECT 1 UNION SELECT 2) AS `d`', $binder->bind('SELECT * FROM ((SELECT 1) UNION (SELECT 2)) d')->toString());
-        self::assertSame('SELECT `t`.`a` AS `a` FROM `t`', $binder->bind('SELECT * FROM ((t))')->toString());
+        self::assertSame('SELECT `d`.`?column?` AS `?column?` FROM(SELECT 1 LIMIT 1) AS `d`', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('SELECT * FROM ((SELECT 1 LIMIT 1)) d')));
+        self::assertSame('SELECT `d`.`?column?` AS `?column?` FROM(SELECT 1 UNION SELECT 2) AS `d`', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('SELECT * FROM ((SELECT 1) UNION (SELECT 2)) d')));
+        self::assertSame('SELECT `t`.`a` AS `a` FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('SELECT * FROM ((t))')));
         $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('SELECT * FROM ((t))');
         self::assertNull(\SqlSemantics\Binding\Query\QueryNodes::parenthesizedQuery($tree->find('table_factor')[0]));
     }
@@ -323,7 +323,7 @@ final class QueryNodesTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $query = $binder->bind('SELECT * FROM unnest(ARRAY[1], ARRAY[2] ORDER BY 1)');
-        self::assertSame('SELECT "unnest"."unnest" AS "unnest" FROM "unnest"(ARRAY[1], ARRAY[2] ORDER BY 1 ASC) AS "unnest"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT "unnest"."unnest" AS "unnest" FROM "unnest"(ARRAY[1], ARRAY[2] ORDER BY 1 ASC) AS "unnest"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 }

@@ -25,7 +25,7 @@ final class ListPartitionBoundTest extends TestCase
         self::assertInstanceOf(Relation\Partition\AttachPartition::class, $statement->actions[0]);
         self::assertInstanceOf(Relation\Partition\ListPartitionBound::class, $statement->actions[0]->bound);
         self::assertCount(2, $statement->actions[0]->bound->values);
-        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "t_a" FOR VALUES IN(\'a\', \'b\')', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "t_a" FOR VALUES IN(\'a\', \'b\')', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAValueFromAnotherDatabaseLanguage(): void

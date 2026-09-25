@@ -29,7 +29,7 @@ final class TableAccessTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $statement->from);
         TableAccess::check($statement->from, Dialect::from($dialect));
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['mysql', 'SELECT a FROM t PARTITION (p0)', 'sqlite'])]

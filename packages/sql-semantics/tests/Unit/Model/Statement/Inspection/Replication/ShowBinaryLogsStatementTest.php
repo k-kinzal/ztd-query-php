@@ -32,8 +32,8 @@ final class ShowBinaryLogsStatementTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(ShowBinaryLogsStatement::class, $statement);
         self::assertSame($expected, array_column($statement->resultColumns(), 'name'));
-        self::assertSame('SHOW BINARY LOGS', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SHOW BINARY LOGS', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginKeepsTheRequest(): void
@@ -42,7 +42,7 @@ final class ShowBinaryLogsStatementTest extends TestCase
         self::assertInstanceOf(ShowBinaryLogsStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAnotherDialect(): void

@@ -28,22 +28,22 @@ final class AlterCompositeTypeStatementTest extends TestCase
         self::assertInstanceOf(AlterCompositeTypeStatement::class, $statement);
         self::assertCount(3, $statement->changes);
         self::assertEquals(new Composite\DropAttribute('b', true), $statement->changes[1]);
-        self::assertSame('ALTER TYPE "pair" ADD ATTRIBUTE "a" integer COLLATE "c" CASCADE, DROP ATTRIBUTE IF EXISTS "b", ALTER ATTRIBUTE "c" TYPE text COLLATE "d" RESTRICT', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER TYPE "pair" ADD ATTRIBUTE "a" integer COLLATE "c" CASCADE, DROP ATTRIBUTE IF EXISTS "b", ALTER ATTRIBUTE "c" TYPE text COLLATE "d" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TYPE pair DROP ATTRIBUTE a');
         self::assertInstanceOf(AlterCompositeTypeStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithTypeReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TYPE pair DROP ATTRIBUTE a');
         self::assertInstanceOf(AlterCompositeTypeStatement::class, $statement);
-        self::assertSame('ALTER TYPE "s"."p" DROP ATTRIBUTE "a"', $statement->withType(new QualifiedName(['s', 'p']))->toString());
+        self::assertSame('ALTER TYPE "s"."p" DROP ATTRIBUTE "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withType(new QualifiedName(['s', 'p']))));
     }
 
     public function testWithChangesReplacesTheOperand(): void
@@ -51,7 +51,7 @@ final class AlterCompositeTypeStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TYPE pair DROP ATTRIBUTE a');
         self::assertInstanceOf(AlterCompositeTypeStatement::class, $statement);
         $changed = $statement->withChanges([new Composite\AddAttribute(new Composite\CompositeAttribute('b', TypeDescriptor::builtin(Dialect::PostgreSql, 'text')), DropBehavior::Restrict)]);
-        self::assertSame('ALTER TYPE "pair" ADD ATTRIBUTE "b" text RESTRICT', $changed->toString());
+        self::assertSame('ALTER TYPE "pair" ADD ATTRIBUTE "b" text RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAnAttributeAddedTwice(): void

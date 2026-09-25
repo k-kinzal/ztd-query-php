@@ -36,6 +36,6 @@ final class ProgramStatementTest extends TestCase
         $statement = $binder->bind('CREATE PROCEDURE p() ' . $body);
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertInstanceOf($class, $statement->body);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

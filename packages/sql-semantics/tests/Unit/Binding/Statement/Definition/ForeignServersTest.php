@@ -41,7 +41,7 @@ final class ForeignServersTest extends TestCase
         self::assertInstanceOf(CreateForeignServerStatement::class, $implicit);
         self::assertNull($implicit->serverType);
         self::assertNull($implicit->version);
-        self::assertSame($implicit->toString(), $explicit->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($implicit), (new \SqlSemantics\SimpleSerializer())->serialize($explicit));
     }
 
     public function testBindAlterationKeepsVersionWhenOnlyOptionsChange(): void

@@ -34,7 +34,7 @@ final class ReleaseTest extends TestCase
         self::assertInstanceOf(CommitTransactionStatement::class, $statement);
         self::assertSame($release, $statement->release);
         self::assertSame($sql, $statement->toString());
-        self::assertSame($sql, $binder->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 
     public function testClassifiesTheConnectionReleaseOfARollback(): void

@@ -37,7 +37,7 @@ final class ConstraintResponseTest extends TestCase
         self::assertInstanceOf(InsertStatement::class, $statement);
         self::assertInstanceOf(SqliteInsertion::class, $statement->policy);
         self::assertSame($response, $statement->policy->onViolation);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

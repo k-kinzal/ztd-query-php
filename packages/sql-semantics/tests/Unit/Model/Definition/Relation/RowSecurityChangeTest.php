@@ -27,6 +27,6 @@ final class RowSecurityChangeTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ENABLE ROW LEVEL SECURITY, NO FORCE ROW LEVEL SECURITY', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals([new Relation\SetRowSecurity(Relation\RowSecurityChange::Enable), new Relation\SetRowSecurity(Relation\RowSecurityChange::NoForce)], $statement->actions);
-        self::assertSame('ALTER TABLE "t" ENABLE ROW LEVEL SECURITY, NO FORCE ROW LEVEL SECURITY', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ENABLE ROW LEVEL SECURITY, NO FORCE ROW LEVEL SECURITY', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

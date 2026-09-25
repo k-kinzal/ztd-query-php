@@ -38,7 +38,7 @@ final class ForeignImportsTest extends TestCase
         self::assertSame([], $statement->diagnostics);
         self::assertSame([], $schema->tables);
         self::assertSame('IMPORT', $statement->kind->value);
-        self::assertSame($statement->toString(), (new Binder($schema))->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize((new Binder($schema))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindRetainsOptionsOrderIncludingRepeatedWrapperOptionNames(): void

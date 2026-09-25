@@ -27,6 +27,6 @@ final class RuleEventTest extends TestCase
         $statement = $binder->bind('CREATE RULE r AS ON ' . $event->value . ' TO t DO NOTHING');
         self::assertInstanceOf(CreateEmptyRuleStatement::class, $statement);
         self::assertSame($event, $statement->event);
-        self::assertSame('CREATE RULE "r" AS ON ' . $event->value . ' TO "public"."t" DO ALSO NOTHING', $statement->toString());
+        self::assertSame('CREATE RULE "r" AS ON ' . $event->value . ' TO "public"."t" DO ALSO NOTHING', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -37,8 +37,8 @@ final class JsonObjectConstructorTest extends TestCase
         self::assertSame('jsonb', $value->type->name);
         self::assertSame(Nullability::NotNull, $value->nullability);
         self::assertSame(ExpressionKind::JsonConstructor, $value->kind);
-        self::assertSame('SELECT JSON_OBJECT("k" : "v", \'b\' : 2 ABSENT ON NULL WITH UNIQUE KEYS RETURNING jsonb) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_OBJECT("k" : "v", \'b\' : 2 ABSENT ON NULL WITH UNIQUE KEYS RETURNING jsonb) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectOptionsWithoutMembers(): void

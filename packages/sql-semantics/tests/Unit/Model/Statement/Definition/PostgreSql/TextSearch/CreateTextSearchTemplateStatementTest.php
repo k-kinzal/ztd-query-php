@@ -25,8 +25,8 @@ final class CreateTextSearchTemplateStatementTest extends TestCase
         $statement = $binder->bind('CREATE TEXT SEARCH TEMPLATE s.t (lexize = l, init = i)');
         self::assertInstanceOf(CreateTextSearchTemplateStatement::class, $statement);
         self::assertSame(['i'], $statement->init?->parts);
-        self::assertSame('CREATE TEXT SEARCH TEMPLATE "s"."t"(INIT = "i", LEXIZE = "l")', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TEXT SEARCH TEMPLATE "s"."t"(INIT = "i", LEXIZE = "l")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -49,7 +49,7 @@ final class CreateTextSearchTemplateStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH TEMPLATE t (lexize = l)');
         self::assertInstanceOf(CreateTextSearchTemplateStatement::class, $statement);
-        self::assertSame('CREATE TEXT SEARCH TEMPLATE "t"(LEXIZE = "l")', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE TEXT SEARCH TEMPLATE "t"(LEXIZE = "l")', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -74,6 +74,6 @@ final class CreateTextSearchTemplateStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH TEMPLATE t (lexize = l)');
         self::assertInstanceOf(CreateTextSearchTemplateStatement::class, $statement);
         $changed = $statement->withInit(new QualifiedName(['i2']));
-        self::assertSame('CREATE TEXT SEARCH TEMPLATE "t"(INIT = "i2", LEXIZE = "l")', $changed->toString());
+        self::assertSame('CREATE TEXT SEARCH TEMPLATE "t"(INIT = "i2", LEXIZE = "l")', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

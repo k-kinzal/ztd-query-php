@@ -62,4 +62,19 @@ final class MySqlTablesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(id INT, n INT)')))->bind($sql);
         self::assertSame($expected, MySqlTables::write($statement)?->toString());
     }
+
+    public function testFromQueryWritesTheDeclarationThenTheDuplicatePolicyAndTheQuery(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE u(a INT)')))->bind('create temporary table t (c int) comment = \'x\' ignore as select a from u');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\MySql\Table\CreateTableFromQueryStatement::class, $statement);
+        self::assertSame("CREATE TEMPORARY TABLE `t`(`c` integer) COMMENT = 'x' IGNORE AS SELECT `a` AS `a` FROM `u`", MySqlTables::fromQuery($statement)->toString());
+        self::assertSame(MySqlTables::fromQuery($statement)->toString(), MySqlTables::write($statement)?->toString());
+    }
+
+    public function testFromQueryOmitsAnAbsentDuplicatePolicy(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('CREATE TABLE t (c INT) SELECT 1 AS c');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\MySql\Table\CreateTableFromQueryStatement::class, $statement);
+        self::assertSame('CREATE TABLE `t`(`c` integer) AS SELECT 1 AS `c`', MySqlTables::fromQuery($statement)->toString());
+    }
 }

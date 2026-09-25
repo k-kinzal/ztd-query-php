@@ -148,7 +148,7 @@ final class TypeDefinitionsTest extends TestCase
     #[TestWith(['ALTER TYPE c ALTER ATTRIBUTE a SET DATA TYPE text COLLATE s.c', 'ALTER TYPE "c" ALTER ATTRIBUTE "a" TYPE text COLLATE "s"."c"'])]
     public function testCreateAndAlterWriteBackEveryForm(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     public function testCollationRejectsAnOverQualifiedName(): void

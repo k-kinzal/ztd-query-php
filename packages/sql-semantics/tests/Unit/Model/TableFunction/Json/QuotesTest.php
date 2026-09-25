@@ -38,6 +38,6 @@ final class QuotesTest extends TestCase
         self::assertInstanceOf(JsonTable::class, $statement->from->table);
         self::assertInstanceOf(ValueColumn::class, $statement->from->table->columns[0]);
         self::assertSame($quotes, $statement->from->table->columns[0]->quotes);
-        self::assertSame('SELECT "j"."v" AS "v" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("v" text PATH \'$.b\'' . $expected . ')) AS "j"', $statement->toString());
+        self::assertSame('SELECT "j"."v" AS "v" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("v" text PATH \'$.b\'' . $expected . ')) AS "j"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

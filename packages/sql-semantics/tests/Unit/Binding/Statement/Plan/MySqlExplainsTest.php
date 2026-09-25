@@ -32,14 +32,14 @@ final class MySqlExplainsTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(ExplainConnectionStatement::class, $statement);
         self::assertSame('15', $statement->connection->spelling);
-        self::assertSame('EXPLAIN FOR CONNECTION 15', $statement->toString());
+        self::assertSame('EXPLAIN FOR CONNECTION 15', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTargetBindsTheDatabaseScopedStatement(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('EXPLAIN FOR SCHEMA d INSERT INTO t VALUES (1)', strict: false);
         self::assertInstanceOf(ExplainInDatabaseStatement::class, $statement);
-        self::assertSame('EXPLAIN FOR DATABASE `d` INSERT INTO `d`.`t` VALUES (1)', $statement->toString());
+        self::assertSame('EXPLAIN FOR DATABASE `d` INSERT INTO `d`.`t` VALUES (1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['EXPLAIN FOR CONNECTION 1.5', InputViolation::ExplainSetting])]
@@ -70,6 +70,6 @@ final class MySqlExplainsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('EXPLAIN FOR SCHEMA d SELECT 1');
         self::assertInstanceOf(ExplainInDatabaseStatement::class, $statement);
-        self::assertSame('EXPLAIN FOR DATABASE `d` SELECT 1', $statement->toString());
+        self::assertSame('EXPLAIN FOR DATABASE `d` SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

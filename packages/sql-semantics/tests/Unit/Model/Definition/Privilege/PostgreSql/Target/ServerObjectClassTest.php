@@ -37,7 +37,7 @@ final class ServerObjectClassTest extends TestCase
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertInstanceOf(ServerObjectTargets::class, $statement->target);
         self::assertSame($class, $statement->target->class);
-        self::assertSame('GRANT ' . $privilege . ' ON ' . $words . ' "x" TO "a"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('GRANT ' . $privilege . ' ON ' . $words . ' "x" TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

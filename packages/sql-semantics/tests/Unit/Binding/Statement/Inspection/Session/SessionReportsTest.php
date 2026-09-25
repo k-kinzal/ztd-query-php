@@ -54,7 +54,7 @@ final class SessionReportsTest extends TestCase
         self::assertInstanceOf(ShowStatusStatement::class, $status);
         self::assertInstanceOf(ConditionFilter::class, $variables->filter);
         self::assertSame([VariableScope::Global, VariableScope::Session], [$variables->scope, $status->scope]);
-        self::assertSame("SHOW GLOBAL VARIABLES WHERE (`Value` <> '')", $variables->toString());
+        self::assertSame("SHOW GLOBAL VARIABLES WHERE (`Value` <> '')", (new \SqlSemantics\SimpleSerializer())->serialize($variables));
     }
 
     public function testGrantsReadsTheAccountAndRoles(): void
@@ -83,6 +83,6 @@ final class SessionReportsTest extends TestCase
     public function testBindRoutesEverySessionReport(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

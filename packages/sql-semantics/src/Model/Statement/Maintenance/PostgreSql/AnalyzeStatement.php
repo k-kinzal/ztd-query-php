@@ -16,7 +16,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the targets
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('ANALYSE VERBOSE t');
- *     [$statement->options->verbose, $statement->toString()] // => [true, 'ANALYZE(VERBOSE) "public"."t"']
+ *     [$statement->options->verbose, (new \SqlSemantics\SimpleSerializer())->serialize($statement)] // => [true, 'ANALYZE(VERBOSE) "public"."t"']
  */
 final class AnalyzeStatement extends BoundStatement
 {

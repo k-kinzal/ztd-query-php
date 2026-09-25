@@ -13,7 +13,7 @@ use SqlSemantics\Type\TypeDescriptor;
  * @example Reading a removed operator
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER OPERATOR FAMILY integer_ops USING btree DROP OPERATOR 1 (integer)');
  *     $statement->members[0]->right->name // => 'integer'
- *     $statement->toString() // => 'ALTER OPERATOR FAMILY "integer_ops" USING "btree" DROP OPERATOR 1(integer, integer)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER OPERATOR FAMILY "integer_ops" USING "btree" DROP OPERATOR 1(integer, integer)'
  */
 final class MemberRemoval
 {

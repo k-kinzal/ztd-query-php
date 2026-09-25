@@ -25,7 +25,7 @@ final class ShowCreateFunctionStatementTest extends TestCase
         self::assertSame(['app', 'it em'], $statement->function->parts);
         self::assertCount(6, $statement->resultColumns());
         self::assertSame('Function', $statement->resultColumns()[0]->name);
-        self::assertSame('SHOW CREATE FUNCTION `app`.`it em`', $statement->toString());
+        self::assertSame('SHOW CREATE FUNCTION `app`.`it em`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithFunctionNamesAnotherObjectImmutably(): void
@@ -36,7 +36,7 @@ final class ShowCreateFunctionStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame(['item'], $statement->function->parts);
         self::assertSame(['other', 'renamed'], $changed->function->parts);
-        self::assertSame('SHOW CREATE FUNCTION `other`.`renamed`', $changed->toString());
+        self::assertSame('SHOW CREATE FUNCTION `other`.`renamed`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheName(): void

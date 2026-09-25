@@ -24,7 +24,7 @@ final class IntrinsicExpressionsTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertNotNull(IntrinsicExpressions::write($query->outputs[0]->expression));
         self::assertNull(IntrinsicExpressions::write($query->outputs[1]->expression));
-        self::assertStringContainsString('DATE_ADD(', $query->toString());
+        self::assertStringContainsString('DATE_ADD(', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     /**

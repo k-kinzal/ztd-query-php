@@ -26,8 +26,8 @@ final class CreateCompositeTypeStatementTest extends TestCase
         $statement = $binder->bind('CREATE TYPE pair AS (label text COLLATE "C", amounts integer[])');
         self::assertInstanceOf(CreateCompositeTypeStatement::class, $statement);
         self::assertSame('label', $statement->attributes[0]->name);
-        self::assertSame('CREATE TYPE "pair" AS ("label" text COLLATE "C", "amounts" integer [])', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TYPE "pair" AS ("label" text COLLATE "C", "amounts" integer [])', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindsAnEmptyComposite(): void
@@ -35,21 +35,21 @@ final class CreateCompositeTypeStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE empty AS ()');
         self::assertInstanceOf(CreateCompositeTypeStatement::class, $statement);
         self::assertSame([], $statement->attributes);
-        self::assertSame('CREATE TYPE "empty" AS ()', $statement->toString());
+        self::assertSame('CREATE TYPE "empty" AS ()', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE pair AS (a text)');
         self::assertInstanceOf(CreateCompositeTypeStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE pair AS (a text)');
         self::assertInstanceOf(CreateCompositeTypeStatement::class, $statement);
-        self::assertSame('CREATE TYPE "s"."p" AS ("a" text)', $statement->withName(new QualifiedName(['s', 'p']))->toString());
+        self::assertSame('CREATE TYPE "s"."p" AS ("a" text)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['s', 'p']))));
     }
 
     public function testWithAttributesReplacesTheOperand(): void
@@ -57,7 +57,7 @@ final class CreateCompositeTypeStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE pair AS (a text)');
         self::assertInstanceOf(CreateCompositeTypeStatement::class, $statement);
         $changed = $statement->withAttributes([new CompositeAttribute('b', TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'))]);
-        self::assertSame('CREATE TYPE "pair" AS ("b" integer)', $changed->toString());
+        self::assertSame('CREATE TYPE "pair" AS ("b" integer)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertCount(1, $statement->attributes);
     }
 

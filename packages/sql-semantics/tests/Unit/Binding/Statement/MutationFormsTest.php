@@ -20,7 +20,7 @@ final class MutationFormsTest extends TestCase
         $statement = $binder->bind('WITH c AS (VALUES (?1 OR ?1)) UPDATE t SET id=?9');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
         self::assertSame(\SqlSemantics\Model\Write\Policy\ConstraintResponse::Default, $statement->onViolation);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testDeleteReadsMySqlModifiersAndPagination(): void
@@ -32,7 +32,7 @@ final class MutationFormsTest extends TestCase
         self::assertTrue($statement->ignore);
         self::assertCount(1, $statement->orderBy);
         self::assertNotNull($statement->limit);
-        self::assertSame('DELETE LOW_PRIORITY QUICK IGNORE FROM `t` WHERE (`a` = 1) ORDER BY `a` ASC LIMIT 1', $statement->toString());
+        self::assertSame('DELETE LOW_PRIORITY QUICK IGNORE FROM `t` WHERE (`a` = 1) ORDER BY `a` ASC LIMIT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testDeleteSeparatesJoinedAndUsingForms(): void
@@ -47,7 +47,7 @@ final class MutationFormsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $using->using);
         self::assertSame('u', $using->using->declaration->name);
         self::assertCount(1, $using->outputs);
-        self::assertSame('DELETE FROM "public"."t" USING "public"."u" WHERE ("t"."a" = "u"."a") RETURNING "t"."a" AS "a"', $using->toString());
+        self::assertSame('DELETE FROM "public"."t" USING "public"."u" WHERE ("t"."a" = "u"."a") RETURNING "t"."a" AS "a"', (new \SqlSemantics\SimpleSerializer())->serialize($using));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['UPDATE t JOIN u ON t.a = u.a SET t.a = 1 LIMIT 1'])]
@@ -66,7 +66,7 @@ final class MutationFormsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, `ignore` INT)')))->bind($sql);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
         self::assertSame([$lowPriority, $ignore], [$statement->lowPriority, $statement->ignore]);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['update or ignore t set a = 1', \SqlSemantics\Model\Write\Policy\ConstraintResponse::Ignore, 'UPDATE OR IGNORE "main"."t" SET "a" = 1'])]
@@ -77,17 +77,17 @@ final class MutationFormsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
         self::assertSame($response, $statement->onViolation);
         self::assertFalse($statement->ignore);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testUpdateSeparatesJoinedAndFromForms(): void
     {
         $joined = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('UPDATE t JOIN t AS u ON t.a = u.a SET t.a = 1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement::class, $joined);
-        self::assertSame('UPDATE `t` INNER JOIN `t` AS `u` ON (`t`.`a` = `u`.`a`) SET `t`.`a` = 1', $joined->toString());
+        self::assertSame('UPDATE `t` INNER JOIN `t` AS `u` ON (`t`.`a` = `u`.`a`) SET `t`.`a` = 1', (new \SqlSemantics\SimpleSerializer())->serialize($joined));
         $from = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('UPDATE t SET a = u.a FROM t AS u WHERE t.a = u.a');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateFromStatement::class, $from);
-        self::assertSame('UPDATE "public"."t" SET "a" = "u"."a" FROM "public"."t" AS "u" WHERE ("t"."a" = "u"."a")', $from->toString());
+        self::assertSame('UPDATE "public"."t" SET "a" = "u"."a" FROM "public"."t" AS "u" WHERE ("t"."a" = "u"."a")', (new \SqlSemantics\SimpleSerializer())->serialize($from));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['delete low_priority quick ignore from t', true, true, true, 'DELETE LOW_PRIORITY QUICK IGNORE FROM `t`'])]
@@ -97,14 +97,14 @@ final class MutationFormsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, quick INT)')))->bind($sql);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $statement);
         self::assertSame([$lowPriority, $quick, $ignore], [$statement->lowPriority, $statement->quick, $statement->ignore]);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testDeleteTreatsAMySqlTableListAsAJoinedDelete(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('DELETE t FROM t WHERE a = 1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteJoinedStatement::class, $statement);
-        self::assertSame('DELETE `t` FROM `t` WHERE (`a` = 1)', $statement->toString());
+        self::assertSame('DELETE `t` FROM `t` WHERE (`a` = 1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -125,7 +125,7 @@ final class MutationFormsTest extends TestCase
         $statement = $binder->bind('UPDATE t IGNORE INDEX FOR ORDER BY (k) JOIN t AS u ON t.a = u.a SET t.a = 1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement::class, $statement);
         self::assertFalse($statement->ignore);
-        self::assertSame('UPDATE `t` IGNORE INDEX FOR ORDER BY(`k`) INNER JOIN `t` AS `u` ON (`t`.`a` = `u`.`a`) SET `t`.`a` = 1', $statement->toString());
+        self::assertSame('UPDATE `t` IGNORE INDEX FOR ORDER BY(`k`) INNER JOIN `t` AS `u` ON (`t`.`a` = `u`.`a`) SET `t`.`a` = 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testDeleteDoesNotReadAnIgnoreIndexHintAsTheIgnoreModifier(): void
@@ -134,6 +134,6 @@ final class MutationFormsTest extends TestCase
         $statement = $binder->bind('DELETE t FROM t IGNORE INDEX (k) JOIN t AS u ON t.a = u.a');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteJoinedStatement::class, $statement);
         self::assertFalse($statement->ignore);
-        self::assertSame('DELETE `t` FROM `t` IGNORE INDEX(`k`) INNER JOIN `t` AS `u` ON (`t`.`a` = `u`.`a`)', $statement->toString());
+        self::assertSame('DELETE `t` FROM `t` IGNORE INDEX(`k`) INNER JOIN `t` AS `u` ON (`t`.`a` = `u`.`a`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

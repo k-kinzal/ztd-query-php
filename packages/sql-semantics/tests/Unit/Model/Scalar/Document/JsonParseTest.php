@@ -33,8 +33,8 @@ final class JsonParseTest extends TestCase
         self::assertSame([$value->input->expression], $value->inputs());
         self::assertSame('json', $value->type->name);
         self::assertSame(Nullability::MaybeNull, $value->nullability);
-        self::assertSame('SELECT JSON("d" WITH UNIQUE KEYS) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON("d" WITH UNIQUE KEYS) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAnotherDialect(): void

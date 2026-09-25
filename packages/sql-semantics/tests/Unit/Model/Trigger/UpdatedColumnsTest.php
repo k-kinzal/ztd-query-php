@@ -28,7 +28,7 @@ final class UpdatedColumnsTest extends TestCase
         self::assertInstanceOf(UpdatedColumns::class, $event);
         self::assertSame(['x', 'id'], $event->columns);
         self::assertSame(WriteEvent::Update, $event->operation());
-        self::assertSame('CREATE TRIGGER "tr" AFTER UPDATE OF "x", "id" ON "main"."t" FOR EACH ROW BEGIN UPDATE "t" SET "x" = "new"."id" WHERE ("id" = "old"."id"); END', $statement->toString());
+        self::assertSame('CREATE TRIGGER "tr" AFTER UPDATE OF "x", "id" ON "main"."t" FOR EACH ROW BEGIN UPDATE "t" SET "x" = "new"."id" WHERE ("id" = "old"."id"); END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testOperationIsAlwaysAnUpdate(): void

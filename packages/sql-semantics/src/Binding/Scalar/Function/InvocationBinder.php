@@ -21,6 +21,9 @@ use SqlSemantics\Model\Scalar\Function\FunctionReference;
 final class InvocationBinder
 {
     /**
+     * Binds the call and its window; MySQL parses IGNORE NULLS and FROM LAST on window functions but rejects both,
+     * so neither binds.
+     *
      * @param list<Expression> $arguments Bound direct arguments
      * @param list<Expression> $orderedInputs Bound per-row arguments of an ordered-set aggregate
      * @throws \SqlSemantics\InvalidSql
@@ -49,6 +52,12 @@ final class InvocationBinder
         $over = FunctionClauses::find($source, ['over_clause', 'windowing_clause']);
         if ($over !== null && $call instanceof \SqlSemantics\Model\Scalar\Function\OrderedSetCall) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::OrderedSetWindow, $source);
+        }
+        foreach (['opt_null_treatment' => 'IGNORE NULLS', 'opt_from_first_last' => 'FROM LAST'] as $clause => $rejected) {
+            $modifier = FunctionClauses::find($source, [$clause]);
+            if ($modifier !== null && strtoupper(Tree::text($modifier)) === $rejected) {
+                throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::WindowModifier, $modifier);
+            }
         }
         return $over === null ? $call : new \SqlSemantics\Model\Scalar\Function\WindowCall($facts, $source, $call, (new WindowBinder())->bind($over, $scope));
     }

@@ -40,8 +40,8 @@ final class TemporalLiteralTest extends TestCase
         self::assertSame(Nullability::NotNull, $literal->nullability);
         self::assertSame([], $literal->inputs());
         self::assertSame($expected, $literal->spelling());
-        self::assertSame('SELECT ' . $expected, $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT ' . $expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingRejectsANonTemporalCategory(): void

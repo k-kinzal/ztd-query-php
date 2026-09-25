@@ -29,8 +29,8 @@ final class VacuumIntoStatementTest extends TestCase
         self::assertSame('main', $named->schema);
         self::assertSame("'copy.db'", $named->destination->spelling());
         self::assertSame(StatementKind::Vacuum, $named->kind);
-        self::assertSame("VACUUM INTO 'copy.db'", $whole->toString());
-        self::assertSame('VACUUM "main" INTO \'copy.db\'', $named->toString());
+        self::assertSame("VACUUM INTO 'copy.db'", (new \SqlSemantics\SimpleSerializer())->serialize($whole));
+        self::assertSame('VACUUM "main" INTO \'copy.db\'', (new \SqlSemantics\SimpleSerializer())->serialize($named));
     }
 
     public function testWithOriginPreservesTheDestination(): void
@@ -42,6 +42,6 @@ final class VacuumIntoStatementTest extends TestCase
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->destination, $copy->destination);
         self::assertSame('main', $copy->schema);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

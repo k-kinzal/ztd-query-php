@@ -35,8 +35,8 @@ final class JsonArrayConstructorTest extends TestCase
         self::assertSame([$value->elements[0]->expression, $value->elements[1]->expression], $value->inputs());
         self::assertSame('jsonb', $value->type->name);
         self::assertSame(Nullability::NotNull, $value->nullability);
-        self::assertSame('SELECT JSON_ARRAY("v", "d" FORMAT JSON NULL ON NULL RETURNING jsonb) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_ARRAY("v", "d" FORMAT JSON NULL ON NULL RETURNING jsonb) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectANullClauseWithoutElements(): void

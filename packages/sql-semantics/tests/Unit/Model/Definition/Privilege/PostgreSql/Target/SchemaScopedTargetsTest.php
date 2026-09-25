@@ -32,8 +32,8 @@ final class SchemaScopedTargetsTest extends TestCase
         $statement = $binder->bind('GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s, app TO a');
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertEquals(new SchemaScopedTargets(SchemaScopedClass::Tables, ['s', 'app']), $statement->target);
-        self::assertSame('GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA "s", "app" TO "a"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA "s", "app" TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnEmptySchemaName(): void

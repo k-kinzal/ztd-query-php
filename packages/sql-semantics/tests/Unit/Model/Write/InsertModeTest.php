@@ -32,6 +32,6 @@ final class InsertModeTest extends TestCase
         $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER)')))->bind($sql);
         self::assertInstanceOf(InsertStatement::class, $statement);
         self::assertSame($mode, $statement->mode);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

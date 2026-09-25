@@ -25,7 +25,7 @@ final class ColumnDefaultChangeTest extends TestCase
         self::assertInstanceOf(Relation\Column\ColumnDefaultChange::class, $statement->actions[0]);
         self::assertSame('7', $statement->actions[0]->default?->structure()->toString());
         self::assertEquals(new Relation\Column\ColumnDefaultChange('id', null), $statement->actions[1]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET DEFAULT 7, ALTER COLUMN "id" DROP DEFAULT', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET DEFAULT 7, ALTER COLUMN "id" DROP DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyColumn(): void

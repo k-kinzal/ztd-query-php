@@ -24,8 +24,8 @@ final class RequestsTest extends TestCase
         $help = $binder->bind('HELP contents');
         self::assertInstanceOf(HelpStatement::class, $help);
         self::assertSame("HELP 'contents'", (new SimpleSerializer())->serialize($help));
-        self::assertSame("IMPORT TABLE FROM 'a'", $binder->bind("IMPORT  TABLE FROM 'a'")->toString());
-        self::assertSame('UNLOCK INSTANCE', $binder->bind('unlock   instance')->toString());
+        self::assertSame("IMPORT TABLE FROM 'a'", (new SimpleSerializer())->serialize($binder->bind("IMPORT  TABLE FROM 'a'")));
+        self::assertSame('UNLOCK INSTANCE', (new SimpleSerializer())->serialize($binder->bind('unlock   instance')));
     }
 
     public function testTextEscapesQuotesAndBackslashes(): void

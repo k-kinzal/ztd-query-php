@@ -68,7 +68,7 @@ final class ProgramNamespaceTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT, n INT)')))->bind('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET NEW.n = OLD.a + 1', strict: false);
         self::assertSame([], $statement->diagnostics);
-        self::assertSame('CREATE TRIGGER `tr` BEFORE UPDATE ON `t` FOR EACH ROW SET `new`.`n` = (`old`.`a` + 1)', $statement->toString());
+        self::assertSame('CREATE TRIGGER `tr` BEFORE UPDATE ON `t` FOR EACH ROW SET `new`.`n` = (`old`.`a` + 1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testResolveDiagnosesAnUnknownTriggerColumn(): void

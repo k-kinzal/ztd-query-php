@@ -26,29 +26,29 @@ final class AddDomainConstraintStatementTest extends TestCase
         self::assertInstanceOf(AddDomainConstraintStatement::class, $statement);
         self::assertInstanceOf(Domain\DomainCheck::class, $statement->constraint);
         self::assertTrue($statement->notValid);
-        self::assertSame('ALTER DOMAIN "d" ADD CONSTRAINT "positive" CHECK (("value" > 0)) NOT VALID', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER DOMAIN "d" ADD CONSTRAINT "positive" CHECK (("value" > 0)) NOT VALID', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d ADD NOT NULL');
         self::assertInstanceOf(AddDomainConstraintStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "d" ADD NOT NULL', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER DOMAIN "d" ADD NOT NULL', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithDomainReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d ADD NOT NULL');
         self::assertInstanceOf(AddDomainConstraintStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "e" ADD NOT NULL', $statement->withDomain(new QualifiedName(['e']))->toString());
+        self::assertSame('ALTER DOMAIN "e" ADD NOT NULL', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDomain(new QualifiedName(['e']))));
     }
 
     public function testWithConstraintReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d ADD NOT NULL');
         self::assertInstanceOf(AddDomainConstraintStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "d" ADD CONSTRAINT "c" NOT NULL', $statement->withConstraint(new Domain\DomainNotNull('c'))->toString());
+        self::assertSame('ALTER DOMAIN "d" ADD CONSTRAINT "c" NOT NULL', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withConstraint(new Domain\DomainNotNull('c'))));
     }
 
     public function testWithNotValidReplacesTheOperand(): void

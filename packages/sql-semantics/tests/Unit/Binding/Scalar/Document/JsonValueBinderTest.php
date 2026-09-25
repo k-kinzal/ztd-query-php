@@ -24,8 +24,8 @@ final class JsonValueBinderTest extends TestCase
     public function testBindKeepsThePathReturnedTypeAndResponses(string $release, string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testBindLeavesPostgreSqlToItsOwnForm(): void

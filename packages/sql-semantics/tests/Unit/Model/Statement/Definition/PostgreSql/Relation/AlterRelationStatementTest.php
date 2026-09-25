@@ -28,8 +28,8 @@ final class AlterRelationStatementTest extends TestCase
         self::assertCount(2, $statement->actions);
         self::assertTrue($statement->ifExists);
         self::assertTrue($statement->only);
-        self::assertSame('ALTER TABLE IF EXISTS ONLY "t" SET LOGGED, CLUSTER ON "t_pkey"', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER TABLE IF EXISTS ONLY "t" SET LOGGED, CLUSTER ON "t_pkey"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -38,7 +38,7 @@ final class AlterRelationStatementTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -58,7 +58,7 @@ final class AlterRelationStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new QualifiedName(['t']), $statement->name);
         self::assertEquals(new QualifiedName(['public', 't']), $changed->name);
-        self::assertStringContainsString('ONLY "public"."t"', $changed->toString());
+        self::assertStringContainsString('ONLY "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithActionsReplacesTheOperand(): void
@@ -69,7 +69,7 @@ final class AlterRelationStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals($statement->actions, $statement->actions);
         self::assertEquals([new \SqlSemantics\Model\Definition\Relation\Storage\SetTablespace('fast')], $changed->actions);
-        self::assertStringContainsString('SET TABLESPACE "fast"', $changed->toString());
+        self::assertStringContainsString('SET TABLESPACE "fast"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfExistsReplacesTheOperand(): void
@@ -80,7 +80,7 @@ final class AlterRelationStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(true, $statement->ifExists);
         self::assertEquals(false, $changed->ifExists);
-        self::assertStringContainsString('ALTER TABLE ONLY', $changed->toString());
+        self::assertStringContainsString('ALTER TABLE ONLY', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOnlyReplacesTheOperand(): void
@@ -91,7 +91,7 @@ final class AlterRelationStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(true, $statement->only);
         self::assertEquals(false, $changed->only);
-        self::assertStringContainsString('IF EXISTS "t"', $changed->toString());
+        self::assertStringContainsString('IF EXISTS "t"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAPartitionActionAmongOthers(): void
@@ -116,7 +116,7 @@ final class AlterRelationStatementTest extends TestCase
         $copy = new AlterRelationStatement($statement->origin, Kind\RelationKind::Index, $statement->name, $statement->actions);
         self::assertFalse($copy->ifExists);
         self::assertFalse($copy->only);
-        self::assertSame('ALTER INDEX "i" ATTACH PARTITION "p"', $copy->toString());
+        self::assertSame('ALTER INDEX "i" ATTACH PARTITION "p"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsATablePartitionOnAView(): void

@@ -31,7 +31,7 @@ final class JsonTableBinderTest extends TestCase
         self::assertSame('root', $table->pathName);
         self::assertSame([], $table->passing);
         self::assertSame(\SqlSemantics\Model\TableFunction\Json\Response\TableError::Error, $table->onError);
-        self::assertSame('SELECT "jt"."id" AS "id" FROM "public"."t" CROSS JOIN JSON_TABLE("t"."doc", \'$[*]\' AS "root" COLUMNS("id" integer PATH \'$.id\') ERROR ON ERROR) AS "jt"', $statement->toString());
+        self::assertSame('SELECT "jt"."id" AS "id" FROM "public"."t" CROSS JOIN JSON_TABLE("t"."doc", \'$[*]\' AS "root" COLUMNS("id" integer PATH \'$.id\') ERROR ON ERROR) AS "jt"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindHandlesMySqlWithoutPathNameOrPassing(): void

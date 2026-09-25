@@ -31,16 +31,16 @@ final class RenameRoleStatementTest extends TestCase
     public function testToStringWritesTheRoleKeywordAndQuotesBothNames(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER GROUP staff RENAME TO crew');
-        self::assertSame('ALTER ROLE "staff" RENAME TO "crew"', $statement->toString());
+        self::assertSame('ALTER ROLE "staff" RENAME TO "crew"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRebindingTheOutputReachesAFixedPoint(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('ALTER USER staff RENAME TO crew');
-        $again = $binder->bind($statement->toString());
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(RenameRoleStatement::class, $again);
-        self::assertSame($statement->toString(), $again->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithRoleReplacesTheRenamedRoleWithoutMutatingTheOriginal(): void
@@ -52,7 +52,7 @@ final class RenameRoleStatementTest extends TestCase
         self::assertEquals(new NamedRole('staff'), $statement->role);
         self::assertEquals(new NamedRole('x"y'), $changed->role);
         self::assertEquals($statement->newName, $changed->newName);
-        self::assertSame('ALTER ROLE "x""y" RENAME TO "crew"', $changed->toString());
+        self::assertSame('ALTER ROLE "x""y" RENAME TO "crew"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNewNameKeepsAQuotedSpecialWordAsANamedRole(): void
@@ -64,7 +64,7 @@ final class RenameRoleStatementTest extends TestCase
         self::assertEquals(new NamedRole('crew'), $statement->newName);
         self::assertEquals(new NamedRole('CURRENT_USER'), $changed->newName);
         self::assertEquals($statement->role, $changed->role);
-        self::assertSame('ALTER ROLE "staff" RENAME TO "CURRENT_USER"', $changed->toString());
+        self::assertSame('ALTER ROLE "staff" RENAME TO "CURRENT_USER"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsBothNames(): void
@@ -75,7 +75,7 @@ final class RenameRoleStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertEquals($statement->role, $copy->role);
         self::assertEquals($statement->newName, $copy->newName);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

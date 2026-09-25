@@ -39,8 +39,8 @@ final class LoadsTest extends TestCase
         self::assertInstanceOf(LoadFileStatement::class, $statement);
         self::assertSame(['XML', 'CONCURRENT', true, 'IGNORE', ['p'], 'latin1', "'<row>'", 1], [$statement->format->value, $statement->scheduling?->value, $statement->local, $statement->duplicates?->value, $statement->partitions?->names, $statement->layout->characterSet, $statement->layout->lines->terminator?->text, $statement->layout->skippedRows]);
         self::assertInstanceOf(ColumnReference::class, $statement->targets[0]);
-        self::assertSame("LOAD XML CONCURRENT LOCAL INFILE 'rows.xml' IGNORE INTO TABLE `t` PARTITION(`p`) CHARACTER SET `latin1` ROWS IDENTIFIED BY '<row>' IGNORE 1 LINES(`a`, `b`) SET `b` = (`a` + 1)", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("LOAD XML CONCURRENT LOCAL INFILE 'rows.xml' IGNORE INTO TABLE `t` PARTITION(`p`) CHARACTER SET `latin1` ROWS IDENTIFIED BY '<row>' IGNORE 1 LINES(`a`, `b`) SET `b` = (`a` + 1)", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(["LOAD DATA FROM URL 'u' INTO TABLE t"])]
@@ -84,7 +84,7 @@ final class LoadsTest extends TestCase
         self::assertInstanceOf(LoadFileStatement::class, $statement);
         self::assertInstanceOf(VariableReference::class, $statement->targets[0]);
         self::assertInstanceOf(ColumnReference::class, $statement->targets[1]);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t`(@`x`, `a`)", $statement->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t`(@`x`, `a`)", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testAssignmentsBindsEachSetItem(): void
@@ -101,7 +101,7 @@ final class LoadsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, b INT)')))->bind($sql, strict: false);
         self::assertInstanceOf(LoadFileStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTargetsAndAssignmentsReadNothingWithoutLists(): void

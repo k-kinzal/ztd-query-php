@@ -22,6 +22,6 @@ final class RemoveRelationPropertyTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t NOT OF', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\RemoveRelationProperty(Relation\RelationProperty::Type), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" NOT OF', $statement->toString());
+        self::assertSame('ALTER TABLE "t" NOT OF', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

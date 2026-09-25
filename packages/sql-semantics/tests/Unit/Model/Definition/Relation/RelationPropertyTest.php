@@ -27,6 +27,6 @@ final class RelationPropertyTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t SET WITHOUT CLUSTER, SET WITHOUT OIDS', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals([new Relation\RemoveRelationProperty(Relation\RelationProperty::Cluster), new Relation\RemoveRelationProperty(Relation\RelationProperty::Oids)], $statement->actions);
-        self::assertSame('ALTER TABLE "t" SET WITHOUT CLUSTER, SET WITHOUT OIDS', $statement->toString());
+        self::assertSame('ALTER TABLE "t" SET WITHOUT CLUSTER, SET WITHOUT OIDS', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

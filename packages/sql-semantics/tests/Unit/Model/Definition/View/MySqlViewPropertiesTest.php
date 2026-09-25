@@ -51,4 +51,10 @@ final class MySqlViewPropertiesTest extends TestCase
         self::assertInstanceOf(CurrentAccount::class, $statement->properties->definer);
     }
 
+    public function testSecurityMayBeLeftUnstated(): void
+    {
+        $properties = new MySqlViewProperties(ViewAlgorithm::Merge, security: null);
+        self::assertNull($properties->security);
+        self::assertSame(ViewAlgorithm::Merge, $properties->algorithm);
+    }
 }

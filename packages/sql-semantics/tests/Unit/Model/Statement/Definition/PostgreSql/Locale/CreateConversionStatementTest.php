@@ -30,8 +30,8 @@ final class CreateConversionStatementTest extends TestCase
         self::assertSame(['s', 'f'], $statement->function->parts);
         self::assertFalse($statement->isDefault);
         self::assertSame(StatementKind::Create, $statement->kind);
-        self::assertSame("CREATE CONVERSION \"s\".\"c\" FOR 'WIN1252' TO 'UTF8' FROM \"s\".\"f\"", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("CREATE CONVERSION \"s\".\"c\" FOR 'WIN1252' TO 'UTF8' FROM \"s\".\"f\"", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAConversionToSqlAscii(): void
@@ -46,7 +46,7 @@ final class CreateConversionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE CONVERSION c FOR 'UTF8' TO 'LATIN1' FROM f");
         self::assertInstanceOf(CreateConversionStatement::class, $statement);
-        self::assertSame("CREATE CONVERSION \"c\" FOR 'UTF8' TO 'LATIN1' FROM \"f\"", $statement->withOrigin($statement->origin)->toString());
+        self::assertSame("CREATE CONVERSION \"c\" FOR 'UTF8' TO 'LATIN1' FROM \"f\"", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -61,7 +61,7 @@ final class CreateConversionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE CONVERSION c FOR 'UTF8' TO 'LATIN1' FROM f");
         self::assertInstanceOf(CreateConversionStatement::class, $statement);
-        self::assertSame("CREATE CONVERSION \"c\" FOR 'EUC_JP' TO 'LATIN1' FROM \"f\"", $statement->withSourceEncoding(ServerEncoding::EucJp)->toString());
+        self::assertSame("CREATE CONVERSION \"c\" FOR 'EUC_JP' TO 'LATIN1' FROM \"f\"", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withSourceEncoding(ServerEncoding::EucJp)));
     }
 
     public function testWithTargetEncodingReplacesTheOperand(): void
@@ -82,6 +82,6 @@ final class CreateConversionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE CONVERSION c FOR 'UTF8' TO 'LATIN1' FROM f");
         self::assertInstanceOf(CreateConversionStatement::class, $statement);
-        self::assertSame("CREATE DEFAULT CONVERSION \"c\" FOR 'UTF8' TO 'LATIN1' FROM \"f\"", $statement->withIsDefault(true)->toString());
+        self::assertSame("CREATE DEFAULT CONVERSION \"c\" FOR 'UTF8' TO 'LATIN1' FROM \"f\"", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIsDefault(true)));
     }
 }

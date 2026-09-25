@@ -58,7 +58,7 @@ final class TargetsTest extends TestCase
         self::assertInstanceOf(Routine\OrderedSetAggregate::class, $statement->targets[3]);
         self::assertCount(1, $statement->targets[3]->direct);
         self::assertCount(1, $statement->targets[3]->ordered);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testAggregateRetainsMatchingVariadicInputsInBothPositions(): void
@@ -69,7 +69,7 @@ final class TargetsTest extends TestCase
         self::assertInstanceOf(Routine\OrderedSetAggregate::class, $statement->targets[0]);
         self::assertSame('d', $statement->targets[0]->direct[0]->name);
         self::assertSame('o', $statement->targets[0]->ordered[0]->name);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testAggregateRejectsAnInconsistentVariadicSignature(): void
@@ -84,7 +84,7 @@ final class TargetsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['drop aggregate a(int order by int)', 'DROP AGGREGATE "a"(integer ORDER BY integer)'])]
     public function testRoutineAndAggregateKeepQualifiedNamesAndSignatures(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     public function testNameReadsTheQualifiedComponents(): void

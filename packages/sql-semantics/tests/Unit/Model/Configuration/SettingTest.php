@@ -163,8 +163,8 @@ final class SettingTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedUserVariable::class, $statement->settings[0]);
         self::assertSame([''], $statement->settings[0]->name);
-        self::assertSame('SET @`` = 1', $statement->toString());
-        self::assertSame('SET @`` = 1', $binder->bind($statement->toString())->toString());
+        self::assertSame('SET @`` = 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('SET @`` = 1', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testReadPragmaHasItsOwnStatementType(): void

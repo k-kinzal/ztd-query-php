@@ -39,8 +39,8 @@ final class ChangesTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(ChangeReplicationSourceStatement::class, $statement);
-        self::assertSame($written, $statement->toString());
-        self::assertSame($written, $binder->bind($written)->toString());
+        self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($written)));
     }
 
     #[TestWith(['mysql-5.7.44', 'CHANGE REPLICATION FILTER REPLICATE_DO_DB = (a), REPLICATE_DO_DB = ()', 'CHANGE REPLICATION FILTER REPLICATE_DO_DB = ()'])]
@@ -51,8 +51,8 @@ final class ChangesTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(ChangeReplicationFilterStatement::class, $statement);
-        self::assertSame($written, $statement->toString());
-        self::assertSame($written, $binder->bind($written)->toString());
+        self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($written)));
     }
 
     public function testBindDiagnosesConflictingCoordinates(): void

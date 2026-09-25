@@ -24,7 +24,7 @@ final class UseDatabaseStatementTest extends TestCase
         self::assertInstanceOf(UseDatabaseStatement::class, $statement);
         self::assertSame(['app'], $statement->database->parts);
         self::assertSame(StatementKind::Use, $statement->kind);
-        self::assertSame('USE `app`', $statement->toString());
+        self::assertSame('USE `app`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheDatabase(): void
@@ -35,6 +35,6 @@ final class UseDatabaseStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->database, $copy->database);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

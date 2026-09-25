@@ -32,8 +32,8 @@ final class CallsTest extends TestCase
         self::assertInstanceOf(CallStatement::class, $statement);
         self::assertSame(['app', 'refresh'], $statement->procedure->parts);
         self::assertCount(2, $statement->arguments);
-        self::assertSame('CALL `app`.`refresh`((1 + 2), @`since`)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('CALL `app`.`refresh`((1 + 2), @`since`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)));
         $bare = $binder->bind('CALL refresh');
         self::assertInstanceOf(CallStatement::class, $bare);
         self::assertSame([], $bare->arguments);

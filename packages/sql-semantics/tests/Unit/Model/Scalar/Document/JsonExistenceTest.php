@@ -35,8 +35,8 @@ final class JsonExistenceTest extends TestCase
         self::assertSame([$value->document->expression, $value->path, $value->passing[0]->input->expression], $value->inputs());
         self::assertSame('boolean', $value->type->name);
         self::assertSame(ExpressionKind::JsonExists, $value->kind);
-        self::assertSame('SELECT JSON_EXISTS("d" FORMAT JSON, \'$[$i]\' PASSING "n" AS "i" ERROR ON ERROR) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_EXISTS("d" FORMAT JSON, \'$[$i]\' PASSING "n" AS "i" ERROR ON ERROR) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAnotherDialect(): void

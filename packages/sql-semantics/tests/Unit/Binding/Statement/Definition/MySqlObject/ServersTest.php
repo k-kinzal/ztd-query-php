@@ -37,9 +37,9 @@ final class ServersTest extends TestCase
         self::assertSame(['remote', 'mysql', 'h', 3307, 'b'], [$create->name, $create->wrapper, $create->options->host, $create->options->port, $create->options->user]);
         self::assertSame(['remote', 'p', null], [$alter->name, $alter->options->password, $alter->options->host]);
         $expected = "CREATE SERVER `remote` FOREIGN DATA WRAPPER `mysql` OPTIONS(USER 'b', HOST 'h', PORT 3307)";
-        self::assertSame($expected, $create->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
-        self::assertSame($alter->toString(), $binder->bind($alter->toString())->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($create));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($alter), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($alter))));
     }
 
     #[TestWith(["CREATE SERVER '' FOREIGN DATA WRAPPER mysql OPTIONS (USER 'a')"])]

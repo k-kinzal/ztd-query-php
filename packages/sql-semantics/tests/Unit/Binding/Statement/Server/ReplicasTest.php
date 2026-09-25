@@ -39,11 +39,11 @@ final class ReplicasTest extends TestCase
         $start = $binder->bind('START ' . $written . " IO_THREAD, SQL_THREAD USER = 'u' PASSWORD = 'p'");
         self::assertInstanceOf(StartReplicaStatement::class, $start);
         self::assertSame([ReplicaThread::Receiver, ReplicaThread::Applier], $start->threads);
-        self::assertSame('START ' . $spelled . " IO_THREAD, SQL_THREAD USER = 'u' PASSWORD = 'p'", $start->toString());
-        self::assertSame($start->toString(), $binder->bind($start->toString())->toString());
+        self::assertSame('START ' . $spelled . " IO_THREAD, SQL_THREAD USER = 'u' PASSWORD = 'p'", (new \SqlSemantics\SimpleSerializer())->serialize($start));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($start), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($start))));
         $stop = $binder->bind('STOP ' . $written . ' SQL_THREAD');
         self::assertInstanceOf(StopReplicaStatement::class, $stop);
-        self::assertSame('STOP ' . $spelled . ' SQL_THREAD', $stop->toString());
+        self::assertSame('STOP ' . $spelled . ' SQL_THREAD', (new \SqlSemantics\SimpleSerializer())->serialize($stop));
     }
 
     #[TestWith(['mysql-5.7.44'])]
@@ -92,6 +92,6 @@ final class ReplicasTest extends TestCase
     public function testBindSpellsEveryReplicaRequest(string $version, string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

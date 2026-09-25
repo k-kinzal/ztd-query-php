@@ -32,8 +32,8 @@ final class ExplainConnectionStatementTest extends TestCase
         self::assertSame(MySqlFormat::Default, $plain->format);
         self::assertSame(MySqlFormat::Json, $json->format);
         self::assertSame(StatementKind::Explain, $json->kind);
-        self::assertSame('EXPLAIN FOR CONNECTION 42', $plain->toString());
-        self::assertSame('EXPLAIN FORMAT = JSON FOR CONNECTION 42', $json->toString());
+        self::assertSame('EXPLAIN FOR CONNECTION 42', (new \SqlSemantics\SimpleSerializer())->serialize($plain));
+        self::assertSame('EXPLAIN FORMAT = JSON FOR CONNECTION 42', (new \SqlSemantics\SimpleSerializer())->serialize($json));
     }
 
     public function testWithOriginPreservesTheConnectionAndFormat(): void
@@ -45,7 +45,7 @@ final class ExplainConnectionStatementTest extends TestCase
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->connection, $copy->connection);
         self::assertSame(MySqlFormat::Json, $copy->format);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAFractionalConnectionNumber(): void

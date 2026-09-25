@@ -29,7 +29,7 @@ final class BinaryExpressionTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
         $query = $binder->bind('SELECT (CASE WHEN 1 THEN 2 ELSE 3 END) + 4');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
-        $rebound = $binder->bind($query->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query));
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $rebound);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $rebound->outputs[0]->expression);
         self::assertSame('case', $rebound->outputs[0]->expression->left->kind->value);
@@ -46,8 +46,8 @@ final class BinaryExpressionTest extends TestCase
         self::assertSame('1', $operation->left->spelling());
         self::assertSame('2', $operation->right->spelling());
         self::assertSame([$operation->left, $operation->right], $operation->inputs());
-        self::assertSame('SELECT (1 + 2)', $query->toString());
-        self::assertSame('SELECT (1 + 2)', $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT (1 + 2)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame('SELECT (1 + 2)', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingReturnsTheOperatorSymbol(): void

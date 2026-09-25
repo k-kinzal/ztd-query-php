@@ -196,7 +196,7 @@ final class IndexBinderTest extends TestCase
         self::assertSame(['id'], $definition->include);
         self::assertSame('("id" > 0)', $definition->predicate?->structure()->toString());
         self::assertSame(['fillfactor'], array_map(static fn (\SqlSemantics\Schema\Storage\Parameter $parameter): string => implode('.', $parameter->name->parts), $definition->properties->storageParameters));
-        self::assertSame('CREATE UNIQUE INDEX "ix" ON "public"."t" USING "btree"("id" DESC NULLS LAST, (("id" + 1)) COLLATE "C") INCLUDE("id") WHERE ("id" > 0) WITH ("fillfactor" = 70)', $statement->toString());
+        self::assertSame('CREATE UNIQUE INDEX "ix" ON "public"."t" USING "btree"("id" DESC NULLS LAST, (("id" + 1)) COLLATE "C") INCLUDE("id") WHERE ("id" > 0) WITH ("fillfactor" = 70)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testDefinitionDiagnosesANonBooleanPredicate(): void

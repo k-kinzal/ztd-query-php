@@ -33,8 +33,8 @@ final class OptimizerHintsTest extends TestCase
         self::assertInstanceOf(MaxExecutionTime::class, $statement->hints[0]);
         self::assertSame('1000', $statement->hints[0]->milliseconds);
         self::assertSame('/*+ MAX_EXECUTION_TIME(1000) */', OptimizerHints::write($statement->hints)->toString());
-        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) */ `id` AS `id` FROM `t`', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) */ `id` AS `id` FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(BoundSelect::class, $rebound);
         self::assertInstanceOf(MaxExecutionTime::class, $rebound->hints[0]);
         self::assertSame('1000', $rebound->hints[0]->milliseconds);

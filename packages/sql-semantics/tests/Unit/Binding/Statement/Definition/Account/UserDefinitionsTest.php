@@ -40,8 +40,8 @@ final class UserDefinitionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(CreateUsersStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testBindReadsSharedClauses(): void
@@ -95,6 +95,6 @@ final class UserDefinitionsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind("CREATE ROLE IF NOT EXISTS r, 's'@'h'");
         self::assertInstanceOf(CreateRolesStatement::class, $statement);
         self::assertEquals([new AccountName('r'), new AccountName('s', 'h')], $statement->roles);
-        self::assertSame("CREATE ROLE IF NOT EXISTS 'r', 's'@'h'", $statement->toString());
+        self::assertSame("CREATE ROLE IF NOT EXISTS 'r', 's'@'h'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

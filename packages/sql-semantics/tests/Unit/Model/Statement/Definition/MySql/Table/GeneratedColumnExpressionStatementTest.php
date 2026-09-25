@@ -24,8 +24,8 @@ final class GeneratedColumnExpressionStatementTest extends TestCase
         $statement = $binder->bind('PARSE_GCOL_EXPR (1 + 2)');
         self::assertInstanceOf(GeneratedColumnExpressionStatement::class, $statement);
         self::assertSame(StatementKind::ParseGeneratedColumnExpression, $statement->kind);
-        self::assertSame('PARSE_GCOL_EXPR((1 + 2))', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('PARSE_GCOL_EXPR((1 + 2))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithExpressionReplacesTheExpression(): void
@@ -35,7 +35,7 @@ final class GeneratedColumnExpressionStatementTest extends TestCase
         $other = $binder->bind('PARSE_GCOL_EXPR (3)');
         self::assertInstanceOf(GeneratedColumnExpressionStatement::class, $statement);
         self::assertInstanceOf(GeneratedColumnExpressionStatement::class, $other);
-        self::assertSame('PARSE_GCOL_EXPR(3)', $statement->withExpression($other->expression)->toString());
+        self::assertSame('PARSE_GCOL_EXPR(3)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withExpression($other->expression)));
         self::assertSame($statement->expression, $statement->withOrigin($statement->origin)->expression);
     }
 
@@ -52,6 +52,6 @@ final class GeneratedColumnExpressionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('PARSE_GCOL_EXPR (1)', strict: false);
         self::assertInstanceOf(GeneratedColumnExpressionStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 }

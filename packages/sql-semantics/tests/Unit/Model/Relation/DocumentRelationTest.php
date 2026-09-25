@@ -35,7 +35,7 @@ final class DocumentRelationTest extends TestCase
         self::assertSame(['n', 'label', 'child', 'value'], array_column($relation->outputs, 'name'));
         self::assertSame(\SqlSemantics\Type\Nullability::MaybeNull, $relation->outputs[2]->expression->nullability);
         self::assertSame('nested', $relation->withScope('nested')->scopeId);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testResultExpressionsRetainXmlPathsDefaultsAndNamespaces(): void
@@ -51,6 +51,6 @@ final class DocumentRelationTest extends TestCase
         self::assertSame("'@id'", $relation->table->columns[1]->path?->spelling());
         self::assertSame('1', $relation->table->columns[1]->default?->spelling());
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $relation->resultExpressions()[1]->nullability);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

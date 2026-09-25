@@ -28,6 +28,6 @@ final class RangeBoundaryTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertInstanceOf(Relation\Partition\AttachPartition::class, $statement->actions[0]);
         self::assertEquals(new Relation\Partition\RangePartitionBound([Relation\Partition\RangeBoundary::MinValue], [Relation\Partition\RangeBoundary::MaxValue]), $statement->actions[0]->bound);
-        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "t_hi" FOR VALUES FROM(MINVALUE) TO(MAXVALUE)', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "t_hi" FOR VALUES FROM(MINVALUE) TO(MAXVALUE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

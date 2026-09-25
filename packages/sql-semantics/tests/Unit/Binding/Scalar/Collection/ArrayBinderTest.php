@@ -52,7 +52,7 @@ final class ArrayBinderTest extends TestCase
         $comparison = $query->outputs[0]->expression;
         self::assertInstanceOf(ArrayComparison::class, $comparison);
         self::assertInstanceOf(ArrayConstructor::class, $comparison->array);
-        self::assertSame('SELECT (1 = ANY (ARRAY[1, 2]))', $query->toString());
+        self::assertSame('SELECT (1 = ANY (ARRAY[1, 2]))', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testComparisonRejectsAnArithmeticOperator(): void
@@ -76,7 +76,7 @@ final class ArrayBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $query = $binder->bind("SELECT 1 OPERATOR(pg_catalog.=) ANY (ARRAY[1]), 'a' ~~* SOME (ARRAY['b']), 1 OPERATOR(geo.<->) ALL (ARRAY[2])");
-        self::assertSame("SELECT (1 = ANY (ARRAY[1])), ('a' ILIKE SOME(ARRAY['b'])), (1 OPERATOR(\"geo\".<->) ALL (ARRAY[2]))", $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame("SELECT (1 = ANY (ARRAY[1])), ('a' ILIKE SOME(ARRAY['b'])), (1 OPERATOR(\"geo\".<->) ALL (ARRAY[2]))", (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 }

@@ -23,7 +23,8 @@ final class ConstraintReader
     }
 
     /**
-     * Reads an integrity condition, or returns null for another attribute.
+     * Reads an integrity condition, or returns null for another attribute; a MySQL column attribute written as a
+     * bare KEY is its PRIMARY KEY.
      */
     public function read(Node $node, ?string $column = null): ?TableConstraint
     {
@@ -34,13 +35,7 @@ final class ConstraintReader
             $name = isset($tokens[1]) && !$unnamed ? $this->identifiers->name($tokens[1]) : null;
             $tokens = array_slice($tokens, $unnamed ? 1 : 2);
         }
-        $kind = match (strtoupper($tokens[0]->text ?? '')) {
-            'PRIMARY' => ConstraintKind::PrimaryKey,
-            'UNIQUE' => ConstraintKind::Unique,
-            'FOREIGN', 'REFERENCES' => ConstraintKind::ForeignKey,
-            'CHECK' => ConstraintKind::Check,
-            default => null,
-        };
+        $kind = self::kind(strtoupper($tokens[0]->text ?? ''), $column !== null);
         if ($kind === null) {
             return null;
         }
@@ -55,6 +50,22 @@ final class ConstraintReader
         [$enforced, $noInherit] = self::checkAttributes($node);
 
         return new TableConstraint($kind, $kind === ConstraintKind::Check ? [] : $columns, $node, $name, $table, $references, $expression, ...Definition\ReferenceReader::read($node, $this->identifiers), enforced: $enforced, noInherit: $noInherit);
+    }
+
+    /**
+     * Classifies a constraint by its leading keyword; a bare KEY is a PRIMARY KEY only as a MySQL column attribute,
+     * while a table element KEY declares an index.
+     */
+    public static function kind(string $keyword, bool $columnAttribute): ?ConstraintKind
+    {
+        return match ($keyword) {
+            'PRIMARY' => ConstraintKind::PrimaryKey,
+            'KEY' => $columnAttribute ? ConstraintKind::PrimaryKey : null,
+            'UNIQUE' => ConstraintKind::Unique,
+            'FOREIGN', 'REFERENCES' => ConstraintKind::ForeignKey,
+            'CHECK' => ConstraintKind::Check,
+            default => null,
+        };
     }
 
     /**

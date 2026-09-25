@@ -28,8 +28,8 @@ final class RelationTargetsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind($sql, strict: false);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     /**
@@ -43,8 +43,8 @@ final class RelationTargetsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind($sql, strict: false);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     /**
@@ -54,7 +54,7 @@ final class RelationTargetsTest extends TestCase
     public function testReadRecognizesLowercaseOnly(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

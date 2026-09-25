@@ -28,8 +28,8 @@ final class MaintenanceCommandsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)'));
         $statement = $binder->bind($sql, strict: false);
         self::assertInstanceOf(Statement\VacuumStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     #[TestWith(['ANALYZE', 'ANALYZE'])]
@@ -40,8 +40,8 @@ final class MaintenanceCommandsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)'));
         $statement = $binder->bind($sql);
         self::assertInstanceOf(Statement\AnalyzeStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['CLUSTER', Statement\ClusterAllStatement::class, 'CLUSTER'])]
@@ -53,8 +53,8 @@ final class MaintenanceCommandsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)'));
         $statement = $binder->bind($sql);
         self::assertSame($class, $statement::class);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testTargetsKeepColumnLists(): void

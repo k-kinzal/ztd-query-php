@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('DROP CAST IF EXISTS (bigint AS money) CASCADE');
  *     $statement->cast->target->name // => 'money'
  *     $statement->ifExists // => true
- *     $statement->toString() // => 'DROP CAST IF EXISTS(bigint AS "money") CASCADE'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'DROP CAST IF EXISTS(bigint AS "money") CASCADE'
  */
 final class DropCastStatement extends BoundStatement
 {

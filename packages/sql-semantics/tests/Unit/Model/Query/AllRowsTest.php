@@ -26,7 +26,7 @@ final class AllRowsTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertInstanceOf(AllRows::class, $statement->quantifier);
-        self::assertSame('SELECT "id" AS "id" FROM "public"."t"', $statement->toString());
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testIsNotAppliedToADistinctProjection(): void

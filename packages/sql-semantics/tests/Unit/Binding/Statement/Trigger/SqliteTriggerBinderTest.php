@@ -30,7 +30,7 @@ final class SqliteTriggerBinderTest extends TestCase
         self::assertTrue($statement->temporary);
         self::assertTrue($statement->ifNotExists);
         self::assertSame([], $statement->diagnostics);
-        self::assertSame('CREATE TEMP TRIGGER IF NOT EXISTS "tr" AFTER UPDATE OF "a" ON "main"."t" FOR EACH ROW WHEN ("new"."a" > "old"."a") BEGIN INSERT INTO "u" VALUES ("new"."a"); END', $statement->toString());
+        self::assertSame('CREATE TEMP TRIGGER IF NOT EXISTS "tr" AFTER UPDATE OF "a" ON "main"."t" FOR EACH ROW WHEN ("new"."a" > "old"."a") BEGIN INSERT INTO "u" VALUES ("new"."a"); END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testEventReadsPlainWriteEventsAndQualifiedTriggerNames(): void
@@ -68,7 +68,7 @@ final class SqliteTriggerBinderTest extends TestCase
     public function testBindReadsLowercaseTriggers(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

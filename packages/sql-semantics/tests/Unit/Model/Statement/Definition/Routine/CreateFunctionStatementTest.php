@@ -31,8 +31,8 @@ final class CreateFunctionStatementTest extends TestCase
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
         self::assertSame([true, ['app', 'f'], true, 'sql'], [$statement->orReplace, $statement->name->parts, $statement->result->setOf, $statement->implementation->language]);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\UnaryExpression::class, $statement->parameters[1]->default);
-        self::assertSame('CREATE OR REPLACE FUNCTION "app"."f"("a" integer, "b" integer DEFAULT (- 1)) RETURNS SETOF integer LANGUAGE "sql" STABLE ROWS 5 SET "search_path" = "app" AS \'SELECT a\'', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE OR REPLACE FUNCTION "app"."f"("a" integer, "b" integer DEFAULT (- 1)) RETURNS SETOF integer LANGUAGE "sql" STABLE ROWS 5 SET "search_path" = "app" AS \'SELECT a\'', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithResultReplacesTheResultType(): void
@@ -47,7 +47,7 @@ final class CreateFunctionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE FUNCTION f(a integer) RETURNS integer LANGUAGE sql AS 'SELECT a'");
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
-        self::assertStringContainsString(' WINDOW ', $statement->withWindow(true)->toString());
+        self::assertStringContainsString(' WINDOW ', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withWindow(true)));
         self::assertFalse($statement->window);
     }
 
@@ -57,7 +57,7 @@ final class CreateFunctionStatementTest extends TestCase
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('CREATE FUNCTION "f"("a" integer) RETURNS integer LANGUAGE "sql" AS \'SELECT a\'', $copy->toString());
+        self::assertSame('CREATE FUNCTION "f"("a" integer) RETURNS integer LANGUAGE "sql" AS \'SELECT a\'', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -72,7 +72,7 @@ final class CreateFunctionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE FUNCTION f(a integer) RETURNS integer LANGUAGE sql AS 'SELECT a'");
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
-        self::assertStringStartsWith('CREATE OR REPLACE ', $statement->withOrReplace(true)->toString());
+        self::assertStringStartsWith('CREATE OR REPLACE ', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrReplace(true)));
         self::assertFalse($statement->orReplace);
     }
 
@@ -80,7 +80,7 @@ final class CreateFunctionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE FUNCTION f(a integer) RETURNS integer LANGUAGE sql AS 'SELECT a'");
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
-        self::assertStringContainsString('FUNCTION "app"."g"', $statement->withName(new QualifiedName(['app', 'g']))->toString());
+        self::assertStringContainsString('FUNCTION "app"."g"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['app', 'g']))));
         $this->expectException(InvalidStructure::class);
         $statement->withName(new QualifiedName(['a', 'b', 'c', 'd']));
     }
@@ -90,7 +90,7 @@ final class CreateFunctionStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE FUNCTION f(a integer) RETURNS integer LANGUAGE sql AS 'SELECT a'");
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
         $parameters = [...$statement->parameters, new Declaration\ParameterDeclaration(new RoutineParameter(TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), ParameterMode::Input, 'extra'), Expression::literal(7, Dialect::PostgreSql))];
-        self::assertStringContainsString('"extra" integer DEFAULT 7', $statement->withParameters($parameters)->toString());
+        self::assertStringContainsString('"extra" integer DEFAULT 7', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withParameters($parameters)));
         $this->expectException(InvalidStructure::class);
         $statement->withParameters([...$parameters, new Declaration\ParameterDeclaration(new RoutineParameter(TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), ParameterMode::Input, 'late'))]);
     }

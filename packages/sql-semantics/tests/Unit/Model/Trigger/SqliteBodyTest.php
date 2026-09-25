@@ -35,7 +35,7 @@ final class SqliteBodyTest extends TestCase
         self::assertCount(1, $changed->body->steps);
         self::assertCount(2, $statement->body->steps);
         self::assertSame('CREATE TRIGGER "tr" AFTER UPDATE OF "id" ON "main"."t" FOR EACH ROW BEGIN SELECT 1; END', $changed->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString())->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString())));
     }
 
     public function testRejectsAnEmptyProgram(): void

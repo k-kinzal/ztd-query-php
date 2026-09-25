@@ -23,7 +23,7 @@ final class ValidateConstraintTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t VALIDATE CONSTRAINT positive', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Constraint\ValidateConstraint('positive'), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" VALIDATE CONSTRAINT "positive"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" VALIDATE CONSTRAINT "positive"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyName(): void

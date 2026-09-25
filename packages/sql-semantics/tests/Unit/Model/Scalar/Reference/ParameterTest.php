@@ -37,7 +37,7 @@ final class ParameterTest extends TestCase
         self::assertSame('unknown', $parameter->type->name);
         self::assertSame(Nullability::Unknown, $parameter->nullability);
         self::assertSame($sql, $statement->toString());
-        self::assertSame($sql, $binder->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 
     public function testSpellingReturnsTheBindingKey(): void

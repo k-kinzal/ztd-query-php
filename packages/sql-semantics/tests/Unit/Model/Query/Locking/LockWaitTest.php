@@ -31,6 +31,6 @@ final class LockWaitTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertSame($wait, $statement->locks[0]->wait);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

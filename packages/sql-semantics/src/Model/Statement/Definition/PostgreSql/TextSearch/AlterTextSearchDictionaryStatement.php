@@ -19,7 +19,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @visibility public
  * @example Changing the stop words and removing an option
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH DICTIONARY app.stem (StopWords = russian, Accept)');
- *     $statement->toString() // => 'ALTER TEXT SEARCH DICTIONARY "app"."stem"("stopwords" = \'russian\', "accept")'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER TEXT SEARCH DICTIONARY "app"."stem"("stopwords" = \'russian\', "accept")'
  */
 final class AlterTextSearchDictionaryStatement extends BoundStatement
 {

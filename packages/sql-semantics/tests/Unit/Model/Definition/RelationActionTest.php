@@ -26,6 +26,6 @@ final class RelationActionTest extends TestCase
         self::assertInstanceOf(Relation\Storage\SetLogging::class, $statement->actions[0]);
         self::assertInstanceOf(Relation\ClusterOn::class, $statement->actions[1]);
         self::assertInstanceOf(Relation\ChangeOwner::class, $statement->actions[2]);
-        self::assertSame('ALTER TABLE "t" SET LOGGED, CLUSTER ON "ix", OWNER TO "alice"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" SET LOGGED, CLUSTER ON "ix", OWNER TO "alice"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

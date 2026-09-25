@@ -29,8 +29,8 @@ final class DropOperatorFamilyMembersStatementTest extends TestCase
         self::assertInstanceOf(DropOperatorFamilyMembersStatement::class, $statement);
         self::assertSame(MemberKind::Function, $statement->members[1]->kind);
         self::assertSame('integer', $statement->members[0]->right->name);
-        self::assertSame('ALTER OPERATOR FAMILY "f" USING "btree" DROP OPERATOR 1(integer, integer), FUNCTION 2(integer, text)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER OPERATOR FAMILY "f" USING "btree" DROP OPERATOR 1(integer, integer), FUNCTION 2(integer, text)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -45,7 +45,7 @@ final class DropOperatorFamilyMembersStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER OPERATOR FAMILY f USING btree DROP OPERATOR 1 (integer)');
         self::assertInstanceOf(DropOperatorFamilyMembersStatement::class, $statement);
-        self::assertSame('ALTER OPERATOR FAMILY "f" USING "btree" DROP OPERATOR 1(integer, integer)', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER OPERATOR FAMILY "f" USING "btree" DROP OPERATOR 1(integer, integer)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithFamilyReplacesTheOperand(): void
@@ -59,7 +59,7 @@ final class DropOperatorFamilyMembersStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER OPERATOR FAMILY f USING btree DROP OPERATOR 1 (integer)');
         self::assertInstanceOf(DropOperatorFamilyMembersStatement::class, $statement);
-        self::assertSame('ALTER OPERATOR FAMILY "f" USING "hash" DROP OPERATOR 1(integer, integer)', $statement->withMethod('hash')->toString());
+        self::assertSame('ALTER OPERATOR FAMILY "f" USING "hash" DROP OPERATOR 1(integer, integer)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withMethod('hash')));
     }
 
     public function testWithMembersReplacesTheOperand(): void

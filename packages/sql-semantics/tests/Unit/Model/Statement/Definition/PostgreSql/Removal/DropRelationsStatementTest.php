@@ -28,8 +28,8 @@ final class DropRelationsStatementTest extends TestCase
         self::assertEquals([new QualifiedName(['app', 's1']), new QualifiedName(['s2'])], $statement->names);
         self::assertTrue($statement->ifExists);
         self::assertSame(DropBehavior::Cascade, $statement->behavior);
-        self::assertSame('DROP SEQUENCE IF EXISTS "app"."s1", "s2" CASCADE', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('DROP SEQUENCE IF EXISTS "app"."s1", "s2" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -38,7 +38,7 @@ final class DropRelationsStatementTest extends TestCase
         self::assertInstanceOf(DropRelationsStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -58,7 +58,7 @@ final class DropRelationsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(Kind\RelationKind::Sequence, $statement->relationKind);
         self::assertEquals(Kind\RelationKind::ForeignTable, $changed->relationKind);
-        self::assertStringContainsString('DROP FOREIGN TABLE', $changed->toString());
+        self::assertStringContainsString('DROP FOREIGN TABLE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNamesReplacesTheOperand(): void
@@ -69,7 +69,7 @@ final class DropRelationsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new QualifiedName(['app', 's1']), new QualifiedName(['s2'])], $statement->names);
         self::assertEquals([new QualifiedName(['s3'])], $changed->names);
-        self::assertStringContainsString('EXISTS "s3" CASCADE', $changed->toString());
+        self::assertStringContainsString('EXISTS "s3" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfExistsReplacesTheOperand(): void
@@ -80,7 +80,7 @@ final class DropRelationsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(true, $statement->ifExists);
         self::assertEquals(false, $changed->ifExists);
-        self::assertStringContainsString('DROP SEQUENCE "app"', $changed->toString());
+        self::assertStringContainsString('DROP SEQUENCE "app"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithBehaviorReplacesTheOperand(): void
@@ -91,7 +91,7 @@ final class DropRelationsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(DropBehavior::Cascade, $statement->behavior);
         self::assertEquals(DropBehavior::Restrict, $changed->behavior);
-        self::assertStringContainsString('"s2" RESTRICT', $changed->toString());
+        self::assertStringContainsString('"s2" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsATableRemovedByItsOwnForm(): void

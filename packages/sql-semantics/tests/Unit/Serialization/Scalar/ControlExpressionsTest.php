@@ -26,8 +26,8 @@ final class ControlExpressionsTest extends TestCase
         $statement = $binder->bind("CREATE TRIGGER tr BEFORE INSERT ON t BEGIN SELECT RAISE(ABORT, 'no'); SELECT RAISE(IGNORE); SELECT RAISE(FAIL, 'f'); SELECT RAISE(ROLLBACK, 'r'); END");
         self::assertInstanceOf(CreateSqliteTriggerStatement::class, $statement);
         $expected = 'CREATE TRIGGER "tr" BEFORE INSERT ON "main"."t" FOR EACH ROW BEGIN SELECT RAISE(ABORT, \'no\'); SELECT RAISE(IGNORE); SELECT RAISE(FAIL, \'f\'); SELECT RAISE(ROLLBACK, \'r\'); END';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testWriteSpellsTheActionAndMessageOfAnError(): void

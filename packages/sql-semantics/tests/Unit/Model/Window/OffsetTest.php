@@ -34,8 +34,8 @@ final class OffsetTest extends TestCase
         self::assertSame(Direction::Following, $end->direction);
         self::assertSame('1', $end->value->spelling());
         self::assertSame([$end->value], $end->expressions());
-        self::assertSame('SELECT sum("id") OVER (ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING) FROM "main"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT sum("id") OVER (ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING) FROM "main"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testExpressionsContainOnlyTheOffsetValue(): void

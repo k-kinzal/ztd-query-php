@@ -27,7 +27,7 @@ final class FlushTablesStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame($statement->tables, $copy->tables);
-        self::assertSame('FLUSH TABLES `t`', $copy->toString());
+        self::assertSame('FLUSH TABLES `t`', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithTablesReplacesTheTargetsImmutably(): void
@@ -46,7 +46,7 @@ final class FlushTablesStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('FLUSH TABLES t');
         self::assertInstanceOf(FlushTablesStatement::class, $statement);
-        self::assertSame('FLUSH NO_WRITE_TO_BINLOG TABLES `t`', $statement->withBinlog(BinlogPolicy::Omit)->toString());
+        self::assertSame('FLUSH NO_WRITE_TO_BINLOG TABLES `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withBinlog(BinlogPolicy::Omit)));
         self::assertSame(BinlogPolicy::Write, $statement->binlog);
     }
 

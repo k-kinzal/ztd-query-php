@@ -69,7 +69,7 @@ final class PublicationMembersTest extends TestCase
     public function testBindReadsContinuedPublicationObjects(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

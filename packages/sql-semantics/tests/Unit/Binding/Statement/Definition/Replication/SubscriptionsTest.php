@@ -27,7 +27,7 @@ final class SubscriptionsTest extends TestCase
         $binder = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()));
         $statement = $binder->bind($sql);
         self::assertSame($class, $statement::class);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(["CREATE SUBSCRIPTION s CONNECTION 'c' PUBLICATION p WITH (slot_name = NONE)"])]
@@ -79,6 +79,6 @@ final class SubscriptionsTest extends TestCase
     public function testBindSpellsEverySubscriptionForm(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

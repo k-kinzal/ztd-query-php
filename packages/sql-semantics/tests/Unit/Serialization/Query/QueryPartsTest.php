@@ -33,8 +33,8 @@ final class QueryPartsTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertSame($expected, QueryParts::with($statement->ctes, Dialect::PostgreSql)->toString());
-        self::assertStringStartsWith($expected . ' SELECT', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertStringStartsWith($expected . ' SELECT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith([Dialect::PostgreSql, 'SELECT id FROM t LIMIT 2 OFFSET 3', 'LIMIT 2 OFFSET 3'])]
@@ -48,8 +48,8 @@ final class QueryPartsTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertSame($expected, QueryParts::pagination($statement->limit, $statement->offset, $statement->withTies, $dialect)->toString());
-        self::assertStringEndsWith(' ' . $expected, $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertStringEndsWith(' ' . $expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith([Dialect::MySql, 'LIMIT 18446744073709551615 OFFSET 3'])]

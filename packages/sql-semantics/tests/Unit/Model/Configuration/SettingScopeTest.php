@@ -36,6 +36,6 @@ final class SettingScopeTest extends TestCase
         self::assertInstanceOf(SetStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $statement->settings[0]);
         self::assertSame($scope, $statement->settings[0]->scope);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

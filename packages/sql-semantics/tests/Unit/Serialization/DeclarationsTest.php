@@ -26,7 +26,7 @@ final class DeclarationsTest extends TestCase
         $statement = $binder->bind('CREATE TEMPORARY TABLE IF NOT EXISTS copied LIKE original');
         self::assertInstanceOf(CreateTableLikeStatement::class, $statement);
         self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS `copied` LIKE `original`', Declarations::like($statement)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateTableLikeStatement::class, $rebound);
         self::assertTrue($rebound->temporary);
         self::assertTrue($rebound->ifNotExists);
@@ -47,7 +47,7 @@ final class DeclarationsTest extends TestCase
         $rebound = $binder->bind($expected);
         self::assertInstanceOf(CreateTableStatement::class, $rebound);
         self::assertSame(count($statement->definition->table->columns), count($rebound->definition->table->columns));
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     #[TestWith(['CREATE TABLE t (id INTEGER CONSTRAINT pk PRIMARY KEY DESC, n TEXT)', 'CREATE TABLE "main"."t"("id" "integer" CONSTRAINT "pk" PRIMARY KEY DESC, "n" "text")', 'maybe-null'])]
@@ -62,11 +62,11 @@ final class DeclarationsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $key);
         self::assertSame(\SqlSemantics\Schema\Index\Direction::Descending, $key->keys[0]->direction);
         self::assertSame($nullability, $statement->definition->table->columns[0]->nullability->value);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertInstanceOf(CreateTableStatement::class, $rebound);
         self::assertSame($nullability, $rebound->definition->table->columns[0]->nullability->value);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testColumnKeyLeavesOtherDialectsToTableConstraints(): void
@@ -81,8 +81,8 @@ final class DeclarationsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
         $statement = $binder->bind('CREATE TABLE t (id INTEGER PRIMARY KEY AUTOINCREMENT, n TEXT)');
         self::assertInstanceOf(CreateTableStatement::class, $statement);
-        self::assertSame('CREATE TABLE "main"."t"("id" "integer" NOT NULL PRIMARY KEY AUTOINCREMENT, "n" "text")', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TABLE "main"."t"("id" "integer" NOT NULL PRIMARY KEY AUTOINCREMENT, "n" "text")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith([Dialect::Sqlite, 'CREATE INDEX IF NOT EXISTS main.ix ON t (id COLLATE nocase ASC, n DESC) WHERE n > 0', 'CREATE INDEX IF NOT EXISTS "main"."ix" ON "t"("id" COLLATE "nocase" ASC, "n" DESC) WHERE ("n" > 0)'])]
@@ -97,7 +97,7 @@ final class DeclarationsTest extends TestCase
         self::assertInstanceOf(CreateIndexStatement::class, $rebound);
         self::assertSame($statement->index->definition->unique, $rebound->index->definition->unique);
         self::assertSame(count($statement->index->definition->elements), count($rebound->index->definition->elements));
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testIndexWritesThePostgresAccessMethod(): void
@@ -130,5 +130,13 @@ final class DeclarationsTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER PRIMARY KEY ON CONFLICT FAIL); CREATE TABLE u(id INTEGER UNIQUE)');
         self::assertSame(\SqlSemantics\Model\Write\Policy\ConstraintResponse::Fail, Declarations::keyConflict($schema->tables[0]));
         self::assertSame(\SqlSemantics\Model\Write\Policy\ConstraintResponse::Default, Declarations::keyConflict($schema->tables[1]));
+    }
+
+    public function testDeclaredWritesATableFromItsDefinition(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE TABLE t (c INT, KEY k (c)) ENGINE = InnoDB');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        self::assertSame('CREATE TABLE IF NOT EXISTS `t`(`c` integer, INDEX `k`(`c`)) ENGINE `InnoDB`', Declarations::declared($statement->definition->table, Dialect::MySql, true)->toString());
+        self::assertSame(Declarations::table($statement)->toString(), Declarations::declared($statement->definition->table, Dialect::MySql, false)->toString());
     }
 }

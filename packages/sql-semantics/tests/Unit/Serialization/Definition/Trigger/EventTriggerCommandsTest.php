@@ -27,10 +27,10 @@ final class EventTriggerCommandsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame($statement::class, $rebound::class);
         self::assertSame($statement->kind, $rebound->kind);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     #[TestWith(['DROP TABLE t'])]

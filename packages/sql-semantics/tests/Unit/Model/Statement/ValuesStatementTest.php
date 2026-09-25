@@ -162,7 +162,7 @@ final class ValuesStatementTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputPosition::class, $changed->orderBy[0]->key);
         self::assertSame($changed->outputs[0], $changed->orderBy[0]->key->output);
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
-        self::assertSame($changed->toString(), $query->withRows($replacement->rows)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($changed), (new \SqlSemantics\SimpleSerializer())->serialize($query->withRows($replacement->rows)));
     }
 
     public function testWithOriginKeepsTheRows(): void
@@ -172,7 +172,7 @@ final class ValuesStatementTest extends TestCase
         $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [], $statement->origin->context));
         self::assertSame('other', $changed->scopeId);
         self::assertSame($statement->rows, $changed->rows);
-        self::assertSame('VALUES (1, 2), (3, 4)', $changed->toString());
+        self::assertSame('VALUES (1, 2), (3, 4)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame('s0', $statement->scopeId);
     }
 
@@ -189,8 +189,32 @@ final class ValuesStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('VALUES (1, 2), (3, 4)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $statement);
         $changed = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(new \SqlSemantics\Model\Query\Ordering\OutputPosition($statement->outputs[1]), true)]);
-        self::assertSame('VALUES (1, 2), (3, 4) ORDER BY 2 DESC', $changed->toString());
+        self::assertSame('VALUES (1, 2), (3, 4) ORDER BY 2 DESC', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame([], $statement->orderBy);
-        self::assertSame('VALUES (1, 2), (3, 4)', $changed->withOrderBy([])->toString());
+        self::assertSame('VALUES (1, 2), (3, 4)', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withOrderBy([])));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.0.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0'])]
+    public function testWithLocksReplacesTheLocksOfAMySqlValuesBlock(string $version): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind('VALUES ROW(1) FOR UPDATE NOWAIT');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Locking\AllRowLock::class, $statement->locks[0]);
+        self::assertSame(\SqlSemantics\Model\Query\Locking\LockWait::NoWait, $statement->locks[0]->wait);
+        self::assertSame('VALUES ROW(1) FOR UPDATE NOWAIT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $unlocked = $statement->withLocks([]);
+        self::assertSame('VALUES ROW(1)', (new \SqlSemantics\SimpleSerializer())->serialize($unlocked));
+        self::assertCount(1, $statement->locks);
+        self::assertSame('VALUES ROW(1) LOCK IN SHARE MODE', (new \SqlSemantics\SimpleSerializer())->serialize($unlocked->withLocks([new \SqlSemantics\Model\Query\Locking\AllRowLock(\SqlSemantics\Model\Query\Locking\LockStrength::Share)])));
+    }
+
+    public function testWithLocksRejectsALockOnAPostgreSqlValuesBlock(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('VALUES (1)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withLocks([new \SqlSemantics\Model\Query\Locking\AllRowLock(\SqlSemantics\Model\Query\Locking\LockStrength::Update)]);
     }
 }

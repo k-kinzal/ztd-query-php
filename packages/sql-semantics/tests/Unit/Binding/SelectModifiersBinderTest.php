@@ -208,8 +208,8 @@ final class SelectModifiersBinderTest extends TestCase
         $query = $binder->bind('SELECT n FROM t WINDOW w AS (PARTITION BY id ORDER BY n)');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame([], $query->orderBy);
-        self::assertStringEndsWith('ORDER BY ' . ($dialect === Dialect::MySql ? '`n`' : '"n"') . ' ASC)', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertStringEndsWith('ORDER BY ' . ($dialect === Dialect::MySql ? '`n`' : '"n"') . ' ASC)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
         $ordered = $binder->bind('SELECT n FROM t WINDOW w AS (ORDER BY n) ORDER BY id DESC');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $ordered);
         self::assertCount(1, $ordered->orderBy);
@@ -223,7 +223,7 @@ final class SelectModifiersBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('1', $query->limit?->spelling());
         self::assertFalse($query->withTies);
-        self::assertSame('SELECT "id" AS "id" FROM "public"."t" ORDER BY "id" ASC LIMIT 1', $query->toString());
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" ORDER BY "id" ASC LIMIT 1', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testOrderingReadsEveryKeyWithLowercaseModifiers(): void
@@ -235,7 +235,7 @@ final class SelectModifiersBinderTest extends TestCase
         self::assertTrue($statement->orderBy[0]->descending);
         self::assertTrue($statement->orderBy[0]->nullsFirst);
         self::assertFalse($statement->orderBy[1]->descending);
-        self::assertSame('SELECT "a" AS "a" FROM "public"."t" ORDER BY "a" DESC NULLS FIRST, "b" ASC', $statement->toString());
+        self::assertSame('SELECT "a" AS "a" FROM "public"."t" ORDER BY "a" DESC NULLS FIRST, "b" ASC', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWindowedExcludesEveryWindowOrdering(): void
@@ -253,7 +253,7 @@ final class SelectModifiersBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT * FROM missing ORDER BY 3', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\UnresolvedOutputPosition::class, $statement->orderBy[0]->key);
-        self::assertSame('SELECT "missing".* FROM "public"."missing" ORDER BY 3 ASC', $statement->toString());
+        self::assertSame('SELECT "missing".* FROM "public"."missing" ORDER BY 3 ASC', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testSortExpressionRejectsPositionZeroBeforeAWildcard(): void
@@ -294,7 +294,7 @@ final class SelectModifiersBinderTest extends TestCase
         $all = $binder->bind('SELECT 1 limit all');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $all);
         self::assertNull($all->limit);
-        self::assertSame('SELECT 1', $binder->bind('SELECT 1 LIMIT ALL')->toString());
+        self::assertSame('SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('SELECT 1 LIMIT ALL')));
     }
 
     public function testImplicitRowReadsAFetchWithoutACount(): void

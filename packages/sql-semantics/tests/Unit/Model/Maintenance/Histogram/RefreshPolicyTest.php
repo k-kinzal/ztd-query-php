@@ -27,6 +27,6 @@ final class RefreshPolicyTest extends TestCase
         $statement = $binder->bind('ANALYZE TABLE t UPDATE HISTOGRAM ON id' . $suffix);
         self::assertInstanceOf(UpdateHistogramStatement::class, $statement);
         self::assertSame($expected, $statement->refresh);
-        self::assertSame('ANALYZE TABLE `t` UPDATE HISTOGRAM ON `id`' . $suffix, $statement->toString());
+        self::assertSame('ANALYZE TABLE `t` UPDATE HISTOGRAM ON `id`' . $suffix, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

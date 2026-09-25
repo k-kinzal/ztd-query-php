@@ -34,7 +34,7 @@ final class DerivedRelationTest extends TestCase
         self::assertFalse($relation->lateral);
         self::assertSame(array_column($relation->query->resultColumns(), 'expression'), $relation->resultExpressions());
         self::assertSame(['n'], array_column($relation->declaration->columns, 'name'));
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testRenamesTheOutputsWithColumnAliases(): void
@@ -45,7 +45,7 @@ final class DerivedRelationTest extends TestCase
         self::assertInstanceOf(DerivedRelation::class, $relation);
         self::assertSame(['m'], $relation->columnAliases);
         self::assertSame(['m'], array_column($relation->declaration->columns, 'name'));
-        self::assertSame('SELECT "d"."m" AS "m" FROM(SELECT 1 AS "n") AS "d"("m")', $query->toString());
+        self::assertSame('SELECT "d"."m" AS "m" FROM(SELECT 1 AS "n") AS "d"("m")', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testResultExpressionsComeFromTheSubquery(): void

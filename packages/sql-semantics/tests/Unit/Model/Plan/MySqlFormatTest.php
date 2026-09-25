@@ -35,7 +35,7 @@ final class MySqlFormatTest extends TestCase
         self::assertInstanceOf(ExplainStatement::class, $statement);
         self::assertInstanceOf(MySqlPlan::class, $statement->options);
         self::assertSame($format, $statement->options->format);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

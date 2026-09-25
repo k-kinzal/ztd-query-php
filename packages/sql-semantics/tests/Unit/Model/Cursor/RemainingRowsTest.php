@@ -29,8 +29,8 @@ final class RemainingRowsTest extends TestCase
         $movement = $statement->movement;
         self::assertInstanceOf(RemainingRows::class, $movement);
         self::assertSame($direction, $movement->direction);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testExposesTheSuppliedDirection(): void

@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the query
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('COPY (SELECT a FROM t) TO STDOUT (FORMAT csv)');
- *     [$statement->query->resultColumns()[0]->name, $statement->toString()] // => ['a', 'COPY(SELECT "a" AS "a" FROM "public"."t") TO STDOUT WITH (FORMAT \'csv\')']
+ *     [$statement->query->resultColumns()[0]->name, (new \SqlSemantics\SimpleSerializer())->serialize($statement)] // => ['a', 'COPY(SELECT "a" AS "a" FROM "public"."t") TO STDOUT WITH (FORMAT \'csv\')']
  * @example Rejecting a data-modifying query without RETURNING
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)');
  *     (new \SqlSemantics\Binder($schema))->bind('COPY (DELETE FROM t) TO STDOUT'); // throws \SqlSemantics\InvalidSql

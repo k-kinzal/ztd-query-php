@@ -33,8 +33,8 @@ final class CursorPositionTest extends TestCase
         self::assertSame([], $where->inputs());
         self::assertSame('boolean', $where->type->name);
         self::assertSame(Nullability::NotNull, $where->nullability);
-        self::assertSame('UPDATE "public"."t" SET "id" = 1 WHERE CURRENT OF "cur"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('UPDATE "public"."t" SET "id" = 1 WHERE CURRENT OF "cur"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testReferencePartsReturnsTheCursorName(): void

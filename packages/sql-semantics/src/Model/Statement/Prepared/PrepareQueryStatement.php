@@ -19,7 +19,7 @@ use SqlSemantics\Type\TypeDescriptor;
  * @example Reading the operation's structure
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('PREPARE s(int) AS SELECT $1', strict: false);
- *     $statement->toString() // => 'PREPARE "s"(integer) AS SELECT $1'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'PREPARE "s"(integer) AS SELECT $1'
  *
  * @visibility public
  */

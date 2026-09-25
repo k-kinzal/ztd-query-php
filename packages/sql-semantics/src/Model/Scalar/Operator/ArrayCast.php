@@ -19,7 +19,7 @@ use SqlSemantics\Type\TypeDescriptor;
  * @visibility public
  * @example Reading the element type of a multi-valued index key
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()))->bind("CREATE TABLE t (j JSON, INDEX ((CAST(j->'$.tags' AS CHAR(8) ARRAY))))");
- *     $statement->toString() // => "CREATE TABLE `t`(`j` json, INDEX((CAST((`j` -> '$.tags') AS CHAR(8) ARRAY))))"
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => "CREATE TABLE `t`(`j` json, INDEX((CAST((`j` -> '$.tags') AS CHAR(8) ARRAY))))"
  */
 final class ArrayCast extends Expression
 {

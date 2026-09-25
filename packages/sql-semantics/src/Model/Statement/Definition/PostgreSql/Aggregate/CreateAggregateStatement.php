@@ -29,7 +29,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement->orReplace // => true
  * @example Binding the old syntax to a zero-argument aggregate
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("CREATE AGGREGATE tally (BASETYPE = 'ANY', SFUNC1 = int8inc, STYPE1 = bigint, INITCOND1 = '0')");
- *     $statement->toString() // => 'CREATE AGGREGATE "tally"(*)(SFUNC = "int8inc", STYPE = bigint, INITCOND = \'0\')'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE AGGREGATE "tally"(*)(SFUNC = "int8inc", STYPE = bigint, INITCOND = \'0\')'
  */
 final class CreateAggregateStatement extends BoundStatement
 {

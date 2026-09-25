@@ -17,7 +17,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the operation's structure
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('DEALLOCATE PREPARE s', strict: false);
- *     $statement->toString() // => 'DEALLOCATE PREPARE `s`'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'DEALLOCATE PREPARE `s`'
  *
  * @visibility public
  */

@@ -45,26 +45,26 @@ final class AlterRoleStatementTest extends TestCase
         self::assertSame(-1, $statement->options[0]->limit);
         self::assertInstanceOf(RoleValidity::class, $statement->options[1]);
         self::assertSame("'infinity'", $statement->options[1]->until->text);
-        self::assertSame("ALTER ROLE \"r\" CONNECTION LIMIT -1 VALID UNTIL 'infinity'", $statement->toString());
+        self::assertSame("ALTER ROLE \"r\" CONNECTION LIMIT -1 VALID UNTIL 'infinity'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $cleared = $binder->bind('ALTER ROLE r PASSWORD NULL');
         self::assertInstanceOf(AlterRoleStatement::class, $cleared);
         self::assertEquals([new ClearedPassword()], $cleared->options);
-        self::assertSame('ALTER ROLE "r" PASSWORD NULL', $cleared->toString());
+        self::assertSame('ALTER ROLE "r" PASSWORD NULL', (new \SqlSemantics\SimpleSerializer())->serialize($cleared));
     }
 
     public function testToStringWritesTheRoleKeywordAndTheMembersAsUsers(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER USER CURRENT_USER WITH NOLOGIN USER alice');
-        self::assertSame('ALTER ROLE CURRENT_USER NOLOGIN USER "alice"', $statement->toString());
+        self::assertSame('ALTER ROLE CURRENT_USER NOLOGIN USER "alice"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRebindingTheOutputReachesAFixedPoint(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('ALTER USER CURRENT_USER WITH NOLOGIN USER alice');
-        $again = $binder->bind($statement->toString());
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(AlterRoleStatement::class, $again);
-        self::assertSame($statement->toString(), $again->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithRoleReplacesTheAlteredRoleWithoutMutatingTheOriginal(): void
@@ -76,7 +76,7 @@ final class AlterRoleStatementTest extends TestCase
         self::assertSame(SessionRole::CurrentUser, $statement->role);
         self::assertEquals(new NamedRole('x"y'), $changed->role);
         self::assertEquals($statement->options, $changed->options);
-        self::assertSame('ALTER ROLE "x""y" NOLOGIN USER "alice"', $changed->toString());
+        self::assertSame('ALTER ROLE "x""y" NOLOGIN USER "alice"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOptionsReplacesTheCompleteOrderedRequest(): void
@@ -88,7 +88,7 @@ final class AlterRoleStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new RoleAttribute(RoleCapability::Login, false), new RoleMembers([new NamedRole('alice')])], $statement->options);
         self::assertEquals($options, $changed->options);
-        self::assertSame('ALTER ROLE CURRENT_USER SUPERUSER CONNECTION LIMIT -1 PASSWORD NULL', $changed->toString());
+        self::assertSame('ALTER ROLE CURRENT_USER SUPERUSER CONNECTION LIMIT -1 PASSWORD NULL', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOptionsAcceptsAnEmptyRequest(): void
@@ -97,7 +97,7 @@ final class AlterRoleStatementTest extends TestCase
         self::assertInstanceOf(AlterRoleStatement::class, $statement);
         $changed = $statement->withOptions([]);
         self::assertSame([], $changed->options);
-        self::assertSame('ALTER ROLE CURRENT_USER', $changed->toString());
+        self::assertSame('ALTER ROLE CURRENT_USER', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOptionsRejectsContradictoryAttributes(): void
@@ -124,7 +124,7 @@ final class AlterRoleStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertSame($statement->role, $copy->role);
         self::assertSame($statement->options, $copy->options);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

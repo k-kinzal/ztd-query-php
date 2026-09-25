@@ -25,7 +25,7 @@ final class RelationIdentityTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("COMMENT ON MATERIALIZED VIEW app.totals IS 'daily'");
         self::assertInstanceOf(Statement\CommentOnStatement::class, $statement);
         self::assertEquals(new Catalog\RelationIdentity(Kind\RelationKind::MaterializedView, new QualifiedName(['app', 'totals'])), $statement->object);
-        self::assertSame("COMMENT ON MATERIALIZED VIEW \"app\".\"totals\" IS 'daily'", $statement->toString());
+        self::assertSame("COMMENT ON MATERIALIZED VIEW \"app\".\"totals\" IS 'daily'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOverQualifiedName(): void

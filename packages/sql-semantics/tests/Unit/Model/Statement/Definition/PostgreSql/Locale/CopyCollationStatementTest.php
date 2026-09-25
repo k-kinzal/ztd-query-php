@@ -24,8 +24,8 @@ final class CopyCollationStatementTest extends TestCase
         $statement = $binder->bind('CREATE COLLATION c (from = pg_catalog."POSIX")');
         self::assertInstanceOf(CopyCollationStatement::class, $statement);
         self::assertSame(['pg_catalog', 'POSIX'], $statement->copied->parts);
-        self::assertSame('CREATE COLLATION "c" FROM "pg_catalog"."POSIX"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE COLLATION "c" FROM "pg_catalog"."POSIX"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnOverQualifiedSource(): void
@@ -40,14 +40,14 @@ final class CopyCollationStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE COLLATION c FROM "C"');
         self::assertInstanceOf(CopyCollationStatement::class, $statement);
-        self::assertSame('CREATE COLLATION "c" FROM "C"', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE COLLATION "c" FROM "C"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE COLLATION c FROM "C"');
         self::assertInstanceOf(CopyCollationStatement::class, $statement);
-        self::assertSame('CREATE COLLATION "d" FROM "C"', $statement->withName(new QualifiedName(['d']))->toString());
+        self::assertSame('CREATE COLLATION "d" FROM "C"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['d']))));
     }
 
     public function testWithCopiedReplacesTheOperand(): void

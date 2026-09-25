@@ -40,7 +40,7 @@ final class FieldSpellingTest extends TestCase
         $extract = $query->outputs[0]->expression;
         self::assertInstanceOf(Extract::class, $extract);
         self::assertSame(PostgreSqlField::Year, $extract->field);
-        self::assertSame('SELECT EXTRACT(YEAR FROM CURRENT_TIMESTAMP)', $query->toString());
+        self::assertSame('SELECT EXTRACT(YEAR FROM CURRENT_TIMESTAMP)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testQuotedJoinsContinuationPieces(): void

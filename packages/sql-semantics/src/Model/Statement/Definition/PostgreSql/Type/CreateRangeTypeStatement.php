@@ -22,7 +22,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Creating a range type
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE TYPE floatrange AS RANGE (SUBTYPE = float8, SUBTYPE_DIFF = float8mi)');
  *     $statement->options[0]->value->name // => 'double precision'
- *     $statement->toString() // => 'CREATE TYPE "floatrange" AS RANGE(SUBTYPE = double precision, SUBTYPE_DIFF = "float8mi")'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE TYPE "floatrange" AS RANGE(SUBTYPE = double precision, SUBTYPE_DIFF = "float8mi")'
  */
 final class CreateRangeTypeStatement extends BoundStatement
 {

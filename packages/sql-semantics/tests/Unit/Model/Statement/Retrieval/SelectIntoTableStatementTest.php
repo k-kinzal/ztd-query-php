@@ -36,8 +36,8 @@ final class SelectIntoTableStatementTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(SelectIntoTableStatement::class, $statement);
         self::assertSame([$name, $persistence], [$statement->table->parts, $statement->persistence]);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testWithTableReplacesTheNameAndPersistence(): void
@@ -45,7 +45,7 @@ final class SelectIntoTableStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1 INTO n');
         self::assertInstanceOf(SelectIntoTableStatement::class, $statement);
         $changed = $statement->withTable(new QualifiedName(['m']), Persistence::Unlogged);
-        self::assertSame('SELECT 1 INTO UNLOGGED TABLE "m"', $changed->toString());
+        self::assertSame('SELECT 1 INTO UNLOGGED TABLE "m"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame(Persistence::Permanent, $statement->persistence);
     }
 
@@ -56,8 +56,8 @@ final class SelectIntoTableStatementTest extends TestCase
         $query = $binder->bind('SELECT 2');
         self::assertInstanceOf(SelectIntoTableStatement::class, $statement);
         self::assertInstanceOf(BoundSelect::class, $query);
-        self::assertSame('SELECT 2 INTO TABLE "n"', $statement->withQuery($query)->toString());
-        self::assertSame('SELECT 1 INTO TABLE "n"', $statement->toString());
+        self::assertSame('SELECT 2 INTO TABLE "n"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withQuery($query)));
+        self::assertSame('SELECT 1 INTO TABLE "n"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginKeepsTheOperands(): void

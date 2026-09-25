@@ -48,7 +48,7 @@ final class AttributesTest extends TestCase
     public function testAttributesSerializeBackIntoTheColumnDeclaration(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE TABLE t(name VARCHAR(10) COMMENT 'label' INVISIBLE COLUMN_FORMAT FIXED STORAGE DISK)");
-        self::assertSame("CREATE TABLE `t`(`name` varchar(10) COMMENT 'label' STORAGE DISK COLUMN_FORMAT FIXED INVISIBLE)", $statement->toString());
+        self::assertSame("CREATE TABLE `t`(`name` varchar(10) COMMENT 'label' STORAGE DISK COLUMN_FORMAT FIXED INVISIBLE)", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
 
@@ -63,5 +63,11 @@ final class AttributesTest extends TestCase
     {
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         new Attributes(storage: Storage::Disk, storageStrategy: \SqlSemantics\Model\Definition\Relation\Column\ColumnStorageMode::Plain);
+    }
+
+    public function testDefaultsToLoadingTheColumnIntoTheSecondaryEngine(): void
+    {
+        self::assertFalse((new Attributes())->excludedFromSecondaryEngine);
+        self::assertTrue((new Attributes(excludedFromSecondaryEngine: true))->excludedFromSecondaryEngine);
     }
 }

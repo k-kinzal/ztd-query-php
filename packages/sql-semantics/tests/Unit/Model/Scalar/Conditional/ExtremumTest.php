@@ -33,8 +33,8 @@ final class ExtremumTest extends TestCase
         self::assertSame($value->arguments, $value->inputs());
         self::assertSame('numeric', $value->arguments[0]->type->name);
         self::assertSame('numeric', $value->arguments[1]->type->name);
-        self::assertSame($serialized, $statement->toString());
-        self::assertSame($serialized, $binder->bind($serialized)->toString());
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($serialized)));
     }
 
     public function testInputsRequiresAtLeastOneCandidate(): void

@@ -34,7 +34,7 @@ final class XaTransactionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $statement = $binder->bind("XA PREPARE X'00ff', b'001', 9223372036854775807");
         self::assertInstanceOf(XaPrepareStatement::class, $statement);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
         self::assertNotNull($statement->transactionId->branch);
         self::assertNotNull($statement->transactionId->branch->format);
         self::assertSame('9223372036854775807', $statement->transactionId->branch->format->spelling);

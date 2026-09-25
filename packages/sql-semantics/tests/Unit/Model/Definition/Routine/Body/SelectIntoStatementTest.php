@@ -33,8 +33,8 @@ final class SelectIntoStatementTest extends TestCase
         self::assertInstanceOf(SelectIntoStatement::class, $into);
         self::assertInstanceOf(LocalVariableReference::class, $into->targets[0]);
         self::assertInstanceOf(UnresolvedVariableReference::class, $into->targets[1]);
-        self::assertSame('CREATE PROCEDURE `p`() BEGIN DECLARE `x` integer; SELECT `id` AS `id`, `n` AS `n` FROM `t` LIMIT 1 INTO `x`, @`y` FOR UPDATE; END', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('CREATE PROCEDURE `p`() BEGIN DECLARE `x` integer; SELECT `id` AS `id`, `n` AS `n` FROM `t` LIMIT 1 INTO `x`, @`y` FOR UPDATE; END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)));
     }
 
     public function testRequiresOneTargetPerColumn(): void

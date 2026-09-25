@@ -39,8 +39,8 @@ final class FrameTest extends TestCase
         self::assertInstanceOf(Offset::class, $frame->start);
         self::assertInstanceOf(CurrentRow::class, $frame->end);
         self::assertSame(FrameExclusion::Ties, $frame->exclusion);
-        self::assertSame('SELECT "sum"("id") OVER (ORDER BY "id" ASC ROWS BETWEEN 1 PRECEDING AND CURRENT ROW EXCLUDE TIES) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT "sum"("id") OVER (ORDER BY "id" ASC ROWS BETWEEN 1 PRECEDING AND CURRENT ROW EXCLUDE TIES) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testExposesTheSuppliedOperands(): void

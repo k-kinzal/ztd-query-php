@@ -29,8 +29,8 @@ final class CreateProcedureStatementTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER)'));
         $statement = $binder->bind('CREATE OR REPLACE PROCEDURE p(v integer) EXTERNAL SECURITY INVOKER BEGIN ATOMIC INSERT INTO t VALUES (v); DELETE FROM t WHERE a = p.v; END');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
-        self::assertSame('CREATE OR REPLACE PROCEDURE "p"("v" integer) LANGUAGE "sql" SECURITY INVOKER BEGIN ATOMIC INSERT INTO "public"."t" VALUES ("v"); DELETE FROM "public"."t" WHERE ("a" = "p"."v"); END', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE OR REPLACE PROCEDURE "p"("v" integer) LANGUAGE "sql" SECURITY INVOKER BEGIN ATOMIC INSERT INTO "public"."t" VALUES ("v"); DELETE FROM "public"."t" WHERE ("a" = "p"."v"); END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -39,7 +39,7 @@ final class CreateProcedureStatementTest extends TestCase
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('CREATE PROCEDURE "f"("a" integer) LANGUAGE "sql" AS \'SELECT a\'', $copy->toString());
+        self::assertSame('CREATE PROCEDURE "f"("a" integer) LANGUAGE "sql" AS \'SELECT a\'', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -54,7 +54,7 @@ final class CreateProcedureStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE PROCEDURE f(a integer) LANGUAGE sql AS 'SELECT a'");
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
-        self::assertStringStartsWith('CREATE OR REPLACE ', $statement->withOrReplace(true)->toString());
+        self::assertStringStartsWith('CREATE OR REPLACE ', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrReplace(true)));
         self::assertFalse($statement->orReplace);
     }
 
@@ -62,7 +62,7 @@ final class CreateProcedureStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE PROCEDURE f(a integer) LANGUAGE sql AS 'SELECT a'");
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
-        self::assertStringContainsString('PROCEDURE "app"."g"', $statement->withName(new QualifiedName(['app', 'g']))->toString());
+        self::assertStringContainsString('PROCEDURE "app"."g"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['app', 'g']))));
         $this->expectException(InvalidStructure::class);
         $statement->withName(new QualifiedName(['a', 'b', 'c', 'd']));
     }
@@ -72,7 +72,7 @@ final class CreateProcedureStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE PROCEDURE f(a integer) LANGUAGE sql AS 'SELECT a'");
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         $parameters = [...$statement->parameters, new Declaration\ParameterDeclaration(new RoutineParameter(TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), ParameterMode::Input, 'extra'), Expression::literal(7, Dialect::PostgreSql))];
-        self::assertStringContainsString('"extra" integer DEFAULT 7', $statement->withParameters($parameters)->toString());
+        self::assertStringContainsString('"extra" integer DEFAULT 7', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withParameters($parameters)));
         $this->expectException(InvalidStructure::class);
         $statement->withParameters([...$parameters, new Declaration\ParameterDeclaration(new RoutineParameter(TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), ParameterMode::Input, 'late'))]);
     }
@@ -90,7 +90,7 @@ final class CreateProcedureStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE PROCEDURE f(a integer) LANGUAGE sql AS 'SELECT a'");
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
-        self::assertStringContainsString('SECURITY DEFINER', $statement->withOptions([\SqlSemantics\Model\Definition\Routine\Characteristics\RoutineSecurity::Definer])->toString());
+        self::assertStringContainsString('SECURITY DEFINER', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOptions([\SqlSemantics\Model\Definition\Routine\Characteristics\RoutineSecurity::Definer])));
         $this->expectException(InvalidStructure::class);
         $statement->withOptions([Option\Volatility::Stable]);
     }

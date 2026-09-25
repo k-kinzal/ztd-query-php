@@ -168,6 +168,7 @@ final class BoundSelectTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT id FROM t');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $grouped = $statement->withGroupBy([Expression::reference(['id'], Dialect::PostgreSql)]);
+        self::assertInstanceOf(Expression::class, $grouped->groupBy[0]);
         self::assertSame('id', $grouped->groupBy[0]->columnBinding()?->column->name);
         self::assertSame([], $grouped->withGroupBy([])->groupBy);
     }
@@ -219,7 +220,7 @@ final class BoundSelectTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $changed = $statement->withOutputs([]);
         self::assertSame([], $changed->resultColumns());
-        self::assertSame('SELECT FROM "public"."t"', $changed->toString());
+        self::assertSame('SELECT FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertCount(1, $statement->outputs);
     }
 
@@ -250,12 +251,12 @@ final class BoundSelectTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('SELECT id FROM t');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $ordered = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(Expression::reference(['n'], Dialect::PostgreSql), true, true)]);
-        self::assertSame('SELECT "id" AS "id" FROM "public"."t" ORDER BY "n" DESC NULLS FIRST', $ordered->toString());
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" ORDER BY "n" DESC NULLS FIRST', (new \SqlSemantics\SimpleSerializer())->serialize($ordered));
         $key = $ordered->orderBy[0]->key;
         self::assertInstanceOf(Expression::class, $key);
         self::assertSame('n', $key->columnBinding()?->column->name);
         self::assertSame([], $statement->orderBy);
-        self::assertSame('SELECT "id" AS "id" FROM "public"."t"', $ordered->withOrderBy([])->toString());
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($ordered->withOrderBy([])));
     }
 
     public function testWithTiesIsOffByDefault(): void
@@ -264,7 +265,7 @@ final class BoundSelectTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $bound);
         $select = new \SqlSemantics\Model\BoundSelect($bound->origin, null, $bound->outputs, null, $bound->quantifier, [], null, null);
         self::assertFalse($select->withTies);
-        self::assertSame('SELECT 1', $select->toString());
+        self::assertSame('SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($select));
     }
 
     public function testFromMustUseTheStatementDialect(): void
@@ -304,7 +305,7 @@ final class BoundSelectTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $sqlite);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
         $this->expectException(InvalidStructure::class);
-        $this->expectExceptionMessage('SQLite SELECT does not have locking clauses.');
+        $this->expectExceptionMessage('SQLite queries do not have locking clauses.');
         new \SqlSemantics\Model\BoundSelect($sqlite->origin, null, $sqlite->outputs, null, $sqlite->quantifier, [], null, null, locks: $postgres->locks);
     }
 
@@ -338,8 +339,8 @@ final class BoundSelectTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $mysql);
         self::assertCount(1, $postgres->locks);
-        self::assertSame('SELECT "id" AS "id" FROM "public"."t" AS "a" FOR NO KEY UPDATE OF "a"', $postgres->toString());
-        self::assertSame('SELECT `id` AS `id` FROM `t` AS `a` FOR UPDATE OF `a`', $mysql->toString());
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" AS "a" FOR NO KEY UPDATE OF "a"', (new \SqlSemantics\SimpleSerializer())->serialize($postgres));
+        self::assertSame('SELECT `id` AS `id` FROM `t` AS `a` FOR UPDATE OF `a`', (new \SqlSemantics\SimpleSerializer())->serialize($mysql));
     }
 
     public function testWithWhereKeepsTheQueryBlockOptions(): void
@@ -348,7 +349,7 @@ final class BoundSelectTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $changed = $statement->withWhere(null)->withOrigin($statement->origin);
         self::assertSame([\SqlSemantics\Model\Query\Optimization\SelectOption::HighPriority, \SqlSemantics\Model\Query\Optimization\SelectOption::SmallResult], $changed->options);
-        self::assertSame('SELECT HIGH_PRIORITY SQL_SMALL_RESULT `a` AS `a` FROM `t`', $changed->toString());
+        self::assertSame('SELECT HIGH_PRIORITY SQL_SMALL_RESULT `a` AS `a` FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testOptionsRequireMySql(): void
@@ -359,5 +360,42 @@ final class BoundSelectTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
         $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Model\BoundSelect($postgres->origin, null, $postgres->outputs, null, $postgres->quantifier, [], null, null, options: $mysql->options);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.3.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.0.1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0'])]
+    public function testKeepsTheQualifyPredicateThroughStructuralSerialization(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE t(a INT)'));
+        $statement = $binder->bind('SELECT a FROM t QUALIFY ROW_NUMBER() OVER (ORDER BY a) = 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(Expression::class, $statement->qualify);
+        $written = (new \SqlSemantics\SimpleSerializer())->serialize($statement);
+        self::assertSame('SELECT `a` AS `a` FROM `t` QUALIFY(row_number() OVER (ORDER BY `a` ASC) = 1)', $written);
+        $rebound = $binder->bind($written);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $rebound);
+        self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
+    }
+
+    public function testRejectsQualifyBeforeMySql83(): void
+    {
+        $modern = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(a INT)')))->bind('SELECT a FROM t QUALIFY a > 1');
+        $older = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.2.0'))->build('CREATE TABLE t(a INT)')))->bind('SELECT a FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $modern);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $older);
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\BoundSelect($older->origin, $older->from, $older->outputs, null, $older->quantifier, [], null, null, qualify: $modern->qualify);
+    }
+
+    public function testWithGroupByAcceptsGroupingSetConstructs(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER)')))->bind('SELECT a FROM t GROUP BY a');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(Expression::class, $statement->groupBy[0]);
+        $changed = $statement->withGroupBy([new \SqlSemantics\Model\Query\Grouping\Rollup([$statement->groupBy[0]]), new \SqlSemantics\Model\Query\Grouping\EmptyGroupingSet()]);
+        self::assertSame('SELECT "a" AS "a" FROM "public"."t" GROUP BY ROLLUP("a"), ()', $changed->toString());
+        self::assertSame('SELECT "a" AS "a" FROM "public"."t" GROUP BY "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

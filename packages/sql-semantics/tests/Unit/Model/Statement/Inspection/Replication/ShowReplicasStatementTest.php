@@ -31,7 +31,7 @@ final class ShowReplicasStatementTest extends TestCase
         self::assertInstanceOf(ShowReplicasStatement::class, $statement);
         self::assertSame($uuid, $statement->resultColumns()[4]->name);
         self::assertSame($sql, $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithVocabularyRelabelsTheResultImmutably(): void

@@ -60,12 +60,13 @@ final class ColumnDeclarations
     }
 
     /**
-     * Parses a declaration node with its column attributes.
+     * Parses a declaration node with its column attributes; MySQL enforces an inline REFERENCES from 9.0 on.
      * @return array{ParsedColumn, list<ParsedConstraint>}
      */
     public static function parse(Node $column, Scope $scope): array
     {
-        return (new ColumnReader($scope->identifiers))->read($column, Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute', 'gcol_attribute']));
+        $inline = \SqlSemantics\Model\Configuration\Replication\ReplicationRelease::number($scope->queries?->tables->schema->grammarVersion) >= 90000 ? ['opt_references'] : [];
+        return (new ColumnReader($scope->identifiers))->read($column, array_values(array_filter(Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute', 'gcol_attribute', ...$inline]), Tree::hasTokens(...))));
     }
 
     /**

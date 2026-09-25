@@ -34,7 +34,7 @@ final class HandlersTest extends TestCase
         self::assertInstanceOf(Statement\ReadHandlerIndexStatement::class, $binder->bind('HANDLER t READ k FIRST'));
         $key = $binder->bind('HANDLER t READ k >= (1) WHERE a < 5 LIMIT 2');
         self::assertInstanceOf(Statement\ReadHandlerKeyStatement::class, $key);
-        self::assertSame($key->toString(), $binder->bind($key->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($key), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($key))));
     }
 
     public function testBindKeepsAnAliasHandlerAsADiagnosedName(): void
@@ -67,7 +67,7 @@ final class HandlersTest extends TestCase
     #[TestWith(['handler t close', 'HANDLER `t` CLOSE'])]
     public function testBindReadsLowerCaseHandlerForms(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT, KEY k (a, b))')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT, KEY k (a, b))')))->bind($sql)));
     }
 
     public function testKeyBindsEveryKeyValue(): void
@@ -83,6 +83,6 @@ final class HandlersTest extends TestCase
         self::assertInstanceOf(Statement\ReadHandlerStatement::class, $statement);
         $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT, KEY k (a, b))'), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
         $read = Handlers::read($statement->origin, $statement->source, $statement->handler, 3, $context);
-        self::assertSame('HANDLER `t` READ FIRST WHERE (`a` > 1)', $read->toString());
+        self::assertSame('HANDLER `t` READ FIRST WHERE (`a` > 1)', (new \SqlSemantics\SimpleSerializer())->serialize($read));
     }
 }

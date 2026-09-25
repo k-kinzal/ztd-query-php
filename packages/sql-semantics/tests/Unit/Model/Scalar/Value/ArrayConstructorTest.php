@@ -39,8 +39,8 @@ final class ArrayConstructorTest extends TestCase
         self::assertContainsOnlyInstancesOf(ArrayConstructor::class, $nested->elements);
         self::assertSame('integer[]', $nested->type->name);
         self::assertSame('text[]', $query->outputs[2]->expression->type->name);
-        self::assertSame('SELECT ARRAY[1, 2], ARRAY[ARRAY[1], ARRAY[2]], CAST(ARRAY[] AS text [])', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT ARRAY[1, 2], ARRAY[ARRAY[1], ARRAY[2]], CAST(ARRAY[] AS text [])', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testArrayOfWrapsAScalarAndKeepsAnArrayOrUnknownType(): void

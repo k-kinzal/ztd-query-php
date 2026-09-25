@@ -44,10 +44,10 @@ final class RoleSpecsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('ALTER GROUP staff ADD USER "CURRENT_USER", CURRENT_USER, "Public"');
         self::assertInstanceOf(AddGroupMembersStatement::class, $statement);
-        self::assertSame('ALTER GROUP "staff" ADD USER "CURRENT_USER", CURRENT_USER, "Public"', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('ALTER GROUP "staff" ADD USER "CURRENT_USER", CURRENT_USER, "Public"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(AddGroupMembersStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
         self::assertEquals($statement->members, $rebound->members);
     }
 }

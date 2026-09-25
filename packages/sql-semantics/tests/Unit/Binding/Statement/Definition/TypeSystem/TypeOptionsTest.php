@@ -73,6 +73,6 @@ final class TypeOptionsTest extends TestCase
 
     public function testBaseSkipsAnUnknownLeadingAttribute(): void
     {
-        self::assertSame('CREATE TYPE "t"(INPUT = "i", OUTPUT = "o")', (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t (foo = 1, input = i, output = o)')->toString());
+        self::assertSame('CREATE TYPE "t"(INPUT = "i", OUTPUT = "o")', (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t (foo = 1, input = i, output = o)')));
     }
 }

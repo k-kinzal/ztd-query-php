@@ -26,14 +26,14 @@ final class FlushServerStatementTest extends TestCase
         self::assertInstanceOf(FlushServerStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame("FLUSH NO_WRITE_TO_BINLOG RELAY LOGS FOR CHANNEL 'c', STATUS", $copy->toString());
+        self::assertSame("FLUSH NO_WRITE_TO_BINLOG RELAY LOGS FOR CHANNEL 'c', STATUS", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithTargetsReplacesTheOptionsImmutably(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('FLUSH LOGS');
         self::assertInstanceOf(FlushServerStatement::class, $statement);
-        self::assertSame('FLUSH PRIVILEGES, RELAY LOGS', $statement->withTargets([ServerFlush::Privileges, new RelayLogFlush()])->toString());
+        self::assertSame('FLUSH PRIVILEGES, RELAY LOGS', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withTargets([ServerFlush::Privileges, new RelayLogFlush()])));
         self::assertSame([ServerFlush::Logs], $statement->targets);
     }
 

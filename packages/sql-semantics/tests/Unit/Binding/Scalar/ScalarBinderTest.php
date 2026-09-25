@@ -185,8 +185,8 @@ final class ScalarBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.2.0'))->build());
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testOperatorRetainsBetweenBounds(): void
@@ -312,6 +312,6 @@ final class ScalarBinderTest extends TestCase
         $expression = $statement->outputs[0]->expression;
         self::assertSame($operator, $expression->spelling());
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $expression->inputs()[1]);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

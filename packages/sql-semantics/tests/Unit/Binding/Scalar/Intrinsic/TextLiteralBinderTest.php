@@ -32,7 +32,7 @@ final class TextLiteralBinderTest extends TestCase
         $query = $binder->bind('SELECT ' . $sql);
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertInstanceOf($class, $query->outputs[0]->expression);
-        self::assertSame('SELECT ' . $expected, $query->toString());
+        self::assertSame('SELECT ' . $expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testBindLeavesOtherDialectsAlone(): void
@@ -69,6 +69,6 @@ final class TextLiteralBinderTest extends TestCase
     #[TestWith(["select 'a' 'b'", "SELECT 'ab'"])]
     public function testBindWritesIntroducedAndNationalStringsBack(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)));
     }
 }

@@ -29,7 +29,7 @@ final class RowBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $comparison);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\RowExpression::class, $comparison->left);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\RowExpression::class, $comparison->right);
-        self::assertSame('SELECT ROW(1, 2), (ROW(1, 2) = ROW(3, 4)) FROM "public"."t"', $statement->toString());
+        self::assertSame('SELECT ROW(1, 2), (ROW(1, 2) = ROW(3, 4)) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindKeepsColumnOperandsInsideTheRow(): void
@@ -40,7 +40,7 @@ final class RowBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $comparison);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\RowExpression::class, $comparison->left);
         self::assertSame(['a', 'b'], array_map(static fn ($item): ?string => $item->columnBinding()?->column->name, $comparison->left->items));
-        self::assertSame('SELECT ((`a`, `b`) = (3, 4)) FROM `t`', $statement->toString());
+        self::assertSame('SELECT ((`a`, `b`) = (3, 4)) FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindLeavesScalarParenthesesAlone(): void
@@ -59,6 +59,6 @@ final class RowBinderTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'SELECT (a, b) = (1, 2) FROM t', 'SELECT (("a", "b") = (1, 2)) FROM "main"."t"'])]
     public function testBindWritesEveryRowConstructorBack(Dialect $dialect, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT, b INT)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT, b INT)')))->bind($sql)));
     }
 }

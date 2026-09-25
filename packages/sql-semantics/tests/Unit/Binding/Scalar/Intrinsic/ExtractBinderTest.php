@@ -49,7 +49,7 @@ final class ExtractBinderTest extends TestCase
         $extract = $query->outputs[0]->expression;
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Temporal\Extract::class, $extract);
         self::assertSame(\SqlSemantics\Model\Scalar\Temporal\MySqlUnit::DaySecond, $extract->field);
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     #[TestWith(['SELECT EXTRACT(nonsense FROM CURRENT_TIMESTAMP)'])]

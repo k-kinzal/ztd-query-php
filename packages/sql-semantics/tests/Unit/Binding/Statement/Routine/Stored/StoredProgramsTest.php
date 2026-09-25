@@ -39,7 +39,7 @@ final class StoredProgramsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t (n INT)'));
         $statement = $binder->bind($sql);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindLeavesLoadableFunctionsToTheirFamily(): void
@@ -76,7 +76,7 @@ final class StoredProgramsTest extends TestCase
     public function testBindKeepsTheDefinerOfEachProgram(string $version, string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)'));
-        self::assertSame($expected, $binder->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 
     public function testNameRejectsAnEmptyComponent(): void

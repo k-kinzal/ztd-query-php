@@ -29,9 +29,9 @@ final class RemovalsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $first = $binder->bind($sql);
-        self::assertSame($expected, $first->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($first));
         $second = $binder->bind($expected);
         self::assertSame($first::class, $second::class);
-        self::assertSame($expected, $second->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($second));
     }
 }

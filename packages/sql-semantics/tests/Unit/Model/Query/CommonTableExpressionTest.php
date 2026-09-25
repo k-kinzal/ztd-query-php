@@ -54,4 +54,11 @@ final class CommonTableExpressionTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new CommonTableExpression('q', $query, materialization: Materialization::Inline);
     }
+
+    public function testVisibleColumnsPreferAliasesAndFallBackToResultNames(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH q(x) AS (SELECT 1 AS a, 2 AS b) SELECT * FROM q');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        self::assertSame(['x', 'b'], $statement->ctes?->definitions[0]->visibleColumns());
+    }
 }

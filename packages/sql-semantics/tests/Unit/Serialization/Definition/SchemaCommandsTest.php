@@ -35,9 +35,9 @@ final class SchemaCommandsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INT)'));
         $statement = $binder->bind($sql);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame($statement::class, $rebound::class);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testDropWritesSelectionExistenceAndDependencyPolicy(): void
@@ -85,5 +85,19 @@ final class SchemaCommandsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT, c INT)')))->bind($sql, strict: false);
         self::assertTrue($statement instanceof \SqlSemantics\Model\Statement\Definition\DropTableStatement || $statement instanceof \SqlSemantics\Model\Statement\Definition\DropColumnStatement || $statement instanceof AddColumnStatement || $statement instanceof CreateTableAsStatement);
         self::assertSame($expected, [$statement::class, SchemaCommands::write($statement)->toString()]);
+    }
+
+    public function testTableHeaderWritesPersistenceNameAliasesAndOptions(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEMP TABLE IF NOT EXISTS copied (a, b) ON COMMIT DROP AS SELECT 1, 2');
+        self::assertInstanceOf(CreateTableAsStatement::class, $statement);
+        self::assertSame(['CREATE TEMPORARY TABLE IF NOT EXISTS', '"copied"', '("a", "b")', 'ON COMMIT DROP'], array_map(static fn ($tree): string => $tree->toString(), SchemaCommands::tableHeader($statement->name, $statement->columns, $statement->properties, $statement->ifNotExists, Dialect::PostgreSql)));
+    }
+
+    public function testTableAsWritesTheMySqlDuplicatePolicy(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE u (a INT)')))->bind('CREATE TABLE copied REPLACE SELECT a FROM u');
+        self::assertInstanceOf(CreateTableAsStatement::class, $statement);
+        self::assertSame('CREATE TABLE `copied` REPLACE AS SELECT `a` AS `a` FROM `u`', SchemaCommands::tableAs($statement)->toString());
     }
 }

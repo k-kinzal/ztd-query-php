@@ -45,7 +45,7 @@ final class OwnedDropsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $statement = $binder->bind('DROP INDEX ix ON t ALGORITHM=INPLACE LOCK=NONE', strict: false);
         self::assertInstanceOf(DropTableIndexStatement::class, $statement);
-        $rebound = $binder->bind($statement->toString(), strict: false);
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false);
         self::assertInstanceOf(DropTableIndexStatement::class, $rebound);
         self::assertSame($statement->algorithm, $rebound->algorithm);
         self::assertSame($statement->lock, $rebound->lock);

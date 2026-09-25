@@ -45,7 +45,7 @@ final class ColumnReferenceTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\ColumnReference::class, $value);
         self::assertSame(['t', 'id'], $value->referenceParts());
         self::assertSame($value->name, $value->referenceParts());
-        self::assertSame('SELECT "t"."id" AS "id" FROM "public"."t"', $query->toString());
+        self::assertSame('SELECT "t"."id" AS "id" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testInputsListsTheOriginsOfADerivedColumn(): void

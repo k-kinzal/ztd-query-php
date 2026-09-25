@@ -27,6 +27,6 @@ final class RelationLoggingTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t SET LOGGED', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Storage\SetLogging(Relation\Storage\RelationLogging::Logged), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" SET LOGGED', $statement->toString());
+        self::assertSame('ALTER TABLE "t" SET LOGGED', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

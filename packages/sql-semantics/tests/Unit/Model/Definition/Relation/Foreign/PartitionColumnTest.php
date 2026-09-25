@@ -27,7 +27,7 @@ final class PartitionColumnTest extends TestCase
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $statement->columns[0]->nullability);
         self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $statement->columns[0]->generation);
         self::assertCount(1, $statement->columns[0]->constraints);
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a INTEGER)')))->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a INTEGER)')))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnUnknownNullability(): void

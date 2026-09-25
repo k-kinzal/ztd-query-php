@@ -26,8 +26,8 @@ final class RenameObjectStatementTest extends TestCase
         self::assertInstanceOf(RenameObjectStatement::class, $statement);
         self::assertEquals(new Catalog\NamedIdentity(Kind\NamedObjectKind::Language, 'plperl'), $statement->object);
         self::assertSame('plperl_old', $statement->newName);
-        self::assertSame('ALTER LANGUAGE "plperl" RENAME TO "plperl_old"', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER LANGUAGE "plperl" RENAME TO "plperl_old"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -36,7 +36,7 @@ final class RenameObjectStatementTest extends TestCase
         self::assertInstanceOf(RenameObjectStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -56,7 +56,7 @@ final class RenameObjectStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new Catalog\NamedIdentity(Kind\NamedObjectKind::Language, 'plperl'), $statement->object);
         self::assertEquals(new Catalog\RelationMemberIdentity(Kind\RelationMemberKind::Trigger, 'a', new QualifiedName(['t'])), $changed->object);
-        self::assertStringContainsString('ALTER TRIGGER "a" ON "t" RENAME TO', $changed->toString());
+        self::assertStringContainsString('ALTER TRIGGER "a" ON "t" RENAME TO', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNewNameReplacesTheOperand(): void
@@ -67,7 +67,7 @@ final class RenameObjectStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('plperl_old', $statement->newName);
         self::assertEquals('pl', $changed->newName);
-        self::assertStringContainsString('RENAME TO "pl"', $changed->toString());
+        self::assertStringContainsString('RENAME TO "pl"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsARelationWhichRenamesWithItsOwnForm(): void

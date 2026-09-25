@@ -183,7 +183,7 @@ final class CreateTableStatementTest extends TestCase
         $statement = $binder->bind('CREATE TABLE t ()');
         self::assertInstanceOf(CreateTableStatement::class, $statement);
         self::assertSame([], $statement->definition->table->columns);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsColumnTypesFromAnotherDialect(): void

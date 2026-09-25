@@ -33,16 +33,16 @@ final class TableMembershipTest extends TestCase
         self::assertInstanceOf(InSubquery::class, $expression);
         self::assertSame($negated, $expression->negated);
         self::assertSame('x', $expression->query->resultColumns()[0]->name);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($query->toString())->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testBindReadsTheInOperandOfPosition(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE b(x)'));
         $query = $binder->bind("SELECT position('a' in 'b')");
-        self::assertSame('SELECT position((\'a\' IN (SELECT "b"."x" AS "x" FROM "main"."b")))', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT position((\'a\' IN (SELECT "b"."x" AS "x" FROM "main"."b")))', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testBindKeepsTheArgumentsOfATableValuedFunction(): void

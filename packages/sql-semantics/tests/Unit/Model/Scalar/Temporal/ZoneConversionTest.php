@@ -35,7 +35,7 @@ final class ZoneConversionTest extends TestCase
         self::assertSame($type, $conversion->type->name);
         self::assertCount($inputs, $conversion->inputs());
         self::assertSame($conversion->value, $conversion->inputs()[0]);
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAnotherDialect(): void

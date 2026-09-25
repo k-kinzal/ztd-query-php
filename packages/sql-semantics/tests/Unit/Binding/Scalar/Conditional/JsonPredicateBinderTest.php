@@ -63,13 +63,13 @@ final class JsonPredicateBinderTest extends TestCase
         self::assertInstanceOf(JsonPredicate::class, $predicate);
         self::assertSame([$kind, $negated, $unique], [$predicate->itemKind, $predicate->negated, $predicate->uniqueKeys]);
         self::assertSame(Nullability::MaybeNull, $predicate->nullability);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindIgnoresExpressionsWithoutAJsonConstraint(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SELECT 1 + 2, 'a' || 'b'");
-        self::assertSame("SELECT (1 + 2), ('a' || 'b')", $statement->toString());
+        self::assertSame("SELECT (1 + 2), ('a' || 'b')", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['integer', false])]

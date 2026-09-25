@@ -277,7 +277,7 @@ final class FromBinder
         if ($definition !== null && ($partitions !== null || $indexing !== null || $sample !== null)) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::StoredTableClause, $source);
         }
-        $declaration = $definition === null ? $this->tables->resolve($parts, $source) : QueryRelation::declaration($definition->query, $definition->name, $definition->columns, $source);
+        $declaration = $definition === null ? $this->tables->resolve($parts, $source) : Query\Recursion\RecursionClauses::declaration($definition, $source);
         $table = $definition === null
             ? Query\TableOccurrence::bind($this->ids->relation(), $this->scopeId, $declaration, $this->tables->name($parts, $declaration), $alias, $source, $indexHints, $partitions, $indexing, $sample)
             : new \SqlSemantics\Model\Relation\CteReference($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $definition);

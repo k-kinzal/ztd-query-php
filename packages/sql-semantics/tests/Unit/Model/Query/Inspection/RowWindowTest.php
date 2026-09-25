@@ -25,7 +25,7 @@ final class RowWindowTest extends TestCase
         self::assertInstanceOf(ShowDiagnosticsStatement::class, $statement);
         self::assertNotNull($statement->limit);
         self::assertSame(['5', '2'], [$statement->limit->count->spelling(), $statement->limit->offset?->spelling()]);
-        self::assertSame('SHOW WARNINGS LIMIT 5 OFFSET 2', $statement->toString());
+        self::assertSame('SHOW WARNINGS LIMIT 5 OFFSET 2', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testOffsetIsOptional(): void

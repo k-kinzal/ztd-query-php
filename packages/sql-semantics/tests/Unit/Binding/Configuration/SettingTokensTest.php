@@ -162,7 +162,7 @@ final class SettingTokensTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         self::assertSame('-5', $statement->settings[0]->values[0]->spelling());
-        self::assertSame('SET "work_mem" = -5', $statement->toString());
+        self::assertSame('SET "work_mem" = -5', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
     public function testWordsRetainsTokenOrder(): void
     {
@@ -179,7 +179,7 @@ final class SettingTokensTest extends TestCase
         $value = $setting->values[0];
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\CastExpression::class, $value);
         self::assertInstanceOf(\SqlSemantics\Type\Identity\IntervalStorage::class, $value->type->identity);
-        self::assertSame("ALTER DATABASE \"d\" SET TIME ZONE INTERVAL(2) '1'", $statement->toString());
+        self::assertSame("ALTER DATABASE \"d\" SET TIME ZONE INTERVAL(2) '1'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -189,7 +189,7 @@ final class SettingTokensTest extends TestCase
     public function testValueSpellsEverySettingForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -215,7 +215,7 @@ final class SettingTokensTest extends TestCase
             'SET x = local (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = local', 'SET "x" = LOCAL'],
             'SET x = foo (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = foo', 'SET "x" = "foo"'],
             'SET x = "Foo" (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = "Foo"', 'SET "x" = "Foo"'],
-            'SET TIME ZONE LOCAL (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET TIME ZONE LOCAL', 'SET "timezone" = LOCAL'],
+            'SET TIME ZONE LOCAL (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET TIME ZONE LOCAL', 'SET "timezone" = DEFAULT'],
             'set time zone interval \'1\' hour (PostgreSql)' => [Dialect::PostgreSql, null, [], 'set time zone interval \'1\' hour', 'SET TIME ZONE INTERVAL \'1\' HOUR'],
             'SET TIME ZONE \'UTC\' (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET TIME ZONE \'UTC\'', 'SET "timezone" = \'UTC\''],
             'SET TIME ZONE -7 (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET TIME ZONE -7', 'SET "timezone" = -7'],

@@ -24,6 +24,6 @@ final class AddExclusionConstraintTest extends TestCase
         self::assertInstanceOf(Relation\Constraint\AddExclusionConstraint::class, $statement->actions[0]);
         self::assertSame('ex', $statement->actions[0]->constraint->name);
         self::assertNull($statement->actions[0]->constraint->method);
-        self::assertSame('ALTER TABLE "t" ADD CONSTRAINT "ex" EXCLUDE("id" WITH =)', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ADD CONSTRAINT "ex" EXCLUDE("id" WITH =)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

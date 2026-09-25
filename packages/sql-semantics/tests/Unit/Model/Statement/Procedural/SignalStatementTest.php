@@ -26,7 +26,7 @@ final class SignalStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame($statement->assignments, $copy->assignments);
-        self::assertSame("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'stop'", $copy->toString());
+        self::assertSame("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'stop'", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithConditionSignalsAnotherState(): void
@@ -34,7 +34,7 @@ final class SignalStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("SIGNAL SQLSTATE '45000'");
         self::assertInstanceOf(SignalStatement::class, $statement);
         $changed = $statement->withCondition(new SqlState('01000'));
-        self::assertSame("SIGNAL SQLSTATE '01000'", $changed->toString());
+        self::assertSame("SIGNAL SQLSTATE '01000'", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame('45000', $statement->condition->code);
     }
 
@@ -42,7 +42,7 @@ final class SignalStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'stop'");
         self::assertInstanceOf(SignalStatement::class, $statement);
-        self::assertSame("SIGNAL SQLSTATE '45000'", $statement->withAssignments([])->toString());
+        self::assertSame("SIGNAL SQLSTATE '45000'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withAssignments([])));
         self::assertCount(1, $statement->assignments);
     }
 

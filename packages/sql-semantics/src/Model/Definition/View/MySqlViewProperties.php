@@ -17,12 +17,14 @@ use SqlSemantics\Model\Configuration\Account\CurrentAccount;
 final class MySqlViewProperties
 {
     /**
-     * An omitted definer denotes the account executing the declaration.
+     * An omitted definer denotes the account executing the declaration. A null security is a clause the statement
+     * does not write: ALTER VIEW then keeps the view's current SQL SECURITY, which an explicit DEFINER would replace,
+     * while CREATE VIEW binds an omitted clause as DEFINER.
      */
     public function __construct(
         public readonly ViewAlgorithm $algorithm = ViewAlgorithm::Undefined,
         public readonly AccountName|CurrentAccount|null $definer = null,
-        public readonly ViewSecurity $security = ViewSecurity::Definer,
+        public readonly ?ViewSecurity $security = ViewSecurity::Definer,
     ) {
     }
 }

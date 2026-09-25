@@ -29,7 +29,7 @@ final class AlterViewStatementTest extends TestCase
         self::assertInstanceOf(AlterViewStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('ALTER VIEW `v`(`a`) AS SELECT 1 WITH CASCADED CHECK OPTION', $copy->toString());
+        self::assertSame('ALTER VIEW `v`(`a`) AS SELECT 1 WITH CASCADED CHECK OPTION', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -45,7 +45,7 @@ final class AlterViewStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER VIEW v AS SELECT 1');
         self::assertInstanceOf(AlterViewStatement::class, $statement);
-        self::assertSame('ALTER VIEW `d`.`w` AS SELECT 1', $statement->withName(new QualifiedName(['d', 'w']))->toString());
+        self::assertSame('ALTER VIEW `d`.`w` AS SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['d', 'w']))));
         self::assertSame(['v'], $statement->name->parts);
     }
 
@@ -56,14 +56,14 @@ final class AlterViewStatementTest extends TestCase
         $query = $binder->bind('SELECT 2, 3');
         self::assertInstanceOf(AlterViewStatement::class, $statement);
         self::assertInstanceOf(BoundQuery::class, $query);
-        self::assertSame('ALTER VIEW `v` AS SELECT 2, 3', $statement->withQuery($query)->toString());
+        self::assertSame('ALTER VIEW `v` AS SELECT 2, 3', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withQuery($query)));
     }
 
     public function testWithCheckReplacesTheCheckOption(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER VIEW v AS SELECT 1');
         self::assertInstanceOf(AlterViewStatement::class, $statement);
-        self::assertSame('ALTER VIEW `v` AS SELECT 1 WITH LOCAL CHECK OPTION', $statement->withCheck(ViewCheck::Local)->toString());
+        self::assertSame('ALTER VIEW `v` AS SELECT 1 WITH LOCAL CHECK OPTION', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withCheck(ViewCheck::Local)));
         self::assertSame(ViewCheck::None, $statement->check);
     }
 
@@ -71,6 +71,6 @@ final class AlterViewStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER VIEW v AS SELECT 1');
         self::assertInstanceOf(AlterViewStatement::class, $statement);
-        self::assertSame('ALTER ALGORITHM = TEMPTABLE SQL SECURITY INVOKER VIEW `v` AS SELECT 1', $statement->withProperties(new MySqlViewProperties(ViewAlgorithm::TempTable, security: ViewSecurity::Invoker))->toString());
+        self::assertSame('ALTER ALGORITHM = TEMPTABLE SQL SECURITY INVOKER VIEW `v` AS SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withProperties(new MySqlViewProperties(ViewAlgorithm::TempTable, security: ViewSecurity::Invoker))));
     }
 }

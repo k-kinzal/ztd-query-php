@@ -35,8 +35,8 @@ final class UnboundedTest extends TestCase
         self::assertSame(Direction::Preceding, $frame->start->direction);
         self::assertSame(Direction::Following, $frame->end->direction);
         self::assertSame([], $frame->start->expressions());
-        self::assertSame('SELECT sum(`id`) OVER (ORDER BY `id` ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) FROM `t`', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT sum(`id`) OVER (ORDER BY `id` ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testExpressionsAreEmptyForAnUnboundedEdge(): void

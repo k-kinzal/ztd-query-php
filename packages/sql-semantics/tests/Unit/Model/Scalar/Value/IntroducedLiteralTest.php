@@ -42,8 +42,8 @@ final class IntroducedLiteralTest extends TestCase
         self::assertSame(Nullability::NotNull, $literal->nullability);
         self::assertSame(ExpressionKind::Literal, $literal->kind);
         self::assertSame([], $literal->inputs());
-        self::assertSame('SELECT ' . $literal->spelling(), $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT ' . $literal->spelling(), (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingRejectsANumberLiteral(): void

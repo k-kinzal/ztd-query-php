@@ -31,8 +31,8 @@ final class AssignmentStatementTest extends TestCase
         self::assertInstanceOf(LocalAssignment::class, $statement->body->assignments[0]);
         self::assertInstanceOf(AssignedUserVariable::class, $statement->body->assignments[1]);
         self::assertInstanceOf(AssignedSetting::class, $statement->body->assignments[2]);
-        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer) SET `a` = 1, @`b` = `a`, GLOBAL `max_connections` = `a`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer) SET `a` = 1, @`b` = `a`, GLOBAL `max_connections` = `a`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRequiresALocalOrTriggerTarget(): void

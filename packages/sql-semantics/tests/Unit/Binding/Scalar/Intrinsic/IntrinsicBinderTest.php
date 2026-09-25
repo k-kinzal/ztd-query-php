@@ -34,7 +34,7 @@ final class IntrinsicBinderTest extends TestCase
     public function testBindReadsALowerCaseSqliteRaise(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INT)')))->bind("CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT raise(abort, 'no'); END");
-        self::assertSame("CREATE TRIGGER \"tr\" AFTER INSERT ON \"main\".\"t\" FOR EACH ROW BEGIN SELECT RAISE(ABORT, 'no'); END", $statement->toString());
+        self::assertSame("CREATE TRIGGER \"tr\" AFTER INSERT ON \"main\".\"t\" FOR EACH ROW BEGIN SELECT RAISE(ABORT, 'no'); END", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindLeavesRaiseAsAFunctionOutsideSqlite(): void

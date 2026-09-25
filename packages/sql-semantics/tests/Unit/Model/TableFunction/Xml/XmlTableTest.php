@@ -37,7 +37,7 @@ final class XmlTableTest extends TestCase
         self::assertCount(2, $table->columns);
         self::assertSame(PassingMode::Reference, $table->inputMode);
         self::assertSame(PassingMode::Value, $table->outputMode);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testDerivesTheDialectFromTheDocumentAndDefaultsTheOptions(): void

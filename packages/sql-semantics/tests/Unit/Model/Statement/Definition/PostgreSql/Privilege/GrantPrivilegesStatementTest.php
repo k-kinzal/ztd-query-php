@@ -50,7 +50,7 @@ final class GrantPrivilegesStatementTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, a INTEGER)');
         $statement = (new Binder($schema))->bind('GRANT SELECT (id), INSERT ON TABLE t TO PUBLIC, alice WITH GRANT OPTION GRANTED BY bob');
-        self::assertSame('GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO PUBLIC, "alice" WITH GRANT OPTION GRANTED BY "bob"', $statement->toString());
+        self::assertSame('GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO PUBLIC, "alice" WITH GRANT OPTION GRANTED BY "bob"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['GRANT SELECT (id), INSERT ON TABLE t TO PUBLIC, alice WITH GRANT OPTION GRANTED BY bob', 'GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO PUBLIC, "alice" WITH GRANT OPTION GRANTED BY "bob"'])]
@@ -65,10 +65,10 @@ final class GrantPrivilegesStatementTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, a INTEGER)'));
         $statement = $binder->bind($sql);
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        $again = $binder->bind($statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(GrantPrivilegesStatement::class, $again);
-        self::assertSame($expected, $again->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithPrivilegesReplacesTheCompleteRequestWithoutMutatingTheOriginal(): void
@@ -81,7 +81,7 @@ final class GrantPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new ColumnPrivilege(Privilege::Select, ['id']), new ObjectPrivilege(Privilege::Insert)], $statement->privileges);
         self::assertEquals($privileges, $changed->privileges);
-        self::assertSame('GRANT ALL PRIVILEGES ON TABLE "public"."t" TO PUBLIC, "alice" WITH GRANT OPTION GRANTED BY "bob"', $changed->toString());
+        self::assertSame('GRANT ALL PRIVILEGES ON TABLE "public"."t" TO PUBLIC, "alice" WITH GRANT OPTION GRANTED BY "bob"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithPrivilegesRejectsAllPrivilegesCombinedWithAnother(): void
@@ -104,7 +104,7 @@ final class GrantPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals($target, $changed->target);
         self::assertEquals($statement->privileges, $changed->privileges);
-        self::assertSame('GRANT USAGE ON LANGUAGE "plpgsql" TO "a"', $changed->toString());
+        self::assertSame('GRANT USAGE ON LANGUAGE "plpgsql" TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTargetRejectsColumnsOnANonTableClass(): void
@@ -134,7 +134,7 @@ final class GrantPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([PublicRole::Public, new NamedRole('alice')], $statement->grantees);
         self::assertEquals($grantees, $changed->grantees);
-        self::assertSame('GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO CURRENT_ROLE, "x""y" WITH GRANT OPTION GRANTED BY "bob"', $changed->toString());
+        self::assertSame('GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO CURRENT_ROLE, "x""y" WITH GRANT OPTION GRANTED BY "bob"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithGrantOptionRemovesTheOnwardGrant(): void
@@ -146,7 +146,7 @@ final class GrantPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertTrue($statement->grantOption);
         self::assertFalse($changed->grantOption);
-        self::assertSame('GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO PUBLIC, "alice" GRANTED BY "bob"', $changed->toString());
+        self::assertSame('GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO PUBLIC, "alice" GRANTED BY "bob"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithGrantorReplacesOrRemovesTheGrantor(): void
@@ -158,10 +158,10 @@ final class GrantPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $removed);
         self::assertEquals(new NamedRole('bob'), $statement->grantor);
         self::assertNull($removed->grantor);
-        self::assertSame('GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO PUBLIC, "alice" WITH GRANT OPTION', $removed->toString());
+        self::assertSame('GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO PUBLIC, "alice" WITH GRANT OPTION', (new \SqlSemantics\SimpleSerializer())->serialize($removed));
         $session = $statement->withGrantor(SessionRole::CurrentUser);
         self::assertSame(SessionRole::CurrentUser, $session->grantor);
-        self::assertSame('GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO PUBLIC, "alice" WITH GRANT OPTION GRANTED BY CURRENT_USER', $session->toString());
+        self::assertSame('GRANT SELECT ("id"), INSERT ON TABLE "public"."t" TO PUBLIC, "alice" WITH GRANT OPTION GRANTED BY CURRENT_USER', (new \SqlSemantics\SimpleSerializer())->serialize($session));
     }
 
     public function testWithOriginRetainsEveryOperand(): void
@@ -176,7 +176,7 @@ final class GrantPrivilegesStatementTest extends TestCase
         self::assertSame($statement->grantees, $copy->grantees);
         self::assertSame($statement->grantOption, $copy->grantOption);
         self::assertSame($statement->grantor, $copy->grantor);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

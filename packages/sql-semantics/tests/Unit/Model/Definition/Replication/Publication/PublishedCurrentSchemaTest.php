@@ -22,6 +22,6 @@ final class PublishedCurrentSchemaTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)')))->bind('ALTER PUBLICATION p DROP TABLES IN SCHEMA CURRENT_SCHEMA');
         self::assertInstanceOf(Statement\AlterPublicationObjectsStatement::class, $statement);
         self::assertEquals([new Operand\PublishedCurrentSchema()], $statement->objects);
-        self::assertSame('ALTER PUBLICATION "p" DROP TABLES IN SCHEMA CURRENT_SCHEMA', $statement->toString());
+        self::assertSame('ALTER PUBLICATION "p" DROP TABLES IN SCHEMA CURRENT_SCHEMA', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -23,7 +23,7 @@ use SqlSemantics\Type\TypeDescriptor;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR CLASS app.int_ops DEFAULT FOR TYPE integer USING btree FAMILY app.ints AS OPERATOR 1 <, FUNCTION 1 btint4cmp(integer, integer)');
  *     $statement->isDefault // => true
  *     $statement->family->parts // => ['app', 'ints']
- *     $statement->toString() // => 'CREATE OPERATOR CLASS "app"."int_ops" DEFAULT FOR TYPE integer USING "btree" FAMILY "app"."ints" AS OPERATOR 1 <, FUNCTION 1 "btint4cmp"(integer, integer)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE OPERATOR CLASS "app"."int_ops" DEFAULT FOR TYPE integer USING "btree" FAMILY "app"."ints" AS OPERATOR 1 <, FUNCTION 1 "btint4cmp"(integer, integer)'
  * @example Rejecting two storage types
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR CLASS box_ops FOR TYPE polygon USING gist AS STORAGE box');
  *     $statement->withMembers([$statement->members[0], $statement->members[0]]); // throws \SqlSemantics\Model\Validation\InvalidStructure

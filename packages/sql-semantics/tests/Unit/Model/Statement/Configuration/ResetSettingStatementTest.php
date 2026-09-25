@@ -26,8 +26,8 @@ final class ResetSettingStatementTest extends TestCase
         $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('new-scope', $statement->source, Dialect::MySql));
         self::assertSame('new-scope', $changed->scopeId);
         self::assertNotSame($statement, $changed);
-        self::assertSame('RESET PERSIST IF EXISTS `max_connections`', $changed->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString(), strict: false)->toString());
+        self::assertSame('RESET PERSIST IF EXISTS `max_connections`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($changed), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString(), strict: false)));
     }
 
     public function testSettingAcceptsAPostgreSqlSessionReset(): void
@@ -35,7 +35,7 @@ final class ResetSettingStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('RESET work_mem');
         self::assertInstanceOf(ResetSettingStatement::class, $statement);
         $rebuilt = new ResetSettingStatement($statement->origin, new \SqlSemantics\Model\Configuration\ResetSetting(['work_mem'], \SqlSemantics\Model\Configuration\SettingScope::Session, $statement->setting->source));
-        self::assertSame('RESET "work_mem"', $rebuilt->toString());
+        self::assertSame('RESET "work_mem"', (new \SqlSemantics\SimpleSerializer())->serialize($rebuilt));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'RESET work_mem', 'persist', false])]

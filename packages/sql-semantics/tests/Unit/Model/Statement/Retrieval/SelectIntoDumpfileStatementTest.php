@@ -32,8 +32,8 @@ final class SelectIntoDumpfileStatementTest extends TestCase
         $statement = $binder->bind("SELECT a INTO DUMPFILE '/tmp/a.bin' FROM t");
         self::assertInstanceOf(SelectIntoDumpfileStatement::class, $statement);
         self::assertSame("'/tmp/a.bin'", $statement->file->text);
-        self::assertSame("SELECT `a` AS `a` FROM `t` INTO DUMPFILE '/tmp/a.bin'", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SELECT `a` AS `a` FROM `t` INTO DUMPFILE '/tmp/a.bin'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithQueryReplacesTheWrittenQuery(): void
@@ -43,8 +43,8 @@ final class SelectIntoDumpfileStatementTest extends TestCase
         $query = $binder->bind('SELECT 2');
         self::assertInstanceOf(SelectIntoDumpfileStatement::class, $statement);
         self::assertInstanceOf(BoundSelect::class, $query);
-        self::assertSame("SELECT 2 INTO DUMPFILE 'f'", $statement->withQuery($query)->toString());
-        self::assertSame("SELECT 1 INTO DUMPFILE 'f'", $statement->toString());
+        self::assertSame("SELECT 2 INTO DUMPFILE 'f'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withQuery($query)));
+        self::assertSame("SELECT 1 INTO DUMPFILE 'f'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginKeepsTheOperands(): void

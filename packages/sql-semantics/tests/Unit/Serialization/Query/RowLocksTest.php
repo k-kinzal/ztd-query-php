@@ -38,8 +38,8 @@ final class RowLocksTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertSame($expected, RowLocks::write($statement->locks, $dialect)->toString());
-        self::assertStringEndsWith(' ' . $expected, $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertStringEndsWith(' ' . $expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWriteIsEmptyWithoutLocks(): void

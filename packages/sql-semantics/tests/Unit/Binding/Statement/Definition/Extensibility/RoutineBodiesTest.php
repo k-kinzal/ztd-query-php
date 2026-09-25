@@ -128,7 +128,7 @@ final class RoutineBodiesTest extends TestCase
     #[TestWith(["CREATE FUNCTION f() RETURNS integer LANGUAGE sql SET search_path = a SET work_mem = '1MB' AS 'SELECT 1'", "CREATE FUNCTION \"f\"() RETURNS integer LANGUAGE \"sql\" SET \"search_path\" = \"a\" SET \"work_mem\" = '1MB' AS 'SELECT 1'"])]
     public function testImplementationWritesBackASingleDefinition(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     public function testDefinitionReadsOneStringAsTheBody(): void

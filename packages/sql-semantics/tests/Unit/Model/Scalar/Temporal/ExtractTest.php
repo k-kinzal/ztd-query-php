@@ -34,7 +34,7 @@ final class ExtractTest extends TestCase
         self::assertSame($field, $extract->field);
         self::assertSame([$extract->value], $extract->inputs());
         self::assertSame($type, $extract->type->name);
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectsAFieldFromAnotherDialect(): void

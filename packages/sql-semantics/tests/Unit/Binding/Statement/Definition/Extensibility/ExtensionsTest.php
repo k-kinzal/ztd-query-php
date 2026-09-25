@@ -34,8 +34,8 @@ final class ExtensionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(Statement\CreateExtensionStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['CREATE EXTENSION e CASCADE CASCADE'])]
@@ -73,8 +73,8 @@ final class ExtensionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testMemberRejectsAnOverqualifiedName(): void
@@ -87,7 +87,7 @@ final class ExtensionsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE OR REPLACE TRUSTED LANGUAGE plperl');
         self::assertInstanceOf(Statement\CreateExtensionStatement::class, $statement);
-        self::assertSame('CREATE EXTENSION IF NOT EXISTS "plperl"', $statement->toString());
+        self::assertSame('CREATE EXTENSION IF NOT EXISTS "plperl"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testLanguageReadsTheHandlers(): void
@@ -137,7 +137,7 @@ final class ExtensionsTest extends TestCase
     public function testBindReadsEveryExtensionForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement::class . ' => ' . $statement->toString());
+        self::assertSame($expected, $statement::class . ' => ' . (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

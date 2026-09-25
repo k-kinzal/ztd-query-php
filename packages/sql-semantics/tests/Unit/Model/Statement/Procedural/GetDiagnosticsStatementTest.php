@@ -27,7 +27,7 @@ final class GetDiagnosticsStatementTest extends TestCase
         self::assertInstanceOf(GetDiagnosticsStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('GET STACKED DIAGNOSTICS @`n` = NUMBER', $copy->toString());
+        self::assertSame('GET STACKED DIAGNOSTICS @`n` = NUMBER', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithAreaReadsAnotherArea(): void
@@ -43,7 +43,7 @@ final class GetDiagnosticsStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('GET DIAGNOSTICS @n = NUMBER');
         self::assertInstanceOf(GetDiagnosticsStatement::class, $statement);
         $changed = $statement->withItems([new StatementDiagnostic('r', StatementItem::RowCount), new StatementDiagnostic('n', StatementItem::Number)]);
-        self::assertSame('GET CURRENT DIAGNOSTICS @`r` = ROW_COUNT, @`n` = NUMBER', $changed->toString());
+        self::assertSame('GET CURRENT DIAGNOSTICS @`r` = ROW_COUNT, @`n` = NUMBER', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAnEmptyItemList(): void

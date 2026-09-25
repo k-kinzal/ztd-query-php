@@ -144,12 +144,24 @@ final class SpecialSettingsTest extends TestCase
         $default = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET NAMES');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $default);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\DefaultSetting::class, $default->settings[0]);
-        self::assertSame('SET "client_encoding" = DEFAULT', $default->toString());
+        self::assertSame('SET "client_encoding" = DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($default));
         $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET NAMES utf8mb4 COLLATE utf8mb4_bin');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $mysql);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\Connection\ConnectionNames::class, $mysql->settings[0]);
         self::assertSame('utf8mb4_bin', $mysql->settings[0]->collation);
     }
+    public function testBindRestoresTheDefaultTimeZoneForLocal(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $local = $binder->bind('SET LOCAL TIME ZONE LOCAL');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $local);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\DefaultSetting::class, $local->settings[0]);
+        self::assertSame('SET LOCAL "timezone" = DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($local));
+        $named = $binder->bind('SET timezone = LOCAL');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $named);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $named->settings[0]);
+    }
+
     public function testBindRetainsTimezoneAndRole(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
@@ -177,6 +189,6 @@ final class SpecialSettingsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(["set time zone 'UTC'", 'SET "timezone" = \'UTC\''])]
     public function testBindNamesEachSpecialPostgreSqlSetting(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 }

@@ -32,7 +32,7 @@ final class SensitivityTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(DeclareCursorStatement::class, $statement);
         self::assertSame($sensitivity, $statement->sensitivity);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

@@ -45,7 +45,7 @@ final class SetDefaultRolesStatementTest extends TestCase
         self::assertSame('other', $changed->roles[0]->username);
         self::assertSame('localhost', $changed->roles[0]->host);
         self::assertSame("SET DEFAULT ROLE 'r' TO 'u'", $statement->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString())->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString())));
     }
 
 
@@ -58,7 +58,7 @@ final class SetDefaultRolesStatementTest extends TestCase
         self::assertSame('other', $changed->accounts[0]->username);
         self::assertSame('localhost', $changed->accounts[0]->host);
         self::assertSame("SET DEFAULT ROLE 'r' TO 'u'", $statement->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString())->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString())));
     }
 
 }

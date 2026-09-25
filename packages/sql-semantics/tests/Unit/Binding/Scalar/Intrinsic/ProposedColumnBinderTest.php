@@ -25,7 +25,7 @@ final class ProposedColumnBinderTest extends TestCase
         $value = $query->outputs[0]->expression;
         self::assertInstanceOf(ProposedColumn::class, $value);
         self::assertSame(['a', 'b'], $value->column->referenceParts());
-        self::assertSame('SELECT VALUES (`a`.`b`)', $query->toString());
+        self::assertSame('SELECT VALUES (`a`.`b`)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testBindLeavesOtherDialectsAlone(): void
@@ -47,6 +47,6 @@ final class ProposedColumnBinderTest extends TestCase
         self::assertSame([$statement->insertion->target], ProposedColumnBinder::destinations($scope)->relations);
         $plain = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql), [$statement->insertion->target]);
         self::assertSame($plain, ProposedColumnBinder::destinations($plain));
-        self::assertSame('INSERT INTO `t` VALUES (1, 2) AS `n` ON DUPLICATE KEY UPDATE `a` = (VALUES (`a`) + `n`.`a`)', $statement->toString());
+        self::assertSame('INSERT INTO `t` VALUES (1, 2) AS `n` ON DUPLICATE KEY UPDATE `a` = (VALUES (`a`) + `n`.`a`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

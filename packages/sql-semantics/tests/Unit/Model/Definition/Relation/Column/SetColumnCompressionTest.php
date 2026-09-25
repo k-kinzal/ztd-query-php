@@ -23,7 +23,7 @@ final class SetColumnCompressionTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER COLUMN id SET COMPRESSION lz4', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Column\SetColumnCompression('id', Relation\Column\ColumnCompression::Lz4), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET COMPRESSION lz4', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET COMPRESSION lz4', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyColumn(): void

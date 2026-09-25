@@ -27,7 +27,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()))->bind('CREATE FUNCTION twice(a INT) RETURNS BIGINT DETERMINISTIC RETURN a * 2');
  *     $statement->returns->type->name // => 'bigint'
  *     $statement->characteristics->deterministic // => true
- *     $statement->toString() // => 'CREATE FUNCTION `twice`(`a` integer) RETURNS bigint DETERMINISTIC RETURN(`a` * 2)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE FUNCTION `twice`(`a` integer) RETURNS bigint DETERMINISTIC RETURN(`a` * 2)'
  */
 final class CreateFunctionStatement extends BoundStatement
 {

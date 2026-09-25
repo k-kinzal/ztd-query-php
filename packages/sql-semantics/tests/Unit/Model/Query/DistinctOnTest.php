@@ -25,8 +25,8 @@ final class DistinctOnTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertInstanceOf(DistinctOn::class, $statement->quantifier);
         self::assertSame(['n', 'id'], array_map(static fn (\SqlSemantics\Model\Expression $key): ?string => $key->columnBinding()?->column->name, $statement->quantifier->keys));
-        self::assertSame('SELECT DISTINCT ON("n", "id") "id" AS "id" FROM "public"."t"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT DISTINCT ON("n", "id") "id" AS "id" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRequiresAtLeastOneKey(): void

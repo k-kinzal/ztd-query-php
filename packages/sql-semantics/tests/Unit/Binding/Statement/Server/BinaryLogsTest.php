@@ -34,8 +34,8 @@ final class BinaryLogsTest extends TestCase
         $statement = $binder->bind('PURGE ' . $spelling . " LOGS TO 'binlog.000007'");
         self::assertInstanceOf(PurgeBinaryLogsToStatement::class, $statement);
         self::assertSame("'binlog.000007'", $statement->logName->text);
-        self::assertSame("PURGE BINARY LOGS TO 'binlog.000007'", $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame("PURGE BINARY LOGS TO 'binlog.000007'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(PurgeBinaryLogsToStatement::class, $rebound);
         self::assertSame($statement->logName->text, $rebound->logName->text);
     }
@@ -46,6 +46,6 @@ final class BinaryLogsTest extends TestCase
         $statement = $binder->bind("PURGE BINARY LOGS BEFORE '2024-01-01' ");
         self::assertInstanceOf(PurgeBinaryLogsBeforeStatement::class, $statement);
         self::assertSame("'2024-01-01'", $statement->moment->spelling());
-        self::assertSame("PURGE BINARY LOGS BEFORE '2024-01-01'", $binder->bind($statement->toString())->toString());
+        self::assertSame("PURGE BINARY LOGS BEFORE '2024-01-01'", (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

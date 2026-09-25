@@ -26,6 +26,6 @@ final class PublicationObjectChangeTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)')))->bind('ALTER PUBLICATION p ' . $change->value . ' TABLE t');
         self::assertInstanceOf(Statement\AlterPublicationObjectsStatement::class, $statement);
         self::assertSame($change, $statement->change);
-        self::assertSame('ALTER PUBLICATION "p" ' . $change->value . ' TABLE "public"."t"', $statement->toString());
+        self::assertSame('ALTER PUBLICATION "p" ' . $change->value . ' TABLE "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

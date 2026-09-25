@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $query = (new \SqlSemantics\Binder($schema))->bind('SELECT x IS NOT DOCUMENT FROM t');
  *     $value = $query->outputs[0]->expression;
  *     [$value->value->referenceParts(), $value->negated, $value->type->name] // => [['x'], true, 'boolean']
- *     $query->toString() // => 'SELECT ("x" IS NOT DOCUMENT) FROM "public"."t"'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($query) // => 'SELECT ("x" IS NOT DOCUMENT) FROM "public"."t"'
  */
 final class DocumentPredicate extends Expression
 {

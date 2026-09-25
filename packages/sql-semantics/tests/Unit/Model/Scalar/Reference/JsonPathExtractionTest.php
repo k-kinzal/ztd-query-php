@@ -41,8 +41,8 @@ final class JsonPathExtractionTest extends TestCase
         self::assertSame($type, $path->type->name);
         self::assertSame(Nullability::MaybeNull, $path->nullability);
         self::assertSame(ExpressionKind::JsonPath, $path->kind);
-        self::assertSame('SELECT (`t`.`doc` ' . $operator . " '$.name') FROM `t`", $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT (`t`.`doc` ' . $operator . " '$.name') FROM `t`", (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAnOperandThatIsNotAColumn(): void
@@ -57,8 +57,8 @@ final class JsonPathExtractionTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.1.0'))->build());
         $statement = $binder->bind("SHOW EVENTS WHERE name ->> '$.a' = 1");
-        self::assertSame("SHOW EVENTS WHERE ((`Name` ->> '$.a') = 1)", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SHOW EVENTS WHERE ((`Name` ->> '$.a') = 1)", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testInputsRejectAPathThatIsNotAString(): void

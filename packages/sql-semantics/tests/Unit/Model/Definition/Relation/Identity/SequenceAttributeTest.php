@@ -29,6 +29,6 @@ final class SequenceAttributeTest extends TestCase
         self::assertInstanceOf(Relation\Identity\SetColumnIdentity::class, $statement->actions[0]);
         self::assertInstanceOf(Relation\Identity\SequenceValueChange::class, $statement->actions[0]->changes[1]);
         self::assertSame(Relation\Identity\SequenceAttribute::MinValue, $statement->actions[0]->changes[1]->attribute);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET INCREMENT BY 5 SET MINVALUE -3 SET NO MAXVALUE', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET INCREMENT BY 5 SET MINVALUE -3 SET NO MAXVALUE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

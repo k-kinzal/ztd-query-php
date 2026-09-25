@@ -96,7 +96,7 @@ final class WindowCallTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(n INTEGER NOT NULL)');
         $binder = new Binder($schema);
         $statement = $binder->bind('SELECT row_number() OVER (PARTITION BY n ORDER BY n) FROM t');
-        self::assertSame('SELECT "row_number"() OVER (PARTITION BY "n" ORDER BY "n" ASC) FROM "public"."t"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT "row_number"() OVER (PARTITION BY "n" ORDER BY "n" ASC) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

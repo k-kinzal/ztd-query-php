@@ -76,7 +76,7 @@ final class ModifierBinderTest extends TestCase
     public function testReadUnwrapsParenthesesAroundEveryOperandForm(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        self::assertSame("SELECT CAST('a' AS \"app\".\"measure\"(- (1), - (- (2)), 'a', \"x\"))", $binder->bind("SELECT app.measure(-(1), - -2, ('a'), (x)) 'a'")->toString());
+        self::assertSame("SELECT CAST('a' AS \"app\".\"measure\"(- (1), - (- (2)), 'a', \"x\"))", (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind("SELECT app.measure(-(1), - -2, ('a'), (x)) 'a'")));
     }
 
     #[TestWith(["SELECT app.measure(-'1') 'a'"])]

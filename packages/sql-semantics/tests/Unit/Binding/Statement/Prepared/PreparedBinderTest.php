@@ -24,7 +24,7 @@ final class PreparedBinderTest extends TestCase
         self::assertSame(['integer', 'text'], array_map(static fn ($type): string => $type->name, $statement->parameterTypes));
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->statement);
         self::assertSame(['integer', 'text'], array_map(static fn ($output): string => $output->expression->type->name, $statement->statement->outputs));
-        self::assertSame('PREPARE "p"(integer, text) AS SELECT $1, $2', $statement->toString());
+        self::assertSame('PREPARE "p"(integer, text) AS SELECT $1, $2', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testQueryAcceptsMutationsAsPreparableStatements(): void
@@ -47,7 +47,7 @@ final class PreparedBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Prepared\PrepareTextStatement::class, $variable);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedVariableReference::class, $variable->sql);
         self::assertSame('v', $variable->sql->name);
-        self::assertSame('PREPARE `s` FROM @`v`', $variable->toString());
+        self::assertSame('PREPARE `s` FROM @`v`', (new \SqlSemantics\SimpleSerializer())->serialize($variable));
     }
 
     public function testBindSeparatesExecutionAndDeallocationForms(): void
@@ -65,7 +65,7 @@ final class PreparedBinderTest extends TestCase
         $using = $mysql->bind('EXECUTE s USING @a, @b', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Prepared\ExecuteUsingStatement::class, $using);
         self::assertSame(['a', 'b'], array_column($using->variables, 'name'));
-        self::assertSame('EXECUTE `s` USING @`a`, @`b`', $using->toString());
+        self::assertSame('EXECUTE `s` USING @`a`, @`b`', (new \SqlSemantics\SimpleSerializer())->serialize($using));
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Prepared\DeallocateStatement::class, $mysql->bind('DROP PREPARE s'));
     }
 
@@ -79,6 +79,6 @@ final class PreparedBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Prepared\PrepareQueryStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

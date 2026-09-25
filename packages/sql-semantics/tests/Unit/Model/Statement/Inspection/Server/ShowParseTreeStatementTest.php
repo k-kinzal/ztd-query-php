@@ -25,7 +25,7 @@ final class ShowParseTreeStatementTest extends TestCase
         self::assertSame('SELECT', $statement->statement->kind->value);
         self::assertSame(['Parse_tree'], array_column($statement->resultColumns(), 'name'));
         self::assertSame('json', $statement->resultColumns()[0]->expression->type->name);
-        self::assertSame('SHOW PARSE_TREE SELECT `id` AS `id` FROM `users`', $statement->toString());
+        self::assertSame('SHOW PARSE_TREE SELECT `id` AS `id` FROM `users`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithStatementParsesAnotherStatementImmutably(): void
@@ -38,7 +38,7 @@ final class ShowParseTreeStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame('SELECT', $statement->statement->kind->value);
         self::assertInstanceOf(ShowDatabasesStatement::class, $changed->statement);
-        self::assertSame('SHOW PARSE_TREE SHOW DATABASES', $changed->toString());
+        self::assertSame('SHOW PARSE_TREE SHOW DATABASES', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheStatement(): void

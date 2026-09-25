@@ -39,8 +39,8 @@ final class PartitionChangesTest extends TestCase
         $statement = $binder->bind('ALTER TABLE t REBUILD PARTITION a, b');
         self::assertInstanceOf(AlterTableStatement::class, $statement);
         self::assertInstanceOf(ProcessPartitions::class, $statement->alterations[0]);
-        self::assertSame('ALTER TABLE `t` REBUILD PARTITION `a`, `b`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER TABLE `t` REBUILD PARTITION `a`, `b`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testAddDiagnosesAPartitionWithoutDefinitionsOrCount(): void
@@ -110,7 +110,7 @@ final class PartitionChangesTest extends TestCase
     #[DataProvider('providerBindSpellsEveryStandaloneCommand')]
     public function testBindSpellsEveryStandaloneCommand(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT); CREATE TABLE u(id INT, n INT)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT); CREATE TABLE u(id INT, n INT)')))->bind($sql)));
     }
 
     public function testAddRejectsAZeroPartitionCount(): void

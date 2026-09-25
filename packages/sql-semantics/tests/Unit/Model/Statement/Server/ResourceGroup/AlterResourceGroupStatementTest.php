@@ -23,21 +23,21 @@ final class AlterResourceGroupStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER RESOURCE GROUP g VCPU 1 DISABLE FORCE');
         self::assertInstanceOf(AlterResourceGroupStatement::class, $statement);
-        self::assertSame('ALTER RESOURCE GROUP `g` VCPU = 1 DISABLE FORCE', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER RESOURCE GROUP `g` VCPU = 1 DISABLE FORCE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameChangesAnotherGroup(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER RESOURCE GROUP g');
         self::assertInstanceOf(AlterResourceGroupStatement::class, $statement);
-        self::assertSame('ALTER RESOURCE GROUP `h`', $statement->withName('h')->toString());
+        self::assertSame('ALTER RESOURCE GROUP `h`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName('h')));
     }
 
     public function testWithCpusReplacesTheRanges(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER RESOURCE GROUP g');
         self::assertInstanceOf(AlterResourceGroupStatement::class, $statement);
-        self::assertSame('ALTER RESOURCE GROUP `g` VCPU = 0-7', $statement->withCpus([new CpuRange(0, 7)])->toString());
+        self::assertSame('ALTER RESOURCE GROUP `g` VCPU = 0-7', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withCpus([new CpuRange(0, 7)])));
         self::assertSame([], $statement->cpus);
     }
 
@@ -54,7 +54,7 @@ final class AlterResourceGroupStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER RESOURCE GROUP g');
         self::assertInstanceOf(AlterResourceGroupStatement::class, $statement);
-        self::assertSame('ALTER RESOURCE GROUP `g` ENABLE', $statement->withState(ResourceGroupState::Enabled)->toString());
+        self::assertSame('ALTER RESOURCE GROUP `g` ENABLE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withState(ResourceGroupState::Enabled)));
         self::assertNull($statement->state);
     }
 

@@ -31,7 +31,7 @@ final class CatalogRemovalsTest extends TestCase
     public function testWriteProducesTheStatementText(string $sql): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind($sql, strict: false);
-        self::assertSame($statement->toString(), CatalogRemovals::write($statement)?->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), CatalogRemovals::write($statement)?->toString());
     }
 
     /**

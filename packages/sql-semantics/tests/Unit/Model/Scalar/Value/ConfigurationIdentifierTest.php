@@ -35,8 +35,8 @@ final class ConfigurationIdentifierTest extends TestCase
         self::assertSame([], $value->inputs());
         self::assertSame('text', $value->type->name);
         self::assertSame(Nullability::NotNull, $value->nullability);
-        self::assertSame('SET "search_path" = "public", "pg_catalog"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SET "search_path" = "public", "pg_catalog"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testSpellingJoinsTheNameParts(): void

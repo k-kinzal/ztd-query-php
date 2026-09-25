@@ -28,8 +28,8 @@ final class TrimBinderTest extends TestCase
     public function testBindKeepsTheMySqlSideRemovedCharactersAndString(string $release, string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(["SELECT TRIM(LEADING 'a' FROM 'b')", "SELECT TRIM(LEADING 'a' FROM 'b')"])]
@@ -39,8 +39,8 @@ final class TrimBinderTest extends TestCase
     public function testBindReadsThePostgreSqlArgumentListAsStringThenCharacters(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testBindDiagnosesTooManyPostgreSqlOperands(): void
@@ -54,6 +54,6 @@ final class TrimBinderTest extends TestCase
     #[TestWith([Dialect::Sqlite, "SELECT trim('a', 'b')", "SELECT trim('a', 'b')"])]
     public function testBindLeavesOrdinaryFunctionsToSignatureResolution(Dialect $dialect, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder($dialect))->build()))->bind($sql)));
     }
 }

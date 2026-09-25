@@ -30,8 +30,8 @@ final class FunctionRelationTest extends TestCase
         self::assertSame(['n'], array_column($relation->outputs, 'name'));
         self::assertSame(array_column($relation->outputs, 'expression'), $relation->resultExpressions());
         self::assertSame($relation->function->type, $relation->resultExpressions()[0]->type);
-        self::assertSame('SELECT "g"."n" AS "n" FROM "generate_series"(1, 3) AS "g"("n")', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT "g"."n" AS "n" FROM "generate_series"(1, 3) AS "g"("n")', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testResultExpressionsFollowTheOutputs(): void

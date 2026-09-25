@@ -28,7 +28,7 @@ final class TableOccurrenceTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertTrue($statement instanceof UpdateStatement || $statement instanceof DeleteStatement);
         self::assertInstanceOf(OnlyTableReference::class, $statement->affectedTables()[0]);
-        self::assertSame($serialized, $statement->toString());
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($serialized);
         self::assertTrue($rebound instanceof UpdateStatement || $rebound instanceof DeleteStatement);
         self::assertInstanceOf(OnlyTableReference::class, $rebound->affectedTables()[0]);
@@ -59,8 +59,8 @@ final class TableOccurrenceTest extends TestCase
         self::assertSame([\SqlSemantics\Model\Query\Optimization\IndexHintScope::Join, null, \SqlSemantics\Model\Query\Optimization\IndexHintScope::GroupBy, \SqlSemantics\Model\Query\Optimization\IndexHintScope::OrderBy], array_column($hints, 'scope'));
         self::assertSame([['k', 'PRIMARY'], [], ['k'], ['k']], array_column($hints, 'indexes'));
         $expected = 'SELECT `a` AS `a` FROM `t` AS `x` USE INDEX FOR JOIN(`k`, `PRIMARY`) USE INDEX() FORCE INDEX FOR GROUP BY(`k`) IGNORE INDEX FOR ORDER BY(`k`)';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testHintsLeaveOtherDialectsWithoutHints(): void
@@ -74,7 +74,7 @@ final class TableOccurrenceTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT, KEY k (a))'));
         $statement = $binder->bind('UPDATE t USE INDEX (k) SET a = 1');
         self::assertInstanceOf(UpdateStatement::class, $statement);
-        self::assertSame('UPDATE `t` USE INDEX(`k`) SET `a` = 1', $statement->toString());
+        self::assertSame('UPDATE `t` USE INDEX(`k`) SET `a` = 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
 
@@ -94,8 +94,8 @@ final class TableOccurrenceTest extends TestCase
             'DELETE FROM t PARTITION (p0) WHERE id = 1' => 'DELETE FROM `t` PARTITION(`p0`) WHERE (`id` = 1)',
             'INSERT t PARTITION (p0) SELECT * FROM t PARTITION (p1)' => 'INSERT INTO `t` PARTITION(`p0`) SELECT `t`.`id` AS `id`, `t`.`a` AS `a` FROM `t` PARTITION(`p1`)',
         ];
-        self::assertSame(array_values($cases), array_map(static fn (string $sql): string => $binder->bind($sql)->toString(), array_keys($cases)));
-        self::assertSame(array_values($cases), array_map(static fn (string $sql): string => $binder->bind($sql)->toString(), array_values($cases)));
+        self::assertSame(array_values($cases), array_map(static fn (string $sql): string => (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)), array_keys($cases)));
+        self::assertSame(array_values($cases), array_map(static fn (string $sql): string => (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)), array_values($cases)));
         $statement = $binder->bind('SELECT * FROM t PARTITION (p0, p1)');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $statement->from);
@@ -111,8 +111,8 @@ final class TableOccurrenceTest extends TestCase
     public function testIndexingKeepsTheSqliteIndexDirective(string $sql, string $serialized): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (id INTEGER PRIMARY KEY, a INT); CREATE INDEX ix ON t(a)'));
-        self::assertSame($serialized, $binder->bind($sql)->toString());
-        self::assertSame($serialized, $binder->bind($serialized)->toString());
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($serialized)));
         self::assertNull(TableOccurrence::indexing(null, new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite)));
     }
 
@@ -138,7 +138,7 @@ final class TableOccurrenceTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INT, a INT)'));
         $expected = 'SELECT "t"."id" AS "id", "t"."a" AS "a", "z"."id" AS "id", "z"."a" AS "a" FROM "public"."t" CROSS JOIN LATERAL(SELECT "u"."id" AS "id", "u"."a" AS "a" FROM "public"."t" AS "u" TABLESAMPLE SYSTEM("t"."a")) AS "z"';
-        self::assertSame($expected, $binder->bind('SELECT * FROM t, LATERAL (SELECT * FROM t u TABLESAMPLE SYSTEM (t.a)) z')->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('SELECT * FROM t, LATERAL (SELECT * FROM t u TABLESAMPLE SYSTEM (t.a)) z')));
         self::assertNull(TableOccurrence::sample(null, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql))));
     }
 }

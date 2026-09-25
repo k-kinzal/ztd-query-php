@@ -22,7 +22,7 @@ final class AccountSettingsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("SET PASSWORD='new'", strict: false);
         self::assertInstanceOf(SetPasswordStatement::class, $statement);
-        self::assertSame("SET PASSWORD = 'new'", $statement->toString());
+        self::assertSame("SET PASSWORD = 'new'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['mysql-8.4.7', 'SET ROLE ALL', 'SET ROLE ALL'])]

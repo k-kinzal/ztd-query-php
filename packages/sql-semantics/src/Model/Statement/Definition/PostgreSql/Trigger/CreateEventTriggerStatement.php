@@ -21,7 +21,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading an event trigger with a tag filter
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("CREATE EVENT TRIGGER guard ON table_rewrite WHEN tag IN ('alter table') EXECUTE PROCEDURE stop_rewrite()");
  *     $statement->event // => \SqlSemantics\Model\Definition\Trigger\EventTriggerEvent::TableRewrite
- *     $statement->toString() // => 'CREATE EVENT TRIGGER "guard" ON "table_rewrite" WHEN TAG IN(\'ALTER TABLE\') EXECUTE FUNCTION "stop_rewrite"()'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE EVENT TRIGGER "guard" ON "table_rewrite" WHEN TAG IN(\'ALTER TABLE\') EXECUTE FUNCTION "stop_rewrite"()'
  */
 final class CreateEventTriggerStatement extends BoundStatement
 {

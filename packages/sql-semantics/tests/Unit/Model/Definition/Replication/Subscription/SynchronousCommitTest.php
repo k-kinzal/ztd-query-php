@@ -30,6 +30,6 @@ final class SynchronousCommitTest extends TestCase
         $statement = $binder->bind('ALTER SUBSCRIPTION s SET (synchronous_commit = ' . $spelling . ')');
         self::assertInstanceOf(Statement\AlterSubscriptionOptionsStatement::class, $statement);
         self::assertSame($value, $statement->options->synchronousCommit);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

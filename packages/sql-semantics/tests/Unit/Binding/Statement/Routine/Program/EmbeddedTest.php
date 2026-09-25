@@ -33,6 +33,6 @@ final class EmbeddedTest extends TestCase
         self::assertInstanceOf(SelectIntoStatement::class, $select);
         self::assertInstanceOf(EmbeddedStatement::class, $update);
         self::assertInstanceOf(UpdateTableStatement::class, $update->statement);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

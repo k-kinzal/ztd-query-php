@@ -38,7 +38,7 @@ final class InvocationBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\WindowCall::class, $windowed);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\FunctionCall::class, $windowed->function);
         self::assertInstanceOf(\SqlSemantics\Model\Window\WindowSpecification::class, $windowed->window);
-        self::assertSame('SELECT "count"(*), "sum"(DISTINCT "a") FILTER (WHERE ("a" > 0)), "string_agg"(CAST("a" AS text), \',\' ORDER BY "a" ASC), "abs"("a"), "rank"() OVER () FROM "public"."t"', $statement->toString());
+        self::assertSame('SELECT "count"(*), "sum"(DISTINCT "a") FILTER (WHERE ("a" > 0)), "string_agg"(CAST("a" AS text), \',\' ORDER BY "a" ASC), "abs"("a"), "rank"() OVER () FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testOrderedSetBindsWithinGroupOrderingToThePerRowInputs(): void
@@ -55,7 +55,7 @@ final class InvocationBinderTest extends TestCase
         $groupKey = $call->withinGroup[0]->key;
         self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $groupKey);
         self::assertSame('a', $groupKey->columnBinding()?->column->name);
-        self::assertSame('SELECT "percentile_cont"(0.5) WITHIN GROUP(ORDER BY "a" DESC) FROM "public"."t"', $statement->toString());
+        self::assertSame('SELECT "percentile_cont"(0.5) WITHIN GROUP(ORDER BY "a" DESC) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindRejectsAnOrderedSetAggregateUsedAsAWindowFunction(): void
@@ -97,7 +97,7 @@ final class InvocationBinderTest extends TestCase
     public function testBindClassifiesEachInvocationForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT, b INT)')))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement->toString(), array_map(static fn ($diagnostic): string => $diagnostic->reason, $statement->diagnostics)]);
+        self::assertSame($expected, [(new \SqlSemantics\SimpleSerializer())->serialize($statement), array_map(static fn ($diagnostic): string => $diagnostic->reason, $statement->diagnostics)]);
     }
 
 
@@ -129,8 +129,8 @@ final class InvocationBinderTest extends TestCase
         self::assertSame($call->arguments[2], $call->orderBy[0]->key->output->expression);
         self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputPosition::class, $call->orderBy[1]->key);
         self::assertSame($call->arguments[0], $call->orderBy[1]->key->output->expression);
-        self::assertSame("SELECT group_concat(`a`, '-', `b` ORDER BY 3 DESC, 1 ASC) FROM `t`", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SELECT group_concat(`a`, '-', `b` ORDER BY 3 DESC, 1 ASC) FROM `t`", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindRejectsAGroupConcatOrderingPositionBeyondItsArguments(): void
@@ -139,5 +139,33 @@ final class InvocationBinderTest extends TestCase
         $this->expectException(InvalidSql::class);
         $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::OutputPosition->message());
         $binder->bind('SELECT GROUP_CONCAT(a ORDER BY 2) FROM t');
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.0.44', 'SELECT LEAD(a) IGNORE NULLS OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.0.44', 'SELECT NTH_VALUE(a, 2) FROM LAST OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.1.0', 'SELECT LEAD(a) IGNORE NULLS OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.1.0', 'SELECT NTH_VALUE(a, 2) FROM LAST OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.2.0', 'SELECT LEAD(a) IGNORE NULLS OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.2.0', 'SELECT NTH_VALUE(a, 2) FROM LAST OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.3.0', 'SELECT LEAD(a) IGNORE NULLS OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.3.0', 'SELECT NTH_VALUE(a, 2) FROM LAST OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'SELECT LEAD(a) IGNORE NULLS OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'SELECT NTH_VALUE(a, 2) FROM LAST OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.0.1', 'SELECT LEAD(a) IGNORE NULLS OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.0.1', 'SELECT NTH_VALUE(a, 2) FROM LAST OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0', 'SELECT LEAD(a) IGNORE NULLS OVER () FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0', 'SELECT NTH_VALUE(a, 2) FROM LAST OVER () FROM t'])]
+    public function testBindRejectsTheWindowModifiersMySqlDoesNotImplement(string $release, string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE t(a INT)'));
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::WindowModifier->message());
+        $binder->bind($sql);
+    }
+
+    public function testBindAcceptsTheWindowModifiersMySqlImplements(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('SELECT NTH_VALUE(a, 2) FROM FIRST RESPECT NULLS OVER () FROM t');
+        self::assertSame('SELECT nth_value(`a`, 2) OVER () FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -72,6 +72,6 @@ final class IdentificationsTest extends TestCase
         self::assertSame("auth'x", Identifications::plugin($tree->find('identified_with_plugin')[0], new Identifiers(Dialect::MySql)));
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE USER u IDENTIFIED WITH 'auth''x'");
         self::assertInstanceOf(CreateUsersStatement::class, $statement);
-        self::assertSame("CREATE USER 'u' IDENTIFIED WITH `auth'x`", $statement->toString());
+        self::assertSame("CREATE USER 'u' IDENTIFIED WITH `auth'x`", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

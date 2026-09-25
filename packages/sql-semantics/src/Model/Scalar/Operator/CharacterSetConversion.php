@@ -22,7 +22,7 @@ use SqlSemantics\Type\TypeDescriptor;
  * @example Reading the target character set
  *     $query = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()))->bind("SELECT CONVERT('abc' USING utf8mb4)");
  *     $query->outputs[0]->expression->characterSet // => 'utf8mb4'
- *     $query->toString() // => "SELECT CONVERT('abc' USING `utf8mb4`)"
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($query) // => "SELECT CONVERT('abc' USING `utf8mb4`)"
  */
 final class CharacterSetConversion extends Expression
 {

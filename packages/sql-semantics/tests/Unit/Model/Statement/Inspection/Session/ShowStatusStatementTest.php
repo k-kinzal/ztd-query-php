@@ -34,8 +34,8 @@ final class ShowStatusStatementTest extends TestCase
         self::assertSame(VariableScope::Global, $statement->scope);
         self::assertInstanceOf(PatternFilter::class, $statement->filter);
         self::assertSame(['Variable_name', 'Value'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame("SHOW GLOBAL STATUS LIKE 'a%'", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SHOW GLOBAL STATUS LIKE 'a%'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['SHOW STATUS'])]
@@ -46,7 +46,7 @@ final class ShowStatusStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql);
         self::assertInstanceOf(ShowStatusStatement::class, $statement);
         self::assertSame(VariableScope::Session, $statement->scope);
-        self::assertSame('SHOW STATUS', $statement->toString());
+        self::assertSame('SHOW STATUS', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithScopeReplacesTheScopeImmutably(): void
@@ -56,7 +56,7 @@ final class ShowStatusStatementTest extends TestCase
         $changed = $statement->withScope(VariableScope::Global);
         self::assertNotSame($statement, $changed);
         self::assertSame(VariableScope::Session, $statement->scope);
-        self::assertSame('SHOW GLOBAL STATUS', $changed->toString());
+        self::assertSame('SHOW GLOBAL STATUS', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithFilterBindsAConditionOverTheResultFields(): void
@@ -70,8 +70,8 @@ final class ShowStatusStatementTest extends TestCase
         $changed = $statement->withFilter($other->filter);
         self::assertNotSame($statement, $changed);
         self::assertInstanceOf(PatternFilter::class, $statement->filter);
-        self::assertSame("SHOW STATUS WHERE (`Variable_name` = 'y')", $changed->toString());
-        self::assertSame('SHOW STATUS', $changed->withFilter(null)->toString());
+        self::assertSame("SHOW STATUS WHERE (`Variable_name` = 'y')", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SHOW STATUS', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withFilter(null)));
     }
 
     public function testWithOriginRetainsTheOperands(): void

@@ -37,8 +37,8 @@ final class JsonTableTest extends TestCase
         self::assertSame(['k'], array_column($table->passing, 'name'));
         self::assertSame(TableError::Error, $table->onError);
         self::assertCount(1, $table->columns);
-        self::assertSame('SELECT "j"."n" AS "n" FROM JSON_TABLE(\'[]\', \'$[*]\' AS "root" PASSING 2 AS "k" COLUMNS("n" FOR ORDINALITY) ERROR ON ERROR) AS "j"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT "j"."n" AS "n" FROM JSON_TABLE(\'[]\', \'$[*]\' AS "root" PASSING 2 AS "k" COLUMNS("n" FOR ORDINALITY) ERROR ON ERROR) AS "j"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testDerivesTheDialectFromTheDocumentAndDefaultsTheOptions(): void

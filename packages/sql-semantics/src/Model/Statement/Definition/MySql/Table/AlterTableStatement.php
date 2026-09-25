@@ -26,7 +26,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('ALTER TABLE t ALGORITHM = INPLACE, LOCK = NONE, ADD COLUMN n INT, ADD INDEX ix (n)');
  *     [$statement->table->declaration->name, count($statement->alterations)] // => ['t', 2]
  *     $statement->lock // => \SqlSemantics\Model\Definition\IndexLock::None
- *     $statement->toString() // => 'ALTER TABLE `t` ALGORITHM = INPLACE, LOCK = NONE, ADD COLUMN `n` integer, ADD INDEX `ix`(`n`)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER TABLE `t` ALGORITHM = INPLACE, LOCK = NONE, ADD COLUMN `n` integer, ADD INDEX `ix`(`n`)'
  * @example Rejecting a partition command combined with another alteration
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(id INT)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('ALTER TABLE t TRUNCATE PARTITION ALL');

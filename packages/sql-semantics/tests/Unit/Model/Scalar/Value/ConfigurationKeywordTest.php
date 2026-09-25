@@ -37,8 +37,8 @@ final class ConfigurationKeywordTest extends TestCase
         self::assertInstanceOf(ConfigurationKeyword::class, $value);
         self::assertSame($keyword, $value->keyword);
         self::assertSame([], $value->inputs());
-        self::assertSame($serialized, $statement->toString());
-        self::assertSame($serialized, $binder->bind($serialized)->toString());
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($serialized)));
     }
 
     public function testSpellingReturnsTheKeywordText(): void

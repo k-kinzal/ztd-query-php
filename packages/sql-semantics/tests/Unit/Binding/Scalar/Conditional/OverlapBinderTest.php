@@ -50,7 +50,7 @@ final class OverlapBinderTest extends TestCase
     #[TestWith([Dialect::MySql, 'SELECT (1, 2) = (3, 4)', 'SELECT ((1, 2) = (3, 4))'])]
     public function testBindLeavesOtherRowsAndSubqueries(Dialect $dialect, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder($dialect))->build()))->bind($sql)));
     }
 
     public function testBindIgnoresOtherDialects(): void

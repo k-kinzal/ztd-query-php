@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Creating a template
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH TEMPLATE app.plain (INIT = dsimple_init, LEXIZE = dsimple_lexize)');
  *     $statement->lexize->parts // => ['dsimple_lexize']
- *     $statement->toString() // => 'CREATE TEXT SEARCH TEMPLATE "app"."plain"(INIT = "dsimple_init", LEXIZE = "dsimple_lexize")'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE TEXT SEARCH TEMPLATE "app"."plain"(INIT = "dsimple_init", LEXIZE = "dsimple_lexize")'
  */
 final class CreateTextSearchTemplateStatement extends BoundStatement
 {

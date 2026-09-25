@@ -35,7 +35,7 @@ final class LogfileGroupsTest extends TestCase
         self::assertInstanceOf(Statement\AlterLogfileGroupStatement::class, $alter);
         self::assertSame([LogFileKind::Undo, 'u.log', 1024, 2048, 1, 'NDB'], [$create->fileKind, $create->file, $create->options->initialSize, $create->options->undoBufferSize, $create->options->nodegroup, $create->options->engine]);
         self::assertSame(['v.log', 4, CompletionWait::NoWait], [$alter->file, $alter->initialSize, $alter->waiting]);
-        self::assertSame($alter->toString(), $binder->bind($alter->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($alter), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($alter))));
     }
 
     public function testBindLegacyRedoFile(): void

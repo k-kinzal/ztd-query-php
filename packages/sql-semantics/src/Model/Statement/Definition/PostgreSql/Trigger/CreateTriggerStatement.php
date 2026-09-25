@@ -27,7 +27,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement->table->name->parts // => ['public', 't']
  *     $statement->timing // => \SqlSemantics\Model\Trigger\Timing::Before
  *     $statement->orReplace // => true
- *     $statement->toString() // => 'CREATE OR REPLACE TRIGGER "audit" BEFORE UPDATE ON "public"."t" FOR EACH ROW WHEN (("old"."a" <> "new"."a")) EXECUTE FUNCTION "log_change"()'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE OR REPLACE TRIGGER "audit" BEFORE UPDATE ON "public"."t" FOR EACH ROW WHEN (("old"."a" <> "new"."a")) EXECUTE FUNCTION "log_change"()'
  */
 final class CreateTriggerStatement extends BoundStatement
 {

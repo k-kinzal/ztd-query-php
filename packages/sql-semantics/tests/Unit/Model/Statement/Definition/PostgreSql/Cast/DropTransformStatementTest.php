@@ -28,8 +28,8 @@ final class DropTransformStatementTest extends TestCase
         self::assertInstanceOf(DropTransformStatement::class, $statement);
         self::assertSame('integer[]', $statement->transform->type->name);
         self::assertSame('plperl', $statement->transform->language);
-        self::assertSame('DROP TRANSFORM FOR integer [] LANGUAGE "plperl" RESTRICT', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('DROP TRANSFORM FOR integer [] LANGUAGE "plperl" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -44,7 +44,7 @@ final class DropTransformStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP TRANSFORM FOR hstore LANGUAGE plperl');
         self::assertInstanceOf(DropTransformStatement::class, $statement);
-        self::assertSame('DROP TRANSFORM FOR "hstore" LANGUAGE "plperl"', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('DROP TRANSFORM FOR "hstore" LANGUAGE "plperl"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithTransformReplacesTheOperand(): void
@@ -66,6 +66,6 @@ final class DropTransformStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP TRANSFORM FOR hstore LANGUAGE plperl');
         self::assertInstanceOf(DropTransformStatement::class, $statement);
-        self::assertSame('DROP TRANSFORM FOR "hstore" LANGUAGE "plperl" CASCADE', $statement->withBehavior(DropBehavior::Cascade)->toString());
+        self::assertSame('DROP TRANSFORM FOR "hstore" LANGUAGE "plperl" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withBehavior(DropBehavior::Cascade)));
     }
 }

@@ -39,6 +39,6 @@ final class SqlitePlanTest extends TestCase
         self::assertInstanceOf(ExplainStatement::class, $statement);
         self::assertSame($plan, $statement->options);
         self::assertSame($sql, $statement->toString());
-        self::assertSame($sql, $binder->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 }

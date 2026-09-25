@@ -32,8 +32,8 @@ final class ServerObjectTargetsTest extends TestCase
         $statement = $binder->bind('GRANT CONNECT ON DATABASE d, e TO a');
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertEquals(new ServerObjectTargets(ServerObjectClass::Database, ['d', 'e']), $statement->target);
-        self::assertSame('GRANT CONNECT ON DATABASE "d", "e" TO "a"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('GRANT CONNECT ON DATABASE "d", "e" TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnEmptyObjectName(): void

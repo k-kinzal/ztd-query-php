@@ -31,8 +31,8 @@ final class LockRelationsStatementTest extends TestCase
         self::assertTrue($statement->nowait);
         $copy = $statement->withOrigin($statement->origin);
         self::assertSame($statement->tables, $copy->tables);
-        self::assertSame('LOCK TABLE ONLY "public"."t", "public"."u" IN SHARE ROW EXCLUSIVE MODE NOWAIT', $copy->toString());
-        self::assertSame($copy->toString(), $binder->bind($copy->toString())->toString());
+        self::assertSame('LOCK TABLE ONLY "public"."t", "public"."u" IN SHARE ROW EXCLUSIVE MODE NOWAIT', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($copy), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($copy))));
     }
 
     public function testWithModeChangesOnlyTheConflictMode(): void
@@ -43,7 +43,7 @@ final class LockRelationsStatementTest extends TestCase
         self::assertSame(PostgreSqlLockMode::AccessExclusive, $statement->mode);
         self::assertSame(PostgreSqlLockMode::AccessShare, $changed->mode);
         self::assertFalse($changed->nowait);
-        self::assertSame('LOCK TABLE "public"."t" IN ACCESS SHARE MODE', $changed->toString());
+        self::assertSame('LOCK TABLE "public"."t" IN ACCESS SHARE MODE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTablesPreservesOnlySelection(): void

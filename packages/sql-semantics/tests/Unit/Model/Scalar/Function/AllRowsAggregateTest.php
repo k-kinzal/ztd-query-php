@@ -34,7 +34,7 @@ final class AllRowsAggregateTest extends TestCase
         self::assertSame($signature, $aggregate->function->signature);
         self::assertSame($integer, $aggregate->type);
         self::assertCount(1, $aggregate->inputs());
-        self::assertSame('SELECT "app"."row_total"(*) FILTER (WHERE TRUE)', $statement->toString());
+        self::assertSame('SELECT "app"."row_total"(*) FILTER (WHERE TRUE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRetainsTheNameAndAllRowsInputOfAnUnregisteredAggregate(): void
@@ -46,7 +46,7 @@ final class AllRowsAggregateTest extends TestCase
         self::assertInstanceOf(UnresolvedFunction::class, $aggregate->function);
         self::assertSame(['app', 'row_total'], $aggregate->function->name()->parts);
         self::assertSame([], $aggregate->inputs());
-        self::assertSame('SELECT "app"."row_total"(*)', $statement->toString());
+        self::assertSame('SELECT "app"."row_total"(*)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithFactsPreservesTheReferenceAndFilter(): void

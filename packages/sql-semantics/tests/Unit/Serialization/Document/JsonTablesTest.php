@@ -33,7 +33,7 @@ final class JsonTablesTest extends TestCase
         self::assertInstanceOf(JsonTable::class, $table);
         $expected = "JSON_TABLE('[1]' FORMAT JSON, '$[*]' AS \"root\" PASSING 1 AS \"x\" COLUMNS(\"id\" FOR ORDINALITY, \"n\" integer PATH '$' WITH UNCONDITIONAL WRAPPER KEEP QUOTES DEFAULT 0 ON EMPTY ERROR ON ERROR, \"e\" integer EXISTS PATH '$.e' TRUE ON ERROR, \"t\" text FORMAT JSON PATH '$' OMIT QUOTES, NESTED PATH '$.k[*]' AS \"nested\" COLUMNS(\"v\" text PATH '$' NULL ON EMPTY)) ERROR ON ERROR)";
         self::assertSame($expected, JsonTables::write($table, Dialect::PostgreSql)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(BoundSelect::class, $rebound);
         $again = $rebound->from;
         self::assertInstanceOf(DocumentRelation::class, $again);
@@ -51,8 +51,8 @@ final class JsonTablesTest extends TestCase
         $statement = $binder->bind("SELECT * FROM JSON_TABLE('[1]', '$[*]' COLUMNS (id FOR ORDINALITY, n INT PATH '$' DEFAULT '0' ON EMPTY ERROR ON ERROR, e INT EXISTS PATH '$.e', NESTED PATH '$.k[*]' COLUMNS (v VARCHAR(10) PATH '$' NULL ON EMPTY))) AS jt");
         self::assertInstanceOf(BoundSelect::class, $statement);
         $expected = "SELECT `jt`.`id` AS `id`, `jt`.`n` AS `n`, `jt`.`e` AS `e`, `jt`.`v` AS `v` FROM JSON_TABLE('[1]', '$[*]' COLUMNS(`id` FOR ORDINALITY, `n` integer PATH '$' DEFAULT '0' ON EMPTY ERROR ON ERROR, `e` integer EXISTS PATH '$.e', NESTED PATH '$.k[*]' COLUMNS(`v` varchar(10) PATH '$' NULL ON EMPTY))) AS `jt`";
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testInputKeepsAnExplicitFormatWithItsExpression(): void
@@ -85,8 +85,8 @@ final class JsonTablesTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.0.44'))->build());
         $statement = $binder->bind("SELECT * FROM JSON_TABLE('[]', '$[*]' COLUMNS (v INT PATH '$' DEFAULT -1 ON EMPTY)) j");
-        self::assertSame("SELECT `j`.`v` AS `v` FROM JSON_TABLE('[]', '$[*]' COLUMNS(`v` integer PATH '$' DEFAULT - 1 ON EMPTY)) AS `j`", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SELECT `j`.`v` AS `v` FROM JSON_TABLE('[]', '$[*]' COLUMNS(`v` integer PATH '$' DEFAULT - 1 ON EMPTY)) AS `j`", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testResponseWritesDefaultsAndBehaviorsAgainstTheirCondition(): void

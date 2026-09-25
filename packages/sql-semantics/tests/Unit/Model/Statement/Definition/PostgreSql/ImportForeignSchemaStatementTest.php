@@ -45,7 +45,7 @@ final class ImportForeignSchemaStatementTest extends TestCase
         $changed = $statement->withLocalSchema('app"; DROP SCHEMA ext; --');
         self::assertSame('app', $statement->localSchema);
         self::assertSame('app"; DROP SCHEMA ext; --', $changed->localSchema);
-        self::assertStringContainsString('"app""; DROP SCHEMA ext; --"', $changed->toString());
+        self::assertStringContainsString('"app""; DROP SCHEMA ext; --"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithSelectionChangesBetweenExplicitSelectionForms(): void
@@ -60,7 +60,7 @@ final class ImportForeignSchemaStatementTest extends TestCase
         self::assertInstanceOf(ExcludeForeignTables::class, $except->selection);
         self::assertSame(['private'], $except->selection->tables[0]->name->parts);
         self::assertSame(AllForeignTables::InSchema, $all->selection);
-        self::assertSame($statement->toString(), $all->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($all));
     }
 
     public function testWithOptionsRefreshesLiteralFactsAndPreservesTheOriginal(): void

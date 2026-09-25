@@ -23,7 +23,7 @@ final class SetColumnNullabilityTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER COLUMN id DROP NOT NULL, ALTER id SET NOT NULL', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals([new Relation\Column\SetColumnNullability('id', \SqlSemantics\Type\Nullability::MaybeNull), new Relation\Column\SetColumnNullability('id', \SqlSemantics\Type\Nullability::NotNull)], $statement->actions);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" DROP NOT NULL, ALTER COLUMN "id" SET NOT NULL', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" DROP NOT NULL, ALTER COLUMN "id" SET NOT NULL', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnUnknownNullability(): void

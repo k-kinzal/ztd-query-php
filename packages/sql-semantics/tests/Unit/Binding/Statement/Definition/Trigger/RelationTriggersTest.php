@@ -38,8 +38,8 @@ final class RelationTriggersTest extends TestCase
         self::assertSame(TriggerLevel::Statement, $statement->level);
         self::assertSame([RowVersion::New, RowVersion::Old], array_map(static fn ($table) => $table->version, $statement->transitions));
         self::assertTrue($statement->orReplace);
-        self::assertSame('CREATE OR REPLACE TRIGGER "audit" AFTER UPDATE ON "public"."t" REFERENCING NEW TABLE AS "added" OLD TABLE AS "removed" FOR EACH STATEMENT EXECUTE FUNCTION "audit"."log"(\'1\', \'x\')', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE OR REPLACE TRIGGER "audit" AFTER UPDATE ON "public"."t" REFERENCING NEW TABLE AS "added" OLD TABLE AS "removed" FOR EACH STATEMENT EXECUTE FUNCTION "audit"."log"(\'1\', \'x\')', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['CREATE TRIGGER x AFTER INSERT OR INSERT ON t EXECUTE FUNCTION f()'])]
@@ -107,7 +107,7 @@ final class RelationTriggersTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE TRIGGER x AFTER INSERT ON t EXECUTE PROCEDURE "S".f()');
         self::assertInstanceOf(CreateTriggerStatement::class, $statement);
         self::assertSame(['S', 'f'], $statement->invocation->function->parts);
-        self::assertStringEndsWith('EXECUTE FUNCTION "S"."f"()', $statement->toString());
+        self::assertStringEndsWith('EXECUTE FUNCTION "S"."f"()', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['42', '42'])]
@@ -153,6 +153,6 @@ final class RelationTriggersTest extends TestCase
     #[TestWith(['create trigger tr before truncate on t execute function f(0b11, 0x0a)', 'CREATE TRIGGER "tr" BEFORE TRUNCATE ON "public"."t" FOR EACH STATEMENT EXECUTE FUNCTION "f"(\'3\', \'10\')'])]
     public function testBindReadsLowercaseKeywordsAndIntegerBases(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql)));
     }
 }

@@ -39,7 +39,7 @@ final class ContextReferenceTest extends TestCase
         self::assertSame($type, $value->type->name);
         self::assertSame(Nullability::NotNull, $value->nullability);
         self::assertSame($sql, $statement->toString());
-        self::assertSame($sql, $binder->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 
     #[TestWith([ContextValueKind::SessionUser, null, 'SESSION_USER'])]

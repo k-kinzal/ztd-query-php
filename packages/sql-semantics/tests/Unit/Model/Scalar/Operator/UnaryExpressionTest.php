@@ -30,8 +30,8 @@ final class UnaryExpressionTest extends TestCase
         self::assertSame($operator, $predicate->operator);
         self::assertSame([$predicate->operand], $predicate->inputs());
         self::assertSame(Nullability::NotNull, $predicate->nullability);
-        self::assertSame('SELECT (NULL ' . $operator->value . ')', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT (NULL ' . $operator->value . ')', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     /**

@@ -25,7 +25,7 @@ final class AddConstraintTest extends TestCase
         self::assertInstanceOf(Relation\Constraint\AddConstraint::class, $statement->actions[0]);
         self::assertSame('positive', $statement->actions[0]->constraint->name);
         self::assertTrue($statement->actions[0]->notValid);
-        self::assertSame('ALTER TABLE "t" ADD CONSTRAINT "positive" CHECK (("id" > 0)) NOT VALID', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ADD CONSTRAINT "positive" CHECK (("id" > 0)) NOT VALID', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsNotValidOnAKey(): void

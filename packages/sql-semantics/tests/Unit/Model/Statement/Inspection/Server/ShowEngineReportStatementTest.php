@@ -26,7 +26,7 @@ final class ShowEngineReportStatementTest extends TestCase
         self::assertSame('InnoDB', $statement->engine);
         self::assertSame(EngineReport::Status, $statement->report);
         self::assertSame(['Type', 'Name', 'Status'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('SHOW ENGINE `InnoDB` STATUS', $statement->toString());
+        self::assertSame('SHOW ENGINE `InnoDB` STATUS', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithEngineAsksEveryEngineImmutably(): void
@@ -37,8 +37,8 @@ final class ShowEngineReportStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame('INNODB', $statement->engine);
         self::assertSame(EngineSelection::All, $changed->engine);
-        self::assertSame('SHOW ENGINE ALL MUTEX', $changed->toString());
-        self::assertSame('SHOW ENGINE `ndb` MUTEX', $changed->withEngine('ndb')->toString());
+        self::assertSame('SHOW ENGINE ALL MUTEX', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SHOW ENGINE `ndb` MUTEX', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withEngine('ndb')));
     }
 
     public function testWithReportAsksAnotherReportImmutably(): void
@@ -48,7 +48,7 @@ final class ShowEngineReportStatementTest extends TestCase
         $changed = $statement->withReport(EngineReport::Logs);
         self::assertNotSame($statement, $changed);
         self::assertSame(EngineReport::Status, $statement->report);
-        self::assertSame('SHOW ENGINE `INNODB` LOGS', $changed->toString());
+        self::assertSame('SHOW ENGINE `INNODB` LOGS', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheOperands(): void

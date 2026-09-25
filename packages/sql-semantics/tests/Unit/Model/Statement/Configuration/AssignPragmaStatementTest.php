@@ -30,9 +30,9 @@ final class AssignPragmaStatementTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $literal);
         $replacement = new NumericArgument($literal, Sign::Negative);
         $changed = $original->withValue($replacement);
-        self::assertSame('PRAGMA "main"."cache_size" = - 2000', $original->toString());
-        self::assertSame('PRAGMA "main"."cache_size" = - 4000', $changed->toString());
-        self::assertInstanceOf(AssignPragmaStatement::class, $binder->bind($changed->toString()));
+        self::assertSame('PRAGMA "main"."cache_size" = - 2000', (new \SqlSemantics\SimpleSerializer())->serialize($original));
+        self::assertSame('PRAGMA "main"."cache_size" = - 4000', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertInstanceOf(AssignPragmaStatement::class, $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($changed)));
     }
 
     public function testWithOriginKeepsTheNameAndArgument(): void
@@ -43,7 +43,7 @@ final class AssignPragmaStatementTest extends TestCase
         self::assertSame('other', $changed->scopeId);
         self::assertSame($statement->name, $changed->name);
         self::assertSame($statement->value, $changed->value);
-        self::assertSame('PRAGMA "main"."cache_size" = - 2000', $changed->toString());
+        self::assertSame('PRAGMA "main"."cache_size" = - 2000', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame('s0', $statement->scopeId);
     }
 }

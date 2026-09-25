@@ -33,9 +33,18 @@ final class MySqlTables
             $statement instanceof Statement\RenameTablesStatement => new Tree('rename-tables', [Build::keyword('RENAME TABLE'), Build::separated(array_map(self::renaming(...), $statement->renamings))]),
             $statement instanceof Statement\AlterTableStatement => self::alter($statement),
             $statement instanceof Statement\PartitionSchemeStatement => Partitionings::write($statement->partitioning),
+            $statement instanceof Statement\CreateTableFromQueryStatement => self::fromQuery($statement),
             $statement instanceof Statement\GeneratedColumnExpressionStatement => new Tree('parse-gcol-expr', [Build::keyword('PARSE_GCOL_EXPR'), Build::parentheses(Expressions::write($statement->expression))]),
             default => null,
         };
+    }
+
+    /**
+     * Writes the declared table, then the duplicate policy and the input query after AS.
+     */
+    public static function fromQuery(Statement\CreateTableFromQueryStatement $statement): Tree
+    {
+        return new Tree('create-table-from-query', [\SqlSemantics\Serialization\Declarations::declared($statement->definition->table, Dialect::MySql, $statement->ifNotExists), ...($statement->duplicates === null ? [] : [Build::keyword($statement->duplicates->value)]), Build::keyword('AS'), \SqlSemantics\Serialization\Query\Queries::write($statement->query)]);
     }
 
     /**

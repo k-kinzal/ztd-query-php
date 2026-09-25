@@ -23,7 +23,7 @@ final class SetAccessMethodTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t SET ACCESS METHOD DEFAULT, SET ACCESS METHOD heap', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals([new Relation\Storage\SetAccessMethod(null), new Relation\Storage\SetAccessMethod('heap')], $statement->actions);
-        self::assertSame('ALTER TABLE "t" SET ACCESS METHOD DEFAULT, SET ACCESS METHOD "heap"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" SET ACCESS METHOD DEFAULT, SET ACCESS METHOD "heap"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyMethod(): void

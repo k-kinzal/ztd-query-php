@@ -33,7 +33,7 @@ final class VariableDeclarationTest extends TestCase
         self::assertInstanceOf(VariableDeclaration::class, $declaration);
         self::assertSame(['a', 'b'], array_column($declaration->variables(), 'name'));
         self::assertSame($declaration->domain, $declaration->variables()[1]->domain);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsRepeatedNames(): void

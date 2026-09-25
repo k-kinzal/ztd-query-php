@@ -26,7 +26,7 @@ final class PostgreSqlFieldTest extends TestCase
         $extract = $query->outputs[0]->expression;
         self::assertInstanceOf(Extract::class, $extract);
         self::assertSame($field, $extract->field);
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     /**

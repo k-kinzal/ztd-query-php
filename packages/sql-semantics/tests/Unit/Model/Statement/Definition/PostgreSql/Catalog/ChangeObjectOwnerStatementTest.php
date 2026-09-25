@@ -28,8 +28,8 @@ final class ChangeObjectOwnerStatementTest extends TestCase
         self::assertInstanceOf(ChangeObjectOwnerStatement::class, $statement);
         self::assertEquals(new Catalog\NamedIdentity(Kind\NamedObjectKind::Schema, 'app'), $statement->object);
         self::assertSame(SessionRole::SessionUser, $statement->newOwner);
-        self::assertSame('ALTER SCHEMA "app" OWNER TO SESSION_USER', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER SCHEMA "app" OWNER TO SESSION_USER', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -38,7 +38,7 @@ final class ChangeObjectOwnerStatementTest extends TestCase
         self::assertInstanceOf(ChangeObjectOwnerStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -58,7 +58,7 @@ final class ChangeObjectOwnerStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new Catalog\NamedIdentity(Kind\NamedObjectKind::Schema, 'app'), $statement->object);
         self::assertEquals(new Catalog\SchemaObjectIdentity(Kind\SchemaObjectKind::Collation, new QualifiedName(['c'])), $changed->object);
-        self::assertStringContainsString('ALTER COLLATION "c" OWNER TO', $changed->toString());
+        self::assertStringContainsString('ALTER COLLATION "c" OWNER TO', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNewOwnerReplacesTheOperand(): void
@@ -69,7 +69,7 @@ final class ChangeObjectOwnerStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(SessionRole::SessionUser, $statement->newOwner);
         self::assertEquals(new NamedRole('bob'), $changed->newOwner);
-        self::assertStringContainsString('OWNER TO "bob"', $changed->toString());
+        self::assertStringContainsString('OWNER TO "bob"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsARelationWhoseOwnerChangesInsideAlterTable(): void

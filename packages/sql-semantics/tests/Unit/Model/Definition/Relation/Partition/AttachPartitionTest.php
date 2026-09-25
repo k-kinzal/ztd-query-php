@@ -26,7 +26,7 @@ final class AttachPartitionTest extends TestCase
         self::assertInstanceOf(Relation\Partition\AttachPartition::class, $statement->actions[0]);
         self::assertSame(['app', 't_a'], $statement->actions[0]->partition->parts);
         self::assertInstanceOf(Relation\Partition\ListPartitionBound::class, $statement->actions[0]->bound);
-        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "app"."t_a" FOR VALUES IN(1)', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "app"."t_a" FOR VALUES IN(1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOverQualifiedPartition(): void

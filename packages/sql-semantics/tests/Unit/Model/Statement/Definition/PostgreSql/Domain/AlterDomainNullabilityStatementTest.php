@@ -26,21 +26,21 @@ final class AlterDomainNullabilityStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
         self::assertInstanceOf(AlterDomainNullabilityStatement::class, $statement);
         self::assertSame($notNull, $statement->notNull);
-        self::assertSame(str_replace(' d ', ' "d" ', $sql), $statement->toString());
+        self::assertSame(str_replace(' d ', ' "d" ', $sql), (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d SET NOT NULL');
         self::assertInstanceOf(AlterDomainNullabilityStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithDomainReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d SET NOT NULL');
         self::assertInstanceOf(AlterDomainNullabilityStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "s"."e" SET NOT NULL', $statement->withDomain(new QualifiedName(['s', 'e']))->toString());
+        self::assertSame('ALTER DOMAIN "s"."e" SET NOT NULL', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDomain(new QualifiedName(['s', 'e']))));
     }
 
     public function testWithNotNullReplacesTheOperand(): void

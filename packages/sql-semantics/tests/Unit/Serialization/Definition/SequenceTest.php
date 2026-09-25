@@ -27,7 +27,7 @@ final class SequenceTest extends TestCase
         $generation = $statement->definition->table->columns[0]->generation;
         self::assertInstanceOf(IdentityColumn::class, $generation);
         self::assertSame('(START WITH 1 INCREMENT BY 2 MINVALUE 1 MAXVALUE 100 CACHE 5 CYCLE)', Sequence::write($generation->sequence)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateTableStatement::class, $rebound);
         $again = $rebound->definition->table->columns[0]->generation;
         self::assertInstanceOf(IdentityColumn::class, $again);
@@ -53,6 +53,6 @@ final class SequenceTest extends TestCase
         $generation = $statement->definition->table->columns[0]->generation;
         self::assertInstanceOf(IdentityColumn::class, $generation);
         self::assertSame('(SEQUENCE NAME "q" AS smallint LOGGED OWNED BY "t"."a" RESTART)', Sequence::write($generation->sequence)->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

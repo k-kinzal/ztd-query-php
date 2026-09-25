@@ -25,6 +25,6 @@ final class DeallocateStatementTest extends TestCase
         self::assertSame('new-scope', $changed->scopeId);
         self::assertNotSame($statement, $changed);
         self::assertSame('DEALLOCATE PREPARE `s`', $changed->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString(), strict: false)->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString(), strict: false)));
     }
 }

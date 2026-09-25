@@ -35,8 +35,8 @@ final class DocumentPredicateTest extends TestCase
         self::assertSame(Nullability::MaybeNull, $value->nullability);
         self::assertSame([$value->value], $value->inputs());
         self::assertSame(ExpressionKind::XmlPredicate, $value->kind);
-        self::assertSame('SELECT ("x" IS NOT DOCUMENT) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT ("x" IS NOT DOCUMENT) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingNamesTheOperation(): void

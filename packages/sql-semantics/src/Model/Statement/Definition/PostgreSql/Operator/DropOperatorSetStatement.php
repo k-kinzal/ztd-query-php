@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('DROP OPERATOR FAMILY IF EXISTS app.ints USING btree CASCADE');
  *     $statement->object->kind // => \SqlSemantics\Model\Definition\Catalog\Kind\OperatorSetKind::OperatorFamily
  *     $statement->object->method // => 'btree'
- *     $statement->toString() // => 'DROP OPERATOR FAMILY IF EXISTS "app"."ints" USING "btree" CASCADE'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'DROP OPERATOR FAMILY IF EXISTS "app"."ints" USING "btree" CASCADE'
  */
 final class DropOperatorSetStatement extends BoundStatement
 {

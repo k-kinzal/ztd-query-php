@@ -22,6 +22,6 @@ final class SetLoggingTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER SEQUENCE s SET UNLOGGED', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Storage\SetLogging(Relation\Storage\RelationLogging::Unlogged), $statement->actions[0]);
-        self::assertSame('ALTER SEQUENCE "s" SET UNLOGGED', $statement->toString());
+        self::assertSame('ALTER SEQUENCE "s" SET UNLOGGED', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

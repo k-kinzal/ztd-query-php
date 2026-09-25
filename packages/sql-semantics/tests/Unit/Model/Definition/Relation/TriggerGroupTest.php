@@ -27,6 +27,6 @@ final class TriggerGroupTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t DISABLE TRIGGER ALL', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\SetFiring(Relation\FiringTarget::Trigger, Relation\TriggerGroup::All, \SqlSemantics\Model\Definition\Trigger\TriggerFiring::Disabled), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" DISABLE TRIGGER ALL', $statement->toString());
+        self::assertSame('ALTER TABLE "t" DISABLE TRIGGER ALL', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

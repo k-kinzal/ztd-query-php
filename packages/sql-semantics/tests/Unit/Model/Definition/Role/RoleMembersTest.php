@@ -39,10 +39,10 @@ final class RoleMembersTest extends TestCase
         $option = $statement->options[0];
         self::assertInstanceOf(RoleMembers::class, $option);
         self::assertEquals([new NamedRole('a'), new NamedRole('b')], $option->roles);
-        self::assertSame('CREATE ROLE "r" ROLE "a", "b"', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('CREATE ROLE "r" ROLE "a", "b"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateRoleStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testAnAlterationWritesTheMembersWithTheUserKeyword(): void
@@ -53,9 +53,9 @@ final class RoleMembersTest extends TestCase
         $option = $statement->options[0];
         self::assertInstanceOf(RoleMembers::class, $option);
         self::assertEquals([new NamedRole('a')], $option->roles);
-        self::assertSame('ALTER ROLE "r" USER "a"', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('ALTER ROLE "r" USER "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(AlterRoleStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * PHP-Fuzzer entry point: every PostgreSQL statement sql-faker generates must produce semantic structure.
+ * PHP-Fuzzer entry point: every PostgreSQL statement sql-faker generates must bind into a Statement that writes back the same SQL.
  *
  * Usage:
  *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_semantics.php fuzz/corpus/pg/

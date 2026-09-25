@@ -32,7 +32,7 @@ final class QueriesTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $statement);
         $expected = 'WITH "c" AS (SELECT 1 AS "x") SELECT DISTINCT "id" AS "id" FROM "public"."t" WHERE ("id" > 0) GROUP BY "id" HAVING ("count"(*) > 1) WINDOW "w" AS (PARTITION BY "id") ORDER BY "id" ASC LIMIT 1 OFFSET 2 FOR UPDATE';
         self::assertSame($expected, Queries::write($statement)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith([Dialect::MySql, 'VALUES ROW(1,2), ROW(3,4)', 'VALUES ROW(1, 2), ROW(3, 4)', ValuesStatement::class])]
@@ -47,7 +47,7 @@ final class QueriesTest extends TestCase
         self::assertInstanceOf(BoundQuery::class, $statement);
         self::assertSame($class, $statement::class);
         self::assertSame($expected, Queries::write($statement)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testOperandParenthesizesAPaginatedOrCompoundOperandOutsideSqlite(): void
@@ -70,8 +70,8 @@ final class QueriesTest extends TestCase
     public function testOperandChainsALeftSetOperationOfNoLowerPrecedence(Dialect $dialect, ?string $version, string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['mysql-5.7.44', '( SELECT 1 FOR UPDATE ) UNION SELECT 2', '(SELECT 1 FOR UPDATE) UNION SELECT 2'])]
@@ -79,8 +79,8 @@ final class QueriesTest extends TestCase
     public function testOperandParenthesizesALockedSelect(string $version, string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testIntersectionRecognizesBothIntersectForms(): void
@@ -97,7 +97,7 @@ final class QueriesTest extends TestCase
         $compound = $binder->bind('SELECT 1 UNION SELECT 2 LIMIT 1');
         self::assertInstanceOf(CompoundStatement::class, $compound);
         self::assertSame('SELECT 1', Queries::operand($compound->left)->toString());
-        self::assertSame('SELECT 1 UNION SELECT 2 LIMIT 1', $compound->toString());
+        self::assertSame('SELECT 1 UNION SELECT 2 LIMIT 1', (new \SqlSemantics\SimpleSerializer())->serialize($compound));
     }
 
     public function testQuantifierSpellsEachDuplicateEliminationForm(): void
@@ -115,7 +115,7 @@ final class QueriesTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $on);
         self::assertInstanceOf(DistinctOn::class, $on->quantifier);
         self::assertSame('DISTINCT ON("id")', Queries::quantifier($on->quantifier)->toString());
-        self::assertSame('SELECT DISTINCT ON("id") "id" AS "id" FROM "public"."t"', $on->toString());
+        self::assertSame('SELECT DISTINCT ON("id") "id" AS "id" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($on));
     }
 
     public function testWindowsWritesNamedDefinitionsOnlyWhenDeclared(): void
@@ -124,7 +124,7 @@ final class QueriesTest extends TestCase
         $named = $binder->bind('SELECT SUM(n) OVER w FROM t WINDOW w AS (PARTITION BY id)');
         self::assertInstanceOf(BoundSelect::class, $named);
         self::assertSame('WINDOW "w" AS (PARTITION BY "id")', Queries::windows($named)->toString());
-        self::assertSame('SELECT "sum"("n") OVER "w" FROM "public"."t" WINDOW "w" AS (PARTITION BY "id")', $named->toString());
+        self::assertSame('SELECT "sum"("n") OVER "w" FROM "public"."t" WINDOW "w" AS (PARTITION BY "id")', (new \SqlSemantics\SimpleSerializer())->serialize($named));
         $plain = $binder->bind('SELECT n FROM t');
         self::assertInstanceOf(BoundSelect::class, $plain);
         self::assertSame('', Queries::windows($plain)->toString());
@@ -137,8 +137,8 @@ final class QueriesTest extends TestCase
     public function testFromNamesDualForAFilteredMySqlQueryWithoutTables(Dialect $dialect, ?string $version, string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testFromNamesDualBeforeALimitOnlyWhenAnIntoClauseFollows(): void

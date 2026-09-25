@@ -28,7 +28,7 @@ final class UnresolvedLockRelationTest extends TestCase
         $relation = $statement->locks[0]->relations[0];
         self::assertInstanceOf(UnresolvedLockRelation::class, $relation);
         self::assertSame(['missing'], $relation->name->parts);
-        self::assertSame('SELECT "id" AS "id" FROM "public"."t" FOR UPDATE OF "missing" NOWAIT', $statement->toString());
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" FOR UPDATE OF "missing" NOWAIT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testKeepsAQualifiedIdentifierPath(): void

@@ -48,7 +48,7 @@ final class ExpressionsTest extends TestCase
         $statement = $binder->bind('SELECT ' . $expression . ' FROM t');
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertSame($expected, Expressions::write($statement->outputs[0]->expression)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(BoundSelect::class, $rebound);
         self::assertSame($statement->outputs[0]->expression::class, $rebound->outputs[0]->expression::class);
         self::assertSame($expected, Expressions::write($rebound->outputs[0]->expression)->toString());
@@ -58,8 +58,8 @@ final class ExpressionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INT)'));
         $statement = $binder->bind("CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT RAISE(ABORT, 'no'); END");
-        self::assertSame("CREATE TRIGGER \"tr\" AFTER INSERT ON \"main\".\"t\" FOR EACH ROW BEGIN SELECT RAISE(ABORT, 'no'); END", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("CREATE TRIGGER \"tr\" AFTER INSERT ON \"main\".\"t\" FOR EACH ROW BEGIN SELECT RAISE(ABORT, 'no'); END", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['ARRAY(SELECT 1)', 'ARRAY(SELECT 1)'])]

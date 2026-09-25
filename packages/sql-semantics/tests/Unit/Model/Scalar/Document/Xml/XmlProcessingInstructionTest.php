@@ -35,7 +35,7 @@ final class XmlProcessingInstructionTest extends TestCase
         self::assertSame([$value->content], $value->inputs());
         self::assertSame(ExpressionKind::XmlConstructor, $value->kind);
         self::assertSame('SELECT XMLPI(NAME "Php", \'echo 1;\')', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingNamesTheOperation(): void

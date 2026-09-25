@@ -31,9 +31,9 @@ final class ServerInspectionTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind('SHOW /* layout */ STORAGE ENGINES');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Inspection\ShowEnginesStatement::class, $statement);
-        self::assertSame('SHOW ENGINES', $statement->toString());
+        self::assertSame('SHOW ENGINES', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertCount(6, $statement->resultColumns());
-        $copy = $binder->bind($statement->toString());
+        $copy = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Inspection\ShowEnginesStatement::class, $copy);
         self::assertSame(array_column($statement->resultColumns(), 'name'), array_column($copy->resultColumns(), 'name'));
     }
@@ -44,6 +44,6 @@ final class ServerInspectionTest extends TestCase
     #[TestWith(['show full processlist', 'SHOW FULL PROCESSLIST'])]
     public function testBindReadsEachServerListing(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)));
     }
 }

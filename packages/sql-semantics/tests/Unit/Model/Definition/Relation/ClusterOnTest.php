@@ -23,7 +23,7 @@ final class ClusterOnTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t CLUSTER ON t_pkey', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\ClusterOn('t_pkey'), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" CLUSTER ON "t_pkey"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" CLUSTER ON "t_pkey"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyIndexName(): void

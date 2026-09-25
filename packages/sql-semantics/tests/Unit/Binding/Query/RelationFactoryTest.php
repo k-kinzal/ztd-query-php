@@ -176,8 +176,8 @@ final class RelationFactoryTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, a INTEGER)', 'CREATE TABLE u (id INTEGER, b INTEGER)'));
         $query = $binder->bind($sql);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testAliasesPreservesQuotedColumnLabels(): void
@@ -214,8 +214,8 @@ final class RelationFactoryTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\FunctionRelation::class, $query->relations[0]);
         self::assertSame([], $query->relations[0]->columnAliases);
-        self::assertStringEndsWith($from, $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertStringEndsWith($from, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testFunctionKeepsTheImplicitFunctionName(): void

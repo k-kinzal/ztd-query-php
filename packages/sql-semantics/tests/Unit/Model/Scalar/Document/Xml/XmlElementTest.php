@@ -36,8 +36,8 @@ final class XmlElementTest extends TestCase
         self::assertSame(Nullability::NotNull, $value->nullability);
         self::assertSame([$value->attributes[0]->value, $value->attributes[1]->value, ...$value->content], $value->inputs());
         self::assertSame(ExpressionKind::XmlConstructor, $value->kind);
-        self::assertSame('SELECT XMLELEMENT(NAME "item", XMLATTRIBUTES("n", \'k\' AS "kind"), "x", \'text\') FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT XMLELEMENT(NAME "item", XMLATTRIBUTES("n", \'k\' AS "kind"), "x", \'text\') FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingNamesTheOperation(): void

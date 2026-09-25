@@ -40,11 +40,20 @@ final class DocumentInvariant
     }
 
     /**
+     * Whether the row path is a text literal, written plainly or after a character set introducer.
+     */
+    public static function textLiteral(\SqlSemantics\Model\Expression $path): bool
+    {
+        $literal = $path instanceof \SqlSemantics\Model\Scalar\Value\IntroducedLiteral ? $path->literal : $path;
+        return $literal instanceof Literal && $literal->literalKind === LiteralKind::Text;
+    }
+
+    /**
      * @throws InvalidStructure
      */
     public static function mysql(Json\JsonTable $table): void
     {
-        if (!$table->path instanceof Literal || $table->path->literalKind !== LiteralKind::Text || $table->document->format !== null || $table->passing !== [] || $table->pathName !== null || $table->onError !== Json\Response\TableError::Default) {
+        if (!self::textLiteral($table->path) || $table->document->format !== null || $table->passing !== [] || $table->pathName !== null || $table->onError !== Json\Response\TableError::Default) {
             throw new InvalidStructure('MySQL JSON_TABLE requires a literal row path and its own supported document options.');
         }
         foreach (OutputColumns::json($table->columns) as [$column]) {

@@ -24,7 +24,7 @@ final class ShowCreateTableStatementTest extends TestCase
         self::assertInstanceOf(ShowCreateTableStatement::class, $statement);
         self::assertSame('users', $statement->table->declaration->name);
         self::assertSame(['Table', 'Create Table'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('SHOW CREATE TABLE `users`', $statement->toString());
+        self::assertSame('SHOW CREATE TABLE `users`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithTableDescribesAnotherObjectImmutably(): void
@@ -38,7 +38,7 @@ final class ShowCreateTableStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame('users', $statement->table->declaration->name);
         self::assertSame('orders', $changed->table->declaration->name);
-        self::assertSame('SHOW CREATE TABLE `orders`', $changed->toString());
+        self::assertSame('SHOW CREATE TABLE `orders`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheObject(): void

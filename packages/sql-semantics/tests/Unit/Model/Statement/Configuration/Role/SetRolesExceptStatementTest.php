@@ -45,7 +45,7 @@ final class SetRolesExceptStatementTest extends TestCase
         self::assertSame('other', $changed->excludedRoles[0]->username);
         self::assertSame('localhost', $changed->excludedRoles[0]->host);
         self::assertSame("SET ROLE ALL EXCEPT 'r'", $statement->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString())->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString())));
     }
 
 }

@@ -28,8 +28,8 @@ final class AlterRoutineStatementTest extends TestCase
         $statement = $binder->bind('ALTER ROUTINE app.f(integer, text) RETURNS NULL ON NULL INPUT EXTERNAL SECURITY DEFINER SET TIME ZONE LOCAL RESTRICT');
         self::assertInstanceOf(AlterRoutineStatement::class, $statement);
         self::assertSame([RoutineKind::Routine, Option\NullInputBehavior::Strict, RoutineSecurity::Definer], [$statement->routine, $statement->changes[0], $statement->changes[1]]);
-        self::assertSame('ALTER ROUTINE "app"."f"(integer, text) STRICT SECURITY DEFINER SET "timezone" = LOCAL', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER ROUTINE "app"."f"(integer, text) STRICT SECURITY DEFINER SET "timezone" = DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -38,7 +38,7 @@ final class AlterRoutineStatementTest extends TestCase
         self::assertInstanceOf(AlterRoutineStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('ALTER FUNCTION "f" VOLATILE', $copy->toString());
+        self::assertSame('ALTER FUNCTION "f" VOLATILE', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -53,7 +53,7 @@ final class AlterRoutineStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER FUNCTION f SECURITY INVOKER');
         self::assertInstanceOf(AlterRoutineStatement::class, $statement);
-        self::assertSame('ALTER PROCEDURE "f" SECURITY INVOKER', $statement->withRoutine(RoutineKind::Procedure)->toString());
+        self::assertSame('ALTER PROCEDURE "f" SECURITY INVOKER', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withRoutine(RoutineKind::Procedure)));
         $this->expectException(InvalidStructure::class);
         $statement->withChanges([Option\Volatility::Stable])->withRoutine(RoutineKind::Procedure);
     }
@@ -70,7 +70,7 @@ final class AlterRoutineStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER FUNCTION f VOLATILE');
         self::assertInstanceOf(AlterRoutineStatement::class, $statement);
-        self::assertSame('ALTER FUNCTION "f" LEAKPROOF', $statement->withChanges([Option\LeakproofBehavior::Leakproof])->toString());
+        self::assertSame('ALTER FUNCTION "f" LEAKPROOF', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withChanges([Option\LeakproofBehavior::Leakproof])));
         $this->expectException(InvalidStructure::class);
         $statement->withChanges([Option\ParallelSafety::Safe, Option\ParallelSafety::Unsafe]);
     }

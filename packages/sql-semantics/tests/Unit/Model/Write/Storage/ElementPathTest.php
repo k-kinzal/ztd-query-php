@@ -32,7 +32,7 @@ final class ElementPathTest extends TestCase
         self::assertSame($path->base->column(), $path->column());
         self::assertSame('a', $path->column()->columnBinding()?->column->name);
         self::assertSame('1', $path->index->spelling());
-        self::assertSame('UPDATE "public"."t" SET "a"[1] = 2', $statement->toString());
+        self::assertSame('UPDATE "public"."t" SET "a"[1] = 2', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTypeIsTheArrayElementType(): void

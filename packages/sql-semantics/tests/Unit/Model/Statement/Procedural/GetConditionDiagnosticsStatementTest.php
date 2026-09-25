@@ -27,14 +27,14 @@ final class GetConditionDiagnosticsStatementTest extends TestCase
         self::assertInstanceOf(GetConditionDiagnosticsStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('GET CURRENT DIAGNOSTICS CONDITION 1 @`t` = MESSAGE_TEXT', $copy->toString());
+        self::assertSame('GET CURRENT DIAGNOSTICS CONDITION 1 @`t` = MESSAGE_TEXT', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithAreaReadsAnotherArea(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('GET DIAGNOSTICS CONDITION 1 @t = MESSAGE_TEXT');
         self::assertInstanceOf(GetConditionDiagnosticsStatement::class, $statement);
-        self::assertSame('GET STACKED DIAGNOSTICS CONDITION 1 @`t` = MESSAGE_TEXT', $statement->withArea(DiagnosticsArea::Stacked)->toString());
+        self::assertSame('GET STACKED DIAGNOSTICS CONDITION 1 @`t` = MESSAGE_TEXT', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withArea(DiagnosticsArea::Stacked)));
     }
 
     public function testWithConditionReadsAnotherNumber(): void
@@ -44,7 +44,7 @@ final class GetConditionDiagnosticsStatementTest extends TestCase
         $other = $binder->bind('GET DIAGNOSTICS CONDITION 2 @t = MESSAGE_TEXT');
         self::assertInstanceOf(GetConditionDiagnosticsStatement::class, $statement);
         self::assertInstanceOf(GetConditionDiagnosticsStatement::class, $other);
-        self::assertSame('GET CURRENT DIAGNOSTICS CONDITION 2 @`t` = MESSAGE_TEXT', $statement->withCondition($other->condition)->toString());
+        self::assertSame('GET CURRENT DIAGNOSTICS CONDITION 2 @`t` = MESSAGE_TEXT', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withCondition($other->condition)));
         self::assertSame('1', $statement->condition->spelling());
     }
 
@@ -53,7 +53,7 @@ final class GetConditionDiagnosticsStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('GET DIAGNOSTICS CONDITION 1 @t = MESSAGE_TEXT');
         self::assertInstanceOf(GetConditionDiagnosticsStatement::class, $statement);
         $changed = $statement->withItems([new ConditionDiagnostic('s', ConditionItem::ReturnedSqlState)]);
-        self::assertSame('GET CURRENT DIAGNOSTICS CONDITION 1 @`s` = RETURNED_SQLSTATE', $changed->toString());
+        self::assertSame('GET CURRENT DIAGNOSTICS CONDITION 1 @`s` = RETURNED_SQLSTATE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAnEmptyItemList(): void

@@ -28,7 +28,7 @@ final class Queries
     public static function write(BoundQuery $query, bool $into = false): Tree
     {
         if ($query instanceof BoundSelect) {
-            $body = new Tree('select', [Build::keyword('SELECT'), OptimizerHints::write($query->hints), self::quantifier($query->quantifier), ...array_map(static fn (\SqlSemantics\Model\Query\Optimization\SelectOption $option): Tree => Build::keyword($option->value), $query->options), Parts::outputs($query->outputs, $query->origin->dialect), ...self::from($query, $into), Parts::expressions('WHERE', $query->where === null ? [] : [$query->where]), Parts::expressions('GROUP BY', $query->groupBy), Parts::expressions('HAVING', $query->having === null ? [] : [$query->having]), self::windows($query)]);
+            $body = new Tree('select', [Build::keyword('SELECT'), OptimizerHints::write($query->hints), self::quantifier($query->quantifier), ...array_map(static fn (\SqlSemantics\Model\Query\Optimization\SelectOption $option): Tree => Build::keyword($option->value), $query->options), Parts::outputs($query->outputs, $query->origin->dialect), ...self::from($query, $into), Parts::expressions('WHERE', $query->where === null ? [] : [$query->where]), Groupings::write($query), Parts::expressions('HAVING', $query->having === null ? [] : [$query->having]), self::windows($query), Parts::expressions('QUALIFY', $query->qualify === null ? [] : [$query->qualify])]);
         } elseif ($query instanceof Statement\ValuesStatement) {
             $body = $query->origin->dialect === \SqlSemantics\Dialect::MySql
                 ? new Tree('values', [Build::keyword('VALUES'), Build::separated(array_map(static fn (array $row): Tree => new Tree('row', [Build::keyword('ROW'), Build::parentheses(Build::separated(array_map(Expressions::write(...), $row)))]), $query->rows))])
@@ -40,7 +40,7 @@ final class Queries
         } else {
             throw new InvalidStructure('A relation description cannot be serialized as a standalone query.');
         }
-        return new Tree('query', [QueryParts::with($query->ctes, $query->origin->dialect), $body, Parts::ordering($query->orderBy), QueryParts::pagination($query->limit, $query->offset, $query->withTies, $query->origin->dialect), ...($query instanceof BoundSelect ? [RowLocks::write($query->locks, $query->origin->dialect)] : [])]);
+        return new Tree('query', [QueryParts::with($query->ctes, $query->origin->dialect), $body, Parts::ordering($query->orderBy), QueryParts::pagination($query->limit, $query->offset, $query->withTies, $query->origin->dialect), ...($query instanceof BoundSelect || $query instanceof Statement\TableStatement || $query instanceof Statement\ValuesStatement ? [RowLocks::write($query->locks, $query->origin->dialect)] : [])]);
     }
 
     /**
@@ -51,7 +51,7 @@ final class Queries
     {
         if ($query instanceof BoundSelect || $query instanceof Statement\ValuesStatement || $query instanceof Statement\CompoundStatement || $query instanceof Statement\TableStatement) {
             $body = self::write($query);
-            $plain = $query->ctes === null && $query->orderBy === [] && $query->limit === null && $query->offset === null && !($query instanceof BoundSelect && $query->locks !== []);
+            $plain = $query->ctes === null && $query->orderBy === [] && $query->limit === null && $query->offset === null && !(($query instanceof BoundSelect || $query instanceof Statement\TableStatement || $query instanceof Statement\ValuesStatement) && $query->locks !== []);
             if ($plain && $query instanceof Statement\CompoundStatement && $chain !== null && (!self::intersection($chain) || self::intersection($query->setOperator))) {
                 return $body;
             }
@@ -72,7 +72,7 @@ final class Queries
         if ($query->from !== null) {
             return [Build::keyword('FROM'), Relations::write($query->from, $query->origin->dialect)];
         }
-        $filtered = $query->where !== null || $query->groupBy !== [] || $query->having !== null || ($into && ($query->limit !== null || $query->offset !== null));
+        $filtered = $query->where !== null || $query->groupBy !== [] || $query->having !== null || $query->qualify !== null || ($into && ($query->limit !== null || $query->offset !== null));
         return $filtered && $query->origin->dialect === \SqlSemantics\Dialect::MySql ? [Build::keyword('FROM DUAL')] : [];
     }
 

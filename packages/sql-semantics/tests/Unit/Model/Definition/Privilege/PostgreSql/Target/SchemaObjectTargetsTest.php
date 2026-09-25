@@ -35,7 +35,7 @@ final class SchemaObjectTargetsTest extends TestCase
         $statement = $binder->bind('GRANT USAGE ON SEQUENCE s, app.t TO a');
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertEquals(new SchemaObjectTargets(SchemaObjectClass::Sequence, [new QualifiedName(['s']), new QualifiedName(['app', 't'])]), $statement->target);
-        self::assertSame('GRANT USAGE ON SEQUENCE "s", "app"."t" TO "a"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('GRANT USAGE ON SEQUENCE "s", "app"."t" TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

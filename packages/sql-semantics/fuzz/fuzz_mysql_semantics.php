@@ -1,7 +1,7 @@
 <?php
 
 /**
- * PHP-Fuzzer entry point: every MySQL statement sql-faker generates must produce semantic structure.
+ * PHP-Fuzzer entry point: every MySQL statement sql-faker generates must bind into a Statement that writes back the same SQL.
  *
  * Usage:
  *   MYSQL_VERSION=8.4.7 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_semantics.php fuzz/corpus/mysql/

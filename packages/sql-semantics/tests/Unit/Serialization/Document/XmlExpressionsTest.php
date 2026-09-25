@@ -76,6 +76,6 @@ final class XmlExpressionsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(["SELECT XMLPI(NAME p, 'c')", 'SELECT XMLPI(NAME "p", \'c\')'])]
     public function testWriteKeepsEveryOperandOfEachXmlFunction(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(x xml)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(x xml)')))->bind($sql)));
     }
 }

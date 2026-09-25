@@ -34,7 +34,7 @@ final class TablespaceCommandsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertSame($class, $statement::class);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testCreateReadsTheOwnerAndAcceptsDriveLetterPaths(): void
@@ -97,7 +97,7 @@ final class TablespaceCommandsTest extends TestCase
     {
         $node = (new DialectParser(Dialect::PostgreSql))->parse("CREATE TABLESPACE t OWNER u LOCATION '/x' WITH (seq_page_cost = 2, random_page_cost = 3)")->find('CreateTableSpaceStmt')[0];
         $statement = TablespaceCommands::create(new Origin('s0', $node, Dialect::PostgreSql), $node, 't', new Scope(new Identifiers(Dialect::PostgreSql)));
-        self::assertSame('CREATE TABLESPACE "t" OWNER "u" LOCATION \'/x\' WITH ("seq_page_cost" = 2, "random_page_cost" = 3)', $statement->toString());
+        self::assertSame('CREATE TABLESPACE "t" OWNER "u" LOCATION \'/x\' WITH ("seq_page_cost" = 2, "random_page_cost" = 3)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(["CREATE TABLESPACE t LOCATION 'data/x'"])]
@@ -115,7 +115,7 @@ final class TablespaceCommandsTest extends TestCase
         $node = (new DialectParser(Dialect::PostgreSql))->parse("ALTER TABLESPACE t SET (seq_page_cost = +1, random_page_cost = 2.5, effective_io_concurrency = '3')")->find('AlterTblSpcStmt')[0];
         $parameters = TablespaceCommands::parameters($node, new Scope(new Identifiers(Dialect::PostgreSql)));
         self::assertSame([['seq_page_cost'], ['random_page_cost'], ['effective_io_concurrency']], array_map(static fn ($parameter): array => $parameter->name->parts, $parameters));
-        self::assertSame('ALTER TABLESPACE "t" SET ("seq_page_cost" = +1, "random_page_cost" = 2.5, "effective_io_concurrency" = \'3\')', (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("ALTER TABLESPACE t SET (seq_page_cost = +1, random_page_cost = 2.5, effective_io_concurrency = '3')")->toString());
+        self::assertSame('ALTER TABLESPACE "t" SET ("seq_page_cost" = +1, "random_page_cost" = 2.5, "effective_io_concurrency" = \'3\')', (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("ALTER TABLESPACE t SET (seq_page_cost = +1, random_page_cost = 2.5, effective_io_concurrency = '3')")));
     }
 
     public function testNamesReadsEveryResetParameter(): void
@@ -130,7 +130,7 @@ final class TablespaceCommandsTest extends TestCase
         $sql = "ALTER TABLESPACE t SET (seq_page_cost = -0, random_page_cost = ' 1e3 ', effective_io_concurrency = '0x3E8', maintenance_io_concurrency = '1000.5')";
         $statement = $binder->bind($sql);
         self::assertInstanceOf(Statement\SetTablespaceOptionsStatement::class, $statement);
-        self::assertSame('ALTER TABLESPACE "t" SET ("seq_page_cost" = -0, "random_page_cost" = \' 1e3 \', "effective_io_concurrency" = \'0x3E8\', "maintenance_io_concurrency" = \'1000.5\')', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER TABLESPACE "t" SET ("seq_page_cost" = -0, "random_page_cost" = \' 1e3 \', "effective_io_concurrency" = \'0x3E8\', "maintenance_io_concurrency" = \'1000.5\')', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

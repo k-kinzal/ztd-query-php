@@ -24,7 +24,7 @@ final class UnlockInstanceStatementTest extends TestCase
         self::assertInstanceOf(UnlockInstanceStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('UNLOCK INSTANCE', $copy->toString());
+        self::assertSame('UNLOCK INSTANCE', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAReleaseWithoutBackupLocks(): void

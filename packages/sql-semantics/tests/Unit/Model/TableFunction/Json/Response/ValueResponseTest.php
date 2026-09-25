@@ -32,6 +32,6 @@ final class ValueResponseTest extends TestCase
         self::assertInstanceOf(ValueColumn::class, $column);
         self::assertInstanceOf(DefaultResponse::class, $column->onEmpty);
         self::assertInstanceOf(ValueBehavior::class, $column->onError);
-        self::assertSame('SELECT "j"."v" AS "v" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("v" integer PATH \'$.b\' DEFAULT 0 ON EMPTY NULL ON ERROR)) AS "j"', $statement->toString());
+        self::assertSame('SELECT "j"."v" AS "v" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("v" integer PATH \'$.b\' DEFAULT 0 ON EMPTY NULL ON ERROR)) AS "j"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

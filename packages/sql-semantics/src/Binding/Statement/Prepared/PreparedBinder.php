@@ -43,6 +43,10 @@ final class PreparedBinder
         }
         $scope = new Scope($context->tables->identifiers, queries: $context);
         if ($node->name === 'ExecuteStmt') {
+            $table = TableFromExecute::bind($origin, $node, $name, $context);
+            if ($table !== null) {
+                return $table;
+            }
             $arguments = array_map(static fn (Node $expression) => (new ExpressionBinder())->bind($expression, $scope), Tree::outer($node, ['a_expr']));
             return new Statement\ExecuteQueryStatement($origin, $name, $arguments);
         }

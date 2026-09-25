@@ -88,6 +88,6 @@ final class PartitioningsTest extends TestCase
     public function testWriteSpellsEachPartitioningForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

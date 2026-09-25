@@ -28,8 +28,8 @@ final class ZoneBinderTest extends TestCase
         self::assertNull($outer->zone);
         self::assertInstanceOf(ZoneConversion::class, $outer->value);
         self::assertSame('z', $outer->value->zone?->columnBinding()?->column->name);
-        self::assertSame('SELECT (("a" AT TIME ZONE "z") AT LOCAL) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT (("a" AT TIME ZONE "z") AT LOCAL) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testBindLeavesOtherDialectsAlone(): void

@@ -29,8 +29,8 @@ final class DropOperatorSetStatementTest extends TestCase
         self::assertInstanceOf(DropOperatorSetStatement::class, $statement);
         self::assertSame(OperatorSetKind::OperatorClass, $statement->object->kind);
         self::assertSame(['app', 'int_ops'], $statement->object->name->parts);
-        self::assertSame('DROP OPERATOR CLASS "app"."int_ops" USING "gist" RESTRICT', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('DROP OPERATOR CLASS "app"."int_ops" USING "gist" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -45,7 +45,7 @@ final class DropOperatorSetStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP OPERATOR CLASS c USING gist');
         self::assertInstanceOf(DropOperatorSetStatement::class, $statement);
-        self::assertSame('DROP OPERATOR CLASS "c" USING "gist"', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('DROP OPERATOR CLASS "c" USING "gist"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithObjectReplacesTheOperand(): void
@@ -59,7 +59,7 @@ final class DropOperatorSetStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP OPERATOR CLASS c USING gist');
         self::assertInstanceOf(DropOperatorSetStatement::class, $statement);
-        self::assertSame('DROP OPERATOR CLASS IF EXISTS "c" USING "gist"', $statement->withIfExists(true)->toString());
+        self::assertSame('DROP OPERATOR CLASS IF EXISTS "c" USING "gist"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIfExists(true)));
     }
 
     public function testWithBehaviorReplacesTheOperand(): void

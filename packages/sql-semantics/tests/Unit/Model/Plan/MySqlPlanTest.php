@@ -32,8 +32,8 @@ final class MySqlPlanTest extends TestCase
         self::assertFalse($options->extended);
         self::assertFalse($options->partitions);
         self::assertSame(Dialect::MySql, $options->dialect());
-        self::assertSame('EXPLAIN ANALYZE FORMAT = TREE SELECT 1', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('EXPLAIN ANALYZE FORMAT = TREE SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testDialectIsMySql(): void

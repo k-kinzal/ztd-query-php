@@ -40,7 +40,7 @@ final class EntryPointsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($statement->toString())->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

@@ -94,7 +94,7 @@ final class MaterializedViewBinderTest extends TestCase
     public function testBindReadsEachLowercaseForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE MATERIALIZED VIEW mv AS SELECT 1 AS a')))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     public function testRefreshRejectsAConcurrentRefreshWithoutData(): void
@@ -135,7 +135,17 @@ final class MaterializedViewBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE x (a int)'));
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
+    }
+
+    public function testBindKeepsTheLockingClauseOfTheMaterializedViewQuery(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)'));
+        $statement = $binder->bind('CREATE MATERIALIZED VIEW m AS SELECT a FROM t FOR UPDATE OF t NOWAIT WITH NO DATA');
+        self::assertInstanceOf(CreateMaterializedViewStatement::class, $statement);
+        $expected = 'CREATE MATERIALIZED VIEW "m" AS SELECT "a" AS "a" FROM "public"."t" FOR UPDATE OF "t" NOWAIT WITH NO DATA';
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

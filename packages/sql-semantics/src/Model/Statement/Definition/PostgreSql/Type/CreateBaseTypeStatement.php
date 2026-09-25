@@ -22,7 +22,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Creating a base type
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE TYPE box3d (INPUT = box3d_in, OUTPUT = box3d_out, INTERNALLENGTH = VARIABLE, STORAGE = main)');
  *     $statement->options[2]->value // => -1
- *     $statement->toString() // => 'CREATE TYPE "box3d"(INPUT = "box3d_in", OUTPUT = "box3d_out", INTERNALLENGTH = -1, STORAGE = \'main\')'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE TYPE "box3d"(INPUT = "box3d_in", OUTPUT = "box3d_out", INTERNALLENGTH = -1, STORAGE = \'main\')'
  * @example Rejecting a base type without an output function
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE TYPE box3d (INPUT = box3d_in, OUTPUT = box3d_out)');
  *     $statement->withOptions([$statement->options[0]]); // throws \SqlSemantics\Model\Validation\InvalidStructure

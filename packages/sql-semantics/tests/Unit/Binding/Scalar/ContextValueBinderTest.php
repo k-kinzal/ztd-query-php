@@ -32,7 +32,7 @@ final class ContextValueBinderTest extends TestCase
         self::assertSame([3, null, null, 2, null], array_column($expressions, 'precision'));
         self::assertSame(['timestamptz', 'timetz', 'text', 'time', 'date'], array_map(static fn ($expression): string => $expression->type->name, $expressions));
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $expressions[0]->nullability);
-        self::assertSame('SELECT CURRENT_TIMESTAMP(3), CURRENT_TIME, CURRENT_USER, LOCALTIME(2), CURRENT_DATE', $statement->toString());
+        self::assertSame('SELECT CURRENT_TIMESTAMP(3), CURRENT_TIME, CURRENT_USER, LOCALTIME(2), CURRENT_DATE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindAcceptsMySqlEmptyParenthesesAsNoPrecision(): void
@@ -46,7 +46,7 @@ final class ContextValueBinderTest extends TestCase
         $user = $statement->outputs[1]->expression;
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\ContextReference::class, $user);
         self::assertSame(ContextValueKind::User, $user->request);
-        self::assertSame('SELECT CURRENT_TIME, USER()', $statement->toString());
+        self::assertSame('SELECT CURRENT_TIME, USER()', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindLeavesOrdinaryColumnsToTheResolver(): void
@@ -65,8 +65,8 @@ final class ContextValueBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['datetime', 'datetime'], [$query->outputs[5]->expression->type->name, $query->outputs[6]->expression->type->name]);
         $expected = 'SELECT CURRENT_TIMESTAMP(3), CURRENT_DATE, CURRENT_TIME, UTC_DATE, UTC_TIME, UTC_TIMESTAMP(1), SYSDATE(), SYSDATE(2)';
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['NOW', ContextValueKind::CurrentTimestamp])]

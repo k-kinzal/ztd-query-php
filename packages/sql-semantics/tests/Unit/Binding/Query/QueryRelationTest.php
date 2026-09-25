@@ -190,7 +190,7 @@ final class QueryRelationTest extends TestCase
     public function testDistinctKeepsRenamedOrNonMysqlColumns(Dialect $dialect, string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder($dialect))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

@@ -41,8 +41,8 @@ final class JsonQueryBinderTest extends TestCase
         self::assertSame('numeric', $value->returning?->name);
         self::assertSame(ValueBehavior::Null, $value->onEmpty);
         self::assertInstanceOf(DefaultResponse::class, $value->onError);
-        self::assertSame('SELECT JSON_VALUE("d" FORMAT JSON, \'$[$i]\' PASSING "n" AS "i", \'x\' AS "s" RETURNING numeric(5, 2) NULL ON EMPTY DEFAULT - 1 ON ERROR) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_VALUE("d" FORMAT JSON, \'$[$i]\' PASSING "n" AS "i", \'x\' AS "s" RETURNING numeric(5, 2) NULL ON EMPTY DEFAULT - 1 ON ERROR) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     #[TestWith(["SELECT JSON_VALUE(jsonb '1', '$' EMPTY ON ERROR)"])]
@@ -72,8 +72,8 @@ final class JsonQueryBinderTest extends TestCase
         self::assertInstanceOf(JsonQueryExtraction::class, $value);
         self::assertSame($wrapper, $value->wrapper);
         self::assertSame($quotes, $value->quotes);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(["SELECT JSON_QUERY(jsonb '1', '$' WITH WRAPPER OMIT QUOTES)"])]
@@ -102,7 +102,7 @@ final class JsonQueryBinderTest extends TestCase
         $value = $query->outputs[0]->expression;
         self::assertInstanceOf(JsonExistence::class, $value);
         self::assertSame($expected, $value->onError);
-        self::assertSame("SELECT JSON_EXISTS(CAST('1' AS jsonb), '$.a' " . $response . ' ON ERROR)', $query->toString());
+        self::assertSame("SELECT JSON_EXISTS(CAST('1' AS jsonb), '$.a' " . $response . ' ON ERROR)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     #[TestWith(['NULL'])]

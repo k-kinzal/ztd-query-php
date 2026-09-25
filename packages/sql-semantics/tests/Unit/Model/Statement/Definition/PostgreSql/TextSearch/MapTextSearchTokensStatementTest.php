@@ -27,8 +27,8 @@ final class MapTextSearchTokensStatementTest extends TestCase
         self::assertInstanceOf(MapTextSearchTokensStatement::class, $statement);
         self::assertSame(MappingChange::Alter, $statement->change);
         self::assertSame(['word', 'Url'], $statement->tokenTypes);
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "s"."c" ALTER MAPPING FOR "word", "Url" WITH "s"."syn", "simple"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "s"."c" ALTER MAPPING FOR "word", "Url" WITH "s"."syn", "simple"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -51,7 +51,7 @@ final class MapTextSearchTokensStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word WITH simple');
         self::assertInstanceOf(MapTextSearchTokensStatement::class, $statement);
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" ADD MAPPING FOR "word" WITH "simple"', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" ADD MAPPING FOR "word" WITH "simple"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithConfigurationReplacesTheOperand(): void
@@ -68,7 +68,7 @@ final class MapTextSearchTokensStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word WITH simple');
         self::assertInstanceOf(MapTextSearchTokensStatement::class, $statement);
         $changed = $statement->withChange(MappingChange::Alter);
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" ALTER MAPPING FOR "word" WITH "simple"', $changed->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" ALTER MAPPING FOR "word" WITH "simple"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTokenTypesReplacesTheOperand(): void

@@ -170,10 +170,10 @@ final class TableResolverTest extends TestCase
     public function testSearchedFindsATemporaryTableBeforeTheDefaultSchema(): void
     {
         $postgres = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(b INT)', 'CREATE TEMP TABLE t(a INT)'));
-        self::assertSame('SELECT "a" AS "a" FROM "pg_temp"."t"', $postgres->bind('SELECT a FROM t')->toString());
-        self::assertSame('SELECT "b" AS "b" FROM "public"."t"', $postgres->bind('SELECT b FROM public.t')->toString());
+        self::assertSame('SELECT "a" AS "a" FROM "pg_temp"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($postgres->bind('SELECT a FROM t')));
+        self::assertSame('SELECT "b" AS "b" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($postgres->bind('SELECT b FROM public.t')));
         $sqlite = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TEMP TABLE t(a INT)'));
-        self::assertSame('SELECT "a" AS "a" FROM "temp"."t"', $sqlite->bind('SELECT a FROM t')->toString());
+        self::assertSame('SELECT "a" AS "a" FROM "temp"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($sqlite->bind('SELECT a FROM t')));
         $mysql = new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql))->build('CREATE TEMPORARY TABLE t(a INT)'), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), '');
         self::assertSame('', $mysql->searched('t'));
     }

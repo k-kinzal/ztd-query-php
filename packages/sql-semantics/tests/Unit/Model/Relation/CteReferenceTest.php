@@ -33,7 +33,7 @@ final class CteReferenceTest extends TestCase
         self::assertSame($relation->definition->name, $relation->name);
         self::assertSame(array_column($relation->definition->query->resultColumns(), 'expression'), $relation->resultExpressions());
         self::assertSame(['n'], array_column($relation->declaration->columns, 'name'));
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testResultExpressionsComeFromTheDefinitionQuery(): void

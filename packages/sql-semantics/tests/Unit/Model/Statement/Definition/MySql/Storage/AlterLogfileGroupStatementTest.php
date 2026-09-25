@@ -26,7 +26,7 @@ final class AlterLogfileGroupStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind("ALTER LOGFILE GROUP lg ADD $kind 'f.log' NO_WAIT");
         self::assertInstanceOf(AlterLogfileGroupStatement::class, $statement);
-        self::assertSame("ALTER LOGFILE GROUP `lg` ADD $kind 'f.log' NO_WAIT", $statement->withOrigin($statement->origin)->toString());
+        self::assertSame("ALTER LOGFILE GROUP `lg` ADD $kind 'f.log' NO_WAIT", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameKeepsTheOriginal(): void
@@ -58,7 +58,7 @@ final class AlterLogfileGroupStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("ALTER LOGFILE GROUP lg ADD UNDOFILE 'f.log'");
         self::assertInstanceOf(AlterLogfileGroupStatement::class, $statement);
-        self::assertSame("ALTER LOGFILE GROUP `lg` ADD UNDOFILE 'f.log' ENGINE = `NDB` WAIT", $statement->withEngine('NDB')->toString());
+        self::assertSame("ALTER LOGFILE GROUP `lg` ADD UNDOFILE 'f.log' ENGINE = `NDB` WAIT", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withEngine('NDB')));
     }
 
     public function testWithWaitingReplacesTheCompletionRequest(): void

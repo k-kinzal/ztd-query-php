@@ -25,8 +25,8 @@ final class CreateTextSearchConfigurationStatementTest extends TestCase
         $statement = $binder->bind('CREATE TEXT SEARCH CONFIGURATION s.c (parser = x, parser = pg_catalog.default)');
         self::assertInstanceOf(CreateTextSearchConfigurationStatement::class, $statement);
         self::assertSame(['pg_catalog', 'default'], $statement->parser->parts);
-        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "s"."c"(PARSER = "pg_catalog"."default")', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "s"."c"(PARSER = "pg_catalog"."default")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -49,7 +49,7 @@ final class CreateTextSearchConfigurationStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH CONFIGURATION c (parser = default)');
         self::assertInstanceOf(CreateTextSearchConfigurationStatement::class, $statement);
-        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "c"(PARSER = "default")', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "c"(PARSER = "default")', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -66,6 +66,6 @@ final class CreateTextSearchConfigurationStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH CONFIGURATION c (parser = default)');
         self::assertInstanceOf(CreateTextSearchConfigurationStatement::class, $statement);
         $changed = $statement->withParser(new QualifiedName(['p']));
-        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "c"(PARSER = "p")', $changed->toString());
+        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "c"(PARSER = "p")', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

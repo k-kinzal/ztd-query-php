@@ -23,14 +23,14 @@ final class SetResourceGroupStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET RESOURCE GROUP g FOR 1, 0x2');
         self::assertInstanceOf(SetResourceGroupStatement::class, $statement);
-        self::assertSame('SET RESOURCE GROUP `g` FOR 1, 0x2', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('SET RESOURCE GROUP `g` FOR 1, 0x2', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameAssignsAnotherGroup(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET RESOURCE GROUP g');
         self::assertInstanceOf(SetResourceGroupStatement::class, $statement);
-        self::assertSame('SET RESOURCE GROUP `h`', $statement->withName('h')->toString());
+        self::assertSame('SET RESOURCE GROUP `h`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName('h')));
     }
 
     public function testWithThreadsRequiresUnsignedIntegerLiterals(): void
@@ -40,7 +40,7 @@ final class SetResourceGroupStatementTest extends TestCase
         $text = $binder->bind("DO 'x'");
         self::assertInstanceOf(SetResourceGroupStatement::class, $statement);
         self::assertInstanceOf(DoExpressionsStatement::class, $text);
-        self::assertSame('SET RESOURCE GROUP `g`', $statement->withThreads([])->toString());
+        self::assertSame('SET RESOURCE GROUP `g`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withThreads([])));
         $literal = $text->expressions[0];
         self::assertInstanceOf(Literal::class, $literal);
         $this->expectException(InvalidStructure::class);

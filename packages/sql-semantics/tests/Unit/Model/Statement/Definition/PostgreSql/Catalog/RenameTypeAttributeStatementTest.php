@@ -27,8 +27,8 @@ final class RenameTypeAttributeStatementTest extends TestCase
         self::assertSame('x', $statement->attribute);
         self::assertSame('px', $statement->newName);
         self::assertSame(DropBehavior::Cascade, $statement->behavior);
-        self::assertSame('ALTER TYPE "app"."point" RENAME ATTRIBUTE "x" TO "px" CASCADE', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER TYPE "app"."point" RENAME ATTRIBUTE "x" TO "px" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -37,7 +37,7 @@ final class RenameTypeAttributeStatementTest extends TestCase
         self::assertInstanceOf(RenameTypeAttributeStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -57,7 +57,7 @@ final class RenameTypeAttributeStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new QualifiedName(['app', 'point']), $statement->type);
         self::assertEquals(new QualifiedName(['pt']), $changed->type);
-        self::assertStringContainsString('ALTER TYPE "pt"', $changed->toString());
+        self::assertStringContainsString('ALTER TYPE "pt"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithAttributeReplacesTheOperand(): void
@@ -68,7 +68,7 @@ final class RenameTypeAttributeStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('x', $statement->attribute);
         self::assertEquals('y', $changed->attribute);
-        self::assertStringContainsString('ATTRIBUTE "y"', $changed->toString());
+        self::assertStringContainsString('ATTRIBUTE "y"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNewNameReplacesTheOperand(): void
@@ -79,7 +79,7 @@ final class RenameTypeAttributeStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('px', $statement->newName);
         self::assertEquals('py', $changed->newName);
-        self::assertStringContainsString('TO "py"', $changed->toString());
+        self::assertStringContainsString('TO "py"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithBehaviorReplacesTheOperand(): void
@@ -90,7 +90,7 @@ final class RenameTypeAttributeStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(DropBehavior::Cascade, $statement->behavior);
         self::assertEquals(DropBehavior::Restrict, $changed->behavior);
-        self::assertStringContainsString('"px" RESTRICT', $changed->toString());
+        self::assertStringContainsString('"px" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAnEmptyAttribute(): void

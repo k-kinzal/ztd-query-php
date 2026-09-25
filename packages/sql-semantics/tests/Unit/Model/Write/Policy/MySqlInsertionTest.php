@@ -38,8 +38,8 @@ final class MySqlInsertionTest extends TestCase
         self::assertInstanceOf(MySqlInsertion::class, $statement->policy);
         self::assertSame(Scheduling::LowPriority, $statement->policy->scheduling);
         self::assertTrue($statement->policy->ignore);
-        self::assertSame('INSERT LOW_PRIORITY IGNORE INTO `t` VALUES (1)', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('INSERT LOW_PRIORITY IGNORE INTO `t` VALUES (1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(InsertStatement::class, $rebound);
         self::assertInstanceOf(MySqlInsertion::class, $rebound->policy);
         self::assertSame(Scheduling::LowPriority, $rebound->policy->scheduling);
@@ -55,6 +55,6 @@ final class MySqlInsertionTest extends TestCase
         self::assertTrue($statement->policy->ignore);
         self::assertSame('n', $statement->policy->rowAlias?->row->alias);
         self::assertNull((new MySqlInsertion())->rowAlias);
-        self::assertSame('INSERT IGNORE INTO `t` VALUES (1) AS `n` ON DUPLICATE KEY UPDATE `id` = (`n`.`id` + 1)', $statement->toString());
+        self::assertSame('INSERT IGNORE INTO `t` VALUES (1) AS `n` ON DUPLICATE KEY UPDATE `id` = (`n`.`id` + 1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -33,8 +33,8 @@ final class PoliciesTest extends TestCase
         self::assertSame(['app', 'docs'], $statement->table->name->parts);
         self::assertSame(PolicyCommand::Update, $statement->command);
         self::assertSame([PublicRole::Public, SessionRole::CurrentUser], $statement->roles);
-        self::assertSame('CREATE POLICY "own" ON "app"."docs" AS RESTRICTIVE FOR UPDATE TO PUBLIC, CURRENT_USER USING(("owner" = CURRENT_USER)) WITH CHECK(("docs"."owner" IS NOT NULL))', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE POLICY "own" ON "app"."docs" AS RESTRICTIVE FOR UPDATE TO PUBLIC, CURRENT_USER USING(("owner" = CURRENT_USER)) WITH CHECK(("docs"."owner" IS NOT NULL))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindReadsAnAlterationWithOnlyItsChanges(): void
@@ -87,6 +87,6 @@ final class PoliciesTest extends TestCase
     public function testBindSpellsLowercasePolicies(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

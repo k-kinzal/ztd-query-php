@@ -212,7 +212,7 @@ final class ExpressionBinderTest extends TestCase
         self::assertSame('OR', $statement->outputs[1]->expression->spelling());
         self::assertSame('AND', $statement->outputs[1]->expression->inputs()[1]->spelling());
         self::assertSame('integer', $statement->outputs[1]->expression->type->name);
-        self::assertSame('SELECT (NOT ?), (1 OR (0 AND 2))', $statement->toString());
+        self::assertSame('SELECT (NOT ?), (1 OR (0 AND 2))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['mysql-5.7.44', 'SELECT * LIMIT 1, ACCOUNT', 'SELECT * LIMIT `ACCOUNT` OFFSET 1'])]
@@ -223,7 +223,7 @@ final class ExpressionBinderTest extends TestCase
         $query = $binder->bind($sql, strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::UnresolvedColumn, $query->limit?->kind);
-        self::assertSame($expected, $query->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testIndirectionAppliesSubscriptsAndFieldsToAPositionalParameter(): void
@@ -235,8 +235,8 @@ final class ExpressionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\Parameter::class, $query->outputs[0]->expression->base);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\FieldAccess::class, $query->outputs[1]->expression);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\SliceAccess::class, $query->outputs[2]->expression);
-        self::assertSame('SELECT $1[1], ($2)."f", $3[1 : 2]', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT $1[1], ($2)."f", $3[1 : 2]', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testTokenTypesAPositionalParameterByItsDeclaredPosition(): void
@@ -256,7 +256,7 @@ final class ExpressionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Column, $statement->outputs[0]->expression->kind);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Column, $statement->outputs[1]->expression->kind);
-        self::assertSame('SELECT "indexed" AS "indexed", "left" AS "left" FROM "main"."t"', $statement->toString());
+        self::assertSame('SELECT "indexed" AS "indexed", "left" AS "left" FROM "main"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['rename'])]
@@ -271,11 +271,11 @@ final class ExpressionBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
         $table = $binder->bind(sprintf('CREATE TABLE t (%s INT, CHECK (%s > 0))', $keyword, $keyword));
-        self::assertSame(sprintf('CREATE TABLE "main"."t"("%s" "int", CHECK (("%s" > 0)))', $keyword, $keyword), $table->toString());
+        self::assertSame(sprintf('CREATE TABLE "main"."t"("%s" "int", CHECK (("%s" > 0)))', $keyword, $keyword), (new \SqlSemantics\SimpleSerializer())->serialize($table));
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build(sprintf('CREATE TABLE t (%s INT)', $keyword))))->bind(sprintf('SELECT %s FROM t', $keyword));
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Column, $statement->outputs[0]->expression->kind);
-        self::assertSame(sprintf('SELECT "%s" AS "%s" FROM "main"."t"', $keyword, $keyword), $statement->toString());
+        self::assertSame(sprintf('SELECT "%s" AS "%s" FROM "main"."t"', $keyword, $keyword), (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTokenRejectsDefaultOutsideAWrite(): void
@@ -322,7 +322,7 @@ final class ExpressionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('IS NULL', $statement->outputs[0]->expression->spelling());
         self::assertSame('IS NOT NULL', $statement->outputs[1]->expression->spelling());
-        self::assertSame('SELECT (1 IS NULL), (1 IS NOT NULL)', $statement->toString());
+        self::assertSame('SELECT (1 IS NULL), (1 IS NOT NULL)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith([Dialect::PostgreSql, 'SELECT ("id" IS NOT TRUE) FROM "public"."t"'])]
@@ -334,13 +334,13 @@ final class ExpressionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('IS NOT TRUE', $statement->outputs[0]->expression->spelling());
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Column, $statement->outputs[0]->expression->inputs()[0]->kind);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testOperationComparesARowSubqueryWithALowercaseOperator(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
-        self::assertSame('SELECT ((SELECT 1, 2) IS(1, 2))', $binder->bind('SELECT (SELECT 1, 2) is (1, 2)')->toString());
+        self::assertSame('SELECT ((SELECT 1, 2) IS(1, 2))', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('SELECT (SELECT 1, 2) is (1, 2)')));
     }
 
     #[TestWith([Dialect::PostgreSql, 'SELECT (SELECT 1, 2) = 1'])]

@@ -37,7 +37,7 @@ final class ParameterTest extends TestCase
         self::assertInstanceOf(PostgreSqlProperties::class, $statement->definition->table->properties);
         $parameter = $statement->definition->table->properties->storageParameters[0];
         self::assertSame(ImpliedSetting::Enabled, $parameter->value);
-        self::assertSame('CREATE TABLE "public"."t"("id" integer) WITH ("autovacuum_enabled")', $statement->toString());
+        self::assertSame('CREATE TABLE "public"."t"("id" integer) WITH ("autovacuum_enabled")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
 }

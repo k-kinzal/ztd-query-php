@@ -32,7 +32,7 @@ final class WildcardTest extends TestCase
         self::assertSame([], $wildcard->inputs());
         self::assertSame(BuiltinIdentity::Unknown, $wildcard->type->identity);
         self::assertSame(Nullability::Unknown, $wildcard->nullability);
-        self::assertSame('SELECT "m".* FROM "main"."missing" AS "m"', $statement->toString());
+        self::assertSame('SELECT "m".* FROM "main"."missing" AS "m"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testReferencePartsReturnsTheQualifier(): void

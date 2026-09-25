@@ -31,7 +31,7 @@ final class TableDropScopeTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind('DROP TEMPORARY TABLES IF EXISTS app.t,u');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\DropTableStatement::class, $statement);
         self::assertSame(TableDropScope::Temporary, $statement->selection);
-        self::assertSame('DROP TEMPORARY TABLE IF EXISTS `app`.`t`, `u`', $statement->toString());
+        self::assertSame('DROP TEMPORARY TABLE IF EXISTS `app`.`t`, `u`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
 }

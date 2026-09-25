@@ -30,8 +30,8 @@ final class RoleKeywordTest extends TestCase
         self::assertInstanceOf(CreateRoleStatement::class, $statement);
         self::assertSame($keyword, $statement->keyword);
         self::assertSame([], $statement->options);
-        self::assertSame('CREATE ' . $word . ' "r"', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('CREATE ' . $word . ' "r"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateRoleStatement::class, $rebound);
         self::assertSame($keyword, $rebound->keyword);
     }

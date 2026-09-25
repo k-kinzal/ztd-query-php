@@ -41,7 +41,7 @@ final class ColumnsTest extends TestCase
         $definition = $statement->definition->table->columns[1];
         self::assertInstanceOf($generation, $definition->generation);
         self::assertSame($expected, Columns::write($definition, $dialect)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateTableStatement::class, $rebound);
         self::assertInstanceOf($generation, $rebound->definition->table->columns[1]->generation);
         self::assertSame($definition->nullability, $rebound->definition->table->columns[1]->nullability);
@@ -63,8 +63,8 @@ final class ColumnsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testDefaultValueWritesTheExpression(): void
@@ -77,7 +77,7 @@ final class ColumnsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $statement = $binder->bind('CREATE TABLE t (a INT, d INT GENERATED ALWAYS AS (a) STORED NOT NULL)');
-        self::assertSame('CREATE TABLE `t`(`a` integer, `d` integer GENERATED ALWAYS AS(`a`) STORED NOT NULL)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TABLE `t`(`a` integer, `d` integer GENERATED ALWAYS AS(`a`) STORED NOT NULL)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

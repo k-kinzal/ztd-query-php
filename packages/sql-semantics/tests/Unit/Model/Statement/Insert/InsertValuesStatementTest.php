@@ -40,7 +40,7 @@ final class InsertValuesStatementTest extends TestCase
         self::assertSame('2', $changed->rows[0][0]->text);
         self::assertSame(StatementKind::Insert, $changed->kind);
         self::assertFalse(property_exists($changed, 'query'));
-        self::assertSame('INSERT INTO "public"."t"("id") VALUES (2)', $changed->toString());
+        self::assertSame('INSERT INTO "public"."t"("id") VALUES (2)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithRowsRejectsAReferenceOutsideTheBindingScope(): void
@@ -60,7 +60,7 @@ final class InsertValuesStatementTest extends TestCase
         self::assertSame('other', $changed->scopeId);
         self::assertSame($statement->rows, $changed->rows);
         self::assertSame($statement->outputs, $changed->outputs);
-        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1) RETURNING "id" AS "id"', $changed->toString());
+        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1) RETURNING "id" AS "id"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithReturningReplacesOutputsAndKeepsTheOriginal(): void
@@ -68,8 +68,8 @@ final class InsertValuesStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('INSERT INTO t(id) VALUES (1) RETURNING id');
         self::assertInstanceOf(InsertValuesStatement::class, $statement);
         $changed = $statement->withReturning([new \SqlSemantics\Model\OutputColumn(0, 'twice', Expression::binary('*', Expression::reference(['n'], Dialect::PostgreSql), Expression::literal(2, Dialect::PostgreSql)))]);
-        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1) RETURNING ("n" * 2) AS "twice"', $changed->toString());
-        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1) RETURNING "id" AS "id"', $statement->toString());
-        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1)', $changed->withReturning([])->toString());
+        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1) RETURNING ("n" * 2) AS "twice"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1) RETURNING "id" AS "id"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1)', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withReturning([])));
     }
 }

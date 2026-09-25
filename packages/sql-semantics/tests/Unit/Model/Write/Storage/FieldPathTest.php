@@ -32,7 +32,7 @@ final class FieldPathTest extends TestCase
         self::assertSame('f', $path->field);
         self::assertSame($path->base->column(), $path->column());
         self::assertSame('r', $path->column()->columnBinding()?->column->name);
-        self::assertSame('UPDATE "public"."t" SET "r"."f" = 1', $statement->toString());
+        self::assertSame('UPDATE "public"."t" SET "r"."f" = 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTypeIsUnknownInTheBaseDialect(): void

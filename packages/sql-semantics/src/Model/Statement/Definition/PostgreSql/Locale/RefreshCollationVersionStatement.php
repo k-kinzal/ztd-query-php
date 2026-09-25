@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Refreshing a collation version
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER COLLATION app.german REFRESH VERSION');
  *     $statement->collation->parts // => ['app', 'german']
- *     $statement->toString() // => 'ALTER COLLATION "app"."german" REFRESH VERSION'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER COLLATION "app"."german" REFRESH VERSION'
  */
 final class RefreshCollationVersionStatement extends BoundStatement
 {

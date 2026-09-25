@@ -47,7 +47,7 @@ final class ResetBinderTest extends TestCase
         self::assertSame(['max_connections'], $named->setting->name);
         self::assertSame(\SqlSemantics\Model\Configuration\SettingScope::Persist, $named->setting->scope);
         self::assertTrue($named->setting->ifExists);
-        self::assertSame('RESET PERSIST IF EXISTS `max_connections`', $named->toString());
+        self::assertSame('RESET PERSIST IF EXISTS `max_connections`', (new \SqlSemantics\SimpleSerializer())->serialize($named));
     }
 
     public function testBindHandsMySqlServerStateResetsToTheServerCommands(): void

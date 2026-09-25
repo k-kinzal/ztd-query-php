@@ -34,8 +34,8 @@ final class NormalizedPredicateTest extends TestCase
         self::assertSame($negated, $predicate->negated);
         self::assertSame([$predicate->string], $predicate->inputs());
         self::assertSame('boolean', $predicate->type->name);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testInputsRejectsSqlite(): void

@@ -22,7 +22,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @visibility public
  * @example Reading the displayed parameter
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SHOW TIME ZONE');
- *     [$statement->name, $statement->toString()] // => [['timezone'], 'SHOW "timezone"']
+ *     [$statement->name, (new \SqlSemantics\SimpleSerializer())->serialize($statement)] // => [['timezone'], 'SHOW "timezone"']
  * @example Reading a dotted custom parameter
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SHOW app.mode');
  *     $statement->resultColumns()[0]->name // => 'app.mode'

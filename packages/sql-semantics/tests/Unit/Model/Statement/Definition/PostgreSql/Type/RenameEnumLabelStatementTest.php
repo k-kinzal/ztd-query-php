@@ -24,21 +24,21 @@ final class RenameEnumLabelStatementTest extends TestCase
         self::assertInstanceOf(RenameEnumLabelStatement::class, $statement);
         self::assertSame('ok', $statement->label);
         self::assertSame('fine', $statement->newLabel);
-        self::assertSame("ALTER TYPE \"mood\" RENAME VALUE 'ok' TO 'fine'", $statement->toString());
+        self::assertSame("ALTER TYPE \"mood\" RENAME VALUE 'ok' TO 'fine'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("ALTER TYPE mood RENAME VALUE 'ok' TO 'fine'");
         self::assertInstanceOf(RenameEnumLabelStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithTypeReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("ALTER TYPE mood RENAME VALUE 'ok' TO 'fine'");
         self::assertInstanceOf(RenameEnumLabelStatement::class, $statement);
-        self::assertSame("ALTER TYPE \"s\".\"m\" RENAME VALUE 'ok' TO 'fine'", $statement->withType(new QualifiedName(['s', 'm']))->toString());
+        self::assertSame("ALTER TYPE \"s\".\"m\" RENAME VALUE 'ok' TO 'fine'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withType(new QualifiedName(['s', 'm']))));
     }
 
     public function testWithLabelReplacesTheOperand(): void

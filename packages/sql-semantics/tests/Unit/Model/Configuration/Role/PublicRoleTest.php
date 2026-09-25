@@ -31,11 +31,11 @@ final class PublicRoleTest extends TestCase
         $statement = $binder->bind('GRANT SELECT ON TABLE t TO PUBLIC, alice');
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertEquals([PublicRole::Public, new NamedRole('alice')], $statement->grantees);
-        self::assertSame('GRANT SELECT ON TABLE "public"."t" TO PUBLIC, "alice"', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('GRANT SELECT ON TABLE "public"."t" TO PUBLIC, "alice"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(GrantPrivilegesStatement::class, $rebound);
         self::assertSame(PublicRole::Public, $rebound->grantees[0]);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testAQuotedPublicNameStaysANamedRole(): void
@@ -44,6 +44,6 @@ final class PublicRoleTest extends TestCase
         $statement = $binder->bind('GRANT SELECT ON TABLE t TO "Public"');
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertEquals([new NamedRole('Public')], $statement->grantees);
-        self::assertSame('GRANT SELECT ON TABLE "public"."t" TO "Public"', $statement->toString());
+        self::assertSame('GRANT SELECT ON TABLE "public"."t" TO "Public"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

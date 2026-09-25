@@ -82,7 +82,7 @@ final class WindowBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $frame->end->value);
         self::assertSame('2', $frame->end->value->text);
         self::assertSame(\SqlSemantics\Model\Window\FrameExclusion::Ties, $frame->exclusion);
-        self::assertSame('SELECT sum("a") OVER (PARTITION BY "b" ORDER BY "a" ASC RANGE BETWEEN 1 PRECEDING AND 2 FOLLOWING EXCLUDE TIES) FROM "main"."t"', $statement->toString());
+        self::assertSame('SELECT sum("a") OVER (PARTITION BY "b" ORDER BY "a" ASC RANGE BETWEEN 1 PRECEDING AND 2 FOLLOWING EXCLUDE TIES) FROM "main"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -92,7 +92,7 @@ final class WindowBinderTest extends TestCase
     public function testBindReadsLowercaseFrames(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -122,7 +122,7 @@ final class WindowBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a DATE, b INT)'));
         $query = $binder->bind($sql);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($query->toString())->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 }

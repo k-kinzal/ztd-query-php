@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $query = (new \SqlSemantics\Binder($schema))->bind("SELECT XMLEXISTS('//a' PASSING BY REF x) FROM t");
  *     $value = $query->outputs[0]->expression;
  *     [$value->path->spelling(), $value->document->referenceParts(), $value->inputMode] // => ["'//a'", ['x'], \SqlSemantics\Model\TableFunction\Xml\PassingMode::Reference]
- *     $query->toString() // => 'SELECT XMLEXISTS(\'//a\' PASSING BY REF "x") FROM "public"."t"'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($query) // => 'SELECT XMLEXISTS(\'//a\' PASSING BY REF "x") FROM "public"."t"'
  */
 final class XmlExistence extends Expression
 {

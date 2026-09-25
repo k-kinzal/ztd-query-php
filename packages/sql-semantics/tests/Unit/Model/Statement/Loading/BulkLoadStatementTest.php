@@ -29,14 +29,14 @@ final class BulkLoadStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
         self::assertInstanceOf(BulkLoadStatement::class, $statement);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` ALGORITHM = BULK", $statement->withOrigin($statement->origin)->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` ALGORITHM = BULK", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithLocationReadsAUrl(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
         self::assertInstanceOf(BulkLoadStatement::class, $statement);
-        self::assertSame("LOAD DATA FROM URL 'f' INTO TABLE `t` ALGORITHM = BULK", $statement->withLocation(LoadSource::Url)->toString());
+        self::assertSame("LOAD DATA FROM URL 'f' INTO TABLE `t` ALGORITHM = BULK", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withLocation(LoadSource::Url)));
     }
 
     public function testWithFileReadsAnotherPrefix(): void
@@ -45,7 +45,7 @@ final class BulkLoadStatementTest extends TestCase
         $file = Expression::literal('g.', Dialect::MySql);
         self::assertInstanceOf(BulkLoadStatement::class, $statement);
         self::assertInstanceOf(Literal::class, $file);
-        self::assertSame("LOAD DATA INFILE 'g.' INTO TABLE `t` ALGORITHM = BULK", $statement->withFile($file)->toString());
+        self::assertSame("LOAD DATA INFILE 'g.' INTO TABLE `t` ALGORITHM = BULK", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withFile($file)));
     }
 
     public function testWithTableLoadsAnotherTable(): void
@@ -55,7 +55,7 @@ final class BulkLoadStatementTest extends TestCase
         $other = $binder->bind("LOAD DATA INFILE 'f' INTO TABLE u ALGORITHM = BULK");
         self::assertInstanceOf(BulkLoadStatement::class, $statement);
         self::assertInstanceOf(BulkLoadStatement::class, $other);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `u` ALGORITHM = BULK", $statement->withTable($other->table)->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `u` ALGORITHM = BULK", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withTable($other->table)));
     }
 
     public function testWithFileCountRequiresAPositiveCount(): void
@@ -71,7 +71,7 @@ final class BulkLoadStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
         self::assertInstanceOf(BulkLoadStatement::class, $statement);
-        self::assertSame("LOAD DATA INFILE 'f' IN PRIMARY KEY ORDER INTO TABLE `t` ALGORITHM = BULK", $statement->withKeyOrdered(true)->toString());
+        self::assertSame("LOAD DATA INFILE 'f' IN PRIMARY KEY ORDER INTO TABLE `t` ALGORITHM = BULK", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withKeyOrdered(true)));
     }
 
     public function testWithDuplicatesAcceptsOnlyReplace(): void
@@ -107,7 +107,7 @@ final class BulkLoadStatementTest extends TestCase
         $zstd = Expression::literal('zstd', Dialect::MySql);
         self::assertInstanceOf(BulkLoadStatement::class, $statement);
         self::assertInstanceOf(Literal::class, $zstd);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` COMPRESSION = 'zstd' ALGORITHM = BULK", $statement->withCompression($zstd)->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` COMPRESSION = 'zstd' ALGORITHM = BULK", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withCompression($zstd)));
     }
 
     public function testWithParallelRequiresMySql82(): void
@@ -123,7 +123,7 @@ final class BulkLoadStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t MEMORY = 2K ALGORITHM = BULK");
         self::assertInstanceOf(BulkLoadStatement::class, $statement);
         self::assertSame('2048', $statement->memory);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` MEMORY = 10 ALGORITHM = BULK", $statement->withMemory('10')->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` MEMORY = 10 ALGORITHM = BULK", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withMemory('10')));
         $this->expectException(InvalidStructure::class);
         $statement->withMemory('010');
     }
@@ -134,8 +134,8 @@ final class BulkLoadStatementTest extends TestCase
         self::assertInstanceOf(BulkLoadStatement::class, $statement);
         $copy = new BulkLoadStatement($statement->origin, $statement->location, $statement->file, $statement->table);
         self::assertFalse($copy->keyOrdered);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` ALGORITHM = BULK", $copy->toString());
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` FIELDS TERMINATED BY ',' ALGORITHM = BULK", $statement->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` ALGORITHM = BULK", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` FIELDS TERMINATED BY ',' ALGORITHM = BULK", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testOriginRequiresMySql80(): void
@@ -163,7 +163,7 @@ final class BulkLoadStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
         self::assertInstanceOf(BulkLoadStatement::class, $statement);
-        self::assertSame($expected, $statement->withParallel($parallel)->withMemory($memory)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement->withParallel($parallel)->withMemory($memory)));
     }
 
     #[TestWith(['mysql-8.1.0', 2, null])]

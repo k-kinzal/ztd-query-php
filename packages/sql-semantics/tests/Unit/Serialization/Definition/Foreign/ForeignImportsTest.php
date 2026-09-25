@@ -37,7 +37,7 @@ final class ForeignImportsTest extends TestCase
         self::assertInstanceOf(ImportForeignSchemaStatement::class, $rebound);
         self::assertSame('x"y', $rebound->options[0]->name);
         self::assertSame($value->text, $rebound->options[0]->value->text);
-        self::assertSame($changed->toString(), $rebound->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
 }

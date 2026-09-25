@@ -263,7 +263,7 @@ final class SchemaEvolutionTest extends TestCase
         self::assertSame(['id', 'a'], array_column($schema->tables[2]->columns, 'name'));
         self::assertSame(['id', 'x'], array_column($schema->tables[3]->columns, 'name'));
         $binder = new Binder($schema);
-        self::assertSame('ALTER FOREIGN TABLE "f" ADD COLUMN "c" integer', $binder->bind('ALTER FOREIGN TABLE f ADD COLUMN c INT')->toString());
-        self::assertSame('ALTER FOREIGN TABLE "g" RENAME COLUMN "x" TO "y"', $binder->bind('ALTER FOREIGN TABLE g RENAME COLUMN x TO y')->toString());
+        self::assertSame('ALTER FOREIGN TABLE "f" ADD COLUMN "c" integer', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER FOREIGN TABLE f ADD COLUMN c INT')));
+        self::assertSame('ALTER FOREIGN TABLE "g" RENAME COLUMN "x" TO "y"', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER FOREIGN TABLE g RENAME COLUMN x TO y')));
     }
 }

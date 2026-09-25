@@ -31,8 +31,8 @@ final class CreateVirtualTableStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('CREATE VIRTUAL TABLE docs USING fts5(title)');
         self::assertInstanceOf(CreateVirtualTableStatement::class, $statement);
         $changed = $statement->withConstructor(new Invocation('fts5', [new ConstructorArgument('body')]));
-        self::assertSame('CREATE VIRTUAL TABLE "docs" USING "fts5"(title)', $statement->toString());
-        self::assertSame('CREATE VIRTUAL TABLE "docs" USING "fts5"(body)', $changed->toString());
+        self::assertSame('CREATE VIRTUAL TABLE "docs" USING "fts5"(title)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('CREATE VIRTUAL TABLE "docs" USING "fts5"(body)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginKeepsTheModuleConstructor(): void
@@ -43,6 +43,6 @@ final class CreateVirtualTableStatementTest extends TestCase
         self::assertSame('other', $changed->scopeId);
         self::assertSame($statement->constructor, $changed->constructor);
         self::assertSame($statement->name, $changed->name);
-        self::assertSame('CREATE VIRTUAL TABLE "temp"."docs" USING "fts5"(title, body)', $changed->toString());
+        self::assertSame('CREATE VIRTUAL TABLE "temp"."docs" USING "fts5"(title, body)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

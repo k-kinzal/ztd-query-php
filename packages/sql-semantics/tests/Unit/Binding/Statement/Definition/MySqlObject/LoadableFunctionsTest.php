@@ -34,8 +34,8 @@ final class LoadableFunctionsTest extends TestCase
         self::assertInstanceOf(CreateLoadableFunctionStatement::class, $statement);
         self::assertSame(['f', $returns, "lib's.so", true, false], [$statement->name, $statement->returns, $statement->library, $statement->aggregate, $statement->ifNotExists]);
         $expected = "CREATE AGGREGATE FUNCTION `f` RETURNS {$returns->value} SONAME 'lib''s.so'";
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['mysql-8.0.44'])]
@@ -69,6 +69,6 @@ final class LoadableFunctionsTest extends TestCase
     public function testBindReadsTheRealResultUnderEveryGrammar(string $version, string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

@@ -55,7 +55,7 @@ final class SettingsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $statement = $binder->bind('RESET PERSIST IF EXISTS max_connections');
         self::assertInstanceOf(ResetSettingStatement::class, $statement);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(ResetSettingStatement::class, $rebound);
         self::assertTrue($rebound->setting->ifExists);
         self::assertSame(['max_connections'], $rebound->setting->name);
@@ -77,7 +77,7 @@ final class SettingsTest extends TestCase
         $statement = $binder->bind('PRAGMA main.cache_size = -2000');
         self::assertInstanceOf(AssignPragmaStatement::class, $statement);
         self::assertSame('- 2000', Settings::pragmaValue($statement->value, Dialect::Sqlite)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(AssignPragmaStatement::class, $rebound);
         self::assertSame($statement->value::class, $rebound->value::class);
     }

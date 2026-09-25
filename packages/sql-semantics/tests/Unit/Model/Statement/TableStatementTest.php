@@ -174,7 +174,7 @@ final class TableStatementTest extends TestCase
         $changed = new \SqlSemantics\Model\Statement\TableStatement($before->origin, $other->from);
         self::assertSame(['name', 'active'], array_column($changed->outputs, 'name'));
         self::assertSame([$other->from], $changed->relations);
-        self::assertSame($changed->toString(), $before->withTable($other->from->declaration)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($changed), (new \SqlSemantics\SimpleSerializer())->serialize($before->withTable($other->from->declaration)));
     }
     public function testWithTablePreservesExcludedDescendants(): void
     {
@@ -184,8 +184,8 @@ final class TableStatementTest extends TestCase
         $changed = $statement->withTable($schema->tables[1]);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\OnlyTableReference::class, $changed->from);
         self::assertSame(['name'], array_column($changed->outputs, 'name'));
-        self::assertSame('TABLE ONLY "public"."u"', $changed->toString());
-        self::assertSame('TABLE ONLY "public"."t"', $statement->toString());
+        self::assertSame('TABLE ONLY "public"."u"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('TABLE ONLY "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginKeepsTheSourceTable(): void
@@ -195,7 +195,7 @@ final class TableStatementTest extends TestCase
         $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [], $statement->origin->context));
         self::assertSame('other', $changed->scopeId);
         self::assertSame($statement->from, $changed->from);
-        self::assertSame('TABLE "public"."t"', $changed->toString());
+        self::assertSame('TABLE "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame('s0', $statement->scopeId);
     }
 
@@ -212,8 +212,8 @@ final class TableStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('TABLE t');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
         $changed = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(Expression::reference(['n'], Dialect::PostgreSql), true)]);
-        self::assertSame('TABLE "public"."t" ORDER BY "n" DESC', $changed->toString());
-        self::assertSame('TABLE "public"."t"', $statement->toString());
+        self::assertSame('TABLE "public"."t" ORDER BY "n" DESC', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('TABLE "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame([], $changed->withOrderBy([])->orderBy);
     }
 
@@ -230,5 +230,55 @@ final class TableStatementTest extends TestCase
         $name = $statement->withTable($schema->tables[1])->from->name;
         self::assertInstanceOf(\SqlSemantics\Model\Relation\QualifiedName::class, $name);
         self::assertSame($parts, $name->parts);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.0.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.1.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.2.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.3.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.0.1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0'])]
+    public function testKeepsMySqlRowLocksThroughStructuralSerialization(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE t(id INT)'));
+        $shared = $binder->bind('TABLE t LOCK IN SHARE MODE');
+        $update = $binder->bind('TABLE t ORDER BY id LIMIT 1 FOR UPDATE OF t NOWAIT');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $shared);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $update);
+        self::assertSame(\SqlSemantics\Model\Query\Locking\LockStrength::Share, $shared->locks[0]->strength);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Locking\NamedRowLock::class, $update->locks[0]);
+        self::assertSame($update->from, $update->locks[0]->relations[0]);
+        self::assertSame('TABLE `t` LOCK IN SHARE MODE', (new \SqlSemantics\SimpleSerializer())->serialize($shared));
+        self::assertSame('TABLE `t` ORDER BY `id` ASC LIMIT 1 FOR UPDATE OF `t` NOWAIT', (new \SqlSemantics\SimpleSerializer())->serialize($update));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($update));
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $rebound);
+        self::assertSame(\SqlSemantics\Model\Query\Locking\LockWait::NoWait, $rebound->locks[0]->wait);
+    }
+
+    public function testKeepsPostgreSqlRowLocksInAnInsertedQuery(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)', 'CREATE TABLE u(id INTEGER)'));
+        $statement = $binder->bind('INSERT INTO u TABLE t FOR KEY SHARE SKIP LOCKED');
+        self::assertSame('INSERT INTO "public"."u" TABLE "public"."t" FOR KEY SHARE SKIP LOCKED', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+    }
+
+    public function testWithLocksReplacesTheRowLocksAndLeavesTheOriginalUnchanged(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('TABLE t FOR UPDATE');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
+        $changed = $statement->withLocks([new \SqlSemantics\Model\Query\Locking\AllRowLock(\SqlSemantics\Model\Query\Locking\LockStrength::NoKeyUpdate)]);
+        self::assertNotSame($statement, $changed);
+        self::assertSame('TABLE "public"."t" FOR NO KEY UPDATE', $changed->toString());
+        self::assertSame(\SqlSemantics\Model\Query\Locking\LockStrength::Update, $statement->locks[0]->strength);
+        self::assertSame([], $changed->withLocks([])->locks);
+    }
+
+    public function testRejectsAPostgreSqlLockStrengthOnMySql(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Statement\TableStatement($statement->origin, $statement->from, locks: [new \SqlSemantics\Model\Query\Locking\AllRowLock(\SqlSemantics\Model\Query\Locking\LockStrength::KeyShare)]);
     }
 }

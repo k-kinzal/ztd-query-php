@@ -35,8 +35,8 @@ final class CreateOperatorClassStatementTest extends TestCase
         self::assertFalse($statement->isDefault);
         self::assertNull($statement->family);
         self::assertSame(StatementKind::Create, $statement->kind);
-        self::assertSame('CREATE OPERATOR CLASS "s"."c" FOR TYPE integer USING "gist" AS OPERATOR 1 "s".<-> (integer, integer) FOR ORDER BY "s"."f", FUNCTION 2(integer, integer) "g"(integer), STORAGE text', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE OPERATOR CLASS "s"."c" FOR TYPE integer USING "gist" AS OPERATOR 1 "s".<-> (integer, integer) FOR ORDER BY "s"."f", FUNCTION 2(integer, integer) "g"(integer), STORAGE text', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsTwoStorageTypes(): void
@@ -52,7 +52,7 @@ final class CreateOperatorClassStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR CLASS c FOR TYPE integer USING btree AS OPERATOR 1 <');
         self::assertInstanceOf(CreateOperatorClassStatement::class, $statement);
-        self::assertSame('CREATE OPERATOR CLASS "c" FOR TYPE integer USING "btree" AS OPERATOR 1 <', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE OPERATOR CLASS "c" FOR TYPE integer USING "btree" AS OPERATOR 1 <', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -88,13 +88,13 @@ final class CreateOperatorClassStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR CLASS c FOR TYPE integer USING btree AS OPERATOR 1 <');
         self::assertInstanceOf(CreateOperatorClassStatement::class, $statement);
-        self::assertSame('CREATE OPERATOR CLASS "c" DEFAULT FOR TYPE integer USING "btree" AS OPERATOR 1 <', $statement->withIsDefault(true)->toString());
+        self::assertSame('CREATE OPERATOR CLASS "c" DEFAULT FOR TYPE integer USING "btree" AS OPERATOR 1 <', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIsDefault(true)));
     }
 
     public function testWithFamilyReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR CLASS c FOR TYPE integer USING btree AS OPERATOR 1 <');
         self::assertInstanceOf(CreateOperatorClassStatement::class, $statement);
-        self::assertSame('CREATE OPERATOR CLASS "c" FOR TYPE integer USING "btree" FAMILY "f" AS OPERATOR 1 <', $statement->withFamily(new QualifiedName(['f']))->toString());
+        self::assertSame('CREATE OPERATOR CLASS "c" FOR TYPE integer USING "btree" FAMILY "f" AS OPERATOR 1 <', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withFamily(new QualifiedName(['f']))));
     }
 }

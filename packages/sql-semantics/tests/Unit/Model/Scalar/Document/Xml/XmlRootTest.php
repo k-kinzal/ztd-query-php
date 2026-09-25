@@ -34,8 +34,8 @@ final class XmlRootTest extends TestCase
         self::assertNotNull($value->version);
         self::assertSame([$value->value, $value->version], $value->inputs());
         self::assertSame(ExpressionKind::XmlConversion, $value->kind);
-        self::assertSame('SELECT XMLROOT("x", VERSION \'1.0\', STANDALONE NO) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT XMLROOT("x", VERSION \'1.0\', STANDALONE NO) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingNamesTheOperation(): void

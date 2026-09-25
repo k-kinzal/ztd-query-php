@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the table and index
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('CLUSTER t_a ON t');
- *     [$statement->table->declaration->name, $statement->index, $statement->toString()] // => ['t', 't_a', 'CLUSTER "public"."t" USING "t_a"']
+ *     [$statement->table->declaration->name, $statement->index, (new \SqlSemantics\SimpleSerializer())->serialize($statement)] // => ['t', 't_a', 'CLUSTER "public"."t" USING "t_a"']
  */
 final class ClusterTableStatement extends BoundStatement
 {

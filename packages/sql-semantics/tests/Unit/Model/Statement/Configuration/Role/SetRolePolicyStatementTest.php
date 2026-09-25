@@ -44,6 +44,6 @@ final class SetRolePolicyStatementTest extends TestCase
         $changed = $statement->withPolicy(SessionRolePolicy::Default);
         self::assertSame(SessionRolePolicy::Default, $changed->policy);
         self::assertSame('SET ROLE NONE', $statement->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString())->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString())));
     }
 }

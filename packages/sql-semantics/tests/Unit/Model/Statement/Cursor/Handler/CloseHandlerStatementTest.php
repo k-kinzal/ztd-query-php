@@ -24,7 +24,7 @@ final class CloseHandlerStatementTest extends TestCase
         self::assertInstanceOf(CloseHandlerStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('HANDLER `t` CLOSE', $copy->toString());
+        self::assertSame('HANDLER `t` CLOSE', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithHandlerClosesAnotherHandler(): void
@@ -34,7 +34,7 @@ final class CloseHandlerStatementTest extends TestCase
         $other = $binder->bind('HANDLER u CLOSE');
         self::assertInstanceOf(CloseHandlerStatement::class, $statement);
         self::assertInstanceOf(CloseHandlerStatement::class, $other);
-        self::assertSame('HANDLER `u` CLOSE', $statement->withHandler($other->handler)->toString());
+        self::assertSame('HANDLER `u` CLOSE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withHandler($other->handler)));
     }
 
     public function testRejectsAnotherDatabaseDialect(): void

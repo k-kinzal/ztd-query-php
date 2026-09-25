@@ -69,7 +69,7 @@ final class LoopsTest extends TestCase
     #[TestWith(['CREATE PROCEDURE p() b: BEGIN leave b; END', 'CREATE PROCEDURE `p`() `b` : BEGIN LEAVE `b`; END `b`'])]
     public function testBindSpellsLabeledLoopsAndJumps(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql)));
     }
 
     #[TestWith(['CREATE PROCEDURE p() b: BEGIN iterate b; END'])]

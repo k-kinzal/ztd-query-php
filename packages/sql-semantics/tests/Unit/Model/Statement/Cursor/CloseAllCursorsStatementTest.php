@@ -23,6 +23,6 @@ final class CloseAllCursorsStatementTest extends TestCase
         $changed = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $changed);
         self::assertSame($statement->toString(), $changed->toString());
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\CloseAllCursorsStatement::class, $binder->bind($changed->toString()));
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\CloseAllCursorsStatement::class, $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($changed)));
     }
 }

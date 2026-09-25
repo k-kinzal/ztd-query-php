@@ -35,8 +35,8 @@ final class ElementAccessTest extends TestCase
         self::assertSame([$access->base, $access->index], $access->inputs());
         self::assertSame('integer', $access->type->name);
         self::assertSame(Nullability::MaybeNull, $access->nullability);
-        self::assertSame('SELECT "tags"[1] FROM "public"."t"', $statement->toString());
-        self::assertSame('SELECT "tags"[1] FROM "public"."t"', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT "tags"[1] FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('SELECT "tags"[1] FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testSpellingIsTheSubscriptBrackets(): void

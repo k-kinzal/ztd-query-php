@@ -25,7 +25,7 @@ final class SetSequenceNameTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertInstanceOf(Relation\Identity\AddColumnIdentity::class, $statement->actions[0]);
         self::assertEquals(new Relation\Identity\SetSequenceName(new QualifiedName(['app', 't_id_seq'])), $statement->actions[0]->options[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY(SEQUENCE NAME "app"."t_id_seq")', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY(SEQUENCE NAME "app"."t_id_seq")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOverQualifiedName(): void

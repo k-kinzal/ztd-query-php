@@ -27,8 +27,8 @@ final class SecurityLabelStatementTest extends TestCase
         self::assertEquals(new Catalog\RelationIdentity(Kind\RelationKind::Table, new QualifiedName(['app', 'users'])), $statement->object);
         self::assertSame('selinux', $statement->provider);
         self::assertSame("'x'", $statement->label?->text);
-        self::assertSame('SECURITY LABEL FOR "selinux" ON TABLE "app"."users" IS \'x\'', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('SECURITY LABEL FOR "selinux" ON TABLE "app"."users" IS \'x\'', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -37,7 +37,7 @@ final class SecurityLabelStatementTest extends TestCase
         self::assertInstanceOf(SecurityLabelStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -57,7 +57,7 @@ final class SecurityLabelStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new Catalog\RelationIdentity(Kind\RelationKind::Table, new QualifiedName(['app', 'users'])), $statement->object);
         self::assertEquals(new Catalog\RelationMemberIdentity(Kind\RelationMemberKind::Column, 'id', new QualifiedName(['t'])), $changed->object);
-        self::assertStringContainsString('ON COLUMN "t"."id"', $changed->toString());
+        self::assertStringContainsString('ON COLUMN "t"."id"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithProviderReplacesTheOperand(): void
@@ -68,7 +68,7 @@ final class SecurityLabelStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('selinux', $statement->provider);
         self::assertEquals(null, $changed->provider);
-        self::assertStringContainsString('SECURITY LABEL ON TABLE', $changed->toString());
+        self::assertStringContainsString('SECURITY LABEL ON TABLE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithLabelReplacesTheOperand(): void
@@ -79,7 +79,7 @@ final class SecurityLabelStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals($statement->label, $statement->label);
         self::assertEquals(null, $changed->label);
-        self::assertStringContainsString('IS NULL', $changed->toString());
+        self::assertStringContainsString('IS NULL', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAnIndex(): void
@@ -103,6 +103,6 @@ final class SecurityLabelStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SECURITY LABEL FOR 'my prov' ON COLUMN t.id IS 'x'");
         self::assertInstanceOf(SecurityLabelStatement::class, $statement);
         self::assertSame('my prov', $statement->provider);
-        self::assertSame("SECURITY LABEL FOR \"my prov\" ON COLUMN \"t\".\"id\" IS 'x'", $statement->toString());
+        self::assertSame("SECURITY LABEL FOR \"my prov\" ON COLUMN \"t\".\"id\" IS 'x'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

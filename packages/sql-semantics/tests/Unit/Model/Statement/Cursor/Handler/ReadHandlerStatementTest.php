@@ -25,14 +25,14 @@ final class ReadHandlerStatementTest extends TestCase
         self::assertInstanceOf(ReadHandlerStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('HANDLER `t` READ FIRST WHERE (`id` > 1) LIMIT 2', $copy->toString());
+        self::assertSame('HANDLER `t` READ FIRST WHERE (`id` > 1) LIMIT 2', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithScanContinuesTheScan(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('HANDLER t READ FIRST');
         self::assertInstanceOf(ReadHandlerStatement::class, $statement);
-        self::assertSame('HANDLER `t` READ NEXT', $statement->withScan(HandlerScan::Next)->toString());
+        self::assertSame('HANDLER `t` READ NEXT', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withScan(HandlerScan::Next)));
         self::assertSame(HandlerScan::First, $statement->scan);
     }
 
@@ -48,7 +48,7 @@ final class ReadHandlerStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('HANDLER t READ FIRST LIMIT 1, 2');
         self::assertInstanceOf(ReadHandlerStatement::class, $statement);
-        self::assertSame('HANDLER `t` READ FIRST', $statement->withLimit(null)->toString());
+        self::assertSame('HANDLER `t` READ FIRST', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withLimit(null)));
         self::assertSame('1', $statement->limit?->offset?->spelling());
     }
 

@@ -34,7 +34,7 @@ final class PositionTest extends TestCase
         self::assertSame([$position->needle, $position->haystack], $position->inputs());
         self::assertSame($type, $position->type->name);
         self::assertSame(Nullability::NotNull, $position->nullability);
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectsMixedDialects(): void

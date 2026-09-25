@@ -85,8 +85,8 @@ final class AggregateCallTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(n INTEGER NOT NULL)');
         $binder = new Binder($schema);
         $statement = $binder->bind('SELECT count(DISTINCT n ORDER BY n) FILTER (WHERE n > 0) FROM t');
-        self::assertSame('SELECT "count"(DISTINCT "n" ORDER BY "n" ASC) FILTER (WHERE ("n" > 0)) FROM "public"."t"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT "count"(DISTINCT "n" ORDER BY "n" ASC) FILTER (WHERE ("n" > 0)) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
 
@@ -102,8 +102,8 @@ final class AggregateCallTest extends TestCase
         self::assertCount(2, $call->arguments);
         self::assertCount(2, $call->orderBy);
         self::assertSame("';'", $call->separator?->text);
-        self::assertSame("SELECT group_concat(DISTINCT `a`, `b` ORDER BY `b` DESC, `a` ASC SEPARATOR ';') FROM `t`", $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame("SELECT group_concat(DISTINCT `a`, `b` ORDER BY `b` DESC, `a` ASC SEPARATOR ';') FROM `t`", (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testRejectsASeparatorOutsideGroupConcat(): void

@@ -33,8 +33,8 @@ final class ExclusionsTest extends TestCase
         self::assertSame(CheckingTime::DeferrableImmediate, $statement->exclusions[0]->checking);
         self::assertCount(1, $statement->definition->table->constraints);
         $expected = 'CREATE TABLE "public"."t"("a" integer, "b" integer, CHECK (("b" > 0)), CONSTRAINT "e" EXCLUDE USING "gist"("a" WITH =) WHERE (("a" > 0)) DEFERRABLE INITIALLY IMMEDIATE, EXCLUDE("b" WITH <>))';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testExcludesRecognizesOnlyExcludeConstraints(): void
@@ -56,6 +56,6 @@ final class ExclusionsTest extends TestCase
     public function testBindReadsLowercaseAttributes(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

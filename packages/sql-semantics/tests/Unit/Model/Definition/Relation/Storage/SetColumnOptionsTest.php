@@ -23,6 +23,6 @@ final class SetColumnOptionsTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertInstanceOf(Relation\Storage\SetColumnOptions::class, $statement->actions[0]);
         self::assertSame(['n_distinct'], $statement->actions[0]->parameters[0]->name->parts);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET ("n_distinct" = 100)', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET ("n_distinct" = 100)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

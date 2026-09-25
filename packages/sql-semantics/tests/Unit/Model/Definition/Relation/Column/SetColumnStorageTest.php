@@ -23,7 +23,7 @@ final class SetColumnStorageTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER COLUMN id SET STORAGE main', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Column\SetColumnStorage('id', Relation\Column\ColumnStorageMode::Main), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET STORAGE MAIN', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET STORAGE MAIN', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyColumn(): void

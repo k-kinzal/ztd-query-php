@@ -103,7 +103,13 @@ final class ColumnBinderTest extends TestCase
         $response = \SqlSemantics\Model\Write\Policy\ConstraintResponse::class;
         self::assertSame([$response::Ignore, $response::Replace, $response::Default, $response::Default], array_column($table->columns, 'nullConflict'));
         $expected = 'ALTER TABLE "t" ADD COLUMN "c" "int" NOT NULL ON CONFLICT IGNORE DEFAULT 1';
-        self::assertSame($expected, $binder->bind('ALTER TABLE t ADD COLUMN c INT NOT NULL ON CONFLICT IGNORE DEFAULT 1')->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER TABLE t ADD COLUMN c INT NOT NULL ON CONFLICT IGNORE DEFAULT 1')));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
+    }
+
+    public function testBindKeepsNotSecondaryOnAnAddedColumn(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('ALTER TABLE t ADD COLUMN c INT NOT SECONDARY');
+        self::assertSame('ALTER TABLE `t` ADD COLUMN `c` integer NOT SECONDARY', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

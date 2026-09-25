@@ -21,7 +21,7 @@ final class MaintenanceBinderTest extends TestCase
         $use = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('USE db');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\UseDatabaseStatement::class, $use);
         self::assertSame(['db'], $use->database->parts);
-        self::assertSame('USE `db`', $use->toString());
+        self::assertSame('USE `db`', (new \SqlSemantics\SimpleSerializer())->serialize($use));
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\ReindexAllStatement::class, (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('REINDEX'));
     }
 
@@ -40,7 +40,7 @@ final class MaintenanceBinderTest extends TestCase
         self::assertSame('main', $into->schema);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $into->destination);
         self::assertSame("'/tmp/x'", $into->destination->text);
-        self::assertSame("VACUUM \"main\" INTO '/tmp/x'", $into->toString());
+        self::assertSame("VACUUM \"main\" INTO '/tmp/x'", (new \SqlSemantics\SimpleSerializer())->serialize($into));
     }
 
     public function testBindReadsDatabaseAttachmentOperands(): void
@@ -53,10 +53,10 @@ final class MaintenanceBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class, $attach->schema);
         self::assertSame(['a'], $attach->schema->name);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $attach->encryptionKey);
-        self::assertSame("ATTACH DATABASE 'f.db' AS \"a\" KEY 'k'", $attach->toString());
+        self::assertSame("ATTACH DATABASE 'f.db' AS \"a\" KEY 'k'", (new \SqlSemantics\SimpleSerializer())->serialize($attach));
         $detach = $binder->bind('DETACH a', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\DetachDatabaseStatement::class, $detach);
-        self::assertSame('DETACH DATABASE "a"', $detach->toString());
+        self::assertSame('DETACH DATABASE "a"', (new \SqlSemantics\SimpleSerializer())->serialize($detach));
     }
 
     public function testBindLeavesNonSqliteAnalyzeToOtherBinders(): void
@@ -75,6 +75,6 @@ final class MaintenanceBinderTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'ANALYZE', 'ANALYZE'])]
     public function testBindReadsTheNamedObject(Dialect $dialect, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder($dialect))->build()))->bind($sql)));
     }
 }

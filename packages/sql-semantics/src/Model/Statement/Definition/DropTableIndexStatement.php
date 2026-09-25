@@ -19,7 +19,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the operation's structure
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('DROP INDEX ix ON t ALGORITHM=INPLACE LOCK=NONE', strict: false);
- *     $statement->toString() // => 'DROP INDEX `ix` ON `t` ALGORITHM = INPLACE LOCK = NONE'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'DROP INDEX `ix` ON `t` ALGORITHM = INPLACE LOCK = NONE'
  *
  * @visibility public
  */

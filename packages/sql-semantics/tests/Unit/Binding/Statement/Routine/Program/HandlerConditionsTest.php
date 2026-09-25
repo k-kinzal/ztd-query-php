@@ -62,7 +62,7 @@ final class HandlerConditionsTest extends TestCase
     #[TestWith(['CREATE PROCEDURE p() BEGIN DECLARE Dup CONDITION FOR 1062; DECLARE EXIT HANDLER FOR DUP BEGIN END; END', 'CREATE PROCEDURE `p`() BEGIN DECLARE `Dup` CONDITION FOR 1062; DECLARE EXIT HANDLER FOR `DUP` BEGIN END; END'])]
     public function testListBindsEveryConditionForm(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql)));
     }
 
     #[TestWith(['DECLARE Dup CONDITION FOR 1062; DECLARE EXIT HANDLER FOR dup, 1062 BEGIN END'])]

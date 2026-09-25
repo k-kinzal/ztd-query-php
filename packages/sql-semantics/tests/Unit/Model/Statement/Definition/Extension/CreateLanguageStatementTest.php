@@ -25,8 +25,8 @@ final class CreateLanguageStatementTest extends TestCase
         self::assertInstanceOf(CreateLanguageStatement::class, $statement);
         self::assertSame(['pl', true, true], [$statement->name, $statement->orReplace, $statement->trusted]);
         self::assertEquals([new QualifiedName(['app', 'call']), new QualifiedName(['app', 'run']), null], [$statement->handler, $statement->inline, $statement->validator]);
-        self::assertSame('CREATE OR REPLACE TRUSTED LANGUAGE "pl" HANDLER "app"."call" INLINE "app"."run"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE OR REPLACE TRUSTED LANGUAGE "pl" HANDLER "app"."call" INLINE "app"."run"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -35,7 +35,7 @@ final class CreateLanguageStatementTest extends TestCase
         self::assertInstanceOf(CreateLanguageStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('CREATE LANGUAGE "pl" HANDLER "call" VALIDATOR "vld"', $copy->toString());
+        self::assertSame('CREATE LANGUAGE "pl" HANDLER "call" VALIDATOR "vld"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -50,7 +50,7 @@ final class CreateLanguageStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE LANGUAGE pl HANDLER call');
         self::assertInstanceOf(CreateLanguageStatement::class, $statement);
-        self::assertSame('CREATE LANGUAGE "pl2" HANDLER "call"', $statement->withName('pl2')->toString());
+        self::assertSame('CREATE LANGUAGE "pl2" HANDLER "call"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName('pl2')));
         self::assertSame('pl', $statement->name);
     }
 
@@ -58,7 +58,7 @@ final class CreateLanguageStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE LANGUAGE pl HANDLER call');
         self::assertInstanceOf(CreateLanguageStatement::class, $statement);
-        self::assertSame('CREATE OR REPLACE LANGUAGE "pl" HANDLER "call"', $statement->withOrReplace(true)->toString());
+        self::assertSame('CREATE OR REPLACE LANGUAGE "pl" HANDLER "call"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrReplace(true)));
         self::assertFalse($statement->orReplace);
     }
 
@@ -66,7 +66,7 @@ final class CreateLanguageStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TRUSTED LANGUAGE pl HANDLER call');
         self::assertInstanceOf(CreateLanguageStatement::class, $statement);
-        self::assertSame('CREATE LANGUAGE "pl" HANDLER "call"', $statement->withTrusted(false)->toString());
+        self::assertSame('CREATE LANGUAGE "pl" HANDLER "call"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withTrusted(false)));
         self::assertTrue($statement->trusted);
     }
 
@@ -74,7 +74,7 @@ final class CreateLanguageStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE LANGUAGE pl HANDLER call');
         self::assertInstanceOf(CreateLanguageStatement::class, $statement);
-        self::assertSame('CREATE LANGUAGE "pl" HANDLER "app"."h"', $statement->withHandler(new QualifiedName(['app', 'h']))->toString());
+        self::assertSame('CREATE LANGUAGE "pl" HANDLER "app"."h"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withHandler(new QualifiedName(['app', 'h']))));
         $this->expectException(InvalidStructure::class);
         $statement->withHandler(new QualifiedName(['a', 'b', 'c', 'd']));
     }
@@ -83,7 +83,7 @@ final class CreateLanguageStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE LANGUAGE pl HANDLER call INLINE run');
         self::assertInstanceOf(CreateLanguageStatement::class, $statement);
-        self::assertSame('CREATE LANGUAGE "pl" HANDLER "call"', $statement->withInline(null)->toString());
+        self::assertSame('CREATE LANGUAGE "pl" HANDLER "call"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withInline(null)));
         self::assertEquals(new QualifiedName(['run']), $statement->inline);
     }
 
@@ -91,7 +91,7 @@ final class CreateLanguageStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE LANGUAGE pl HANDLER call');
         self::assertInstanceOf(CreateLanguageStatement::class, $statement);
-        self::assertSame('CREATE LANGUAGE "pl" HANDLER "call" VALIDATOR "v"', $statement->withValidator(new QualifiedName(['v']))->toString());
+        self::assertSame('CREATE LANGUAGE "pl" HANDLER "call" VALIDATOR "v"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withValidator(new QualifiedName(['v']))));
         self::assertNull($statement->validator);
     }
 }

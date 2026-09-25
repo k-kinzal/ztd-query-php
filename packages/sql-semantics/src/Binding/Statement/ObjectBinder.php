@@ -51,7 +51,7 @@ final class ObjectBinder
         if (($words[0] ?? '') !== 'CREATE') {
             return null;
         }
-        $query = \SqlSemantics\Binding\Query\QueryNodes::legacyContainer($source) ?? array_values(array_filter(Tree::outer($source, ['SelectStmt', 'select_stmt', 'select', 'query_expression', 'create_select', 'columnDef', 'column_def', 'columnlist', 'TableConstraint', 'table_constraint_def']), static fn (Node $node): bool => in_array($node->name, ['SelectStmt', 'select_stmt', 'select', 'query_expression', 'create_select'], true)))[0] ?? null;
+        $query = \SqlSemantics\Binding\Query\QueryNodes::legacyContainer($source) ?? array_values(array_filter(Tree::outer($source, ['SelectStmt', 'select_stmt', 'select', 'query_expression_with_opt_locking_clauses', 'query_expression', 'create_select', 'columnDef', 'column_def', 'columnlist', 'TableConstraint', 'table_constraint_def']), static fn (Node $node): bool => in_array($node->name, ['SelectStmt', 'select_stmt', 'select', 'query_expression_with_opt_locking_clauses', 'query_expression', 'create_select'], true)))[0] ?? null;
         if ($query === null) {
             return null;
         }
@@ -88,12 +88,16 @@ final class ObjectBinder
     }
 
     /**
-     * Binds query-derived table columns without fabricating an empty CREATE TABLE body.
+     * Binds query-derived table columns without fabricating an empty CREATE TABLE body; a MySQL table that also
+     * declares its own columns has its own form.
      * @throws UnclassifiedSql
      */
-    public static function tableAs(Origin $origin, Node $source, Node $query, QueryContext $context): Statement\CreateTableAsStatement
+    public static function tableAs(Origin $origin, Node $source, Node $query, QueryContext $context): Statement\CreateTableAsStatement|Statement\MySql\Table\CreateTableFromQueryStatement
     {
         $parsed = (new \SqlSemantics\Ast\SchemaReader($context->tables->identifiers, $context->tables->defaultSchema, $context->tables->diagnostics->report(...), $context->tables->schema->grammarVersion))->table($source);
+        if ($parsed->columns !== [] && $origin->dialect === \SqlSemantics\Dialect::MySql) {
+            return Definition\TableFromQuery::bind($origin, $source, $parsed, $query, $context);
+        }
         if ($parsed->columns !== []) {
             throw new UnclassifiedSql('A table declaration with both explicit columns and an input query requires its own form.');
         }
@@ -108,7 +112,7 @@ final class ObjectBinder
             $header[] = strtoupper($token->text);
         }
         $ifNotExists = ($parsed->options['if_not_exists'] ?? false) === true || in_array('EXISTS', $header, true);
-        return new Statement\CreateTableAsStatement($origin, self::name($source, $context), $context->bind($query), $columns, \SqlSemantics\Binding\Schema\TablePropertiesBinder::bind($parsed, $scope), !str_contains(strtoupper(Tree::text($source)), 'WITH NO DATA'), $ifNotExists);
+        return new Statement\CreateTableAsStatement($origin, self::name($source, $context), Definition\TableFromQuery::query($origin, $query, $context), $columns, \SqlSemantics\Binding\Schema\TablePropertiesBinder::bind($parsed, $scope), !str_contains(strtoupper(Tree::text($source)), 'WITH NO DATA'), $ifNotExists, $origin->dialect === \SqlSemantics\Dialect::MySql ? Definition\TableFromQuery::duplicates($source) : null);
     }
 
     /**

@@ -25,7 +25,7 @@ final class ReadPragmaStatementTest extends TestCase
         self::assertSame(['main', 'cache_size'], $statement->name->parts);
         self::assertSame(StatementKind::Pragma, $statement->kind);
         self::assertSame([], $statement->assignments());
-        self::assertSame('PRAGMA "main"."cache_size"', $statement->toString());
+        self::assertSame('PRAGMA "main"."cache_size"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheNameAndReplacesProvenance(): void
@@ -36,6 +36,6 @@ final class ReadPragmaStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->name, $copy->name);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

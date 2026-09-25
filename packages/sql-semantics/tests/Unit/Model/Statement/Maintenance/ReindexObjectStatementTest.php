@@ -31,7 +31,7 @@ final class ReindexObjectStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertSame($kind, $copy->targetKind);
         self::assertSame($name, $copy->target->parts);
-        $roundTrip = $binder->bind($copy->toString());
+        $roundTrip = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($copy));
         self::assertInstanceOf(ReindexObjectStatement::class, $roundTrip);
         self::assertSame($kind, $roundTrip->targetKind);
         self::assertSame($name, $roundTrip->target->parts);

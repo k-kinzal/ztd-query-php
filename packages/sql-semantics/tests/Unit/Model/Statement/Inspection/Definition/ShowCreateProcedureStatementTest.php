@@ -25,7 +25,7 @@ final class ShowCreateProcedureStatementTest extends TestCase
         self::assertSame(['app', 'it em'], $statement->procedure->parts);
         self::assertCount(6, $statement->resultColumns());
         self::assertSame('Procedure', $statement->resultColumns()[0]->name);
-        self::assertSame('SHOW CREATE PROCEDURE `app`.`it em`', $statement->toString());
+        self::assertSame('SHOW CREATE PROCEDURE `app`.`it em`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithProcedureNamesAnotherObjectImmutably(): void
@@ -36,7 +36,7 @@ final class ShowCreateProcedureStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame(['item'], $statement->procedure->parts);
         self::assertSame(['other', 'renamed'], $changed->procedure->parts);
-        self::assertSame('SHOW CREATE PROCEDURE `other`.`renamed`', $changed->toString());
+        self::assertSame('SHOW CREATE PROCEDURE `other`.`renamed`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheName(): void

@@ -18,11 +18,17 @@ use SqlSemantics\Model\TableUse;
 final class LockingBinder
 {
     /**
+     * Binds the locking clauses of one query block, looking inside the parentheses of a MySQL derived table, whose
+     * MySQL 5 grammar writes the query block as a table factor; MySQL rejects a table locked by more than one clause.
+     *
      * @return list<Locking\RowLock>
+     * @throws \SqlSemantics\InvalidSql
      */
     public static function bind(Node $source, Scope $scope): array
     {
-        $nodes = QueryNodes::local($source, ['for_locking_item', 'locking_clause', 'select_lock_type', 'opt_select_lock_type']);
+        $body = QueryNodes::body($source);
+        $block = $body->name === 'table_factor' ? $body : ($source->name === 'table_subquery' ? (Tree::child($source, ['subquery']) ?? $source) : $source);
+        $nodes = QueryNodes::local($block, ['for_locking_item', 'locking_clause', 'select_lock_type', 'opt_select_lock_type']);
         $locks = [];
         foreach ($nodes as $node) {
             if (!Tree::hasTokens($node)) {
@@ -37,7 +43,47 @@ final class LockingBinder
             $targets = $of === null ? [] : Tree::outer($of, ['qualified_name', 'table_ident_opt_wild']);
             $locks[] = $targets === [] ? new Locking\AllRowLock($strength, $wait) : new Locking\NamedRowLock($strength, array_map(static fn (Node $target): TableUse|Locking\UnresolvedLockRelation => self::target($target, $scope), $targets), $wait);
         }
+        if ($scope->identifiers->dialect === \SqlSemantics\Dialect::MySql && Locking\LockPlacement::repeated($locks, $scope->relations)) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::RepeatedLock, $source);
+        }
         return $locks;
+    }
+
+    /**
+     * Resolves the locking clauses of a VALUES query block, which MySQL accepts and PostgreSQL rejects.
+     *
+     * @return list<Locking\RowLock>
+     * @throws \SqlSemantics\InvalidSql
+     */
+    public static function values(Node $source, Scope $scope): array
+    {
+        $locks = self::bind($source, $scope);
+        if ($locks !== [] && $scope->identifiers->dialect !== \SqlSemantics\Dialect::MySql) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::ValuesLock, $source);
+        }
+        return $locks;
+    }
+
+    /**
+     * Finds the MySQL locking clause lists written after a set operation, between the query source and the set-operation body.
+     *
+     * MySQL applies such a clause to the last query block of the set operation, so the binder hands it to the rightmost operand.
+     *
+     * @return list<Node>
+     */
+    public static function trailing(Node $source, Node $body): array
+    {
+        $lists = [];
+        $node = $body;
+        while (($parent = QueryNodes::parentOf($source, $node)) !== null) {
+            foreach ($parent->children as $child) {
+                if ($child instanceof Node && $child->name === 'locking_clause_list' && Tree::hasTokens($child)) {
+                    $lists[] = $child;
+                }
+            }
+            $node = $parent;
+        }
+        return $lists;
     }
 
     /**

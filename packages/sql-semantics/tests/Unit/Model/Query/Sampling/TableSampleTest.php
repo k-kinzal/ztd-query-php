@@ -36,8 +36,8 @@ final class TableSampleTest extends TestCase
         self::assertSame('10', $sample->arguments[0]->structure()->toString());
         self::assertSame('1', $sample->repeatable?->structure()->toString());
         $expected = 'SELECT "a" AS "a" FROM ONLY "public"."t" AS "x" TABLESAMPLE BERNOULLI(10) REPEATABLE(1)';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testExtensionMethodIsAQualifiedName(): void
@@ -49,7 +49,7 @@ final class TableSampleTest extends TestCase
         self::assertInstanceOf(QualifiedName::class, $statement->from->sample?->method);
         self::assertSame(['tsm_system_rows'], $statement->from->sample->method->parts);
         self::assertCount(2, $statement->from->sample->arguments);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['mysql-8.4.7'])]
@@ -62,8 +62,8 @@ final class TableSampleTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertInstanceOf(NamedTableReference::class, $statement->from);
         self::assertSame(SamplingMethod::System, $statement->from->sample?->method);
-        self::assertSame('SELECT `a` AS `a` FROM `t` AS `x` TABLESAMPLE SYSTEM(?)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT `a` AS `a` FROM `t` AS `x` TABLESAMPLE SYSTEM(?)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBuiltInMethodWithTwoArgumentsIsInvalidSql(): void

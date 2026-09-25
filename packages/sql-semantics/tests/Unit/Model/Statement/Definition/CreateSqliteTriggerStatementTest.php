@@ -51,8 +51,8 @@ final class CreateSqliteTriggerStatementTest extends TestCase
         self::assertNull($statement->when);
         self::assertNotNull($changed->when);
         self::assertSame('TRUE', $changed->when->spelling());
-        self::assertSame($statement->body->steps[0]->toString(), $changed->body->steps[0]->toString());
-        self::assertInstanceOf(CreateSqliteTriggerStatement::class, $binder->bind($changed->toString()));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement->body->steps[0]), (new \SqlSemantics\SimpleSerializer())->serialize($changed->body->steps[0]));
+        self::assertInstanceOf(CreateSqliteTriggerStatement::class, $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($changed)));
     }
 
     public function testWithOriginKeepsTheTriggerProgram(): void
@@ -64,7 +64,7 @@ final class CreateSqliteTriggerStatementTest extends TestCase
         self::assertSame('other', $changed->scopeId);
         self::assertSame($statement->body, $changed->body);
         self::assertSame($statement->subject, $changed->subject);
-        self::assertSame($statement->toString(), $changed->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithBodyReplacesTheProgramAndKeepsTheOriginal(): void
@@ -77,7 +77,7 @@ final class CreateSqliteTriggerStatementTest extends TestCase
         $delete = $binder->bind('DELETE FROM t WHERE x IS NULL');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $delete);
         $changed = $statement->withBody(new \SqlSemantics\Model\Trigger\SqliteBody([$query, $delete]));
-        self::assertSame('CREATE TRIGGER "tr" AFTER UPDATE OF "id" ON "main"."t" FOR EACH ROW BEGIN SELECT 1; DELETE FROM "t" WHERE ("x" IS NULL); END', $changed->toString());
+        self::assertSame('CREATE TRIGGER "tr" AFTER UPDATE OF "id" ON "main"."t" FOR EACH ROW BEGIN SELECT 1; DELETE FROM "t" WHERE ("x" IS NULL); END', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertCount(2, $changed->body->steps);
         self::assertCount(1, $statement->body->steps);
         self::assertInstanceOf(UpdateTableStatement::class, $statement->body->steps[0]);

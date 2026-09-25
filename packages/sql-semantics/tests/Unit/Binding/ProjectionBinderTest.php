@@ -207,7 +207,7 @@ final class ProjectionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertCount(2, $query->outputs);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Composite\RowExpansion::class, $query->outputs[0]->expression);
-        self::assertSame('SELECT ($1).*, ("g"()).*', $query->toString());
+        self::assertSame('SELECT ($1).*, ("g"()).*', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testStarredRecognizesARelationStarOnly(): void
@@ -225,6 +225,6 @@ final class ProjectionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['id', 'a', 'id', 'b'], array_map(static fn ($output): ?string => $output->name, $query->outputs));
         self::assertSame([0, 1, 2, 3], array_map(static fn ($output): ?int => $output->expression->columnBinding()?->column->ordinal, $query->outputs));
-        self::assertSame('SELECT "x".* FROM("public"."t" INNER JOIN "public"."u" ON ("t"."id" = "u"."id")) AS "x"', $query->toString());
+        self::assertSame('SELECT "x".* FROM("public"."t" INNER JOIN "public"."u" ON ("t"."id" = "u"."id")) AS "x"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 }

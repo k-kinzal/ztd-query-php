@@ -33,7 +33,7 @@ final class ArgumentTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(AssignPragmaStatement::class, $statement);
         self::assertInstanceOf($class, $statement->value);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

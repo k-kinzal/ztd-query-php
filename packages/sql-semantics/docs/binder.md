@@ -95,7 +95,7 @@ from its complete `from` input; callers cannot supply a contradictory relation l
 | Named table | `TableReference` with a qualified name and declaration. PostgreSQL includes descendant tables. |
 | PostgreSQL `ONLY table` | `OnlyTableReference` with the same identity information and an explicit restriction to this table's rows. This type also identifies UPDATE, DELETE, TABLE, LOCK, and CREATE INDEX targets. |
 | Derived SELECT | `DerivedRelation` with a required query and LATERAL policy. |
-| Common table expression | `CteReference` with its required definition. A statement's `ctes` owns ordered `CommonTableExpression` definitions, column aliases, and materialization policy. |
+| Common table expression | `CteReference` with its required definition. A statement's `ctes` owns ordered `CommonTableExpression` definitions, column aliases, materialization policy, and the PostgreSQL `search` (`SearchClause`) and `cycle` (`CycleClause`) clauses of a recursive query, whose added columns follow the query's columns. |
 | `JOIN ... ON ...` | `OnJoin` with a required predicate and two inputs. |
 | `JOIN ... USING(id)` | `UsingJoin` with a nonempty set of `SharedColumn` pairs and their merged output expressions. |
 | `NATURAL JOIN` | `NaturalJoin` retaining its shared columns, including the case of no shared names. |
@@ -144,6 +144,7 @@ SELECT structures require at least one output.
 | Date/time extraction | `Extract` has a required `PostgreSqlField` or `MySqlUnit` enum and a required temporal `value`. The field must match the operand dialect. Its result is PostgreSQL numeric or MySQL bigint; field names are normalized without evaluating the input. |
 | MySQL temporal arithmetic | `DateShift` has required temporal `value`, interval `quantity`, `MySqlUnit`, and `ShiftDirection`. `IntervalOperandOrder` retains input order, including leading intervals, so anonymous parameter positions survive serialization. DATE_ADD, DATE_SUB, ADDDATE, SUBDATE, and infix interval forms bind these roles. |
 | String position | `Position` has required `needle` and `haystack` expressions in the same dialect. Its integer result and NULL facts are derived from those operands; binding does not perform the search. |
+| MySQL CHAR and WEIGHT_STRING | `CharacterCodes` retains the nonempty ordered `codes` and the USING `characterSet` (a binary string without it). `WeightString` retains the `operand`, the optional `WeightPadding` (AS CHAR(n) or AS BINARY(n)) and the MySQL 5.x `WeightLevel` items; `InternalWeightString` retains the numeric result length, codepoints and flags of the four-argument form. |
 | Binary or unary operation | An operator enum and required `left`/`right` or `operand`. MySQL and PostgreSQL truth tests (`IS TRUE`, `IS FALSE`, `IS UNKNOWN`, and their negations) are unary enum cases with a non-NULL predicate result. |
 | Function | `FunctionCall` has a registered or unresolved function reference and ordered value arguments. |
 | PostgreSQL COALESCE and NULLIF | `Coalesce` retains ordered alternatives; `NullIf` has required `left` and `right` comparison operands. These are language operations. |
@@ -152,7 +153,7 @@ SELECT structures require at least one output.
 | Aggregate over values | `AggregateCall` retains value arguments, ALL/DISTINCT, optional input ordering, and FILTER. |
 | Aggregate over rows, such as `count(*)` | `AllRowsAggregate` retains the function reference and optional FILTER; it has no value-argument list. |
 | Ordered-set aggregate | `OrderedSetCall` separates `directArguments` from the required `withinGroup` row ordering and optional FILTER. Both argument groups participate in signature resolution. |
-| Window function | `WindowCall` retains the invocation and its window specification or named window reference. |
+| Window function | `WindowCall` retains the invocation and its window specification or named window reference. MySQL rejects IGNORE NULLS and FROM LAST with the `window-modifier` violation. |
 | JSON membership | MySQL `JsonMembership` has a required searched `value` and JSON `array` input. Neither is evaluated during binding. |
 | SQL/JSON functions | `JsonScalarExtraction` (JSON_VALUE) retains the document, path, RETURNING type and ON EMPTY/ON ERROR responses, plus PostgreSQL's document FORMAT and PASSING variables. PostgreSQL `JsonQueryExtraction` (JSON_QUERY) adds the wrapper and quotes, `JsonExistence` (JSON_EXISTS) its ON ERROR response; `JsonSerialization`, `JsonParse` and `JsonScalarConversion` retain JSON_SERIALIZE, JSON() and JSON_SCALAR. `JsonObjectConstructor`, `JsonArrayConstructor`, `JsonArrayQuery`, `JsonObjectAggregate` and `JsonArrayAggregate` retain members or elements, NULL handling, key uniqueness, ordering, FILTER and RETURNING. Result types derive from RETURNING or the function's default; options PostgreSQL rejects raise `InvalidSql`. |
 | PostgreSQL named infix operator, `a OPERATOR(schema.op) b` | `QualifiedInfixOperation` retains a `QualifiedOperator` (schema path and symbol) and required `left`/`right`. No operator catalog is consulted, so the result type is unknown. A built-in written through `pg_catalog` or without a schema, such as `OPERATOR(pg_catalog.+)` or `~~`, binds as its plain operator instead; a bare symbol the binder does not classify, such as `#`, binds as an unqualified `QualifiedOperator`. More than a database and a schema before the symbol raises `InvalidSql`. |
@@ -212,6 +213,12 @@ enum; it does not manufacture a valid Statement. Lexical and syntax errors are
 reported by sql-parser. An unclassified construct is an implementation failure and
 is not represented by a generic command or raw grammar payload.
 
-`source` retains parser positions and original text for diagnostics. Semantic
-operands determine serialization. Transformations belong to the Statement and
-return a new validated snapshot. See [statements and serialization](statements.md).
+`source` retains parser positions and original text for diagnostics. A Statement
+returned by `bind()` or `bindAll()` writes back exactly the SQL text it was bound
+from: `$binder->bind($sql)->toString() === $sql`, with comments, whitespace, and
+keyword case intact. Transformations belong to the Statement and return a new
+validated snapshot; a transformed Statement, and one constructed from operands by
+`StatementFactory`, discards the original formatting and `toString()` writes it from
+its semantic operands with `SimpleSerializer`. `SimpleSerializer::serialize()` writes
+the compact layout of any Statement, bound or not. See
+[statements and serialization](statements.md).

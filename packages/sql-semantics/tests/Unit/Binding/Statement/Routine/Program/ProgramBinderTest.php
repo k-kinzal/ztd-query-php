@@ -30,7 +30,7 @@ final class ProgramBinderTest extends TestCase
         $statement = $binder->bind('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO outer_block: BEGIN DECLARE i INT DEFAULT 0; l: LOOP SET i = i + 1; IF i > 3 THEN LEAVE l; END IF; END LOOP l; END outer_block');
         self::assertInstanceOf(CreateEventStatement::class, $statement);
         self::assertInstanceOf(BlockStatement::class, $statement->body);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testListKeepsStatementOrder(): void
@@ -67,7 +67,7 @@ final class ProgramBinderTest extends TestCase
         $sql = 'CREATE PROCEDURE p(x INT) b: BEGIN DECLARE v INT; DECLARE c CURSOR FOR SELECT a FROM t; OPEN c; FETCH c INTO v; CLOSE c; CASE x WHEN 1 THEN SET v = 1; ELSE SET v = 2; END CASE; l: LOOP ITERATE l; END LOOP l; WHILE x DO LEAVE b; END WHILE; REPEAT SET v = 3; UNTIL x END REPEAT; END b';
         $expected = 'CREATE PROCEDURE `p`(IN `x` integer) `b` : BEGIN DECLARE `v` integer; DECLARE `c` CURSOR FOR SELECT `a` AS `a` FROM `t`; OPEN `c`; FETCH `c` INTO `v`; CLOSE `c`; CASE `x` WHEN 1 THEN SET `v` = 1; ELSE SET `v` = 2; END CASE; `l` : LOOP ITERATE `l`; END LOOP `l`; WHILE `x` DO LEAVE `b`; END WHILE; REPEAT SET `v` = 3; UNTIL `x` END REPEAT; END `b`';
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)'));
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

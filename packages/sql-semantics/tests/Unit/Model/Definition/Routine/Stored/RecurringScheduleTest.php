@@ -29,7 +29,7 @@ final class RecurringScheduleTest extends TestCase
         self::assertInstanceOf(RecurringSchedule::class, $statement->schedule);
         self::assertSame(MySqlUnit::Minute, $statement->schedule->unit);
         self::assertSame("'2030-01-01'", $statement->schedule->starts?->spelling());
-        self::assertSame("CREATE EVENT `e` ON SCHEDULE EVERY 90 MINUTE STARTS '2030-01-01' ENDS '2031-01-01' DO DO 1", $statement->toString());
+        self::assertSame("CREATE EVENT `e` ON SCHEDULE EVERY 90 MINUTE STARTS '2030-01-01' ENDS '2031-01-01' DO DO 1", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsMicrosecondUnits(): void

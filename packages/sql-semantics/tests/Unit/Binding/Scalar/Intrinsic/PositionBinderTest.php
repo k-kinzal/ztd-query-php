@@ -35,6 +35,6 @@ final class PositionBinderTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql])]
     public function testBindReadsALowercasePositionWithItsOperandsInOrder(Dialect $dialect): void
     {
-        self::assertSame("SELECT POSITION('a' IN 'bc')", (new Binder((new SchemaBuilder($dialect))->build()))->bind("SELECT position('a' in 'bc')")->toString());
+        self::assertSame("SELECT POSITION('a' IN 'bc')", (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder($dialect))->build()))->bind("SELECT position('a' in 'bc')")));
     }
 }

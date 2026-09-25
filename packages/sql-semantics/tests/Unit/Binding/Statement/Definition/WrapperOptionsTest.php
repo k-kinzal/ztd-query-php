@@ -70,7 +70,7 @@ final class WrapperOptionsTest extends TestCase
     #[TestWith(["alter foreign data wrapper w options (add a '1', set b '2', drop c)", 'ALTER FOREIGN DATA WRAPPER "w" OPTIONS(ADD "a" \'1\', SET "b" \'2\', DROP "c")'])]
     public function testFunctionsAndChangeReadLowerCaseKeywords(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     public function testFunctionsDiagnosesARemovedFunctionThatWasSupplied(): void

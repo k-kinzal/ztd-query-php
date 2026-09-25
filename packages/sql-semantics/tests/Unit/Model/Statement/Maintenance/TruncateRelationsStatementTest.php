@@ -33,8 +33,8 @@ final class TruncateRelationsStatementTest extends TestCase
         self::assertSame(ReferencingTables::Include, $statement->references);
         $copy = $statement->withOrigin($statement->origin);
         self::assertSame($statement->tables, $copy->tables);
-        self::assertSame('TRUNCATE TABLE ONLY "public"."t", "public"."u" RESTART IDENTITY CASCADE', $copy->toString());
-        self::assertSame($copy->toString(), $binder->bind($copy->toString())->toString());
+        self::assertSame('TRUNCATE TABLE ONLY "public"."t", "public"."u" RESTART IDENTITY CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($copy), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($copy))));
     }
 
     public function testWithIdentitiesChangesOnlySequencePolicy(): void
@@ -45,7 +45,7 @@ final class TruncateRelationsStatementTest extends TestCase
         self::assertSame(IdentityReset::Continue, $statement->identities);
         self::assertSame(IdentityReset::Restart, $changed->identities);
         self::assertSame(ReferencingTables::RequireListed, $changed->references);
-        self::assertSame('TRUNCATE TABLE "public"."t" RESTART IDENTITY RESTRICT', $changed->toString());
+        self::assertSame('TRUNCATE TABLE "public"."t" RESTART IDENTITY RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTablesPreservesReferencePolicyAndDescendantSelection(): void

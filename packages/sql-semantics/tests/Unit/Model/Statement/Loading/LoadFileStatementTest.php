@@ -28,14 +28,14 @@ final class LoadFileStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, b INT)')))->bind("LOAD DATA LOCAL INFILE 'f' INTO TABLE t (a, b) SET b = a");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
-        self::assertSame("LOAD DATA LOCAL INFILE 'f' INTO TABLE `t`(`a`, `b`) SET `b` = `a`", $statement->withOrigin($statement->origin)->toString());
+        self::assertSame("LOAD DATA LOCAL INFILE 'f' INTO TABLE `t`(`a`, `b`) SET `b` = `a`", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithFormatReadsXml(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t LINES TERMINATED BY '<r>'");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
-        self::assertSame("LOAD XML INFILE 'f' INTO TABLE `t` ROWS IDENTIFIED BY '<r>'", $statement->withFormat(LoadFormat::Xml)->toString());
+        self::assertSame("LOAD XML INFILE 'f' INTO TABLE `t` ROWS IDENTIFIED BY '<r>'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withFormat(LoadFormat::Xml)));
         self::assertSame(LoadFormat::Data, $statement->format);
     }
 
@@ -46,7 +46,7 @@ final class LoadFileStatementTest extends TestCase
         $other = $binder->bind("LOAD DATA INFILE 'g' INTO TABLE t");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
         self::assertInstanceOf(LoadFileStatement::class, $other);
-        self::assertSame("LOAD DATA INFILE 'g' INTO TABLE `t`", $statement->withFile($other->file)->toString());
+        self::assertSame("LOAD DATA INFILE 'g' INTO TABLE `t`", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withFile($other->file)));
     }
 
     public function testWithTableLoadsAnotherTable(): void
@@ -56,14 +56,14 @@ final class LoadFileStatementTest extends TestCase
         $other = $binder->bind("LOAD DATA INFILE 'f' INTO TABLE u");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
         self::assertInstanceOf(LoadFileStatement::class, $other);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `u`", $statement->withTable($other->table)->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `u`", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withTable($other->table)));
     }
 
     public function testWithSchedulingRequestsLowPriority(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
-        self::assertSame("LOAD DATA LOW_PRIORITY INFILE 'f' INTO TABLE `t`", $statement->withScheduling(LoadScheduling::LowPriority)->toString());
+        self::assertSame("LOAD DATA LOW_PRIORITY INFILE 'f' INTO TABLE `t`", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withScheduling(LoadScheduling::LowPriority)));
     }
 
     public function testWithLocalReadsAServerFile(): void
@@ -78,7 +78,7 @@ final class LoadFileStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
-        self::assertSame("LOAD DATA S3 'f' INTO TABLE `t`", $statement->withLocation(LoadSource::S3)->toString());
+        self::assertSame("LOAD DATA S3 'f' INTO TABLE `t`", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withLocation(LoadSource::S3)));
         $this->expectException(InvalidStructure::class);
         $statement->withLocation(LoadSource::Url);
     }
@@ -87,7 +87,7 @@ final class LoadFileStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
-        self::assertSame("LOAD DATA INFILE 'f' IGNORE INTO TABLE `t`", $statement->withDuplicates(DuplicateRows::Ignore)->toString());
+        self::assertSame("LOAD DATA INFILE 'f' IGNORE INTO TABLE `t`", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDuplicates(DuplicateRows::Ignore)));
     }
 
     public function testWithPartitionsRestrictsTheLoad(): void
@@ -95,14 +95,14 @@ final class LoadFileStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t PARTITION (p0)");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
         self::assertSame(['p0'], $statement->partitions?->names);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` PARTITION(`p1`, `p2`)", $statement->withPartitions(new NamedPartitions(['p1', 'p2']))->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` PARTITION(`p1`, `p2`)", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withPartitions(new NamedPartitions(['p1', 'p2']))));
     }
 
     public function testWithLayoutReplacesTheInputLayout(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t IGNORE 1 ROWS");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` CHARACTER SET `latin1`", $statement->withLayout(new LoadLayout('latin1'))->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` CHARACTER SET `latin1`", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withLayout(new LoadLayout('latin1'))));
         self::assertSame(1, $statement->layout->skippedRows);
     }
 
@@ -110,7 +110,7 @@ final class LoadFileStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t (a)");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t`", $statement->withTargets([])->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t`", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withTargets([])));
         self::assertCount(1, $statement->targets);
     }
 
@@ -118,8 +118,8 @@ final class LoadFileStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t SET a = DEFAULT");
         self::assertInstanceOf(LoadFileStatement::class, $statement);
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t`", $statement->withAssignments([])->toString());
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` SET `a` = DEFAULT", $statement->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t`", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withAssignments([])));
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` SET `a` = DEFAULT", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnotherDialect(): void

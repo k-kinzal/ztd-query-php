@@ -1,7 +1,7 @@
 <?php
 
 /**
- * PHP-Fuzzer entry point: every SQLite statement sql-faker generates must produce semantic structure.
+ * PHP-Fuzzer entry point: every SQLite statement sql-faker generates must bind into a Statement that writes back the same SQL.
  *
  * Usage:
  *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_semantics.php fuzz/corpus/sqlite/

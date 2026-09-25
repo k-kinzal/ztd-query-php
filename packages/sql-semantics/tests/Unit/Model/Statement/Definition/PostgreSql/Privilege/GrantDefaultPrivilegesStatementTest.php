@@ -42,7 +42,7 @@ final class GrantDefaultPrivilegesStatementTest extends TestCase
     public function testToStringQuotesTheRoleAndTheSchema(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DEFAULT PRIVILEGES FOR ROLE owner IN SCHEMA app GRANT SELECT ON TABLES TO PUBLIC');
-        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT SELECT ON TABLES TO PUBLIC', $statement->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT SELECT ON TABLES TO PUBLIC', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['ALTER DEFAULT PRIVILEGES FOR ROLE owner IN SCHEMA app GRANT SELECT ON TABLES TO PUBLIC', 'ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT SELECT ON TABLES TO PUBLIC'])]
@@ -55,10 +55,10 @@ final class GrantDefaultPrivilegesStatementTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(GrantDefaultPrivilegesStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        $again = $binder->bind($statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(GrantDefaultPrivilegesStatement::class, $again);
-        self::assertSame($expected, $again->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithPrivilegesReplacesTheCompleteRequestWithoutMutatingTheOriginal(): void
@@ -70,7 +70,7 @@ final class GrantDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new ObjectPrivilege(Privilege::Select)], $statement->privileges);
         self::assertEquals($privileges, $changed->privileges);
-        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT INSERT, DELETE ON TABLES TO PUBLIC', $changed->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT INSERT, DELETE ON TABLES TO PUBLIC', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithPrivilegesRejectsAColumnList(): void
@@ -89,7 +89,7 @@ final class GrantDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame(DefaultPrivilegeTarget::Tables, $statement->target);
         self::assertSame(DefaultPrivilegeTarget::Sequences, $changed->target);
-        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT SELECT ON SEQUENCES TO PUBLIC', $changed->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT SELECT ON SEQUENCES TO PUBLIC', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTargetRejectsAClassOutsideThePrivilegeDomain(): void
@@ -109,7 +109,7 @@ final class GrantDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame([PublicRole::Public], $statement->grantees);
         self::assertEquals($grantees, $changed->grantees);
-        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT SELECT ON TABLES TO "alice", CURRENT_USER', $changed->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT SELECT ON TABLES TO "alice", CURRENT_USER', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithGrantOptionAddsTheOnwardGrant(): void
@@ -120,7 +120,7 @@ final class GrantDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertFalse($statement->grantOption);
         self::assertTrue($changed->grantOption);
-        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT SELECT ON TABLES TO PUBLIC WITH GRANT OPTION', $changed->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "app" GRANT SELECT ON TABLES TO PUBLIC WITH GRANT OPTION', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithRolesReplacesOrClearsTheDefiningRoles(): void
@@ -131,9 +131,9 @@ final class GrantDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $cleared);
         self::assertEquals([new NamedRole('owner')], $statement->roles);
         self::assertSame([], $cleared->roles);
-        self::assertSame('ALTER DEFAULT PRIVILEGES IN SCHEMA "app" GRANT SELECT ON TABLES TO PUBLIC', $cleared->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES IN SCHEMA "app" GRANT SELECT ON TABLES TO PUBLIC', (new \SqlSemantics\SimpleSerializer())->serialize($cleared));
         $session = $statement->withRoles([SessionRole::CurrentUser, new NamedRole('x"y')]);
-        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE CURRENT_USER, "x""y" IN SCHEMA "app" GRANT SELECT ON TABLES TO PUBLIC', $session->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE CURRENT_USER, "x""y" IN SCHEMA "app" GRANT SELECT ON TABLES TO PUBLIC', (new \SqlSemantics\SimpleSerializer())->serialize($session));
     }
 
     public function testWithSchemasReplacesOrClearsTheSchemaSelection(): void
@@ -144,10 +144,10 @@ final class GrantDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $cleared);
         self::assertSame(['app'], $statement->schemas);
         self::assertSame([], $cleared->schemas);
-        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" GRANT SELECT ON TABLES TO PUBLIC', $cleared->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" GRANT SELECT ON TABLES TO PUBLIC', (new \SqlSemantics\SimpleSerializer())->serialize($cleared));
         $two = $statement->withSchemas(['s', 'x"y']);
         self::assertSame(['s', 'x"y'], $two->schemas);
-        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "s", "x""y" GRANT SELECT ON TABLES TO PUBLIC', $two->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner" IN SCHEMA "s", "x""y" GRANT SELECT ON TABLES TO PUBLIC', (new \SqlSemantics\SimpleSerializer())->serialize($two));
     }
 
     public function testWithSchemasRejectsASelectionForSchemaDefaults(): void
@@ -178,7 +178,7 @@ final class GrantDefaultPrivilegesStatementTest extends TestCase
         self::assertSame($statement->grantOption, $copy->grantOption);
         self::assertSame($statement->roles, $copy->roles);
         self::assertSame($statement->schemas, $copy->schemas);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

@@ -26,7 +26,7 @@ final class EngineSelectionTest extends TestCase
         self::assertInstanceOf(ShowEngineReportStatement::class, $named);
         self::assertSame(EngineSelection::All, $all->engine);
         self::assertSame('all', $named->engine);
-        self::assertSame('SHOW ENGINE ALL MUTEX', $all->toString());
-        self::assertSame('SHOW ENGINE `all` MUTEX', $named->toString());
+        self::assertSame('SHOW ENGINE ALL MUTEX', (new \SqlSemantics\SimpleSerializer())->serialize($all));
+        self::assertSame('SHOW ENGINE `all` MUTEX', (new \SqlSemantics\SimpleSerializer())->serialize($named));
     }
 }

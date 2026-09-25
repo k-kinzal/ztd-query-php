@@ -23,7 +23,7 @@ final class DropColumnTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t DROP COLUMN IF EXISTS id CASCADE, DROP id', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals([new Relation\Column\DropColumn('id', true, \SqlSemantics\Model\Definition\DropBehavior::Cascade), new Relation\Column\DropColumn('id')], $statement->actions);
-        self::assertSame('ALTER TABLE "t" DROP COLUMN IF EXISTS "id" CASCADE, DROP COLUMN "id"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" DROP COLUMN IF EXISTS "id" CASCADE, DROP COLUMN "id"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyColumn(): void

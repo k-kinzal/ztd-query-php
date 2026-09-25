@@ -28,7 +28,7 @@ final class StopsTest extends TestCase
         self::assertInstanceOf(StartReplicaStatement::class, $statement);
         self::assertInstanceOf(SourcePosition::class, $statement->until);
         self::assertSame("'b'", $statement->until->file->text);
-        self::assertSame("START SLAVE UNTIL MASTER_LOG_FILE = 'b', MASTER_LOG_POS = 4", $statement->toString());
+        self::assertSame("START SLAVE UNTIL MASTER_LOG_FILE = 'b', MASTER_LOG_POS = 4", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(["START REPLICA UNTIL SOURCE_LOG_FILE = 'a'"])]
@@ -68,7 +68,7 @@ final class StopsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql);
         self::assertInstanceOf(StartReplicaStatement::class, $statement);
         self::assertInstanceOf($class, $statement->until);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testReadReturnsNullWithoutAnUntilClause(): void

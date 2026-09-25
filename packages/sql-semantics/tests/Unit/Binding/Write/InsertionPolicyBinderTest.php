@@ -39,7 +39,7 @@ final class InsertionPolicyBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Write\Policy\MySqlInsertion::class, $delayed->policy);
         self::assertSame(\SqlSemantics\Model\Write\Policy\Scheduling::Delayed, $delayed->policy->scheduling);
         self::assertTrue($delayed->policy->ignore);
-        self::assertSame('INSERT DELAYED IGNORE INTO `t` VALUES (1)', $delayed->toString());
+        self::assertSame('INSERT DELAYED IGNORE INTO `t` VALUES (1)', (new \SqlSemantics\SimpleSerializer())->serialize($delayed));
         $plain = $binder->bind('INSERT INTO t VALUES (1)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $plain);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Policy\MySqlInsertion::class, $plain->policy);
@@ -78,7 +78,7 @@ final class InsertionPolicyBinderTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'insert low_priority ignore into t values (1)', 'INSERT LOW_PRIORITY IGNORE INTO `t` VALUES (1)'])]
     public function testBindReadsLowerCasePolicies(Dialect $dialect, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT)')))->bind($sql)));
     }
 
     public function testBindAttachesTheMySqlRowAlias(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Model;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -150,7 +151,7 @@ final class BoundStatementTest extends TestCase
         $sql = '/* retained */ SELECT   1 -- trailing';
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertSame('SELECT 1', $statement->toString());
+        self::assertSame('SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame($sql, $statement->source->toString());
     }
 
@@ -160,7 +161,7 @@ final class BoundStatementTest extends TestCase
         $sql = '/* retained */ SELECT   missing -- trailing';
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertSame('SELECT "missing" AS "missing"', $statement->toString());
+        self::assertSame('SELECT "missing" AS "missing"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame($sql, $statement->source->toString());
         self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
         self::assertSame($statement->outputs[0]->expression->source, $statement->diagnostics[0]->source);
@@ -173,7 +174,7 @@ final class BoundStatementTest extends TestCase
         $changed = $statement->replaceExpression($statement->outputs[0]->expression, \SqlSemantics\Model\Expression::binary('+', \SqlSemantics\Model\Expression::literal(2, Dialect::Sqlite), \SqlSemantics\Model\Expression::literal(3, Dialect::Sqlite)));
         self::assertSame('+', $changed->outputs[0]->expression->spelling());
         self::assertSame('1', $statement->outputs[0]->expression->spelling());
-        self::assertEquals($changed, $binder->bind($changed->toString()));
+        self::assertEquals($changed->withVerbatimSource(), $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($changed)));
     }
     public function testReplaceExpressionValidatesAnUnresolvedStatement(): void
     {
@@ -184,7 +185,7 @@ final class BoundStatementTest extends TestCase
         self::assertSame([], $repaired->diagnostics);
         self::assertSame('id', $repaired->outputs[0]->expression->columnBinding()?->column->name);
         self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
-        self::assertSame('SELECT "missing" AS "missing" FROM "public"."t"', $statement->toString());
+        self::assertSame('SELECT "missing" AS "missing" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $this->expectException(\SqlSemantics\SemanticException::class);
         $statement->replaceExpression($statement->outputs[0]->expression, \SqlSemantics\Model\Expression::reference(['still_missing'], Dialect::PostgreSql));
     }
@@ -231,7 +232,7 @@ final class BoundStatementTest extends TestCase
         self::assertSame('*', $changed->outputs[0]->expression->spelling());
         self::assertSame('+', $changed->outputs[0]->expression->inputs()[0]->spelling());
         self::assertSame('b', $changed->outputs[0]->expression->lineage()[0]->column->name);
-        self::assertStringNotContainsString('original', $changed->toString());
+        self::assertStringNotContainsString('original', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertStringContainsString('original', $statement->source->toString());
     }
 
@@ -310,8 +311,87 @@ final class BoundStatementTest extends TestCase
         self::assertSame(['custom'], array_column($changed->diagnostics, 'reason'));
         self::assertSame($statement->scopeId, $changed->scopeId);
         self::assertSame($statement->source, $changed->source);
-        self::assertSame($statement->toString(), $changed->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame([], $statement->diagnostics);
         self::assertSame([], $changed->withDiagnostics([])->diagnostics);
+    }
+
+    #[DataProvider('providerBoundText')]
+    public function testToStringWritesBackTheBoundText(Dialect $dialect, string $sql): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t (a INT, b INT)')))->bind($sql);
+        self::assertSame($sql, $statement->toString());
+        self::assertTrue($statement->origin->verbatim);
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, string}>
+     */
+    public static function providerBoundText(): iterable
+    {
+        yield 'mysql comments and case' => [Dialect::MySql, "/* lead */ select   A , b\nFROM t -- tail\n"];
+        yield 'mysql write' => [Dialect::MySql, 'insert  INTO t ( a )values(1) ;'];
+        yield 'postgresql spacing' => [Dialect::PostgreSql, "  Select a+1  AS x from   t WHERE b>0\t"];
+        yield 'postgresql definition' => [Dialect::PostgreSql, 'create TABLE  u( id int  PRIMARY key )'];
+        yield 'sqlite command' => [Dialect::Sqlite, "-- lead\nbegin   IMMEDIATE ;"];
+        yield 'sqlite update' => [Dialect::Sqlite, 'UPDATE t SET a = 2 /* why */ WHERE b = 1'];
+    }
+
+    public function testToStringWritesATransformedStatementWithTheSimpleSerializer(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT, b INT)')))->bind('select a  from t   -- all rows');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $changed = $statement->withWhere(\SqlSemantics\Model\Expression::reference(['b'], Dialect::MySql));
+        self::assertFalse($changed->origin->verbatim);
+        self::assertSame('SELECT `a` AS `a` FROM `t` WHERE `b`', $changed->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($changed), $changed->toString());
+        self::assertSame('select a  from t   -- all rows', $statement->toString());
+    }
+
+    public function testToStringWritesAReplacedExpressionWithTheSimpleSerializer(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('select  1 ;');
+        $changed = $statement->replaceExpression(\SqlSemantics\Model\Traversal\Expressions::all($statement)[0], \SqlSemantics\Model\Expression::literal(2, Dialect::Sqlite));
+        self::assertSame('SELECT 2', $changed->toString());
+        self::assertSame('select  1 ;', $statement->toString());
+    }
+
+    public function testToStringWritesAConstructedStatementWithTheSimpleSerializer(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $factory = new \SqlSemantics\StatementFactory($schema);
+        $constructed = $factory->select([new \SqlSemantics\Model\OutputColumn(0, 'answer', \SqlSemantics\Model\Expression::literal(42, Dialect::PostgreSql))]);
+        self::assertFalse($constructed->origin->verbatim);
+        self::assertSame('SELECT 42 AS "answer"', $constructed->toString());
+        $validated = $factory->create((new Binder($schema))->bind('select   42 as answer'));
+        self::assertSame('SELECT 42 AS "answer"', $validated->toString());
+    }
+
+    public function testWithVerbatimSourceWritesTheSourceText(): void
+    {
+        $constructed = (new \SqlSemantics\StatementFactory((new SchemaBuilder(Dialect::Sqlite))->build()))->select([new \SqlSemantics\Model\OutputColumn(0, 'n', \SqlSemantics\Model\Expression::literal(7, Dialect::Sqlite))]);
+        $verbatim = $constructed->withVerbatimSource();
+        self::assertNotSame($constructed, $verbatim);
+        self::assertTrue($verbatim->origin->verbatim);
+        self::assertSame($constructed->source->toString(), $verbatim->toString());
+        self::assertFalse($constructed->origin->verbatim);
+    }
+
+    public function testWithDiagnosticsKeepsTheBoundText(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('select  missing', strict: false);
+        $changed = $statement->withDiagnostics([]);
+        self::assertSame([], $changed->diagnostics);
+        self::assertTrue($changed->origin->verbatim);
+        self::assertSame('select  missing', $changed->toString());
+    }
+
+    public function testWithContextKeepsTheBoundText(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql))->build();
+        $statement = (new Binder($schema))->bind('Select 1  /* one */');
+        $changed = $statement->withContext(new \SqlSemantics\Binding\Editing\StatementContext($schema));
+        self::assertTrue($changed->origin->verbatim);
+        self::assertSame('Select 1  /* one */', $changed->toString());
     }
 }

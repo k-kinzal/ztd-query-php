@@ -35,7 +35,7 @@ final class CatalogCommandsTest extends TestCase
     public function testWriteProducesTheStatementText(string $sql): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind($sql, strict: false);
-        self::assertSame($statement->toString(), CatalogCommands::write($statement)?->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), CatalogCommands::write($statement)?->toString());
     }
 
     public function testTextWritesNullOrTheOriginalSpelling(): void

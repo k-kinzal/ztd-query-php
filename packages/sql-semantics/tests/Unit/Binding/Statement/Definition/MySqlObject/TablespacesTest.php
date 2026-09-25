@@ -35,8 +35,8 @@ final class TablespacesTest extends TestCase
         self::assertInstanceOf(Statement\CreateTablespaceStatement::class, $statement);
         self::assertSame(['t s', "a'b", 'lg', 1048576, 'NDB', 'x'], [$statement->name, $statement->datafile, $statement->logfileGroup, $statement->options->initialSize, $statement->options->engine, $statement->options->comment]);
         $expected = "CREATE TABLESPACE `t s` ADD DATAFILE 'a''b' USE LOGFILE GROUP `lg` INITIAL_SIZE = 1048576 ENGINE = `NDB` COMMENT = 'x' WAIT";
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['mysql-8.0.44'])]
@@ -99,7 +99,7 @@ final class TablespacesTest extends TestCase
     #[TestWith(['mysql-5.7.44', 'alter tablespace ts not accessible', 'ALTER TABLESPACE `ts` NOT ACCESSIBLE'])]
     public function testBindReadsLowerCaseStates(string $version, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)));
     }
 
     public function testAlterAndNameReadParsedNodes(): void

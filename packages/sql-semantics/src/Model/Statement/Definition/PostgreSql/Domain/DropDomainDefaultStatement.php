@@ -17,7 +17,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @visibility public
  * @example Dropping a domain default
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN price DROP DEFAULT');
- *     $statement->toString() // => 'ALTER DOMAIN "price" DROP DEFAULT'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER DOMAIN "price" DROP DEFAULT'
  */
 final class DropDomainDefaultStatement extends BoundStatement
 {

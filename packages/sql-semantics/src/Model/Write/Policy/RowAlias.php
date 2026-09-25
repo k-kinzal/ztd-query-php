@@ -16,7 +16,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('INSERT INTO t (id, a) VALUES (1, 2) AS n(i, x) ON DUPLICATE KEY UPDATE a = x');
  *     $statement->policy->rowAlias->row->alias // => 'n'
  *     $statement->policy->rowAlias->columns // => ['i', 'x']
- *     $statement->toString() // => 'INSERT INTO `t`(`id`, `a`) VALUES (1, 2) AS `n`(`i`, `x`) ON DUPLICATE KEY UPDATE `a` = `x`'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'INSERT INTO `t`(`id`, `a`) VALUES (1, 2) AS `n`(`i`, `x`) ON DUPLICATE KEY UPDATE `a` = `x`'
  */
 final class RowAlias
 {

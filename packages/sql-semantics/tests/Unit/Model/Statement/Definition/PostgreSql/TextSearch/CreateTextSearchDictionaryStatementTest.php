@@ -27,8 +27,8 @@ final class CreateTextSearchDictionaryStatementTest extends TestCase
         self::assertInstanceOf(CreateTextSearchDictionaryStatement::class, $statement);
         self::assertSame(['pg_catalog', 'simple'], $statement->template->parts);
         self::assertSame('1.50', $statement->options[1]->value);
-        self::assertSame('CREATE TEXT SEARCH DICTIONARY "s"."d"(TEMPLATE = "pg_catalog"."simple", "accept" = \'false\', "stopwords" = \'1.50\')', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TEXT SEARCH DICTIONARY "s"."d"(TEMPLATE = "pg_catalog"."simple", "accept" = \'false\', "stopwords" = \'1.50\')', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -51,7 +51,7 @@ final class CreateTextSearchDictionaryStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH DICTIONARY d (template = simple)');
         self::assertInstanceOf(CreateTextSearchDictionaryStatement::class, $statement);
-        self::assertSame('CREATE TEXT SEARCH DICTIONARY "d"(TEMPLATE = "simple")', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE TEXT SEARCH DICTIONARY "d"(TEMPLATE = "simple")', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -76,6 +76,6 @@ final class CreateTextSearchDictionaryStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH DICTIONARY d (template = simple)');
         self::assertInstanceOf(CreateTextSearchDictionaryStatement::class, $statement);
         $changed = $statement->withOptions([new DictionaryOption('dictfile', 'english')]);
-        self::assertSame('CREATE TEXT SEARCH DICTIONARY "d"(TEMPLATE = "simple", "dictfile" = \'english\')', $changed->toString());
+        self::assertSame('CREATE TEXT SEARCH DICTIONARY "d"(TEMPLATE = "simple", "dictfile" = \'english\')', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

@@ -56,7 +56,7 @@ final class PrivilegeTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertSame($privilege, $statement->privileges[0]->privilege);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($statement->toString())->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

@@ -30,8 +30,8 @@ final class CreateForeignPartitionStatementTest extends TestCase
         self::assertCount(1, $statement->constraints);
         self::assertSame([], $statement->columns);
         self::assertFalse($statement->ifNotExists);
-        self::assertSame('CREATE FOREIGN TABLE "ft" PARTITION OF "t"(CHECK (("id" > 0))) FOR VALUES IN(1, 2) SERVER "remote" OPTIONS("a" $$b$$)', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('CREATE FOREIGN TABLE "ft" PARTITION OF "t"(CHECK (("id" > 0))) FOR VALUES IN(1, 2) SERVER "remote" OPTIONS("a" $$b$$)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -40,7 +40,7 @@ final class CreateForeignPartitionStatementTest extends TestCase
         self::assertInstanceOf(CreateForeignPartitionStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -60,7 +60,7 @@ final class CreateForeignPartitionStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new QualifiedName(['ft']), $statement->name);
         self::assertEquals(new QualifiedName(['app', 'ft2']), $changed->name);
-        self::assertStringContainsString('TABLE "app"."ft2" PARTITION', $changed->toString());
+        self::assertStringContainsString('TABLE "app"."ft2" PARTITION', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithParentReplacesTheOperand(): void
@@ -71,7 +71,7 @@ final class CreateForeignPartitionStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new QualifiedName(['t']), $statement->parent);
         self::assertEquals(new QualifiedName(['t']), $changed->parent);
-        self::assertStringContainsString('PARTITION OF "t"', $changed->toString());
+        self::assertStringContainsString('PARTITION OF "t"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithBoundReplacesTheOperand(): void
@@ -82,7 +82,7 @@ final class CreateForeignPartitionStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals($statement->bound, $statement->bound);
         self::assertEquals(new \SqlSemantics\Model\Definition\Relation\Partition\DefaultPartitionBound(), $changed->bound);
-        self::assertStringContainsString(') DEFAULT SERVER', $changed->toString());
+        self::assertStringContainsString(') DEFAULT SERVER', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithServerReplacesTheOperand(): void
@@ -93,7 +93,7 @@ final class CreateForeignPartitionStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('remote', $statement->server);
         self::assertEquals('other', $changed->server);
-        self::assertStringContainsString('SERVER "other"', $changed->toString());
+        self::assertStringContainsString('SERVER "other"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfNotExistsReplacesTheOperand(): void
@@ -104,7 +104,7 @@ final class CreateForeignPartitionStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(false, $statement->ifNotExists);
         self::assertEquals(true, $changed->ifNotExists);
-        self::assertStringContainsString('IF NOT EXISTS "ft"', $changed->toString());
+        self::assertStringContainsString('IF NOT EXISTS "ft"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testBindsColumnOverridesWithoutTypes(): void
@@ -115,7 +115,7 @@ final class CreateForeignPartitionStatementTest extends TestCase
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $statement->columns[0]->nullability);
         self::assertSame(['C'], $statement->columns[0]->collation?->parts);
         self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $statement->columns[1]->generation);
-        self::assertSame('CREATE FOREIGN TABLE "ft" PARTITION OF "t"("id" WITH OPTIONS COLLATE "C" NOT NULL DEFAULT 1, "b" WITH OPTIONS GENERATED ALWAYS AS((1 + 2)) STORED) DEFAULT SERVER "s"', $statement->toString());
+        self::assertSame('CREATE FOREIGN TABLE "ft" PARTITION OF "t"("id" WITH OPTIONS COLLATE "C" NOT NULL DEFAULT 1, "b" WITH OPTIONS GENERATED ALWAYS AS((1 + 2)) STORED) DEFAULT SERVER "s"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyServer(): void
@@ -130,7 +130,7 @@ final class CreateForeignPartitionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a INT) PARTITION BY LIST (a)')))->bind('CREATE FOREIGN TABLE d.s.c PARTITION OF d.public.p FOR VALUES IN (1) SERVER s', strict: false);
         self::assertInstanceOf(CreateForeignPartitionStatement::class, $statement);
-        self::assertSame('CREATE FOREIGN TABLE "d"."s"."c" PARTITION OF "d"."public"."p" FOR VALUES IN(1) SERVER "s"', $statement->toString());
+        self::assertSame('CREATE FOREIGN TABLE "d"."s"."c" PARTITION OF "d"."public"."p" FOR VALUES IN(1) SERVER "s"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithNameRejectsFourComponents(): void

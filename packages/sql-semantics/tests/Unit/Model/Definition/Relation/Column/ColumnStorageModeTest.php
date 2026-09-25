@@ -27,6 +27,6 @@ final class ColumnStorageModeTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER COLUMN id SET STORAGE external', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Column\SetColumnStorage('id', Relation\Column\ColumnStorageMode::External), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET STORAGE EXTERNAL', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET STORAGE EXTERNAL', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

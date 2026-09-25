@@ -60,10 +60,21 @@ final class SchemaCommands
     public static function tableAs(Statement\CreateTableAsStatement $statement): Tree
     {
         $dialect = $statement->origin->dialect;
-        $properties = $statement->properties;
+        return new Tree('create-table-as', [...self::tableHeader($statement->name, $statement->columns, $statement->properties, $statement->ifNotExists, $dialect), ...($statement->duplicates === null ? [] : [Build::keyword($statement->duplicates->value)]), Build::keyword('AS'), Queries::write($statement->query), ...($statement->withData ? [] : [Build::keyword('WITH NO DATA')])]);
+    }
+
+    /**
+     * Writes the head of a table filled from a query: CREATE, persistence, IF NOT EXISTS, name, column aliases and
+     * table options.
+     *
+     * @param list<string> $columns
+     * @return list<Tree>
+     */
+    public static function tableHeader(\SqlSemantics\Model\Relation\QualifiedName $name, array $columns, ?Table\Properties $properties, bool $ifNotExists, Dialect $dialect): array
+    {
         $modifier = $properties instanceof Table\PostgreSqlProperties ? match ($properties->persistence) {
             Table\Persistence::Permanent => '', Table\Persistence::Temporary => 'TEMPORARY ', Table\Persistence::Unlogged => 'UNLOGGED ',
         } : (($properties instanceof Table\MySqlProperties || $properties instanceof Table\SqliteProperties) && $properties->temporary ? 'TEMPORARY ' : '');
-        return new Tree('create-table-as', [Build::keyword('CREATE ' . $modifier . 'TABLE' . ($statement->ifNotExists ? ' IF NOT EXISTS' : '')), Build::identifier($statement->name->parts, $dialect), ...($statement->columns === [] ? [] : [Constraints::columns($statement->columns, $dialect)]), Storage::table($properties, $dialect), Build::keyword('AS'), Queries::write($statement->query), ...($statement->withData ? [] : [Build::keyword('WITH NO DATA')])]);
+        return [Build::keyword('CREATE ' . $modifier . 'TABLE' . ($ifNotExists ? ' IF NOT EXISTS' : '')), Build::identifier($name->parts, $dialect), ...($columns === [] ? [] : [Constraints::columns($columns, $dialect)]), Storage::table($properties, $dialect)];
     }
 }

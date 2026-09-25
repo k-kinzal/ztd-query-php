@@ -32,8 +32,8 @@ final class CastBinderTest extends TestCase
         $query = $binder->bind('SELECT ' . $sql);
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertInstanceOf(CastExpression::class, $query->outputs[0]->expression);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['mysql-8.0.44'])]

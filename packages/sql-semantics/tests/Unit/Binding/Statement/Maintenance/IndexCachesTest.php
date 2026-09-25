@@ -39,7 +39,7 @@ final class IndexCachesTest extends TestCase
         self::assertSame([], $statement->targets[1]->indexes?->names);
         self::assertInstanceOf(Cache\CacheName::class, $statement->cache);
         self::assertSame('hot', $statement->cache->name);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
     #[TestWith(['mysql-5.6.51'])]
     #[TestWith(['mysql-5.7.44'])]
@@ -59,7 +59,7 @@ final class IndexCachesTest extends TestCase
         self::assertSame(['p0', 'ALL'], $statement->partitions->names);
         self::assertSame([], $statement->target->indexes?->names);
         self::assertSame(Cache\DefaultCache::Instance, $statement->cache);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
     #[TestWith(['mysql-5.6.51'])]
     #[TestWith(['mysql-5.7.44'])]
@@ -79,7 +79,7 @@ final class IndexCachesTest extends TestCase
         self::assertNull($statement->targets[0]->indexes->indexes);
         self::assertTrue($statement->targets[1]->ignoreLeaves);
         self::assertSame(['ix'], $statement->targets[1]->indexes->indexes?->names);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
     #[TestWith(['mysql-5.6.51'])]
     #[TestWith(['mysql-5.7.44'])]
@@ -98,7 +98,7 @@ final class IndexCachesTest extends TestCase
         self::assertSame(Cache\AllPartitions::All, $statement->partitions);
         self::assertTrue($statement->target->ignoreLeaves);
         self::assertSame('t', $statement->target->indexes->table->declaration->name);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindRejectsMissingTableDeclarations(): void
@@ -122,7 +122,7 @@ final class IndexCachesTest extends TestCase
     public function testBindReadsLowercaseCacheRequests(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

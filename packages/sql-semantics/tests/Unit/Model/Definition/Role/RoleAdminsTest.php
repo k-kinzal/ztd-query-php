@@ -35,9 +35,9 @@ final class RoleAdminsTest extends TestCase
         $option = $statement->options[0];
         self::assertInstanceOf(RoleAdmins::class, $option);
         self::assertEquals([new NamedRole('a'), SessionRole::CurrentUser], $option->roles);
-        self::assertSame('CREATE ROLE "r" ADMIN "a", CURRENT_USER', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('CREATE ROLE "r" ADMIN "a", CURRENT_USER', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateRoleStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 }

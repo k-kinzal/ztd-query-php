@@ -34,36 +34,36 @@ final class AlterEventStatementTest extends TestCase
         self::assertInstanceOf(AlterEventStatement::class, $statement);
         self::assertSame(StatementKind::Alter, $statement->kind);
         self::assertSame(['archive', 'e'], $statement->changes->newName?->parts);
-        self::assertSame("ALTER DEFINER = 'ops'@'%' EVENT `e` ON SCHEDULE EVERY 2 WEEK ON COMPLETION NOT PRESERVE RENAME TO `archive`.`e` ENABLE COMMENT 'weekly' DO BEGIN DECLARE `x` integer; SET `x` = 1; END", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("ALTER DEFINER = 'ops'@'%' EVENT `e` ON SCHEDULE EVERY 2 WEEK ON COMPLETION NOT PRESERVE RENAME TO `archive`.`e` ENABLE COMMENT 'weekly' DO BEGIN DECLARE `x` integer; SET `x` = 1; END", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginPreservesTheChanges(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER EVENT e DISABLE');
         self::assertInstanceOf(AlterEventStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheTarget(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER EVENT e DISABLE');
         self::assertInstanceOf(AlterEventStatement::class, $statement);
-        self::assertSame('ALTER EVENT `db`.`e` DISABLE', $statement->withName(new QualifiedName(['db', 'e']))->toString());
+        self::assertSame('ALTER EVENT `db`.`e` DISABLE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['db', 'e']))));
     }
 
     public function testWithChangesReplacesAllChanges(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER EVENT e DISABLE');
         self::assertInstanceOf(AlterEventStatement::class, $statement);
-        self::assertSame('ALTER EVENT `e` ENABLE', $statement->withChanges(new EventAlteration(status: EventStatus::Enabled))->toString());
+        self::assertSame('ALTER EVENT `e` ENABLE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withChanges(new EventAlteration(status: EventStatus::Enabled))));
     }
 
     public function testWithDefinerRemovesTheDefiner(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER DEFINER = CURRENT_USER EVENT e DISABLE');
         self::assertInstanceOf(AlterEventStatement::class, $statement);
-        self::assertSame('ALTER EVENT `e` DISABLE', $statement->withDefiner(null)->toString());
+        self::assertSame('ALTER EVENT `e` DISABLE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDefiner(null)));
     }
 
     public function testRejectsAThreePartName(): void

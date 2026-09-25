@@ -24,7 +24,7 @@ final class ReadHandlerKeyStatementTest extends TestCase
         self::assertInstanceOf(ReadHandlerKeyStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('HANDLER `t` READ `k` = (1, 2) WHERE (`b` > 0) LIMIT 5', $copy->toString());
+        self::assertSame('HANDLER `t` READ `k` = (1, 2) WHERE (`b` > 0) LIMIT 5', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithIndexSearchesAnotherIndex(): void
@@ -39,7 +39,7 @@ final class ReadHandlerKeyStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, KEY k(a))')))->bind('HANDLER t READ k = (1)');
         self::assertInstanceOf(ReadHandlerKeyStatement::class, $statement);
-        self::assertSame('HANDLER `t` READ `k` > (1)', $statement->withComparison(KeyComparison::After)->toString());
+        self::assertSame('HANDLER `t` READ `k` > (1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withComparison(KeyComparison::After)));
     }
 
     public function testWithKeyReplacesTheValues(): void
@@ -49,21 +49,21 @@ final class ReadHandlerKeyStatementTest extends TestCase
         $other = $binder->bind('HANDLER t READ k = (3, 4)');
         self::assertInstanceOf(ReadHandlerKeyStatement::class, $statement);
         self::assertInstanceOf(ReadHandlerKeyStatement::class, $other);
-        self::assertSame('HANDLER `t` READ `k` = (3, 4)', $statement->withKey($other->key)->toString());
+        self::assertSame('HANDLER `t` READ `k` = (3, 4)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withKey($other->key)));
     }
 
     public function testWithWhereRemovesTheCondition(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, KEY k(a))')))->bind('HANDLER t READ k = (1) WHERE a > 0');
         self::assertInstanceOf(ReadHandlerKeyStatement::class, $statement);
-        self::assertSame('HANDLER `t` READ `k` = (1)', $statement->withWhere(null)->toString());
+        self::assertSame('HANDLER `t` READ `k` = (1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withWhere(null)));
     }
 
     public function testWithLimitRemovesTheWindow(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, KEY k(a))')))->bind('HANDLER t READ k = (1) LIMIT 9');
         self::assertInstanceOf(ReadHandlerKeyStatement::class, $statement);
-        self::assertSame('HANDLER `t` READ `k` = (1)', $statement->withLimit(null)->toString());
+        self::assertSame('HANDLER `t` READ `k` = (1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withLimit(null)));
     }
 
     public function testRejectsAnEmptyKey(): void

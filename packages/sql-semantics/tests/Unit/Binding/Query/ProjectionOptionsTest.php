@@ -29,7 +29,7 @@ final class ProjectionOptionsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $on);
         self::assertInstanceOf(\SqlSemantics\Model\Query\DistinctOn::class, $on->quantifier);
         self::assertSame(['a', 'b'], array_map(static fn ($key): ?string => $key->columnBinding()?->column->name, $on->quantifier->keys));
-        self::assertSame('SELECT DISTINCT ON("a", "b") "a" AS "a" FROM "public"."t"', $on->toString());
+        self::assertSame('SELECT DISTINCT ON("a", "b") "a" AS "a" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($on));
     }
 
     public function testWindowsBindsEachNamedWindowSpecification(): void

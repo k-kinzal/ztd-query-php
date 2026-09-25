@@ -39,8 +39,8 @@ final class PrivilegeGrantsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)'));
         $statement = $binder->bind($sql);
         self::assertSame($class, $statement::class);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['mysql-8.4.7', 'GRANT SELECT ON PROCEDURE p TO u'])]
@@ -87,6 +87,6 @@ final class PrivilegeGrantsTest extends TestCase
     public function testBindReadsTheGrantorContextInAnyCase(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)'));
-        self::assertSame($expected, $binder->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 }

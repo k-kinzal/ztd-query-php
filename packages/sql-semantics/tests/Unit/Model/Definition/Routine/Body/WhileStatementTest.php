@@ -26,8 +26,8 @@ final class WhileStatementTest extends TestCase
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertInstanceOf(WhileStatement::class, $statement->body);
         self::assertInstanceOf(LocalVariableReference::class, $statement->body->condition);
-        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer) `w` : WHILE `a` DO SET `a` = (`a` - 1); END WHILE `w`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer) `w` : WHILE `a` DO SET `a` = (`a` - 1); END WHILE `w`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRequiresStatements(): void

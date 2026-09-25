@@ -34,7 +34,7 @@ final class TriggerDefinitionsTest extends TestCase
         self::assertInstanceOf(UpdateTableStatement::class, $statement->body->statement);
         $columns = array_values(array_filter(\SqlSemantics\Model\Traversal\Expressions::all($statement), static fn ($expression): bool => $expression instanceof TriggerColumn));
         self::assertEqualsCanonicalizing([RowVersion::New, RowVersion::Old], array_map(static fn (TriggerColumn $column): RowVersion => $column->version, $columns));
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindDiagnosesTablesInAnotherDatabase(): void
@@ -58,7 +58,7 @@ final class TriggerDefinitionsTest extends TestCase
     public function testBindReadsEveryTriggerForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

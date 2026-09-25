@@ -27,7 +27,7 @@ final class AddColumnTest extends TestCase
         self::assertTrue($statement->actions[0]->ifNotExists);
         self::assertCount(1, $statement->actions[0]->constraints);
         self::assertSame([], $statement->actions[0]->options);
-        self::assertSame('ALTER TABLE "t" ADD COLUMN IF NOT EXISTS "n" integer NOT NULL DEFAULT 0 CHECK (("n" >= 0))', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ADD COLUMN IF NOT EXISTS "n" integer NOT NULL DEFAULT 0 CHECK (("n" >= 0))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindsWrapperOptionsOfAForeignTableColumn(): void
@@ -36,7 +36,7 @@ final class AddColumnTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertInstanceOf(Relation\Column\AddColumn::class, $statement->actions[0]);
         self::assertSame('column_name', $statement->actions[0]->options[0]->name);
-        self::assertSame('ALTER FOREIGN TABLE "t" ADD COLUMN "n" integer OPTIONS("column_name" \'x\') NOT NULL', $statement->toString());
+        self::assertSame('ALTER FOREIGN TABLE "t" ADD COLUMN "n" integer OPTIONS("column_name" \'x\') NOT NULL', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAColumnFromAnotherDatabaseLanguage(): void

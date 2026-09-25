@@ -33,13 +33,13 @@ final class FilterDefinitionsTest extends TestCase
         self::assertInstanceOf(ChangeReplicationFilterStatement::class, $statement);
         self::assertInstanceOf(TableFilter::class, $statement->filters[0]);
         self::assertSame(['d.b', 't'], $statement->filters[0]->tables[0]->parts);
-        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_TABLE = (`d.b`.`t`)', $statement->toString());
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_TABLE = (`d.b`.`t`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testReadSpellsEveryLowercaseRule(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("change replication filter replicate_do_db = (a, b), replicate_ignore_db = (c), replicate_do_table = (d.t), replicate_ignore_table = (d.u), replicate_wild_do_table = ('d.%'), replicate_wild_ignore_table = ('e.%'), replicate_rewrite_db = ((a, b), (c, d))");
-        self::assertSame("CHANGE REPLICATION FILTER REPLICATE_DO_DB = (`a`, `b`), REPLICATE_IGNORE_DB = (`c`), REPLICATE_DO_TABLE = (`d`.`t`), REPLICATE_IGNORE_TABLE = (`d`.`u`), REPLICATE_WILD_DO_TABLE = ('d.%'), REPLICATE_WILD_IGNORE_TABLE = ('e.%'), REPLICATE_REWRITE_DB = ((`a`, `b`), (`c`, `d`))", $statement->toString());
+        self::assertSame("CHANGE REPLICATION FILTER REPLICATE_DO_DB = (`a`, `b`), REPLICATE_IGNORE_DB = (`c`), REPLICATE_DO_TABLE = (`d`.`t`), REPLICATE_IGNORE_TABLE = (`d`.`u`), REPLICATE_WILD_DO_TABLE = ('d.%'), REPLICATE_WILD_IGNORE_TABLE = ('e.%'), REPLICATE_REWRITE_DB = ((`a`, `b`), (`c`, `d`))", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testReadRejectsAWildcardWithoutADot(): void

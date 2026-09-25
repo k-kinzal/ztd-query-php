@@ -22,7 +22,7 @@ final class ChangeOwnerTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t OWNER TO CURRENT_ROLE', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\ChangeOwner(\SqlSemantics\Model\Configuration\Role\SessionRole::CurrentRole), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" OWNER TO CURRENT_ROLE', $statement->toString());
+        self::assertSame('ALTER TABLE "t" OWNER TO CURRENT_ROLE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindsANamedOwner(): void
@@ -30,6 +30,6 @@ final class ChangeOwnerTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t OWNER TO alice', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\ChangeOwner(new \SqlSemantics\Model\Configuration\Role\NamedRole('alice')), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" OWNER TO "alice"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" OWNER TO "alice"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

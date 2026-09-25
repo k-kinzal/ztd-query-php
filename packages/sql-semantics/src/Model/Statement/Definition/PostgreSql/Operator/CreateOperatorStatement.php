@@ -24,7 +24,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR app.=== (PROCEDURE = int4eq, LEFTARG = integer, RIGHTARG = integer, COMMUTATOR = ===, SORT1 = <)');
  *     $statement->name->parts // => ['app', '===']
  *     $statement->options[0]->attribute // => \SqlSemantics\Model\Definition\TypeSystem\Definition\OperatorAttribute::Function
- *     $statement->toString() // => 'CREATE OPERATOR "app".=== (FUNCTION = "int4eq", LEFTARG = integer, RIGHTARG = integer, COMMUTATOR = ===, MERGES = TRUE)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE OPERATOR "app".=== (FUNCTION = "int4eq", LEFTARG = integer, RIGHTARG = integer, COMMUTATOR = ===, MERGES = TRUE)'
  * @example Rejecting an operator without a right operand
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR === (FUNCTION = f, RIGHTARG = integer)');
  *     $statement->withOptions([$statement->options[0]]); // throws \SqlSemantics\Model\Validation\InvalidStructure

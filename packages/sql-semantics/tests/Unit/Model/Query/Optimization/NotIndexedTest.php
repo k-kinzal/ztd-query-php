@@ -25,7 +25,7 @@ final class NotIndexedTest extends TestCase
         self::assertInstanceOf(DeleteTableStatement::class, $statement);
         self::assertInstanceOf(TableReference::class, $statement->target);
         self::assertInstanceOf(NotIndexed::class, $statement->target->indexing);
-        self::assertSame('DELETE FROM "main"."t" AS "x" NOT INDEXED WHERE ("a" = 1)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('DELETE FROM "main"."t" AS "x" NOT INDEXED WHERE ("a" = 1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

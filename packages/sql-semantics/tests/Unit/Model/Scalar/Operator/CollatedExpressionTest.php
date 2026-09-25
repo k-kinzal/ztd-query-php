@@ -33,8 +33,8 @@ final class CollatedExpressionTest extends TestCase
         self::assertSame("'a'", $collated->operand->spelling());
         self::assertSame([$collated->operand], $collated->inputs());
         self::assertSame(Nullability::NotNull, $collated->nullability);
-        self::assertSame('SELECT (\'a\' COLLATE "C")', $statement->toString());
-        self::assertSame('SELECT (\'a\' COLLATE "C")', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT (\'a\' COLLATE "C")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('SELECT (\'a\' COLLATE "C")', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testSpellingIsTheCollateKeyword(): void

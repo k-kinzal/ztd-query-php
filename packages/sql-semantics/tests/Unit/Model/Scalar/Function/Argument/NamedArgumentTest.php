@@ -34,8 +34,8 @@ final class NamedArgumentTest extends TestCase
         self::assertInstanceOf(NamedArgument::class, $call->arguments[2]);
         self::assertSame(['a', 'B'], [$call->arguments[1]->name, $call->arguments[2]->name]);
         self::assertSame(ExpressionKind::NamedArgument, $call->arguments[1]->kind);
-        self::assertSame('SELECT "f"(1, "a" => 2, "B" => 3)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT "f"(1, "a" => 2, "B" => 3)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testInputsContainsTheValue(): void

@@ -26,7 +26,7 @@ final class SequenceValueChangeTest extends TestCase
         self::assertInstanceOf(Relation\Identity\SequenceValueChange::class, $statement->actions[0]->changes[0]);
         self::assertSame(Relation\Identity\SequenceAttribute::Increment, $statement->actions[0]->changes[0]->attribute);
         self::assertSame('5', $statement->actions[0]->changes[0]->value->text);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET INCREMENT BY 5', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET INCREMENT BY 5', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAFractionalValue(): void

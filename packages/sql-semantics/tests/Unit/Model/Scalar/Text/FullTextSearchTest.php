@@ -42,8 +42,8 @@ final class FullTextSearchTest extends TestCase
         self::assertSame('double precision', $search->type->name);
         self::assertSame(Nullability::NotNull, $search->nullability);
         self::assertSame(ExpressionKind::FullTextSearch, $search->kind);
-        self::assertSame("SELECT MATCH(`title`, `t`.`body`) AGAINST('word' WITH QUERY EXPANSION) FROM `t`", $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame("SELECT MATCH(`title`, `t`.`body`) AGAINST('word' WITH QUERY EXPANSION) FROM `t`", (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAnEmptyColumnList(): void

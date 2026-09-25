@@ -38,8 +38,8 @@ final class TypedLiteralBinderTest extends TestCase
         $cast = $query->outputs[0]->expression;
         self::assertInstanceOf(CastExpression::class, $cast);
         self::assertSame($type, $cast->type->name);
-        self::assertSame('SELECT ' . $serialized, $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT ' . $serialized, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     #[TestWith(["app.measure(10, 2) 'x'", 'app.measure', 2])]
@@ -55,7 +55,7 @@ final class TypedLiteralBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Type\Identity\NamedIdentity::class, $cast->type->identity);
         self::assertSame($type, $cast->type->name);
         self::assertCount($modifiers, $cast->type->identity->arguments);
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     #[TestWith(["int4 '1'", "CAST('1' AS integer)"])]
@@ -68,7 +68,7 @@ final class TypedLiteralBinderTest extends TestCase
     #[TestWith(["regclass 'x'", "CAST('x' AS \"regclass\")"])]
     public function testNamedSeparatesBuiltinSpellingsFromTypeReferences(string $input, string $serialized): void
     {
-        self::assertSame('SELECT ' . $serialized, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT ' . $input)->toString());
+        self::assertSame('SELECT ' . $serialized, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT ' . $input)));
     }
 
     public function testNamedReadsABuiltinDeclarationDirectly(): void

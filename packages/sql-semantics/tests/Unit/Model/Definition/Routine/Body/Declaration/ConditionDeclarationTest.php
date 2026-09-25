@@ -33,7 +33,7 @@ final class ConditionDeclarationTest extends TestCase
         self::assertInstanceOf(ErrorCode::class, $statement->body->declarations[0]->value);
         self::assertInstanceOf(ConditionDeclaration::class, $statement->body->declarations[1]);
         self::assertInstanceOf(SqlState::class, $statement->body->declarations[1]->value);
-        self::assertSame("CREATE PROCEDURE `p`() BEGIN DECLARE `dup` CONDITION FOR 1062; DECLARE `gone` CONDITION FOR SQLSTATE '42S02'; END", $statement->toString());
+        self::assertSame("CREATE PROCEDURE `p`() BEGIN DECLARE `dup` CONDITION FOR 1062; DECLARE `gone` CONDITION FOR SQLSTATE '42S02'; END", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRequiresAName(): void

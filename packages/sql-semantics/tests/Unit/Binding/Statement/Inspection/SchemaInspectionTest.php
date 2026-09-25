@@ -25,10 +25,10 @@ final class SchemaInspectionTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE users(id INT)'));
         $statement = $binder->bind($sql);
         self::assertInstanceOf(InspectionStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $copy = $binder->bind($expected);
         self::assertInstanceOf(InspectionStatement::class, $copy);
-        self::assertSame($expected, $copy->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($copy));
         self::assertSame(array_column($statement->resultColumns(), 'name'), array_column($copy->resultColumns(), 'name'));
     }
 

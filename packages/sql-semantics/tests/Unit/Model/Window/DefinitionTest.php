@@ -28,8 +28,8 @@ final class DefinitionTest extends TestCase
         self::assertSame('w', $definition->name);
         self::assertNull($definition->specification->base);
         self::assertSame('x', $definition->specification->partitionBy[0]->columnBinding()?->column->name);
-        self::assertSame('SELECT sum(`id`) OVER `w` FROM `t` WINDOW `w` AS (PARTITION BY `x`)', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT sum(`id`) OVER `w` FROM `t` WINDOW `w` AS (PARTITION BY `x`)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testExposesTheSuppliedOperands(): void

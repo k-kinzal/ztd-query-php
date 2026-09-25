@@ -19,7 +19,7 @@ final class DiagnosticsAreaTest extends TestCase
     public function testCurrentIsTheDefaultArea(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
-        self::assertSame('GET CURRENT DIAGNOSTICS @`n` = NUMBER', $binder->bind('GET DIAGNOSTICS @n = NUMBER')->toString());
-        self::assertSame('GET STACKED DIAGNOSTICS @`n` = NUMBER', $binder->bind('GET STACKED DIAGNOSTICS @n = NUMBER')->toString());
+        self::assertSame('GET CURRENT DIAGNOSTICS @`n` = NUMBER', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('GET DIAGNOSTICS @n = NUMBER')));
+        self::assertSame('GET STACKED DIAGNOSTICS @`n` = NUMBER', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('GET STACKED DIAGNOSTICS @n = NUMBER')));
     }
 }

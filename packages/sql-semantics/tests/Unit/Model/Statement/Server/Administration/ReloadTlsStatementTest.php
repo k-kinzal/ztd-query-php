@@ -26,14 +26,14 @@ final class ReloadTlsStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertSame(TlsChannel::Admin, $copy->channel);
         self::assertFalse($copy->rollbackOnError);
-        self::assertSame('ALTER INSTANCE RELOAD TLS FOR CHANNEL `mysql_admin` NO ROLLBACK ON ERROR', $copy->toString());
+        self::assertSame('ALTER INSTANCE RELOAD TLS FOR CHANNEL `mysql_admin` NO ROLLBACK ON ERROR', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithChannelSelectsTheContextImmutably(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER INSTANCE RELOAD TLS');
         self::assertInstanceOf(ReloadTlsStatement::class, $statement);
-        self::assertSame('ALTER INSTANCE RELOAD TLS FOR CHANNEL `mysql_admin`', $statement->withChannel(TlsChannel::Admin)->toString());
+        self::assertSame('ALTER INSTANCE RELOAD TLS FOR CHANNEL `mysql_admin`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withChannel(TlsChannel::Admin)));
         self::assertSame(TlsChannel::Main, $statement->channel);
     }
 
@@ -41,7 +41,7 @@ final class ReloadTlsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER INSTANCE RELOAD TLS');
         self::assertInstanceOf(ReloadTlsStatement::class, $statement);
-        self::assertSame('ALTER INSTANCE RELOAD TLS NO ROLLBACK ON ERROR', $statement->withRollbackOnError(false)->toString());
+        self::assertSame('ALTER INSTANCE RELOAD TLS NO ROLLBACK ON ERROR', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withRollbackOnError(false)));
         self::assertTrue($statement->rollbackOnError);
     }
 

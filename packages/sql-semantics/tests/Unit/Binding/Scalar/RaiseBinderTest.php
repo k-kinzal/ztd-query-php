@@ -35,7 +35,7 @@ final class RaiseBinderTest extends TestCase
         self::assertSame('never', $expressions[1]->type->name);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Control\RaiseError::class, $expressions[2]);
         self::assertSame(\SqlSemantics\Model\Scalar\Control\RaiseAction::Fail, $expressions[2]->action);
-        self::assertSame("CREATE TRIGGER \"tr\" BEFORE INSERT ON \"main\".\"t\" FOR EACH ROW BEGIN SELECT RAISE(ABORT, 'no'); SELECT RAISE(IGNORE); SELECT RAISE(FAIL, 'r'); END", $statement->toString());
+        self::assertSame("CREATE TRIGGER \"tr\" BEFORE INSERT ON \"main\".\"t\" FOR EACH ROW BEGIN SELECT RAISE(ABORT, 'no'); SELECT RAISE(IGNORE); SELECT RAISE(FAIL, 'r'); END", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindReadsRollbackAndKeepsTheResultNotNull(): void
@@ -57,7 +57,7 @@ final class RaiseBinderTest extends TestCase
     public function testBindReadsLowercaseActions(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

@@ -24,8 +24,8 @@ final class ResourceGroupsTest extends TestCase
         $create = $binder->bind('CREATE RESOURCE GROUP g TYPE USER VCPU 1 THREAD_PRIORITY 2');
         self::assertInstanceOf(CreateResourceGroupStatement::class, $create);
         self::assertSame('CREATE RESOURCE GROUP `g` TYPE = USER VCPU = 1 THREAD_PRIORITY = 2 ENABLE', ResourceGroups::write($create)->toString());
-        self::assertSame('ALTER RESOURCE GROUP `g` FORCE', $binder->bind('ALTER RESOURCE GROUP g FORCE')->toString());
-        self::assertSame('SET RESOURCE GROUP `g`', $binder->bind('SET RESOURCE GROUP g')->toString());
+        self::assertSame('ALTER RESOURCE GROUP `g` FORCE', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER RESOURCE GROUP g FORCE')));
+        self::assertSame('SET RESOURCE GROUP `g`', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('SET RESOURCE GROUP g')));
     }
 
     public function testCpusSpellsASingleCpuWithoutARange(): void
@@ -38,6 +38,6 @@ final class ResourceGroupsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['set resource group g for 1, 2', 'SET RESOURCE GROUP `g` FOR 1, 2'])]
     public function testWriteSpellsEveryResourceGroupClause(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)));
     }
 }

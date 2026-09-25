@@ -37,29 +37,29 @@ final class CreateTriggerStatementTest extends TestCase
         self::assertSame(Timing::Before, $statement->timing);
         self::assertSame(WriteEvent::Update, $statement->event);
         self::assertSame('t', $statement->table->declaration->name);
-        self::assertSame('CREATE DEFINER = CURRENT_USER TRIGGER `tr` BEFORE UPDATE ON `t` FOR EACH ROW BEGIN IF(`new`.`n` < 0) THEN SET `new`.`n` = `old`.`n`; END IF; END', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE DEFINER = CURRENT_USER TRIGGER `tr` BEFORE UPDATE ON `t` FOR EACH ROW BEGIN IF(`new`.`n` < 0) THEN SET `new`.`n` = `old`.`n`; END IF; END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginPreservesTheDefinition(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (n INT)')))->bind('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW DO NEW.n');
         self::assertInstanceOf(CreateTriggerStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesOnlyTheName(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (n INT)')))->bind('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW DO NEW.n');
         self::assertInstanceOf(CreateTriggerStatement::class, $statement);
-        self::assertSame('CREATE TRIGGER `audit` AFTER INSERT ON `t` FOR EACH ROW DO `new`.`n`', $statement->withName(new QualifiedName(['audit']))->toString());
+        self::assertSame('CREATE TRIGGER `audit` AFTER INSERT ON `t` FOR EACH ROW DO `new`.`n`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['audit']))));
     }
 
     public function testWithTimingRevalidatesRowAssignments(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (n INT)')))->bind('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW DO NEW.n');
         self::assertInstanceOf(CreateTriggerStatement::class, $statement);
-        self::assertSame('CREATE TRIGGER `tr` AFTER INSERT ON `t` FOR EACH ROW DO `new`.`n`', $statement->withTiming(Timing::After)->toString());
+        self::assertSame('CREATE TRIGGER `tr` AFTER INSERT ON `t` FOR EACH ROW DO `new`.`n`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withTiming(Timing::After)));
     }
 
     public function testWithEventRevalidatesRowImages(): void
@@ -75,14 +75,14 @@ final class CreateTriggerStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (n INT)')))->bind('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW DO 1');
         self::assertInstanceOf(CreateTriggerStatement::class, $statement);
-        self::assertSame('CREATE TRIGGER `tr` BEFORE INSERT ON `t` FOR EACH ROW BEGIN END', $statement->withBody(new BlockStatement(null))->toString());
+        self::assertSame('CREATE TRIGGER `tr` BEFORE INSERT ON `t` FOR EACH ROW BEGIN END', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withBody(new BlockStatement(null))));
     }
 
     public function testWithOrderPlacesTheTrigger(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (n INT)')))->bind('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW DO 1');
         self::assertInstanceOf(CreateTriggerStatement::class, $statement);
-        self::assertSame('CREATE TRIGGER `tr` BEFORE INSERT ON `t` FOR EACH ROW PRECEDES `first` DO 1', $statement->withOrder(new TriggerOrder(TriggerOrdering::Precedes, 'first'))->toString());
+        self::assertSame('CREATE TRIGGER `tr` BEFORE INSERT ON `t` FOR EACH ROW PRECEDES `first` DO 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrder(new TriggerOrder(TriggerOrdering::Precedes, 'first'))));
     }
 
     public function testRejectsInsteadOfTiming(): void

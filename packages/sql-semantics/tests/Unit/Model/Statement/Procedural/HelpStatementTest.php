@@ -25,7 +25,7 @@ final class HelpStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame('select', $copy->topic);
-        self::assertSame("HELP 'select'", $copy->toString());
+        self::assertSame("HELP 'select'", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithTopicSearchesAnotherTopicImmutably(): void
@@ -33,7 +33,7 @@ final class HelpStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("HELP 'contents'");
         self::assertInstanceOf(HelpStatement::class, $statement);
         $changed = $statement->withTopic("it's");
-        self::assertSame("HELP 'it''s'", $changed->toString());
+        self::assertSame("HELP 'it''s'", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame("it's", $changed->topic);
         self::assertSame('contents', $statement->topic);
     }

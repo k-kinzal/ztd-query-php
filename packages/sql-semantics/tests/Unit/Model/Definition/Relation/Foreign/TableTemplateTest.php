@@ -24,7 +24,7 @@ final class TableTemplateTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE FOREIGN TABLE ft (LIKE app.t INCLUDING DEFAULTS EXCLUDING COMMENTS) SERVER s', strict: false);
         self::assertInstanceOf(CreateForeignTableStatement::class, $statement);
         self::assertEquals(new Foreign\TableTemplate(new QualifiedName(['app', 't']), [new Foreign\TemplateSelection(Foreign\TemplateProperty::Defaults, true), new Foreign\TemplateSelection(Foreign\TemplateProperty::Comments, false)]), $statement->templates[0]);
-        self::assertSame('CREATE FOREIGN TABLE "public"."ft"(LIKE "app"."t" INCLUDING DEFAULTS EXCLUDING COMMENTS) SERVER "s"', $statement->toString());
+        self::assertSame('CREATE FOREIGN TABLE "public"."ft"(LIKE "app"."t" INCLUDING DEFAULTS EXCLUDING COMMENTS) SERVER "s"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOverQualifiedTemplate(): void

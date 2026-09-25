@@ -19,7 +19,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the operation's structure
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('EXECUTE s USING @x, @y', strict: false);
- *     $statement->toString() // => 'EXECUTE `s` USING @`x`, @`y`'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'EXECUTE `s` USING @`x`, @`y`'
  *
  * @visibility public
  */

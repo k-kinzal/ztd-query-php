@@ -17,7 +17,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the targets and options
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('VACUUM (ANALYZE, PARALLEL 2) t (a)');
- *     [$statement->options->parallel, $statement->targets[0]->columns, $statement->toString()] // => [2, ['a'], 'VACUUM(ANALYZE, PARALLEL 2) "public"."t"("a")']
+ *     [$statement->options->parallel, $statement->targets[0]->columns, (new \SqlSemantics\SimpleSerializer())->serialize($statement)] // => [2, ['a'], 'VACUUM(ANALYZE, PARALLEL 2) "public"."t"("a")']
  * @example Rejecting a column list without ANALYZE
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)');
  *     (new \SqlSemantics\Binder($schema))->bind('VACUUM t (a)'); // throws \SqlSemantics\InvalidSql

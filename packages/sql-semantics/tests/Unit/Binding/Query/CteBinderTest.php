@@ -28,7 +28,7 @@ final class CteBinderTest extends TestCase
         self::assertSame(['n'], $definition->columns);
         self::assertSame(\SqlSemantics\Model\Query\Materialization::Materialized, $definition->materialization);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $definition->query);
-        self::assertSame('WITH RECURSIVE "c"("n") AS MATERIALIZED(SELECT 1) SELECT "n" AS "n" FROM "c"', $statement->toString());
+        self::assertSame('WITH RECURSIVE "c"("n") AS MATERIALIZED(SELECT 1) SELECT "n" AS "n" FROM "c"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testDefinitionReadsNotMaterializedAndTheDefaultPolicy(): void
@@ -106,6 +106,6 @@ final class CteBinderTest extends TestCase
     public function testDefinitionAcceptsEachResultQueryForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INT)')))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

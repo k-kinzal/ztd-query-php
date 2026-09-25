@@ -28,9 +28,9 @@ final class TransactionSettingsTest extends TestCase
         $binder = new Binder((new SchemaBuilder($dialect))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf($expected, $statement);
-        $again = $binder->bind($statement->toString());
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf($expected, $again);
-        self::assertSame($statement->toString(), $again->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     /**

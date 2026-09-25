@@ -28,8 +28,8 @@ final class BlockStatementTest extends TestCase
         self::assertInstanceOf(BlockStatement::class, $statement->body);
         self::assertCount(3, $statement->body->declarations);
         self::assertCount(1, $statement->body->statements);
-        self::assertSame('CREATE PROCEDURE `p`() `b` : BEGIN DECLARE `x` integer; DECLARE `c` CURSOR FOR SELECT `n` AS `n` FROM `t`; DECLARE CONTINUE HANDLER FOR NOT FOUND SET `x` = 1; OPEN `c`; END `b`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE PROCEDURE `p`() `b` : BEGIN DECLARE `x` integer; DECLARE `c` CURSOR FOR SELECT `n` AS `n` FROM `t`; DECLARE CONTINUE HANDLER FOR NOT FOUND SET `x` = 1; OPEN `c`; END `b`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnEmptyLabel(): void

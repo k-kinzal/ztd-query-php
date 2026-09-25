@@ -38,7 +38,7 @@ final class UnresolvedFunctionTest extends TestCase
         self::assertInstanceOf(UnresolvedFunction::class, $call->function);
         self::assertSame($lookup, $call->function->lookup);
         self::assertSame('left', strtolower($call->function->name()->parts[0]));
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindingAnUnregisteredFunctionKeepsItsQualifiedName(): void
@@ -49,6 +49,6 @@ final class UnresolvedFunctionTest extends TestCase
         self::assertInstanceOf(FunctionCall::class, $call);
         self::assertInstanceOf(UnresolvedFunction::class, $call->function);
         self::assertSame(['app', 'total'], $call->function->name()->parts);
-        self::assertSame('SELECT "app"."total"(1)', $statement->toString());
+        self::assertSame('SELECT "app"."total"(1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

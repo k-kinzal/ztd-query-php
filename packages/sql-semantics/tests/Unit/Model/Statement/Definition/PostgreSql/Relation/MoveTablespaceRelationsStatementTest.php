@@ -29,8 +29,8 @@ final class MoveTablespaceRelationsStatementTest extends TestCase
         self::assertSame('fast', $statement->newTablespace);
         self::assertEquals([new NamedRole('alice'), SessionRole::CurrentUser], $statement->owners);
         self::assertTrue($statement->nowait);
-        self::assertSame('ALTER INDEX ALL IN TABLESPACE "slow" OWNED BY "alice", CURRENT_USER SET TABLESPACE "fast" NOWAIT', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER INDEX ALL IN TABLESPACE "slow" OWNED BY "alice", CURRENT_USER SET TABLESPACE "fast" NOWAIT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -39,7 +39,7 @@ final class MoveTablespaceRelationsStatementTest extends TestCase
         self::assertInstanceOf(MoveTablespaceRelationsStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -59,7 +59,7 @@ final class MoveTablespaceRelationsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(Kind\RelationKind::Index, $statement->relationKind);
         self::assertEquals(Kind\RelationKind::MaterializedView, $changed->relationKind);
-        self::assertStringContainsString('ALTER MATERIALIZED VIEW ALL', $changed->toString());
+        self::assertStringContainsString('ALTER MATERIALIZED VIEW ALL', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTablespaceReplacesTheOperand(): void
@@ -70,7 +70,7 @@ final class MoveTablespaceRelationsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('slow', $statement->tablespace);
         self::assertEquals('cold', $changed->tablespace);
-        self::assertStringContainsString('TABLESPACE "cold"', $changed->toString());
+        self::assertStringContainsString('TABLESPACE "cold"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNewTablespaceReplacesTheOperand(): void
@@ -81,7 +81,7 @@ final class MoveTablespaceRelationsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('fast', $statement->newTablespace);
         self::assertEquals('hot', $changed->newTablespace);
-        self::assertStringContainsString('SET TABLESPACE "hot"', $changed->toString());
+        self::assertStringContainsString('SET TABLESPACE "hot"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOwnersReplacesTheOperand(): void
@@ -92,7 +92,7 @@ final class MoveTablespaceRelationsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new NamedRole('alice'), SessionRole::CurrentUser], $statement->owners);
         self::assertEquals([], $changed->owners);
-        self::assertStringContainsString('"slow" SET TABLESPACE', $changed->toString());
+        self::assertStringContainsString('"slow" SET TABLESPACE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNowaitReplacesTheOperand(): void
@@ -103,7 +103,7 @@ final class MoveTablespaceRelationsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(true, $statement->nowait);
         self::assertEquals(false, $changed->nowait);
-        self::assertStringContainsString('"fast"', $changed->toString());
+        self::assertStringContainsString('"fast"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsASequence(): void

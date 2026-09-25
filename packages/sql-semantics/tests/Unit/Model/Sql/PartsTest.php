@@ -200,7 +200,7 @@ final class PartsTest extends TestCase
         $query = $binder->bind('SELECT (t.*) FROM t');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('("t".*) AS "t"', Sql\Parts::outputs($query->outputs, Dialect::PostgreSql)->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testOutputsWritesAPositionalExpansionBackAsItsStar(): void
@@ -210,6 +210,6 @@ final class PartsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertCount(5, $query->outputs);
         self::assertSame('1 AS "k", "j".*', Sql\Parts::outputs($query->outputs, Dialect::PostgreSql)->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 }

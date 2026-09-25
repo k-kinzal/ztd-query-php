@@ -172,7 +172,7 @@ final class PrivilegeTargetsTest extends TestCase
         $target = $statement->target;
         self::assertInstanceOf(TableTargets::class, $target);
         self::assertSame(['public', 'u'], $target->tables[0]->name->parts);
-        self::assertSame('GRANT SELECT ON TABLE "public"."u" TO "a"', $statement->toString());
+        self::assertSame('GRANT SELECT ON TABLE "public"."u" TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTablesRejectsUnknownTablesWhenStrict(): void
@@ -268,7 +268,7 @@ final class PrivilegeTargetsTest extends TestCase
     public function testReadWritesEachLowercaseTarget(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     #[TestWith(['GRANT SELECT ON LARGE OBJECT 4294967296 TO a'])]

@@ -28,7 +28,7 @@ final class DropIndexStatementTest extends TestCase
         self::assertTrue($statement->ifExists);
         self::assertSame(DropBehavior::Cascade, $statement->behavior);
         self::assertSame(StatementKind::Drop, $statement->kind);
-        self::assertSame('DROP INDEX IF EXISTS "ix", "iy" CASCADE', $statement->toString());
+        self::assertSame('DROP INDEX IF EXISTS "ix", "iy" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheNamesAndPolicy(): void
@@ -40,7 +40,7 @@ final class DropIndexStatementTest extends TestCase
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->names, $copy->names);
         self::assertTrue($copy->ifExists);
-        self::assertSame('DROP INDEX IF EXISTS "ix"', $copy->toString());
+        self::assertSame('DROP INDEX IF EXISTS "ix"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsSeveralSqliteIndexesBeforeSerialization(): void

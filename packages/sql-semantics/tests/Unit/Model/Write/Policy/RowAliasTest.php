@@ -42,8 +42,8 @@ final class RowAliasTest extends TestCase
         $assignment = $statement->conflicts[0]->assignments[0];
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $assignment);
         self::assertSame($alias->row->id, $assignment->value->columnBinding()?->relationId);
-        self::assertSame('INSERT INTO `t`(`id`, `a`) VALUES (1, 2) AS `n` ON DUPLICATE KEY UPDATE `a` = `n`.`a`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('INSERT INTO `t`(`id`, `a`) VALUES (1, 2) AS `n` ON DUPLICATE KEY UPDATE `a` = `n`.`a`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testColumnAliasesRenameTheProposedColumnsInInsertionOrder(): void
@@ -60,8 +60,8 @@ final class RowAliasTest extends TestCase
         $sum = $assignment->value->inputs();
         self::assertSame($statement->policy->rowAlias->row->id, $sum[0]->columnBinding()?->relationId);
         self::assertSame($statement->insertion->target->id, $sum[1]->columnBinding()?->relationId);
-        self::assertSame('INSERT INTO `t` SET `id` = 1, `a` = 2 AS `n`(`p`, `q`) ON DUPLICATE KEY UPDATE `b` = (`q` + `a`)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('INSERT INTO `t` SET `id` = 1, `a` = 2 AS `n`(`p`, `q`) ON DUPLICATE KEY UPDATE `b` = (`q` + `a`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRequiresAnAlias(): void

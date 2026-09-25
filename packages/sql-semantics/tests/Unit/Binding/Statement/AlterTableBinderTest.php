@@ -30,7 +30,7 @@ final class AlterTableBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\RenameColumnStatement::class, $column);
         self::assertSame('a', $column->column);
         self::assertSame('b', $column->newName);
-        self::assertSame('ALTER TABLE "t" RENAME COLUMN "a" TO "b"', $column->toString());
+        self::assertSame('ALTER TABLE "t" RENAME COLUMN "a" TO "b"', (new \SqlSemantics\SimpleSerializer())->serialize($column));
     }
 
     public function testBindClassifiesColumnRemoval(): void
@@ -39,7 +39,7 @@ final class AlterTableBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\DropColumnStatement::class, $statement);
         self::assertSame('a', $statement->column);
         self::assertSame(\SqlSemantics\Model\Definition\DropBehavior::Default, $statement->behavior);
-        self::assertSame('ALTER TABLE "t" DROP COLUMN "a"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" DROP COLUMN "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testAddColumnBindsTheColumnAndItsConstraintsAgainstTheGrownTable(): void
@@ -52,7 +52,7 @@ final class AlterTableBinderTest extends TestCase
         self::assertCount(1, $statement->constraints);
         self::assertInstanceOf(\SqlSemantics\Schema\Constraint\Check::class, $statement->constraints[0]);
         self::assertSame([], $statement->diagnostics);
-        self::assertSame('ALTER TABLE "main"."t" ADD COLUMN "c" "text" NOT NULL DEFAULT 1 CHECK (("c" <> "a"))', $statement->toString());
+        self::assertSame('ALTER TABLE "main"."t" ADD COLUMN "c" "text" NOT NULL DEFAULT 1 CHECK (("c" <> "a"))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['ALTER TABLE t ADD COLUMN c INT PRIMARY KEY'])]
@@ -80,7 +80,7 @@ final class AlterTableBinderTest extends TestCase
     public function testBindReadsEverySqliteAlteration(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement::class . ' => ' . $statement->toString());
+        self::assertSame($expected, $statement::class . ' => ' . (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

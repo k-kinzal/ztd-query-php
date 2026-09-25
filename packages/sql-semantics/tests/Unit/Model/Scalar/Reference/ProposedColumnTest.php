@@ -29,8 +29,8 @@ final class ProposedColumnTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t (id INT PRIMARY KEY, n INT NOT NULL)'));
         $statement = $binder->bind('INSERT INTO t (id, n) VALUES (1, 2) ON DUPLICATE KEY UPDATE n = ' . $value);
         $sql = 'INSERT INTO `t`(`id`, `n`) VALUES (1, 2) ON DUPLICATE KEY UPDATE `n` = ' . $expected;
-        self::assertSame($sql, $statement->toString());
-        self::assertSame($sql, $binder->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 
     public function testInputsResolveTheColumnAndItsType(): void

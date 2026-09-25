@@ -28,7 +28,8 @@ use Override;
 final class PostgreSqlProperties implements Properties
 {
     /**
-     * Constructs a valid declaration; a partitioned table stores no rows, so it takes no storage parameters, and it cannot inherit.
+     * Constructs a valid declaration; a partitioned table stores no rows, so it takes no storage parameters, and it cannot inherit;
+     * only a temporary table has a commit action other than keeping its rows.
      *
      * @param list<\SqlSemantics\Schema\Storage\Parameter> $storageParameters
      * @param \SqlSemantics\Schema\Partition\PartitionScheme|null $partitioning Strategy and keys of a partitioned table (PARTITION BY)
@@ -45,6 +46,9 @@ final class PostgreSqlProperties implements Properties
         public readonly array $parents = [],
     ) {
         \SqlSemantics\Model\Validation\Collections::objects($storageParameters, \SqlSemantics\Schema\Storage\Parameter::class);
+        if ($onCommit !== CommitAction::PreserveRows && $persistence !== Persistence::Temporary) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('Only a temporary table deletes its rows or itself at commit.');
+        }
         if ($partitioning !== null && $storageParameters !== []) {
             throw new \SqlSemantics\Model\Validation\InvalidStructure('A partitioned table cannot declare storage parameters.');
         }

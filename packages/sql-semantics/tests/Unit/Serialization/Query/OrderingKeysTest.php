@@ -30,7 +30,7 @@ final class OrderingKeysTest extends TestCase
         self::assertInstanceOf(OutputPosition::class, $key);
         self::assertSame(1, $key->output->ordinal);
         self::assertSame('2', OrderingKeys::write($key)->toString());
-        self::assertSame('SELECT "n" AS "n", "id" AS "id" FROM "public"."t" ORDER BY 2 ASC', $statement->toString());
+        self::assertSame('SELECT "n" AS "n", "id" AS "id" FROM "public"."t" ORDER BY 2 ASC', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWriteQuotesAnOutputAliasForItsDialect(): void
@@ -41,7 +41,7 @@ final class OrderingKeysTest extends TestCase
         self::assertInstanceOf(OutputAlias::class, $key);
         self::assertSame('x', $key->output->name);
         self::assertSame('`x`', OrderingKeys::write($key)->toString());
-        self::assertSame('SELECT `id` AS `x` FROM `t` ORDER BY `x` ASC', $statement->toString());
+        self::assertSame('SELECT `id` AS `x` FROM `t` ORDER BY `x` ASC', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWriteSerializesAnExpressionKey(): void
@@ -51,7 +51,7 @@ final class OrderingKeysTest extends TestCase
         $key = $statement->orderBy[0]->key;
         self::assertInstanceOf(BinaryExpression::class, $key);
         self::assertSame('("id" + 1)', OrderingKeys::write($key)->toString());
-        self::assertSame('SELECT "id" AS "id" FROM "public"."t" ORDER BY("id" + 1) DESC', $statement->toString());
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" ORDER BY("id" + 1) DESC', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWriteKeepsAnUnresolvedPositionSpelling(): void
@@ -62,7 +62,7 @@ final class OrderingKeysTest extends TestCase
         self::assertInstanceOf(UnresolvedOutputPosition::class, $key);
         self::assertSame('3', $key->position->spelling);
         self::assertSame('3', OrderingKeys::write($key)->toString());
-        self::assertSame('SELECT "missing".* FROM "public"."missing" ORDER BY 3 ASC', $statement->toString());
+        self::assertSame('SELECT "missing".* FROM "public"."missing" ORDER BY 3 ASC', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWriteRejectsAnAliasWithoutAName(): void

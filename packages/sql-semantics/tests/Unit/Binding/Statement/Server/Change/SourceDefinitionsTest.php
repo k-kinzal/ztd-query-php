@@ -31,7 +31,7 @@ final class SourceDefinitionsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CHANGE REPLICATION SOURCE TO SOURCE_BIND = 'b', SOURCE_RETRY_COUNT = 1e2, SOURCE_SSL_VERIFY_SERVER_CERT = 2");
         self::assertInstanceOf(ChangeReplicationSourceStatement::class, $statement);
         self::assertInstanceOf(SourceText::class, $statement->settings[0]);
-        self::assertSame("CHANGE REPLICATION SOURCE TO SOURCE_BIND = 'b', SOURCE_RETRY_COUNT = 1e2, SOURCE_SSL_VERIFY_SERVER_CERT = 1", $statement->toString());
+        self::assertSame("CHANGE REPLICATION SOURCE TO SOURCE_BIND = 'b', SOURCE_RETRY_COUNT = 1e2, SOURCE_SSL_VERIFY_SERVER_CERT = 1", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['REQUIRE_ROW_FORMAT = 2'])]
@@ -62,9 +62,9 @@ final class SourceDefinitionsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = 'a'@'h'");
         self::assertInstanceOf(ChangeReplicationSourceStatement::class, $statement);
         self::assertEquals(new \SqlSemantics\Model\Configuration\Replication\Source\PrivilegeChecks(new AccountName('a', 'h')), $statement->settings[0]);
-        self::assertSame("CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = 'a'@'h'", $statement->toString());
+        self::assertSame("CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = 'a'@'h'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $null = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = NULL');
-        self::assertSame('CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = NULL', $null->toString());
+        self::assertSame('CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = NULL', (new \SqlSemantics\SimpleSerializer())->serialize($null));
     }
 
     #[TestWith(['IGNORE_SERVER_IDS = (1, 2)', 'IGNORE_SERVER_IDS = (1, 2)'])]
@@ -78,7 +78,7 @@ final class SourceDefinitionsTest extends TestCase
     #[TestWith(['GTID_ONLY = 0x0', 'GTID_ONLY = 0'])]
     public function testReadSpellsEachOptionValue(string $option, string $expected): void
     {
-        self::assertSame('CHANGE REPLICATION SOURCE TO ' . $expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CHANGE REPLICATION SOURCE TO ' . $option)->toString());
+        self::assertSame('CHANGE REPLICATION SOURCE TO ' . $expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CHANGE REPLICATION SOURCE TO ' . $option)));
     }
 
     public function testFlagNamesTheOptionThatAcceptsOnlyZeroOrOne(): void

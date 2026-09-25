@@ -37,8 +37,8 @@ final class ResetsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(ResetServerStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testTargetReadsEachOptionKind(): void
@@ -66,6 +66,6 @@ final class ResetsTest extends TestCase
     #[TestWith(['mysql-8.4.7', 'reset binary logs and gtids to 3', 'RESET BINARY LOGS AND GTIDS TO 3'])]
     public function testTargetReadsLowercaseOptions(string $version, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)));
     }
 }

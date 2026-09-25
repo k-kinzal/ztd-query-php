@@ -45,4 +45,27 @@ final class OriginTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new Origin('', $statement->source, Dialect::Sqlite);
     }
+
+    public function testIsNotVerbatimUnlessDeclared(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1');
+        self::assertFalse((new Origin('s1', $statement->source, Dialect::Sqlite))->verbatim);
+        self::assertTrue((new Origin('s1', $statement->source, Dialect::Sqlite, verbatim: true))->verbatim);
+    }
+
+    public function testBindingMarksTheOriginVerbatim(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('select  1 -- one');
+        self::assertTrue($statement->origin->verbatim);
+        self::assertSame('select  1 -- one', $statement->origin->source->toString());
+        self::assertSame('select  1 -- one', $statement->toString());
+    }
+
+    public function testTransformationProducesANonVerbatimOrigin(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('select  1');
+        $changed = $statement->replaceExpression(\SqlSemantics\Model\Traversal\Expressions::all($statement)[0], \SqlSemantics\Model\Expression::literal(2, Dialect::Sqlite));
+        self::assertFalse($changed->origin->verbatim);
+        self::assertTrue($statement->origin->verbatim);
+    }
 }

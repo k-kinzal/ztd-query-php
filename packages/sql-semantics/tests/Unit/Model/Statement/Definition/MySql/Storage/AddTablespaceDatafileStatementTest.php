@@ -30,7 +30,7 @@ final class AddTablespaceDatafileStatementTest extends TestCase
         self::assertInstanceOf(AddTablespaceDatafileStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertSame(2048, $copy->changes->initialSize);
-        self::assertSame("ALTER TABLESPACE `ts` ADD DATAFILE 'f.ibd' INITIAL_SIZE = 2048 WAIT", $copy->toString());
+        self::assertSame("ALTER TABLESPACE `ts` ADD DATAFILE 'f.ibd' INITIAL_SIZE = 2048 WAIT", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithNameRejectsAnEmptyName(): void

@@ -31,7 +31,7 @@ final class ExclusionConstraintTest extends TestCase
         self::assertSame('ts', $constraint->tablespace);
         self::assertNotNull($constraint->predicate);
         self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableImmediate, $constraint->checking);
-        self::assertSame('ALTER TABLE "t" ADD CONSTRAINT "ex" EXCLUDE USING "gist"("id" WITH =, "n" WITH &&) INCLUDE("n") WITH ("fillfactor" = 50) USING INDEX TABLESPACE "ts" WHERE (("id" > 0)) DEFERRABLE INITIALLY IMMEDIATE', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ADD CONSTRAINT "ex" EXCLUDE USING "gist"("id" WITH =, "n" WITH &&) INCLUDE("n") WITH ("fillfactor" = 50) USING INDEX TABLESPACE "ts" WHERE (("id" > 0)) DEFERRABLE INITIALLY IMMEDIATE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyIncludedColumn(): void

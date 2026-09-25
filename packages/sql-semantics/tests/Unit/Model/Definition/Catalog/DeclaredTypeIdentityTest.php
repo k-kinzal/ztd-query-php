@@ -29,7 +29,7 @@ final class DeclaredTypeIdentityTest extends TestCase
         self::assertTrue($statement instanceof Statement\CommentOnStatement || $statement instanceof Statement\SecurityLabelStatement);
         self::assertInstanceOf(Catalog\DeclaredTypeIdentity::class, $statement->object);
         self::assertSame($kind, $statement->object->kind->name);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsATypeFromAnotherDatabaseLanguage(): void

@@ -33,7 +33,7 @@ final class TimestampDiffTest extends TestCase
         self::assertSame(['a', 'b'], [$call->start->columnBinding()?->column->name, $call->end->columnBinding()?->column->name]);
         self::assertSame(['bigint', Nullability::MaybeNull], [$call->type->name, $call->nullability]);
         self::assertSame(ExpressionKind::TimestampDiff, $call->kind);
-        self::assertSame('SELECT TIMESTAMPDIFF(MONTH, `a`, `b`) FROM `t`', $query->toString());
+        self::assertSame('SELECT TIMESTAMPDIFF(MONTH, `a`, `b`) FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testInputsListTheStartThenTheEnd(): void

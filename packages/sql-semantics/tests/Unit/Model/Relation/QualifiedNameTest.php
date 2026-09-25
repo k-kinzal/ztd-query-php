@@ -28,7 +28,7 @@ final class QualifiedNameTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('PRAGMA main.cache_size');
         self::assertInstanceOf(ReadPragmaStatement::class, $statement);
         self::assertSame(['main', 'cache_size'], $statement->name->parts);
-        self::assertSame('PRAGMA "main"."cache_size"', $statement->toString());
+        self::assertSame('PRAGMA "main"."cache_size"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyPath(): void

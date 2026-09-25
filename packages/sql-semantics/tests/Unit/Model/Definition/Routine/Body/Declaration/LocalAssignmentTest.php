@@ -30,7 +30,7 @@ final class LocalAssignmentTest extends TestCase
         $assignment = $statement->body->assignments[0];
         self::assertInstanceOf(LocalAssignment::class, $assignment);
         self::assertSame('a', $assignment->target->variable->name);
-        self::assertSame('CREATE PROCEDURE `p`(INOUT `a` integer) SET `a` = (`a` * 2)', $statement->toString());
+        self::assertSame('CREATE PROCEDURE `p`(INOUT `a` integer) SET `a` = (`a` * 2)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnotherDialectValue(): void

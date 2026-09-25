@@ -26,7 +26,7 @@ final class IdentityInvariantTest extends TestCase
         self::assertInstanceOf(Relation\Identity\SetColumnIdentity::class, $statement->actions[0]);
         self::assertInstanceOf(Relation\Identity\SequenceValueChange::class, $statement->actions[0]->changes[0]);
         self::assertSame('-3', $statement->actions[0]->changes[0]->value->text);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET MINVALUE -3', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET MINVALUE -3', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         Relation\Identity\IdentityInvariant::integer($statement->actions[0]->changes[0]->value);
     }
 

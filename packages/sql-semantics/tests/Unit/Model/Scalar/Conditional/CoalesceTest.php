@@ -34,7 +34,7 @@ final class CoalesceTest extends TestCase
         self::assertSame('integer', $value->type->name);
         self::assertSame(Nullability::NotNull, $value->nullability);
         self::assertSame('SELECT COALESCE(NULL, 1)', $statement->toString());
-        self::assertSame('SELECT COALESCE(NULL, 1)', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT COALESCE(NULL, 1)', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testInputsRequiresAtLeastOneArgument(): void

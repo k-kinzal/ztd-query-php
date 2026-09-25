@@ -21,7 +21,7 @@ final class PragmaBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('PRAGMA foreign_keys');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ReadPragmaStatement::class, $statement);
         self::assertSame(['foreign_keys'], $statement->name->parts);
-        self::assertSame('PRAGMA "foreign_keys"', $statement->toString());
+        self::assertSame('PRAGMA "foreign_keys"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindKeepsTheSchemaPrefixAndASignedNumericArgument(): void
@@ -44,7 +44,7 @@ final class PragmaBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\AssignPragmaStatement::class, $identifier);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\Pragma\IdentifierArgument::class, $identifier->value);
         self::assertSame('t', $identifier->value->name);
-        self::assertSame('PRAGMA "table_info" = "t"', $identifier->toString());
+        self::assertSame('PRAGMA "table_info" = "t"', (new \SqlSemantics\SimpleSerializer())->serialize($identifier));
     }
 
     public function testBindTreatsAnUnsignedCallArgumentAsUnsigned(): void

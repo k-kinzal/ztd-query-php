@@ -31,15 +31,15 @@ final class ExplainInDatabaseStatementTest extends TestCase
         self::assertInstanceOf(ExplainInDatabaseStatement::class, $statement);
         self::assertSame('sales', $statement->database);
         self::assertSame([], $statement->diagnostics);
-        self::assertSame('EXPLAIN FOR DATABASE `sales` UPDATE `sales`.`orders` SET `id` = 1', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('EXPLAIN FOR DATABASE `sales` UPDATE `sales`.`orders` SET `id` = 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithDatabaseReplacesTheScope(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('EXPLAIN FOR DATABASE a SELECT 1');
         self::assertInstanceOf(ExplainInDatabaseStatement::class, $statement);
-        self::assertSame('EXPLAIN FOR DATABASE `b` SELECT 1', $statement->withDatabase('b')->toString());
+        self::assertSame('EXPLAIN FOR DATABASE `b` SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDatabase('b')));
         self::assertSame('a', $statement->database);
     }
 
@@ -47,7 +47,7 @@ final class ExplainInDatabaseStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('EXPLAIN FOR DATABASE a SELECT 1');
         self::assertInstanceOf(ExplainInDatabaseStatement::class, $statement);
-        self::assertSame('EXPLAIN FORMAT = JSON FOR DATABASE `a` SELECT 1', $statement->withOptions(new MySqlPlan(MySqlFormat::Json))->toString());
+        self::assertSame('EXPLAIN FORMAT = JSON FOR DATABASE `a` SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOptions(new MySqlPlan(MySqlFormat::Json))));
     }
 
     public function testWithOriginKeepsTheOperands(): void

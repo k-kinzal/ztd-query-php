@@ -35,8 +35,8 @@ final class CharacterSetConversionTest extends TestCase
         self::assertSame(strtolower($characterSet), $conversion->characterSet);
         self::assertSame([$conversion->operand], $conversion->inputs());
         self::assertSame($type, $conversion->type->name);
-        self::assertSame("SELECT CONVERT('abc' USING `" . strtolower($characterSet) . '`)', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame("SELECT CONVERT('abc' USING `" . strtolower($characterSet) . '`)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAnUppercaseCharacterSetName(): void

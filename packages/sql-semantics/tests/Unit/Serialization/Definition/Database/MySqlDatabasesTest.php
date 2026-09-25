@@ -27,9 +27,9 @@ final class MySqlDatabasesTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $first = $binder->bind($sql);
-        $second = $binder->bind($first->toString());
+        $second = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($first));
         self::assertSame($first::class, $second::class);
-        self::assertSame($first->toString(), $second->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($first), (new \SqlSemantics\SimpleSerializer())->serialize($second));
     }
 
     public function testWriteReturnsNullForAnUnrelatedOperation(): void

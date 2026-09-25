@@ -56,6 +56,6 @@ final class SchemaCreationTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE SCHEMA AUTHORIZATION alice CREATE TABLE alice.t (id integer)');
         self::assertInstanceOf(Statement\CreateAuthorizationSchemaStatement::class, $statement);
-        self::assertSame('CREATE SCHEMA AUTHORIZATION "alice" CREATE TABLE "alice"."t"("id" integer)', $statement->toString());
+        self::assertSame('CREATE SCHEMA AUTHORIZATION "alice" CREATE TABLE "alice"."t"("id" integer)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

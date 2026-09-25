@@ -39,8 +39,8 @@ final class CreatePartitionStatementTest extends TestCase
         self::assertSame(\SqlSemantics\Schema\Partition\PartitionStrategy::List, $statement->properties->partitioning?->strategy);
         self::assertTrue($statement->ifNotExists);
         $expected = 'CREATE TEMPORARY TABLE IF NOT EXISTS "c" PARTITION OF "p"("id" WITH OPTIONS NOT NULL, CONSTRAINT "k" CHECK (("id" > 0))) FOR VALUES FROM(1) TO(10) PARTITION BY LIST("at") ON COMMIT DROP';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testRejectsAnotherDatabaseLanguage(): void
@@ -70,7 +70,7 @@ final class CreatePartitionStatementTest extends TestCase
         self::assertInstanceOf(CreatePartitionStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('CREATE TABLE "c" PARTITION OF "p" DEFAULT', $copy->toString());
+        self::assertSame('CREATE TABLE "c" PARTITION OF "p" DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -79,7 +79,7 @@ final class CreatePartitionStatementTest extends TestCase
         self::assertInstanceOf(CreatePartitionStatement::class, $statement);
         $changed = $statement->withName(new QualifiedName(['app', 'c2']));
         self::assertSame(['c'], $statement->name->parts);
-        self::assertSame('CREATE TABLE "app"."c2" PARTITION OF "p" DEFAULT', $changed->toString());
+        self::assertSame('CREATE TABLE "app"."c2" PARTITION OF "p" DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithParentReplacesTheOperand(): void
@@ -88,7 +88,7 @@ final class CreatePartitionStatementTest extends TestCase
         self::assertInstanceOf(CreatePartitionStatement::class, $statement);
         $changed = $statement->withParent(new QualifiedName(['q']));
         self::assertSame(['p'], $statement->parent->parts);
-        self::assertSame('CREATE TABLE "c" PARTITION OF "q" DEFAULT', $changed->toString());
+        self::assertSame('CREATE TABLE "c" PARTITION OF "q" DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithBoundReplacesTheOperand(): void
@@ -96,8 +96,8 @@ final class CreatePartitionStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(id INTEGER)')))->bind('CREATE TABLE c PARTITION OF p FOR VALUES IN (1)');
         self::assertInstanceOf(CreatePartitionStatement::class, $statement);
         $changed = $statement->withBound(new DefaultPartitionBound());
-        self::assertSame('CREATE TABLE "c" PARTITION OF "p" FOR VALUES IN(1)', $statement->toString());
-        self::assertSame('CREATE TABLE "c" PARTITION OF "p" DEFAULT', $changed->toString());
+        self::assertSame('CREATE TABLE "c" PARTITION OF "p" FOR VALUES IN(1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('CREATE TABLE "c" PARTITION OF "p" DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithColumnsReplacesTheOperand(): void
@@ -106,7 +106,7 @@ final class CreatePartitionStatementTest extends TestCase
         self::assertInstanceOf(CreatePartitionStatement::class, $statement);
         $changed = $statement->withColumns([new PartitionColumn('id', Nullability::NotNull)]);
         self::assertSame([], $statement->columns);
-        self::assertSame('CREATE TABLE "c" PARTITION OF "p"("id" WITH OPTIONS NOT NULL) DEFAULT', $changed->toString());
+        self::assertSame('CREATE TABLE "c" PARTITION OF "p"("id" WITH OPTIONS NOT NULL) DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithConstraintsReplacesTheOperand(): void
@@ -115,7 +115,7 @@ final class CreatePartitionStatementTest extends TestCase
         self::assertInstanceOf(CreatePartitionStatement::class, $statement);
         $changed = $statement->withConstraints([]);
         self::assertCount(1, $statement->constraints);
-        self::assertSame('CREATE TABLE "c" PARTITION OF "p" DEFAULT', $changed->toString());
+        self::assertSame('CREATE TABLE "c" PARTITION OF "p" DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithPropertiesReplacesTheOperand(): void
@@ -124,7 +124,7 @@ final class CreatePartitionStatementTest extends TestCase
         self::assertInstanceOf(CreatePartitionStatement::class, $statement);
         $changed = $statement->withProperties(new PostgreSqlProperties(Persistence::Unlogged, tablespace: 'fast'));
         self::assertSame(Persistence::Permanent, $statement->properties->persistence);
-        self::assertSame('CREATE UNLOGGED TABLE "c" PARTITION OF "p" DEFAULT TABLESPACE "fast"', $changed->toString());
+        self::assertSame('CREATE UNLOGGED TABLE "c" PARTITION OF "p" DEFAULT TABLESPACE "fast"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfNotExistsReplacesTheOperand(): void
@@ -133,7 +133,7 @@ final class CreatePartitionStatementTest extends TestCase
         self::assertInstanceOf(CreatePartitionStatement::class, $statement);
         $changed = $statement->withIfNotExists(true);
         self::assertFalse($statement->ifNotExists);
-        self::assertSame('CREATE TABLE IF NOT EXISTS "c" PARTITION OF "p" DEFAULT', $changed->toString());
+        self::assertSame('CREATE TABLE IF NOT EXISTS "c" PARTITION OF "p" DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithExclusionsReplacesTheOperand(): void
@@ -142,6 +142,6 @@ final class CreatePartitionStatementTest extends TestCase
         self::assertInstanceOf(CreatePartitionStatement::class, $statement);
         $changed = $statement->withExclusions([]);
         self::assertCount(1, $statement->exclusions);
-        self::assertSame('CREATE TABLE "c" PARTITION OF "p" DEFAULT', $changed->toString());
+        self::assertSame('CREATE TABLE "c" PARTITION OF "p" DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

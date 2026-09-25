@@ -25,8 +25,8 @@ final class CopyTextSearchConfigurationStatementTest extends TestCase
         $statement = $binder->bind('CREATE TEXT SEARCH CONFIGURATION s.c (COPY = \'English\')');
         self::assertInstanceOf(CopyTextSearchConfigurationStatement::class, $statement);
         self::assertSame(['English'], $statement->copied->parts);
-        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "s"."c"(COPY = "English")', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "s"."c"(COPY = "English")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -49,7 +49,7 @@ final class CopyTextSearchConfigurationStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH CONFIGURATION c (copy = english)');
         self::assertInstanceOf(CopyTextSearchConfigurationStatement::class, $statement);
-        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "c"(COPY = "english")', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "c"(COPY = "english")', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -66,6 +66,6 @@ final class CopyTextSearchConfigurationStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH CONFIGURATION c (copy = english)');
         self::assertInstanceOf(CopyTextSearchConfigurationStatement::class, $statement);
         $changed = $statement->withCopied(new QualifiedName(['simple']));
-        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "c"(COPY = "simple")', $changed->toString());
+        self::assertSame('CREATE TEXT SEARCH CONFIGURATION "c"(COPY = "simple")', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

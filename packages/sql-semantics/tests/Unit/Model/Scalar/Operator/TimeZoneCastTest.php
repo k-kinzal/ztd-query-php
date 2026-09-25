@@ -35,8 +35,8 @@ final class TimeZoneCastTest extends TestCase
         self::assertSame($precision, $cast->precision);
         self::assertSame([$cast->operand, $cast->zone], $cast->inputs());
         self::assertSame('datetime', $cast->type->name);
-        self::assertSame('SELECT ' . str_replace('(at ', '(`at` ', $sql) . ' FROM `t`', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT ' . str_replace('(at ', '(`at` ', $sql) . ' FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAZoneThatIsNotAString(): void

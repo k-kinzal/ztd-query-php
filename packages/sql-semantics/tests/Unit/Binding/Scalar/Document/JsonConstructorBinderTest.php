@@ -42,8 +42,8 @@ final class JsonConstructorBinderTest extends TestCase
         self::assertCount($members, $value->members);
         self::assertSame($onNull, $value->onNull);
         self::assertSame($unique, $value->uniqueKeys);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     /**
@@ -60,8 +60,8 @@ final class JsonConstructorBinderTest extends TestCase
         $query = $binder->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertInstanceOf($class, $query->outputs[0]->expression);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['SELECT JSON_ARRAY(SELECT 1, 2)', InputViolation::ScalarQueryWidth])]
@@ -91,7 +91,7 @@ final class JsonConstructorBinderTest extends TestCase
         $query = $binder->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertInstanceOf($class, $query->outputs[0]->expression);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

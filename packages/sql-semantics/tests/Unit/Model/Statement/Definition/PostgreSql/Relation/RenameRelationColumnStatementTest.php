@@ -30,8 +30,8 @@ final class RenameRelationColumnStatementTest extends TestCase
         self::assertSame('b', $statement->newName);
         self::assertTrue($statement->ifExists);
         self::assertFalse($statement->only);
-        self::assertSame('ALTER VIEW IF EXISTS "v" RENAME COLUMN "a" TO "b"', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER VIEW IF EXISTS "v" RENAME COLUMN "a" TO "b"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -40,7 +40,7 @@ final class RenameRelationColumnStatementTest extends TestCase
         self::assertInstanceOf(RenameRelationColumnStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -60,7 +60,7 @@ final class RenameRelationColumnStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(Kind\RelationKind::View, $statement->relationKind);
         self::assertEquals(Kind\RelationKind::MaterializedView, $changed->relationKind);
-        self::assertStringContainsString('ALTER MATERIALIZED VIEW', $changed->toString());
+        self::assertStringContainsString('ALTER MATERIALIZED VIEW', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -71,7 +71,7 @@ final class RenameRelationColumnStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new QualifiedName(['v']), $statement->name);
         self::assertEquals(new QualifiedName(['w']), $changed->name);
-        self::assertStringContainsString('"w" RENAME', $changed->toString());
+        self::assertStringContainsString('"w" RENAME', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithColumnReplacesTheOperand(): void
@@ -82,7 +82,7 @@ final class RenameRelationColumnStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('a', $statement->column);
         self::assertEquals('c', $changed->column);
-        self::assertStringContainsString('COLUMN "c"', $changed->toString());
+        self::assertStringContainsString('COLUMN "c"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNewNameReplacesTheOperand(): void
@@ -93,7 +93,7 @@ final class RenameRelationColumnStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('b', $statement->newName);
         self::assertEquals('d', $changed->newName);
-        self::assertStringContainsString('TO "d"', $changed->toString());
+        self::assertStringContainsString('TO "d"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfExistsReplacesTheOperand(): void
@@ -104,14 +104,14 @@ final class RenameRelationColumnStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(true, $statement->ifExists);
         self::assertEquals(false, $changed->ifExists);
-        self::assertStringContainsString('ALTER VIEW "v"', $changed->toString());
+        self::assertStringContainsString('ALTER VIEW "v"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOnlyAppliesToTables(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TABLE t RENAME a TO b', strict: false);
         self::assertInstanceOf(RenameRelationColumnStatement::class, $statement);
-        self::assertSame('ALTER TABLE ONLY "t" RENAME COLUMN "a" TO "b"', $statement->withOnly(true)->toString());
+        self::assertSame('ALTER TABLE ONLY "t" RENAME COLUMN "a" TO "b"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOnly(true)));
     }
 
     public function testRejectsASequence(): void
@@ -129,7 +129,7 @@ final class RenameRelationColumnStatementTest extends TestCase
         $rebuilt = new RenameRelationColumnStatement($statement->origin, Kind\RelationKind::View, new QualifiedName(['v']), 'a', 'b');
         self::assertFalse($rebuilt->ifExists);
         self::assertFalse($rebuilt->only);
-        self::assertSame('ALTER VIEW "v" RENAME COLUMN "a" TO "b"', $rebuilt->toString());
+        self::assertSame('ALTER VIEW "v" RENAME COLUMN "a" TO "b"', (new \SqlSemantics\SimpleSerializer())->serialize($rebuilt));
     }
 
     public function testRejectsOnlyOnAView(): void

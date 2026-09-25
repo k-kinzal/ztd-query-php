@@ -41,8 +41,8 @@ final class JoinsTest extends TestCase
         self::assertInstanceOf(Join::class, $join);
         self::assertSame($class, $join::class);
         self::assertSame($expected, Joins::write($join, $dialect)->toString());
-        self::assertStringEndsWith(' FROM ' . $expected, $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertStringEndsWith(' FROM ' . $expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWriteParenthesizesANestedLeftOperand(): void
@@ -54,7 +54,7 @@ final class JoinsTest extends TestCase
         self::assertInstanceOf(Join::class, $join);
         self::assertInstanceOf(Join::class, $join->left);
         self::assertSame('("public"."t" INNER JOIN "public"."s" ON ("t"."id" = "s"."id")) INNER JOIN "public"."t" AS "u" ON ("u"."id" = "s"."id")', Joins::write($join, Dialect::PostgreSql)->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWriteParenthesizesANestedRightOperand(): void
@@ -66,7 +66,7 @@ final class JoinsTest extends TestCase
         self::assertInstanceOf(Join::class, $join);
         self::assertInstanceOf(Join::class, $join->right);
         self::assertSame('"public"."t" INNER JOIN("public"."s" INNER JOIN "public"."t" AS "u" ON ("s"."id" = "u"."id")) ON ("t"."id" = "s"."id")', Joins::write($join, Dialect::PostgreSql)->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['mysql-5.6.51'])]
@@ -76,8 +76,8 @@ final class JoinsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE t(a INT, b INT)', 'CREATE TABLE u(b INT, c INT)'));
         $statement = $binder->bind('UPDATE LOW_PRIORITY ( t NATURAL JOIN u ) SET a = DEFAULT');
-        self::assertSame('UPDATE LOW_PRIORITY `t` NATURAL JOIN `u` SET `a` = DEFAULT', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('UPDATE LOW_PRIORITY `t` NATURAL JOIN `u` SET `a` = DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['mysql-5.6.51', 'SELECT 1 FROM t STRAIGHT_JOIN u ON t.a = u.a', 'SELECT 1 FROM `t` STRAIGHT_JOIN `u` ON (`t`.`a` = `u`.`a`)'])]
@@ -91,6 +91,6 @@ final class JoinsTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertInstanceOf(Join::class, $query->from);
         self::assertSame(substr($expected, strlen('SELECT 1 FROM ')), Joins::write($query->from, Dialect::MySql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

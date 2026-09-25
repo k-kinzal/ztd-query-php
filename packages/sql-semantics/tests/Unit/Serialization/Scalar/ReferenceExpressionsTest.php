@@ -38,8 +38,8 @@ final class ReferenceExpressionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder($dialect))->build($ddl));
         $statement = $binder->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     public function testWriteKeepsSliceBoundsAndParameterNames(): void
@@ -106,8 +106,8 @@ final class ReferenceExpressionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a INTEGER[])'));
         $query = $binder->bind($sql);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
         self::assertInstanceOf(BoundSelect::class, $query);
         $base = $query->outputs[0]->expression->inputs()[0];
         self::assertSame(str_contains($expected, '"a"'), !str_starts_with(ReferenceExpressions::subscripted($base)->toString(), '('));

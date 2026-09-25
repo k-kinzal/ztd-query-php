@@ -30,8 +30,8 @@ final class SequencesTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(Statement\CreateSequenceStatement::class, $statement);
         self::assertSame($persistence, $statement->persistence);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['CREATE SEQUENCE s MINVALUE -3 START WITH -5'])]
@@ -58,7 +58,7 @@ final class SequencesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE SCHEMA app CREATE SEQUENCE q START 5');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\PostgreSql\Schema\CreateSchemaStatement::class, $statement);
         self::assertInstanceOf(Statement\CreateSequenceStatement::class, $statement->elements[0]);
-        self::assertSame('CREATE SCHEMA "app" CREATE SEQUENCE "q" START WITH 5', $statement->toString());
+        self::assertSame('CREATE SCHEMA "app" CREATE SEQUENCE "q" START WITH 5', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testAlterChecksOnlyTheExplicitBounds(): void
@@ -125,7 +125,7 @@ final class SequencesTest extends TestCase
     #[TestWith(['ALTER SEQUENCE s RESTART 5', 'ALTER SEQUENCE "s" RESTART WITH 5'])]
     public function testBindSpellsTheAcceptedForms(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     #[TestWith(['ALTER SEQUENCE a.b.c.s CYCLE'])]

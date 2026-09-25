@@ -35,7 +35,7 @@ final class ArgumentModeTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(n INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT count(ALL n), count(DISTINCT n) FROM t');
-        self::assertSame('SELECT "count"("n"), "count"(DISTINCT "n") FROM "public"."t"', $statement->toString());
+        self::assertSame('SELECT "count"("n"), "count"(DISTINCT "n") FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testSpellsEachModeAsItsKeyword(): void

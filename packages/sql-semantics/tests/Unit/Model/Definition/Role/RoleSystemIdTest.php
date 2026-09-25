@@ -44,9 +44,9 @@ final class RoleSystemIdTest extends TestCase
         $option = $statement->options[0];
         self::assertInstanceOf(RoleSystemId::class, $option);
         self::assertSame(5, $option->id);
-        self::assertSame('CREATE ROLE "r" SYSID 5', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('CREATE ROLE "r" SYSID 5', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateRoleStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 }

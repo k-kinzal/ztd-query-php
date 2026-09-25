@@ -15,7 +15,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @visibility public
  * @example Reading the request
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CLUSTER VERBOSE');
- *     [$statement->verbose, $statement->toString()] // => [true, 'CLUSTER(VERBOSE)']
+ *     [$statement->verbose, (new \SqlSemantics\SimpleSerializer())->serialize($statement)] // => [true, 'CLUSTER(VERBOSE)']
  */
 final class ClusterAllStatement extends BoundStatement
 {

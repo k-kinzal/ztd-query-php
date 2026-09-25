@@ -29,6 +29,6 @@ final class EventTriggerEventTest extends TestCase
         $statement = $binder->bind('CREATE EVENT TRIGGER x ON ' . strtoupper($event->value) . ' EXECUTE FUNCTION f()');
         self::assertInstanceOf(CreateEventTriggerStatement::class, $statement);
         self::assertSame($event, $statement->event);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

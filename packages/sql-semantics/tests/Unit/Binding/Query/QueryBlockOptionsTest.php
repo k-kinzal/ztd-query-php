@@ -35,7 +35,7 @@ final class QueryBlockOptionsTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertSame($options, $statement->options);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertInstanceOf(BoundSelect::class, $rebound);
         self::assertSame($options, $rebound->options);
@@ -46,8 +46,8 @@ final class QueryBlockOptionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, KEY k (a))', 'CREATE TABLE w (a INT)'));
         $statement = $binder->bind('INSERT INTO w SELECT HIGH_PRIORITY a FROM t IGNORE INDEX (k)');
         self::assertInstanceOf(InsertSelectStatement::class, $statement);
-        self::assertSame('INSERT INTO `w` SELECT HIGH_PRIORITY `a` AS `a` FROM `t` IGNORE INDEX(`k`)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('INSERT INTO `w` SELECT HIGH_PRIORITY `a` AS `a` FROM `t` IGNORE INDEX(`k`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindRejectsBothQueryCacheOptions(): void
@@ -79,6 +79,6 @@ final class QueryBlockOptionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)'));
         $statement = $binder->bind($sql);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

@@ -30,7 +30,7 @@ final class OperatorIdentityTest extends TestCase
         self::assertInstanceOf(Catalog\OperatorIdentity::class, $statement->object);
         self::assertSame($left, $statement->object->left?->name);
         self::assertSame($right, $statement->object->right?->name);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOperatorWithoutOperandTypes(): void

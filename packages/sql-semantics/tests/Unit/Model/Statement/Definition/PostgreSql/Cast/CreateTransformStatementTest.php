@@ -29,8 +29,8 @@ final class CreateTransformStatementTest extends TestCase
         self::assertSame(['from_h'], $statement->fromSql?->name->parts);
         self::assertSame(['to_h'], $statement->toSql?->name->parts);
         self::assertFalse($statement->orReplace);
-        self::assertSame('CREATE TRANSFORM FOR "hstore" LANGUAGE "plperl"(FROM SQL WITH FUNCTION "from_h"("internal"), TO SQL WITH FUNCTION "to_h"("internal"))', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TRANSFORM FOR "hstore" LANGUAGE "plperl"(FROM SQL WITH FUNCTION "from_h"("internal"), TO SQL WITH FUNCTION "to_h"("internal"))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsATransformWithoutFunctions(): void
@@ -45,7 +45,7 @@ final class CreateTransformStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TRANSFORM FOR hstore LANGUAGE plperl (TO SQL WITH FUNCTION f)');
         self::assertInstanceOf(CreateTransformStatement::class, $statement);
-        self::assertSame('CREATE TRANSFORM FOR "hstore" LANGUAGE "plperl"(TO SQL WITH FUNCTION "f")', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE TRANSFORM FOR "hstore" LANGUAGE "plperl"(TO SQL WITH FUNCTION "f")', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithTypeReplacesTheOperand(): void
@@ -81,6 +81,6 @@ final class CreateTransformStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION f)');
         self::assertInstanceOf(CreateTransformStatement::class, $statement);
-        self::assertSame('CREATE OR REPLACE TRANSFORM FOR "hstore" LANGUAGE "plperl"(FROM SQL WITH FUNCTION "f")', $statement->withOrReplace(true)->toString());
+        self::assertSame('CREATE OR REPLACE TRANSFORM FOR "hstore" LANGUAGE "plperl"(FROM SQL WITH FUNCTION "f")', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrReplace(true)));
     }
 }

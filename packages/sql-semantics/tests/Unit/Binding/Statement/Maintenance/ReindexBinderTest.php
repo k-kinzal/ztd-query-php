@@ -24,7 +24,7 @@ final class ReindexBinderTest extends TestCase
         $named = $binder->bind('REINDEX main.t');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\ReindexNamedStatement::class, $named);
         self::assertSame(['main', 't'], $named->target->parts);
-        self::assertSame('REINDEX "main"."t"', $named->toString());
+        self::assertSame('REINDEX "main"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($named));
     }
 
     public function testBindReadsPostgreSqlObjectTargetsWithOptions(): void
@@ -40,7 +40,7 @@ final class ReindexBinderTest extends TestCase
         $schema = $binder->bind('REINDEX SCHEMA s');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\ReindexObjectStatement::class, $schema);
         self::assertSame(\SqlSemantics\Model\Maintenance\ReindexObjectKind::Schema, $schema->targetKind);
-        self::assertSame('REINDEX SCHEMA "s"', $schema->toString());
+        self::assertSame('REINDEX SCHEMA "s"', (new \SqlSemantics\SimpleSerializer())->serialize($schema));
     }
 
     public function testBindReadsDatabaseSelections(): void
@@ -50,7 +50,7 @@ final class ReindexBinderTest extends TestCase
         self::assertSame(\SqlSemantics\Model\Maintenance\DatabaseIndexScope::UserTables, $statement->selection);
         self::assertNull($statement->database);
         self::assertFalse($statement->options->concurrently);
-        self::assertSame('REINDEX DATABASE', $statement->toString());
+        self::assertSame('REINDEX DATABASE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindRejectsConcurrentSystemRebuilds(): void

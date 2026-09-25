@@ -37,8 +37,8 @@ final class MergeUpdateTest extends TestCase
         self::assertInstanceOf(ScalarAssignment::class, $action->assignments[0]);
         self::assertSame('n', $action->assignments[0]->target->column()->columnBinding()?->column->name);
         $expected = 'MERGE INTO "public"."t" USING "public"."s" ON ("t"."id" = "s"."id") WHEN MATCHED AND ("s"."n" > 0) THEN UPDATE SET "n" = "s"."n", "id" = DEFAULT';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testAcceptsAMissingSourceMatch(): void

@@ -25,7 +25,7 @@ final class ExclusionElementTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertInstanceOf(Relation\Constraint\AddExclusionConstraint::class, $statement->actions[0]);
         self::assertSame(['='], $statement->actions[0]->constraint->elements[0]->operator->parts);
-        self::assertSame('ALTER TABLE "t" ADD EXCLUDE USING "gist"("id" WITH =)', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ADD EXCLUDE USING "gist"("id" WITH =)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOverQualifiedOperator(): void

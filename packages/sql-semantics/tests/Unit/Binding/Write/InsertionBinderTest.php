@@ -222,8 +222,8 @@ final class InsertionBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INTEGER DEFAULT 1, b INTEGER)'));
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
         $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('INSERT INTO t (b) SELECT 1');
         self::assertSame('b', (new \SqlSemantics\Binding\Write\InsertionBinder())->columnList($tree->find('insert_stmt')[0])?->toString());
     }

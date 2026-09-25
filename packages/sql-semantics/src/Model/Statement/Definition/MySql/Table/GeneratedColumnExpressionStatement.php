@@ -19,7 +19,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('PARSE_GCOL_EXPR (1 + 2)');
  *     $statement->expression instanceof \SqlSemantics\Model\Scalar\Operator\BinaryExpression // => true
- *     $statement->toString() // => 'PARSE_GCOL_EXPR((1 + 2))'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'PARSE_GCOL_EXPR((1 + 2))'
  */
 final class GeneratedColumnExpressionStatement extends BoundStatement
 {

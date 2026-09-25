@@ -29,7 +29,7 @@ final class NumericArgumentTest extends TestCase
         self::assertInstanceOf(NumericArgument::class, $argument);
         self::assertSame(Sign::Positive, $argument->sign);
         self::assertSame('100', $argument->literal->text);
-        self::assertSame('PRAGMA "cache_size" = + 100', $statement->toString());
+        self::assertSame('PRAGMA "cache_size" = + 100', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testDefaultsToAnUnsignedNumber(): void

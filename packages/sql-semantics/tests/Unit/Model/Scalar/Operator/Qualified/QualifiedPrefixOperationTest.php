@@ -35,8 +35,8 @@ final class QualifiedPrefixOperationTest extends TestCase
         self::assertSame(ExpressionKind::Operator, $operation->kind);
         self::assertSame('unknown', $operation->type->name);
         self::assertSame(Nullability::Unknown, $operation->nullability);
-        self::assertSame('SELECT (OPERATOR("public".@@) "n") FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT (OPERATOR("public".@@) "n") FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingNamesTheOperator(): void

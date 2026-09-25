@@ -31,7 +31,7 @@ final class OnlyTableReferenceTest extends TestCase
         self::assertSame('a', $copy->alias);
         self::assertSame(['public', 't'], $copy->name->parts);
         self::assertNotSame($copy->scopeId, $table->scopeId);
-        self::assertSame('SELECT "a"."id" AS "id" FROM ONLY "public"."t" AS "a"', $statement->toString());
+        self::assertSame('SELECT "a"."id" AS "id" FROM ONLY "public"."t" AS "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithScopeRetainsUnresolvedTableIdentity(): void
@@ -41,7 +41,7 @@ final class OnlyTableReferenceTest extends TestCase
         self::assertInstanceOf(TableStatement::class, $statement);
         self::assertInstanceOf(OnlyTableReference::class, $statement->from);
         self::assertFalse($statement->from->declaration->resolved);
-        self::assertSame('TABLE ONLY "public"."absent"', $statement->toString());
+        self::assertSame('TABLE ONLY "public"."absent"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsForeignDialectDeclaration(): void

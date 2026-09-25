@@ -36,8 +36,8 @@ final class JsonSerializationTest extends TestCase
         self::assertSame('bytea', $value->type->name);
         self::assertSame(Nullability::NotNull, $value->nullability);
         self::assertSame(ExpressionKind::JsonConversion, $value->kind);
-        self::assertSame('SELECT JSON_SERIALIZE("d" FORMAT JSON ENCODING UTF8 RETURNING bytea FORMAT JSON ENCODING UTF8) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_SERIALIZE("d" FORMAT JSON ENCODING UTF8 RETURNING bytea FORMAT JSON ENCODING UTF8) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsDefaultToText(): void

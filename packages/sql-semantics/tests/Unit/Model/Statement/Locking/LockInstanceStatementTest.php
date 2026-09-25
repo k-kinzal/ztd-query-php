@@ -24,7 +24,7 @@ final class LockInstanceStatementTest extends TestCase
         self::assertInstanceOf(LockInstanceStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('LOCK INSTANCE FOR BACKUP', $copy->toString());
+        self::assertSame('LOCK INSTANCE FOR BACKUP', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAReleaseWithoutBackupLocks(): void

@@ -26,7 +26,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()))->bind('CREATE DEFINER = CURRENT_USER PROCEDURE app.p(IN a INT) SQL SECURITY INVOKER SELECT a');
  *     $statement->name->parts // => ['app', 'p']
  *     $statement->definer === \SqlSemantics\Model\Configuration\Account\CurrentAccount::Authenticated // => true
- *     $statement->toString() // => 'CREATE DEFINER = CURRENT_USER PROCEDURE `app`.`p`(IN `a` integer) SQL SECURITY INVOKER SELECT `a`'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE DEFINER = CURRENT_USER PROCEDURE `app`.`p`(IN `a` integer) SQL SECURITY INVOKER SELECT `a`'
  */
 final class CreateProcedureStatement extends BoundStatement
 {

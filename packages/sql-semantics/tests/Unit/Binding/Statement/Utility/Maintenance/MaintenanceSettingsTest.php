@@ -91,7 +91,7 @@ final class MaintenanceSettingsTest extends TestCase
     #[TestWith(['ANALYZE (VERBOSE, SKIP_LOCKED, BUFFER_USAGE_LIMIT 256) t', 'ANALYZE(VERBOSE, SKIP_LOCKED, BUFFER_USAGE_LIMIT \'256\') "public"."t"'])]
     public function testVacuumAndAnalyzeSpellOnlyTheNonDefaultOptions(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql)));
     }
 
     #[TestWith(['VACUUM (BOGUS) t'])]

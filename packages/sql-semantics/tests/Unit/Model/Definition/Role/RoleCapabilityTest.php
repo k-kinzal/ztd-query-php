@@ -34,14 +34,14 @@ final class RoleCapabilityTest extends TestCase
         $granted = $binder->bind('CREATE ROLE r ' . $keyword);
         self::assertInstanceOf(CreateRoleStatement::class, $granted);
         self::assertEquals([new RoleAttribute($capability, true)], $granted->options);
-        self::assertSame('CREATE ROLE "r" ' . $keyword, $granted->toString());
+        self::assertSame('CREATE ROLE "r" ' . $keyword, (new \SqlSemantics\SimpleSerializer())->serialize($granted));
         $withheld = $binder->bind('CREATE ROLE r NO' . $keyword);
         self::assertInstanceOf(CreateRoleStatement::class, $withheld);
         self::assertEquals([new RoleAttribute($capability, false)], $withheld->options);
-        self::assertSame('CREATE ROLE "r" NO' . $keyword, $withheld->toString());
-        $rebound = $binder->bind($withheld->toString());
+        self::assertSame('CREATE ROLE "r" NO' . $keyword, (new \SqlSemantics\SimpleSerializer())->serialize($withheld));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($withheld));
         self::assertInstanceOf(CreateRoleStatement::class, $rebound);
-        self::assertSame($withheld->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($withheld), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testTheEnumerationListsTheSevenCapabilities(): void

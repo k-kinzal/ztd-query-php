@@ -35,7 +35,7 @@ final class MySqlRemovalsTest extends TestCase
         self::assertInstanceOf(Statement\DropDatabaseStatement::class, $database);
         self::assertSame('app', $database->name);
         self::assertTrue($database->ifExists);
-        self::assertSame('DROP DATABASE IF EXISTS `app`', $database->toString());
+        self::assertSame('DROP DATABASE IF EXISTS `app`', (new \SqlSemantics\SimpleSerializer())->serialize($database));
         $event = $binder->bind('DROP EVENT IF EXISTS app.daily');
         self::assertInstanceOf(Statement\DropEventStatement::class, $event);
         self::assertSame(['app', 'daily'], $event->name->parts);
@@ -44,9 +44,9 @@ final class MySqlRemovalsTest extends TestCase
         self::assertInstanceOf(Statement\DropServerStatement::class, $server);
         self::assertSame('remote', $server->name);
         self::assertTrue($server->ifExists);
-        self::assertSame($database->toString(), $binder->bind($database->toString())->toString());
-        self::assertSame($event->toString(), $binder->bind($event->toString())->toString());
-        self::assertSame($server->toString(), $binder->bind($server->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($database), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($database))));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($event), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($event))));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($server), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($server))));
     }
 
     #[TestWith(['mysql-5.6.51'])]
@@ -70,7 +70,7 @@ final class MySqlRemovalsTest extends TestCase
         self::assertInstanceOf(AccountName::class, $statement->accounts[2]);
         self::assertSame('CURRENT_USER', $statement->accounts[2]->username);
         self::assertFalse($statement->ifExists);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['mysql-8.0.44'])]
@@ -92,8 +92,8 @@ final class MySqlRemovalsTest extends TestCase
         self::assertInstanceOf(Statement\DropResourceGroupStatement::class, $group);
         self::assertSame('workers', $group->name);
         self::assertTrue($group->force);
-        self::assertSame($roles->toString(), $binder->bind($roles->toString())->toString());
-        self::assertSame($group->toString(), $binder->bind($group->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($roles), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($roles))));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($group), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($group))));
     }
 
     /**
@@ -111,7 +111,7 @@ final class MySqlRemovalsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindRejectsAnEmptyDatabaseName(): void

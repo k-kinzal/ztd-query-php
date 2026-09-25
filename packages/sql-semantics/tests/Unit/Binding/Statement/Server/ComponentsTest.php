@@ -38,7 +38,7 @@ final class ComponentsTest extends TestCase
         self::assertSame(['x', 'y'], $statement->settings[0]->name);
         self::assertSame(SettingScope::Global, $statement->settings[0]->scope);
         self::assertSame(SettingScope::Persist, $statement->settings[1]->scope);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
         $removal = $binder->bind("UNINSTALL COMPONENT 'a'");
         self::assertInstanceOf(UninstallComponentStatement::class, $removal);
     }
@@ -64,7 +64,7 @@ final class ComponentsTest extends TestCase
     public function testBindReadsLowercaseComponentCommands(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement::class . ' => ' . $statement->toString());
+        self::assertSame($expected, $statement::class . ' => ' . (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

@@ -24,7 +24,7 @@ final class CreateMaterializedViewStatementTest extends TestCase
         self::assertInstanceOf(CreateMaterializedViewStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
         self::assertTrue($copy->unlogged);
         self::assertTrue($copy->ifNotExists);
         self::assertSame('heap', $copy->accessMethod);
@@ -50,8 +50,8 @@ final class CreateMaterializedViewStatementTest extends TestCase
         $query = $binder->bind('SELECT a FROM t');
         self::assertInstanceOf(BoundQuery::class, $query);
         $changed = $statement->withQuery($query);
-        self::assertSame($query->toString(), $changed->query->toString());
-        self::assertSame('CREATE MATERIALIZED VIEW "m" AS SELECT "a" AS "a" FROM "public"."t"', $changed->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($changed->query));
+        self::assertSame('CREATE MATERIALIZED VIEW "m" AS SELECT "a" AS "a" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithPopulationTogglesTheInitialLoad(): void
@@ -61,7 +61,7 @@ final class CreateMaterializedViewStatementTest extends TestCase
         $changed = $statement->withPopulation(false);
         self::assertTrue($statement->withData);
         self::assertFalse($changed->withData);
-        self::assertSame('CREATE MATERIALIZED VIEW "m" AS SELECT 1 WITH NO DATA', $changed->toString());
+        self::assertSame('CREATE MATERIALIZED VIEW "m" AS SELECT 1 WITH NO DATA', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsEmptyStorageNames(): void

@@ -24,7 +24,7 @@ final class SetInheritanceTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t NO INHERIT app.base, INHERIT base', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals([new Relation\SetInheritance(new QualifiedName(['app', 'base']), false), new Relation\SetInheritance(new QualifiedName(['base']), true)], $statement->actions);
-        self::assertSame('ALTER TABLE "t" NO INHERIT "app"."base", INHERIT "base"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" NO INHERIT "app"."base", INHERIT "base"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOverQualifiedParent(): void

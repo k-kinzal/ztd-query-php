@@ -64,10 +64,10 @@ final class RoleOptionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertSame($statement::class, $rebound::class);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testAlterationWritesMembersWithTheUserKeyword(): void
@@ -87,9 +87,9 @@ final class RoleOptionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertSame($statement::class, $rebound::class);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 }

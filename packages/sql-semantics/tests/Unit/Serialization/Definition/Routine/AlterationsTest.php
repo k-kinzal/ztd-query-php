@@ -29,10 +29,10 @@ final class AlterationsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $first = $binder->bind($sql);
-        self::assertSame($expected, $first->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($first));
         $second = $binder->bind($expected);
         self::assertSame($first::class, $second::class);
-        self::assertSame($expected, $second->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($second));
     }
 
     #[TestWith(['ALTER PROCEDURE p SQL SECURITY INVOKER', \SqlSemantics\Model\Statement\Definition\MySql\AlterProcedureStatement::class, 'ALTER PROCEDURE `p` SQL SECURITY INVOKER'])]
@@ -40,6 +40,6 @@ final class AlterationsTest extends TestCase
     public function testWriteSpellsTheSecurityContext(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

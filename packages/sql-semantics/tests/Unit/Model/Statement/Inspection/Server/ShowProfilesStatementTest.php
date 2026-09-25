@@ -24,7 +24,7 @@ final class ShowProfilesStatementTest extends TestCase
         self::assertInstanceOf(ShowProfilesStatement::class, $statement);
         self::assertSame(['Query_ID', 'Duration', 'Query'], array_column($statement->resultColumns(), 'name'));
         self::assertSame(['bigint', 'numeric', 'varchar'], array_map(static fn (\SqlSemantics\Model\OutputColumn $column): string => $column->expression->type->name, $statement->resultColumns()));
-        self::assertSame('SHOW PROFILES', $statement->toString());
+        self::assertSame('SHOW PROFILES', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginProducesAnEquivalentRequest(): void
@@ -33,7 +33,7 @@ final class ShowProfilesStatementTest extends TestCase
         self::assertInstanceOf(ShowProfilesStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAnOriginFromAnotherDialect(): void

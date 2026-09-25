@@ -23,7 +23,7 @@ final class AlterTablespaceStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER TABLESPACE ts NO_WAIT');
         self::assertInstanceOf(AlterTablespaceStatement::class, $statement);
-        self::assertSame('ALTER TABLESPACE `ts` NO_WAIT', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER TABLESPACE `ts` NO_WAIT', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
         $legacy = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('SELECT 1')->origin;
         $this->expectException(InvalidStructure::class);
         $statement->withOrigin($legacy);
@@ -43,6 +43,6 @@ final class AlterTablespaceStatementTest extends TestCase
         self::assertInstanceOf(AlterTablespaceStatement::class, $statement);
         $changed = $statement->withChanges(new TablespaceChanges(engineAttribute: '{"k": 1}', waiting: CompletionWait::NoWait));
         self::assertSame(4194304, $statement->changes->autoextendSize);
-        self::assertSame('ALTER TABLESPACE `ts` ENGINE_ATTRIBUTE = \'{"k": 1}\' NO_WAIT', $changed->toString());
+        self::assertSame('ALTER TABLESPACE `ts` ENGINE_ATTRIBUTE = \'{"k": 1}\' NO_WAIT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

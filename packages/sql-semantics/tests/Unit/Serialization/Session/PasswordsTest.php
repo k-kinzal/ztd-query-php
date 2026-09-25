@@ -22,7 +22,7 @@ final class PasswordsTest extends TestCase
         $statement = $binder->bind("SET PASSWORD = 'new'");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\Password\SetPasswordStatement::class, $statement);
         $changed = $statement->withAccount(new \SqlSemantics\Model\Configuration\Account\AccountName("x'; DROP TABLE t; --", 'local@host'));
-        $rebound = $binder->bind($changed->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\Password\SetPasswordStatement::class, $rebound);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\Account\AccountName::class, $rebound->account);
         self::assertSame("x'; DROP TABLE t; --", $rebound->account->username);
@@ -41,7 +41,7 @@ final class PasswordsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build());
         $statement = $binder->bind("SET GLOBAL sql_mode = 1, @@wait_timeout = 2, PASSWORD = '*x'");
-        self::assertSame("SET GLOBAL `sql_mode` = 1, SESSION `wait_timeout` = 2, PASSWORD = '*x'", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SET GLOBAL `sql_mode` = 1, SESSION `wait_timeout` = 2, PASSWORD = '*x'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

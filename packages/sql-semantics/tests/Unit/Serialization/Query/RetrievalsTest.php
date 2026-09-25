@@ -63,7 +63,7 @@ final class RetrievalsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build());
         $statement = $binder->bind("SELECT SQL_NO_CACHE 1 FROM DUAL LIMIT 9485349219540000000 INTO DUMPFILE 'x'");
         self::assertSame("SELECT SQL_NO_CACHE 1 FROM DUAL LIMIT 9485349219540000000 INTO DUMPFILE 'x'", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     /**

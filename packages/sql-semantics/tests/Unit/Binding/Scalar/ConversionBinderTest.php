@@ -30,7 +30,7 @@ final class ConversionBinderTest extends TestCase
         $shorthand = $statement->outputs[1]->expression;
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\CastExpression::class, $shorthand);
         self::assertSame('text', $shorthand->type->name);
-        self::assertSame('SELECT CAST("a" AS integer), CAST("a" AS text) FROM "public"."t"', $statement->toString());
+        self::assertSame('SELECT CAST("a" AS integer), CAST("a" AS text) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testCastReadsSqliteTypeTokens(): void
@@ -52,7 +52,7 @@ final class ConversionBinderTest extends TestCase
         self::assertSame(['C'], $collated->collation->parts);
         self::assertSame('a', $collated->operand->columnBinding()?->column->name);
         self::assertSame('text', $collated->type->name);
-        self::assertSame('SELECT ("a" COLLATE "C") FROM "public"."t"', $statement->toString());
+        self::assertSame('SELECT ("a" COLLATE "C") FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testCollationReadsUnquotedMySqlAndSqliteNames(): void
@@ -78,6 +78,6 @@ final class ConversionBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a TEXT)')))->bind($sql);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertSame([$class, $expected], [$statement->outputs[0]->expression::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement->outputs[0]->expression::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

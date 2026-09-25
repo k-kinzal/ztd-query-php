@@ -38,4 +38,24 @@ final class DeclaredDomainTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new DeclaredDomain(TypeDescriptor::builtin(Dialect::MySql, 'integer'), '');
     }
+
+    public function testRetainsZerofillOfAnUnsignedNumericType(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE FUNCTION f() RETURNS INT ZEROFILL RETURN 1');
+        self::assertInstanceOf(CreateFunctionStatement::class, $statement);
+        self::assertTrue($statement->returns->zeroFill);
+        self::assertFalse((new DeclaredDomain($statement->returns->type))->zeroFill);
+    }
+
+    public function testRejectsZerofillOfAnotherType(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        new DeclaredDomain(TypeDescriptor::builtin(Dialect::MySql, 'text'), zeroFill: true);
+    }
+
+    public function testRejectsZerofillOfASignedType(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        new DeclaredDomain(TypeDescriptor::builtin(Dialect::MySql, 'integer'), zeroFill: true);
+    }
 }

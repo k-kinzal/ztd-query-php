@@ -35,7 +35,7 @@ final class SchedulingTest extends TestCase
         self::assertInstanceOf(InsertStatement::class, $statement);
         self::assertInstanceOf(MySqlInsertion::class, $statement->policy);
         self::assertSame($scheduling, $statement->policy->scheduling);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

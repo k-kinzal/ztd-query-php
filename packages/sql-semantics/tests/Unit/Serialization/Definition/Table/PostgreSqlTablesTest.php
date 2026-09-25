@@ -57,6 +57,6 @@ final class PostgreSqlTablesTest extends TestCase
     public function testWriteSpellsTemplatesConstraintsAndExclusions(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE s(a INT, b TEXT)')))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

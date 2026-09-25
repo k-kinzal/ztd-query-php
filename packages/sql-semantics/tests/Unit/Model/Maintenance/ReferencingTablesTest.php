@@ -25,6 +25,6 @@ final class ReferencingTablesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('TRUNCATE t ' . $sql);
         self::assertInstanceOf(TruncateRelationsStatement::class, $statement);
         self::assertSame($expected, $statement->references);
-        self::assertSame('TRUNCATE TABLE "public"."t" CONTINUE IDENTITY ' . $sql, $statement->toString());
+        self::assertSame('TRUNCATE TABLE "public"."t" CONTINUE IDENTITY ' . $sql, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -35,10 +35,10 @@ final class PartitionSchemeBinderTest extends TestCase
         self::assertInstanceOf(PostgreSqlProperties::class, $properties);
         self::assertSame(PartitionStrategy::Range, $properties->partitioning?->strategy);
         self::assertCount(2, $properties->partitioning->keys);
-        self::assertSame('CREATE TABLE "public"."p"("id" integer, "t" text) PARTITION BY RANGE("id", ("lower"("t")) COLLATE "C" "text_pattern_ops") USING "heap"', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('CREATE TABLE "public"."p"("id" integer, "t" text) PARTITION BY RANGE("id", ("lower"("t")) COLLATE "C" "text_pattern_ops") USING "heap"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateTableStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testReadReturnsNullForAnUnpartitionedTable(): void

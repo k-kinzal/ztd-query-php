@@ -151,7 +151,7 @@ final class SimpleSerializerTest extends TestCase
         $sql = $serializer->serialize($statement);
         self::assertSame("SELECT (1 + 2), 'a  b'", $sql);
         self::assertSame($sql, $serializer->serialize($binder->bind($sql)));
-        self::assertSame($sql, $statement->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertStringContainsString('ordinary', $statement->source->toString());
     }
     public function testSerializePreservesHintsAndLiteralNewlines(): void
@@ -165,7 +165,7 @@ final class SimpleSerializerTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind("SELECT 'a'\n'b'");
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $rebound);
         self::assertEquals($statement->outputs, $rebound->outputs);
     }

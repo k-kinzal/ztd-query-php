@@ -52,22 +52,22 @@ final class CreateRoleStatementTest extends TestCase
         self::assertEquals(new RoleMembers([new NamedRole('m')]), $statement->options[2]);
         self::assertEquals(new RoleAdmins([new NamedRole('ad')]), $statement->options[3]);
         self::assertEquals(new RoleSystemId(5), $statement->options[4]);
-        self::assertSame("CREATE ROLE \"r\" PASSWORD 'x' VALID UNTIL '2030-01-01' ROLE \"m\" ADMIN \"ad\" SYSID 5", $statement->toString());
+        self::assertSame("CREATE ROLE \"r\" PASSWORD 'x' VALID UNTIL '2030-01-01' ROLE \"m\" ADMIN \"ad\" SYSID 5", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testToStringKeepsTheKeywordAndQuotesTheNames(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE USER app WITH LOGIN CONNECTION LIMIT 10 IN ROLE a');
-        self::assertSame('CREATE USER "app" LOGIN CONNECTION LIMIT 10 IN ROLE "a"', $statement->toString());
+        self::assertSame('CREATE USER "app" LOGIN CONNECTION LIMIT 10 IN ROLE "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRebindingTheOutputReachesAFixedPoint(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind("CREATE GROUP g NOLOGIN PASSWORD 'x' IN GROUP a");
-        $again = $binder->bind($statement->toString());
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateRoleStatement::class, $again);
-        self::assertSame($statement->toString(), $again->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithNameReplacesTheDefinedNameWithoutMutatingTheOriginal(): void
@@ -80,7 +80,7 @@ final class CreateRoleStatementTest extends TestCase
         self::assertEquals(new NamedRole('x"y'), $changed->name);
         self::assertEquals($statement->options, $changed->options);
         self::assertSame($statement->keyword, $changed->keyword);
-        self::assertSame('CREATE USER "x""y" LOGIN CONNECTION LIMIT 10 IN ROLE "a"', $changed->toString());
+        self::assertSame('CREATE USER "x""y" LOGIN CONNECTION LIMIT 10 IN ROLE "a"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOptionsReplacesTheCompleteOrderedRequest(): void
@@ -92,7 +92,7 @@ final class CreateRoleStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new RoleAttribute(RoleCapability::Login, true), new ConnectionLimit(10), new RoleMemberships([new NamedRole('a')])], $statement->options);
         self::assertEquals($options, $changed->options);
-        self::assertSame('CREATE USER "app" SUPERUSER PASSWORD NULL SYSID 7', $changed->toString());
+        self::assertSame('CREATE USER "app" SUPERUSER PASSWORD NULL SYSID 7', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOptionsCarriesABoundPasswordLiteral(): void
@@ -108,7 +108,7 @@ final class CreateRoleStatementTest extends TestCase
         self::assertCount(1, $changed->options);
         self::assertInstanceOf(RolePassword::class, $changed->options[0]);
         self::assertSame($password->secret->text, $changed->options[0]->secret->text);
-        self::assertSame("CREATE USER \"app\" PASSWORD 'x'", $changed->toString());
+        self::assertSame("CREATE USER \"app\" PASSWORD 'x'", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOptionsRejectsContradictoryAttributes(): void
@@ -136,8 +136,8 @@ final class CreateRoleStatementTest extends TestCase
         self::assertSame(RoleKeyword::User, $statement->keyword);
         self::assertSame(RoleKeyword::Group, $changed->keyword);
         self::assertEquals($statement->options, $changed->options);
-        self::assertSame('CREATE GROUP "app" LOGIN CONNECTION LIMIT 10 IN ROLE "a"', $changed->toString());
-        self::assertSame('CREATE ROLE "app" LOGIN CONNECTION LIMIT 10 IN ROLE "a"', $statement->withKeyword(RoleKeyword::Role)->toString());
+        self::assertSame('CREATE GROUP "app" LOGIN CONNECTION LIMIT 10 IN ROLE "a"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('CREATE ROLE "app" LOGIN CONNECTION LIMIT 10 IN ROLE "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withKeyword(RoleKeyword::Role)));
     }
 
     public function testWithOriginRetainsTheNameTheOptionsAndTheKeyword(): void
@@ -149,7 +149,7 @@ final class CreateRoleStatementTest extends TestCase
         self::assertSame($statement->name, $copy->name);
         self::assertSame($statement->options, $copy->options);
         self::assertSame($statement->keyword, $copy->keyword);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

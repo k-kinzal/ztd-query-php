@@ -172,8 +172,8 @@ final class FromBinderTest extends TestCase
     public function testRelationKeepsATableFunctionWhoseOperandHasASubquery(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.3.0'))->build('CREATE TABLE t(x INT)'));
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['SELECT 1 FROM (SELECT 1) AS d', 'select_with_parens'])]
@@ -347,13 +347,13 @@ final class FromBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\CrossJoin::class, $statement->from);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\CrossJoin::class, $statement->from->left);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement::class, $rebound);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\CrossJoin::class, $rebound->from);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\CrossJoin::class, $rebound->from->left);
         self::assertSame($statement->from->id, $rebound->from->id);
         self::assertSame($statement->from->left->id, $rebound->from->left->id);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     #[TestWith(['mysql-8.0.44'])]
@@ -368,8 +368,8 @@ final class FromBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Relation\DerivedRelation::class, $relation);
         self::assertSame(['b', 'c'], $relation->columnAliases);
         self::assertSame(['b', 'c'], array_map(static fn ($output): ?string => $output->name, $query->outputs));
-        self::assertSame('SELECT `d`.`b` AS `b`, `d`.`c` AS `c` FROM(SELECT 1 AS `a`, 2) AS `d`(`b`, `c`)', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT `d`.`b` AS `b`, `d`.`c` AS `c` FROM(SELECT 1 AS `a`, 2) AS `d`(`b`, `c`)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     #[TestWith([Dialect::MySql, 'SELECT * FROM (SELECT 1 AS a, 2) AS d (b)'])]
@@ -443,7 +443,7 @@ final class FromBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t (id INT, a INT)', 'CREATE TABLE u (id INT, b INT)')))->bind($sql);
         self::assertSame([], $statement->diagnostics);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRelationAndJoinedBindParsedMySqlNodesDirectly(): void
@@ -467,7 +467,7 @@ final class FromBinderTest extends TestCase
         $statement = $binder->bind("SELECT j.key, k.key AS kk FROM json_each('[1]') AS j JOIN json_tree('[1]') AS k ON j.id = k.id");
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(['j', 'k'], array_column($statement->relations, 'alias'));
-        self::assertSame('SELECT "j"."key" AS "key", "k"."key" AS "kk" FROM json_each(\'[1]\') AS "j" INNER JOIN json_tree(\'[1]\') AS "k" ON ("j"."id" = "k"."id")', $statement->toString());
+        self::assertSame('SELECT "j"."key" AS "key", "k"."key" AS "kk" FROM json_each(\'[1]\') AS "j" INNER JOIN json_tree(\'[1]\') AS "k" ON ("j"."id" = "k"."id")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testSqliteAndSqliteInputBindParsedNodesDirectly(): void
@@ -505,8 +505,8 @@ final class FromBinderTest extends TestCase
         self::assertSame(['p0'], $statement->from->partitions?->names);
         self::assertSame(\SqlSemantics\Model\Query\Sampling\SamplingMethod::Bernoulli, $statement->from->sample?->method);
         $expected = 'SELECT `x`.`id` AS `id` FROM `t` PARTITION(`p0`) AS `x` FORCE INDEX(`PRIMARY`) TABLESAMPLE BERNOULLI(5)';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['mysql-5.7.44'])]
@@ -516,8 +516,8 @@ final class FromBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE p (x INT PRIMARY KEY)'));
         $expected = 'SELECT `x`.`x` AS `x`, `y`.`x` AS `x` FROM `p` AS `x` CROSS JOIN `p` AS `y`';
-        self::assertSame($expected, $binder->bind('SELECT * FROM (p AS x, p AS y)')->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('SELECT * FROM (p AS x, p AS y)')));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
 
@@ -525,7 +525,7 @@ final class FromBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)'));
         $expected = 'SELECT "x"."id" AS "id" FROM "public"."t" AS "x" TABLESAMPLE SYSTEM(1)';
-        self::assertSame($expected, $binder->bind('SELECT * FROM t x TABLESAMPLE SYSTEM (1)')->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('SELECT * FROM t x TABLESAMPLE SYSTEM (1)')));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

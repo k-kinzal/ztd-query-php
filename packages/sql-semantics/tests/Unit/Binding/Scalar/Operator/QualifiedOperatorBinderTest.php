@@ -44,8 +44,8 @@ final class QualifiedOperatorBinderTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertInstanceOf($class, $query->outputs[0]->expression);
         self::assertSame($type, $query->outputs[0]->expression->type->name);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testBindLeavesOtherExpressionsAlone(): void

@@ -44,8 +44,8 @@ final class XmlBinderTest extends TestCase
         $query = $binder->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertInstanceOf($class, $query->outputs[0]->expression);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testBindLeavesOtherFunctionsAndDialectsAlone(): void
@@ -61,8 +61,8 @@ final class XmlBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (x XML)'));
         $query = $binder->bind($sql);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
         $tree = (new DialectParser(Dialect::PostgreSql))->parse($constant);
         $predicate = XmlBinder::document($tree->find('a_expr')[0], new Scope(new Identifiers(Dialect::PostgreSql)));
         self::assertSame($negated, $predicate?->negated);
@@ -152,7 +152,7 @@ final class XmlBinderTest extends TestCase
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INT)', 'CREATE TABLE s(x xml)')))->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $query);
-        self::assertSame($expected, $query->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
         self::assertSame('maybe-null', $query->outputs[0]->expression->nullability->value);
         self::assertCount(1, $query->outputs[0]->expression->nullExtendedBy);
     }

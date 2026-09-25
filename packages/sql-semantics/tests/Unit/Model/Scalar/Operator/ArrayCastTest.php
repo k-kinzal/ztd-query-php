@@ -29,8 +29,8 @@ final class ArrayCastTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind("CREATE TABLE t (j JSON, INDEX ((CAST(j->'$.v' AS " . $target . ' ARRAY))))');
         $expected = "CREATE TABLE `t`(`j` json, INDEX((CAST((`j` -> '$.v') AS " . $target . ' ARRAY))))';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
         $cast = new ArrayCast($statement->source, Expression::literal('[1]', Dialect::MySql), TypeDescriptor::builtin(Dialect::MySql, $type));
         self::assertSame($type, $cast->type->name);
         self::assertSame(ExpressionKind::Cast, $cast->kind);

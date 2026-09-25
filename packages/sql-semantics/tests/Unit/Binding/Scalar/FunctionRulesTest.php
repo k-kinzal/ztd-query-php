@@ -301,8 +301,8 @@ final class FunctionRulesTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $query = $binder->bind('SELECT db.fn(1), `d b`.f()', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
-        self::assertSame('SELECT `db`.`fn`(1), `d b`.`f`()', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString(), strict: false)->toString());
+        self::assertSame('SELECT `db`.`fn`(1), `d b`.`f`()', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query), strict: false)));
     }
 
     public function testNameIncludesTheSchemaQualifier(): void

@@ -29,7 +29,7 @@ final class DeleteTableStatementTest extends TestCase
         self::assertCount(1, $statement->orderBy);
         self::assertSame('1', $statement->limit?->spelling());
         self::assertSame(StatementKind::Delete, $statement->kind);
-        self::assertSame('DELETE LOW_PRIORITY QUICK IGNORE FROM `t` WHERE (`id` = 1) ORDER BY `id` ASC LIMIT 1', $statement->toString());
+        self::assertSame('DELETE LOW_PRIORITY QUICK IGNORE FROM `t` WHERE (`id` = 1) ORDER BY `id` ASC LIMIT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testAffectedTablesNamesTheSingleTarget(): void
@@ -52,7 +52,7 @@ final class DeleteTableStatementTest extends TestCase
         self::assertSame($statement->orderBy, $copy->orderBy);
         self::assertSame($statement->limit, $copy->limit);
         self::assertTrue($copy->quick);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithWhereReplacesThePredicateImmutably(): void
@@ -60,9 +60,9 @@ final class DeleteTableStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER)')))->bind('DELETE FROM t WHERE id=1');
         self::assertInstanceOf(DeleteTableStatement::class, $statement);
         $changed = $statement->withWhere(Expression::binary('>', Expression::reference(['id'], Dialect::Sqlite), Expression::literal(5, Dialect::Sqlite)));
-        self::assertSame('DELETE FROM "main"."t" WHERE ("id" > 5)', $changed->toString());
-        self::assertSame('DELETE FROM "main"."t"', $changed->withWhere(null)->toString());
-        self::assertSame('DELETE FROM "main"."t" WHERE ("id" = 1)', $statement->toString());
+        self::assertSame('DELETE FROM "main"."t" WHERE ("id" > 5)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('DELETE FROM "main"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withWhere(null)));
+        self::assertSame('DELETE FROM "main"."t" WHERE ("id" = 1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame($statement->target->declaration, $changed->target->declaration);
     }
 }

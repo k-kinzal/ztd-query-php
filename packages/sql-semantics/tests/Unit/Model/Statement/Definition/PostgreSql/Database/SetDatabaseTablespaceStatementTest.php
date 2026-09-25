@@ -23,7 +23,7 @@ final class SetDatabaseTablespaceStatementTest extends TestCase
         self::assertInstanceOf(SetDatabaseTablespaceStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertSame('fast', $copy->tablespace);
-        self::assertSame('ALTER DATABASE "app" SET TABLESPACE "fast"', $copy->toString());
+        self::assertSame('ALTER DATABASE "app" SET TABLESPACE "fast"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithNameReplacesTheMovedDatabase(): void

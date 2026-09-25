@@ -28,7 +28,7 @@ final class DateShiftBinderTest extends TestCase
         $query = $binder->bind($sql, strict: false);
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertInstanceOf($expected, $query->outputs[0]->expression);
-        self::assertSame($query->toString(), $binder->bind($query->toString(), strict: false)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query), strict: false)));
     }
 
     /**

@@ -192,7 +192,7 @@ final class IndirectionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\Wildcard::class, $call->arguments[0]);
         self::assertSame(['t'], $call->arguments[0]->qualifier);
         self::assertSame(['unknown-relation'], array_map(static fn ($diagnostic): string => $diagnostic->reason, $query->diagnostics));
-        self::assertSame('SELECT "f"("t".*), "f"("u".*) FROM "public"."t"', $query->toString());
+        self::assertSame('SELECT "f"("t".*), "f"("u".*) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testExpansionRecognizesOnlyTheStarElement(): void
@@ -213,7 +213,7 @@ final class IndirectionBinderTest extends TestCase
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER)')))->bind('SELECT f(t.*) FROM t', strict: false);
         self::assertSame([], $query->diagnostics);
-        self::assertSame('SELECT "f"("t".*) FROM "public"."t"', $query->toString());
+        self::assertSame('SELECT "f"("t".*) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testRowReportsARelationOutOfScope(): void

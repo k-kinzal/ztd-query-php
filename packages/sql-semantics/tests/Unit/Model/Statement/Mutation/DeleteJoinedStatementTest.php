@@ -27,11 +27,11 @@ final class DeleteJoinedStatementTest extends TestCase
         self::assertInstanceOf(DeleteJoinedStatement::class, $statement);
         self::assertSame(['tenant', 't'], $statement->targets[0]->name->parts);
         self::assertSame($statement->targets, $statement->affectedTables());
-        self::assertSame('DELETE `tenant`.`t`, `t` FROM `other_table`', $statement->toString());
-        $copy = $binder->bind($statement->toString(), false);
+        self::assertSame('DELETE `tenant`.`t`, `t` FROM `other_table`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $copy = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), false);
         self::assertInstanceOf(DeleteJoinedStatement::class, $copy);
         self::assertSame(['tenant', 't'], $copy->targets[0]->name->parts);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testAffectedTablesRetainsAnAliasInsteadOfTheHiddenTableName(): void
@@ -39,7 +39,7 @@ final class DeleteJoinedStatementTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE tenant.t(id INTEGER)');
         $statement = (new Binder($schema))->bind('DELETE a FROM tenant.t AS a');
         self::assertInstanceOf(DeleteJoinedStatement::class, $statement);
-        self::assertSame('DELETE `a` FROM `tenant`.`t` AS `a`', $statement->toString());
+        self::assertSame('DELETE `a` FROM `tenant`.`t` AS `a`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame('a', $statement->targets[0]->alias);
     }
 
@@ -60,7 +60,7 @@ final class DeleteJoinedStatementTest extends TestCase
         $statement = (new Binder($schema))->bind('DELETE tenant.t FROM tenant.t');
         self::assertInstanceOf(DeleteJoinedStatement::class, $statement);
         $copy = $statement->withWhere(Expression::literal(true, Dialect::MySql));
-        self::assertSame('DELETE `tenant`.`t` FROM `tenant`.`t` WHERE TRUE', $copy->toString());
+        self::assertSame('DELETE `tenant`.`t` FROM `tenant`.`t` WHERE TRUE', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
         self::assertNull($statement->where);
     }
 }

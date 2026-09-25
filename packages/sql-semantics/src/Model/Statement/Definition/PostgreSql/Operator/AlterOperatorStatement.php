@@ -23,7 +23,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Removing an estimator and enabling hashing
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER OPERATOR === (integer, integer) SET (RESTRICT = NONE, HASHES)');
  *     $statement->options[0]->value // => null
- *     $statement->toString() // => 'ALTER OPERATOR === (integer, integer) SET (RESTRICT = NONE, HASHES = TRUE)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER OPERATOR === (integer, integer) SET (RESTRICT = NONE, HASHES = TRUE)'
  * @example Rejecting a change of the implementing function
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER OPERATOR === (integer, integer) SET (HASHES)');
  *     $statement->withOptions([new \SqlSemantics\Model\Definition\TypeSystem\Definition\DefinitionOption(\SqlSemantics\Model\Definition\TypeSystem\Definition\OperatorAttribute::Function, new \SqlSemantics\Model\Relation\QualifiedName(['f']))]); // throws \SqlSemantics\Model\Validation\InvalidStructure

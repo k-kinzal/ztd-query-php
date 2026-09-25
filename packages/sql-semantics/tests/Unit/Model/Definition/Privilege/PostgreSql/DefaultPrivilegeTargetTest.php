@@ -35,7 +35,7 @@ final class DefaultPrivilegeTargetTest extends TestCase
         $statement = $binder->bind('ALTER DEFAULT PRIVILEGES GRANT ' . $clause . ' TO a');
         self::assertInstanceOf(GrantDefaultPrivilegesStatement::class, $statement);
         self::assertSame($target, $statement->target);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($statement->toString())->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

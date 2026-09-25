@@ -21,7 +21,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Adding a cross-type operator
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER OPERATOR FAMILY integer_ops USING btree ADD OPERATOR 1 < (integer, bigint)');
  *     $statement->members[0]->left->name // => 'integer'
- *     $statement->toString() // => 'ALTER OPERATOR FAMILY "integer_ops" USING "btree" ADD OPERATOR 1 < (integer, bigint)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER OPERATOR FAMILY "integer_ops" USING "btree" ADD OPERATOR 1 < (integer, bigint)'
  */
 final class AddOperatorFamilyMembersStatement extends BoundStatement
 {

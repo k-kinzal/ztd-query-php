@@ -17,7 +17,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading an enabled change
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER SUBSCRIPTION sub DISABLE');
  *     $statement->enabled // => false
- *     $statement->toString() // => 'ALTER SUBSCRIPTION "sub" DISABLE'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER SUBSCRIPTION "sub" DISABLE'
  */
 final class AlterSubscriptionEnabledStatement extends BoundStatement
 {

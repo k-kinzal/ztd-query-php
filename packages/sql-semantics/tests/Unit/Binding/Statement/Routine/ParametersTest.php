@@ -41,7 +41,7 @@ final class ParametersTest extends TestCase
         self::assertNotNull($parameters[0]->type->binding);
         self::assertSame($schema->tables[0]->columns[0]->type, $parameters[0]->type->binding->column->type);
         self::assertTrue($parameters[1]->setOf);
-        self::assertSame('DROP FUNCTION "f"("t"."id" %TYPE, SETOF text)', $statement->toString());
+        self::assertSame('DROP FUNCTION "f"("t"."id" %TYPE, SETOF text)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTypeRetainsAnUnresolvedReferenceWithItsDiagnosis(): void
@@ -64,8 +64,8 @@ final class ParametersTest extends TestCase
         self::assertInstanceOf(Routine\ColumnTypeReference::class, $type);
         self::assertSame([['absent', 'c'], null], [$type->name->parts, $type->binding]);
         self::assertSame(['unknown-table'], array_column($statement->diagnostics, 'reason'));
-        self::assertSame('DROP FUNCTION "f"("absent"."c" %TYPE)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('DROP FUNCTION "f"("absent"."c" %TYPE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)));
     }
 
     public function testTypeRejectsUnresolvedReferencesInStrictBinding(): void
@@ -86,7 +86,7 @@ final class ParametersTest extends TestCase
     public function testArgumentReadsLowercaseModesAndColumnTypes(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     public function testTypeReportsAnUnknownColumnType(): void

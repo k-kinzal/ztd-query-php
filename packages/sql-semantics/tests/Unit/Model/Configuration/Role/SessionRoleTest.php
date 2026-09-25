@@ -27,7 +27,7 @@ final class SessionRoleTest extends TestCase
         $statement = $binder->bind('REASSIGN OWNED BY alice TO ' . $role->value);
         self::assertInstanceOf(ReassignOwnedStatement::class, $statement);
         self::assertSame($role, $statement->newOwner);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(ReassignOwnedStatement::class, $rebound);
         self::assertSame($role, $rebound->newOwner);
     }

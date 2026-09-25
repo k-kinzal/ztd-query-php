@@ -25,6 +25,6 @@ final class IdentityResetTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('TRUNCATE t ' . $sql);
         self::assertInstanceOf(TruncateRelationsStatement::class, $statement);
         self::assertSame($expected, $statement->identities);
-        self::assertSame('TRUNCATE TABLE "public"."t" ' . $sql . ' RESTRICT', $statement->toString());
+        self::assertSame('TRUNCATE TABLE "public"."t" ' . $sql . ' RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

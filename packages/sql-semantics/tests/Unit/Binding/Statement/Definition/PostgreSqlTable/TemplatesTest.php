@@ -28,8 +28,8 @@ final class TemplatesTest extends TestCase
         self::assertSame(TemplateProperty::Indexes, $statement->templates[0]->template->selections[1]->property);
         self::assertFalse($statement->templates[0]->template->selections[1]->including);
         $expected = 'CREATE TABLE "public"."t"(LIKE "s" INCLUDING ALL EXCLUDING INDEXES, "x" integer, "y" integer, LIKE "app"."r")';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testReadFindsNoTemplateInAPlainDeclaration(): void

@@ -24,7 +24,7 @@ final class AlterServerStatementTest extends TestCase
         self::assertInstanceOf(AlterServerStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame("ALTER SERVER `s` OPTIONS(SOCKET '/tmp/s')", $copy->toString());
+        self::assertSame("ALTER SERVER `s` OPTIONS(SOCKET '/tmp/s')", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -40,7 +40,7 @@ final class AlterServerStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("ALTER SERVER s OPTIONS (SOCKET '/tmp/s')");
         self::assertInstanceOf(AlterServerStatement::class, $statement);
-        self::assertSame("ALTER SERVER `t` OPTIONS(SOCKET '/tmp/s')", $statement->withName('t')->toString());
+        self::assertSame("ALTER SERVER `t` OPTIONS(SOCKET '/tmp/s')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName('t')));
         self::assertSame('s', $statement->name);
     }
 
@@ -48,7 +48,7 @@ final class AlterServerStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("ALTER SERVER s OPTIONS (SOCKET '/tmp/s')");
         self::assertInstanceOf(AlterServerStatement::class, $statement);
-        self::assertSame("ALTER SERVER `s` OPTIONS(OWNER 'o', PASSWORD 'p')", $statement->withOptions(new ServerOptions(owner: 'o', password: 'p'))->toString());
+        self::assertSame("ALTER SERVER `s` OPTIONS(OWNER 'o', PASSWORD 'p')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOptions(new ServerOptions(owner: 'o', password: 'p'))));
         self::assertSame('/tmp/s', $statement->options->socket);
     }
 }

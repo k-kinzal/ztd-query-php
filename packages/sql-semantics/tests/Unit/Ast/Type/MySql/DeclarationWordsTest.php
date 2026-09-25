@@ -44,7 +44,7 @@ final class DeclarationWordsTest extends TestCase
         $statement = $binder->bind('CREATE TABLE t(x ' . $declaration . ')');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
         self::assertSame($expected, $statement->definition->table->columns[0]->type->name);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['mysql-5.6.51'])]

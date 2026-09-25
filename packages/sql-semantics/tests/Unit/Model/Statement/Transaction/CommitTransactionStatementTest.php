@@ -33,15 +33,15 @@ final class CommitTransactionStatementTest extends TestCase
         self::assertSame(\SqlSemantics\Model\Transaction\Release::Release, $chained->release);
         self::assertSame(\SqlSemantics\Model\Transaction\Release::NoRelease, $kept->release);
         self::assertSame(StatementKind::Commit, $plain->kind);
-        self::assertSame('COMMIT AND CHAIN RELEASE', $chained->toString());
-        self::assertSame('COMMIT NO RELEASE', $kept->toString());
+        self::assertSame('COMMIT AND CHAIN RELEASE', (new \SqlSemantics\SimpleSerializer())->serialize($chained));
+        self::assertSame('COMMIT NO RELEASE', (new \SqlSemantics\SimpleSerializer())->serialize($kept));
     }
 
     public function testSqliteEndIsACommit(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('END');
         self::assertInstanceOf(CommitTransactionStatement::class, $statement);
-        self::assertSame('COMMIT', $statement->toString());
+        self::assertSame('COMMIT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesThePolicies(): void
@@ -53,6 +53,6 @@ final class CommitTransactionStatementTest extends TestCase
         self::assertSame('s9', $copy->scopeId);
         self::assertSame(\SqlSemantics\Model\Transaction\Chaining::Chain, $copy->chaining);
         self::assertSame($statement->release, $copy->release);
-        self::assertSame('COMMIT AND CHAIN', $copy->toString());
+        self::assertSame('COMMIT AND CHAIN', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

@@ -29,7 +29,7 @@ final class PathTest extends TestCase
         $paths = array_map(static fn (Assignment $assignment): Path => $assignment->destinations()[0], $statement->writes);
         self::assertSame([SlicePath::class, ElementPath::class, FieldPath::class, ColumnPath::class], array_map(static fn (Path $path): string => $path::class, $paths));
         self::assertSame(['a', 'a', 'r', 'id'], array_map(static fn (Path $path): ?string => $path->column()->columnBinding()?->column->name, $paths));
-        self::assertSame('UPDATE "public"."t" SET "a"[1 : 2] = "a", "a"[1] = 2, "r"."f" = 1, "id" = 1', $statement->toString());
+        self::assertSame('UPDATE "public"."t" SET "a"[1 : 2] = "a", "a"[1] = 2, "r"."f" = 1, "id" = 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTypeDescribesTheDestinationWithoutLoadingAValue(): void

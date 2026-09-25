@@ -64,6 +64,6 @@ final class AlterRoutinesTest extends TestCase
     #[TestWith(['alter procedure p sql security invoker', 'ALTER PROCEDURE `p` SQL SECURITY INVOKER'])]
     public function testBindReadsLowerCaseAlterations(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)));
     }
 }

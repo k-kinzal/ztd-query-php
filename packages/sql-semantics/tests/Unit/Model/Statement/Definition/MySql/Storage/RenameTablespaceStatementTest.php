@@ -21,7 +21,7 @@ final class RenameTablespaceStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.0.44'))->build()))->bind('ALTER TABLESPACE a RENAME TO b');
         self::assertInstanceOf(RenameTablespaceStatement::class, $statement);
-        self::assertSame('ALTER TABLESPACE `a` RENAME TO `b`', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER TABLESPACE `a` RENAME TO `b`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheSource(): void

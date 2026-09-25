@@ -32,8 +32,8 @@ final class TriggerRowAssignmentTest extends TestCase
         $assignment = $statement->body->assignments[0];
         self::assertInstanceOf(TriggerRowAssignment::class, $assignment);
         self::assertInstanceOf(TriggerColumn::class, $assignment->value);
-        self::assertSame('CREATE TRIGGER `tr` BEFORE UPDATE ON `t` FOR EACH ROW SET `new`.`n` = `old`.`m`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TRIGGER `tr` BEFORE UPDATE ON `t` FOR EACH ROW SET `new`.`n` = `old`.`m`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnOldTarget(): void

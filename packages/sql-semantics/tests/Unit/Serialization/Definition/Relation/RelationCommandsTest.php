@@ -32,7 +32,7 @@ final class RelationCommandsTest extends TestCase
     public function testWriteProducesTheStatementText(string $sql): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind($sql, strict: false);
-        self::assertSame($statement->toString(), RelationCommands::write($statement)?->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), RelationCommands::write($statement)?->toString());
     }
 
     #[TestWith([Kind\RelationKind::ForeignTable, true, true, 'ALTER FOREIGN TABLE IF EXISTS ONLY "f"'])]

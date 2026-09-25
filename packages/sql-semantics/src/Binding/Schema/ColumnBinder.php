@@ -46,8 +46,9 @@ final class ColumnBinder
             zeroFill: isset($options['zerofill']),
             binary: !$ownsEncoding && isset($options['binary']),
             storageStrategy: ($value = OptionBinding::string($options, 'storage')) === null || !$postgreSql ? null : (\SqlSemantics\Model\Definition\Relation\Column\ColumnStorageMode::tryFrom(strtoupper($value)) ?? throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::ColumnStorage, $column->source)),
+            excludedFromSecondaryEngine: isset($options['not_secondary']),
         );
-        OptionBinding::classified($options, ['collation', 'character_set', 'comment', 'invisible', 'visible', 'storage', 'column_format', 'compression', 'engine_attribute', 'secondary_engine_attribute', 'srid', 'zerofill', 'binary', 'signed', 'unsigned', 'auto_increment', 'identity', 'start', 'increment', 'minvalue', 'maxvalue', 'cache', 'cycle', 'no', 'as', 'sequence', 'restart', 'owned', 'logged', 'unlogged', 'generated_storage', 'on_update']);
+        OptionBinding::classified($options, ['collation', 'character_set', 'comment', 'invisible', 'visible', 'storage', 'column_format', 'compression', 'engine_attribute', 'secondary_engine_attribute', 'srid', 'zerofill', 'binary', 'signed', 'unsigned', 'auto_increment', 'identity', 'start', 'increment', 'minvalue', 'maxvalue', 'cache', 'cycle', 'no', 'as', 'sequence', 'restart', 'owned', 'logged', 'unlogged', 'generated_storage', 'on_update', 'not_secondary']);
         return new ColumnDefinition($column->name, $column->type, $column->nullability, $column->source, $generation, $attributes, self::nullConflict($column));
     }
 

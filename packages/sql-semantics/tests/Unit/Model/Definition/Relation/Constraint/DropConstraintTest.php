@@ -23,7 +23,7 @@ final class DropConstraintTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t DROP CONSTRAINT IF EXISTS positive RESTRICT', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Constraint\DropConstraint('positive', true, \SqlSemantics\Model\Definition\DropBehavior::Restrict), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" DROP CONSTRAINT IF EXISTS "positive" RESTRICT', $statement->toString());
+        self::assertSame('ALTER TABLE "t" DROP CONSTRAINT IF EXISTS "positive" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyName(): void

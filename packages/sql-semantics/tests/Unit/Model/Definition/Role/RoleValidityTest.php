@@ -59,9 +59,9 @@ final class RoleValidityTest extends TestCase
         $option = $statement->options[0];
         self::assertInstanceOf(RoleValidity::class, $option);
         self::assertSame("'infinity'", $option->until->text);
-        self::assertSame('ALTER ROLE "r" VALID UNTIL \'infinity\'', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('ALTER ROLE "r" VALID UNTIL \'infinity\'', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(AlterRoleStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 }

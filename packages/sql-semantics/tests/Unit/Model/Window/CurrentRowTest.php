@@ -33,7 +33,7 @@ final class CurrentRowTest extends TestCase
         self::assertInstanceOf(WindowCall::class, $call);
         self::assertInstanceOf(WindowSpecification::class, $call->window);
         self::assertInstanceOf(CurrentRow::class, $call->window->frame?->end);
-        self::assertSame('SELECT sum(`id`) OVER (ORDER BY `id` ASC ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) FROM `t`', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT sum(`id`) OVER (ORDER BY `id` ASC ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 }

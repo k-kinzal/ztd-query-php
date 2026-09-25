@@ -35,8 +35,8 @@ final class PostgreSqlInsertionTest extends TestCase
         self::assertInstanceOf(InsertStatement::class, $statement);
         self::assertInstanceOf(PostgreSqlInsertion::class, $statement->policy);
         self::assertSame(IdentityOverride::User, $statement->policy->overriding);
-        self::assertSame('INSERT INTO "public"."t" OVERRIDING USER VALUE VALUES (1)', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('INSERT INTO "public"."t" OVERRIDING USER VALUE VALUES (1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(InsertStatement::class, $rebound);
         self::assertInstanceOf(PostgreSqlInsertion::class, $rebound->policy);
         self::assertSame(IdentityOverride::User, $rebound->policy->overriding);

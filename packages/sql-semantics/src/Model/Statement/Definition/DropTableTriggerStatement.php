@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the operation's structure
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('DROP TRIGGER IF EXISTS tr ON public.t CASCADE', strict: false);
- *     $statement->toString() // => 'DROP TRIGGER IF EXISTS "tr" ON "public"."t" CASCADE'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'DROP TRIGGER IF EXISTS "tr" ON "public"."t" CASCADE'
  *
  * @visibility public
  */

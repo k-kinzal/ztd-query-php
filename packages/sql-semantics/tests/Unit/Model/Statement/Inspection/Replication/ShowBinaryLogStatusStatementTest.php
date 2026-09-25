@@ -29,8 +29,8 @@ final class ShowBinaryLogStatusStatementTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(ShowBinaryLogStatusStatement::class, $statement);
         self::assertSame($expected === 'SHOW BINARY LOG STATUS', $statement->binaryLogSpelling());
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testResultColumnsListTheCurrentPosition(): void
@@ -47,7 +47,7 @@ final class ShowBinaryLogStatusStatementTest extends TestCase
         self::assertInstanceOf(ShowBinaryLogStatusStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAnotherDialect(): void

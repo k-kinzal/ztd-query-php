@@ -31,7 +31,7 @@ final class UpdateFromStatementTest extends TestCase
         self::assertSame(ConstraintResponse::Default, $statement->onViolation);
         self::assertSame(StatementKind::Update, $statement->kind);
         self::assertSame(['n'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('UPDATE "public"."t" SET "n" = "s"."n" FROM "public"."s" WHERE ("t"."id" = "s"."id") RETURNING "t"."n" AS "n"', $statement->toString());
+        self::assertSame('UPDATE "public"."t" SET "n" = "s"."n" FROM "public"."s" WHERE ("t"."id" = "s"."id") RETURNING "t"."n" AS "n"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testAffectedTablesExcludesTheFromInput(): void
@@ -52,7 +52,7 @@ final class UpdateFromStatementTest extends TestCase
         self::assertSame($statement->target, $copy->target);
         self::assertSame($statement->from, $copy->from);
         self::assertSame($statement->writes, $copy->writes);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithWhereReplacesThePredicateImmutably(): void
@@ -60,8 +60,8 @@ final class UpdateFromStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)', 'CREATE TABLE s(id INTEGER, n INTEGER)')))->bind('UPDATE t SET n=s.n FROM s WHERE t.id=s.id');
         self::assertInstanceOf(UpdateFromStatement::class, $statement);
         $changed = $statement->withWhere(Expression::binary('<', Expression::reference(['t', 'id'], Dialect::PostgreSql), Expression::reference(['s', 'id'], Dialect::PostgreSql)));
-        self::assertSame('UPDATE "public"."t" SET "n" = "s"."n" FROM "public"."s" WHERE ("t"."id" < "s"."id")', $changed->toString());
-        self::assertSame('UPDATE "public"."t" SET "n" = "s"."n" FROM "public"."s"', $changed->withWhere(null)->toString());
+        self::assertSame('UPDATE "public"."t" SET "n" = "s"."n" FROM "public"."s" WHERE ("t"."id" < "s"."id")', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('UPDATE "public"."t" SET "n" = "s"."n" FROM "public"."s"', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withWhere(null)));
         self::assertSame('=', $statement->where?->spelling());
     }
 
@@ -73,7 +73,7 @@ final class UpdateFromStatementTest extends TestCase
         self::assertInstanceOf(UpdateFromStatement::class, $statement);
         self::assertInstanceOf(UpdateFromStatement::class, $other);
         $changed = $statement->withAssignments($other->writes);
-        self::assertSame('UPDATE "public"."t" SET "id" = "s"."id" FROM "public"."s" WHERE ("t"."id" = "s"."id")', $changed->toString());
+        self::assertSame('UPDATE "public"."t" SET "id" = "s"."id" FROM "public"."s" WHERE ("t"."id" = "s"."id")', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame('id', $changed->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);
         self::assertSame('n', $statement->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);
     }

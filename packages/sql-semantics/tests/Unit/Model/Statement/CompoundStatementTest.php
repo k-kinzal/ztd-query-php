@@ -168,8 +168,8 @@ final class CompoundStatementTest extends TestCase
         $changed = $statement->withLeft($replacement);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $changed->left);
         self::assertSame(\SqlSemantics\Model\Query\SetOperator::Except, $changed->left->setOperator);
-        self::assertSame('VALUES (3) EXCEPT VALUES (4) UNION ALL VALUES (2)', $changed->toString());
-        self::assertSame('VALUES (1) UNION ALL VALUES (2)', $statement->toString());
+        self::assertSame('VALUES (3) EXCEPT VALUES (4) UNION ALL VALUES (2)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('VALUES (1) UNION ALL VALUES (2)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithRightRejectsACompoundOperandNotExpressibleInSqlite(): void
@@ -199,7 +199,7 @@ final class CompoundStatementTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputPosition::class, $changed->orderBy[0]->key);
         self::assertSame($changed->outputs[0], $changed->orderBy[0]->key->output);
         self::assertSame('integer', $original->outputs[0]->expression->type->name);
-        self::assertSame($changed->toString(), $original->withRight($replacement)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($changed), (new \SqlSemantics\SimpleSerializer())->serialize($original->withRight($replacement)));
     }
 
     public function testWithOriginRetainsBothOperands(): void
@@ -211,7 +211,7 @@ final class CompoundStatementTest extends TestCase
         self::assertSame($statement->left, $changed->left);
         self::assertSame($statement->right, $changed->right);
         self::assertSame(\SqlSemantics\Model\Query\SetOperator::Union, $changed->setOperator);
-        self::assertSame($statement->toString(), $changed->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testResultColumnsDeriveFromTheLeftOperand(): void
@@ -227,7 +227,7 @@ final class CompoundStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('SELECT id FROM t UNION SELECT n FROM t');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $statement);
         $byPosition = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(new \SqlSemantics\Model\Query\Ordering\OutputPosition($statement->outputs[0]), true)]);
-        self::assertSame('SELECT "id" AS "id" FROM "public"."t" UNION SELECT "n" AS "n" FROM "public"."t" ORDER BY 1 DESC', $byPosition->toString());
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" UNION SELECT "n" AS "n" FROM "public"."t" ORDER BY 1 DESC', (new \SqlSemantics\SimpleSerializer())->serialize($byPosition));
         $byAlias = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(Expression::reference(['id'], Dialect::PostgreSql))]);
         self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputAlias::class, $byAlias->orderBy[0]->key);
         self::assertSame([], $statement->orderBy);

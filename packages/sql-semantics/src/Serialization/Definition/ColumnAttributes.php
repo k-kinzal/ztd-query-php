@@ -54,6 +54,9 @@ final class ColumnAttributes
         if ($attributes->spatialReferenceId !== null) {
             $parts[] = Build::keyword('SRID ' . $attributes->spatialReferenceId);
         }
+        if ($attributes->excludedFromSecondaryEngine) {
+            $parts[] = Build::keyword('NOT SECONDARY');
+        }
         if ($attributes->zeroFill) {
             $parts[] = Build::keyword('ZEROFILL');
         }

@@ -94,7 +94,7 @@ final class ObjectBinderTest extends TestCase
     public function testBindSpellsEveryObjectForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement::class . ' => ' . $statement->toString());
+        self::assertSame($expected, $statement::class . ' => ' . (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -141,5 +141,34 @@ final class ObjectBinderTest extends TestCase
             'alter table t add column b int (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT)'], 'alter table t add column b int', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Relation\\AlterRelationStatement => ALTER TABLE "t" ADD COLUMN "b" integer'],
             'create unlogged table u as select a from t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT)'], 'create unlogged table u as select a from t', 'SqlSemantics\\Model\\Statement\\Definition\\CreateTableAsStatement => CREATE UNLOGGED TABLE "u" AS SELECT "a" AS "a" FROM "public"."t"'],
         ];
+    }
+
+    #[TestWith([Dialect::MySql, 'mysql-5.6.51', 'CREATE TABLE x SELECT a FROM t LOCK IN SHARE MODE', 'CREATE TABLE `x` AS SELECT `a` AS `a` FROM `t` LOCK IN SHARE MODE'])]
+    #[TestWith([Dialect::MySql, 'mysql-5.7.44', 'CREATE TABLE x AS SELECT a FROM t LOCK IN SHARE MODE', 'CREATE TABLE `x` AS SELECT `a` AS `a` FROM `t` LOCK IN SHARE MODE'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.0.44', 'CREATE TABLE x AS SELECT a FROM t FOR SHARE OF t NOWAIT', 'CREATE TABLE `x` AS SELECT `a` AS `a` FROM `t` FOR SHARE OF `t` NOWAIT'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'CREATE TABLE x SELECT 1 AS a FOR UPDATE', 'CREATE TABLE `x` AS SELECT 1 AS `a` FOR UPDATE'])]
+    #[TestWith([Dialect::MySql, 'mysql-9.1.0', 'CREATE TABLE x IGNORE AS SELECT a FROM t UNION SELECT a FROM t FOR SHARE', 'CREATE TABLE `x` IGNORE AS SELECT `a` AS `a` FROM `t` UNION (SELECT `a` AS `a` FROM `t` LOCK IN SHARE MODE)'])]
+    #[TestWith([Dialect::PostgreSql, null, 'CREATE TABLE x AS SELECT a FROM t FOR UPDATE OF t SKIP LOCKED', 'CREATE TABLE "x" AS SELECT "a" AS "a" FROM "public"."t" FOR UPDATE OF "t" SKIP LOCKED'])]
+    public function testTableAsKeepsTheLockingClauseOfTheQuery(Dialect $dialect, ?string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT)'));
+        $statement = $binder->bind($sql);
+        self::assertInstanceOf(CreateTableAsStatement::class, $statement);
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
+    }
+
+    #[TestWith(['mysql-5.6.51', 'CREATE TABLE x SELECT a FROM t FOR UPDATE'])]
+    #[TestWith(['mysql-5.7.44', 'CREATE TABLE x SELECT a FROM t WHERE a IN (SELECT a FROM t FOR UPDATE)'])]
+    #[TestWith(['mysql-8.0.44', 'CREATE TEMPORARY TABLE x AS SELECT a FROM t FOR UPDATE SKIP LOCKED'])]
+    #[TestWith(['mysql-8.4.7', 'CREATE TABLE x AS SELECT a FROM t FOR UPDATE'])]
+    #[TestWith(['mysql-8.4.7', 'CREATE TABLE x AS TABLE t FOR UPDATE'])]
+    #[TestWith(['mysql-9.1.0', 'CREATE TABLE x AS WITH c AS (SELECT a FROM t FOR UPDATE OF t) SELECT a FROM c'])]
+    public function testTableAsRejectsAMySqlQueryThatLocksAStoredTableForUpdate(string $version, string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::TableCreationLock->message());
+        $binder->bind($sql);
     }
 }

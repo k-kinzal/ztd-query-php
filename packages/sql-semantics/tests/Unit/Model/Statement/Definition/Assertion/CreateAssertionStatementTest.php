@@ -26,8 +26,8 @@ final class CreateAssertionStatementTest extends TestCase
         $statement = $binder->bind('CREATE ASSERTION app.positive CHECK (NOT EXISTS (SELECT 1 FROM t WHERE a < 0)) DEFERRABLE INITIALLY DEFERRED');
         self::assertInstanceOf(CreateAssertionStatement::class, $statement);
         self::assertSame([['app', 'positive'], CheckingTime::DeferrableDeferred], [$statement->name->parts, $statement->checking]);
-        self::assertSame('CREATE ASSERTION "app"."positive" CHECK ((NOT EXISTS(SELECT 1 FROM "public"."t" WHERE ("a" < 0)))) DEFERRABLE INITIALLY DEFERRED', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE ASSERTION "app"."positive" CHECK ((NOT EXISTS(SELECT 1 FROM "public"."t" WHERE ("a" < 0)))) DEFERRABLE INITIALLY DEFERRED', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAConditionOfAnotherDatabaseLanguage(): void
@@ -44,7 +44,7 @@ final class CreateAssertionStatementTest extends TestCase
         self::assertInstanceOf(CreateAssertionStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('CREATE ASSERTION "a" CHECK (true)', $copy->toString());
+        self::assertSame('CREATE ASSERTION "a" CHECK (true)', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -59,7 +59,7 @@ final class CreateAssertionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE ASSERTION a CHECK (true)');
         self::assertInstanceOf(CreateAssertionStatement::class, $statement);
-        self::assertSame('CREATE ASSERTION "b" CHECK (true)', $statement->withName(new QualifiedName(['b']))->toString());
+        self::assertSame('CREATE ASSERTION "b" CHECK (true)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['b']))));
         $this->expectException(InvalidStructure::class);
         $statement->withName(new QualifiedName(['a', 'b', 'c', 'd']));
     }
@@ -68,15 +68,15 @@ final class CreateAssertionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE ASSERTION a CHECK (true)');
         self::assertInstanceOf(CreateAssertionStatement::class, $statement);
-        self::assertSame('CREATE ASSERTION "a" CHECK (FALSE)', $statement->withCondition(Expression::literal(false, Dialect::PostgreSql))->toString());
-        self::assertSame('CREATE ASSERTION "a" CHECK (true)', $statement->toString());
+        self::assertSame('CREATE ASSERTION "a" CHECK (FALSE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withCondition(Expression::literal(false, Dialect::PostgreSql))));
+        self::assertSame('CREATE ASSERTION "a" CHECK (true)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithCheckingReplacesTheCheckingTime(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE ASSERTION a CHECK (true)');
         self::assertInstanceOf(CreateAssertionStatement::class, $statement);
-        self::assertSame('CREATE ASSERTION "a" CHECK (true) DEFERRABLE', $statement->withChecking(CheckingTime::DeferrableImmediate)->toString());
+        self::assertSame('CREATE ASSERTION "a" CHECK (true) DEFERRABLE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withChecking(CheckingTime::DeferrableImmediate)));
         self::assertSame(CheckingTime::Immediate, $statement->checking);
     }
 }

@@ -87,7 +87,7 @@ final class ExistsSubqueryTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (n INTEGER)');
         $binder = new Binder($schema);
         $statement = $binder->bind('SELECT EXISTS (SELECT n FROM t WHERE n > 0)');
-        self::assertSame('SELECT EXISTS(SELECT "n" AS "n" FROM "public"."t" WHERE ("n" > 0))', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT EXISTS(SELECT "n" AS "n" FROM "public"."t" WHERE ("n" > 0))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

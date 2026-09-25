@@ -39,8 +39,8 @@ final class VariableAssignmentTest extends TestCase
         self::assertSame([$target, $assignment->value], $assignment->inputs());
         self::assertSame('integer', $assignment->type->name);
         self::assertSame(Nullability::NotNull, $assignment->nullability);
-        self::assertSame('DO(@`x` := 1)', $statement->toString());
-        self::assertSame('DO(@`x` := 1)', $binder->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('DO(@`x` := 1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('DO(@`x` := 1)', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)));
     }
 
     public function testSpellingIsTheAssignmentOperator(): void

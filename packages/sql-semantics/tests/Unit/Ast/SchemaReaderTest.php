@@ -286,9 +286,9 @@ final class SchemaReaderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('CREATE TABLE c.s.t (a int)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
-        self::assertSame('CREATE TABLE "c"."s"."t"("a" integer)', $statement->toString());
+        self::assertSame('CREATE TABLE "c"."s"."t"("a" integer)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame('s', $statement->definition->table->schema);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testTableRejectsAFourPartPostgreSqlName(): void
@@ -316,8 +316,8 @@ final class SchemaReaderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Schema\Column\AutoIncrementColumn::class, $statement->definition->table->columns[0]->generation);
         $expected = 'CREATE TABLE "main"."u"("a" "integer" NOT NULL PRIMARY KEY ON CONFLICT IGNORE AUTOINCREMENT, "b" "int")';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['CREATE TABLE u (a INT, b INT, PRIMARY KEY (a AUTOINCREMENT))'])]
@@ -338,6 +338,6 @@ final class SchemaReaderTest extends TestCase
         self::assertCount($count, $schema->tables[1]->constraints);
         $binder = new Binder($schema);
         $statement = $binder->bind('CREATE TABLE v (a INT REFERENCES p (x))');
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

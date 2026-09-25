@@ -28,6 +28,6 @@ final class TriggerEventTest extends TestCase
         $statement = $binder->bind('CREATE TRIGGER audit AFTER ' . $event->value . ' ON t EXECUTE FUNCTION f()');
         self::assertInstanceOf(CreateTriggerStatement::class, $statement);
         self::assertSame([$event], $statement->events->events);
-        self::assertSame('CREATE TRIGGER "audit" AFTER ' . $event->value . ' ON "public"."t" FOR EACH STATEMENT EXECUTE FUNCTION "f"()', $statement->toString());
+        self::assertSame('CREATE TRIGGER "audit" AFTER ' . $event->value . ' ON "public"."t" FOR EACH STATEMENT EXECUTE FUNCTION "f"()', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

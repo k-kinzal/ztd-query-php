@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading an object change of a publication
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('ALTER PUBLICATION pub ADD TABLE t, TABLES IN SCHEMA CURRENT_SCHEMA');
  *     $statement->change // => \SqlSemantics\Model\Definition\Replication\Publication\PublicationObjectChange::Add
- *     $statement->toString() // => 'ALTER PUBLICATION "pub" ADD TABLE "public"."t", TABLES IN SCHEMA CURRENT_SCHEMA'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER PUBLICATION "pub" ADD TABLE "public"."t", TABLES IN SCHEMA CURRENT_SCHEMA'
  */
 final class AlterPublicationObjectsStatement extends BoundStatement
 {

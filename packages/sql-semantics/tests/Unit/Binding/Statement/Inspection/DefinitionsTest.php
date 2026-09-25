@@ -36,8 +36,8 @@ final class DefinitionsTest extends TestCase
         self::assertInstanceOf(ShowRoutineStatusStatement::class, $statement);
         self::assertSame(RoutineKind::Procedure, $statement->routine);
         self::assertInstanceOf(ConditionFilter::class, $statement->filter);
-        self::assertSame("SHOW PROCEDURE STATUS WHERE (`Db` = 'app')", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SHOW PROCEDURE STATUS WHERE (`Db` = 'app')", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testCreateKeepsEachObjectKindInItsOwnNameDomain(): void
@@ -54,7 +54,7 @@ final class DefinitionsTest extends TestCase
         self::assertSame(['my db', 'sync'], $procedure->procedure->parts);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\Account\AccountName::class, $user->account);
         self::assertSame('%', $user->account->host);
-        self::assertSame('SHOW CREATE DATABASE IF NOT EXISTS `my db`', $database->toString());
+        self::assertSame('SHOW CREATE DATABASE IF NOT EXISTS `my db`', (new \SqlSemantics\SimpleSerializer())->serialize($database));
     }
 
     public function testRoutineNameUnquotesEachPart(): void
@@ -62,7 +62,7 @@ final class DefinitionsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SHOW FUNCTION CODE `a``b`.`c d`');
         self::assertInstanceOf(ShowRoutineCodeStatement::class, $statement);
         self::assertSame(['a`b', 'c d'], $statement->name->parts);
-        self::assertSame('SHOW FUNCTION CODE `a``b`.`c d`', $statement->toString());
+        self::assertSame('SHOW FUNCTION CODE `a``b`.`c d`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testDatabaseNameUnquotesTheIdentifier(): void
@@ -70,7 +70,7 @@ final class DefinitionsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SHOW CREATE DATABASE `a``b`');
         self::assertInstanceOf(ShowCreateDatabaseStatement::class, $statement);
         self::assertSame('a`b', $statement->database);
-        self::assertSame('SHOW CREATE DATABASE `a``b`', $statement->toString());
+        self::assertSame('SHOW CREATE DATABASE `a``b`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['show create event e', \SqlSemantics\Model\Statement\Inspection\Definition\ShowCreateEventStatement::class, 'SHOW CREATE EVENT `e`'])]
@@ -88,7 +88,7 @@ final class DefinitionsTest extends TestCase
     public function testCreateRoutesEveryDescribedObject(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)', 'CREATE VIEW v AS SELECT 1')))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     public function testRoutineNameAndDatabaseNameReadTheirIdentifiers(): void

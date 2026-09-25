@@ -34,8 +34,8 @@ final class XmlConcatenationTest extends TestCase
         self::assertSame(Nullability::MaybeNull, $value->nullability);
         self::assertSame($value->values, $value->inputs());
         self::assertSame(ExpressionKind::XmlConstructor, $value->kind);
-        self::assertSame('SELECT XMLCONCAT("x", NULL) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT XMLCONCAT("x", NULL) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingNamesTheOperation(): void

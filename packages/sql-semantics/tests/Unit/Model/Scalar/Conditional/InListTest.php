@@ -65,7 +65,7 @@ final class InListTest extends TestCase
         $copy = $membership->withFacts($membership->facts);
         self::assertSame([], $copy->choices);
         self::assertSame($membership->value, $copy->value);
-        self::assertSame('SELECT (NULL IN ())', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT (NULL IN ())', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith([false, 'IN', '(1 IN (2))'])]

@@ -25,7 +25,7 @@ final class FlushCommandsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('FLUSH LOCAL TABLE t WITH READ LOCK');
         self::assertInstanceOf(FlushTablesWithReadLockStatement::class, $statement);
         self::assertSame('flush', FlushCommands::write($statement)->role);
-        self::assertSame('FLUSH NO_WRITE_TO_BINLOG TABLES `t` WITH READ LOCK', $statement->toString());
+        self::assertSame('FLUSH NO_WRITE_TO_BINLOG TABLES `t` WITH READ LOCK', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTargetWritesKeywordsAndChannels(): void

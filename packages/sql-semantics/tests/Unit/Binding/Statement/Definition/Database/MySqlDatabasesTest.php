@@ -89,13 +89,13 @@ final class MySqlDatabasesTest extends TestCase
     public function testBindRoutesOnlyMySqlCreationAndAlteration(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     #[TestWith(['CREATE DATABASE d', \SqlSemantics\Model\Statement\Definition\PostgreSql\Database\CreateDatabaseStatement::class, 'CREATE DATABASE "d"'])]
     public function testBindLeavesPostgreSqlDatabasesAlone(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

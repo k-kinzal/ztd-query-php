@@ -37,7 +37,7 @@ final class HandlerDeclarationTest extends TestCase
         self::assertInstanceOf(HandlerDeclaration::class, $handler);
         self::assertSame(HandlerAction::Continue, $handler->action);
         self::assertSame(['error:1062', 'state:23000', 'name:gone', 'class:SQLWARNING', 'class:NOT FOUND', 'class:SQLEXCEPTION'], array_map(HandlerDeclaration::key(...), $handler->conditions));
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testKeyComparesNamedConditionsIgnoringCase(): void

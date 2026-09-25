@@ -32,8 +32,8 @@ final class CountedRowsTest extends TestCase
         self::assertInstanceOf(CountedRows::class, $movement);
         self::assertSame($direction, $movement->direction);
         self::assertSame($count, $movement->count->text);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testExposesTheSuppliedOperands(): void

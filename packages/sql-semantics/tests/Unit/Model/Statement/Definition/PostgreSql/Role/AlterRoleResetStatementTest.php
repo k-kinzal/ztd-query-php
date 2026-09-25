@@ -43,22 +43,22 @@ final class AlterRoleResetStatementTest extends TestCase
         self::assertSame(AllRoles::All, $statement->role);
         self::assertSame('d', $statement->database);
         self::assertSame(['work_mem'], $statement->setting->name);
-        self::assertSame('ALTER ROLE ALL IN DATABASE "d" RESET "work_mem"', $statement->toString());
+        self::assertSame('ALTER ROLE ALL IN DATABASE "d" RESET "work_mem"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testToStringQuotesTheRoleAndTheCanonicalParameterName(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER USER app RESET TIME ZONE');
-        self::assertSame('ALTER ROLE "app" RESET "timezone"', $statement->toString());
+        self::assertSame('ALTER ROLE "app" RESET "timezone"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRebindingTheOutputReachesAFixedPoint(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('ALTER USER app IN DATABASE d RESET TIME ZONE');
-        $again = $binder->bind($statement->toString());
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(AlterRoleResetStatement::class, $again);
-        self::assertSame($statement->toString(), $again->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithRoleReplacesTheSelectionWithoutMutatingTheOriginal(): void
@@ -70,7 +70,7 @@ final class AlterRoleResetStatementTest extends TestCase
         self::assertEquals(new NamedRole('app'), $statement->role);
         self::assertSame(SessionRole::CurrentRole, $changed->role);
         self::assertSame($statement->setting->name, $changed->setting->name);
-        self::assertSame('ALTER ROLE CURRENT_ROLE RESET "timezone"', $changed->toString());
+        self::assertSame('ALTER ROLE CURRENT_ROLE RESET "timezone"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithDatabaseAddsAQuotedQualifier(): void
@@ -81,7 +81,7 @@ final class AlterRoleResetStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertNull($statement->database);
         self::assertSame('x"y', $changed->database);
-        self::assertSame('ALTER ROLE "app" IN DATABASE "x""y" RESET "timezone"', $changed->toString());
+        self::assertSame('ALTER ROLE "app" IN DATABASE "x""y" RESET "timezone"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithDatabaseRemovesTheQualifier(): void
@@ -91,7 +91,7 @@ final class AlterRoleResetStatementTest extends TestCase
         $changed = $statement->withDatabase(null);
         self::assertSame('d', $statement->database);
         self::assertNull($changed->database);
-        self::assertSame('ALTER ROLE ALL RESET "work_mem"', $changed->toString());
+        self::assertSame('ALTER ROLE ALL RESET "work_mem"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithDatabaseRejectsAnEmptyName(): void
@@ -114,7 +114,7 @@ final class AlterRoleResetStatementTest extends TestCase
         self::assertSame(['timezone'], $statement->setting->name);
         self::assertSame($reset->setting->name, $changed->setting->name);
         self::assertEquals($statement->role, $changed->role);
-        self::assertSame('ALTER ROLE "app" RESET "work_mem"', $changed->toString());
+        self::assertSame('ALTER ROLE "app" RESET "work_mem"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithSettingRejectsALocalScope(): void
@@ -146,7 +146,7 @@ final class AlterRoleResetStatementTest extends TestCase
         self::assertSame($statement->role, $copy->role);
         self::assertSame($statement->database, $copy->database);
         self::assertSame($statement->setting, $copy->setting);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

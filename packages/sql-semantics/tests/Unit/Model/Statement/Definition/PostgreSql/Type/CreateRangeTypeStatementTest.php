@@ -26,8 +26,8 @@ final class CreateRangeTypeStatementTest extends TestCase
         $statement = $binder->bind('CREATE TYPE r AS RANGE (subtype = text, collation = "C", subtype_opclass = s.text_ops)');
         self::assertInstanceOf(CreateRangeTypeStatement::class, $statement);
         self::assertSame(RangeAttribute::Collation, $statement->options[1]->attribute);
-        self::assertSame('CREATE TYPE "r" AS RANGE(SUBTYPE = text, COLLATION = "C", SUBTYPE_OPCLASS = "s"."text_ops")', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TYPE "r" AS RANGE(SUBTYPE = text, COLLATION = "C", SUBTYPE_OPCLASS = "s"."text_ops")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsARangeWithoutSubtype(): void
@@ -42,14 +42,14 @@ final class CreateRangeTypeStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE r AS RANGE (subtype = text)');
         self::assertInstanceOf(CreateRangeTypeStatement::class, $statement);
-        self::assertSame('CREATE TYPE "r" AS RANGE(SUBTYPE = text)', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE TYPE "r" AS RANGE(SUBTYPE = text)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE r AS RANGE (subtype = text)');
         self::assertInstanceOf(CreateRangeTypeStatement::class, $statement);
-        self::assertSame('CREATE TYPE "s"."q" AS RANGE(SUBTYPE = text)', $statement->withName(new QualifiedName(['s', 'q']))->toString());
+        self::assertSame('CREATE TYPE "s"."q" AS RANGE(SUBTYPE = text)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['s', 'q']))));
     }
 
     public function testWithOptionsReplacesTheOperand(): void

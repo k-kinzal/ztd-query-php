@@ -19,7 +19,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the operation's structure
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('PREPARE s FROM @sql', strict: false);
- *     $statement->toString() // => 'PREPARE `s` FROM @`sql`'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'PREPARE `s` FROM @`sql`'
  *
  * @visibility public
  */

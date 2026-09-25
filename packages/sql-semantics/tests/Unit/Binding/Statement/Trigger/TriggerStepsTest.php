@@ -28,7 +28,7 @@ final class TriggerStepsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $steps[2]);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $steps[3]);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $steps[4]);
-        self::assertSame('CREATE TRIGGER "tr" AFTER UPDATE ON "main"."t" FOR EACH ROW BEGIN INSERT INTO "u" VALUES ("new"."a"); UPDATE "t" SET "a" = 1; DELETE FROM "u"; SELECT 1; INSERT INTO "u" SELECT "a" AS "a" FROM "main"."t"; END', $statement->toString());
+        self::assertSame('CREATE TRIGGER "tr" AFTER UPDATE ON "main"."t" FOR EACH ROW BEGIN INSERT INTO "u" VALUES ("new"."a"); UPDATE "t" SET "a" = 1; DELETE FROM "u"; SELECT 1; INSERT INTO "u" SELECT "a" AS "a" FROM "main"."t"; END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testStepRejectsAQualifiedMutationTarget(): void
@@ -53,7 +53,7 @@ final class TriggerStepsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['create trigger tr after insert on t begin insert into u select a from t; update u set a = t.a from t; end', 'CREATE TRIGGER "tr" AFTER INSERT ON "main"."t" FOR EACH ROW BEGIN INSERT INTO "u" SELECT "a" AS "a" FROM "main"."t"; UPDATE "u" SET "a" = "t"."a" FROM "main"."t"; END'])]
     public function testBindKeepsEveryStepForm(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind($sql)));
     }
 
     public function testStepRejectsAnIndexHint(): void

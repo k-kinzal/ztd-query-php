@@ -25,14 +25,14 @@ final class StopReplicaStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame([ReplicaThread::Receiver], $copy->threads);
-        self::assertSame("STOP SLAVE IO_THREAD FOR CHANNEL 'c'", $copy->toString());
+        self::assertSame("STOP SLAVE IO_THREAD FOR CHANNEL 'c'", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithThreadsReplacesTheThreadsImmutably(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('STOP REPLICA');
         self::assertInstanceOf(StopReplicaStatement::class, $statement);
-        self::assertSame('STOP REPLICA SQL_THREAD, IO_THREAD', $statement->withThreads([ReplicaThread::Applier, ReplicaThread::Receiver])->toString());
+        self::assertSame('STOP REPLICA SQL_THREAD, IO_THREAD', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withThreads([ReplicaThread::Applier, ReplicaThread::Receiver])));
         self::assertSame([], $statement->threads);
     }
 
@@ -40,7 +40,7 @@ final class StopReplicaStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("STOP REPLICA FOR CHANNEL 'c'");
         self::assertInstanceOf(StopReplicaStatement::class, $statement);
-        self::assertSame('STOP REPLICA', $statement->withChannel(null)->toString());
+        self::assertSame('STOP REPLICA', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withChannel(null)));
         self::assertSame('c', $statement->channel);
     }
 

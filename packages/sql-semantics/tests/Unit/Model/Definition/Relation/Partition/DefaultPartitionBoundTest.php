@@ -23,6 +23,6 @@ final class DefaultPartitionBoundTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ATTACH PARTITION t_rest DEFAULT', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Partition\AttachPartition(new QualifiedName(['t_rest']), new Relation\Partition\DefaultPartitionBound()), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "t_rest" DEFAULT', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "t_rest" DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

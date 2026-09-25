@@ -38,6 +38,6 @@ final class ForeignConstraintsTest extends TestCase
     public function testCheckAcceptsNotNullAndCheckConstraints(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
-        self::assertSame($expected, $binder->bind($sql, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql, strict: false)));
     }
 }

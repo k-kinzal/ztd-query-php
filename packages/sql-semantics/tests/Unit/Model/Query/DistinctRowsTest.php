@@ -27,6 +27,6 @@ final class DistinctRowsTest extends TestCase
         $statement = $binder->bind('SELECT DISTINCT id FROM t');
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertInstanceOf(DistinctRows::class, $statement->quantifier);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

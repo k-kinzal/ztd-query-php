@@ -58,10 +58,10 @@ final class PrivilegeTargetsTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertSame($expected, PrivilegeTargets::target($statement->target)->toString());
-        self::assertStringContainsString(' ON ' . $expected . ' TO ', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertStringContainsString(' ON ' . $expected . ' TO ', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(GrantPrivilegesStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
         self::assertSame($expected, PrivilegeTargets::target($rebound->target)->toString());
     }
 

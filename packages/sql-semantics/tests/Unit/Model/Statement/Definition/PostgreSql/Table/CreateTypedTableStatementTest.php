@@ -35,8 +35,8 @@ final class CreateTypedTableStatementTest extends TestCase
         self::assertSame('fast', $statement->properties->tablespace);
         self::assertTrue($statement->ifNotExists);
         $expected = 'CREATE UNLOGGED TABLE IF NOT EXISTS "people" OF "app"."person"("name" WITH OPTIONS NOT NULL DEFAULT \'x\', UNIQUE("name")) PARTITION BY HASH("name") TABLESPACE "fast"';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     public function testRejectsAnotherDatabaseLanguage(): void
@@ -59,7 +59,7 @@ final class CreateTypedTableStatementTest extends TestCase
         self::assertInstanceOf(CreateTypedTableStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('CREATE TABLE "t" OF "ty"', $copy->toString());
+        self::assertSame('CREATE TABLE "t" OF "ty"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -68,7 +68,7 @@ final class CreateTypedTableStatementTest extends TestCase
         self::assertInstanceOf(CreateTypedTableStatement::class, $statement);
         $changed = $statement->withName(new QualifiedName(['app', 'u']));
         self::assertSame(['t'], $statement->name->parts);
-        self::assertSame('CREATE TABLE "app"."u" OF "ty"', $changed->toString());
+        self::assertSame('CREATE TABLE "app"."u" OF "ty"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTypeReplacesTheOperand(): void
@@ -77,7 +77,7 @@ final class CreateTypedTableStatementTest extends TestCase
         self::assertInstanceOf(CreateTypedTableStatement::class, $statement);
         $changed = $statement->withType(new QualifiedName(['app', 'other']));
         self::assertSame(['ty'], $statement->type->parts);
-        self::assertSame('CREATE TABLE "t" OF "app"."other"', $changed->toString());
+        self::assertSame('CREATE TABLE "t" OF "app"."other"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithColumnsReplacesTheOperand(): void
@@ -86,7 +86,7 @@ final class CreateTypedTableStatementTest extends TestCase
         self::assertInstanceOf(CreateTypedTableStatement::class, $statement);
         $changed = $statement->withColumns([new PartitionColumn('a', Nullability::NotNull)]);
         self::assertSame([], $statement->columns);
-        self::assertSame('CREATE TABLE "t" OF "ty"("a" WITH OPTIONS NOT NULL)', $changed->toString());
+        self::assertSame('CREATE TABLE "t" OF "ty"("a" WITH OPTIONS NOT NULL)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithConstraintsReplacesTheOperand(): void
@@ -95,7 +95,7 @@ final class CreateTypedTableStatementTest extends TestCase
         self::assertInstanceOf(CreateTypedTableStatement::class, $statement);
         $changed = $statement->withConstraints([]);
         self::assertCount(1, $statement->constraints);
-        self::assertSame('CREATE TABLE "t" OF "ty"', $changed->toString());
+        self::assertSame('CREATE TABLE "t" OF "ty"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithPropertiesReplacesTheOperand(): void
@@ -104,7 +104,7 @@ final class CreateTypedTableStatementTest extends TestCase
         self::assertInstanceOf(CreateTypedTableStatement::class, $statement);
         $changed = $statement->withProperties(new PostgreSqlProperties(Persistence::Temporary, accessMethod: 'heap'));
         self::assertNull($statement->properties->accessMethod);
-        self::assertSame('CREATE TEMPORARY TABLE "t" OF "ty" USING "heap"', $changed->toString());
+        self::assertSame('CREATE TEMPORARY TABLE "t" OF "ty" USING "heap"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfNotExistsReplacesTheOperand(): void
@@ -113,7 +113,7 @@ final class CreateTypedTableStatementTest extends TestCase
         self::assertInstanceOf(CreateTypedTableStatement::class, $statement);
         $changed = $statement->withIfNotExists(true);
         self::assertFalse($statement->ifNotExists);
-        self::assertSame('CREATE TABLE IF NOT EXISTS "t" OF "ty"', $changed->toString());
+        self::assertSame('CREATE TABLE IF NOT EXISTS "t" OF "ty"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithExclusionsReplacesTheOperand(): void
@@ -122,6 +122,6 @@ final class CreateTypedTableStatementTest extends TestCase
         self::assertInstanceOf(CreateTypedTableStatement::class, $statement);
         $changed = $statement->withExclusions([]);
         self::assertCount(1, $statement->exclusions);
-        self::assertSame('CREATE TABLE "t" OF "ty"', $changed->toString());
+        self::assertSame('CREATE TABLE "t" OF "ty"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

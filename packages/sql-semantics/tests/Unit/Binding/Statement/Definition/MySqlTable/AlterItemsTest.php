@@ -75,6 +75,6 @@ final class AlterItemsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, k INT, CONSTRAINT c CHECK (id > 0), INDEX ix (k))')))->bind($sql);
         self::assertInstanceOf(AlterTableStatement::class, $statement);
-        self::assertSame([$class, $expected], [$statement->alterations[0]::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement->alterations[0]::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

@@ -45,6 +45,13 @@ final class ProgramDeclarationsTest extends TestCase
         self::assertSame('text COLLATE `utf8mb4_bin`', ProgramDeclarations::domain(new DeclaredDomain(TypeDescriptor::builtin(Dialect::MySql, 'text'), 'utf8mb4_bin'))->toString());
     }
 
+    public function testDomainWritesZerofillBeforeTheCollation(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE FUNCTION f() RETURNS INT ZEROFILL RETURN 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\MySql\Program\CreateFunctionStatement::class, $statement);
+        self::assertSame('integer UNSIGNED ZEROFILL', ProgramDeclarations::domain($statement->returns)->toString());
+    }
+
     public function testAssignmentsSpellsSessionAfterAScopedItem(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p(a INT) SET GLOBAL max_connections = 1, a = 2, SESSION wait_timeout = 3');

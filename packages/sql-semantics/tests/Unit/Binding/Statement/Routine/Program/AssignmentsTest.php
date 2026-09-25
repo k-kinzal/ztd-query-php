@@ -39,7 +39,7 @@ final class AssignmentsTest extends TestCase
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertInstanceOf(AssignmentStatement::class, $statement->body);
         self::assertInstanceOf(AssignedSetting::class, $statement->body->assignments[2]);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET OLD.n = 1'])]
@@ -66,6 +66,6 @@ final class AssignmentsTest extends TestCase
     #[TestWith(['CREATE PROCEDURE p() SET NEW.n = 1', 'CREATE PROCEDURE `p`() SET `NEW`.`n` = 1'])]
     public function testTargetAssignsTheNewRowBeforeTheEvent(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (n INT)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (n INT)')))->bind($sql)));
     }
 }

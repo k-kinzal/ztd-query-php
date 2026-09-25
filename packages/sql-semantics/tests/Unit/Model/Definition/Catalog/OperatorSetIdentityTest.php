@@ -28,7 +28,7 @@ final class OperatorSetIdentityTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
         self::assertInstanceOf(Statement\SetObjectSchemaStatement::class, $statement);
         self::assertEquals(new Catalog\OperatorSetIdentity($kind, new QualifiedName(['app', 'ints']), 'btree'), $statement->object);
-        self::assertStringContainsString('"app"."ints" USING "btree" SET SCHEMA "archive"', $statement->toString());
+        self::assertStringContainsString('"app"."ints" USING "btree" SET SCHEMA "archive"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyAccessMethod(): void

@@ -27,7 +27,7 @@ final class VariableBinderTest extends TestCase
         self::assertSame(['a', 'sql_mode', 'x', 'y'], array_column($expressions, 'name'));
         self::assertSame([VariableScope::User, VariableScope::Session, VariableScope::Global, VariableScope::Session], array_column($expressions, 'scope'));
         self::assertSame(['unknown-variable', 'unknown-variable', 'unknown-variable', 'unknown-variable'], array_column($statement->diagnostics, 'reason'));
-        self::assertSame('SELECT @`a`, @@SESSION.`sql_mode`, @@GLOBAL.`x`, @@SESSION.`y` FROM `t`', $statement->toString());
+        self::assertSame('SELECT @`a`, @@SESSION.`sql_mode`, @@GLOBAL.`x`, @@SESSION.`y` FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindResolvesDeclaredVariablesByNamespaceAndCaseInsensitiveName(): void
@@ -59,7 +59,7 @@ final class VariableBinderTest extends TestCase
         self::assertSame('b', $assignment->target->name);
         self::assertSame('a', $assignment->value->columnBinding()?->column->name);
         self::assertSame('integer', $assignment->type->name);
-        self::assertSame('SELECT (@`b` := `a`) FROM `t`', $statement->toString());
+        self::assertSame('SELECT (@`b` := `a`) FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

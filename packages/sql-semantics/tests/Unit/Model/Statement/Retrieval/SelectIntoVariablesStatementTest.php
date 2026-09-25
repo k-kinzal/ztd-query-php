@@ -33,8 +33,8 @@ final class SelectIntoVariablesStatementTest extends TestCase
         self::assertInstanceOf(SelectIntoVariablesStatement::class, $statement);
         self::assertSame(['first', 'Second'], $statement->variables);
         self::assertSame(StatementKind::Select, $statement->kind);
-        self::assertSame('SELECT `a` AS `a`, `b` AS `b` FROM `t` WHERE (`a` > 0) INTO @`first`, @`Second` FOR UPDATE', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT `a` AS `a`, `b` AS `b` FROM `t` WHERE (`a` > 0) INTO @`first`, @`Second` FOR UPDATE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithVariablesReplacesTheTargets(): void
@@ -45,7 +45,7 @@ final class SelectIntoVariablesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame(['y'], $changed->variables);
         self::assertSame(['x'], $statement->variables);
-        self::assertSame('SELECT `a` AS `a` FROM `t` INTO @`y`', $changed->toString());
+        self::assertSame('SELECT `a` AS `a` FROM `t` INTO @`y`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithQueryReplacesTheStoredQuery(): void
@@ -56,8 +56,8 @@ final class SelectIntoVariablesStatementTest extends TestCase
         self::assertInstanceOf(SelectIntoVariablesStatement::class, $statement);
         self::assertInstanceOf(BoundSelect::class, $query);
         $changed = $statement->withQuery($query);
-        self::assertSame('SELECT `b` AS `b` FROM `t` INTO @`x`', $changed->toString());
-        self::assertSame('SELECT `a` AS `a` FROM `t` INTO @`x`', $statement->toString());
+        self::assertSame('SELECT `b` AS `b` FROM `t` INTO @`x`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SELECT `a` AS `a` FROM `t` INTO @`x`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginKeepsTheOperands(): void

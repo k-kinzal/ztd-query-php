@@ -31,8 +31,8 @@ final class ConstraintActionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind($sql, strict: false);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     /**
@@ -44,8 +44,8 @@ final class ConstraintActionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind($sql, strict: false);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     /**
@@ -57,8 +57,8 @@ final class ConstraintActionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind($sql, strict: false);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     /**
@@ -71,8 +71,8 @@ final class ConstraintActionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind($sql, strict: false);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     /**
@@ -84,8 +84,8 @@ final class ConstraintActionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind($sql, strict: false);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     /**
@@ -97,8 +97,8 @@ final class ConstraintActionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind($sql, strict: false);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     #[TestWith(['ALTER TABLE t ADD PRIMARY KEY (id) NOT VALID'])]
@@ -126,7 +126,7 @@ final class ConstraintActionsTest extends TestCase
     public function testBindSpellsLowercaseConstraintCommands(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -169,6 +169,6 @@ final class ConstraintActionsTest extends TestCase
         $statement = $binder->bind('ALTER TABLE t ADD CONSTRAINT u UNIQUE USING INDEX ix');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Definition\Relation\Constraint\AddIndexConstraint::class, $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ADD CONSTRAINT "u" UNIQUE USING INDEX "ix"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ADD CONSTRAINT "u" UNIQUE USING INDEX "ix"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

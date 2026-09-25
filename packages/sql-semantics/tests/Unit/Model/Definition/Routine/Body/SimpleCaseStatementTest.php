@@ -24,8 +24,8 @@ final class SimpleCaseStatementTest extends TestCase
         $statement = $binder->bind('CREATE PROCEDURE p(a INT) CASE a WHEN 1 THEN DO 1; WHEN 2 THEN DO 2; END CASE');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertInstanceOf(SimpleCaseStatement::class, $statement->body);
-        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer) CASE `a` WHEN 1 THEN DO 1; WHEN 2 THEN DO 2; END CASE', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer) CASE `a` WHEN 1 THEN DO 1; WHEN 2 THEN DO 2; END CASE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRequiresABranch(): void

@@ -26,7 +26,7 @@ final class ShowDatabasesStatementTest extends TestCase
         self::assertInstanceOf(ShowDatabasesStatement::class, $statement);
         self::assertNull($statement->filter);
         self::assertSame(['Database'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('SHOW DATABASES', $statement->toString());
+        self::assertSame('SHOW DATABASES', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithFilterReplacesTheRestrictionImmutably(): void
@@ -41,9 +41,9 @@ final class ShowDatabasesStatementTest extends TestCase
         $changed = $statement->withFilter($conditioned->filter);
         self::assertNotSame($statement, $changed);
         self::assertNotSame($statement->filter, $changed->filter);
-        self::assertSame("SHOW DATABASES WHERE (`Database` <> 'x')", $changed->toString());
-        self::assertSame('SHOW DATABASES', $statement->withFilter(null)->toString());
-        self::assertSame("SHOW DATABASES LIKE 'app%'", $statement->toString());
+        self::assertSame("SHOW DATABASES WHERE (`Database` <> 'x')", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SHOW DATABASES', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withFilter(null)));
+        self::assertSame("SHOW DATABASES LIKE 'app%'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginRetainsTheRestriction(): void
@@ -53,7 +53,7 @@ final class ShowDatabasesStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame($statement->filter, $copy->filter);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAnOriginFromAnotherDialect(): void

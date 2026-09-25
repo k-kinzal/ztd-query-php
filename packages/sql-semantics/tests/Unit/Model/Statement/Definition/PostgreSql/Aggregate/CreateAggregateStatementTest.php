@@ -35,8 +35,8 @@ final class CreateAggregateStatementTest extends TestCase
         self::assertSame('{}', $statement->options[6]->value);
         self::assertFalse($statement->orReplace);
         self::assertSame(StatementKind::Create, $statement->kind);
-        self::assertSame("CREATE AGGREGATE \"pct\"(double precision ORDER BY double precision)(SFUNC = \"ordered_set_transition\", STYPE = \"internal\", FINALFUNC = \"pct_final\", FINALFUNC_EXTRA = TRUE, HYPOTHETICAL = TRUE, PARALLEL = 'restricted', INITCOND = '{}')", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("CREATE AGGREGATE \"pct\"(double precision ORDER BY double precision)(SFUNC = \"ordered_set_transition\", STYPE = \"internal\", FINALFUNC = \"pct_final\", FINALFUNC_EXTRA = TRUE, HYPOTHETICAL = TRUE, PARALLEL = 'restricted', INITCOND = '{}')", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testMovingRequiresTheInverseFunctionWithMstype(): void
@@ -72,7 +72,7 @@ final class CreateAggregateStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE AGGREGATE a(integer) (sfunc = f, stype = integer)');
         self::assertInstanceOf(CreateAggregateStatement::class, $statement);
-        self::assertSame('CREATE AGGREGATE "a"(integer)(SFUNC = "f", STYPE = integer)', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE AGGREGATE "a"(integer)(SFUNC = "f", STYPE = integer)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithAggregateReplacesTheOperand(): void
@@ -94,7 +94,7 @@ final class CreateAggregateStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE AGGREGATE a(integer) (sfunc = f, stype = integer)');
         self::assertInstanceOf(CreateAggregateStatement::class, $statement);
-        self::assertSame('CREATE OR REPLACE AGGREGATE "a"(integer)(SFUNC = "f", STYPE = integer)', $statement->withOrReplace(true)->toString());
+        self::assertSame('CREATE OR REPLACE AGGREGATE "a"(integer)(SFUNC = "f", STYPE = integer)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrReplace(true)));
     }
 
     public function testOrReplaceDefaultsToAPlainCreate(): void
@@ -174,6 +174,6 @@ final class CreateAggregateStatementTest extends TestCase
     public function testMovingAcceptsEveryMovingAttributeWithMstype(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE AGGREGATE a(integer) (sfunc = f, stype = integer, mstype = integer, msfunc = g, minvfunc = h, msspace = 4)');
-        self::assertSame('CREATE AGGREGATE "a"(integer)(SFUNC = "f", STYPE = integer, MSTYPE = integer, MSFUNC = "g", MINVFUNC = "h", MSSPACE = 4)', $statement->toString());
+        self::assertSame('CREATE AGGREGATE "a"(integer)(SFUNC = "f", STYPE = integer, MSTYPE = integer, MSFUNC = "g", MINVFUNC = "h", MSSPACE = 4)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

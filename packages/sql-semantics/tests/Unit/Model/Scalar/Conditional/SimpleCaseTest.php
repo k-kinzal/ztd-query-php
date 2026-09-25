@@ -35,7 +35,7 @@ final class SimpleCaseTest extends TestCase
         self::assertSame([$case->value, $case->branches[0]->test, $case->branches[0]->result, $case->otherwise], $case->inputs());
         self::assertSame(Nullability::NotNull, $case->nullability);
         self::assertSame('SELECT CASE 1 WHEN 1 THEN 2 ELSE 3 END', $statement->toString());
-        self::assertSame('SELECT CASE 1 WHEN 1 THEN 2 ELSE 3 END', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT CASE 1 WHEN 1 THEN 2 ELSE 3 END', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testInputsOmitsAMissingElse(): void

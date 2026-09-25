@@ -32,7 +32,7 @@ final class AliasedRelationTest extends TestCase
         self::assertSame(['id', 'id'], array_column($relation->outputs, 'name'));
         self::assertSame(array_column($relation->outputs, 'expression'), $relation->resultExpressions());
         self::assertSame(['a', 'b'], array_column($relation->declaration->columns, 'name'));
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testResultExpressionsFollowTheOutputsInOrder(): void

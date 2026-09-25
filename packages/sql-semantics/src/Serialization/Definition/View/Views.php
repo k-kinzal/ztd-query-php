@@ -63,9 +63,12 @@ final class Views
     }
 
     /**
+     * Writes the MySQL view properties; CREATE VIEW leaves out the default SQL SECURITY DEFINER, while ALTER VIEW
+     * writes every stated security because leaving it out keeps the view's current one.
+     *
      * @return list<Tree>
      */
-    public static function mysql(MySqlViewProperties $properties, Dialect $dialect): array
+    public static function mysql(MySqlViewProperties $properties, Dialect $dialect, bool $alteration = false): array
     {
         $parts = [];
         if ($properties->algorithm !== ViewAlgorithm::Undefined) {
@@ -75,7 +78,7 @@ final class Views
             $parts[] = Build::keyword('DEFINER =');
             $parts[] = \SqlSemantics\Serialization\Definition\MySqlRemovals::accounts([$properties->definer]);
         }
-        if ($properties->security !== ViewSecurity::Definer) {
+        if ($properties->security !== null && ($alteration || $properties->security !== ViewSecurity::Definer)) {
             $parts[] = Build::keyword('SQL SECURITY ' . $properties->security->value);
         }
         return $parts;

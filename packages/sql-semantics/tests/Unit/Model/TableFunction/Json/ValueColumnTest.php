@@ -43,7 +43,7 @@ final class ValueColumnTest extends TestCase
         self::assertInstanceOf(DefaultResponse::class, $column->onEmpty);
         self::assertSame("'{}'", $column->onEmpty->expression->spelling());
         self::assertSame(ValueBehavior::Error, $column->onError);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testDefaultsToAnImplicitPathWithoutOptions(): void
@@ -66,6 +66,6 @@ final class ValueColumnTest extends TestCase
         self::assertInstanceOf(JsonTable::class, $statement->from->table);
         self::assertInstanceOf(ValueColumn::class, $statement->from->table->columns[0]);
         self::assertNull($statement->from->table->columns[0]->path);
-        self::assertSame('SELECT "j"."v" AS "v" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("v" integer)) AS "j"', $statement->toString());
+        self::assertSame('SELECT "j"."v" AS "v" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("v" integer)) AS "j"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

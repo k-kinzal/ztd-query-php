@@ -34,9 +34,9 @@ final class RoleAttributeTest extends TestCase
         $statement = $binder->bind('CREATE ROLE r NOLOGIN SUPERUSER');
         self::assertInstanceOf(CreateRoleStatement::class, $statement);
         self::assertEquals([new RoleAttribute(RoleCapability::Login, false), new RoleAttribute(RoleCapability::Superuser, true)], $statement->options);
-        self::assertSame('CREATE ROLE "r" NOLOGIN SUPERUSER', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('CREATE ROLE "r" NOLOGIN SUPERUSER', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateRoleStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 }

@@ -24,14 +24,14 @@ final class AlterRedoLogStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertTrue($copy->enabled);
-        self::assertSame('ALTER INSTANCE ENABLE INNODB REDO_LOG', $copy->toString());
+        self::assertSame('ALTER INSTANCE ENABLE INNODB REDO_LOG', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithEnabledChangesTheRequestImmutably(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER INSTANCE ENABLE INNODB REDO_LOG');
         self::assertInstanceOf(AlterRedoLogStatement::class, $statement);
-        self::assertSame('ALTER INSTANCE DISABLE INNODB REDO_LOG', $statement->withEnabled(false)->toString());
+        self::assertSame('ALTER INSTANCE DISABLE INNODB REDO_LOG', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withEnabled(false)));
         self::assertTrue($statement->enabled);
     }
 

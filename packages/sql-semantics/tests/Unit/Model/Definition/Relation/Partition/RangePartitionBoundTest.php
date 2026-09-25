@@ -25,7 +25,7 @@ final class RangePartitionBoundTest extends TestCase
         self::assertInstanceOf(Relation\Partition\AttachPartition::class, $statement->actions[0]);
         self::assertInstanceOf(Relation\Partition\RangePartitionBound::class, $statement->actions[0]->bound);
         self::assertSame([Relation\Partition\RangeBoundary::MaxValue], $statement->actions[0]->bound->to);
-        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "t_hi" FOR VALUES FROM(100) TO(MAXVALUE)', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "t_hi" FOR VALUES FROM(100) TO(MAXVALUE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsBoundsOfDifferentWidths(): void

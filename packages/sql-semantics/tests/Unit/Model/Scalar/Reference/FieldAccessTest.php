@@ -32,8 +32,8 @@ final class FieldAccessTest extends TestCase
         $value = $query->outputs[0]->expression;
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\FieldAccess::class, $value);
         self::assertSame([$value->base], $value->inputs());
-        self::assertSame('SELECT (ROW(1, 2))."f1"', $query->toString());
-        self::assertSame('SELECT (ROW(1, 2))."f1"', $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT (ROW(1, 2))."f1"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame('SELECT (ROW(1, 2))."f1"', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingPrefixesTheFieldWithADot(): void

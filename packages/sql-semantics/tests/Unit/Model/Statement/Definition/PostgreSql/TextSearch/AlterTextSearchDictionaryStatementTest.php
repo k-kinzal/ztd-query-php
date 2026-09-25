@@ -27,8 +27,8 @@ final class AlterTextSearchDictionaryStatementTest extends TestCase
         self::assertInstanceOf(AlterTextSearchDictionaryStatement::class, $statement);
         self::assertSame('stopwords', $statement->options[0]->name);
         self::assertNull($statement->options[1]->value);
-        self::assertSame('ALTER TEXT SEARCH DICTIONARY "s"."d"("stopwords" = \'x\', "accept")', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER TEXT SEARCH DICTIONARY "s"."d"("stopwords" = \'x\', "accept")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -51,7 +51,7 @@ final class AlterTextSearchDictionaryStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH DICTIONARY d (accept)');
         self::assertInstanceOf(AlterTextSearchDictionaryStatement::class, $statement);
-        self::assertSame('ALTER TEXT SEARCH DICTIONARY "d"("accept")', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER TEXT SEARCH DICTIONARY "d"("accept")', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithDictionaryReplacesTheOperand(): void
@@ -68,6 +68,6 @@ final class AlterTextSearchDictionaryStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH DICTIONARY d (accept)');
         self::assertInstanceOf(AlterTextSearchDictionaryStatement::class, $statement);
         $changed = $statement->withOptions([new DictionaryOption('accept', 'true')]);
-        self::assertSame('ALTER TEXT SEARCH DICTIONARY "d"("accept" = \'true\')', $changed->toString());
+        self::assertSame('ALTER TEXT SEARCH DICTIONARY "d"("accept" = \'true\')', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

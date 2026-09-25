@@ -92,7 +92,7 @@ final class PartitionDefinitionsTest extends TestCase
     public function testReadBindsEachPartitionBound(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t (a INT, b INT)')))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     #[TestWith(['ALTER TABLE t ADD PARTITION (PARTITION p0 VALUES IN (MAXVALUE))'])]

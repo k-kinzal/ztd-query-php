@@ -27,7 +27,7 @@ final class LegacyPasswordListTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\Password\SetDerivedPasswordStatement::class, $statement->operations[1]);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement->operations[2]);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\Password\SetPasswordHashStatement::class, $statement->operations[3]);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString(), strict: false)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)));
     }
 
     public function testBindRetainsTheInheritedSystemVariableScope(): void
@@ -38,14 +38,14 @@ final class LegacyPasswordListTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement->operations[2]);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $statement->operations[2]->settings[0]);
         self::assertSame(\SqlSemantics\Model\Configuration\SettingScope::Global, $statement->operations[2]->settings[0]->scope);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindReturnsASingleCredentialItself(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build()))->bind("SET PASSWORD = '*abc'");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\Password\SetPasswordHashStatement::class, $statement);
-        self::assertSame("SET PASSWORD = '*abc'", $statement->toString());
+        self::assertSame("SET PASSWORD = '*abc'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(["SET PASSWORD = '*one', PASSWORD FOR u = '*two'", "SET PASSWORD = '*one', PASSWORD FOR 'u' = '*two'"])]
@@ -58,6 +58,6 @@ final class LegacyPasswordListTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build()))->bind($sql);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\Password\SetAccountOptionsStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

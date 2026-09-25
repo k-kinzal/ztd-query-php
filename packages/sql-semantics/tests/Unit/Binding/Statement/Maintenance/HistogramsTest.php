@@ -79,7 +79,7 @@ final class HistogramsTest extends TestCase
         self::assertInstanceOf(ColumnReference::class, $statement->column);
         self::assertSame('n', $statement->column->binding->column->name);
         self::assertSame("'x'", $statement->data->text);
-        self::assertSame("ANALYZE TABLE `t` UPDATE HISTOGRAM ON `n` USING DATA 'x'", $statement->toString());
+        self::assertSame("ANALYZE TABLE `t` UPDATE HISTOGRAM ON `n` USING DATA 'x'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['mysql-8.0.44'])]
@@ -89,7 +89,7 @@ final class HistogramsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(id INT, n INT)'));
         $statement = $binder->bind('analyze table t drop histogram on id');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\MySql\DropHistogramStatement::class, $statement);
-        self::assertSame('ANALYZE TABLE `t` DROP HISTOGRAM ON `id`', $statement->toString());
+        self::assertSame('ANALYZE TABLE `t` DROP HISTOGRAM ON `id`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['mysql-8.0.44', 'analyze table t update histogram on id with 0010 buckets', 10, \SqlSemantics\Model\Maintenance\Histogram\RefreshPolicy::Default])]

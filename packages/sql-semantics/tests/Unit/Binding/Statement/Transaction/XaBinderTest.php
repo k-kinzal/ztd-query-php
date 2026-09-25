@@ -33,8 +33,8 @@ final class XaBinderTest extends TestCase
         self::assertSame("X'00ff'", $statement->transactionId->global->text);
         self::assertSame("B'0101'", $statement->transactionId->branch->qualifier->text);
         self::assertSame('0x2a', $statement->transactionId->branch->format->spelling);
-        self::assertSame("XA START X'00ff', B'0101', 0x2a JOIN", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("XA START X'00ff', B'0101', 0x2a JOIN", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     /**
@@ -76,7 +76,7 @@ final class XaBinderTest extends TestCase
         self::assertNotNull($statement->transactionId->branch);
         self::assertNotNull($statement->transactionId->branch->format);
         self::assertSame('1.5e2', $statement->transactionId->branch->format->spelling);
-        self::assertSame("XA START 'g', 'b', 1.5e2", $statement->toString());
+        self::assertSame("XA START 'g', 'b', 1.5e2", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[DataProvider('providerVersions')]
@@ -113,7 +113,7 @@ final class XaBinderTest extends TestCase
     public function testBindClassifiesEachXaOperation(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     public function testIdentifierReadsTheGlobalAndBranchParts(): void

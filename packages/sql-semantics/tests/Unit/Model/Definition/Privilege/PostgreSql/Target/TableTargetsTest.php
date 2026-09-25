@@ -39,8 +39,8 @@ final class TableTargetsTest extends TestCase
         self::assertCount(2, $statement->target->tables);
         self::assertSame('t', $statement->target->tables[0]->declaration->name);
         self::assertSame('u', $statement->target->tables[1]->declaration->name);
-        self::assertSame('GRANT SELECT ON TABLE "public"."t", "public"."u" TO "a"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('GRANT SELECT ON TABLE "public"."t", "public"."u" TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testDiagnosesAnUnknownTableWithoutRejectingIt(): void

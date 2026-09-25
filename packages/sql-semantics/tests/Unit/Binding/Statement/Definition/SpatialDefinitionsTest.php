@@ -40,7 +40,7 @@ final class SpatialDefinitionsTest extends TestCase
         self::assertSame(4120, $statement->definition->organization->identifier);
         self::assertSame("'EPSG'", $statement->definition->organization->name->text);
         self::assertSame("'description'", $statement->definition->description?->text);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['mysql-8.0.44'])]
@@ -57,8 +57,8 @@ final class SpatialDefinitionsTest extends TestCase
         self::assertInstanceOf(DropSpatialReferenceSystemStatement::class, $statement);
         self::assertSame(4294967295, $statement->srid);
         self::assertTrue($statement->ifExists);
-        self::assertSame('DROP SPATIAL REFERENCE SYSTEM IF EXISTS 4294967295', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('DROP SPATIAL REFERENCE SYSTEM IF EXISTS 4294967295', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['0004120', 4120])]
@@ -90,6 +90,6 @@ final class SpatialDefinitionsTest extends TestCase
     public function testBindReadsEveryCreationPolicyAndIdentifierSpelling(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

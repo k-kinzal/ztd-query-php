@@ -37,8 +37,8 @@ final class ListingsTest extends TestCase
         self::assertInstanceOf(ShowTablesStatement::class, $statement);
         self::assertSame('app', $statement->database);
         self::assertTrue($statement->full);
-        self::assertSame("SHOW FULL TABLES FROM `app` LIKE 'u%'", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SHOW FULL TABLES FROM `app` LIKE 'u%'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testCatalogResolvesConditionReferencesAgainstTheListingResultFields(): void
@@ -58,7 +58,7 @@ final class ListingsTest extends TestCase
         $statement = $binder->bind('SHOW COLUMNS FROM main.users FROM other');
         self::assertInstanceOf(ShowColumnsStatement::class, $statement);
         self::assertSame('other', $statement->table->declaration->schema);
-        self::assertSame('SHOW COLUMNS FROM `other`.`users`', $statement->toString());
+        self::assertSame('SHOW COLUMNS FROM `other`.`users`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testDescribedResolvesIndexConditionsAgainstTheIndexFields(): void
@@ -69,7 +69,7 @@ final class ListingsTest extends TestCase
         self::assertInstanceOf(ConditionFilter::class, $statement->condition);
         self::assertInstanceOf(BinaryExpression::class, $statement->condition->condition);
         self::assertSame('Key_name', $statement->condition->condition->inputs()[0]->spelling());
-        self::assertSame('SHOW EXTENDED INDEX FROM `users` WHERE (`Key_name` = "PRIMARY")', $statement->toString());
+        self::assertSame('SHOW EXTENDED INDEX FROM `users` WHERE (`Key_name` = "PRIMARY")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testDescribedDiagnosesAnUnknownTableInsteadOfThrowing(): void
@@ -77,7 +77,7 @@ final class ListingsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SHOW COLUMNS FROM missing', strict: false);
         self::assertInstanceOf(ShowColumnsStatement::class, $statement);
         self::assertCount(1, $statement->diagnostics);
-        self::assertSame('SHOW COLUMNS FROM `missing`', $statement->toString());
+        self::assertSame('SHOW COLUMNS FROM `missing`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -106,6 +106,6 @@ final class ListingsTest extends TestCase
     public function testBindListsEachCatalogForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

@@ -31,8 +31,8 @@ final class CreateBaseTypeStatementTest extends TestCase
         self::assertSame('double', $statement->options[3]->value);
         self::assertSame(16, $statement->options[2]->value);
         self::assertSame(StatementKind::Create, $statement->kind);
-        self::assertSame("CREATE TYPE \"s\".\"t\"(INPUT = \"t_in\", OUTPUT = \"t_out\", INTERNALLENGTH = 16, ALIGNMENT = 'double', CATEGORY = 'U', PASSEDBYVALUE = FALSE, ELEMENT = real, SUBSCRIPT = \"raw_array_subscript_handler\")", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("CREATE TYPE \"s\".\"t\"(INPUT = \"t_in\", OUTPUT = \"t_out\", INTERNALLENGTH = 16, ALIGNMENT = 'double', CATEGORY = 'U', PASSEDBYVALUE = FALSE, ELEMENT = real, SUBSCRIPT = \"raw_array_subscript_handler\")", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsANonPrintableCategory(): void
@@ -55,7 +55,7 @@ final class CreateBaseTypeStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t (input = i, output = o)');
         self::assertInstanceOf(CreateBaseTypeStatement::class, $statement);
-        self::assertSame('CREATE TYPE "t"(INPUT = "i", OUTPUT = "o")', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE TYPE "t"(INPUT = "i", OUTPUT = "o")', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -70,7 +70,7 @@ final class CreateBaseTypeStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t (input = i, output = o)');
         self::assertInstanceOf(CreateBaseTypeStatement::class, $statement);
-        self::assertSame("CREATE TYPE \"t\"(INPUT = \"i\", OUTPUT = \"o\", STORAGE = 'plain')", $statement->withOptions([...$statement->options, new DefinitionOption(BaseTypeAttribute::Storage, 'plain')])->toString());
+        self::assertSame("CREATE TYPE \"t\"(INPUT = \"i\", OUTPUT = \"o\", STORAGE = 'plain')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOptions([...$statement->options, new DefinitionOption(BaseTypeAttribute::Storage, 'plain')])));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([' '])]

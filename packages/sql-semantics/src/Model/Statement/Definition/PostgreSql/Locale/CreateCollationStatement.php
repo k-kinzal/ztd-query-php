@@ -21,7 +21,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("CREATE COLLATION IF NOT EXISTS app.ci (provider = icu, locale = 'und-u-ks-level2', deterministic = false)");
  *     $statement->locale // => 'und-u-ks-level2'
  *     $statement->deterministic // => false
- *     $statement->toString() // => 'CREATE COLLATION IF NOT EXISTS "app"."ci"(PROVIDER = \'icu\', LOCALE = \'und-u-ks-level2\', DETERMINISTIC = FALSE)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE COLLATION IF NOT EXISTS "app"."ci"(PROVIDER = \'icu\', LOCALE = \'und-u-ks-level2\', DETERMINISTIC = FALSE)'
  * @example Rejecting ICU rules on a libc collation
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("CREATE COLLATION posix (locale = 'C')");
  *     $statement->withRules('&a < b'); // throws \SqlSemantics\Model\Validation\InvalidStructure

@@ -330,7 +330,13 @@ final class OptionReaderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE p (b TEXT)'));
         $expected = "CREATE FULLTEXT INDEX `ft` ON `p`(`b`) COMMENT 'x' WITH PARSER `ngram`";
-        self::assertSame($expected, $binder->bind("CREATE FULLTEXT INDEX ft ON p (b) WITH PARSER ngram COMMENT 'x'")->toString());
-        self::assertSame('CREATE TABLE `u`(`b` text, FULLTEXT INDEX `ft`(`b`) WITH PARSER `ngram`)', $binder->bind('CREATE TABLE u (b TEXT, FULLTEXT KEY ft (b) WITH PARSER ngram)')->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind("CREATE FULLTEXT INDEX ft ON p (b) WITH PARSER ngram COMMENT 'x'")));
+        self::assertSame('CREATE TABLE `u`(`b` text, FULLTEXT INDEX `ft`(`b`) WITH PARSER `ngram`)', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('CREATE TABLE u (b TEXT, FULLTEXT KEY ft (b) WITH PARSER ngram)')));
+    }
+
+    public function testColumnReadsNotSecondary(): void
+    {
+        $column = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT NOT SECONDARY, b INT)')->tables[0]->columns;
+        self::assertSame([true, false], [$column[0]->attributes->excludedFromSecondaryEngine, $column[1]->attributes->excludedFromSecondaryEngine]);
     }
 }

@@ -45,7 +45,7 @@ final class TupleRowAssignmentTest extends TestCase
 
 
         $changed = $original->withAssignments($replacement->writes);
-        self::assertSame('UPDATE "public"."t" SET ("id", "n") = ROW(1, 2)', $original->toString());
-        self::assertSame('UPDATE "public"."t" SET ("id", "n") = ROW("n", "id")', $changed->toString());
+        self::assertSame('UPDATE "public"."t" SET ("id", "n") = ROW(1, 2)', (new \SqlSemantics\SimpleSerializer())->serialize($original));
+        self::assertSame('UPDATE "public"."t" SET ("id", "n") = ROW("n", "id")', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

@@ -26,7 +26,7 @@ final class TransformIdentityTest extends TestCase
         self::assertInstanceOf(Catalog\TransformIdentity::class, $statement->object);
         self::assertSame('hstore', $statement->object->type->name);
         self::assertSame('plpython3u', $statement->object->language);
-        self::assertSame("COMMENT ON TRANSFORM FOR \"hstore\" LANGUAGE \"plpython3u\" IS 'x'", $statement->toString());
+        self::assertSame("COMMENT ON TRANSFORM FOR \"hstore\" LANGUAGE \"plpython3u\" IS 'x'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyLanguage(): void

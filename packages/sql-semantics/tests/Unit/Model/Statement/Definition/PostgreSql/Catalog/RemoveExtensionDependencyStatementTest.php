@@ -26,8 +26,8 @@ final class RemoveExtensionDependencyStatementTest extends TestCase
         self::assertInstanceOf(RemoveExtensionDependencyStatement::class, $statement);
         self::assertInstanceOf(Catalog\RoutineIdentity::class, $statement->object);
         self::assertSame('postgis', $statement->extension);
-        self::assertSame('ALTER FUNCTION "f"(integer) NO DEPENDS ON EXTENSION "postgis"', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER FUNCTION "f"(integer) NO DEPENDS ON EXTENSION "postgis"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -36,7 +36,7 @@ final class RemoveExtensionDependencyStatementTest extends TestCase
         self::assertInstanceOf(RemoveExtensionDependencyStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -56,7 +56,7 @@ final class RemoveExtensionDependencyStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals($statement->object, $statement->object);
         self::assertEquals(new Catalog\RelationIdentity(Kind\RelationKind::MaterializedView, new QualifiedName(['mv'])), $changed->object);
-        self::assertStringContainsString('ALTER MATERIALIZED VIEW "mv" NO DEPENDS', $changed->toString());
+        self::assertStringContainsString('ALTER MATERIALIZED VIEW "mv" NO DEPENDS', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithExtensionReplacesTheOperand(): void
@@ -67,7 +67,7 @@ final class RemoveExtensionDependencyStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('postgis', $statement->extension);
         self::assertEquals('hstore', $changed->extension);
-        self::assertStringContainsString('NO DEPENDS ON EXTENSION "hstore"', $changed->toString());
+        self::assertStringContainsString('NO DEPENDS ON EXTENSION "hstore"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAnEmptyExtension(): void

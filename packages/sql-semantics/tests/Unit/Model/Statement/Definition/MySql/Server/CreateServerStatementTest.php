@@ -24,7 +24,7 @@ final class CreateServerStatementTest extends TestCase
         self::assertInstanceOf(CreateServerStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame("CREATE SERVER `s` FOREIGN DATA WRAPPER `mysql` OPTIONS(USER 'u')", $copy->toString());
+        self::assertSame("CREATE SERVER `s` FOREIGN DATA WRAPPER `mysql` OPTIONS(USER 'u')", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -49,7 +49,7 @@ final class CreateServerStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (USER 'u')");
         self::assertInstanceOf(CreateServerStatement::class, $statement);
-        self::assertSame("CREATE SERVER `s` FOREIGN DATA WRAPPER `other` OPTIONS(USER 'u')", $statement->withWrapper('other')->toString());
+        self::assertSame("CREATE SERVER `s` FOREIGN DATA WRAPPER `other` OPTIONS(USER 'u')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withWrapper('other')));
         self::assertSame('mysql', $statement->wrapper);
     }
 
@@ -57,7 +57,7 @@ final class CreateServerStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (USER 'u')");
         self::assertInstanceOf(CreateServerStatement::class, $statement);
-        self::assertSame("CREATE SERVER `s` FOREIGN DATA WRAPPER `mysql` OPTIONS(HOST 'h', PORT 3306)", $statement->withOptions(new ServerOptions(host: 'h', port: 3306))->toString());
+        self::assertSame("CREATE SERVER `s` FOREIGN DATA WRAPPER `mysql` OPTIONS(HOST 'h', PORT 3306)", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOptions(new ServerOptions(host: 'h', port: 3306))));
         self::assertSame('u', $statement->options->user);
     }
 }

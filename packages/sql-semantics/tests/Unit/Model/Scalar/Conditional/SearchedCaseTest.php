@@ -33,8 +33,8 @@ final class SearchedCaseTest extends TestCase
         self::assertNull($case->otherwise);
         self::assertSame([$case->branches[0]->test, $case->branches[0]->result, $case->branches[1]->test, $case->branches[1]->result], $case->inputs());
         self::assertSame(Nullability::MaybeNull, $case->nullability);
-        self::assertSame('SELECT CASE WHEN (1 = 1) THEN 2 WHEN (2 = 2) THEN 3 END', $statement->toString());
-        self::assertSame('SELECT CASE WHEN (1 = 1) THEN 2 WHEN (2 = 2) THEN 3 END', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT CASE WHEN (1 = 1) THEN 2 WHEN (2 = 2) THEN 3 END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('SELECT CASE WHEN (1 = 1) THEN 2 WHEN (2 = 2) THEN 3 END', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testInputsAppendsTheElseResult(): void

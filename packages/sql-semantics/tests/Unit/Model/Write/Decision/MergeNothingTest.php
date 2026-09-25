@@ -33,8 +33,8 @@ final class MergeNothingTest extends TestCase
         self::assertSame(MatchKind::Matched, $action->match);
         self::assertNull($action->condition);
         $expected = 'MERGE INTO "public"."t" USING "public"."s" ON ("t"."id" = "s"."id") WHEN MATCHED THEN DO NOTHING';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith([MatchKind::Matched])]

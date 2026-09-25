@@ -38,8 +38,8 @@ final class ExplainBinderTest extends TestCase
         self::assertInstanceOf(MySqlPlan::class, $statement->options);
         self::assertTrue($statement->options->analyze);
         self::assertSame(MySqlFormat::Default, $statement->options->format);
-        self::assertSame('EXPLAIN ANALYZE SELECT 1', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('EXPLAIN ANALYZE SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindRetainsTheConnectionNumberAndFormat(): void
@@ -49,8 +49,8 @@ final class ExplainBinderTest extends TestCase
         self::assertInstanceOf(ExplainConnectionStatement::class, $statement);
         self::assertSame('123', $statement->connection->spelling);
         self::assertSame(MySqlFormat::Json, $statement->format);
-        self::assertSame('EXPLAIN FORMAT = JSON FOR CONNECTION 123', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('EXPLAIN FORMAT = JSON FOR CONNECTION 123', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
     #[TestWith(['mysql-5.7.44'])]
     #[TestWith(['mysql-8.0.44'])]
@@ -60,10 +60,10 @@ final class ExplainBinderTest extends TestCase
         $statement = $binder->bind('DESC FOR CONNECTION 1');
         self::assertInstanceOf(ExplainConnectionStatement::class, $statement);
         self::assertSame('1', $statement->connection->spelling);
-        self::assertSame('EXPLAIN FOR CONNECTION 1', $statement->toString());
+        self::assertSame('EXPLAIN FOR CONNECTION 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $query = $binder->bind('EXPLAIN SELECT 1');
         self::assertInstanceOf(ExplainStatement::class, $query);
-        self::assertSame('EXPLAIN SELECT 1', $query->toString());
+        self::assertSame('EXPLAIN SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'explain format=json select 1', 'EXPLAIN FORMAT = JSON SELECT 1'])]
@@ -78,7 +78,7 @@ final class ExplainBinderTest extends TestCase
     public function testBindWrapsTheExplainedCommandOfEachDialect(Dialect $dialect, ?string $version, string $sql, string $expected): void
     {
         $schema = (new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INT)');
-        self::assertSame($expected, (new Binder($schema))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder($schema))->bind($sql)));
     }
 
     public function testBindRejectsAnUnknownFormat(): void

@@ -26,7 +26,7 @@ final class ProfileLimitTest extends TestCase
         self::assertNotNull($statement->limit);
         self::assertSame('5', $statement->limit->count->spelling());
         self::assertSame('2', $statement->limit->offset?->spelling());
-        self::assertSame('SHOW PROFILE LIMIT 5 OFFSET 2', $statement->toString());
+        self::assertSame('SHOW PROFILE LIMIT 5 OFFSET 2', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testOffsetIsOptional(): void

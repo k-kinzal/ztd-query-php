@@ -260,7 +260,7 @@ final class ScopeTest extends TestCase
     public function testMatchesASchemaQualifiedColumn(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE SCHEMA s; CREATE TABLE s.t(a int)')))->bind('SELECT s.t.a FROM s.t');
-        self::assertSame('SELECT "s"."t"."a" AS "a" FROM "s"."t"', $statement->toString());
+        self::assertSame('SELECT "s"."t"."a" AS "a" FROM "s"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['SELECT x.t.a FROM s.t'])]

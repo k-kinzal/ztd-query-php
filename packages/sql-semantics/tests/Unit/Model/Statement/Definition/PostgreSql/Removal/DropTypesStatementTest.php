@@ -27,8 +27,8 @@ final class DropTypesStatementTest extends TestCase
         self::assertSame('app.percent', $statement->types[1]->name);
         self::assertTrue($statement->ifExists);
         self::assertSame(DropBehavior::Default, $statement->behavior);
-        self::assertSame('DROP DOMAIN IF EXISTS "app"."money", "app"."percent"', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('DROP DOMAIN IF EXISTS "app"."money", "app"."percent"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -37,7 +37,7 @@ final class DropTypesStatementTest extends TestCase
         self::assertInstanceOf(DropTypesStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -57,7 +57,7 @@ final class DropTypesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(Kind\TypeKind::Domain, $statement->typeKind);
         self::assertEquals(Kind\TypeKind::Type, $changed->typeKind);
-        self::assertStringContainsString('DROP TYPE IF EXISTS', $changed->toString());
+        self::assertStringContainsString('DROP TYPE IF EXISTS', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTypesReplacesTheOperand(): void
@@ -68,7 +68,7 @@ final class DropTypesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals($statement->types, $statement->types);
         self::assertSame(['text'], array_column($changed->types, 'name'));
-        self::assertStringContainsString('EXISTS text', $changed->toString());
+        self::assertStringContainsString('EXISTS text', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfExistsReplacesTheOperand(): void
@@ -79,7 +79,7 @@ final class DropTypesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(true, $statement->ifExists);
         self::assertEquals(false, $changed->ifExists);
-        self::assertStringContainsString('DROP DOMAIN "app"', $changed->toString());
+        self::assertStringContainsString('DROP DOMAIN "app"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithBehaviorReplacesTheOperand(): void
@@ -90,7 +90,7 @@ final class DropTypesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(DropBehavior::Default, $statement->behavior);
         self::assertEquals(DropBehavior::Cascade, $changed->behavior);
-        self::assertStringContainsString('"percent" CASCADE', $changed->toString());
+        self::assertStringContainsString('"percent" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsATypeFromAnotherDatabaseLanguage(): void

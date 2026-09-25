@@ -35,7 +35,7 @@ final class DefaultResponseTest extends TestCase
         self::assertSame('0', $column->onEmpty->expression->spelling());
         self::assertInstanceOf(DefaultResponse::class, $column->onError);
         self::assertSame('integer', $column->onError->expression->type->name);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testDoesNotReplaceABehaviorKeyword(): void

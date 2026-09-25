@@ -24,7 +24,7 @@ final class ShowCreateViewStatementTest extends TestCase
         self::assertInstanceOf(ShowCreateViewStatement::class, $statement);
         self::assertSame('users', $statement->view->declaration->name);
         self::assertSame(['View', 'Create View', 'character_set_client', 'collation_connection'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('SHOW CREATE VIEW `users`', $statement->toString());
+        self::assertSame('SHOW CREATE VIEW `users`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithViewDescribesAnotherObjectImmutably(): void
@@ -38,7 +38,7 @@ final class ShowCreateViewStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame('users', $statement->view->declaration->name);
         self::assertSame('orders', $changed->view->declaration->name);
-        self::assertSame('SHOW CREATE VIEW `orders`', $changed->toString());
+        self::assertSame('SHOW CREATE VIEW `orders`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheObject(): void

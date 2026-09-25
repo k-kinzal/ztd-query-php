@@ -44,9 +44,9 @@ final class StorageDefinitionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(Tree::class, StorageDefinitions::write($statement));
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame($statement::class, $binder->bind($expected)::class);
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testTablespaceWritesEveryOptionInOrder(): void
@@ -100,6 +100,6 @@ final class StorageDefinitionsTest extends TestCase
     #[TestWith(['mysql-8.4.7', "ALTER TABLESPACE ts ENGINE_ATTRIBUTE '{}' ENCRYPTION 'Y'", "ALTER TABLESPACE `ts` ENGINE_ATTRIBUTE = '{}' ENCRYPTION = 'Y' WAIT"])]
     public function testWriteSpellsEveryStorageClause(string $version, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)));
     }
 }

@@ -25,7 +25,7 @@ final class HashPartitionBoundTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertInstanceOf(Relation\Partition\AttachPartition::class, $statement->actions[0]);
         self::assertEquals(new Relation\Partition\HashPartitionBound(4, 1), $statement->actions[0]->bound);
-        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "t_p1" FOR VALUES WITH(MODULUS 4, REMAINDER 1)', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ATTACH PARTITION "t_p1" FOR VALUES WITH(MODULUS 4, REMAINDER 1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith([4, 4])]

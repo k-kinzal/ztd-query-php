@@ -25,7 +25,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE docs(owner TEXT)')))->bind('CREATE POLICY own ON docs USING (owner = CURRENT_USER)');
  *     $statement->roles // => [\SqlSemantics\Model\Configuration\Role\PublicRole::Public]
  *     $statement->check // => null
- *     $statement->toString() // => 'CREATE POLICY "own" ON "public"."docs" AS PERMISSIVE FOR ALL TO PUBLIC USING(("owner" = CURRENT_USER))'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE POLICY "own" ON "public"."docs" AS PERMISSIVE FOR ALL TO PUBLIC USING(("owner" = CURRENT_USER))'
  */
 final class CreatePolicyStatement extends BoundStatement
 {

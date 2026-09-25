@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Changing composite attributes
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER TYPE pair ADD ATTRIBUTE note text, DROP ATTRIBUTE IF EXISTS amount CASCADE');
  *     count($statement->changes) // => 2
- *     $statement->toString() // => 'ALTER TYPE "pair" ADD ATTRIBUTE "note" text, DROP ATTRIBUTE IF EXISTS "amount" CASCADE'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER TYPE "pair" ADD ATTRIBUTE "note" text, DROP ATTRIBUTE IF EXISTS "amount" CASCADE'
  * @example Rejecting an empty change list
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER TYPE pair DROP ATTRIBUTE a');
  *     $statement->withChanges([]); // throws \SqlSemantics\Model\Validation\InvalidStructure

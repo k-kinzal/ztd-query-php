@@ -37,7 +37,7 @@ final class ExistsColumnTest extends TestCase
         self::assertSame($type, $column->type->name);
         self::assertSame("'$.a'", $column->path?->spelling());
         self::assertSame(ExistsResponse::Default, $column->onError);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRetainsTheErrorResponse(): void
@@ -49,7 +49,7 @@ final class ExistsColumnTest extends TestCase
         $column = $statement->from->table->columns[0];
         self::assertInstanceOf(ExistsColumn::class, $column);
         self::assertSame(ExistsResponse::Unknown, $column->onError);
-        self::assertSame('SELECT "j"."ok" AS "ok" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("ok" boolean EXISTS PATH \'$.a\' UNKNOWN ON ERROR)) AS "j"', $statement->toString());
+        self::assertSame('SELECT "j"."ok" AS "ok" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("ok" boolean EXISTS PATH \'$.a\' UNKNOWN ON ERROR)) AS "j"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testLeavesThePathImplicitByDefault(): void

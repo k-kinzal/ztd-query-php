@@ -29,10 +29,10 @@ final class IndexesTest extends TestCase
         self::assertSame("INDEX `ix` USING BTREE(`a`) KEY_BLOCK_SIZE = 4 COMMENT 'c'", Indexes::inline($indexes[0], Dialect::MySql)->toString());
         self::assertSame('FULLTEXT INDEX `ft`(`b`)', Indexes::inline($indexes[1], Dialect::MySql)->toString());
         self::assertSame('SPATIAL INDEX `sp`(`a`)', Indexes::inline($indexes[2], Dialect::MySql)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateTableStatement::class, $rebound);
         self::assertSame([Kind::Ordinary, Kind::FullText, Kind::Spatial], array_map(static fn ($index): Kind => $index->properties->kind, $rebound->definition->table->indexes));
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testKindReturnsTheClassifiedPrefix(): void
@@ -51,7 +51,7 @@ final class IndexesTest extends TestCase
         $statement = $binder->bind('CREATE UNIQUE INDEX ix ON t (id DESC NULLS LAST) INCLUDE (n) NULLS NOT DISTINCT WHERE id > 0');
         self::assertInstanceOf(CreateIndexStatement::class, $statement);
         self::assertSame('("id" DESC NULLS LAST) INCLUDE("n") NULLS NOT DISTINCT WHERE ("id" > 0)', Indexes::keys($statement->index->definition, Dialect::PostgreSql)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateIndexStatement::class, $rebound);
         self::assertSame(['n'], $rebound->index->definition->include);
         self::assertFalse($rebound->index->definition->properties->nullsDistinct);

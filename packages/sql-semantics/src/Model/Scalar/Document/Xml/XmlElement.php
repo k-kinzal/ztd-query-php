@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $query = (new \SqlSemantics\Binder($schema))->bind("SELECT XMLELEMENT(NAME item, XMLATTRIBUTES(n, 'x' AS kind), x) FROM t");
  *     $value = $query->outputs[0]->expression;
  *     [$value->name, array_map(static fn ($attribute) => $attribute->label(), $value->attributes), count($value->content)] // => ['item', ['n', 'kind'], 1]
- *     $query->toString() // => 'SELECT XMLELEMENT(NAME "item", XMLATTRIBUTES("n", \'x\' AS "kind"), "x") FROM "public"."t"'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($query) // => 'SELECT XMLELEMENT(NAME "item", XMLATTRIBUTES("n", \'x\' AS "kind"), "x") FROM "public"."t"'
  */
 final class XmlElement extends Expression
 {

@@ -18,6 +18,7 @@ final class Origin
 {
     /**
      * @param list<Diagnostic> $diagnostics Binding diagnostics for this operation
+     * @param bool $verbatim Whether the operation is exactly what binding read from its source text
      * @throws InvalidStructure
      */
     public function __construct(
@@ -26,6 +27,7 @@ final class Origin
         public readonly \SqlSemantics\Dialect $dialect,
         public readonly array $diagnostics = [],
         public readonly ?Context $context = null,
+        public readonly bool $verbatim = false,
     ) {
         Collections::objects($diagnostics, Diagnostic::class);
         if ($scopeId === '') {

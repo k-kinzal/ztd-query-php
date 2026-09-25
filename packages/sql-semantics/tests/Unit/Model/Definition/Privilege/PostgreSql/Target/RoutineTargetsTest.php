@@ -45,7 +45,7 @@ final class RoutineTargetsTest extends TestCase
         self::assertInstanceOf(RoutineBySignature::class, $statement->target->routines[2]);
         self::assertSame(['app', 'h'], $statement->target->routines[2]->name->parts);
         self::assertCount(1, $statement->target->routines[2]->parameters);
-        self::assertSame('GRANT EXECUTE ON FUNCTION "f", "g"(), "app"."h"(IN "id" integer) TO "a"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('GRANT EXECUTE ON FUNCTION "f", "g"(), "app"."h"(IN "id" integer) TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

@@ -23,7 +23,7 @@ final class SetFiringTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ENABLE ALWAYS TRIGGER audit', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\SetFiring(Relation\FiringTarget::Trigger, 'audit', \SqlSemantics\Model\Definition\Trigger\TriggerFiring::Always), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ENABLE ALWAYS TRIGGER "audit"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ENABLE ALWAYS TRIGGER "audit"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAReplicaPolicyForATriggerGroup(): void

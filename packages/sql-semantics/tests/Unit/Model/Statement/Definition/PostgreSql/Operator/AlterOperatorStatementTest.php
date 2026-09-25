@@ -32,8 +32,8 @@ final class AlterOperatorStatementTest extends TestCase
         self::assertNull($statement->options[0]->value);
         self::assertTrue($statement->options[2]->value);
         self::assertSame(StatementKind::Alter, $statement->kind);
-        self::assertSame('ALTER OPERATOR "s".=== (NONE, integer) SET (JOIN = NONE, COMMUTATOR = ===, MERGES = TRUE)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER OPERATOR "s".=== (NONE, integer) SET (JOIN = NONE, COMMUTATOR = ===, MERGES = TRUE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnUnsetCapability(): void
@@ -48,7 +48,7 @@ final class AlterOperatorStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER OPERATOR === (integer, integer) SET (HASHES)');
         self::assertInstanceOf(AlterOperatorStatement::class, $statement);
-        self::assertSame('ALTER OPERATOR === (integer, integer) SET (HASHES = TRUE)', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER OPERATOR === (integer, integer) SET (HASHES = TRUE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithOperatorReplacesTheOperand(): void
@@ -56,7 +56,7 @@ final class AlterOperatorStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER OPERATOR === (integer, integer) SET (HASHES)');
         self::assertInstanceOf(AlterOperatorStatement::class, $statement);
         $operator = new OperatorIdentity(new QualifiedName(['#']), TypeDescriptor::builtin(Dialect::PostgreSql, 'text'), TypeDescriptor::builtin(Dialect::PostgreSql, 'text'));
-        self::assertSame('ALTER OPERATOR # (text, text) SET (HASHES = TRUE)', $statement->withOperator($operator)->toString());
+        self::assertSame('ALTER OPERATOR # (text, text) SET (HASHES = TRUE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOperator($operator)));
         self::assertSame(['==='], $statement->operator->name->parts);
     }
 

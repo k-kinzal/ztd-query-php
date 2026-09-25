@@ -49,7 +49,7 @@ final class PlansTest extends TestCase
         $statement = $binder->bind('EXPLAIN FORMAT = JSON FOR CONNECTION 42');
         self::assertInstanceOf(ExplainConnectionStatement::class, $statement);
         self::assertSame('EXPLAIN FORMAT = JSON FOR CONNECTION 42', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(ExplainConnectionStatement::class, $rebound);
         self::assertSame('42', $rebound->connection->spelling);
         self::assertSame(MySqlFormat::Json, $rebound->format);

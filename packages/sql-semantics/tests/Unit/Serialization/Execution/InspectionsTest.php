@@ -27,7 +27,7 @@ final class InspectionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $statement = $binder->bind($sql);
         self::assertSame($sql, Inspections::write($statement)?->toString());
-        self::assertSame($sql, $binder->bind($statement->toString())->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWriteReturnsNullForANonInspectionOperation(): void

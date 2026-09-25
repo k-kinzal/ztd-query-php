@@ -26,7 +26,7 @@ final class CallStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame($statement->arguments, $copy->arguments);
-        self::assertSame("CALL `app`.`refresh`(1, 'x')", $copy->toString());
+        self::assertSame("CALL `app`.`refresh`(1, 'x')", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithProcedureCallsAnotherProcedureImmutably(): void
@@ -35,7 +35,7 @@ final class CallStatementTest extends TestCase
         self::assertInstanceOf(CallStatement::class, $statement);
         $changed = $statement->withProcedure(new QualifiedName(['app', 'rebuild']));
         self::assertSame(['app', 'rebuild'], $changed->procedure->parts);
-        self::assertSame('CALL `app`.`rebuild`(1)', $changed->toString());
+        self::assertSame('CALL `app`.`rebuild`(1)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame(['refresh'], $statement->procedure->parts);
     }
 
@@ -45,7 +45,7 @@ final class CallStatementTest extends TestCase
         self::assertInstanceOf(CallStatement::class, $statement);
         $changed = $statement->withArguments([]);
         self::assertSame([], $changed->arguments);
-        self::assertSame('CALL `refresh`()', $changed->toString());
+        self::assertSame('CALL `refresh`()', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertCount(2, $statement->arguments);
     }
 

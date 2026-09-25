@@ -205,7 +205,7 @@ final class ExpressionRulesTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $expression);
         self::assertSame(\SqlSemantics\Model\Scalar\Operator\BinaryOperator::SoundsLike, $expression->operator);
         self::assertSame(Nullability::MaybeNull, $expression->nullability);
-        self::assertSame('SELECT (`a` SOUNDS LIKE `b`) FROM `t`', $statement->toString());
+        self::assertSame('SELECT (`a` SOUNDS LIKE `b`) FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

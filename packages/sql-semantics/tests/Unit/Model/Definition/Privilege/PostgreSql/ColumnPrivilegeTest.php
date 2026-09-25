@@ -30,8 +30,8 @@ final class ColumnPrivilegeTest extends TestCase
         self::assertInstanceOf(ColumnPrivilege::class, $privilege);
         self::assertSame(Privilege::Select, $privilege->privilege);
         self::assertSame(['a', 'b'], $privilege->columns);
-        self::assertSame('GRANT SELECT ("a", "b") ON TABLE "public"."t" TO "alice"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('GRANT SELECT ("a", "b") ON TABLE "public"."t" TO "alice"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith([Privilege::Select])]

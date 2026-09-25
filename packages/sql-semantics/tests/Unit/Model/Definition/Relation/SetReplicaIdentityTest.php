@@ -23,7 +23,7 @@ final class SetReplicaIdentityTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t REPLICA IDENTITY USING INDEX t_key', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\SetReplicaIdentity('t_key'), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" REPLICA IDENTITY USING INDEX "t_key"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" REPLICA IDENTITY USING INDEX "t_key"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyIndexName(): void

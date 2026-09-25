@@ -40,7 +40,7 @@ final class DiagnosticsTest extends TestCase
         self::assertSame(DiagnosticsArea::Current, $condition->area);
         self::assertSame(['m', 's'], array_column($condition->items, 'variable'));
         self::assertSame([ConditionItem::MessageText, ConditionItem::ReturnedSqlState], array_column($condition->items, 'item'));
-        self::assertSame($condition->toString(), $binder->bind($condition->toString(), strict: false)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($condition), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($condition), strict: false)));
     }
 
     public function testTargetRejectsALocalVariableOutsideAStoredProgram(): void
@@ -64,7 +64,7 @@ final class DiagnosticsTest extends TestCase
     public function testBindReadsLowercaseDiagnosticsAreas(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

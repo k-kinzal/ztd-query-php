@@ -35,8 +35,8 @@ final class RowAliasBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $statement);
         self::assertInstanceOf(MySqlInsertion::class, $statement->policy);
         self::assertSame('n', $statement->policy->rowAlias?->row->alias);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['INSERT INTO t (id, a) VALUES (1, 1) AS n(x) ON DUPLICATE KEY UPDATE a = x'])]
@@ -82,7 +82,7 @@ final class RowAliasBinderTest extends TestCase
         self::assertInstanceOf(InsertValuesStatement::class, $implicit);
         self::assertInstanceOf(MySqlInsertion::class, $implicit->policy);
         self::assertSame(['x'], array_column($implicit->policy->rowAlias?->row->declaration->columns ?? [], 'name'));
-        self::assertSame('INSERT INTO `u` VALUES (1) AS `n`(`x`) ON DUPLICATE KEY UPDATE `a` = `x`', $implicit->toString());
+        self::assertSame('INSERT INTO `u` VALUES (1) AS `n`(`x`) ON DUPLICATE KEY UPDATE `a` = `x`', (new \SqlSemantics\SimpleSerializer())->serialize($implicit));
     }
 
     public function testScopeAddsTheProposedRowBesideTheTarget(): void

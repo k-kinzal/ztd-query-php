@@ -24,7 +24,7 @@ final class SubscriptionsTest extends TestCase
     #[TestWith(['DROP SUBSCRIPTION "s" CASCADE'])]
     public function testWriteIsAFixedPoint(string $sql): void
     {
-        self::assertSame($sql, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     public function testWriteReturnsNullForOtherStatements(): void

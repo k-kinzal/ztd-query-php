@@ -27,7 +27,7 @@ final class ReindexDatabaseStatementTest extends TestCase
         self::assertInstanceOf(ReindexDatabaseStatement::class, $statement);
         self::assertSame($selection, $statement->selection);
         self::assertNull($statement->database);
-        self::assertSame($sql, $statement->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheExplicitDatabaseAndRebuildOptions(): void
@@ -39,7 +39,7 @@ final class ReindexDatabaseStatementTest extends TestCase
         self::assertTrue($copy->options->concurrently);
         self::assertTrue($copy->options->verbose);
         self::assertSame('ts', $copy->options->tablespace);
-        self::assertSame('REINDEX(CONCURRENTLY, VERBOSE, TABLESPACE "ts") DATABASE "app"', $copy->toString());
+        self::assertSame('REINDEX(CONCURRENTLY, VERBOSE, TABLESPACE "ts") DATABASE "app"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsConcurrentSystemIndexRebuildingBeforeSerialization(): void

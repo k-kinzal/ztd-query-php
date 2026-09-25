@@ -35,8 +35,8 @@ final class AlterTablesTest extends TestCase
         $statement = $binder->bind('ALTER TABLE t ADD n INT, COMMENT = \'x\' REMOVE PARTITIONING');
         self::assertInstanceOf(AlterTableStatement::class, $statement);
         self::assertSame(TableCommand::RemovePartitioning, $statement->alterations[2]);
-        self::assertSame('ALTER TABLE `t` ADD COLUMN `n` integer, COMMENT = \'x\' REMOVE PARTITIONING', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER TABLE `t` ADD COLUMN `n` integer, COMMENT = \'x\' REMOVE PARTITIONING', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindDiagnosesInstantOnMySql57(): void
@@ -97,6 +97,6 @@ final class AlterTablesTest extends TestCase
     public function testBindKeepsEachTableCommand(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT); CREATE TABLE u(a INT)')))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

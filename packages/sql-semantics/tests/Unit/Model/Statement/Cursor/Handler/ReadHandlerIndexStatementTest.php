@@ -25,14 +25,14 @@ final class ReadHandlerIndexStatementTest extends TestCase
         self::assertInstanceOf(ReadHandlerIndexStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('HANDLER `t` READ `k` NEXT LIMIT 3', $copy->toString());
+        self::assertSame('HANDLER `t` READ `k` NEXT LIMIT 3', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithIndexWalksAnotherIndex(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, KEY k(id))')))->bind('HANDLER t READ k NEXT');
         self::assertInstanceOf(ReadHandlerIndexStatement::class, $statement);
-        self::assertSame('HANDLER `t` READ `PRIMARY` NEXT', $statement->withIndex('PRIMARY')->toString());
+        self::assertSame('HANDLER `t` READ `PRIMARY` NEXT', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIndex('PRIMARY')));
     }
 
     public function testWithStepChangesTheDirection(): void
@@ -49,7 +49,7 @@ final class ReadHandlerIndexStatementTest extends TestCase
         $filtered = $binder->bind('HANDLER t READ k FIRST WHERE id = 2');
         self::assertInstanceOf(ReadHandlerIndexStatement::class, $statement);
         self::assertInstanceOf(ReadHandlerIndexStatement::class, $filtered);
-        self::assertSame('HANDLER `t` READ `k` NEXT WHERE (`id` = 2)', $statement->withWhere($filtered->where)->toString());
+        self::assertSame('HANDLER `t` READ `k` NEXT WHERE (`id` = 2)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withWhere($filtered->where)));
     }
 
     public function testWithLimitAddsAWindow(): void
@@ -59,7 +59,7 @@ final class ReadHandlerIndexStatementTest extends TestCase
         $limited = $binder->bind('HANDLER t READ k NEXT LIMIT 4');
         self::assertInstanceOf(ReadHandlerIndexStatement::class, $statement);
         self::assertInstanceOf(ReadHandlerIndexStatement::class, $limited);
-        self::assertSame('HANDLER `t` READ `k` NEXT LIMIT 4', $statement->withLimit($limited->limit)->toString());
+        self::assertSame('HANDLER `t` READ `k` NEXT LIMIT 4', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withLimit($limited->limit)));
     }
 
     public function testRejectsAnotherDatabaseDialect(): void

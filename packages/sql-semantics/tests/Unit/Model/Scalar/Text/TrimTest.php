@@ -38,7 +38,7 @@ final class TrimTest extends TestCase
         self::assertSame('text', $trim->type->name);
         self::assertSame(Nullability::NotNull, $trim->nullability);
         self::assertSame("SELECT TRIM(TRAILING 'x' FROM 'axx')", $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsListsOnlyTheStringWithoutRemovedCharacters(): void

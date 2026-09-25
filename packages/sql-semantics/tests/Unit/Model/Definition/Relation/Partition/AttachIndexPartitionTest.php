@@ -24,7 +24,7 @@ final class AttachIndexPartitionTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER INDEX t_id_idx ATTACH PARTITION app.t_a_id_idx', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Partition\AttachIndexPartition(new QualifiedName(['app', 't_a_id_idx'])), $statement->actions[0]);
-        self::assertSame('ALTER INDEX "t_id_idx" ATTACH PARTITION "app"."t_a_id_idx"', $statement->toString());
+        self::assertSame('ALTER INDEX "t_id_idx" ATTACH PARTITION "app"."t_a_id_idx"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOverQualifiedIndex(): void

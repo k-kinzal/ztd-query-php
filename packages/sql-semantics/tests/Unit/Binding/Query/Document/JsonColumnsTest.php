@@ -76,7 +76,7 @@ final class JsonColumnsTest extends TestCase
     public function testColumnReadsTheCollationAndLowerCaseExists(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind("SELECT * FROM JSON_TABLE('[]', '$[*]' COLUMNS (a varchar(9) collate utf8mb4_bin path '$.a', b int exists path '$.b'))");
-        self::assertSame("SELECT `json_table`.`a` AS `a`, `json_table`.`b` AS `b` FROM JSON_TABLE('[]', '$[*]' COLUMNS(`a` varchar(9) COLLATE `utf8mb4_bin` PATH '$.a', `b` integer EXISTS PATH '$.b'))", $statement->toString());
+        self::assertSame("SELECT `json_table`.`a` AS `a`, `json_table`.`b` AS `b` FROM JSON_TABLE('[]', '$[*]' COLUMNS(`a` varchar(9) COLLATE `utf8mb4_bin` PATH '$.a', `b` integer EXISTS PATH '$.b'))", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $relation = $statement->relations[0];
         self::assertInstanceOf(\SqlSemantics\Model\Relation\DocumentRelation::class, $relation);

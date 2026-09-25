@@ -19,7 +19,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading changed subscription options
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("ALTER SUBSCRIPTION sub SET (binary = true, origin = any)");
  *     $statement->options->binary // => true
- *     $statement->toString() // => 'ALTER SUBSCRIPTION "sub" SET (binary = true, origin = \'any\')'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER SUBSCRIPTION "sub" SET (binary = true, origin = \'any\')'
  */
 final class AlterSubscriptionOptionsStatement extends BoundStatement
 {

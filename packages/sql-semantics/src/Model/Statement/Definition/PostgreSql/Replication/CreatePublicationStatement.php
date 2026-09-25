@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading an empty publication
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE PUBLICATION pub WITH (publish_via_partition_root = off)');
  *     $statement->options->viaPartitionRoot // => false
- *     $statement->toString() // => 'CREATE PUBLICATION "pub" WITH (publish_via_partition_root = false)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE PUBLICATION "pub" WITH (publish_via_partition_root = false)'
  */
 final class CreatePublicationStatement extends BoundStatement
 {

@@ -54,11 +54,11 @@ final class RoleCommandsTest extends TestCase
         $tree = RoleCommands::write($statement);
         self::assertNotNull($tree);
         self::assertSame($expected, $tree->toString());
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertSame($statement::class, $rebound::class);
         self::assertSame($statement->kind, $rebound->kind);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteDelegatesPrivilegeOperationsToTheirWriter(): void
@@ -68,7 +68,7 @@ final class RoleCommandsTest extends TestCase
         $tree = RoleCommands::write($statement);
         self::assertNotNull($tree);
         self::assertSame('GRANT SELECT ON TABLE "public"."t" TO "a"', $tree->toString());
-        self::assertSame($tree->toString(), $binder->bind($tree->toString())->toString());
+        self::assertSame($tree->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($tree->toString())));
     }
 
     public function testSelectionWritesTheRoleAndDatabaseQualifier(): void

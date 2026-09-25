@@ -32,6 +32,6 @@ final class MaterializationTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertNotNull($statement->ctes);
         self::assertSame($materialization, $statement->ctes->definitions[0]->materialization);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

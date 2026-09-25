@@ -28,7 +28,7 @@ final class CreateViewStatementTest extends TestCase
         self::assertInstanceOf(CreateViewStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
         self::assertTrue($copy->replace);
         self::assertTrue($copy->temporary);
         self::assertSame(['x'], $copy->columns);
@@ -52,9 +52,9 @@ final class CreateViewStatementTest extends TestCase
         $query = $binder->bind('SELECT b FROM t');
         self::assertInstanceOf(BoundQuery::class, $query);
         $changed = $statement->withQuery($query);
-        self::assertSame($query->toString(), $changed->query->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($changed->query));
         self::assertSame(['x'], $changed->columns);
-        self::assertSame('CREATE VIEW `v`(`x`) AS SELECT `b` AS `b` FROM `t`', $changed->toString());
+        self::assertSame('CREATE VIEW `v`(`x`) AS SELECT `b` AS `b` FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNameChangesTheQualifiedTarget(): void
@@ -64,7 +64,7 @@ final class CreateViewStatementTest extends TestCase
         $changed = $statement->withName(new QualifiedName(['s', 'w']));
         self::assertSame(['v'], $statement->name->parts);
         self::assertSame(['s', 'w'], $changed->name->parts);
-        self::assertSame('CREATE VIEW "s"."w" AS SELECT 1', $changed->toString());
+        self::assertSame('CREATE VIEW "s"."w" AS SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsPropertiesOfAnotherLanguage(): void
@@ -117,6 +117,6 @@ final class CreateViewStatementTest extends TestCase
         self::assertFalse($rebuilt->replace);
         self::assertFalse($rebuilt->ifNotExists);
         self::assertSame([], $rebuilt->columns);
-        self::assertSame('CREATE VIEW "v" AS SELECT "a" AS "a" FROM "public"."t"', $rebuilt->toString());
+        self::assertSame('CREATE VIEW "v" AS SELECT "a" AS "a" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($rebuilt));
     }
 }

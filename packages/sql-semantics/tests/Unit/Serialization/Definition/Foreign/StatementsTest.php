@@ -28,7 +28,7 @@ final class StatementsTest extends TestCase
         $statement = $binder->bind($sql);
         $tree = Statements::write($statement);
         self::assertNotNull($tree);
-        self::assertSame($statement->toString(), $tree->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), $tree->toString());
         self::assertSame($statement::class, $binder->bind($tree->toString())::class);
     }
 

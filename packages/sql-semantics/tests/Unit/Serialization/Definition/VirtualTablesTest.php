@@ -28,7 +28,7 @@ final class VirtualTablesTest extends TestCase
         self::assertInstanceOf(CreateVirtualTableStatement::class, $rebound);
         self::assertSame('fts5', $rebound->constructor->module);
         self::assertSame(['title', 'body', 'tokenize="porter ascii"'], array_map(static fn ($argument): string => $argument->text, $rebound->constructor->arguments));
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteOmitsTheArgumentListWhenTheModuleTakesNone(): void
@@ -36,8 +36,8 @@ final class VirtualTablesTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
         $statement = $binder->bind('CREATE VIRTUAL TABLE IF NOT EXISTS docs USING fts5');
         self::assertInstanceOf(CreateVirtualTableStatement::class, $statement);
-        self::assertSame('CREATE VIRTUAL TABLE IF NOT EXISTS "docs" USING "fts5"', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('CREATE VIRTUAL TABLE IF NOT EXISTS "docs" USING "fts5"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateVirtualTableStatement::class, $rebound);
         self::assertTrue($rebound->ifNotExists);
         self::assertSame([], $rebound->constructor->arguments);

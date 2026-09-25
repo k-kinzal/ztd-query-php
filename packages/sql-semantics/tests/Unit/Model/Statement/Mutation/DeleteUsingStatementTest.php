@@ -29,7 +29,7 @@ final class DeleteUsingStatementTest extends TestCase
         self::assertSame('s', $statement->using->declaration->name);
         self::assertSame(StatementKind::Delete, $statement->kind);
         self::assertSame(['id'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('DELETE FROM "public"."t" USING "public"."s" WHERE ("t"."id" = "s"."id") RETURNING "t"."id" AS "id"', $statement->toString());
+        self::assertSame('DELETE FROM "public"."t" USING "public"."s" WHERE ("t"."id" = "s"."id") RETURNING "t"."id" AS "id"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testAffectedTablesExcludesTheUsingInput(): void
@@ -50,7 +50,7 @@ final class DeleteUsingStatementTest extends TestCase
         self::assertSame($statement->target, $copy->target);
         self::assertSame($statement->using, $copy->using);
         self::assertSame($statement->where, $copy->where);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithWhereReplacesThePredicateImmutably(): void
@@ -58,8 +58,8 @@ final class DeleteUsingStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)', 'CREATE TABLE s(id INTEGER)')))->bind('DELETE FROM t USING s WHERE t.id=s.id');
         self::assertInstanceOf(DeleteUsingStatement::class, $statement);
         $changed = $statement->withWhere(Expression::binary('<', Expression::reference(['t', 'id'], Dialect::PostgreSql), Expression::reference(['s', 'id'], Dialect::PostgreSql)));
-        self::assertSame('DELETE FROM "public"."t" USING "public"."s" WHERE ("t"."id" < "s"."id")', $changed->toString());
-        self::assertSame('DELETE FROM "public"."t" USING "public"."s"', $changed->withWhere(null)->toString());
+        self::assertSame('DELETE FROM "public"."t" USING "public"."s" WHERE ("t"."id" < "s"."id")', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('DELETE FROM "public"."t" USING "public"."s"', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withWhere(null)));
         self::assertSame('=', $statement->where?->spelling());
     }
 }

@@ -51,7 +51,7 @@ final class DoNothingTest extends TestCase
         self::assertInstanceOf(InsertStatement::class, $statement);
         self::assertInstanceOf(DoNothing::class, $statement->conflicts[0]);
         self::assertSame($target, $statement->conflicts[0]->target::class);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

@@ -24,7 +24,7 @@ final class VirtualTableBinderTest extends TestCase
         self::assertSame('fts5', $statement->constructor->module);
         self::assertSame(['a', 'b', "tokenize = 'porter'"], array_column($statement->constructor->arguments, 'text'));
         self::assertTrue($statement->ifNotExists);
-        self::assertSame("CREATE VIRTUAL TABLE IF NOT EXISTS \"main\".\"ft\" USING \"fts5\"(a, b, tokenize = 'porter')", $statement->toString());
+        self::assertSame("CREATE VIRTUAL TABLE IF NOT EXISTS \"main\".\"ft\" USING \"fts5\"(a, b, tokenize = 'porter')", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindAcceptsAModuleWithoutArguments(): void
@@ -34,6 +34,6 @@ final class VirtualTableBinderTest extends TestCase
         self::assertSame(['ft'], $statement->name->parts);
         self::assertSame([], $statement->constructor->arguments);
         self::assertFalse($statement->ifNotExists);
-        self::assertSame('CREATE VIRTUAL TABLE "ft" USING "fts5"', $statement->toString());
+        self::assertSame('CREATE VIRTUAL TABLE "ft" USING "fts5"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

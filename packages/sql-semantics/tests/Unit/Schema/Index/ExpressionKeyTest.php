@@ -37,6 +37,6 @@ final class ExpressionKeyTest extends TestCase
         $key = $statement->index->definition->elements[0];
         self::assertInstanceOf(ExpressionKey::class, $key);
         self::assertSame('("id" + 1)', $key->value()->structure()->toString());
-        self::assertSame('CREATE INDEX "ix" ON "public"."t"((("id" + 1)) ASC)', $statement->toString());
+        self::assertSame('CREATE INDEX "ix" ON "public"."t"((("id" + 1)) ASC)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -28,6 +28,6 @@ final class StreamingModeTest extends TestCase
         $statement = $binder->bind('ALTER SUBSCRIPTION s SET (streaming = ' . $spelling . ')');
         self::assertInstanceOf(Statement\AlterSubscriptionOptionsStatement::class, $statement);
         self::assertSame($value, $statement->options->streaming);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

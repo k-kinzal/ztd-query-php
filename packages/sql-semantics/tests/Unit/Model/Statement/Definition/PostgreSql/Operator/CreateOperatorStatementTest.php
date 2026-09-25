@@ -30,8 +30,8 @@ final class CreateOperatorStatementTest extends TestCase
         self::assertSame(OperatorAttribute::Negator, $statement->options[3]->attribute);
         self::assertFalse($statement->options[5]->value);
         self::assertSame(StatementKind::Create, $statement->kind);
-        self::assertSame('CREATE OPERATOR <-> (FUNCTION = "s"."dist", LEFTARG = point, RIGHTARG = "point", NEGATOR = OPERATOR("s".!<->), RESTRICT = "eqsel", HASHES = FALSE)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE OPERATOR <-> (FUNCTION = "s"."dist", LEFTARG = point, RIGHTARG = "point", NEGATOR = OPERATOR("s".!<->), RESTRICT = "eqsel", HASHES = FALSE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsANameThatIsNotAnOperator(): void
@@ -46,14 +46,14 @@ final class CreateOperatorStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR === (FUNCTION = f, RIGHTARG = integer)');
         self::assertInstanceOf(CreateOperatorStatement::class, $statement);
-        self::assertSame('CREATE OPERATOR === (FUNCTION = "f", RIGHTARG = integer)', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE OPERATOR === (FUNCTION = "f", RIGHTARG = integer)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR === (FUNCTION = f, RIGHTARG = integer)');
         self::assertInstanceOf(CreateOperatorStatement::class, $statement);
-        self::assertSame('CREATE OPERATOR "s".## (FUNCTION = "f", RIGHTARG = integer)', $statement->withName(new QualifiedName(['s', '##']))->toString());
+        self::assertSame('CREATE OPERATOR "s".## (FUNCTION = "f", RIGHTARG = integer)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['s', '##']))));
         self::assertSame(['==='], $statement->name->parts);
     }
 
@@ -62,6 +62,6 @@ final class CreateOperatorStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR === (FUNCTION = f, RIGHTARG = integer)');
         self::assertInstanceOf(CreateOperatorStatement::class, $statement);
         $options = [...$statement->options, new DefinitionOption(OperatorAttribute::Merges, true)];
-        self::assertSame('CREATE OPERATOR === (FUNCTION = "f", RIGHTARG = integer, MERGES = TRUE)', $statement->withOptions($options)->toString());
+        self::assertSame('CREATE OPERATOR === (FUNCTION = "f", RIGHTARG = integer, MERGES = TRUE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOptions($options)));
     }
 }

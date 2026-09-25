@@ -46,8 +46,8 @@ final class RelationsTest extends TestCase
         self::assertNotNull($from);
         self::assertSame($class, $from::class);
         self::assertSame($expected, Relations::write($from, $dialect)->toString());
-        self::assertStringEndsWith($expected, $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertStringEndsWith($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWriteSerializesADocumentRelation(): void
@@ -58,7 +58,7 @@ final class RelationsTest extends TestCase
         $relation = $statement->relations[1];
         self::assertInstanceOf(DocumentRelation::class, $relation);
         self::assertSame('JSON_TABLE("t"."data" FORMAT JSON, \'$[*]\' COLUMNS("n" FOR ORDINALITY)) AS "j"', Relations::write($relation, Dialect::PostgreSql)->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testTargetWritesTheRelationNameWithoutItsAlias(): void
@@ -133,8 +133,8 @@ final class RelationsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.0.44'))->build('CREATE TABLE t (id INT)'));
         $statement = $binder->bind($sql);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $statement);
-        self::assertSame($serialized, $statement->toString());
-        self::assertSame($serialized, $binder->bind($serialized)->toString());
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($serialized)));
         self::assertSame(Relations::write($statement->target, Dialect::PostgreSql)->toString(), Relations::deletion($statement->target, Dialect::PostgreSql)->toString());
     }
 }

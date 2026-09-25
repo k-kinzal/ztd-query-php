@@ -82,8 +82,8 @@ final class PartitionSchemesTest extends TestCase
     public function testBindReadsFunctionsAndCounts(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)'));
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testBindReadsTheSubpartitioningAndItsCount(): void

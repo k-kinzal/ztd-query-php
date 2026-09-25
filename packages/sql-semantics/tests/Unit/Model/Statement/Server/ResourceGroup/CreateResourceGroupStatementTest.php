@@ -26,14 +26,14 @@ final class CreateResourceGroupStatementTest extends TestCase
         self::assertInstanceOf(CreateResourceGroupStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('CREATE RESOURCE GROUP `g` TYPE = SYSTEM VCPU = 0-1 THREAD_PRIORITY = -5 ENABLE', $copy->toString());
+        self::assertSame('CREATE RESOURCE GROUP `g` TYPE = SYSTEM VCPU = 0-1 THREAD_PRIORITY = -5 ENABLE', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithNameCreatesAnotherGroup(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE RESOURCE GROUP g TYPE = USER');
         self::assertInstanceOf(CreateResourceGroupStatement::class, $statement);
-        self::assertSame('CREATE RESOURCE GROUP `h` TYPE = USER ENABLE', $statement->withName('h')->toString());
+        self::assertSame('CREATE RESOURCE GROUP `h` TYPE = USER ENABLE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName('h')));
         self::assertSame('g', $statement->name);
     }
 
@@ -50,7 +50,7 @@ final class CreateResourceGroupStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE RESOURCE GROUP g TYPE = USER VCPU = 1');
         self::assertInstanceOf(CreateResourceGroupStatement::class, $statement);
-        self::assertSame('CREATE RESOURCE GROUP `g` TYPE = USER VCPU = 2-3, 5 ENABLE', $statement->withCpus([new CpuRange(2, 3), new CpuRange(5, 5)])->toString());
+        self::assertSame('CREATE RESOURCE GROUP `g` TYPE = USER VCPU = 2-3, 5 ENABLE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withCpus([new CpuRange(2, 3), new CpuRange(5, 5)])));
         self::assertCount(1, $statement->cpus);
     }
 

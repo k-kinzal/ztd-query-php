@@ -25,8 +25,8 @@ final class OneTimeScheduleTest extends TestCase
         $statement = $binder->bind('CREATE EVENT e ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 HOUR DO DO 1');
         self::assertInstanceOf(CreateEventStatement::class, $statement);
         self::assertInstanceOf(OneTimeSchedule::class, $statement->schedule);
-        self::assertSame('CREATE EVENT `e` ON SCHEDULE AT(DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 1 HOUR)) DO DO 1', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE EVENT `e` ON SCHEDULE AT(DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 1 HOUR)) DO DO 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialectTime(): void

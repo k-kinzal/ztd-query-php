@@ -52,6 +52,6 @@ final class ExtensionsTest extends TestCase
     #[TestWith(['CREATE OR REPLACE TRUSTED LANGUAGE l HANDLER h INLINE i VALIDATOR v', 'CREATE OR REPLACE TRUSTED LANGUAGE "l" HANDLER "h" INLINE "i" VALIDATOR "v"'])]
     public function testWriteSpellsEveryExtensionClause(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 }

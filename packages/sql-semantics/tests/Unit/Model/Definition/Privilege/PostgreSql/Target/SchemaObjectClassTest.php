@@ -34,7 +34,7 @@ final class SchemaObjectClassTest extends TestCase
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertInstanceOf(SchemaObjectTargets::class, $statement->target);
         self::assertSame($class, $statement->target->class);
-        self::assertSame('GRANT USAGE ON ' . $word . ' "app"."x" TO "a"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('GRANT USAGE ON ' . $word . ' "app"."x" TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

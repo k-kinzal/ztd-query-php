@@ -27,8 +27,8 @@ final class RenameRelationStatementTest extends TestCase
         self::assertSame(['app', 's'], $statement->name->parts);
         self::assertSame('s_old', $statement->newName);
         self::assertTrue($statement->ifExists);
-        self::assertSame('ALTER SEQUENCE IF EXISTS "app"."s" RENAME TO "s_old"', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER SEQUENCE IF EXISTS "app"."s" RENAME TO "s_old"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -37,7 +37,7 @@ final class RenameRelationStatementTest extends TestCase
         self::assertInstanceOf(RenameRelationStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -57,7 +57,7 @@ final class RenameRelationStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new QualifiedName(['app', 's']), $statement->name);
         self::assertEquals(new QualifiedName(['s']), $changed->name);
-        self::assertStringContainsString('EXISTS "s" RENAME', $changed->toString());
+        self::assertStringContainsString('EXISTS "s" RENAME', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNewNameReplacesTheOperand(): void
@@ -68,7 +68,7 @@ final class RenameRelationStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('s_old', $statement->newName);
         self::assertEquals('s2', $changed->newName);
-        self::assertStringContainsString('TO "s2"', $changed->toString());
+        self::assertStringContainsString('TO "s2"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfExistsReplacesTheOperand(): void
@@ -79,7 +79,7 @@ final class RenameRelationStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(true, $statement->ifExists);
         self::assertEquals(false, $changed->ifExists);
-        self::assertStringContainsString('ALTER SEQUENCE "app"', $changed->toString());
+        self::assertStringContainsString('ALTER SEQUENCE "app"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOnlyRejectsASequence(): void

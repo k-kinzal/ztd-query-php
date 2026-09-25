@@ -34,8 +34,8 @@ final class SliceAccessTest extends TestCase
         self::assertSame('2', $slice->upper->spelling());
         self::assertSame([$slice->base, $slice->lower, $slice->upper], $slice->inputs());
         self::assertSame('integer[]', $slice->type->name);
-        self::assertSame('SELECT "tags"[1 : 2] FROM "public"."t"', $statement->toString());
-        self::assertSame('SELECT "tags"[1 : 2] FROM "public"."t"', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT "tags"[1 : 2] FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('SELECT "tags"[1 : 2] FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testInputsOmitsAnOpenBound(): void
@@ -47,7 +47,7 @@ final class SliceAccessTest extends TestCase
         self::assertNull($slice->lower);
         self::assertNotNull($slice->upper);
         self::assertSame([$slice->base, $slice->upper], $slice->inputs());
-        self::assertSame('SELECT "tags"[: 2] FROM "public"."t"', $statement->toString());
+        self::assertSame('SELECT "tags"[: 2] FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testSpellingIsTheSliceBrackets(): void

@@ -28,7 +28,7 @@ final class TriggerFiringTest extends TestCase
         $statement = $binder->bind('ALTER EVENT TRIGGER audit ' . $firing->value);
         self::assertInstanceOf(AlterEventTriggerFiringStatement::class, $statement);
         self::assertSame($firing, $statement->firing);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(AlterEventTriggerFiringStatement::class, $rebound);
         self::assertSame($firing, $rebound->firing);
     }

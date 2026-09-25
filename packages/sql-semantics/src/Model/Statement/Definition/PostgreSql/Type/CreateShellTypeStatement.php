@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Creating a shell type
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE TYPE app.box3d');
  *     $statement->name->parts // => ['app', 'box3d']
- *     $statement->toString() // => 'CREATE TYPE "app"."box3d"'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE TYPE "app"."box3d"'
  */
 final class CreateShellTypeStatement extends BoundStatement
 {

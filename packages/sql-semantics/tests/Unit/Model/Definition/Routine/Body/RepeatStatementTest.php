@@ -25,8 +25,8 @@ final class RepeatStatementTest extends TestCase
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertInstanceOf(RepeatStatement::class, $statement->body);
         self::assertNull($statement->body->label);
-        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer) REPEAT SET `a` = (`a` + 1); UNTIL(`a` > 3) END REPEAT', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer) REPEAT SET `a` = (`a` + 1); UNTIL(`a` > 3) END REPEAT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRequiresStatements(): void

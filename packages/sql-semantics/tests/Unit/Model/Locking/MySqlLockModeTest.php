@@ -28,7 +28,7 @@ final class MySqlLockModeTest extends TestCase
         $statement = $binder->bind('LOCK TABLES t ' . $sqlMode);
         self::assertInstanceOf(LockTablesStatement::class, $statement);
         self::assertSame($mode, $statement->locks[0]->mode);
-        self::assertSame('LOCK TABLES `t` ' . $sqlMode, $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('LOCK TABLES `t` ' . $sqlMode, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

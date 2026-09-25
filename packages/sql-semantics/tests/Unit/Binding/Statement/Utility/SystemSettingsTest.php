@@ -28,8 +28,8 @@ final class SystemSettingsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertSame($class, $statement::class);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['alter system set work_mem = \'4MB\'', 'ALTER SYSTEM SET "work_mem" = \'4MB\''])]
@@ -37,6 +37,6 @@ final class SystemSettingsTest extends TestCase
     #[TestWith(['alter system reset all', 'ALTER SYSTEM RESET ALL'])]
     public function testBindReadsEverySystemSettingForm(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 }

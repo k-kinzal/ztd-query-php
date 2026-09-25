@@ -41,7 +41,7 @@ final class ValueColumnTest extends TestCase
         self::assertNull($second->default);
         self::assertFalse($second->notNull);
         self::assertSame([Nullability::NotNull, Nullability::MaybeNull], array_map(static fn ($output): Nullability => $output->expression->nullability, $statement->from->outputs));
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testIsNullableWithAnImplicitPathByDefault(): void

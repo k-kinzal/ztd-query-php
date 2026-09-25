@@ -33,6 +33,6 @@ final class TimingTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(CreateSqliteTriggerStatement::class, $statement);
         self::assertSame($timing, $statement->timing);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

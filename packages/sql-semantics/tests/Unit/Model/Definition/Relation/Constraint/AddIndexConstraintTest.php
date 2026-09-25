@@ -33,8 +33,8 @@ final class AddIndexConstraintTest extends TestCase
         $action = $statement->actions[0];
         self::assertInstanceOf(AddIndexConstraint::class, $action);
         self::assertSame([$kind, 'ix', $name, $checking], [$action->kind, $action->index, $action->name, $action->checking]);
-        self::assertSame($serialized, $statement->toString());
-        self::assertSame($serialized, $binder->bind($serialized)->toString());
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($serialized, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($serialized)));
     }
 
     public function testNotValidIsInvalidSql(): void

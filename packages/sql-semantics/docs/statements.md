@@ -86,10 +86,24 @@ serializer visits the concrete Statement, relation, expression, and declaration
 objects to provide a formatting policy. It receives semantic operands, not a generic
 SQL tree stored on every statement.
 
-`SimpleSerializer` implements the compact layout. `BoundStatement::toString()` uses
-the same serializer. Output is derived from semantic fields, so replacements and
-constructed objects determine the generated SQL. The original parser `source` is
-not used as a fallback for an unknown operation.
+`SimpleSerializer` implements the compact layout. Output is derived from semantic
+fields, so replacements and constructed objects determine the generated SQL. The
+original parser `source` is not used as a fallback for an unknown operation.
+
+`BoundStatement::toString()` returns SQL text according to the statement's origin:
+
+- A Statement returned by `Binder::bind()` or `Binder::bindAll()` writes back exactly
+  the SQL text it was bound from, including comments, whitespace, and keyword case:
+  `$binder->bind($sql)->toString() === $sql`. Each statement from `bindAll()` writes
+  its own segment of the script, so the segments concatenate to the original text.
+  Replacing diagnostics or the transformation context keeps this text.
+- A Statement produced by a `with...()` transformation or `replaceExpression()`, or
+  constructed from operands through `StatementFactory`, has no original text. Its
+  formatting information is discarded and `toString()` writes it from its semantic
+  operands with `SimpleSerializer`.
+
+Call `SimpleSerializer::serialize()` directly to obtain the compact layout of a bound
+Statement. Every Statement satisfies its invariants in both cases.
 
 Ordinary comments, source whitespace, and source positions do not affect the
 serialized layout. Literal and quoted-identifier contents remain intact, including

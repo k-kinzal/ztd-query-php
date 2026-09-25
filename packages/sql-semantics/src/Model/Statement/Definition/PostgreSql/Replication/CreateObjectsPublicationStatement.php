@@ -19,7 +19,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the listed objects of a publication
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT); CREATE TABLE t2(b INT)')))->bind('CREATE PUBLICATION pub FOR TABLE t (a), TABLE t2 WHERE (b > 0)');
  *     count($statement->objects) // => 2
- *     $statement->toString() // => 'CREATE PUBLICATION "pub" FOR TABLE "public"."t"("a"), TABLE "public"."t2" WHERE (("b" > 0))'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE PUBLICATION "pub" FOR TABLE "public"."t"("a"), TABLE "public"."t2" WHERE (("b" > 0))'
  */
 final class CreateObjectsPublicationStatement extends BoundStatement
 {

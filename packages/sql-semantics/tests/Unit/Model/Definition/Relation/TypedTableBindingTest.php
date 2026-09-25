@@ -24,7 +24,7 @@ final class TypedTableBindingTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t OF app.point', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\TypedTableBinding(new QualifiedName(['app', 'point'])), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" OF "app"."point"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" OF "app"."point"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOverQualifiedType(): void

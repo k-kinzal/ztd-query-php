@@ -32,8 +32,8 @@ final class ArraySubqueryTest extends TestCase
         self::assertSame('bigint[]', $array->type->name);
         self::assertSame(Nullability::NotNull, $array->nullability);
         self::assertSame(ExpressionKind::ArraySubquery, $array->kind);
-        self::assertSame('SELECT ARRAY(SELECT "n" AS "n" FROM "public"."t")', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT ARRAY(SELECT "n" AS "n" FROM "public"."t")', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAWideQuery(): void

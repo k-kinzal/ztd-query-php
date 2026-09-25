@@ -90,7 +90,7 @@ final class ParameterInvariantTest extends TestCase
     #[TestWith(["CREATE FUNCTION f(a integer, b integer) RETURNS integer LANGUAGE sql AS 'select 1'", 'CREATE FUNCTION "f"("a" integer, "b" integer) RETURNS integer LANGUAGE "sql" AS \'select 1\''])]
     public function testParametersAcceptsValidDeclarations(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     #[TestWith(["CREATE PROCEDURE p(VARIADIC a integer[], OUT b integer) LANGUAGE sql AS ''"])]

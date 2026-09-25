@@ -62,8 +62,8 @@ final class DatabaseOptionsTest extends TestCase
         $alter = $binder->bind('alter database d collate utf8mb4_bin');
         self::assertInstanceOf(CreateDatabaseStatement::class, $create);
         self::assertInstanceOf(AlterDatabaseStatement::class, $alter);
-        self::assertSame("CREATE DATABASE `d` CHARACTER SET `utf8mb4` COLLATE `utf8mb4_bin` ENCRYPTION 'Y'", $create->toString());
-        self::assertSame('ALTER DATABASE `d` COLLATE `utf8mb4_bin`', $alter->toString());
+        self::assertSame("CREATE DATABASE `d` CHARACTER SET `utf8mb4` COLLATE `utf8mb4_bin` ENCRYPTION 'Y'", (new \SqlSemantics\SimpleSerializer())->serialize($create));
+        self::assertSame('ALTER DATABASE `d` COLLATE `utf8mb4_bin`', (new \SqlSemantics\SimpleSerializer())->serialize($alter));
     }
 
     public function testInitialReadsAParsedCollation(): void

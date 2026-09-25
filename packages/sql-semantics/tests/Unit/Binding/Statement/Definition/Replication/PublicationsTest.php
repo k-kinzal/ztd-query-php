@@ -29,7 +29,7 @@ final class PublicationsTest extends TestCase
         $binder = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)')));
         $statement = $binder->bind($sql);
         self::assertSame($class, $statement::class);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['ALTER PUBLICATION p DROP TABLE t (a)'])]

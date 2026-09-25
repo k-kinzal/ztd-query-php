@@ -77,7 +77,7 @@ final class ColumnDeclarationsTest extends TestCase
     public function testBindReadsEveryColumnDeclaration(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -102,5 +102,21 @@ final class ColumnDeclarationsTest extends TestCase
             'ALTER TABLE t ADD .c INT AFTER a (MySql mysql-5.6.51)' => [Dialect::MySql, 'mysql-5.6.51', ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t ADD .c INT AFTER a', 'ALTER TABLE `t` ADD COLUMN `c` integer AFTER `a`'],
             'ALTER TABLE t MODIFY t.a BIGINT (MySql mysql-5.7.44)' => [Dialect::MySql, 'mysql-5.7.44', ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t MODIFY t.a BIGINT', 'ALTER TABLE `t` MODIFY COLUMN `a` bigint'],
         ];
+    }
+
+    #[TestWith(['mysql-8.0.44', 0])]
+    #[TestWith(['mysql-8.4.7', 0])]
+    #[TestWith(['mysql-9.0.1', 1])]
+    #[TestWith(['mysql-9.1.0', 1])]
+    public function testParseKeepsAnInlineReferenceFromMySql90(string $release, int $count): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE u (a INT PRIMARY KEY)'));
+        $statement = $binder->bind('ALTER TABLE u ADD COLUMN y INT REFERENCES u(a) ON DELETE CASCADE');
+        self::assertInstanceOf(AlterTableStatement::class, $statement);
+        $added = $statement->alterations[0];
+        self::assertInstanceOf(AddColumn::class, $added);
+        self::assertCount($count, $added->constraints);
+        $written = (new \SqlSemantics\SimpleSerializer())->serialize($statement);
+        self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($written)));
     }
 }

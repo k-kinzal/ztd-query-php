@@ -27,7 +27,7 @@ final class PrepareQueryStatementTest extends TestCase
         self::assertSame('new-scope', $changed->scopeId);
         self::assertNotSame($statement, $changed);
         self::assertSame('PREPARE "s"(integer) AS SELECT $1', $changed->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString(), strict: false)->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString(), strict: false)));
     }
 
     public function testDeclaredParametersReachCtesAndNestedQueries(): void
@@ -38,7 +38,7 @@ final class PrepareQueryStatementTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->statement);
         self::assertSame('integer', $statement->statement->outputs[0]->expression->type->name);
         self::assertSame('integer', $statement->statement->outputs[1]->expression->type->name);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDatabaseLanguage(): void

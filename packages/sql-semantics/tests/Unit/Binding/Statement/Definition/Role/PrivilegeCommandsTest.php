@@ -294,6 +294,6 @@ final class PrivilegeCommandsTest extends TestCase
     #[TestWith(['alter default privileges revoke usage on types from r restrict', 'ALTER DEFAULT PRIVILEGES REVOKE USAGE ON TYPES FROM "r" RESTRICT'])]
     public function testDefaultsReadLowercaseKeywords(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 }

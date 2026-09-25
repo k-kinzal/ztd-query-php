@@ -33,7 +33,7 @@ final class ResetServerStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.0.44'))->build()))->bind('RESET MASTER');
         self::assertInstanceOf(ResetServerStatement::class, $statement);
-        self::assertSame('RESET SLAVE, MASTER', (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('RESET SLAVE, MASTER')->toString());
+        self::assertSame('RESET SLAVE, MASTER', (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('RESET SLAVE, MASTER')));
         self::assertSame('RESET REPLICA, MASTER', $statement->withTargets([new ReplicaReset(), new BinaryLogReset()])->toString());
         self::assertCount(1, $statement->targets);
     }

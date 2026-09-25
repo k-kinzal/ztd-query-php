@@ -39,6 +39,6 @@ final class ArrayWrappingTest extends TestCase
         self::assertInstanceOf(JsonTable::class, $statement->from->table);
         self::assertInstanceOf(ValueColumn::class, $statement->from->table->columns[0]);
         self::assertSame($wrapper, $statement->from->table->columns[0]->wrapper);
-        self::assertSame('SELECT "j"."v" AS "v" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("v" integer PATH \'$.b\'' . $expected . ')) AS "j"', $statement->toString());
+        self::assertSame('SELECT "j"."v" AS "v" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("v" integer PATH \'$.b\'' . $expected . ')) AS "j"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

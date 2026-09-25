@@ -22,7 +22,8 @@ use SqlSemantics\Model\Validation\InputViolation;
 final class Domains
 {
     /**
-     * Before MySQL 8.0 a COLLATE clause requires a character set in the type; COLLATE DEFAULT declares no collation.
+     * Before MySQL 8.0 a COLLATE clause requires a character set in the type; COLLATE DEFAULT declares no collation;
+     * ZEROFILL is kept apart from the UNSIGNED type it implies.
      * @throws InvalidSql
      * @throws UnclassifiedSql
      */
@@ -38,7 +39,8 @@ final class Domains
         }
         $token = $name?->tokens()[0] ?? null;
         $collation = $token === null ? null : ($token->name === 'BINARY' || $token->name === 'BINARY_SYM' ? 'binary' : MySqlNames::read($token, $identifiers));
-        return new DeclaredDomain((new TypeReader(Dialect::MySql))->read($type), $collation);
+        $zeroFill = array_filter($type->tokens(), static fn ($token): bool => in_array($token->name, ['ZEROFILL', 'ZEROFILL_SYM'], true)) !== [];
+        return new DeclaredDomain((new TypeReader(Dialect::MySql))->read($type), $collation, $zeroFill);
     }
 
     /**

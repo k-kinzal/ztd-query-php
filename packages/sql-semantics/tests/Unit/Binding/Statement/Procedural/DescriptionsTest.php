@@ -32,7 +32,7 @@ final class DescriptionsTest extends TestCase
         $statement = $binder->bind("EXPLAIN t 'i%'");
         self::assertInstanceOf(DescribeTableStatement::class, $statement);
         self::assertSame('i%', $statement->pattern);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
         self::assertInstanceOf(ExplainStatement::class, $binder->bind('EXPLAIN SELECT 1'));
     }
 

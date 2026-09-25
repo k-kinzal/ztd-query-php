@@ -57,11 +57,11 @@ final class ProgramDeclarations
     }
 
     /**
-     * Writes a declared type and its collation.
+     * Writes a declared type, its ZEROFILL display and its collation.
      */
     public static function domain(DeclaredDomain $domain): Tree
     {
-        return new Tree('domain', [TypeDeclaration::write($domain->type), ...($domain->collation === null ? [] : [Build::keyword('COLLATE'), Build::identifier([$domain->collation], Dialect::MySql)])]);
+        return new Tree('domain', [TypeDeclaration::write($domain->type), ...($domain->zeroFill ? [Build::keyword('ZEROFILL')] : []), ...($domain->collation === null ? [] : [Build::keyword('COLLATE'), Build::identifier([$domain->collation], Dialect::MySql)])]);
     }
 
     /**

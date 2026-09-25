@@ -32,7 +32,7 @@ final class XmlTableBinderTest extends TestCase
         self::assertSame("'/r'", $table->rowPath->text);
         self::assertCount(2, $table->namespaces);
         self::assertSame(['a', 'o', 'b'], array_column($relation->outputs, 'name'));
-        self::assertSame('SELECT "c"."a" AS "a" FROM "public"."t" CROSS JOIN XMLTABLE(XMLNAMESPACES(\'http://x\' AS "x", DEFAULT \'http://d\'), \'/r\' PASSING BY VALUE "t"."x" BY REF COLUMNS "a" integer PATH \'a\' DEFAULT 0 NOT NULL, "o" FOR ORDINALITY, "b" text) AS "c"', $statement->toString());
+        self::assertSame('SELECT "c"."a" AS "a" FROM "public"."t" CROSS JOIN XMLTABLE(XMLNAMESPACES(\'http://x\' AS "x", DEFAULT \'http://d\'), \'/r\' PASSING BY VALUE "t"."x" BY REF COLUMNS "a" integer PATH \'a\' DEFAULT 0 NOT NULL, "o" FOR ORDINALITY, "b" text) AS "c"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testNamespaceLeavesThePrefixAbsentForTheDefaultNamespace(): void
@@ -84,7 +84,7 @@ final class XmlTableBinderTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(["SELECT * FROM t, XMLTABLE('/r' PASSING d COLUMNS v text NOT NULL DEFAULT 'x') AS x", 'SELECT "t"."a" AS "a", "t"."d" AS "d", "x"."v" AS "v" FROM "public"."t" CROSS JOIN XMLTABLE(\'/r\' PASSING "d" COLUMNS "v" text DEFAULT \'x\' NOT NULL) AS "x"'])]
     public function testBindSpellsNamespacesModesAndColumnOptions(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, d XML)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, d XML)')))->bind($sql)));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(["SELECT * FROM t, XMLTABLE('/r' PASSING d COLUMNS v text NULL NOT NULL) AS x"])]

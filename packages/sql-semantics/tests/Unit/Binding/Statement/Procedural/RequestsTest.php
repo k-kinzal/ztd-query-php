@@ -38,7 +38,7 @@ final class RequestsTest extends TestCase
         self::assertInstanceOf(HelpStatement::class, $text);
         self::assertSame('a`b', $identifier->topic);
         self::assertSame("it's", $text->topic);
-        $rebound = $binder->bind($identifier->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($identifier));
         self::assertInstanceOf(HelpStatement::class, $rebound);
         self::assertSame('a`b', $rebound->topic);
     }
@@ -52,7 +52,7 @@ final class RequestsTest extends TestCase
         $statement = $binder->bind("IMPORT TABLE FROM 'a''.sdi', \"b.sdi\"");
         self::assertInstanceOf(ImportTableStatement::class, $statement);
         self::assertSame(["'a''.sdi'", '"b.sdi"'], array_map(static fn ($file): string => $file->text, $statement->files));
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['mysql-8.0.44'])]

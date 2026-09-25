@@ -43,7 +43,7 @@ final class RevokeDefaultPrivilegesStatementTest extends TestCase
     public function testToStringSpellsOutAllPrivilegesAndTheFunctionsClass(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL ON ROUTINES FROM alice CASCADE');
-        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice" CASCADE', $statement->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL ON ROUTINES FROM alice CASCADE', 'ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice" CASCADE'])]
@@ -55,10 +55,10 @@ final class RevokeDefaultPrivilegesStatementTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(RevokeDefaultPrivilegesStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        $again = $binder->bind($statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(RevokeDefaultPrivilegesStatement::class, $again);
-        self::assertSame($expected, $again->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithPrivilegesReplacesTheCompleteRequestWithoutMutatingTheOriginal(): void
@@ -70,7 +70,7 @@ final class RevokeDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new ObjectPrivilege(Privilege::All)], $statement->privileges);
         self::assertEquals($privileges, $changed->privileges);
-        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR EXECUTE ON FUNCTIONS FROM "alice" CASCADE', $changed->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR EXECUTE ON FUNCTIONS FROM "alice" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithPrivilegesRejectsAPrivilegeOutsideTheClassDomain(): void
@@ -89,7 +89,7 @@ final class RevokeDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame(DefaultPrivilegeTarget::Functions, $statement->target);
         self::assertSame(DefaultPrivilegeTarget::Tables, $changed->target);
-        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON TABLES FROM "alice" CASCADE', $changed->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON TABLES FROM "alice" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithGranteesReplacesTheRolesLosingTheDefaults(): void
@@ -101,7 +101,7 @@ final class RevokeDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new NamedRole('alice')], $statement->grantees);
         self::assertEquals($grantees, $changed->grantees);
-        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM PUBLIC, CURRENT_ROLE CASCADE', $changed->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM PUBLIC, CURRENT_ROLE CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithGrantOptionOnlyRevokesTheDefaultsThemselves(): void
@@ -112,7 +112,7 @@ final class RevokeDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertTrue($statement->grantOptionOnly);
         self::assertFalse($changed->grantOptionOnly);
-        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE ALL PRIVILEGES ON FUNCTIONS FROM "alice" CASCADE', $changed->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE ALL PRIVILEGES ON FUNCTIONS FROM "alice" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithBehaviorReplacesTheDependentGrantPolicy(): void
@@ -123,8 +123,8 @@ final class RevokeDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $restricted);
         self::assertSame(DropBehavior::Cascade, $statement->behavior);
         self::assertSame(DropBehavior::Restrict, $restricted->behavior);
-        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice" RESTRICT', $restricted->toString());
-        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice"', $statement->withBehavior(DropBehavior::Default)->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($restricted));
+        self::assertSame('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withBehavior(DropBehavior::Default)));
     }
 
     public function testWithRolesAddsTheDefiningRoles(): void
@@ -136,7 +136,7 @@ final class RevokeDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame([], $statement->roles);
         self::assertEquals($roles, $changed->roles);
-        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner", CURRENT_USER REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice" CASCADE', $changed->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES FOR ROLE "owner", CURRENT_USER REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithSchemasAddsTheSchemaSelection(): void
@@ -147,7 +147,7 @@ final class RevokeDefaultPrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame([], $statement->schemas);
         self::assertSame(['app', 'x"y'], $changed->schemas);
-        self::assertSame('ALTER DEFAULT PRIVILEGES IN SCHEMA "app", "x""y" REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice" CASCADE', $changed->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES IN SCHEMA "app", "x""y" REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTIONS FROM "alice" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithSchemasRejectsASelectionForSchemaDefaults(): void
@@ -179,7 +179,7 @@ final class RevokeDefaultPrivilegesStatementTest extends TestCase
         self::assertSame($statement->behavior, $copy->behavior);
         self::assertSame($statement->roles, $copy->roles);
         self::assertSame($statement->schemas, $copy->schemas);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

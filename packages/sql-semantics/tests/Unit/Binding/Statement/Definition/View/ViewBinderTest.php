@@ -30,7 +30,7 @@ final class ViewBinderTest extends TestCase
         self::assertTrue($statement->temporary);
         self::assertTrue($statement->ifNotExists);
         self::assertNull($statement->properties);
-        self::assertSame('CREATE TEMPORARY VIEW IF NOT EXISTS "v"("x") AS SELECT "a" AS "a" FROM "main"."t"', $statement->toString());
+        self::assertSame('CREATE TEMPORARY VIEW IF NOT EXISTS "v"("x") AS SELECT "a" AS "a" FROM "main"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindReadsPostgreSqlRecursionOptionsAndCheck(): void
@@ -41,7 +41,7 @@ final class ViewBinderTest extends TestCase
         self::assertSame(ViewCheck::Cascaded, $statement->check);
         self::assertInstanceOf(PostgreSqlViewProperties::class, $statement->properties);
         self::assertTrue($statement->properties->recursive);
-        self::assertSame('CREATE OR REPLACE RECURSIVE VIEW "v"("n") WITH ("security_barrier") AS SELECT 1 WITH CASCADED CHECK OPTION', $statement->toString());
+        self::assertSame('CREATE OR REPLACE RECURSIVE VIEW "v"("n") WITH ("security_barrier") AS SELECT 1 WITH CASCADED CHECK OPTION', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindAcceptsLegacyMySqlUnionDefinitions(): void
@@ -49,7 +49,7 @@ final class ViewBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build('CREATE TABLE t (a INT)')))->bind('CREATE VIEW v AS SELECT a FROM t UNION SELECT 1 ORDER BY 1 LIMIT 3');
         self::assertInstanceOf(CreateViewStatement::class, $statement);
         self::assertInstanceOf(CompoundStatement::class, $statement->query);
-        self::assertSame('CREATE VIEW `v` AS SELECT `a` AS `a` FROM `t` UNION SELECT 1 ORDER BY 1 ASC LIMIT 3', $statement->toString());
+        self::assertSame('CREATE VIEW `v` AS SELECT `a` AS `a` FROM `t` UNION SELECT 1 ORDER BY 1 ASC LIMIT 3', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindLeavesMaterializedViewsToTheirOwnForm(): void
@@ -96,7 +96,7 @@ final class ViewBinderTest extends TestCase
         self::assertSame(ViewCheck::Local, $statement->check);
         self::assertInstanceOf(PostgreSqlViewProperties::class, $statement->properties);
         self::assertTrue($statement->properties->recursive);
-        self::assertSame('CREATE OR REPLACE TEMPORARY RECURSIVE VIEW "v"("n") AS SELECT 1 WITH LOCAL CHECK OPTION', $statement->toString());
+        self::assertSame('CREATE OR REPLACE TEMPORARY RECURSIVE VIEW "v"("n") AS SELECT 1 WITH LOCAL CHECK OPTION', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['CREATE VIEW v AS SELECT recursive FROM t'])]
@@ -124,13 +124,21 @@ final class ViewBinderTest extends TestCase
         $statement = $binder->bind('create algorithm = merge sql security invoker view v as select 1 with local check option');
         self::assertInstanceOf(CreateViewStatement::class, $statement);
         self::assertSame(ViewCheck::Local, $statement->check);
-        self::assertSame('CREATE ALGORITHM = MERGE SQL SECURITY INVOKER VIEW `v` AS SELECT 1 WITH LOCAL CHECK OPTION', $statement->toString());
+        self::assertSame('CREATE ALGORITHM = MERGE SQL SECURITY INVOKER VIEW `v` AS SELECT 1 WITH LOCAL CHECK OPTION', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $source = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('create algorithm = temptable sql security definer view v as select 1'), ['create'])[0];
         $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
         $properties = \SqlSemantics\Binding\Statement\Definition\View\ViewBinder::mysql($source, $context);
         self::assertSame(ViewAlgorithm::TempTable, $properties->algorithm);
         self::assertSame(ViewSecurity::Definer, $properties->security);
         self::assertNull($properties->definer);
+    }
+
+    public function testMysqlLeavesTheOmittedSecurityOfAnAlterationUnstated(): void
+    {
+        $source = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('ALTER VIEW v AS SELECT 1'), ['alter_view_stmt'])[0];
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
+        self::assertNull(\SqlSemantics\Binding\Statement\Definition\View\ViewBinder::mysql($source, $context, true)->security);
+        self::assertSame(ViewSecurity::Definer, \SqlSemantics\Binding\Statement\Definition\View\ViewBinder::mysql($source, $context)->security);
     }
 
 
@@ -144,7 +152,23 @@ final class ViewBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(CreateViewStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($statement->toString())->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-5.6.51', 'CREATE VIEW v AS SELECT a FROM t LOCK IN SHARE MODE', 'CREATE VIEW `v` AS SELECT `a` AS `a` FROM `t` LOCK IN SHARE MODE'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-5.7.44', 'CREATE VIEW v AS SELECT a FROM t FOR UPDATE', 'CREATE VIEW `v` AS SELECT `a` AS `a` FROM `t` FOR UPDATE'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-8.0.44', 'CREATE VIEW v AS SELECT a FROM t FOR UPDATE OF t NOWAIT', 'CREATE VIEW `v` AS SELECT `a` AS `a` FROM `t` FOR UPDATE OF `t` NOWAIT'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-8.4.7', 'CREATE OR REPLACE VIEW v AS SELECT a FROM t FOR UPDATE WITH CHECK OPTION', 'CREATE OR REPLACE VIEW `v` AS SELECT `a` AS `a` FROM `t` FOR UPDATE WITH CASCADED CHECK OPTION'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-9.1.0', 'CREATE VIEW v AS (SELECT a FROM t FOR SHARE SKIP LOCKED)', 'CREATE VIEW `v` AS SELECT `a` AS `a` FROM `t` FOR SHARE SKIP LOCKED'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, null, 'CREATE VIEW v AS SELECT a FROM t FOR UPDATE', 'CREATE VIEW "v" AS SELECT "a" AS "a" FROM "public"."t" FOR UPDATE'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, null, 'CREATE RECURSIVE VIEW v (a) AS SELECT a FROM t FOR KEY SHARE OF t', 'CREATE RECURSIVE VIEW "v"("a") AS SELECT "a" AS "a" FROM "public"."t" FOR KEY SHARE OF "t"'])]
+    public function testBindKeepsTheLockingClauseOfTheViewQuery(Dialect $dialect, ?string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT)'));
+        $statement = $binder->bind($sql);
+        self::assertInstanceOf(CreateViewStatement::class, $statement);
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

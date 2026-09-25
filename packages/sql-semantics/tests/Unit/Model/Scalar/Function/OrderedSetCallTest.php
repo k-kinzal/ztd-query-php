@@ -33,7 +33,7 @@ final class OrderedSetCallTest extends TestCase
         self::assertTrue($aggregate->withinGroup[0]->descending);
         self::assertTrue($aggregate->withinGroup[0]->nullsFirst);
         self::assertSame('>', $aggregate->filter?->spelling());
-        self::assertStringContainsString('WITHIN GROUP(ORDER BY "score" DESC NULLS FIRST)', $statement->toString());
+        self::assertStringContainsString('WITHIN GROUP(ORDER BY "score" DESC NULLS FIRST)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testUsesOrderedInputsWhenResolvingTheRegisteredSignature(): void

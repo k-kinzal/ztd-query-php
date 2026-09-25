@@ -33,8 +33,8 @@ final class ConditionalExpressionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INT)'));
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testWriteSpellsAnExtremumWithItsSelectionKeyword(): void
@@ -73,7 +73,7 @@ final class ConditionalExpressionsTest extends TestCase
         $value = $query->outputs[0]->expression;
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Conditional\ArrayComparison::class, $value);
         self::assertSame("('a' NOT LIKE ALL(ARRAY['b']))", ConditionalExpressions::write($value)->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testJsonSpellsTheJsonPredicateItemKind(): void
@@ -90,6 +90,6 @@ final class ConditionalExpressionsTest extends TestCase
     public function testWriteSpellsJsonPredicates(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a TEXT)')))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

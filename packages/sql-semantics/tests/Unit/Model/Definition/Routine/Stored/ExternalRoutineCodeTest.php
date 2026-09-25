@@ -25,8 +25,8 @@ final class ExternalRoutineCodeTest extends TestCase
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertInstanceOf(ExternalRoutineCode::class, $statement->body);
         self::assertSame("it's", $statement->body->code);
-        self::assertSame("CREATE PROCEDURE `p`() LANGUAGE `JAVASCRIPT` AS 'it''s'", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("CREATE PROCEDURE `p`() LANGUAGE `JAVASCRIPT` AS 'it''s'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsTheSqlLanguage(): void

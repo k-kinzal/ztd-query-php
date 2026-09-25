@@ -25,7 +25,7 @@ final class TablespaceCommandsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         self::assertSame($expected, TablespaceCommands::write($binder->bind($sql))?->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testWriteReturnsNullForOtherOperations(): void

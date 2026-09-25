@@ -24,7 +24,7 @@ final class RestartIdentityTest extends TestCase
         self::assertInstanceOf(Relation\Identity\SetColumnIdentity::class, $statement->actions[0]);
         self::assertInstanceOf(Relation\Identity\RestartIdentity::class, $statement->actions[0]->changes[0]);
         self::assertSame('100', $statement->actions[0]->changes[0]->value?->text);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" RESTART WITH 100', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" RESTART WITH 100', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRestartsAtTheStartValueWithoutAnOperand(): void
@@ -33,6 +33,6 @@ final class RestartIdentityTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertInstanceOf(Relation\Identity\SetColumnIdentity::class, $statement->actions[0]);
         self::assertEquals(new Relation\Identity\RestartIdentity(null), $statement->actions[0]->changes[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" RESTART', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" RESTART', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

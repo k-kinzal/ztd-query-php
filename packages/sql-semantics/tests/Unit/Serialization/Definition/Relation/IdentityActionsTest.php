@@ -49,7 +49,7 @@ final class IdentityActionsTest extends TestCase
     #[TestWith(['ALTER TABLE t ALTER id DROP IDENTITY', 'ALTER TABLE "t" ALTER COLUMN "id" DROP IDENTITY'])]
     public function testWriteSpellsEveryIdentityAction(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql)));
     }
 
     public function testOptionWritesValueStorageNameAndOwner(): void

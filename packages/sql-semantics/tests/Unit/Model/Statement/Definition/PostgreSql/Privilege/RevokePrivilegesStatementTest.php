@@ -50,7 +50,7 @@ final class RevokePrivilegesStatementTest extends TestCase
     public function testToStringKeepsTheSignatureAndTheDependentPolicy(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION f(integer) FROM alice GRANTED BY bob CASCADE');
-        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob" CASCADE', $statement->toString());
+        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION f(integer) FROM alice GRANTED BY bob CASCADE', 'REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob" CASCADE'])]
@@ -62,10 +62,10 @@ final class RevokePrivilegesStatementTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, a INTEGER)'));
         $statement = $binder->bind($sql);
         self::assertInstanceOf(RevokePrivilegesStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        $again = $binder->bind($statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(RevokePrivilegesStatement::class, $again);
-        self::assertSame($expected, $again->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithPrivilegesReplacesTheCompleteRequestWithoutMutatingTheOriginal(): void
@@ -77,7 +77,7 @@ final class RevokePrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new ObjectPrivilege(Privilege::Execute)], $statement->privileges);
         self::assertEquals($privileges, $changed->privileges);
-        self::assertSame('REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob" CASCADE', $changed->toString());
+        self::assertSame('REVOKE GRANT OPTION FOR ALL PRIVILEGES ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithPrivilegesRejectsAPrivilegeOutsideTheRoutineDomain(): void
@@ -97,7 +97,7 @@ final class RevokePrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals($target, $changed->target);
         self::assertEquals($statement->privileges, $changed->privileges);
-        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON PROCEDURE "p" FROM "alice" GRANTED BY "bob" CASCADE', $changed->toString());
+        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON PROCEDURE "p" FROM "alice" GRANTED BY "bob" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTargetRejectsAClassOutsideThePrivilegeDomain(): void
@@ -117,7 +117,7 @@ final class RevokePrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new NamedRole('alice')], $statement->grantees);
         self::assertEquals($grantees, $changed->grantees);
-        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM PUBLIC, SESSION_USER GRANTED BY "bob" CASCADE', $changed->toString());
+        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM PUBLIC, SESSION_USER GRANTED BY "bob" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithGrantOptionOnlyRevokesThePrivilegeItself(): void
@@ -128,7 +128,7 @@ final class RevokePrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertTrue($statement->grantOptionOnly);
         self::assertFalse($changed->grantOptionOnly);
-        self::assertSame('REVOKE EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob" CASCADE', $changed->toString());
+        self::assertSame('REVOKE EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithGrantorRemovesOrReplacesTheGrantor(): void
@@ -139,10 +139,10 @@ final class RevokePrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $removed);
         self::assertEquals(new NamedRole('bob'), $statement->grantor);
         self::assertNull($removed->grantor);
-        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" CASCADE', $removed->toString());
+        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($removed));
         $session = $statement->withGrantor(SessionRole::CurrentRole);
         self::assertSame(SessionRole::CurrentRole, $session->grantor);
-        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY CURRENT_ROLE CASCADE', $session->toString());
+        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY CURRENT_ROLE CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($session));
     }
 
     public function testWithBehaviorReplacesTheDependentGrantPolicy(): void
@@ -153,8 +153,8 @@ final class RevokePrivilegesStatementTest extends TestCase
         self::assertNotSame($statement, $restricted);
         self::assertSame(DropBehavior::Cascade, $statement->behavior);
         self::assertSame(DropBehavior::Restrict, $restricted->behavior);
-        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob" RESTRICT', $restricted->toString());
-        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob"', $statement->withBehavior(DropBehavior::Default)->toString());
+        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($restricted));
+        self::assertSame('REVOKE GRANT OPTION FOR EXECUTE ON FUNCTION "f"(integer) FROM "alice" GRANTED BY "bob"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withBehavior(DropBehavior::Default)));
     }
 
     public function testWithOriginRetainsEveryOperand(): void
@@ -169,7 +169,7 @@ final class RevokePrivilegesStatementTest extends TestCase
         self::assertSame($statement->grantOptionOnly, $copy->grantOptionOnly);
         self::assertSame($statement->grantor, $copy->grantor);
         self::assertSame($statement->behavior, $copy->behavior);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

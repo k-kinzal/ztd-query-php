@@ -29,7 +29,7 @@ final class TextArgumentTest extends TestCase
         self::assertInstanceOf(TextArgument::class, $argument);
         self::assertSame(LiteralKind::Text, $argument->literal->literalKind);
         self::assertSame("'wal'", $argument->literal->text);
-        self::assertSame("PRAGMA \"journal_mode\" = 'wal'", $statement->toString());
+        self::assertSame("PRAGMA \"journal_mode\" = 'wal'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsANumericLiteral(): void

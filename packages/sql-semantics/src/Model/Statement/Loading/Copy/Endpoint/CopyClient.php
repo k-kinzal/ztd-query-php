@@ -9,7 +9,7 @@ namespace SqlSemantics\Model\Statement\Loading\Copy\Endpoint;
  * @visibility public
  * @example Writing to the client
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('COPY t TO STDIN', strict: false);
- *     [$statement->destination instanceof \SqlSemantics\Model\Statement\Loading\Copy\Endpoint\CopyClient, $statement->toString()] // => [true, 'COPY "public"."t" TO STDOUT']
+ *     [$statement->destination instanceof \SqlSemantics\Model\Statement\Loading\Copy\Endpoint\CopyClient, (new \SqlSemantics\SimpleSerializer())->serialize($statement)] // => [true, 'COPY "public"."t" TO STDOUT']
  */
 final class CopyClient implements CopyEndpoint
 {

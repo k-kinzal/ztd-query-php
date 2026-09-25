@@ -57,7 +57,7 @@ final class TriggerColumnTest extends TestCase
         self::assertInstanceOf(TriggerColumn::class, $compared);
         self::assertSame(RowVersion::Old, $compared->version);
         self::assertSame(['old', 'id'], $compared->referenceParts());
-        self::assertStringContainsString('SET "x" = "new"."id" WHERE ("id" = "old"."id")', $statement->toString());
+        self::assertStringContainsString('SET "x" = "new"."id" WHERE ("id" = "old"."id")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testInputsHasNoOperandsButContributesItsBindingToLineage(): void

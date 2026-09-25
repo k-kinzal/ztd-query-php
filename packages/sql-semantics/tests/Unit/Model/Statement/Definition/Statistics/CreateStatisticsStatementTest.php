@@ -26,8 +26,8 @@ final class CreateStatisticsStatementTest extends TestCase
         self::assertInstanceOf(CreateStatisticsStatement::class, $statement);
         self::assertSame([['app', 's'], true, [StatisticsKind::MostCommonValues, StatisticsKind::DistinctCounts]], [$statement->name?->parts, $statement->ifNotExists, $statement->kinds]);
         self::assertSame(['public', 't'], $statement->table->name->parts);
-        self::assertSame('CREATE STATISTICS IF NOT EXISTS "app"."s"("mcv", "ndistinct") ON "a", ("lower"("b")) FROM ONLY "public"."t"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE STATISTICS IF NOT EXISTS "app"."s"("mcv", "ndistinct") ON "a", ("lower"("b")) FROM ONLY "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsARepeatedKind(): void
@@ -44,7 +44,7 @@ final class CreateStatisticsStatementTest extends TestCase
         self::assertInstanceOf(CreateStatisticsStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('CREATE STATISTICS ON "a", "b" FROM "public"."t"', $copy->toString());
+        self::assertSame('CREATE STATISTICS ON "a", "b" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -59,7 +59,7 @@ final class CreateStatisticsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, b TEXT)')))->bind('CREATE STATISTICS ON a, b FROM t');
         self::assertInstanceOf(CreateStatisticsStatement::class, $statement);
-        self::assertSame('CREATE STATISTICS "s" ON "a", "b" FROM "public"."t"', $statement->withName(new QualifiedName(['s']))->toString());
+        self::assertSame('CREATE STATISTICS "s" ON "a", "b" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['s']))));
         self::assertNull($statement->name);
     }
 
@@ -67,7 +67,7 @@ final class CreateStatisticsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, b TEXT)')))->bind('CREATE STATISTICS s ON a, b FROM t');
         self::assertInstanceOf(CreateStatisticsStatement::class, $statement);
-        self::assertSame('CREATE STATISTICS IF NOT EXISTS "s" ON "a", "b" FROM "public"."t"', $statement->withIfNotExists(true)->toString());
+        self::assertSame('CREATE STATISTICS IF NOT EXISTS "s" ON "a", "b" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIfNotExists(true)));
         $this->expectException(InvalidStructure::class);
         $statement->withName(null)->withIfNotExists(true);
     }
@@ -76,7 +76,7 @@ final class CreateStatisticsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, b TEXT)')))->bind('CREATE STATISTICS s (mcv) ON a, b FROM t');
         self::assertInstanceOf(CreateStatisticsStatement::class, $statement);
-        self::assertSame('CREATE STATISTICS "s" ON "a", "b" FROM "public"."t"', $statement->withKinds([])->toString());
+        self::assertSame('CREATE STATISTICS "s" ON "a", "b" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withKinds([])));
         self::assertSame([StatisticsKind::MostCommonValues], $statement->kinds);
     }
 
@@ -84,7 +84,7 @@ final class CreateStatisticsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, b TEXT)')))->bind('CREATE STATISTICS s ON a, b FROM t');
         self::assertInstanceOf(CreateStatisticsStatement::class, $statement);
-        self::assertSame('CREATE STATISTICS "s" ON "b", "a" FROM "public"."t"', $statement->withElements([$statement->elements[1], $statement->elements[0]])->toString());
+        self::assertSame('CREATE STATISTICS "s" ON "b", "a" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withElements([$statement->elements[1], $statement->elements[0]])));
         $this->expectException(InvalidStructure::class);
         $statement->withElements([$statement->elements[0]]);
     }

@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("CREATE DEFAULT CONVERSION app.to_latin FOR 'UTF8' TO 'LATIN1' FROM utf8_to_iso8859_1");
  *     $statement->isDefault // => true
  *     $statement->function->parts // => ['utf8_to_iso8859_1']
- *     $statement->toString() // => 'CREATE DEFAULT CONVERSION "app"."to_latin" FOR \'UTF8\' TO \'LATIN1\' FROM "utf8_to_iso8859_1"'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE DEFAULT CONVERSION "app"."to_latin" FOR \'UTF8\' TO \'LATIN1\' FROM "utf8_to_iso8859_1"'
  * @example Rejecting a conversion from SQL_ASCII
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("CREATE CONVERSION c FOR 'UTF8' TO 'LATIN1' FROM f");
  *     $statement->withSourceEncoding(\SqlSemantics\Model\Definition\TypeSystem\Conversion\ServerEncoding::SqlAscii); // throws \SqlSemantics\Model\Validation\InvalidStructure

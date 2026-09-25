@@ -31,8 +31,8 @@ final class DropCastStatementTest extends TestCase
         self::assertFalse($statement->ifExists);
         self::assertSame(DropBehavior::Restrict, $statement->behavior);
         self::assertSame(StatementKind::Drop, $statement->kind);
-        self::assertSame('DROP CAST(integer [] AS text) RESTRICT', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('DROP CAST(integer [] AS text) RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -47,7 +47,7 @@ final class DropCastStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP CAST (integer AS text)');
         self::assertInstanceOf(DropCastStatement::class, $statement);
-        self::assertSame('DROP CAST(integer AS text)', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('DROP CAST(integer AS text)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithCastReplacesTheOperand(): void
@@ -61,7 +61,7 @@ final class DropCastStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP CAST (integer AS text)');
         self::assertInstanceOf(DropCastStatement::class, $statement);
-        self::assertSame('DROP CAST IF EXISTS(integer AS text)', $statement->withIfExists(true)->toString());
+        self::assertSame('DROP CAST IF EXISTS(integer AS text)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIfExists(true)));
     }
 
     public function testWithBehaviorReplacesTheOperand(): void

@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the operation's structure
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('RESET PERSIST IF EXISTS max_connections', strict: false);
- *     $statement->toString() // => 'RESET PERSIST IF EXISTS `max_connections`'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'RESET PERSIST IF EXISTS `max_connections`'
  *
  * @visibility public
  */

@@ -26,8 +26,8 @@ final class RefreshCollationVersionStatementTest extends TestCase
         self::assertInstanceOf(RefreshCollationVersionStatement::class, $statement);
         self::assertSame(['de-x-icu'], $statement->collation->parts);
         self::assertSame(StatementKind::Alter, $statement->kind);
-        self::assertSame('ALTER COLLATION "de-x-icu" REFRESH VERSION', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER COLLATION "de-x-icu" REFRESH VERSION', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnOverQualifiedName(): void
@@ -42,14 +42,14 @@ final class RefreshCollationVersionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER COLLATION c REFRESH VERSION');
         self::assertInstanceOf(RefreshCollationVersionStatement::class, $statement);
-        self::assertSame('ALTER COLLATION "c" REFRESH VERSION', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER COLLATION "c" REFRESH VERSION', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithCollationReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER COLLATION c REFRESH VERSION');
         self::assertInstanceOf(RefreshCollationVersionStatement::class, $statement);
-        self::assertSame('ALTER COLLATION "s"."d" REFRESH VERSION', $statement->withCollation(new QualifiedName(['s', 'd']))->toString());
+        self::assertSame('ALTER COLLATION "s"."d" REFRESH VERSION', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withCollation(new QualifiedName(['s', 'd']))));
         self::assertSame(['c'], $statement->collation->parts);
     }
 }

@@ -28,8 +28,8 @@ final class AssignmentsTest extends TestCase
         $statement = $binder->bind('UPDATE t SET n = DEFAULT, id = 2');
         self::assertInstanceOf(UpdateTableStatement::class, $statement);
         self::assertSame('"n" = DEFAULT, "id" = 2', Assignments::write($statement->writes)->toString());
-        self::assertSame('UPDATE "public"."t" SET "n" = DEFAULT, "id" = 2', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('UPDATE "public"."t" SET "n" = DEFAULT, "id" = 2', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testAssignmentWritesEachInputFormFromItsOperands(): void
@@ -39,7 +39,7 @@ final class AssignmentsTest extends TestCase
         self::assertInstanceOf(UpdateTableStatement::class, $statement);
         self::assertSame([DefaultAssignment::class, ScalarAssignment::class, TupleRowAssignment::class, TupleQueryAssignment::class], array_map(static fn (Assignment $assignment): string => $assignment::class, $statement->writes));
         self::assertSame(['"n" = DEFAULT', '"id" = 1', '("id", "n") = ROW(1, DEFAULT)', '("a"[1], "n") = (SELECT 1, 2)'], array_map(static fn (Assignment $assignment): string => Assignments::assignment($assignment)->toString(), $statement->writes));
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testAssignmentKeepsAOneElementTupleDistinctFromAScalar(): void
@@ -49,7 +49,7 @@ final class AssignmentsTest extends TestCase
         self::assertInstanceOf(UpdateTableStatement::class, $statement);
         self::assertInstanceOf(TupleRowAssignment::class, $statement->writes[0]);
         self::assertSame('("n") = ROW(1)', Assignments::assignment($statement->writes[0])->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(UpdateTableStatement::class, $rebound);
         self::assertInstanceOf(TupleRowAssignment::class, $rebound->writes[0]);
     }

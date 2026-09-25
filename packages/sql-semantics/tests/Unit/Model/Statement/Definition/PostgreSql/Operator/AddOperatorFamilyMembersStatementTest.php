@@ -29,8 +29,8 @@ final class AddOperatorFamilyMembersStatementTest extends TestCase
         self::assertInstanceOf(AddOperatorFamilyMembersStatement::class, $statement);
         self::assertSame(['s', 'f'], $statement->family->parts);
         self::assertSame(StatementKind::Alter, $statement->kind);
-        self::assertSame('ALTER OPERATOR FAMILY "s"."f" USING "btree" ADD OPERATOR 3 = (integer, bigint), FUNCTION 1(integer, bigint) "btint48cmp"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER OPERATOR FAMILY "s"."f" USING "btree" ADD OPERATOR 3 = (integer, bigint), FUNCTION 1(integer, bigint) "btint48cmp"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnOperatorWithoutOperandTypes(): void
@@ -45,7 +45,7 @@ final class AddOperatorFamilyMembersStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER OPERATOR FAMILY f USING btree ADD FUNCTION 1 g');
         self::assertInstanceOf(AddOperatorFamilyMembersStatement::class, $statement);
-        self::assertSame('ALTER OPERATOR FAMILY "f" USING "btree" ADD FUNCTION 1 "g"', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER OPERATOR FAMILY "f" USING "btree" ADD FUNCTION 1 "g"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithFamilyReplacesTheOperand(): void

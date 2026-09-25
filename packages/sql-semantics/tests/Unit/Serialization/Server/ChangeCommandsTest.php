@@ -26,7 +26,7 @@ final class ChangeCommandsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind("CHANGE MASTER TO MASTER_SSL = 5, IGNORE_SERVER_IDS = (1, 2), MASTER_HEARTBEAT_PERIOD = 0.5 FOR CHANNEL 'c'");
         self::assertInstanceOf(ChangeReplicationSourceStatement::class, $statement);
         self::assertSame('change-replication-source', ChangeCommands::source($statement)->role);
-        self::assertSame("CHANGE MASTER TO MASTER_SSL = 1, IGNORE_SERVER_IDS = (1, 2), MASTER_HEARTBEAT_PERIOD = 0.5 FOR CHANNEL 'c'", $statement->toString());
+        self::assertSame("CHANGE MASTER TO MASTER_SSL = 1, IGNORE_SERVER_IDS = (1, 2), MASTER_HEARTBEAT_PERIOD = 0.5 FOR CHANNEL 'c'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testSettingWritesKeywordValues(): void
@@ -34,7 +34,7 @@ final class ChangeCommandsTest extends TestCase
         self::assertSame('keyword', ChangeCommands::setting(AnonymousGtids::Local)->role);
         self::assertSame('keyword', ChangeCommands::setting(new PrivilegeChecks(null))->role);
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', REQUIRE_TABLE_PRIMARY_KEY_CHECK = OFF");
-        self::assertSame("CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', REQUIRE_TABLE_PRIMARY_KEY_CHECK = OFF", $statement->toString());
+        self::assertSame("CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', REQUIRE_TABLE_PRIMARY_KEY_CHECK = OFF", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testFilterWritesEveryRule(): void
@@ -42,7 +42,7 @@ final class ChangeCommandsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CHANGE REPLICATION FILTER REPLICATE_WILD_DO_TABLE = ('a.%'), REPLICATE_IGNORE_DB = (b) FOR CHANNEL 'c'");
         self::assertInstanceOf(ChangeReplicationFilterStatement::class, $statement);
         self::assertSame('change-replication-filter', ChangeCommands::filter($statement)->role);
-        self::assertSame("CHANGE REPLICATION FILTER REPLICATE_WILD_DO_TABLE = ('a.%'), REPLICATE_IGNORE_DB = (`b`) FOR CHANNEL 'c'", $statement->toString());
+        self::assertSame("CHANGE REPLICATION FILTER REPLICATE_WILD_DO_TABLE = ('a.%'), REPLICATE_IGNORE_DB = (`b`) FOR CHANNEL 'c'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testValuesWritesOneTreePerListedValue(): void

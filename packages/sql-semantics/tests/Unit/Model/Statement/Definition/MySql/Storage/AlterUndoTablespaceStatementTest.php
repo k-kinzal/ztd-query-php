@@ -25,7 +25,7 @@ final class AlterUndoTablespaceStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind('ALTER UNDO TABLESPACE u SET ACTIVE STORAGE ENGINE = InnoDB');
         self::assertInstanceOf(AlterUndoTablespaceStatement::class, $statement);
-        self::assertSame('ALTER UNDO TABLESPACE `u` SET ACTIVE ENGINE = `InnoDB`', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER UNDO TABLESPACE `u` SET ACTIVE ENGINE = `InnoDB`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameRejectsAnEmptyName(): void
@@ -49,6 +49,6 @@ final class AlterUndoTablespaceStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER UNDO TABLESPACE u SET ACTIVE ENGINE InnoDB');
         self::assertInstanceOf(AlterUndoTablespaceStatement::class, $statement);
-        self::assertSame('ALTER UNDO TABLESPACE `u` SET ACTIVE', $statement->withEngine(null)->toString());
+        self::assertSame('ALTER UNDO TABLESPACE `u` SET ACTIVE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withEngine(null)));
     }
 }

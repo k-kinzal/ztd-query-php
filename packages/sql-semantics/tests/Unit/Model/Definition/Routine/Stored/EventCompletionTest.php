@@ -25,6 +25,6 @@ final class EventCompletionTest extends TestCase
         self::assertInstanceOf(CreateEventStatement::class, $omitted);
         self::assertInstanceOf(CreateEventStatement::class, $explicit);
         self::assertSame(EventCompletion::Drop, $omitted->completion);
-        self::assertSame($omitted->toString(), $explicit->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($omitted), (new \SqlSemantics\SimpleSerializer())->serialize($explicit));
     }
 }

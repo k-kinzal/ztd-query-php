@@ -21,7 +21,7 @@ final class PoliciesTest extends TestCase
     #[TestWith(['ALTER POLICY "p" ON "public"."t" TO SESSION_USER USING(("a" > 0))'])]
     public function testWriteIsAFixedPoint(string $sql): void
     {
-        self::assertSame($sql, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql)));
     }
 
     public function testWriteReturnsNullForOtherStatements(): void

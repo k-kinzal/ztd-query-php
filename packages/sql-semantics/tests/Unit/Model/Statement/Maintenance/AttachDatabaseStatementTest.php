@@ -26,7 +26,7 @@ final class AttachDatabaseStatementTest extends TestCase
         self::assertSame('archive', $statement->schema->spelling());
         self::assertSame("'secret'", $statement->encryptionKey?->spelling());
         self::assertSame(StatementKind::Attach, $statement->kind);
-        self::assertSame('ATTACH DATABASE \'archive.db\' AS "archive" KEY \'secret\'', $statement->toString());
+        self::assertSame('ATTACH DATABASE \'archive.db\' AS "archive" KEY \'secret\'', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesEveryOperand(): void
@@ -40,6 +40,6 @@ final class AttachDatabaseStatementTest extends TestCase
         self::assertSame($statement->database, $copy->database);
         self::assertSame($statement->schema, $copy->schema);
         self::assertNull($copy->encryptionKey);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

@@ -24,8 +24,8 @@ final class IfStatementTest extends TestCase
         $statement = $binder->bind('CREATE PROCEDURE p(a INT) IF a > 0 THEN DO 1; ELSEIF a < 0 THEN DO 2; ELSE DO 3; END IF');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertInstanceOf(IfStatement::class, $statement->body);
-        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer) IF(`a` > 0) THEN DO 1; ELSEIF(`a` < 0) THEN DO 2; ELSE DO 3; END IF', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer) IF(`a` > 0) THEN DO 1; ELSEIF(`a` < 0) THEN DO 2; ELSE DO 3; END IF', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRequiresABranch(): void

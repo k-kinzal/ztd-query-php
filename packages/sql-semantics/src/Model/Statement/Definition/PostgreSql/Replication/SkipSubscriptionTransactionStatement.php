@@ -17,7 +17,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading a skipped transaction
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("ALTER SUBSCRIPTION sub SKIP (lsn = '0/14c0378')");
  *     $statement->lsn // => '0/14C0378'
- *     $statement->toString() // => 'ALTER SUBSCRIPTION "sub" SKIP(lsn = \'0/14C0378\')'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER SUBSCRIPTION "sub" SKIP(lsn = \'0/14C0378\')'
  */
 final class SkipSubscriptionTransactionStatement extends BoundStatement
 {

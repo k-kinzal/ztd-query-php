@@ -37,8 +37,8 @@ final class CharacteristicsTest extends TestCase
         self::assertSame(Access::ReadWrite, $statement->characteristics->access);
         self::assertFalse($statement->characteristics->deferrable);
         self::assertFalse($statement->characteristics->consistentSnapshot);
-        self::assertSame('BEGIN ISOLATION LEVEL REPEATABLE READ, READ WRITE, NOT DEFERRABLE', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('BEGIN ISOLATION LEVEL REPEATABLE READ, READ WRITE, NOT DEFERRABLE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRetainsTheMySqlSnapshotRequest(): void
@@ -49,7 +49,7 @@ final class CharacteristicsTest extends TestCase
         self::assertTrue($statement->characteristics->consistentSnapshot);
         self::assertSame(Access::ReadOnly, $statement->characteristics->access);
         self::assertNull($statement->characteristics->isolation);
-        self::assertSame('START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

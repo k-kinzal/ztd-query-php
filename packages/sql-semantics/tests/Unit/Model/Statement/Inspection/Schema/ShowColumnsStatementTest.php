@@ -29,7 +29,7 @@ final class ShowColumnsStatementTest extends TestCase
         self::assertFalse($statement->full);
         self::assertFalse($statement->extended);
         self::assertSame(['Field', 'Type', 'Null', 'Key', 'Default', 'Extra'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('SHOW COLUMNS FROM `users`', $statement->toString());
+        self::assertSame('SHOW COLUMNS FROM `users`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithFullAddsCollationPrivilegesAndCommentImmutably(): void
@@ -40,7 +40,7 @@ final class ShowColumnsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertFalse($statement->full);
         self::assertSame(['Field', 'Type', 'Collation', 'Null', 'Key', 'Default', 'Extra', 'Privileges', 'Comment'], array_column($changed->resultColumns(), 'name'));
-        self::assertSame("SHOW FULL COLUMNS FROM `users` LIKE 'id%'", $changed->toString());
+        self::assertSame("SHOW FULL COLUMNS FROM `users` LIKE 'id%'", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithExtendedIncludesHiddenColumnsImmutably(): void
@@ -50,7 +50,7 @@ final class ShowColumnsStatementTest extends TestCase
         $changed = $statement->withExtended(true);
         self::assertNotSame($statement, $changed);
         self::assertFalse($statement->extended);
-        self::assertSame('SHOW EXTENDED FULL COLUMNS FROM `users`', $changed->toString());
+        self::assertSame('SHOW EXTENDED FULL COLUMNS FROM `users`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTableDescribesAnotherTableImmutably(): void
@@ -64,7 +64,7 @@ final class ShowColumnsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame('users', $statement->table->declaration->name);
         self::assertSame('orders', $changed->table->declaration->name);
-        self::assertSame('SHOW COLUMNS FROM `orders`', $changed->toString());
+        self::assertSame('SHOW COLUMNS FROM `orders`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithFilterReplacesTheRestrictionImmutably(): void
@@ -78,8 +78,8 @@ final class ShowColumnsStatementTest extends TestCase
         self::assertInstanceOf(ConditionFilter::class, $conditioned->filter);
         $changed = $statement->withFilter($conditioned->filter);
         self::assertNotSame($statement->filter, $changed->filter);
-        self::assertSame("SHOW COLUMNS FROM `users` WHERE (`Null` = 'NO')", $changed->toString());
-        self::assertSame('SHOW COLUMNS FROM `users`', $statement->withFilter(null)->toString());
+        self::assertSame("SHOW COLUMNS FROM `users` WHERE (`Null` = 'NO')", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SHOW COLUMNS FROM `users`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withFilter(null)));
     }
 
     public function testWithOriginRetainsTheOperands(): void

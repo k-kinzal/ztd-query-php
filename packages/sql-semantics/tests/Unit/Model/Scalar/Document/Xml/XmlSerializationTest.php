@@ -35,8 +35,8 @@ final class XmlSerializationTest extends TestCase
         self::assertSame($value->target, $value->type);
         self::assertSame([$value->value], $value->inputs());
         self::assertSame(ExpressionKind::XmlConversion, $value->kind);
-        self::assertSame('SELECT XMLSERIALIZE(DOCUMENT "x" AS varchar(5)) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT XMLSERIALIZE(DOCUMENT "x" AS varchar(5)) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testSpellingNamesTheOperation(): void

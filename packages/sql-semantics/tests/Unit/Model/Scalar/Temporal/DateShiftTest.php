@@ -26,7 +26,7 @@ final class DateShiftTest extends TestCase
         self::assertSame([$shift->quantity, $shift->value], $shift->inputs());
         self::assertSame('bigint', $shift->quantity->type->name);
         self::assertSame('date', $shift->value->type->name);
-        self::assertSame('SELECT (INTERVAL ? DAY + ?)', $query->toString());
+        self::assertSame('SELECT (INTERVAL ? DAY + ?)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testSpellingRetainsTheSubtractionOperation(): void
@@ -90,7 +90,7 @@ final class DateShiftTest extends TestCase
         $shift = $query->outputs[0]->expression;
         self::assertInstanceOf(DateShift::class, $shift);
         $changed = $query->replaceExpression($shift->quantity, $replacement->outputs[0]->expression);
-        self::assertStringContainsString('INTERVAL 3 DAY', $changed->toString());
-        self::assertStringContainsString('INTERVAL 2 DAY', $query->toString());
+        self::assertStringContainsString('INTERVAL 3 DAY', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertStringContainsString('INTERVAL 2 DAY', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 }

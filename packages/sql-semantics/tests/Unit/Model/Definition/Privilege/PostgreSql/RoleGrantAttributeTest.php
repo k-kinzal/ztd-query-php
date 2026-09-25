@@ -32,7 +32,7 @@ final class RoleGrantAttributeTest extends TestCase
         $statement = $binder->bind('REVOKE ' . $word . ' OPTION FOR staff FROM alice');
         self::assertInstanceOf(RevokeRolesStatement::class, $statement);
         self::assertSame($attribute, $statement->option);
-        self::assertSame('REVOKE ' . $word . ' OPTION FOR "staff" FROM "alice"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('REVOKE ' . $word . ' OPTION FOR "staff" FROM "alice"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

@@ -29,8 +29,8 @@ final class SettingScopesTest extends TestCase
         $statement = $binder->bind('SET GLOBAL a = 1, b = 2, @@c = 3, SESSION d = 4, e = 5');
         self::assertInstanceOf(SetStatement::class, $statement);
         self::assertSame([SettingScope::Global, SettingScope::Global, SettingScope::Session, SettingScope::Session, SettingScope::Session], array_map(static fn ($setting): ?SettingScope => $setting instanceof AssignedSetting ? $setting->scope : null, $statement->settings));
-        self::assertSame('SET GLOBAL `a` = 1, GLOBAL `b` = 2, SESSION `c` = 3, `d` = 4, `e` = 5', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SET GLOBAL `a` = 1, GLOBAL `b` = 2, SESSION `c` = 3, `d` = 4, `e` = 5', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['SET GLOBAL.x = 1'])]
@@ -58,8 +58,8 @@ final class SettingScopesTest extends TestCase
         self::assertInstanceOf(SetStatement::class, $statement);
         self::assertInstanceOf(AssignedSetting::class, $statement->settings[0]);
         self::assertInstanceOf(ConfigurationIdentifier::class, $statement->settings[0]->values[0]);
-        self::assertSame($written, $statement->toString());
-        self::assertSame($written, $binder->bind($written)->toString());
+        self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($written)));
     }
 
     #[TestWith(['SET GLOBAL a = DEFAULT, b = DEFAULT', 'SET GLOBAL `a` = DEFAULT, GLOBAL `b` = DEFAULT'])]
@@ -70,6 +70,6 @@ final class SettingScopesTest extends TestCase
     public function testCarryAppliesTheScopeToLaterDefaultsAndAssignments(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 }

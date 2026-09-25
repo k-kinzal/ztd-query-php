@@ -31,7 +31,7 @@ final class TupleQueryAssignmentTest extends TestCase
         self::assertCount(2, $assignment->destinations());
         self::assertCount(1, $statement->resultColumns());
         self::assertFalse(property_exists($assignment, 'row'));
-        $rebound = (new Binder($schema))->bind($statement->toString());
+        $rebound = (new Binder($schema))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(UpdateTableStatement::class, $rebound);
         self::assertInstanceOf(TupleQueryAssignment::class, $rebound->writes[0]);
     }

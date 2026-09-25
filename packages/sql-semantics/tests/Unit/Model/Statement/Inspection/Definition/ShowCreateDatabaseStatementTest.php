@@ -24,7 +24,7 @@ final class ShowCreateDatabaseStatementTest extends TestCase
         self::assertSame('app', $statement->database);
         self::assertFalse($statement->ifNotExists);
         self::assertSame(['Database', 'Create Database'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('SHOW CREATE DATABASE `app`', $statement->toString());
+        self::assertSame('SHOW CREATE DATABASE `app`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithDatabaseDescribesAnotherDatabaseImmutably(): void
@@ -35,7 +35,7 @@ final class ShowCreateDatabaseStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame('app', $statement->database);
         self::assertSame('other', $changed->database);
-        self::assertSame('SHOW CREATE DATABASE `other`', $changed->toString());
+        self::assertSame('SHOW CREATE DATABASE `other`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfNotExistsTogglesTheReturnedDefinitionImmutably(): void
@@ -46,8 +46,8 @@ final class ShowCreateDatabaseStatementTest extends TestCase
         $changed = $statement->withIfNotExists(false);
         self::assertNotSame($statement, $changed);
         self::assertTrue($statement->ifNotExists);
-        self::assertSame('SHOW CREATE DATABASE `app`', $changed->toString());
-        self::assertSame('SHOW CREATE DATABASE IF NOT EXISTS `app`', $changed->withIfNotExists(true)->toString());
+        self::assertSame('SHOW CREATE DATABASE `app`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SHOW CREATE DATABASE IF NOT EXISTS `app`', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withIfNotExists(true)));
     }
 
     public function testWithOriginRetainsTheOperands(): void

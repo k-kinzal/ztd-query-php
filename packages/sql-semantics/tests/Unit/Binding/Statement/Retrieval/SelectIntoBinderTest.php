@@ -39,7 +39,7 @@ final class SelectIntoBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)'));
         $statement = $binder->bind('SELECT 1 UNION SELECT a FROM t INTO @x');
         self::assertInstanceOf(SelectIntoVariablesStatement::class, $statement);
-        self::assertSame('SELECT 1 UNION SELECT `a` AS `a` FROM `t` INTO @`x`', $statement->toString());
+        self::assertSame('SELECT 1 UNION SELECT `a` AS `a` FROM `t` INTO @`x`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['SELECT a INTO @x FROM t UNION SELECT 2', InputViolation::SelectInto])]
@@ -91,7 +91,7 @@ final class SelectIntoBinderTest extends TestCase
     public function testBindReadsEveryIntoDestination(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement::class . ' => ' . $statement->toString());
+        self::assertSame($expected, $statement::class . ' => ' . (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

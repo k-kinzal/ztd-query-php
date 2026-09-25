@@ -73,4 +73,20 @@ final class DocumentInvariantTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new JsonTable(new Input(Expression::literal('{}', Dialect::MySql)), Expression::literal('$', Dialect::MySql), [$column]);
     }
+
+    public function testTextLiteralAcceptsAPlainOrCharsetIntroducedTextLiteral(): void
+    {
+        $query = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(Dialect::MySql))->build()))->bind("SELECT _utf8mb4 '$', '$', X'24', _binary X'24', 1");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame([true, true, false, false, false], array_map(static fn ($output): bool => DocumentInvariant::textLiteral($output->expression), $query->outputs));
+    }
+
+    #[TestWith(["DELETE x FROM JSON_TABLE(1, _utf8mb4 'text' COLUMNS (x FOR ORDINALITY)) AS n", "DELETE `x` FROM JSON_TABLE(1, _utf8mb4 'text' COLUMNS(`x` FOR ORDINALITY)) AS `n`"])]
+    #[TestWith(["SELECT n.x FROM JSON_TABLE('[1]', _latin1 '$[*]' COLUMNS (x FOR ORDINALITY)) AS n", "SELECT `n`.`x` AS `x` FROM JSON_TABLE('[1]', _latin1 '$[*]' COLUMNS(`x` FOR ORDINALITY)) AS `n`"])]
+    public function testMysqlAcceptsACharsetIntroducedRowPath(string $sql, string $written): void
+    {
+        $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
+        self::assertSame($sql, $statement->toString());
+        self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+    }
 }

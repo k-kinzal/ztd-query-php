@@ -186,9 +186,9 @@ final class UtilityBinderTest extends TestCase
     {
         $pragma = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('PRAGMA cache_size');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ReadPragmaStatement::class, $pragma);
-        self::assertSame('PRAGMA "cache_size"', $pragma->toString());
+        self::assertSame('PRAGMA "cache_size"', (new \SqlSemantics\SimpleSerializer())->serialize($pragma));
         $setting = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET work_mem = 1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $setting);
-        self::assertSame('SET "work_mem" = 1', $setting->toString());
+        self::assertSame('SET "work_mem" = 1', (new \SqlSemantics\SimpleSerializer())->serialize($setting));
     }
 }

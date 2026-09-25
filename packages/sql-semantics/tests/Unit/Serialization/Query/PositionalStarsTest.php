@@ -37,12 +37,12 @@ final class PositionalStarsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p (id int, v int); CREATE TABLE t (id int, a int); CREATE TABLE u (id int, b int)'));
         $query = $binder->bind($sql);
         self::assertInstanceOf(BoundSelect::class, $query);
-        self::assertSame($expected, $query->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
         $ordinals = array_map(static fn ($output): ?int => $output->expression->columnBinding()?->column->ordinal, $query->outputs);
         self::assertSame($columns, $ordinals);
         $rebound = $binder->bind($expected);
         self::assertInstanceOf(BoundSelect::class, $rebound);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
         self::assertSame(array_map(static fn ($output): ?string => $output->name, $query->outputs), array_map(static fn ($output): ?string => $output->name, $rebound->outputs));
     }
 
@@ -102,11 +102,11 @@ final class PositionalStarsTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $query);
         $outputs = array_map(static fn (int $ordinal, int $index): OutputColumn => new OutputColumn($ordinal, $query->outputs[$index]->name, $query->outputs[$index]->expression), array_keys($selection), $selection);
         $changed = $query->withOutputs($outputs);
-        self::assertSame($expected, $changed->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame(array_map(static fn (OutputColumn $output): array => [$output->name, $output->expression->columnBinding()?->column->ordinal], $outputs), array_map(static fn (OutputColumn $output): array => [$output->name, $output->expression->columnBinding()?->column->ordinal], $changed->outputs));
-        $rebound = $binder->bind($changed->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertInstanceOf(BoundSelect::class, $rebound);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
         self::assertCount(count($selection), $rebound->outputs);
         self::assertNotSame($query, $changed);
         self::assertCount(count($query->outputs), $query->outputs);

@@ -36,8 +36,8 @@ final class FunctionsTest extends TestCase
         $call = $statement->outputs[0]->expression;
         self::assertInstanceOf(FunctionCall::class, $call);
         self::assertSame($parts, $call->function->name()->parts);
-        self::assertSame($sql, $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(BoundSelect::class, $rebound);
         $roundTrip = $rebound->outputs[0]->expression;
         self::assertInstanceOf(FunctionCall::class, $roundTrip);
@@ -49,8 +49,8 @@ final class FunctionsTest extends TestCase
     public function testWriteQuotesAMySqlFunctionFoundByName(string $release, string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['SELECT f(a := 1)', 'SELECT "f"("a" => 1)'])]
@@ -60,8 +60,8 @@ final class FunctionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith([Dialect::Sqlite, 'SELECT abs(a), extract(a), "1abc"(1), "abc-"(1), "my fn"(1) FROM t', 'SELECT abs("a"), extract("a"), "1abc"(1), "abc-"(1), "my fn"(1) FROM "main"."t"'])]
@@ -74,7 +74,7 @@ final class FunctionsTest extends TestCase
     public function testWriteSpellsEachInvocationForm(Dialect $dialect, string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INTEGER, b TEXT)'));
-        self::assertSame($expected, $binder->bind($sql, strict: false)->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql, strict: false)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 }

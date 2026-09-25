@@ -27,7 +27,7 @@ final class ShowRoutineCodeStatementTest extends TestCase
         self::assertSame(['app', 'calc'], $statement->name->parts);
         self::assertSame(['Pos', 'Instruction'], array_column($statement->resultColumns(), 'name'));
         self::assertSame('bigint', $statement->resultColumns()[0]->expression->type->name);
-        self::assertSame('SHOW FUNCTION CODE `app`.`calc`', $statement->toString());
+        self::assertSame('SHOW FUNCTION CODE `app`.`calc`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithRoutineListsTheOtherKindImmutably(): void
@@ -37,7 +37,7 @@ final class ShowRoutineCodeStatementTest extends TestCase
         $changed = $statement->withRoutine(RoutineKind::Procedure);
         self::assertNotSame($statement, $changed);
         self::assertSame(RoutineKind::Function, $statement->routine);
-        self::assertSame('SHOW PROCEDURE CODE `calc`', $changed->toString());
+        self::assertSame('SHOW PROCEDURE CODE `calc`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNameNamesAnotherRoutineImmutably(): void
@@ -47,7 +47,7 @@ final class ShowRoutineCodeStatementTest extends TestCase
         $changed = $statement->withName(new QualifiedName(['app', 'other']));
         self::assertNotSame($statement, $changed);
         self::assertSame(['sync'], $statement->name->parts);
-        self::assertSame('SHOW PROCEDURE CODE `app`.`other`', $changed->toString());
+        self::assertSame('SHOW PROCEDURE CODE `app`.`other`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheOperands(): void

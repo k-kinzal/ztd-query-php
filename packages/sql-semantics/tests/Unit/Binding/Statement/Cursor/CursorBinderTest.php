@@ -28,7 +28,7 @@ final class CursorBinderTest extends TestCase
         self::assertTrue($statement->binary);
         self::assertTrue($statement->hold);
         self::assertSame('a', $statement->query->resultColumns()[0]->name);
-        self::assertSame('DECLARE "c" BINARY INSENSITIVE SCROLL CURSOR WITH HOLD FOR SELECT "a" AS "a" FROM "public"."t"', $statement->toString());
+        self::assertSame('DECLARE "c" BINARY INSENSITIVE SCROLL CURSOR WITH HOLD FOR SELECT "a" AS "a" FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $forward = $binder->bind('DECLARE c ASENSITIVE NO SCROLL CURSOR WITHOUT HOLD FOR SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\DeclareCursorStatement::class, $forward);
         self::assertSame(\SqlSemantics\Model\Cursor\Scrollability::ForwardOnly, $forward->scroll);
@@ -66,7 +66,7 @@ final class CursorBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\MoveCursorStatement::class, $remaining);
         self::assertInstanceOf(\SqlSemantics\Model\Cursor\RemainingRows::class, $remaining->movement);
         self::assertSame(\SqlSemantics\Model\Cursor\ScanDirection::Forward, $remaining->movement->direction);
-        self::assertSame('MOVE FORWARD ALL FROM "c"', $remaining->toString());
+        self::assertSame('MOVE FORWARD ALL FROM "c"', (new \SqlSemantics\SimpleSerializer())->serialize($remaining));
     }
 
     public function testNameReadsTheCursorOperandForCloseAndFetch(): void
@@ -79,7 +79,7 @@ final class CursorBinderTest extends TestCase
         $fetch = $binder->bind('FETCH RELATIVE 2 IN c');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\FetchCursorStatement::class, $fetch);
         self::assertSame('c', $fetch->name);
-        self::assertSame('FETCH RELATIVE 2 FROM "c"', $fetch->toString());
+        self::assertSame('FETCH RELATIVE 2 FROM "c"', (new \SqlSemantics\SimpleSerializer())->serialize($fetch));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['declare c binary insensitive no scroll cursor with hold for select 1', 'DECLARE "c" BINARY INSENSITIVE NO SCROLL CURSOR WITH HOLD FOR SELECT 1'])]
@@ -92,7 +92,7 @@ final class CursorBinderTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['fetch last c', 'FETCH LAST FROM "c"'])]
     public function testBindReadsLowerCaseSpellings(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     public function testNameAndMovementReadTheFetchOperands(): void

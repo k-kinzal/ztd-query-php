@@ -35,6 +35,6 @@ final class TableErrorTest extends TestCase
         self::assertInstanceOf(DocumentRelation::class, $statement->from);
         self::assertInstanceOf(JsonTable::class, $statement->from->table);
         self::assertSame($error, $statement->from->table->onError);
-        self::assertSame('SELECT "j"."n" AS "n" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("n" FOR ORDINALITY)' . $clause . ') AS "j"', $statement->toString());
+        self::assertSame('SELECT "j"."n" AS "n" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("n" FOR ORDINALITY)' . $clause . ') AS "j"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

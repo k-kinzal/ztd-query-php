@@ -28,7 +28,7 @@ final class ReleaseSavepointStatementTest extends TestCase
         self::assertSame('sp1', $explicit->name);
         self::assertSame('sp1', $short->name);
         self::assertSame(StatementKind::Release, $short->kind);
-        self::assertSame('RELEASE SAVEPOINT "sp1"', $short->toString());
+        self::assertSame('RELEASE SAVEPOINT "sp1"', (new \SqlSemantics\SimpleSerializer())->serialize($short));
     }
 
     public function testWithOriginPreservesTheName(): void
@@ -39,6 +39,6 @@ final class ReleaseSavepointStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertSame('s9', $copy->scopeId);
         self::assertSame('sp1', $copy->name);
-        self::assertSame('RELEASE SAVEPOINT `sp1`', $copy->toString());
+        self::assertSame('RELEASE SAVEPOINT `sp1`', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

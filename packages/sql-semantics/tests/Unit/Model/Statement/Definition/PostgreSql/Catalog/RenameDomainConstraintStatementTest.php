@@ -25,8 +25,8 @@ final class RenameDomainConstraintStatementTest extends TestCase
         self::assertSame(['app', 'money'], $statement->domain->parts);
         self::assertSame('positive', $statement->constraint);
         self::assertSame('non_negative', $statement->newName);
-        self::assertSame('ALTER DOMAIN "app"."money" RENAME CONSTRAINT "positive" TO "non_negative"', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER DOMAIN "app"."money" RENAME CONSTRAINT "positive" TO "non_negative"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -35,7 +35,7 @@ final class RenameDomainConstraintStatementTest extends TestCase
         self::assertInstanceOf(RenameDomainConstraintStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -55,7 +55,7 @@ final class RenameDomainConstraintStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new QualifiedName(['app', 'money']), $statement->domain);
         self::assertEquals(new QualifiedName(['cash']), $changed->domain);
-        self::assertStringContainsString('ALTER DOMAIN "cash"', $changed->toString());
+        self::assertStringContainsString('ALTER DOMAIN "cash"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithConstraintReplacesTheOperand(): void
@@ -66,7 +66,7 @@ final class RenameDomainConstraintStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('positive', $statement->constraint);
         self::assertEquals('c', $changed->constraint);
-        self::assertStringContainsString('RENAME CONSTRAINT "c"', $changed->toString());
+        self::assertStringContainsString('RENAME CONSTRAINT "c"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNewNameReplacesTheOperand(): void
@@ -77,7 +77,7 @@ final class RenameDomainConstraintStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('non_negative', $statement->newName);
         self::assertEquals('n', $changed->newName);
-        self::assertStringContainsString('TO "n"', $changed->toString());
+        self::assertStringContainsString('TO "n"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAnOverQualifiedDomain(): void

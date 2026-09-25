@@ -24,7 +24,7 @@ final class IdentifierArgumentTest extends TestCase
         $argument = $statement->value;
         self::assertInstanceOf(IdentifierArgument::class, $argument);
         self::assertSame('wal', $argument->name);
-        self::assertSame('PRAGMA "journal_mode" = "wal"', $statement->toString());
+        self::assertSame('PRAGMA "journal_mode" = "wal"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testExposesTheSuppliedName(): void

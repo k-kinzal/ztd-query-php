@@ -22,7 +22,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $query = (new \SqlSemantics\Binder($schema))->bind('SELECT OPERATOR(geo.@@) 2');
  *     $operation = $query->outputs[0]->expression;
  *     [$operation->operator->qualifier, $operation->operator->symbol, $operation->operand->spelling(), $operation->type->name] // => [['geo'], '@@', '2', 'unknown']
- *     $query->toString() // => 'SELECT (OPERATOR("geo".@@) 2)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($query) // => 'SELECT (OPERATOR("geo".@@) 2)'
  */
 final class QualifiedPrefixOperation extends Expression
 {

@@ -28,6 +28,6 @@ final class TriggerLevelTest extends TestCase
         $statement = $binder->bind('CREATE TRIGGER audit AFTER INSERT ON t ' . $clause . ' EXECUTE FUNCTION f()');
         self::assertInstanceOf(CreateTriggerStatement::class, $statement);
         self::assertSame($level, $statement->level);
-        self::assertStringContainsString('FOR EACH ' . $level->value, $statement->toString());
+        self::assertStringContainsString('FOR EACH ' . $level->value, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

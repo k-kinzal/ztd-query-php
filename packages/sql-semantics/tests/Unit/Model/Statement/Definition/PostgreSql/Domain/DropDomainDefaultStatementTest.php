@@ -23,21 +23,21 @@ final class DropDomainDefaultStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN app.d DROP DEFAULT');
         self::assertInstanceOf(DropDomainDefaultStatement::class, $statement);
         self::assertSame(['app', 'd'], $statement->domain->parts);
-        self::assertSame('ALTER DOMAIN "app"."d" DROP DEFAULT', $statement->toString());
+        self::assertSame('ALTER DOMAIN "app"."d" DROP DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d DROP DEFAULT');
         self::assertInstanceOf(DropDomainDefaultStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithDomainReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d DROP DEFAULT');
         self::assertInstanceOf(DropDomainDefaultStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "e" DROP DEFAULT', $statement->withDomain(new QualifiedName(['e']))->toString());
+        self::assertSame('ALTER DOMAIN "e" DROP DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDomain(new QualifiedName(['e']))));
         self::assertSame(['d'], $statement->domain->parts);
     }
 

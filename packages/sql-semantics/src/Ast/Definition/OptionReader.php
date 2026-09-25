@@ -50,6 +50,9 @@ final class OptionReader
             } elseif (in_array($words[0] ?? '', ['COLLATE', 'COMMENT', 'CHARACTER', 'CHARSET', 'STORAGE', 'COMPRESSION', 'COLUMN_FORMAT', 'VISIBLE', 'INVISIBLE', 'ENGINE_ATTRIBUTE', 'SECONDARY_ENGINE_ATTRIBUTE', 'ON', 'SRID', 'SIGNED', 'UNSIGNED', 'ZEROFILL', 'BINARY'], true)) {
                 $result = array_replace($result, self::option($attribute->tokens(), $identifiers));
             }
+            if ($words === ['NOT', 'SECONDARY']) {
+                $result['not_secondary'] = true;
+            }
             if (in_array('STORED', $words, true) || in_array('VIRTUAL', $words, true)) {
                 $result['generated_storage'] = in_array('STORED', $words, true) ? 'stored' : 'virtual';
             }

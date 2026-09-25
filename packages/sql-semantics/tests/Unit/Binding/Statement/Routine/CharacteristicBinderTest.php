@@ -43,7 +43,7 @@ final class CharacteristicBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $identifier = $binder->bind('ALTER FUNCTION f LANGUAGE `sQl`');
         $keyword = $binder->bind('ALTER FUNCTION f LANGUAGE SQL');
-        self::assertSame($identifier->toString(), $keyword->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($identifier), (new \SqlSemantics\SimpleSerializer())->serialize($keyword));
     }
 
     public function testBindRejectsAnEmptyLanguageName(): void

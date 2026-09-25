@@ -32,10 +32,10 @@ final class ClearedPasswordTest extends TestCase
         self::assertInstanceOf(AlterRoleStatement::class, $statement);
         self::assertCount(1, $statement->options);
         self::assertInstanceOf(ClearedPassword::class, $statement->options[0]);
-        self::assertSame('ALTER ROLE "r" PASSWORD NULL', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('ALTER ROLE "r" PASSWORD NULL', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(AlterRoleStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testAClearedPasswordSerializesInsideADefinition(): void
@@ -43,10 +43,10 @@ final class ClearedPasswordTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $origin = $binder->bind('SELECT 1')->origin;
         $statement = new CreateRoleStatement($origin, new NamedRole('r'), [new ClearedPassword()]);
-        self::assertSame('CREATE ROLE "r" PASSWORD NULL', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('CREATE ROLE "r" PASSWORD NULL', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateRoleStatement::class, $rebound);
         self::assertInstanceOf(ClearedPassword::class, $rebound->options[0]);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 }

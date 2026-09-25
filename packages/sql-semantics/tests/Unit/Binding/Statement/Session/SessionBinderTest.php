@@ -28,7 +28,7 @@ final class SessionBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($sql, $statement->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindSeparatesQueryAndConnectionKills(): void
@@ -40,7 +40,7 @@ final class SessionBinderTest extends TestCase
         self::assertSame('42', $query->connectionId->text);
         $connection = $binder->bind('KILL 42');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Server\KillConnectionStatement::class, $connection);
-        self::assertSame('KILL CONNECTION 42', $connection->toString());
+        self::assertSame('KILL CONNECTION 42', (new \SqlSemantics\SimpleSerializer())->serialize($connection));
     }
 
     public function testBindReadsPluginLibraryAndCloneOperands(): void
@@ -56,7 +56,7 @@ final class SessionBinderTest extends TestCase
         $clone = $binder->bind("CLONE LOCAL DATA DIRECTORY = '/d'");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Server\CloneLocalStatement::class, $clone);
         self::assertSame("'/d'", $clone->directory->text);
-        self::assertSame("CLONE LOCAL DATA DIRECTORY '/d'", $clone->toString());
+        self::assertSame("CLONE LOCAL DATA DIRECTORY '/d'", (new \SqlSemantics\SimpleSerializer())->serialize($clone));
     }
 
     public function testTextReadsTheRequiredLiteralOperand(): void
@@ -91,7 +91,7 @@ final class SessionBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTextReadsTheFirstTextLiteral(): void

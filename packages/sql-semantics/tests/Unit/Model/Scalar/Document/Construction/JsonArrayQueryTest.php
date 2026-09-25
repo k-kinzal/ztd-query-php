@@ -32,8 +32,8 @@ final class JsonArrayQueryTest extends TestCase
         self::assertSame([$value->query->resultColumns()[0]->expression], $value->inputs());
         self::assertSame('jsonb', $value->type->name);
         self::assertSame(Nullability::MaybeNull, $value->nullability);
-        self::assertSame('SELECT JSON_ARRAY(SELECT "d" AS "d" FROM "public"."t" ORDER BY "d" ASC FORMAT JSON RETURNING jsonb)', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_ARRAY(SELECT "d" AS "d" FROM "public"."t" ORDER BY "d" ASC FORMAT JSON RETURNING jsonb)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAQueryOfTwoColumns(): void

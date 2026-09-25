@@ -19,7 +19,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the operation's structure
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('EXECUTE s(1, 2)', strict: false);
- *     $statement->toString() // => 'EXECUTE "s"(1, 2)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'EXECUTE "s"(1, 2)'
  *
  * @visibility public
  */

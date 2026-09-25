@@ -28,8 +28,8 @@ final class LockTablesStatementTest extends TestCase
         self::assertSame(['a', 'b'], [$statement->locks[0]->table->alias, $statement->locks[1]->table->alias]);
         $copy = $statement->withOrigin($statement->origin);
         self::assertSame($statement->locks, $copy->locks);
-        self::assertSame('LOCK TABLES `t` AS `a` READ LOCAL, `t` AS `b` WRITE', $copy->toString());
-        self::assertSame($copy->toString(), $binder->bind($copy->toString())->toString());
+        self::assertSame('LOCK TABLES `t` AS `a` READ LOCAL, `t` AS `b` WRITE', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($copy), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($copy))));
     }
 
     public function testWithLocksReplacesRequestsImmutably(): void

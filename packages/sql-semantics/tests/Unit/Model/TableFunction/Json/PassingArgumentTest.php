@@ -33,7 +33,7 @@ final class PassingArgumentTest extends TestCase
         self::assertSame(Format::Json, $passing[0]->input->format);
         self::assertSame('2', $passing[1]->input->expression->spelling());
         self::assertNull($passing[1]->input->format);
-        self::assertSame('SELECT "j"."n" AS "n" FROM JSON_TABLE(\'[]\', \'$[*]\' PASSING \'{}\' FORMAT JSON AS "doc", 2 AS "k" COLUMNS("n" FOR ORDINALITY)) AS "j"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT "j"."n" AS "n" FROM JSON_TABLE(\'[]\', \'$[*]\' PASSING \'{}\' FORMAT JSON AS "doc", 2 AS "k" COLUMNS("n" FOR ORDINALITY)) AS "j"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

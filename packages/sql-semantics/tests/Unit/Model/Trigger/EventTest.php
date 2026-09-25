@@ -35,6 +35,6 @@ final class EventTest extends TestCase
         self::assertInstanceOf(CreateSqliteTriggerStatement::class, $statement);
         self::assertInstanceOf($class, $statement->event);
         self::assertSame($operation, $statement->event->operation());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

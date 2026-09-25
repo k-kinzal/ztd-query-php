@@ -38,7 +38,7 @@ final class InputsTest extends TestCase
         self::assertSame(DefaultSource::Column, $statement->rows[0][1]);
         self::assertSame(['1', 'DEFAULT'], array_map(static fn (Expression|DefaultSource $slot): string => Inputs::write($slot)->toString(), $statement->rows[0]));
         self::assertSame(['DEFAULT', '2'], array_map(static fn (Expression|DefaultSource $slot): string => Inputs::write($slot)->toString(), $statement->rows[1]));
-        self::assertSame('INSERT INTO "public"."t"("id", "n") VALUES (1, DEFAULT), (DEFAULT, 2)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('INSERT INTO "public"."t"("id", "n") VALUES (1, DEFAULT), (DEFAULT, 2)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

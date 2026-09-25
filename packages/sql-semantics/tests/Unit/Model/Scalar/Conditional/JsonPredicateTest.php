@@ -35,8 +35,8 @@ final class JsonPredicateTest extends TestCase
         $predicate = $statement->outputs[0]->expression;
         self::assertInstanceOf(JsonPredicate::class, $predicate);
         self::assertSame([$itemKind, $negated, $uniqueKeys, 'boolean', Nullability::NotNull], [$predicate->itemKind, $predicate->negated, $predicate->uniqueKeys, $predicate->type->name, $predicate->nullability]);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testInputsContainsTheOperand(): void

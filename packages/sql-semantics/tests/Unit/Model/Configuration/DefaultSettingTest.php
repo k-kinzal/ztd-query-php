@@ -25,6 +25,6 @@ final class DefaultSettingTest extends TestCase
         self::assertSame(['work_mem'], $setting->name);
         self::assertSame(\SqlSemantics\Model\Configuration\SettingScope::Local, $setting->scope);
         self::assertSame(\SqlSemantics\Model\Configuration\SettingAction::Default, $setting->action);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

@@ -28,7 +28,7 @@ final class CreateForeignDataWrapperStatementTest extends TestCase
         $changed = $statement->withName('other"wrapper');
         self::assertSame('fdw', $statement->name);
         self::assertSame('other"wrapper', $changed->name);
-        self::assertStringContainsString('"other""wrapper"', $changed->toString());
+        self::assertStringContainsString('"other""wrapper"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertNotSame($statement, $changed);
     }
 
@@ -74,7 +74,7 @@ final class CreateForeignDataWrapperStatementTest extends TestCase
         $removed = $changed->withFunctions(null, null);
         self::assertNull($removed->handler);
         self::assertNull($removed->validator);
-        self::assertSame($statement->toString(), $removed->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($removed));
     }
 
     public function testWithOptionsKeepsTheOriginalInitialOptions(): void

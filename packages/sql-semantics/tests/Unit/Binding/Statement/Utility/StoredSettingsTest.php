@@ -53,6 +53,6 @@ final class StoredSettingsTest extends TestCase
     public function testAssignmentAndResetReadOneStoredParameter(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 }

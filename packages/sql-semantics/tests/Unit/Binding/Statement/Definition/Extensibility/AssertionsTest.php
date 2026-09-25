@@ -25,7 +25,7 @@ final class AssertionsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER)')))->bind('CREATE ASSERTION a CHECK ((SELECT count(*) FROM t) < 10)');
         self::assertInstanceOf(CreateAssertionStatement::class, $statement);
-        self::assertSame('CREATE ASSERTION "a" CHECK (((SELECT "count"(*) FROM "public"."t") < 10))', $statement->toString());
+        self::assertSame('CREATE ASSERTION "a" CHECK (((SELECT "count"(*) FROM "public"."t") < 10))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['', CheckingTime::Immediate])]

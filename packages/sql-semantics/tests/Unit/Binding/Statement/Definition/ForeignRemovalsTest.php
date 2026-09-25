@@ -40,6 +40,6 @@ final class ForeignRemovalsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['drop foreign data wrapper w cascade', 'DROP FOREIGN DATA WRAPPER "w" CASCADE'])]
     public function testBindReadsLowerCaseRemovals(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 }

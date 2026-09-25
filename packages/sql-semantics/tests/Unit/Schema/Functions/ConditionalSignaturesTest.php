@@ -53,7 +53,7 @@ final class ConditionalSignaturesTest extends TestCase
         self::assertInstanceOf(AggregateCall::class, $statement->outputs[1]->expression);
         self::assertInstanceOf(FunctionCall::class, $statement->outputs[2]->expression);
         self::assertInstanceOf(FunctionCall::class, $statement->outputs[3]->expression);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['coalesce'])]
@@ -73,7 +73,7 @@ final class ConditionalSignaturesTest extends TestCase
         self::assertSame($signature, $value->function->signature);
         self::assertSame($text, $value->type);
         self::assertSame(Nullability::AlwaysNull, $value->nullability);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['SELECT coalesce()'])]

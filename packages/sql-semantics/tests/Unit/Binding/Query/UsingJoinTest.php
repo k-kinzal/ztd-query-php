@@ -208,7 +208,7 @@ final class UsingJoinTest extends TestCase
         self::assertSame(['id'], array_column($query->from->columns, 'name'));
         self::assertSame('r0', $query->from->columns[0]->left->columnBinding()?->relationId);
         self::assertSame('r2', $query->from->columns[0]->right->columnBinding()?->relationId);
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['SELECT id FROM a LEFT JOIN b USING (id)', \SqlSemantics\Type\Nullability::NotNull])]
@@ -227,6 +227,6 @@ final class UsingJoinTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\UsingJoin::class, $statement->from);
         self::assertTrue($statement->from->straight);
-        self::assertSame('SELECT `a` AS `a` FROM `t` STRAIGHT_JOIN `u` USING(`a`)', $statement->toString());
+        self::assertSame('SELECT `a` AS `a` FROM `t` STRAIGHT_JOIN `u` USING(`a`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

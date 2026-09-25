@@ -28,8 +28,8 @@ final class TemporalLiteralBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $query = $binder->bind('SELECT ' . $sql);
         self::assertInstanceOf(BoundSelect::class, $query);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testBindLeavesOtherDialectsAlone(): void

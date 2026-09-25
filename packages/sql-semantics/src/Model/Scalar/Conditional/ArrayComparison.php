@@ -30,7 +30,7 @@ use SqlSemantics\Type\TypeDescriptor;
  * @example Keeping an explicitly named operator
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT 1 OPERATOR(geo.<->) ALL (ARRAY[1, 2])');
  *     $statement->outputs[0]->expression->operator->spelling() // => 'OPERATOR(geo.<->)'
- *     $statement->toString() // => 'SELECT (1 OPERATOR("geo".<->) ALL (ARRAY[1, 2]))'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'SELECT (1 OPERATOR("geo".<->) ALL (ARRAY[1, 2]))'
  */
 final class ArrayComparison extends Expression
 {

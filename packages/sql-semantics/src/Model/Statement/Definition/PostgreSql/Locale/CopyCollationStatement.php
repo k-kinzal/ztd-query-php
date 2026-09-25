@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Copying a collation
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE COLLATION IF NOT EXISTS app.german FROM "de_DE"');
  *     $statement->copied->parts // => ['de_DE']
- *     $statement->toString() // => 'CREATE COLLATION IF NOT EXISTS "app"."german" FROM "de_DE"'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE COLLATION IF NOT EXISTS "app"."german" FROM "de_DE"'
  */
 final class CopyCollationStatement extends BoundStatement
 {

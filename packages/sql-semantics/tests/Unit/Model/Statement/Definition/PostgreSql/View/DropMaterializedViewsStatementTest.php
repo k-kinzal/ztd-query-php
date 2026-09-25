@@ -27,7 +27,7 @@ final class DropMaterializedViewsStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertTrue($copy->ifExists);
         self::assertSame(DropBehavior::Cascade, $copy->behavior);
-        self::assertSame('DROP MATERIALIZED VIEW IF EXISTS "a", "s"."b" CASCADE', $copy->toString());
+        self::assertSame('DROP MATERIALIZED VIEW IF EXISTS "a", "s"."b" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherLanguage(): void
@@ -46,7 +46,7 @@ final class DropMaterializedViewsStatementTest extends TestCase
         $changed = $statement->withNames([new QualifiedName(['x"y']), new QualifiedName(['s', 'z'])]);
         self::assertCount(1, $statement->names);
         self::assertCount(2, $changed->names);
-        self::assertSame('DROP MATERIALIZED VIEW "x""y", "s"."z"', $changed->toString());
+        self::assertSame('DROP MATERIALIZED VIEW "x""y", "s"."z"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNamesRejectsAnEmptySelection(): void

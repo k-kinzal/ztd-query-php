@@ -67,15 +67,29 @@ abstract class BoundStatement
      */
     public function withDiagnostics(array $diagnostics): static
     {
-        return $this->withOrigin(new Statement\Origin($this->scopeId, $this->source, $this->origin->dialect, $diagnostics, $this->origin->context));
+        return $this->withOrigin(new Statement\Origin($this->scopeId, $this->source, $this->origin->dialect, $diagnostics, $this->origin->context, $this->origin->verbatim));
     }
 
     /**
-     * Writes the statement structure using the standard compact SQL layout.
+     * Writes the SQL text of this statement.
+     *
+     * A statement read by Binder writes back exactly the SQL text it was bound from. A statement
+     * produced by a transformation or constructed from operands has no original text to keep, so
+     * it is written from its semantic operands in the standard compact layout.
      */
     public function toString(): string
     {
-        return (new \SqlSemantics\SimpleSerializer())->serialize($this);
+        return $this->origin->verbatim ? $this->source->toString() : (new \SqlSemantics\SimpleSerializer())->serialize($this);
+    }
+
+    /**
+     * Marks the operation as exactly the one read from its source text, so it writes that text back.
+     *
+     * @visibility SqlSemantics
+     */
+    public function withVerbatimSource(): static
+    {
+        return $this->withOrigin(new Statement\Origin($this->scopeId, $this->source, $this->origin->dialect, $this->diagnostics, $this->origin->context, true));
     }
 
     /**
@@ -85,7 +99,7 @@ abstract class BoundStatement
      */
     public function withContext(Transformation\Context $context): static
     {
-        return $this->withOrigin(new Statement\Origin($this->scopeId, $this->source, $this->origin->dialect, $this->diagnostics, $context));
+        return $this->withOrigin(new Statement\Origin($this->scopeId, $this->source, $this->origin->dialect, $this->diagnostics, $context, $this->origin->verbatim));
     }
 
     /**

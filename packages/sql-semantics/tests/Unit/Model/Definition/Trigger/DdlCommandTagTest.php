@@ -28,7 +28,7 @@ final class DdlCommandTagTest extends TestCase
         $statement = $binder->bind("CREATE EVENT TRIGGER x ON ddl_command_end WHEN TAG IN ('" . strtolower($tag->value) . "') EXECUTE FUNCTION f()");
         self::assertInstanceOf(CreateEventTriggerStatement::class, $statement);
         self::assertSame([$tag], $statement->tags);
-        self::assertStringContainsString("'" . $tag->value . "'", $statement->toString());
+        self::assertStringContainsString("'" . $tag->value . "'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['SELECT'])]

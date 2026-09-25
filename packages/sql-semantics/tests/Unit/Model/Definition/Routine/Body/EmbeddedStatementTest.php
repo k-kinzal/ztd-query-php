@@ -28,7 +28,7 @@ final class EmbeddedStatementTest extends TestCase
         self::assertInstanceOf(EmbeddedStatement::class, $statement->body);
         self::assertInstanceOf(DeleteTableStatement::class, $statement->body->statement);
         self::assertInstanceOf(LocalVariableReference::class, $statement->body->statement->where?->inputs()[1]);
-        self::assertSame('CREATE PROCEDURE `p`(IN `k` integer) DELETE FROM `t` WHERE (`n` = `k`)', $statement->toString());
+        self::assertSame('CREATE PROCEDURE `p`(IN `k` integer) DELETE FROM `t` WHERE (`n` = `k`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnotherDialectStatement(): void

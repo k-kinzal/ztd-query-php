@@ -24,7 +24,7 @@ final class CreateLoadableFunctionStatementTest extends TestCase
         self::assertInstanceOf(CreateLoadableFunctionStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame("CREATE FUNCTION `f` RETURNS STRING SONAME 'u.so'", $copy->toString());
+        self::assertSame("CREATE FUNCTION `f` RETURNS STRING SONAME 'u.so'", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -49,7 +49,7 @@ final class CreateLoadableFunctionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE FUNCTION f RETURNS STRING SONAME 'u.so'");
         self::assertInstanceOf(CreateLoadableFunctionStatement::class, $statement);
-        self::assertSame("CREATE FUNCTION `f` RETURNS DECIMAL SONAME 'u.so'", $statement->withReturns(LoadableResult::Decimal)->toString());
+        self::assertSame("CREATE FUNCTION `f` RETURNS DECIMAL SONAME 'u.so'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withReturns(LoadableResult::Decimal)));
         self::assertSame(LoadableResult::String, $statement->returns);
     }
 
@@ -57,14 +57,14 @@ final class CreateLoadableFunctionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE FUNCTION f RETURNS STRING SONAME 'u.so'");
         self::assertInstanceOf(CreateLoadableFunctionStatement::class, $statement);
-        self::assertSame("CREATE FUNCTION `f` RETURNS STRING SONAME 'it''s.so'", $statement->withLibrary("it's.so")->toString());
+        self::assertSame("CREATE FUNCTION `f` RETURNS STRING SONAME 'it''s.so'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withLibrary("it's.so")));
     }
 
     public function testWithAggregateDeclaresAnAggregateFunction(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE FUNCTION f RETURNS REAL SONAME 'u.so'");
         self::assertInstanceOf(CreateLoadableFunctionStatement::class, $statement);
-        self::assertSame("CREATE AGGREGATE FUNCTION `f` RETURNS REAL SONAME 'u.so'", $statement->withAggregate(true)->toString());
+        self::assertSame("CREATE AGGREGATE FUNCTION `f` RETURNS REAL SONAME 'u.so'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withAggregate(true)));
         self::assertFalse($statement->aggregate);
     }
 
@@ -74,7 +74,7 @@ final class CreateLoadableFunctionStatementTest extends TestCase
         $legacy = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind("CREATE FUNCTION f RETURNS INTEGER SONAME 'u.so'");
         self::assertInstanceOf(CreateLoadableFunctionStatement::class, $modern);
         self::assertInstanceOf(CreateLoadableFunctionStatement::class, $legacy);
-        self::assertSame("CREATE FUNCTION IF NOT EXISTS `f` RETURNS INTEGER SONAME 'u.so'", $modern->withIfNotExists(true)->toString());
+        self::assertSame("CREATE FUNCTION IF NOT EXISTS `f` RETURNS INTEGER SONAME 'u.so'", (new \SqlSemantics\SimpleSerializer())->serialize($modern->withIfNotExists(true)));
         $this->expectException(InvalidStructure::class);
         $legacy->withIfNotExists(true);
     }

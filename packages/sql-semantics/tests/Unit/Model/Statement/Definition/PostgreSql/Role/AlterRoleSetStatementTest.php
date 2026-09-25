@@ -45,27 +45,27 @@ final class AlterRoleSetStatementTest extends TestCase
         $default = $binder->bind('ALTER ROLE app SET work_mem TO DEFAULT');
         self::assertInstanceOf(AlterRoleSetStatement::class, $default);
         self::assertInstanceOf(DefaultSetting::class, $default->setting);
-        self::assertSame('ALTER ROLE "app" SET "work_mem" = DEFAULT', $default->toString());
+        self::assertSame('ALTER ROLE "app" SET "work_mem" = DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($default));
         $current = $binder->bind('ALTER USER SESSION_USER SET work_mem FROM CURRENT');
         self::assertInstanceOf(AlterRoleSetStatement::class, $current);
         self::assertInstanceOf(CurrentSetting::class, $current->setting);
         self::assertSame(SessionRole::SessionUser, $current->role);
-        self::assertSame('ALTER ROLE SESSION_USER SET "work_mem" FROM CURRENT', $current->toString());
+        self::assertSame('ALTER ROLE SESSION_USER SET "work_mem" FROM CURRENT', (new \SqlSemantics\SimpleSerializer())->serialize($current));
     }
 
     public function testToStringQuotesTheDatabaseTheParameterAndTheValues(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER ROLE ALL IN DATABASE app SET search_path TO app, public');
-        self::assertSame('ALTER ROLE ALL IN DATABASE "app" SET "search_path" = "app", "public"', $statement->toString());
+        self::assertSame('ALTER ROLE ALL IN DATABASE "app" SET "search_path" = "app", "public"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRebindingTheOutputReachesAFixedPoint(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('ALTER ROLE ALL IN DATABASE app SET search_path TO app, public');
-        $again = $binder->bind($statement->toString());
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(AlterRoleSetStatement::class, $again);
-        self::assertSame($statement->toString(), $again->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithRoleReplacesTheSelectionWithoutMutatingTheOriginal(): void
@@ -77,7 +77,7 @@ final class AlterRoleSetStatementTest extends TestCase
         self::assertSame(AllRoles::All, $statement->role);
         self::assertEquals(new NamedRole('x"y'), $changed->role);
         self::assertSame($statement->setting->name, $changed->setting->name);
-        self::assertSame('ALTER ROLE "x""y" IN DATABASE "app" SET "search_path" = "app", "public"', $changed->toString());
+        self::assertSame('ALTER ROLE "x""y" IN DATABASE "app" SET "search_path" = "app", "public"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithDatabaseRemovesTheQualifier(): void
@@ -88,7 +88,7 @@ final class AlterRoleSetStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame('app', $statement->database);
         self::assertNull($changed->database);
-        self::assertSame('ALTER ROLE ALL SET "search_path" = "app", "public"', $changed->toString());
+        self::assertSame('ALTER ROLE ALL SET "search_path" = "app", "public"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithDatabaseQuotesTheReplacementName(): void
@@ -98,7 +98,7 @@ final class AlterRoleSetStatementTest extends TestCase
         $changed = $statement->withDatabase('shop');
         self::assertNull($statement->database);
         self::assertSame('shop', $changed->database);
-        self::assertSame('ALTER ROLE "app" IN DATABASE "shop" SET "work_mem" = 1', $changed->toString());
+        self::assertSame('ALTER ROLE "app" IN DATABASE "shop" SET "work_mem" = 1', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithDatabaseRejectsAnEmptyName(): void
@@ -123,7 +123,7 @@ final class AlterRoleSetStatementTest extends TestCase
         self::assertSame(['search_path'], $statement->setting->name);
         self::assertSame($setting->name, $changed->setting->name);
         self::assertInstanceOf(DefaultSetting::class, $changed->setting);
-        self::assertSame('ALTER ROLE ALL IN DATABASE "app" SET "work_mem" = DEFAULT', $changed->toString());
+        self::assertSame('ALTER ROLE ALL IN DATABASE "app" SET "work_mem" = DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithSettingRejectsALocalScope(): void
@@ -148,7 +148,7 @@ final class AlterRoleSetStatementTest extends TestCase
         self::assertSame($statement->role, $copy->role);
         self::assertSame($statement->database, $copy->database);
         self::assertSame($statement->setting, $copy->setting);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

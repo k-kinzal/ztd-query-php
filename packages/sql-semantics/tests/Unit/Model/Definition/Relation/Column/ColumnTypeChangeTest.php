@@ -27,7 +27,7 @@ final class ColumnTypeChangeTest extends TestCase
         self::assertSame('text', $statement->actions[0]->type->name);
         self::assertSame(['C'], $statement->actions[0]->collation?->parts);
         self::assertNotNull($statement->actions[0]->using);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" TYPE text COLLATE "C" USING CAST("id" AS text)', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" TYPE text COLLATE "C" USING CAST("id" AS text)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindsAPlainTypeChange(): void
@@ -37,7 +37,7 @@ final class ColumnTypeChangeTest extends TestCase
         self::assertInstanceOf(Relation\Column\ColumnTypeChange::class, $statement->actions[0]);
         self::assertNull($statement->actions[0]->collation);
         self::assertNull($statement->actions[0]->using);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" TYPE bigint', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" TYPE bigint', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsATypeFromAnotherDatabaseLanguage(): void

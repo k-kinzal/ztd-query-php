@@ -36,7 +36,7 @@ final class TemporalFormatTest extends TestCase
         self::assertInstanceOf(TemporalFormat::class, $format);
         self::assertSame([TemporalFormatKind::Date, "'EUR'", Nullability::MaybeNull], [$format->temporalKind, $format->standard->spelling(), $format->nullability]);
         self::assertSame("SELECT GET_FORMAT(DATE, 'EUR')", $statement->toString());
-        self::assertSame("SELECT GET_FORMAT(DATE, 'EUR')", $binder->bind($statement->toString())->toString());
+        self::assertSame("SELECT GET_FORMAT(DATE, 'EUR')", (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testInputsContainsTheStandard(): void

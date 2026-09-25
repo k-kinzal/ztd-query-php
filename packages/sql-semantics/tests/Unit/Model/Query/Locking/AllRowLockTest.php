@@ -22,7 +22,7 @@ final class AllRowLockTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Query\Locking\AllRowLock::class, $statement->locks[0]);
         self::assertSame(\SqlSemantics\Model\Query\Locking\LockStrength::Share, $statement->locks[0]->strength);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testDoesNotLeakFromANestedQuery(): void

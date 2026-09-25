@@ -38,6 +38,6 @@ final class ExistsResponseTest extends TestCase
         self::assertInstanceOf(JsonTable::class, $statement->from->table);
         self::assertInstanceOf(ExistsColumn::class, $statement->from->table->columns[0]);
         self::assertSame($response, $statement->from->table->columns[0]->onError);
-        self::assertSame('SELECT "j"."ok" AS "ok" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("ok" boolean EXISTS PATH \'$.a\' ' . $response->value . ' ON ERROR)) AS "j"', $statement->toString());
+        self::assertSame('SELECT "j"."ok" AS "ok" FROM JSON_TABLE(\'[]\', \'$[*]\' COLUMNS("ok" boolean EXISTS PATH \'$.a\' ' . $response->value . ' ON ERROR)) AS "j"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

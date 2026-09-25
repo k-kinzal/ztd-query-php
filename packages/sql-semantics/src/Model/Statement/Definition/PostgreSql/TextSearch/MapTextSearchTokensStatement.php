@@ -21,7 +21,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH CONFIGURATION app.english ALTER MAPPING FOR word, hword WITH app.synonyms, english_stem');
  *     $statement->change // => \SqlSemantics\Model\Definition\TypeSystem\TextSearch\MappingChange::Alter
  *     $statement->tokenTypes // => ['word', 'hword']
- *     $statement->toString() // => 'ALTER TEXT SEARCH CONFIGURATION "app"."english" ALTER MAPPING FOR "word", "hword" WITH "app"."synonyms", "english_stem"'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER TEXT SEARCH CONFIGURATION "app"."english" ALTER MAPPING FOR "word", "hword" WITH "app"."synonyms", "english_stem"'
  */
 final class MapTextSearchTokensStatement extends BoundStatement
 {

@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Setting a domain default
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN app.price SET DEFAULT 1');
  *     $statement->domain->parts // => ['app', 'price']
- *     $statement->toString() // => 'ALTER DOMAIN "app"."price" SET DEFAULT 1'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER DOMAIN "app"."price" SET DEFAULT 1'
  */
 final class SetDomainDefaultStatement extends BoundStatement
 {

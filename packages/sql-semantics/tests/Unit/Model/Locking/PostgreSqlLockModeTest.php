@@ -32,6 +32,6 @@ final class PostgreSqlLockModeTest extends TestCase
         $statement = $binder->bind('LOCK TABLE t IN ' . $sqlMode . ' MODE');
         self::assertInstanceOf(LockRelationsStatement::class, $statement);
         self::assertSame($mode, $statement->mode);
-        self::assertSame('LOCK TABLE "public"."t" IN ' . $sqlMode . ' MODE', $statement->toString());
+        self::assertSame('LOCK TABLE "public"."t" IN ' . $sqlMode . ' MODE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

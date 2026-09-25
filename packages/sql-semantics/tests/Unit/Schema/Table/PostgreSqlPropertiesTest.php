@@ -42,8 +42,14 @@ final class PostgreSqlPropertiesTest extends TestCase
 
     public function testSerializesConstructedProperties(): void
     {
-        $properties = new PostgreSqlProperties(Persistence::Unlogged, CommitAction::Drop, 'heap');
+        $properties = new PostgreSqlProperties(Persistence::Temporary, CommitAction::Drop, 'heap');
         self::assertSame('USING "heap" ON COMMIT DROP', Storage::table($properties, Dialect::PostgreSql)->toString());
+    }
+
+    public function testRejectsACommitActionOfATableThatIsNotTemporary(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new PostgreSqlProperties(Persistence::Unlogged, CommitAction::DeleteRows);
     }
 
     public function testRetainsThePartitioningScheme(): void

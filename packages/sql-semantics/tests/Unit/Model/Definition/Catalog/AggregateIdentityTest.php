@@ -29,6 +29,6 @@ final class AggregateIdentityTest extends TestCase
         self::assertInstanceOf(Statement\ChangeObjectOwnerStatement::class, $statement);
         self::assertInstanceOf(Catalog\AggregateIdentity::class, $statement->object);
         self::assertInstanceOf($form, $statement->object->target);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

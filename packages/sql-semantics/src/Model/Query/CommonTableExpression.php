@@ -26,6 +26,8 @@ final class CommonTableExpression
 {
     /**
      * @param list<string> $columns Result aliases in positional order
+     * @param Recursion\SearchClause|null $search PostgreSQL SEARCH clause of a recursive query
+     * @param Recursion\CycleClause|null $cycle PostgreSQL CYCLE clause of a recursive query
      * @throws InvalidStructure
      */
     public function __construct(
@@ -33,6 +35,8 @@ final class CommonTableExpression
         public readonly BoundQuery|InsertStatement|UpdateStatement|DeleteStatement|MergeStatement $query,
         public readonly array $columns = [],
         public readonly Materialization $materialization = Materialization::Default,
+        public readonly ?Recursion\SearchClause $search = null,
+        public readonly ?Recursion\CycleClause $cycle = null,
     ) {
         Collections::strings($columns);
         $dialect = $query->origin->dialect;
@@ -46,5 +50,24 @@ final class CommonTableExpression
         if ($width !== null && $columns !== [] && (count($columns) > $width || $dialect !== Dialect::PostgreSql && count($columns) !== $width)) {
             throw new InvalidStructure('CTE aliases must match the declared query result positions.');
         }
+        if ($search !== null || $cycle !== null) {
+            Recursion\RecursionRules::validate($this);
+        }
+    }
+
+    /**
+     * Returns the column names the query exposes to references: each result position's alias, or else its name.
+     *
+     * @return list<string>
+     */
+    public function visibleColumns(): array
+    {
+        $names = $this->columns;
+        foreach ($this->query->resultColumns() as $index => $output) {
+            if (!isset($names[$index]) && $output->name !== null) {
+                $names[] = $output->name;
+            }
+        }
+        return $names;
     }
 }

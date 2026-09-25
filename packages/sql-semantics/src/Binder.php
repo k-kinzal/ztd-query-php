@@ -46,7 +46,7 @@ final class Binder
     {
         $diagnostics = new Binding\Analysis\Diagnostics(!$strict);
         $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema, $diagnostics);
-        return (new Binding\Statement\StatementBinder($tables))->bind($this->parser->parse($sql))->withContext(new Binding\Editing\StatementContext($this->schema));
+        return (new Binding\Statement\StatementBinder($tables))->bind($this->parser->parse($sql))->withContext(new Binding\Editing\StatementContext($this->schema))->withVerbatimSource();
     }
 
     /**
@@ -64,7 +64,7 @@ final class Binder
         return array_map(function (\SqlParser\Parser\Node $statement) use ($strict): BoundStatement {
             $diagnostics = new Binding\Analysis\Diagnostics(!$strict);
             $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema, $diagnostics);
-            return (new Binding\Statement\StatementBinder($tables))->bind($statement)->withContext(new Binding\Editing\StatementContext($this->schema));
+            return (new Binding\Statement\StatementBinder($tables))->bind($statement)->withContext(new Binding\Editing\StatementContext($this->schema))->withVerbatimSource();
         }, $statements);
     }
 

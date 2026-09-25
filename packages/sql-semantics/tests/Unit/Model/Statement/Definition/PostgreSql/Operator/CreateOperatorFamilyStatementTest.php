@@ -26,8 +26,8 @@ final class CreateOperatorFamilyStatementTest extends TestCase
         self::assertInstanceOf(CreateOperatorFamilyStatement::class, $statement);
         self::assertSame('Hash', $statement->method);
         self::assertSame(StatementKind::Create, $statement->kind);
-        self::assertSame('CREATE OPERATOR FAMILY "app"."ints" USING "Hash"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE OPERATOR FAMILY "app"."ints" USING "Hash"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnEmptyAccessMethod(): void
@@ -42,7 +42,7 @@ final class CreateOperatorFamilyStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR FAMILY f USING btree');
         self::assertInstanceOf(CreateOperatorFamilyStatement::class, $statement);
-        self::assertSame('CREATE OPERATOR FAMILY "f" USING "btree"', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE OPERATOR FAMILY "f" USING "btree"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -57,6 +57,6 @@ final class CreateOperatorFamilyStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE OPERATOR FAMILY f USING btree');
         self::assertInstanceOf(CreateOperatorFamilyStatement::class, $statement);
-        self::assertSame('CREATE OPERATOR FAMILY "f" USING "hash"', $statement->withMethod('hash')->toString());
+        self::assertSame('CREATE OPERATOR FAMILY "f" USING "hash"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withMethod('hash')));
     }
 }

@@ -30,7 +30,7 @@ final class StoragePathsTest extends TestCase
         $statement = $binder->bind('UPDATE t SET a[1:2] = a, a[1] = 2, r.f = 1, id = 1, a[:2] = a, a[1:] = a');
         self::assertInstanceOf(UpdateTableStatement::class, $statement);
         self::assertSame(['"a"[1 : 2]', '"a"[1]', '"r"."f"', '"id"', '"a"[: 2]', '"a"[1 :]'], array_map(static fn (Assignment $assignment): string => StoragePaths::write($assignment->destinations()[0])->toString(), $statement->writes));
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWriteNestsAFieldBeneathAnElement(): void

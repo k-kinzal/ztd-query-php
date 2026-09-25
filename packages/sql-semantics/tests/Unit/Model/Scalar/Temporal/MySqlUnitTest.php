@@ -26,7 +26,7 @@ final class MySqlUnitTest extends TestCase
         $extract = $query->outputs[0]->expression;
         self::assertInstanceOf(Extract::class, $extract);
         self::assertSame($field, $extract->field);
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     /**
@@ -44,6 +44,6 @@ final class MySqlUnitTest extends TestCase
         self::assertSame(MySqlUnit::Quarter, MySqlUnit::spelled('quarter'));
         self::assertNull(MySqlUnit::spelled('SQL_TSI_FORTNIGHT'));
         $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(d DATETIME)')))->bind('SELECT DATE_ADD(d, INTERVAL 1 SQL_TSI_DAY) FROM t');
-        self::assertSame('SELECT DATE_ADD(`d`, INTERVAL 1 DAY) FROM `t`', $query->toString());
+        self::assertSame('SELECT DATE_ADD(`d`, INTERVAL 1 DAY) FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 }

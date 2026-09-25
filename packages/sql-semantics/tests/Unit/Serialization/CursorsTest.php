@@ -28,19 +28,19 @@ final class CursorsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('DECLARE cur BINARY INSENSITIVE NO SCROLL CURSOR WITH HOLD FOR SELECT 1');
         self::assertInstanceOf(DeclareCursorStatement::class, $statement);
-        self::assertSame('DECLARE "cur" BINARY INSENSITIVE NO SCROLL CURSOR WITH HOLD FOR SELECT 1', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('DECLARE "cur" BINARY INSENSITIVE NO SCROLL CURSOR WITH HOLD FOR SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(DeclareCursorStatement::class, $rebound);
         self::assertSame('cur', $rebound->name);
         self::assertTrue($rebound->binary);
         self::assertTrue($rebound->hold);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteOmitsDefaultDeclarationOptions(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DECLARE cur CURSOR FOR SELECT 1');
-        self::assertSame('DECLARE "cur" CURSOR FOR SELECT 1', $statement->toString());
+        self::assertSame('DECLARE "cur" CURSOR FOR SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['FETCH BACKWARD ALL FROM cur', 'FETCH BACKWARD ALL FROM "cur"'])]
@@ -53,11 +53,11 @@ final class CursorsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(FetchCursorStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertInstanceOf(FetchCursorStatement::class, $rebound);
         self::assertSame($statement->movement::class, $rebound->movement::class);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteNormalizesMoveToTheFromSpelling(): void
@@ -65,15 +65,15 @@ final class CursorsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('MOVE RELATIVE 2 IN cur');
         self::assertInstanceOf(MoveCursorStatement::class, $statement);
-        self::assertSame('MOVE RELATIVE 2 FROM "cur"', $statement->toString());
-        self::assertSame('MOVE ABSOLUTE -2 FROM "cur"', $binder->bind('MOVE ABSOLUTE -2 FROM cur')->toString());
+        self::assertSame('MOVE RELATIVE 2 FROM "cur"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('MOVE ABSOLUTE -2 FROM "cur"', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('MOVE ABSOLUTE -2 FROM cur')));
     }
 
     public function testWriteClosesOneOrAllCursors(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        self::assertSame('CLOSE "cur"', $binder->bind('CLOSE cur')->toString());
-        self::assertSame('CLOSE ALL', $binder->bind('CLOSE ALL')->toString());
+        self::assertSame('CLOSE "cur"', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('CLOSE cur')));
+        self::assertSame('CLOSE ALL', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('CLOSE ALL')));
     }
 
     public function testMovementWritesPositionsAndRemainingRowsDirectly(): void

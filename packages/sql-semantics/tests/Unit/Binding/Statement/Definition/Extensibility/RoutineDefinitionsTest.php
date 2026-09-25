@@ -38,7 +38,7 @@ final class RoutineDefinitionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(["CREATE FUNCTION f(a integer) LANGUAGE sql AS 'SELECT 1'", InputViolation::RoutineDefinition])]
@@ -118,7 +118,7 @@ final class RoutineDefinitionsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testHelpersReadParsedDeclarations(): void

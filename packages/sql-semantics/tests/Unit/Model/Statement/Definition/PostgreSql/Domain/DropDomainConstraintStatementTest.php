@@ -26,42 +26,42 @@ final class DropDomainConstraintStatementTest extends TestCase
         self::assertSame('c', $statement->constraint);
         self::assertTrue($statement->ifExists);
         self::assertSame(DropBehavior::Restrict, $statement->behavior);
-        self::assertSame('ALTER DOMAIN "d" DROP CONSTRAINT IF EXISTS "c" RESTRICT', $statement->toString());
+        self::assertSame('ALTER DOMAIN "d" DROP CONSTRAINT IF EXISTS "c" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d DROP CONSTRAINT c');
         self::assertInstanceOf(DropDomainConstraintStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "d" DROP CONSTRAINT "c"', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER DOMAIN "d" DROP CONSTRAINT "c"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithDomainReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d DROP CONSTRAINT c');
         self::assertInstanceOf(DropDomainConstraintStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "e" DROP CONSTRAINT "c"', $statement->withDomain(new QualifiedName(['e']))->toString());
+        self::assertSame('ALTER DOMAIN "e" DROP CONSTRAINT "c"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDomain(new QualifiedName(['e']))));
     }
 
     public function testWithConstraintReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d DROP CONSTRAINT c');
         self::assertInstanceOf(DropDomainConstraintStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "d" DROP CONSTRAINT "x"', $statement->withConstraint('x')->toString());
+        self::assertSame('ALTER DOMAIN "d" DROP CONSTRAINT "x"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withConstraint('x')));
     }
 
     public function testWithIfExistsReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d DROP CONSTRAINT c');
         self::assertInstanceOf(DropDomainConstraintStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "d" DROP CONSTRAINT IF EXISTS "c"', $statement->withIfExists(true)->toString());
+        self::assertSame('ALTER DOMAIN "d" DROP CONSTRAINT IF EXISTS "c"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIfExists(true)));
     }
 
     public function testWithBehaviorReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DOMAIN d DROP CONSTRAINT c');
         self::assertInstanceOf(DropDomainConstraintStatement::class, $statement);
-        self::assertSame('ALTER DOMAIN "d" DROP CONSTRAINT "c" CASCADE', $statement->withBehavior(DropBehavior::Cascade)->toString());
+        self::assertSame('ALTER DOMAIN "d" DROP CONSTRAINT "c" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withBehavior(DropBehavior::Cascade)));
     }
 
     public function testRejectsAnEmptyConstraintName(): void

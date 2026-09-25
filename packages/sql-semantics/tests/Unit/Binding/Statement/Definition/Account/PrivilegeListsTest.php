@@ -75,7 +75,7 @@ final class PrivilegeListsTest extends TestCase
         $tree = (new DialectParser(Dialect::MySql, 'mysql-8.0.44'))->parse('GRANT SHOW SCHEMAS ON *.* TO u');
         self::assertSame('SHOW DATABASES', PrivilegeLists::keyword($tree->find('role_or_privilege')[0], null));
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build()))->bind('GRANT SHOW SCHEMAS ON *.* TO u');
-        self::assertSame("GRANT SHOW DATABASES ON *.* TO 'u'", $statement->toString());
+        self::assertSame("GRANT SHOW DATABASES ON *.* TO 'u'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testColumnsReadTheColumnNames(): void
@@ -125,7 +125,7 @@ final class PrivilegeListsTest extends TestCase
     #[TestWith(['grant r1@h, r2 to u', "GRANT 'r1'@'h', 'r2' TO 'u'"])]
     public function testPrivilegesAndRolesReadLowerCaseLists(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT)')))->bind($sql)));
     }
 
     public function testRolesRejectARoleWithColumns(): void

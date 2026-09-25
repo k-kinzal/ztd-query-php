@@ -24,7 +24,7 @@ final class JoinOrderTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $statement);
         JoinOrder::straight($statement->from, Dialect::MySql);
         JoinOrder::straight(null, Dialect::PostgreSql);
-        self::assertSame('SELECT 1 FROM(`t` INNER JOIN `u` ON (`t`.`a` = `u`.`a`)) STRAIGHT_JOIN `t` AS `v`', $statement->toString());
+        self::assertSame('SELECT 1 FROM(`t` INNER JOIN `u` ON (`t`.`a` = `u`.`a`)) STRAIGHT_JOIN `t` AS `v`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testStraightRejectsAStraightJoinOutsideMySql(): void

@@ -21,7 +21,7 @@ use SqlSemantics\Type\TypeDescriptor;
  * @example Creating an I/O conversion cast
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE CAST (bigint AS money) WITH INOUT AS ASSIGNMENT');
  *     $statement->mechanism // => \SqlSemantics\Model\Definition\TypeSystem\Cast\CastMechanism::InOut
- *     $statement->toString() // => 'CREATE CAST(bigint AS "money") WITH INOUT AS ASSIGNMENT'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE CAST(bigint AS "money") WITH INOUT AS ASSIGNMENT'
  * @example Rejecting a cast from a type to itself
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE CAST (bigint AS money) WITH INOUT');
  *     $statement->withTargetType($statement->sourceType); // throws \SqlSemantics\Model\Validation\InvalidStructure

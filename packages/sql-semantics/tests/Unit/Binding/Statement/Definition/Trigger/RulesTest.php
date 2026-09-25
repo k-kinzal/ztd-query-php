@@ -34,7 +34,7 @@ final class RulesTest extends TestCase
         self::assertTrue($statement->orReplace);
         self::assertInstanceOf(InsertStatement::class, $statement->actions[0]);
         self::assertInstanceOf(UpdateStatement::class, $statement->actions[1]);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['DO NOTHING'])]
@@ -64,7 +64,7 @@ final class RulesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE RULE r AS ON INSERT TO t DO INSTEAD SELECT NEW.a');
         self::assertInstanceOf(CreateCommandRuleStatement::class, $statement);
         self::assertInstanceOf(BoundQuery::class, $statement->actions[0]);
-        self::assertSame('CREATE RULE "r" AS ON INSERT TO "public"."t" DO INSTEAD SELECT "new"."a" AS "a"', $statement->toString());
+        self::assertSame('CREATE RULE "r" AS ON INSERT TO "public"."t" DO INSTEAD SELECT "new"."a" AS "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testActionCannotReadAnImageTheEventLacks(): void
@@ -91,6 +91,6 @@ final class RulesTest extends TestCase
     public function testBindReadsEachLowercaseRule(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT); CREATE TABLE u(a INT)')))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

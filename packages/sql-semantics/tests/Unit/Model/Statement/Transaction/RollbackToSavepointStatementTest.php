@@ -28,7 +28,7 @@ final class RollbackToSavepointStatementTest extends TestCase
         self::assertSame('sp1', $explicit->name);
         self::assertSame('sp1', $short->name);
         self::assertSame(StatementKind::Rollback, $short->kind);
-        self::assertSame('ROLLBACK TO SAVEPOINT `sp1`', $short->toString());
+        self::assertSame('ROLLBACK TO SAVEPOINT `sp1`', (new \SqlSemantics\SimpleSerializer())->serialize($short));
     }
 
     public function testWithOriginPreservesTheName(): void
@@ -39,6 +39,6 @@ final class RollbackToSavepointStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertSame('s9', $copy->scopeId);
         self::assertSame('sp1', $copy->name);
-        self::assertSame('ROLLBACK TO SAVEPOINT "sp1"', $copy->toString());
+        self::assertSame('ROLLBACK TO SAVEPOINT "sp1"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

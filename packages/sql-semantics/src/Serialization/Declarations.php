@@ -33,17 +33,26 @@ final class Declarations
      */
     public static function table(CreateTableStatement $statement): Tree
     {
-        $table = $statement->definition->table;
-        $dialect = $statement->origin->dialect;
+        return self::declared($statement->definition->table, $statement->origin->dialect, $statement->ifNotExists, $statement->templates, $statement->exclusions, $statement->catalog);
+    }
+
+    /**
+     * Writes a declared table from its definition: the CREATE header, the table elements and the table options.
+     *
+     * @param list<\SqlSemantics\Model\Definition\Table\TemplatePlacement> $templates
+     * @param list<\SqlSemantics\Model\Definition\Relation\Constraint\ExclusionConstraint> $exclusions
+     */
+    public static function declared(\SqlSemantics\Schema\TableDefinition $table, \SqlSemantics\Dialect $dialect, bool $ifNotExists, array $templates = [], array $exclusions = [], ?string $catalog = null): Tree
+    {
         $columns = [];
         $columnKey = self::columnKey($table, $dialect);
         $keyConflict = self::keyConflict($table);
         foreach ($table->columns as $position => $column) {
-            array_push($columns, ...Definition\Table\PostgreSqlTables::templates($statement->templates, $position));
+            array_push($columns, ...Definition\Table\PostgreSqlTables::templates($templates, $position));
             $written = Definition\Columns::write($column, $dialect, $keyConflict);
             $columns[] = $columnKey !== null && $columnKey->localColumns() === [$column->name] ? new Tree('column', [$written, Definition\Constraints::column($columnKey, $dialect)]) : $written;
         }
-        array_push($columns, ...Definition\Table\PostgreSqlTables::templates($statement->templates, count($table->columns)));
+        array_push($columns, ...Definition\Table\PostgreSqlTables::templates($templates, count($table->columns)));
         foreach ($table->constraints as $constraint) {
             if ($constraint === $columnKey || $dialect === \SqlSemantics\Dialect::Sqlite && $constraint instanceof PrimaryKey && array_filter($table->columns, static fn ($column): bool => $column->generation instanceof AutoIncrementColumn) !== []) {
                 continue;
@@ -53,14 +62,14 @@ final class Declarations
         foreach ($table->indexes as $index) {
             $columns[] = Definition\Indexes::inline($index, $dialect);
         }
-        foreach ($statement->exclusions as $exclusion) {
+        foreach ($exclusions as $exclusion) {
             $columns[] = Definition\Relation\ConstraintActions::exclusion($exclusion);
         }
         $properties = $table->properties;
         $modifier = $properties instanceof Table\PostgreSqlProperties ? match ($properties->persistence) {
             Table\Persistence::Permanent => '', Table\Persistence::Temporary => 'TEMPORARY ', Table\Persistence::Unlogged => 'UNLOGGED ',
         } : (($properties instanceof Table\MySqlProperties || $properties instanceof Table\SqliteProperties) && $properties->temporary ? 'TEMPORARY ' : '');
-        return new Tree('create-table', [Build::keyword('CREATE ' . $modifier . 'TABLE' . ($statement->ifNotExists ? ' IF NOT EXISTS' : '')), Build::identifier($statement->catalog === null ? self::tableName($table) : [$statement->catalog, $table->schema, $table->name], $dialect), Build::parentheses(Build::separated($columns)), Definition\Storage::table($properties, $dialect)]);
+        return new Tree('create-table', [Build::keyword('CREATE ' . $modifier . 'TABLE' . ($ifNotExists ? ' IF NOT EXISTS' : '')), Build::identifier($catalog === null ? self::tableName($table) : [$catalog, $table->schema, $table->name], $dialect), Build::parentheses(Build::separated($columns)), Definition\Storage::table($properties, $dialect)]);
     }
 
     /**

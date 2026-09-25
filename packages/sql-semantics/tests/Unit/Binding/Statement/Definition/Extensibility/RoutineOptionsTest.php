@@ -91,7 +91,7 @@ final class RoutineOptionsTest extends TestCase
     public function testOptionSpellsEachAttribute(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     #[TestWith(['ALTER FUNCTION f() SUPPORT a.d.s.g'])]

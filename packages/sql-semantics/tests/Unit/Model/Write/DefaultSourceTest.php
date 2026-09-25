@@ -24,7 +24,7 @@ final class DefaultSourceTest extends TestCase
         $insert = $binder->bind('INSERT INTO t VALUES (DEFAULT)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $insert);
         self::assertSame(\SqlSemantics\Model\Write\DefaultSource::Column, $insert->rows[0][0]);
-        self::assertSame($insert->toString(), $binder->bind($insert->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($insert), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($insert))));
     }
 
     #[TestWith(['SELECT DEFAULT'])]

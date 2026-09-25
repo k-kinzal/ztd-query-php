@@ -24,6 +24,6 @@ final class SetColumnForeignOptionsTest extends TestCase
         self::assertInstanceOf(Relation\Storage\SetColumnForeignOptions::class, $statement->actions[0]);
         self::assertSame('id', $statement->actions[0]->column);
         self::assertInstanceOf(\SqlSemantics\Model\Definition\Foreign\SetForeignOption::class, $statement->actions[0]->changes[0]);
-        self::assertSame('ALTER FOREIGN TABLE "t" ALTER COLUMN "id" OPTIONS(SET "column_name" \'remote_c\')', $statement->toString());
+        self::assertSame('ALTER FOREIGN TABLE "t" ALTER COLUMN "id" OPTIONS(SET "column_name" \'remote_c\')', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

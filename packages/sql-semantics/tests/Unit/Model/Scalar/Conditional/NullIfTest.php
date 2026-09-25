@@ -34,7 +34,7 @@ final class NullIfTest extends TestCase
         self::assertSame('integer', $value->type->name);
         self::assertSame(Nullability::MaybeNull, $value->nullability);
         self::assertSame('SELECT NULLIF(1, 2)', $statement->toString());
-        self::assertSame('SELECT NULLIF(1, 2)', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT NULLIF(1, 2)', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testSpellingIsTheFunctionKeyword(): void

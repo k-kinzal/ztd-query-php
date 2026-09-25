@@ -30,7 +30,7 @@ final class CursorFetchStatementTest extends TestCase
         $fetch = $statement->body->statements[0];
         self::assertInstanceOf(CursorFetchStatement::class, $fetch);
         self::assertSame(['a', 'b'], array_map(static fn ($target): string => $target->variable->name, $fetch->targets));
-        self::assertSame('CREATE PROCEDURE `p`() BEGIN DECLARE `a`, `b` integer; DECLARE `c` CURSOR FOR SELECT 1, 2; FETCH `c` INTO `a`, `b`; END', $statement->toString());
+        self::assertSame('CREATE PROCEDURE `p`() BEGIN DECLARE `a`, `b` integer; DECLARE `c` CURSOR FOR SELECT 1, 2; FETCH `c` INTO `a`, `b`; END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRequiresATarget(): void

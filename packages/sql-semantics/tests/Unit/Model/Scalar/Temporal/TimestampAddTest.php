@@ -35,7 +35,7 @@ final class TimestampAddTest extends TestCase
         self::assertSame($unit, $call->unit);
         self::assertSame($type, $call->type->name);
         self::assertSame(ExpressionKind::TimestampAdd, $call->kind);
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsListTheQuantityThenTheInput(): void

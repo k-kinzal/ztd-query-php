@@ -30,7 +30,7 @@ final class ShowRelayLogEventsStatementTest extends TestCase
         self::assertSame(['relay.4', '8', '3', 'east'], [$statement->log, $statement->position?->text, $statement->limit?->count->spelling(), $statement->channel]);
         self::assertSame('Log_name', $statement->resultColumns()[0]->name);
         self::assertSame("SHOW RELAYLOG EVENTS IN 'relay.4' FROM 8 LIMIT 3 FOR CHANNEL 'east'", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testMySql56ListsTheDefaultChannelOnly(): void

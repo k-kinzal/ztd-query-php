@@ -24,11 +24,13 @@ final class BoundSelect extends BoundQuery
     /**
      * @param list<OutputColumn> $outputs
      * @param list<Ordering> $orderBy
-     * @param list<Expression> $groupBy
+     * @param list<Expression|Query\Grouping\GroupingConstruct|Query\Grouping\DescendingGroupKey> $groupBy Grouping keys and grouping-set constructs
      * @param list<Query\Optimization\OptimizerHint> $hints
      * @param list<Query\Optimization\SelectOption> $options Distinct MySQL query block options, in written order
      * @param list<Query\Locking\RowLock> $locks
      * @param list<Window\Definition> $windows
+     * @param bool $distinctGroupingSets PostgreSQL GROUP BY DISTINCT: duplicate grouping sets form their groups once
+     * @param Expression|null $qualify MySQL 8.3+ QUALIFY: the predicate evaluated after window functions
      * @visibility SqlSemantics
      * @throws Validation\InvalidStructure
      */
@@ -49,6 +51,8 @@ final class BoundSelect extends BoundQuery
         public readonly array $locks = [],
         public readonly array $hints = [],
         public readonly array $options = [],
+        public readonly bool $distinctGroupingSets = false,
+        public readonly ?Expression $qualify = null,
     ) {
         parent::__construct($origin, $ctes, $orderBy, $limit, $offset, $withTies);
         Validation\StatementOperands::relation($from, $origin->dialect);
@@ -57,28 +61,16 @@ final class BoundSelect extends BoundQuery
         if ($outputs === [] && $origin->dialect !== \SqlSemantics\Dialect::PostgreSql) {
             throw new Validation\InvalidStructure('A SELECT projection requires at least one output outside PostgreSQL.');
         }
-        Validation\StatementOperands::expressions([$where, $having, ...$groupBy], $origin->dialect);
+        Validation\StatementOperands::expressions([$where, $having, $qualify], $origin->dialect);
+        if ($qualify !== null && ($origin->dialect !== \SqlSemantics\Dialect::MySql || in_array($origin->context?->schema()->grammarVersion, Query\Grouping\GroupingRules::WITHOUT_CUBE, true))) {
+            throw new Validation\InvalidStructure('QUALIFY requires MySQL 8.3 or later.');
+        }
         Validation\Collections::objects($orderBy, Ordering::class);
-        Validation\Collections::objects($groupBy, Expression::class);
+        Query\Grouping\GroupingRules::validate($groupBy, $origin, $distinctGroupingSets);
         Validation\Collections::objects($windows, Window\Definition::class);
         Validation\Collections::objects($hints, Query\Optimization\OptimizerHint::class);
-        Validation\Collections::objects($locks, Query\Locking\RowLock::class);
         Query\Optimization\SelectOptions::validate($options, $origin);
-        if ($locks !== [] && $origin->dialect === \SqlSemantics\Dialect::Sqlite) {
-            throw new Validation\InvalidStructure('SQLite SELECT does not have locking clauses.');
-        }
-        foreach ($locks as $lock) {
-            if ($origin->dialect === \SqlSemantics\Dialect::MySql && in_array($lock->strength, [Query\Locking\LockStrength::KeyShare, Query\Locking\LockStrength::NoKeyUpdate], true)) {
-                throw new Validation\InvalidStructure('This lock strength is specific to PostgreSQL.');
-            }
-            if ($lock instanceof Query\Locking\NamedRowLock) {
-                foreach ($lock->relations as $relation) {
-                    if ($relation instanceof TableUse && !in_array($relation, $this->relations, true)) {
-                        throw new Validation\InvalidStructure('A named lock target must belong to this query input.');
-                    }
-                }
-            }
-        }
+        Query\Locking\LockPlacement::validate($locks, $origin, $this->relations);
     }
 
     #[Override]
@@ -95,7 +87,7 @@ final class BoundSelect extends BoundQuery
     #[Override]
     public function withOrigin(Statement\Origin $origin): static
     {
-        return new static($origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options);
+        return new static($origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options, $this->distinctGroupingSets, $this->qualify);
     }
 
     /**
@@ -115,7 +107,7 @@ final class BoundSelect extends BoundQuery
      */
     public function withOutputs(array $outputs): self
     {
-        return $this->changed(new self($this->origin, $this->from, $outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
+        return $this->changed(new self($this->origin, $this->from, $outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options, $this->distinctGroupingSets, $this->qualify));
     }
 
     /**
@@ -123,15 +115,17 @@ final class BoundSelect extends BoundQuery
      */
     public function withWhere(?Expression $where): self
     {
-        return $this->changed(new self($this->origin, $this->from, $this->outputs, $where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
+        return $this->changed(new self($this->origin, $this->from, $this->outputs, $where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options, $this->distinctGroupingSets, $this->qualify));
     }
 
     /**
-     * @param list<Expression> $expressions
+     * Replaces the grouping keys and grouping-set constructs; an empty list removes the grouping.
+     *
+     * @param list<Expression|Query\Grouping\GroupingConstruct|Query\Grouping\DescendingGroupKey> $expressions
      */
     public function withGroupBy(array $expressions): self
     {
-        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $expressions, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
+        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $expressions, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options, $this->distinctGroupingSets, $this->qualify));
     }
 
     /**
@@ -139,7 +133,7 @@ final class BoundSelect extends BoundQuery
      */
     public function withHaving(?Expression $having): self
     {
-        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
+        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options, $this->distinctGroupingSets, $this->qualify));
     }
 
     /**
@@ -147,7 +141,7 @@ final class BoundSelect extends BoundQuery
      */
     public function withFrom(TableUse|Join|null $from): self
     {
-        return $this->changed(new self($this->origin, $from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
+        return $this->changed(new self($this->origin, $from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options, $this->distinctGroupingSets, $this->qualify));
     }
 
     /**
@@ -158,6 +152,6 @@ final class BoundSelect extends BoundQuery
     #[Override]
     public function withOrderBy(array $orderBy): static
     {
-        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
+        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options, $this->distinctGroupingSets, $this->qualify));
     }
 }

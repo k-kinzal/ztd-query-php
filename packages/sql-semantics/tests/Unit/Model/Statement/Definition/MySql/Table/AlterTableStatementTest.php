@@ -37,8 +37,8 @@ final class AlterTableStatementTest extends TestCase
         self::assertInstanceOf(AlterTableStatement::class, $statement);
         self::assertSame(StatementKind::Alter, $statement->kind);
         self::assertCount(3, $statement->alterations);
-        self::assertSame('ALTER TABLE `t` ADD COLUMN `c` integer AFTER `id`, DROP COLUMN `n`, ENGINE `InnoDB`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER TABLE `t` ADD COLUMN `c` integer AFTER `id`, DROP COLUMN `n`, ENGINE `InnoDB`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testIgnoreBindsOnMySql56(): void
@@ -46,7 +46,7 @@ final class AlterTableStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build('CREATE TABLE t(id INT)')))->bind('ALTER IGNORE TABLE t ALGORITHM = COPY, FORCE');
         self::assertInstanceOf(AlterTableStatement::class, $statement);
         self::assertTrue($statement->ignore);
-        self::assertSame('ALTER IGNORE TABLE `t` ALGORITHM = COPY, FORCE', $statement->toString());
+        self::assertSame('ALTER IGNORE TABLE `t` ALGORITHM = COPY, FORCE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testAnEmptyListRequestsNoChange(): void
@@ -54,7 +54,7 @@ final class AlterTableStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t');
         self::assertInstanceOf(AlterTableStatement::class, $statement);
         self::assertSame([], $statement->alterations);
-        self::assertSame('ALTER TABLE `t`', $statement->toString());
+        self::assertSame('ALTER TABLE `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -74,7 +74,7 @@ final class AlterTableStatementTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $other);
         self::assertInstanceOf(TableReference::class, $other->from);
         $changed = $statement->withTable($other->from);
-        self::assertSame('ALTER TABLE `u` FORCE', $changed->toString());
+        self::assertSame('ALTER TABLE `u` FORCE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame('t', $statement->table->declaration->name);
     }
 
@@ -83,7 +83,7 @@ final class AlterTableStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t FORCE');
         self::assertInstanceOf(AlterTableStatement::class, $statement);
         $changed = $statement->withAlterations([TableCommand::DisableKeys]);
-        self::assertSame('ALTER TABLE `t` DISABLE KEYS', $changed->toString());
+        self::assertSame('ALTER TABLE `t` DISABLE KEYS', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame([TableCommand::Force], $statement->alterations);
     }
 
@@ -99,7 +99,7 @@ final class AlterTableStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t FORCE');
         self::assertInstanceOf(AlterTableStatement::class, $statement);
-        self::assertSame('ALTER TABLE `t` ALGORITHM = COPY, FORCE', $statement->withAlgorithm(TableAlgorithm::Copy)->toString());
+        self::assertSame('ALTER TABLE `t` ALGORITHM = COPY, FORCE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withAlgorithm(TableAlgorithm::Copy)));
         self::assertSame(TableAlgorithm::Default, $statement->algorithm);
     }
 
@@ -115,14 +115,14 @@ final class AlterTableStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t FORCE');
         self::assertInstanceOf(AlterTableStatement::class, $statement);
-        self::assertSame('ALTER TABLE `t` LOCK = SHARED, FORCE', $statement->withLock(IndexLock::Shared)->toString());
+        self::assertSame('ALTER TABLE `t` LOCK = SHARED, FORCE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withLock(IndexLock::Shared)));
     }
 
     public function testWithValidationReplacesTheValidation(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t FORCE');
         self::assertInstanceOf(AlterTableStatement::class, $statement);
-        self::assertSame('ALTER TABLE `t` WITHOUT VALIDATION, FORCE', $statement->withValidation(PartitionValidation::Without)->toString());
+        self::assertSame('ALTER TABLE `t` WITHOUT VALIDATION, FORCE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withValidation(PartitionValidation::Without)));
     }
 
     public function testWithValidationRejectsMySql56(): void

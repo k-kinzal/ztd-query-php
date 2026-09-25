@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Copying a configuration
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH CONFIGURATION app.english (COPY = pg_catalog.english)');
  *     $statement->copied->parts // => ['pg_catalog', 'english']
- *     $statement->toString() // => 'CREATE TEXT SEARCH CONFIGURATION "app"."english"(COPY = "pg_catalog"."english")'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE TEXT SEARCH CONFIGURATION "app"."english"(COPY = "pg_catalog"."english")'
  */
 final class CopyTextSearchConfigurationStatement extends BoundStatement
 {

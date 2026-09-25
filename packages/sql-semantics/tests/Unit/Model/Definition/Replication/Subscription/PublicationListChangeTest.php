@@ -27,6 +27,6 @@ final class PublicationListChangeTest extends TestCase
         $statement = $binder->bind('ALTER SUBSCRIPTION s ' . $spelling . ' PUBLICATION p');
         self::assertInstanceOf(Statement\AlterSubscriptionPublicationsStatement::class, $statement);
         self::assertSame($value, $statement->change);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

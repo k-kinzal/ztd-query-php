@@ -31,8 +31,8 @@ final class CreateDomainStatementTest extends TestCase
         self::assertEquals(new QualifiedName(['C']), $statement->collation);
         self::assertEquals(new Domain\DomainNotNull('present'), $statement->constraints[0]);
         self::assertInstanceOf(Domain\DomainCheck::class, $statement->constraints[1]);
-        self::assertSame('CREATE DOMAIN "app"."price" AS numeric(10, 2) DEFAULT 0 COLLATE "C" CONSTRAINT "present" NOT NULL CHECK (("value" >= 0))', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE DOMAIN "app"."price" AS numeric(10, 2) DEFAULT 0 COLLATE "C" CONSTRAINT "present" NOT NULL CHECK (("value" >= 0))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -41,7 +41,7 @@ final class CreateDomainStatementTest extends TestCase
         self::assertInstanceOf(CreateDomainStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -59,7 +59,7 @@ final class CreateDomainStatementTest extends TestCase
         self::assertInstanceOf(CreateDomainStatement::class, $statement);
         $changed = $statement->withName(new QualifiedName(['app', 'e']));
         self::assertSame(['d'], $statement->name->parts);
-        self::assertSame('CREATE DOMAIN "app"."e" AS integer', $changed->toString());
+        self::assertSame('CREATE DOMAIN "app"."e" AS integer', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithBaseTypeReplacesTheOperand(): void
@@ -68,7 +68,7 @@ final class CreateDomainStatementTest extends TestCase
         self::assertInstanceOf(CreateDomainStatement::class, $statement);
         $changed = $statement->withBaseType(TypeDescriptor::builtin(Dialect::PostgreSql, 'text'));
         self::assertSame('integer', $statement->baseType->name);
-        self::assertSame('CREATE DOMAIN "d" AS text', $changed->toString());
+        self::assertSame('CREATE DOMAIN "d" AS text', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithDefaultReplacesTheOperand(): void
@@ -77,8 +77,8 @@ final class CreateDomainStatementTest extends TestCase
         self::assertInstanceOf(CreateDomainStatement::class, $statement);
         $changed = $statement->withDefault(Expression::literal(2, Dialect::PostgreSql));
         self::assertNotNull($statement->default);
-        self::assertSame('CREATE DOMAIN "d" AS integer DEFAULT 2', $changed->toString());
-        self::assertSame('CREATE DOMAIN "d" AS integer', $statement->withDefault(null)->toString());
+        self::assertSame('CREATE DOMAIN "d" AS integer DEFAULT 2', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('CREATE DOMAIN "d" AS integer', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDefault(null)));
     }
 
     public function testWithCollationReplacesTheOperand(): void
@@ -87,7 +87,7 @@ final class CreateDomainStatementTest extends TestCase
         self::assertInstanceOf(CreateDomainStatement::class, $statement);
         $changed = $statement->withCollation(new QualifiedName(['pg_catalog', 'C']));
         self::assertNull($statement->collation);
-        self::assertSame('CREATE DOMAIN "d" AS text COLLATE "pg_catalog"."C"', $changed->toString());
+        self::assertSame('CREATE DOMAIN "d" AS text COLLATE "pg_catalog"."C"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithConstraintsReplacesTheOperand(): void
@@ -96,7 +96,7 @@ final class CreateDomainStatementTest extends TestCase
         self::assertInstanceOf(CreateDomainStatement::class, $statement);
         $changed = $statement->withConstraints([new Domain\DomainNullable('open')]);
         self::assertCount(1, $statement->constraints);
-        self::assertSame('CREATE DOMAIN "d" AS integer CONSTRAINT "open" NULL', $changed->toString());
+        self::assertSame('CREATE DOMAIN "d" AS integer CONSTRAINT "open" NULL', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsContradictoryNullability(): void

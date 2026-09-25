@@ -26,7 +26,7 @@ final class DropIndexConcurrentlyStatementTest extends TestCase
         self::assertSame('new-scope', $changed->scopeId);
         self::assertNotSame($statement, $changed);
         self::assertSame('DROP INDEX CONCURRENTLY IF EXISTS "ix"', $changed->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString(), strict: false)->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString(), strict: false)));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['DROP INDEX CONCURRENTLY a, b'])]

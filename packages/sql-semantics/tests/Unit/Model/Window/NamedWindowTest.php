@@ -30,7 +30,7 @@ final class NamedWindowTest extends TestCase
         self::assertSame('w', $window->name);
         self::assertSame($query->windows[0]->name, $window->name);
         self::assertSame([], $window->expressions());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testExpressionsAreEmptyForAReferenceByName(): void

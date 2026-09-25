@@ -30,8 +30,8 @@ final class JsonAggregateBinderTest extends TestCase
         self::assertInstanceOf(WindowCall::class, $window);
         self::assertInstanceOf(JsonObjectAggregate::class, $window->function);
         self::assertNotNull($window->function->filter);
-        self::assertSame('SELECT JSON_OBJECTAGG("k" : "v") FILTER (WHERE ("v" IS NOT NULL)) OVER "w" FROM "public"."t" WINDOW "w" AS (ORDER BY "k" ASC)', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_OBJECTAGG("k" : "v") FILTER (WHERE ("v" IS NOT NULL)) OVER "w" FROM "public"."t" WINDOW "w" AS (ORDER BY "k" ASC)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testObjectKeepsTheMemberAndOptions(): void
@@ -44,7 +44,7 @@ final class JsonAggregateBinderTest extends TestCase
         self::assertSame(JsonNullHandling::Absent, $value->onNull);
         self::assertFalse($value->uniqueKeys);
         self::assertSame('text', $value->type->name);
-        self::assertSame('SELECT JSON_OBJECTAGG("k" : "v" ABSENT ON NULL RETURNING text) FROM "public"."t"', $query->toString());
+        self::assertSame('SELECT JSON_OBJECTAGG("k" : "v" ABSENT ON NULL RETURNING text) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testArrayKeepsTheElementOrder(): void
@@ -56,8 +56,8 @@ final class JsonAggregateBinderTest extends TestCase
         self::assertInstanceOf(JsonArrayAggregate::class, $value);
         self::assertCount(2, $value->orderBy);
         self::assertSame(JsonNullHandling::Absent, $value->onNull);
-        self::assertSame('SELECT JSON_ARRAYAGG("k" FORMAT JSON ORDER BY "v" ASC, "k" DESC) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_ARRAYAGG("k" FORMAT JSON ORDER BY "v" ASC, "k" DESC) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['SELECT json_objectagg(a : b) FROM t', 'SELECT JSON_OBJECTAGG("a" : "b") FROM "public"."t"'])]
@@ -65,7 +65,7 @@ final class JsonAggregateBinderTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['SELECT json_objectagg(a VALUE b) FILTER (WHERE b > 0) FROM t', 'SELECT JSON_OBJECTAGG("a" : "b") FILTER (WHERE ("b" > 0)) FROM "public"."t"'])]
     public function testBindReadsLowercaseAggregates(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a text, b int)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a text, b int)')))->bind($sql)));
     }
 
     public function testBindRejectsANonBooleanFilter(): void

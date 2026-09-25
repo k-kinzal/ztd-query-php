@@ -42,10 +42,10 @@ final class PreparedStatementsTest extends TestCase
         $binder = new Binder((new SchemaBuilder($dialect))->build());
         $statement = $binder->bind($sql, strict: false);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected, strict: false);
         self::assertInstanceOf($class, $rebound);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteKeepsParameterTypesOfAReboundPreparedQuery(): void
@@ -57,5 +57,13 @@ final class PreparedStatementsTest extends TestCase
         self::assertInstanceOf(PrepareQueryStatement::class, $rebound);
         self::assertSame(['integer', 'text'], array_map(static fn ($type): string => $type->name, $rebound->parameterTypes));
         self::assertSame('s', $rebound->name);
+    }
+
+    public function testTableWritesTheHeadThenThePreparedQuery(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE IF NOT EXISTS copied (a) AS EXECUTE fetch_rows(1) WITH NO DATA', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Prepared\CreateTableFromExecuteStatement::class, $statement);
+        self::assertSame('CREATE TABLE IF NOT EXISTS "copied"("a") AS EXECUTE "fetch_rows"(1) WITH NO DATA', PreparedStatements::table($statement)->toString());
+        self::assertSame(PreparedStatements::table($statement)->toString(), PreparedStatements::write($statement)->toString());
     }
 }

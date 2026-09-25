@@ -38,8 +38,8 @@ final class ResourceGroupsTest extends TestCase
         self::assertSame(['b g', 'SYSTEM', [[0, 3], [5, 5]], -4, 'DISABLE'], [$create->name, $create->type->value, array_map(static fn ($range): array => [$range->first, $range->last], $create->cpus), $create->priority, $create->state->value]);
         self::assertSame([3, 'ENABLE', true], [$alter->priority, $alter->state?->value, $alter->force]);
         self::assertSame(['7', '0x1F'], array_map(static fn ($thread): string => $thread->text, $set->threads));
-        self::assertSame($create->toString(), $binder->bind($create->toString())->toString());
-        self::assertSame('SET RESOURCE GROUP `g` FOR 7, 0x1F', $binder->bind($set->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($create), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($create))));
+        self::assertSame('SET RESOURCE GROUP `g` FOR 7, 0x1F', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($set))));
     }
 
     #[TestWith(['CREATE RESOURCE GROUP g TYPE = USER THREAD_PRIORITY = -1'])]

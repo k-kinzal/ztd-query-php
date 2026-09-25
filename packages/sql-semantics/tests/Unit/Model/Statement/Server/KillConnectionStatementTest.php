@@ -25,8 +25,8 @@ final class KillConnectionStatementTest extends TestCase
         self::assertSame('42', $statement->connectionId->text);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDatabaseDialect(): void
@@ -46,8 +46,8 @@ final class KillConnectionStatementTest extends TestCase
         $statement = $binder->bind('KILL (((SYSTEM_USER())))');
         self::assertInstanceOf(KillConnectionStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\ContextReference::class, $statement->connectionId);
-        self::assertSame('KILL CONNECTION SYSTEM_USER()', $statement->toString());
-        $roundTrip = $binder->bind($statement->toString());
+        self::assertSame('KILL CONNECTION SYSTEM_USER()', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $roundTrip = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(KillConnectionStatement::class, $roundTrip);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\ContextReference::class, $roundTrip->connectionId);
         self::assertSame($statement->connectionId->request, $roundTrip->connectionId->request);

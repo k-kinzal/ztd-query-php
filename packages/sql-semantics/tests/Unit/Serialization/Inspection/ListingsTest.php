@@ -35,7 +35,7 @@ final class ListingsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE users(id INT)'));
         $statement = $binder->bind($sql);
         self::assertSame($expected, Listings::write($statement)?->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
         self::assertNull(Listings::write($binder->bind('SHOW PROFILES')));
     }
 

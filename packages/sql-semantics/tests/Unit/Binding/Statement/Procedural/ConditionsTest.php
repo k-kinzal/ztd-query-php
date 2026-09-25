@@ -35,7 +35,7 @@ final class ConditionsTest extends TestCase
         self::assertInstanceOf(SignalStatement::class, $statement);
         self::assertSame([ConditionItem::MessageText, ConditionItem::MySqlErrorNumber, ConditionItem::TableName], array_column($statement->assignments, 'item'));
         self::assertInstanceOf(UnresolvedVariableReference::class, $statement->assignments[1]->value);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString(), strict: false)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)));
         $resignal = $binder->bind('RESIGNAL');
         self::assertInstanceOf(ResignalStatement::class, $resignal);
         self::assertSame([], $resignal->assignments);

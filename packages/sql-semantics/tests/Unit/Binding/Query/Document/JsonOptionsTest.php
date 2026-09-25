@@ -138,7 +138,7 @@ final class JsonOptionsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Relation\DocumentRelation::class, $relation);
         self::assertInstanceOf(\SqlSemantics\Model\TableFunction\Json\JsonTable::class, $relation->table);
         self::assertSame(\SqlSemantics\Model\TableFunction\Json\Response\TableError::EmptyRows, $relation->table->onError);
-        self::assertStringContainsString('EMPTY ON ERROR', $statement->toString());
+        self::assertStringContainsString('EMPTY ON ERROR', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(["select json_query('{}' format json, '$' with array wrapper empty on empty error on error)", "SELECT JSON_QUERY('{}' FORMAT JSON, '$' WITH UNCONDITIONAL WRAPPER EMPTY ARRAY ON EMPTY ERROR ON ERROR)"])]
@@ -149,6 +149,6 @@ final class JsonOptionsTest extends TestCase
     #[TestWith(["select * from json_table('{}', '$' columns (a int path '$') error on error) as j", 'SELECT "j"."a" AS "a" FROM JSON_TABLE(\'{}\', \'$\' COLUMNS("a" integer PATH \'$\') ERROR ON ERROR) AS "j"'])]
     public function testOptionsReadLowercaseKeywords(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 }

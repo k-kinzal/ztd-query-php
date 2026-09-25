@@ -35,7 +35,7 @@ final class DropBinderTest extends TestCase
         self::assertSame(['t'], $statement->table->parts);
         self::assertSame(IndexAlgorithm::Inplace, $statement->algorithm);
         self::assertSame(IndexLock::None, $statement->lock);
-        self::assertSame('DROP INDEX `ix` ON `t` ALGORITHM = INPLACE LOCK = NONE', $statement->toString());
+        self::assertSame('DROP INDEX `ix` ON `t` ALGORITHM = INPLACE LOCK = NONE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $plain = $binder->bind('DROP INDEX ix ON t');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\DropTableIndexStatement::class, $plain);
         self::assertSame(IndexAlgorithm::Default, $plain->algorithm);
@@ -48,7 +48,7 @@ final class DropBinderTest extends TestCase
         self::assertInstanceOf(DropIndexConcurrentlyStatement::class, $statement);
         self::assertSame(['ix'], $statement->name->parts);
         self::assertTrue($statement->ifExists);
-        self::assertSame('DROP INDEX CONCURRENTLY IF EXISTS "ix"', $statement->toString());
+        self::assertSame('DROP INDEX CONCURRENTLY IF EXISTS "ix"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['DROP INDEX CONCURRENTLY ix CASCADE'])]
@@ -73,7 +73,7 @@ final class DropBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\DropTableTriggerStatement::class, $qualified);
         self::assertSame(['s', 't'], $qualified->table->parts);
         self::assertSame(\SqlSemantics\Model\Definition\DropBehavior::Default, $qualified->behavior);
-        self::assertSame('DROP TRIGGER "tr" ON "s"."t"', $qualified->toString());
+        self::assertSame('DROP TRIGGER "tr" ON "s"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($qualified));
     }
 
     public function testBindLeavesOtherDropFormsToTheirOwnBinders(): void

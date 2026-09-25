@@ -30,15 +30,15 @@ final class ValueExpressionsTest extends TestCase
     #[TestWith([Dialect::MySql, 'SELECT (1,2) = (3,4)', 'SELECT ((1, 2) = (3, 4))'])]
     #[TestWith([Dialect::MySql, "SELECT date '2020-01-01', timestamp '2020-01-01 00:00:00', time '10:00'", "SELECT DATE '2020-01-01', TIMESTAMP '2020-01-01 00:00:00', TIME '10:00'"])]
     #[TestWith([Dialect::PostgreSql, 'SET search_path TO public, pg_catalog', 'SET "search_path" = "public", "pg_catalog"'])]
-    #[TestWith([Dialect::PostgreSql, 'SET TIME ZONE LOCAL', 'SET "timezone" = LOCAL'])]
+    #[TestWith([Dialect::PostgreSql, 'SET TIME ZONE LOCAL', 'SET "timezone" = DEFAULT'])]
     #[TestWith([Dialect::MySql, 'SET sql_mode = ON', 'SET `sql_mode` = ON'])]
     #[TestWith([Dialect::MySql, "SELECT _ascii X'2f', _UTF8MB4 0x0f, _binary b'01', N'x'", "SELECT _ascii X'2f', _utf8mb4 0x0f, _binary b'01', N'x'"])]
     public function testWriteKeepsLiteralContextRowAndConfigurationOperands(Dialect $dialect, string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder($dialect))->build());
         $statement = $binder->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     public function testWriteEmitsTheLiteralTextUnchanged(): void
@@ -98,6 +98,6 @@ final class ValueExpressionsTest extends TestCase
         $value = $query->outputs[0]->expression;
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\ArrayConstructor::class, $value);
         self::assertSame('ARRAY[ARRAY[1, 2], ARRAY[3, 4]]', ValueExpressions::write($value)->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 }

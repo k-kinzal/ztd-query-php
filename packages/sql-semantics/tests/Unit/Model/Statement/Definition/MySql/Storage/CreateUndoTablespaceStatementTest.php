@@ -21,7 +21,7 @@ final class CreateUndoTablespaceStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE InnoDB");
         self::assertInstanceOf(CreateUndoTablespaceStatement::class, $statement);
-        self::assertSame("CREATE UNDO TABLESPACE `u` ADD DATAFILE 'u.ibu' ENGINE = `InnoDB`", $statement->withOrigin($statement->origin)->toString());
+        self::assertSame("CREATE UNDO TABLESPACE `u` ADD DATAFILE 'u.ibu' ENGINE = `InnoDB`", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
         $legacy = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build()))->bind('SELECT 1')->origin;
         $this->expectException(InvalidStructure::class);
         $statement->withOrigin($legacy);

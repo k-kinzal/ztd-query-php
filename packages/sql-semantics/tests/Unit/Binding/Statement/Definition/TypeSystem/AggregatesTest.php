@@ -53,6 +53,6 @@ final class AggregatesTest extends TestCase
         $typed = $binder->bind('CREATE AGGREGATE s.a (sfunc1 = f, basetype = SETOF text, stype1 = text)');
         self::assertInstanceOf(CreateAggregateStatement::class, $typed);
         self::assertInstanceOf(OrdinaryAggregate::class, $typed->aggregate);
-        self::assertSame('CREATE AGGREGATE "s"."a"(text)(SFUNC = "f", STYPE = text)', $typed->toString());
+        self::assertSame('CREATE AGGREGATE "s"."a"(text)(SFUNC = "f", STYPE = text)', (new \SqlSemantics\SimpleSerializer())->serialize($typed));
     }
 }

@@ -45,7 +45,7 @@ final class SetDefaultRolePolicyStatementTest extends TestCase
         $changed = $statement->withPolicy(DefaultRolePolicy::All);
         self::assertSame(DefaultRolePolicy::All, $changed->policy);
         self::assertSame("SET DEFAULT ROLE NONE TO 'u'", $statement->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString())->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString())));
     }
 
     public function testWithAccountsRebindsANewSnapshot(): void
@@ -57,7 +57,7 @@ final class SetDefaultRolePolicyStatementTest extends TestCase
         self::assertSame('other', $changed->accounts[0]->username);
         self::assertSame('localhost', $changed->accounts[0]->host);
         self::assertSame("SET DEFAULT ROLE NONE TO 'u'", $statement->toString());
-        self::assertSame($changed->toString(), $binder->bind($changed->toString())->toString());
+        self::assertSame($changed->toString(), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($changed->toString())));
     }
 
 }

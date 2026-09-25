@@ -154,8 +154,8 @@ final class AssignmentBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT, b INT)'));
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testAssignmentRetainsTupleCorrespondence(): void
@@ -269,7 +269,7 @@ final class AssignmentBinderTest extends TestCase
     public function testBindSpellsEveryAssignmentForm(Dialect $dialect, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT, b INT, c ' . ($dialect === Dialect::PostgreSql ? 'INT[]' : 'INT') . ')')))->bind($sql);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET (a, b) = (1, 2, 3)'])]

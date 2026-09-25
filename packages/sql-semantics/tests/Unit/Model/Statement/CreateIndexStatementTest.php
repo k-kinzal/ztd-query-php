@@ -169,8 +169,8 @@ final class CreateIndexStatementTest extends TestCase
         $changed = $statement->withKey(0, Expression::literal(1, Dialect::PostgreSql));
         self::assertInstanceOf(\SqlSemantics\Model\Relation\OnlyTableReference::class, $changed->table);
         self::assertTrue($changed->ifNotExists);
-        self::assertSame('CREATE INDEX IF NOT EXISTS "ix" ON ONLY "public"."t"((1))', $changed->toString());
-        self::assertSame('CREATE INDEX IF NOT EXISTS "ix" ON ONLY "public"."t"("id")', $statement->toString());
+        self::assertSame('CREATE INDEX IF NOT EXISTS "ix" ON ONLY "public"."t"((1))', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('CREATE INDEX IF NOT EXISTS "ix" ON ONLY "public"."t"("id")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAContradictoryOwningTable(): void
@@ -195,7 +195,7 @@ final class CreateIndexStatementTest extends TestCase
         self::assertSame(['custom'], array_column($changed->diagnostics, 'reason'));
         self::assertSame($statement->index, $changed->index);
         self::assertSame($statement->table, $changed->table);
-        self::assertSame('CREATE INDEX "ix" ON "public"."t"("id")', $changed->toString());
+        self::assertSame('CREATE INDEX "ix" ON "public"."t"("id")', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame([], $statement->diagnostics);
     }
 
@@ -222,7 +222,7 @@ final class CreateIndexStatementTest extends TestCase
         $rebuilt = new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $statement->table);
         self::assertFalse($rebuilt->ifNotExists);
         self::assertFalse($rebuilt->concurrently);
-        self::assertSame('CREATE INDEX ON "public"."t"("id")', $rebuilt->toString());
+        self::assertSame('CREATE INDEX ON "public"."t"("id")', (new \SqlSemantics\SimpleSerializer())->serialize($rebuilt));
         self::assertTrue((new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $statement->table, concurrently: true))->concurrently);
     }
 

@@ -29,7 +29,7 @@ final class NotificationBinderTest extends TestCase
         $listen = $binder->bind('LISTEN ch');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Notification\ListenStatement::class, $listen);
         self::assertSame('ch', $listen->channel);
-        self::assertSame('LISTEN "ch"', $listen->toString());
+        self::assertSame('LISTEN "ch"', (new \SqlSemantics\SimpleSerializer())->serialize($listen));
         $unlisten = $binder->bind('UNLISTEN ch');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Notification\UnlistenStatement::class, $unlisten);
         self::assertSame('ch', $unlisten->channel);
@@ -43,7 +43,7 @@ final class NotificationBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Notification\NotifyStatement::class, $payload);
         self::assertSame('ch', $payload->channel);
         self::assertSame("'payload'", $payload->payload?->text);
-        self::assertSame("NOTIFY \"ch\", 'payload'", $payload->toString());
+        self::assertSame("NOTIFY \"ch\", 'payload'", (new \SqlSemantics\SimpleSerializer())->serialize($payload));
         $bare = $binder->bind('NOTIFY ch');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Notification\NotifyStatement::class, $bare);
         self::assertNull($bare->payload);
@@ -55,7 +55,7 @@ final class NotificationBinderTest extends TestCase
         $temp = $binder->bind('DISCARD TEMP');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\DiscardStatement::class, $temp);
         self::assertSame(\SqlSemantics\Model\Configuration\DiscardResource::TemporaryTables, $temp->resource);
-        self::assertSame('DISCARD TEMPORARY', $temp->toString());
+        self::assertSame('DISCARD TEMPORARY', (new \SqlSemantics\SimpleSerializer())->serialize($temp));
         $sequences = $binder->bind('DISCARD SEQUENCES');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\DiscardStatement::class, $sequences);
         self::assertSame(\SqlSemantics\Model\Configuration\DiscardResource::Sequences, $sequences->resource);
@@ -69,7 +69,7 @@ final class NotificationBinderTest extends TestCase
     #[TestWith(['discard all', 'DISCARD ALL'])]
     public function testBindReadsLowercaseCommands(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     #[TestWith(['SET CONSTRAINTS ALL DEFERRED', ConstraintTiming::Deferred])]

@@ -24,6 +24,6 @@ final class SetForeignOptionsTest extends TestCase
         self::assertInstanceOf(Relation\Storage\SetForeignOptions::class, $statement->actions[0]);
         self::assertInstanceOf(\SqlSemantics\Model\Definition\Foreign\AddForeignOption::class, $statement->actions[0]->changes[0]);
         self::assertInstanceOf(\SqlSemantics\Model\Definition\Foreign\DropForeignOption::class, $statement->actions[0]->changes[2]);
-        self::assertSame('ALTER FOREIGN TABLE "t" OPTIONS(ADD "delimiter" \',\', SET "header" \'true\', DROP "quote")', $statement->toString());
+        self::assertSame('ALTER FOREIGN TABLE "t" OPTIONS(ADD "delimiter" \',\', SET "header" \'true\', DROP "quote")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

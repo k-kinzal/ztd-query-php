@@ -35,8 +35,8 @@ final class SubqueriesTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INT, n INT)', 'CREATE TABLE s(id INT, n INT)'));
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testWriteSpellsScalarAndRowSubqueriesAsParenthesizedQueries(): void
@@ -79,6 +79,6 @@ final class SubqueriesTest extends TestCase
         $value = $query->outputs[0]->expression;
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ArraySubquery::class, $value);
         self::assertSame('ARRAY(SELECT 1)', Subqueries::write($value)->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 }

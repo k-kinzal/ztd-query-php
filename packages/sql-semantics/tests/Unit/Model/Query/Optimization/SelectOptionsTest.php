@@ -25,7 +25,7 @@ final class SelectOptionsTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertSame([SelectOption::Cache, SelectOption::HighPriority], $statement->options);
         SelectOptions::validate($statement->options, $statement->origin);
-        self::assertSame('SELECT SQL_CACHE HIGH_PRIORITY 1', $statement->toString());
+        self::assertSame('SELECT SQL_CACHE HIGH_PRIORITY 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

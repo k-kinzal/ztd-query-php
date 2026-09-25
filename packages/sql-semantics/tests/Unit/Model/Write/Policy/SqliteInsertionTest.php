@@ -35,8 +35,8 @@ final class SqliteInsertionTest extends TestCase
         self::assertInstanceOf(InsertStatement::class, $statement);
         self::assertInstanceOf(SqliteInsertion::class, $statement->policy);
         self::assertSame(ConstraintResponse::Ignore, $statement->policy->onViolation);
-        self::assertSame('INSERT OR IGNORE INTO "main"."t" VALUES (1)', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('INSERT OR IGNORE INTO "main"."t" VALUES (1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(InsertStatement::class, $rebound);
         self::assertInstanceOf(SqliteInsertion::class, $rebound->policy);
         self::assertSame(ConstraintResponse::Ignore, $rebound->policy->onViolation);

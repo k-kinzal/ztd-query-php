@@ -41,10 +41,10 @@ final class TransactionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder($dialect))->build());
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertSame($statement::class, $rebound::class);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteKeepsChainingAndReleasePoliciesOnRebinding(): void
@@ -73,7 +73,7 @@ final class TransactionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build());
         $statement = $binder->bind('SHOW PARSE_TREE START TRANSACTION');
-        self::assertSame('SHOW PARSE_TREE START TRANSACTION', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SHOW PARSE_TREE START TRANSACTION', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

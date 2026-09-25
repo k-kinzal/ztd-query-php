@@ -250,6 +250,32 @@ final class BinderTest extends TestCase
         yield 'locking' => ['SELECT id FROM users FOR UPDATE'];
 
     }
+    #[TestWith([Dialect::MySql, '/* lead */ SELECT   1 ;'])]
+    #[TestWith([Dialect::MySql, "select CONCAT( 'a' ,  'b' )  -- text\n"])]
+    #[TestWith([Dialect::PostgreSql, '  create  table t ( id INT )'])]
+    #[TestWith([Dialect::PostgreSql, "Select 'x'::text  AS v"])]
+    #[TestWith([Dialect::Sqlite, "pragma  user_version ;\n"])]
+    #[TestWith([Dialect::Sqlite, '  VALUES(1) , (2)'])]
+    public function testBindWritesBackExactlyTheBoundText(Dialect $dialect, string $sql): void
+    {
+        self::assertSame($sql, (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql)->toString());
+    }
+
+    public function testBindAllWritesBackEachStatementText(): void
+    {
+        $sql = "/* first */ select 1 ;  CREATE table t ( a int ) -- second\n;\n  insert INTO t VALUES (1)  ";
+        $statements = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT)')))->bindAll($sql);
+        self::assertSame(['/* first */ select 1 ;', "  CREATE table t ( a int ) -- second\n;", "\n  insert INTO t VALUES (1)  "], array_map(static fn (\SqlSemantics\Model\BoundStatement $statement): string => $statement->toString(), $statements));
+        self::assertSame($sql, implode('', array_map(static fn (\SqlSemantics\Model\BoundStatement $statement): string => $statement->toString(), $statements)));
+    }
+
+    public function testBindWritesBackTheTextOfAStatementWithDiagnostics(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT  missing  FROM nowhere', strict: false);
+        self::assertNotSame([], $statement->diagnostics);
+        self::assertSame('SELECT  missing  FROM nowhere', $statement->toString());
+    }
+
     public function testBindAllKeepsStatementBoundaries(): void
     {
         $statements = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bindAll('SELECT 1; SELECT 2');
@@ -584,6 +610,7 @@ final class BinderTest extends TestCase
         self::assertSame($statement->ctes->definitions[0]->query, $statement->relations[0]->definition->query);
         self::assertSame($statement->relations[0], $statement->from);
         self::assertSame('>', $statement->where?->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $statement->groupBy[0]);
         self::assertSame('id', $statement->groupBy[0]->columnBinding()?->column->name);
         self::assertSame('>', $statement->having?->spelling());
         self::assertTrue($statement->orderBy[0]->descending);

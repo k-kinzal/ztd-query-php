@@ -39,8 +39,8 @@ final class CreateFunctionStatementTest extends TestCase
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
         self::assertSame(['w', 'h'], array_column($statement->parameters, 'name'));
         self::assertSame('bigint', $statement->returns->type->name);
-        self::assertSame('CREATE FUNCTION `area`(`w` integer, `h` integer) RETURNS bigint DETERMINISTIC NO SQL BEGIN DECLARE `r` bigint DEFAULT (`w` * `h`); RETURN `r`; END', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE FUNCTION `area`(`w` integer, `h` integer) RETURNS bigint DETERMINISTIC NO SQL BEGIN DECLARE `r` bigint DEFAULT (`w` * `h`); RETURN `r`; END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['mysql-8.4.7'])]
@@ -52,29 +52,29 @@ final class CreateFunctionStatementTest extends TestCase
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
         self::assertInstanceOf(ExternalRoutineCode::class, $statement->body);
         self::assertSame(' return a * 2 ', $statement->body->code);
-        self::assertSame("CREATE FUNCTION IF NOT EXISTS `f`(`a` integer) RETURNS integer LANGUAGE `JAVASCRIPT` AS ' return a * 2 '", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("CREATE FUNCTION IF NOT EXISTS `f`(`a` integer) RETURNS integer LANGUAGE `JAVASCRIPT` AS ' return a * 2 '", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginPreservesTheDefinition(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE FUNCTION f() RETURNS INT RETURN 1');
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesOnlyTheName(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE FUNCTION f() RETURNS INT RETURN 1');
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
-        self::assertSame('CREATE FUNCTION `g`() RETURNS integer RETURN 1', $statement->withName(new QualifiedName(['g']))->toString());
+        self::assertSame('CREATE FUNCTION `g`() RETURNS integer RETURN 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['g']))));
     }
 
     public function testWithParametersReordersParameters(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE FUNCTION f(a INT, b INT) RETURNS INT RETURN a - b');
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
-        self::assertSame('CREATE FUNCTION `f`(`b` integer, `a` integer) RETURNS integer RETURN(`a` - `b`)', $statement->withParameters(array_reverse($statement->parameters))->toString());
+        self::assertSame('CREATE FUNCTION `f`(`b` integer, `a` integer) RETURNS integer RETURN(`a` - `b`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withParameters(array_reverse($statement->parameters))));
     }
 
     public function testWithReturnsReplacesTheReturnDomain(): void
@@ -88,7 +88,7 @@ final class CreateFunctionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE FUNCTION f() RETURNS INT NO SQL RETURN 1');
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
-        self::assertSame('CREATE FUNCTION `f`() RETURNS integer DETERMINISTIC RETURN 1', $statement->withCharacteristics(new RoutineCharacteristics(true))->toString());
+        self::assertSame('CREATE FUNCTION `f`() RETURNS integer DETERMINISTIC RETURN 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withCharacteristics(new RoutineCharacteristics(true))));
     }
 
     public function testWithBodyRequiresReturn(): void
@@ -103,7 +103,7 @@ final class CreateFunctionStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE FUNCTION f() RETURNS INT RETURN 1');
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
-        self::assertSame('CREATE DEFINER = CURRENT_USER FUNCTION `f`() RETURNS integer RETURN 1', $statement->withDefiner(CurrentAccount::Authenticated)->toString());
+        self::assertSame('CREATE DEFINER = CURRENT_USER FUNCTION `f`() RETURNS integer RETURN 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDefiner(CurrentAccount::Authenticated)));
     }
 
     public function testRejectsAnExternalBodyBeforeMySql81(): void

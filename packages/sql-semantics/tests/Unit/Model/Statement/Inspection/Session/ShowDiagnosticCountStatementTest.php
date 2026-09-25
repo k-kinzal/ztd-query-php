@@ -30,8 +30,8 @@ final class ShowDiagnosticCountStatementTest extends TestCase
         self::assertInstanceOf(ShowDiagnosticCountStatement::class, $statement);
         self::assertSame(DiagnosticSelection::Errors, $statement->selection);
         self::assertSame(['@@session.error_count'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('SHOW COUNT(*) ERRORS', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SHOW COUNT(*) ERRORS', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithSelectionReplacesTheCounterImmutably(): void
@@ -41,7 +41,7 @@ final class ShowDiagnosticCountStatementTest extends TestCase
         $changed = $statement->withSelection(DiagnosticSelection::Warnings);
         self::assertNotSame($statement, $changed);
         self::assertSame(DiagnosticSelection::Errors, $statement->selection);
-        self::assertSame('SHOW COUNT(*) WARNINGS', $changed->toString());
+        self::assertSame('SHOW COUNT(*) WARNINGS', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame(['@@session.warning_count'], array_column($changed->resultColumns(), 'name'));
     }
 

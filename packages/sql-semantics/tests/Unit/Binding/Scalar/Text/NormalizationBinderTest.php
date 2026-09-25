@@ -23,15 +23,15 @@ final class NormalizationBinderTest extends TestCase
     #[TestWith(['SELECT "normalize"(\'a\')', 'SELECT "normalize"(\'a\')'])]
     public function testBindKeepsTheNormalFormOfTheKeywordForm(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     public function testTestReadsNegationAndForm(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('CREATE ASSERTION a CHECK (((-(ROW(NULL, NULL) OVERLAPS ROW(NULL, NULL))) IS NOT NORMALIZED) IS NOT NULL)');
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
-        self::assertStringContainsString('IS NOT NFC NORMALIZED', $statement->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
+        self::assertStringContainsString('IS NOT NFC NORMALIZED', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testFormDefaultsToNfc(): void
@@ -53,6 +53,6 @@ final class NormalizationBinderTest extends TestCase
     public function testBindReadsLowercaseNormalForms(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a TEXT)')))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

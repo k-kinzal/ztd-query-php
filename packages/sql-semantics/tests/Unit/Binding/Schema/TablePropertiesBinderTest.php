@@ -62,6 +62,24 @@ final class TablePropertiesBinderTest extends TestCase
         self::assertSame('c', $properties->comment);
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE t (a INT) ON COMMIT PRESERVE ROWS'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE UNLOGGED TABLE t (a INT) ON COMMIT DELETE ROWS'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE t ON COMMIT DROP AS SELECT 1 AS a'])]
+    public function testBindDiagnosesACommitActionOfATableThatIsNotTemporary(string $sql): void
+    {
+        $binder = new \SqlSemantics\Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::CommitAction->message());
+        $binder->bind($sql);
+    }
+
+    public function testBindKeepsTheCommitActionOfATemporaryTable(): void
+    {
+        $binder = new \SqlSemantics\Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        self::assertSame('CREATE TEMPORARY TABLE "t"("a" integer) ON COMMIT DELETE ROWS', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('CREATE GLOBAL TEMP TABLE t (a INT) ON COMMIT DELETE ROWS')));
+        self::assertSame('CREATE TEMPORARY TABLE "t"("a" integer)', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('CREATE TEMP TABLE t (a INT) ON COMMIT PRESERVE ROWS')));
+    }
+
     public function testBindDiagnosesStorageParametersOfAPartitionedTable(): void
     {
         $this->expectException(\SqlSemantics\InvalidSql::class);
@@ -120,7 +138,7 @@ final class TablePropertiesBinderTest extends TestCase
     public function testParentsAcceptsACatalogQualifiedParent(): void
     {
         $statement = (new \SqlSemantics\Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a int)')))->bind('CREATE TABLE c(a int) INHERITS (db.public.p)', strict: false);
-        self::assertSame('CREATE TABLE "public"."c"("a" integer) INHERITS("db"."public"."p")', $statement->toString());
+        self::assertSame('CREATE TABLE "public"."c"("a" integer) INHERITS("db"."public"."p")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testParentsRejectsAParentWithFourComponents(): void

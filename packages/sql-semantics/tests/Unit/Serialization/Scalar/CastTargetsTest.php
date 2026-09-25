@@ -35,8 +35,8 @@ final class CastTargetsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $query = $binder->bind('SELECT CAST(1 AS ' . $target . ')');
-        self::assertSame('SELECT CAST(1 AS ' . $expected . ')', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT CAST(1 AS ' . $expected . ')', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testWriteKeepsDeclarationsForOtherDialects(): void

@@ -29,8 +29,8 @@ final class BinaryLogCommandsTest extends TestCase
         $dated = $binder->bind('PURGE MASTER LOGS BEFORE 1');
         self::assertInstanceOf(PurgeBinaryLogsToStatement::class, $named);
         self::assertInstanceOf(PurgeBinaryLogsBeforeStatement::class, $dated);
-        self::assertSame("PURGE BINARY LOGS TO 'a'", $named->toString());
-        self::assertSame('PURGE BINARY LOGS BEFORE 1', $dated->toString());
+        self::assertSame("PURGE BINARY LOGS TO 'a'", (new \SqlSemantics\SimpleSerializer())->serialize($named));
+        self::assertSame('PURGE BINARY LOGS BEFORE 1', (new \SqlSemantics\SimpleSerializer())->serialize($dated));
         self::assertSame('purge', BinaryLogCommands::purge($dated)->role);
     }
 
@@ -39,7 +39,7 @@ final class BinaryLogCommandsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build()))->bind('RESET SLAVE, MASTER');
         self::assertInstanceOf(ResetServerStatement::class, $statement);
         self::assertSame('reset', BinaryLogCommands::reset($statement)->role);
-        self::assertSame('RESET SLAVE, MASTER', $statement->toString());
+        self::assertSame('RESET SLAVE, MASTER', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTargetSpellsEachOptionForTheRelease(): void

@@ -35,8 +35,8 @@ final class PatternMatchTest extends TestCase
         self::assertNotNull($match->escape);
         self::assertSame("'!'", $match->escape->spelling());
         self::assertSame([$match->value, $match->pattern, $match->escape], $match->inputs());
-        self::assertSame("SELECT ('a' NOT ILIKE 'b' ESCAPE '!')", $statement->toString());
-        self::assertSame("SELECT ('a' NOT ILIKE 'b' ESCAPE '!')", $binder->bind($statement->toString())->toString());
+        self::assertSame("SELECT ('a' NOT ILIKE 'b' ESCAPE '!')", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame("SELECT ('a' NOT ILIKE 'b' ESCAPE '!')", (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testInputsOmitsAMissingEscape(): void

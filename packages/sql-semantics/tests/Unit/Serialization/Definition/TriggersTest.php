@@ -33,7 +33,7 @@ final class TriggersTest extends TestCase
         self::assertCount(4, $rebound->body->steps);
         self::assertTrue($rebound->temporary);
         self::assertNotNull($rebound->when);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     #[TestWith(['CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT RAISE(IGNORE); END', 'CREATE TRIGGER "tr" AFTER INSERT ON "main"."t" FOR EACH ROW BEGIN SELECT RAISE(IGNORE); END'])]
@@ -43,7 +43,7 @@ final class TriggersTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER NOT NULL, x INTEGER)'));
         $statement = $binder->bind($sql);
         self::assertInstanceOf(CreateSqliteTriggerStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertInstanceOf(CreateSqliteTriggerStatement::class, $rebound);
         self::assertSame($statement->timing, $rebound->timing);

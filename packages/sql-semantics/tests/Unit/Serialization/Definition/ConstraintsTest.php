@@ -36,7 +36,7 @@ final class ConstraintsTest extends TestCase
         self::assertInstanceOf(CreateTableStatement::class, $statement);
         $constraints = $statement->definition->table->constraints;
         self::assertSame($expected, Constraints::write($constraints[count($constraints) - 1], $dialect)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateTableStatement::class, $rebound);
         $again = $rebound->definition->table->constraints;
         self::assertSame($expected, Constraints::write($again[count($again) - 1], $dialect)->toString());
@@ -50,7 +50,7 @@ final class ConstraintsTest extends TestCase
         $key = $statement->definition->table->constraints[0];
         self::assertInstanceOf(ForeignKey::class, $key);
         self::assertSame('FOREIGN KEY("d") REFERENCES "u"("id") MATCH FULL ON DELETE SET NULL ON UPDATE CASCADE DEFERRABLE INITIALLY IMMEDIATE', Constraints::foreignKey($key, Dialect::PostgreSql)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateTableStatement::class, $rebound);
         $again = $rebound->definition->table->constraints[0];
         self::assertInstanceOf(ForeignKey::class, $again);

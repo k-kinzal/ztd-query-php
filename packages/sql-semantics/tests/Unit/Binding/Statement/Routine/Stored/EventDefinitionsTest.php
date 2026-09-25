@@ -118,7 +118,7 @@ final class EventDefinitionsTest extends TestCase
     #[DataProvider('providerEventsSpellEveryRequestedClause')]
     public function testEventsSpellEveryRequestedClause(string $version, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)));
     }
 
     public function testScheduleRejectsAMicrosecondInterval(): void

@@ -31,7 +31,7 @@ final class AddColumnStatementTest extends TestCase
         self::assertSame(StatementKind::Alter, $statement->kind);
         self::assertFalse($statement->ifNotExists);
         self::assertContainsOnlyInstancesOf(ForeignKey::class, $statement->constraints);
-        self::assertSame('ALTER TABLE "t" ADD COLUMN "m" "integer" NOT NULL DEFAULT 0 REFERENCES "s"("id") ON DELETE NO ACTION ON UPDATE NO ACTION', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ADD COLUMN "m" "integer" NOT NULL DEFAULT 0 REFERENCES "s"("id") ON DELETE NO ACTION ON UPDATE NO ACTION', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheColumnAndConstraints(): void
@@ -43,7 +43,7 @@ final class AddColumnStatementTest extends TestCase
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->column, $copy->column);
         self::assertSame($statement->constraints, $copy->constraints);
-        self::assertSame('ALTER TABLE "t" ADD COLUMN "m" "integer"', $copy->toString());
+        self::assertSame('ALTER TABLE "t" ADD COLUMN "m" "integer"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsASqliteUniqueConstraintBeforeSerialization(): void

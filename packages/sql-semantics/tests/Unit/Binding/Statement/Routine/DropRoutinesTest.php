@@ -35,8 +35,8 @@ final class DropRoutinesTest extends TestCase
         self::assertInstanceOf(MySql\DropFunctionStatement::class, $statement);
         self::assertSame(['app', 'f'], $statement->name->parts);
         self::assertTrue($statement->ifExists);
-        self::assertSame('DROP FUNCTION IF EXISTS `app`.`f`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('DROP FUNCTION IF EXISTS `app`.`f`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['mysql-5.6.51'])]
@@ -55,8 +55,8 @@ final class DropRoutinesTest extends TestCase
         self::assertInstanceOf(MySql\DropProcedureStatement::class, $statement);
         self::assertSame(['app', 'f'], $statement->name->parts);
         self::assertTrue($statement->ifExists);
-        self::assertSame('DROP PROCEDURE IF EXISTS `app`.`f`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('DROP PROCEDURE IF EXISTS `app`.`f`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindPostgreSqlFunctionKeepsOverloadSelectionAndDeletionPolicies(): void
@@ -73,7 +73,7 @@ final class DropRoutinesTest extends TestCase
         self::assertSame(['app', 'h'], $statement->targets[2]->name->parts);
         self::assertSame(Routine\ParameterMode::Input, $statement->targets[2]->parameters[0]->mode);
         self::assertSame(Routine\ParameterMode::Output, $statement->targets[2]->parameters[1]->mode);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindPostgreSqlProcedureKeepsOverloadSelectionAndDeletionPolicies(): void
@@ -90,7 +90,7 @@ final class DropRoutinesTest extends TestCase
         self::assertSame(['app', 'h'], $statement->targets[2]->name->parts);
         self::assertSame(Routine\ParameterMode::Input, $statement->targets[2]->parameters[0]->mode);
         self::assertSame(Routine\ParameterMode::Output, $statement->targets[2]->parameters[1]->mode);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindPostgreSqlRoutineKeepsOverloadSelectionAndDeletionPolicies(): void
@@ -107,7 +107,7 @@ final class DropRoutinesTest extends TestCase
         self::assertSame(['app', 'h'], $statement->targets[2]->name->parts);
         self::assertSame(Routine\ParameterMode::Input, $statement->targets[2]->parameters[0]->mode);
         self::assertSame(Routine\ParameterMode::Output, $statement->targets[2]->parameters[1]->mode);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     /**
@@ -123,6 +123,6 @@ final class DropRoutinesTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -36,7 +36,7 @@ final class SetColumnTest extends TestCase
         self::assertSame('integer', $column->type->name);
         self::assertSame(Nullability::MaybeNull, $column->nullability);
         self::assertSame('SELECT 1 UNION ALL SELECT NULL', $statement->toString());
-        self::assertSame('SELECT 1 UNION ALL SELECT NULL', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT 1 UNION ALL SELECT NULL', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testSpellingReturnsTheSetOperator(): void

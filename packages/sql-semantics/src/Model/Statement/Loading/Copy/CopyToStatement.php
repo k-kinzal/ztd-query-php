@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the table and destination
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('COPY BINARY t TO STDOUT');
- *     [$statement->options->format->value, $statement->toString()] // => ['binary', 'COPY "public"."t" TO STDOUT WITH (FORMAT \'binary\')']
+ *     [$statement->options->format->value, (new \SqlSemantics\SimpleSerializer())->serialize($statement)] // => ['binary', 'COPY "public"."t" TO STDOUT WITH (FORMAT \'binary\')']
  */
 final class CopyToStatement extends BoundStatement
 {

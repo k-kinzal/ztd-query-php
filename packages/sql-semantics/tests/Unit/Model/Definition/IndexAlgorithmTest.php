@@ -31,6 +31,6 @@ final class IndexAlgorithmTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
         self::assertInstanceOf(DropTableIndexStatement::class, $statement);
         self::assertSame($algorithm, $statement->algorithm);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

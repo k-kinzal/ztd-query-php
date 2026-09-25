@@ -31,8 +31,8 @@ final class RowExpressionTest extends TestCase
         self::assertInstanceOf(RowExpression::class, $row);
         self::assertCount($width, $row->items);
         self::assertSame($row->items, $row->inputs());
-        self::assertSame($sql, $statement->toString());
-        self::assertSame($sql, $binder->bind($statement->toString())->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith([Dialect::MySql, 0])]
@@ -68,6 +68,6 @@ final class RowExpressionTest extends TestCase
         $row = $statement->outputs[0]->expression->inputs()[0];
         self::assertInstanceOf(RowExpression::class, $row);
         self::assertSame('ROW', $row->spelling());
-        self::assertSame('SELECT ((1, 2) = (2, 3))', $statement->toString());
+        self::assertSame('SELECT ((1, 2) = (2, 3))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -34,9 +34,9 @@ final class ViewAlterations
         }
         $query = QueryNodes::legacyContainer($tail) ?? Tree::outer($tail, ['select_stmt', 'select', 'query_expression', 'view_select', 'view_query_block'])[0] ?? throw new UnclassifiedSql('ALTER VIEW requires its query.');
         if ($query->name === 'view_query_block') {
-            $query = Tree::outer($query, ['query_expression'])[0] ?? $query;
+            $query = Tree::outer($query, ['query_expression_with_opt_locking_clauses', 'query_expression'])[0] ?? $query;
         }
-        return new AlterViewStatement($origin, ObjectBinder::name($tail, $context), $context->bind($query), ViewBinder::columns($tail, $context), self::check($tail), ViewBinder::mysql($source, $context));
+        return new AlterViewStatement($origin, ObjectBinder::name($tail, $context), $context->bind($query), ViewBinder::columns($tail, $context), self::check($tail), ViewBinder::mysql($source, $context, true));
     }
 
     /**

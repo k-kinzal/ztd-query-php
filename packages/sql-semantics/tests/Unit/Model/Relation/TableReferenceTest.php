@@ -26,11 +26,11 @@ final class TableReferenceTest extends TestCase
         self::assertInstanceOf(TableReference::class, $target);
         self::assertSame(['', $table], $target->name->parts);
         self::assertSame($target->name, $target->withScope('inner')->name);
-        $rebound = $binder->bind($statement->toString(), strict: false);
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $rebound);
         self::assertInstanceOf(TableReference::class, $rebound->target);
         self::assertSame(['', $table], $rebound->target->name->parts);
-        self::assertStringContainsString('""."text"', $statement->toString());
+        self::assertStringContainsString('""."text"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
     public function testInsertTargetPreservesItsExplicitNamespace(): void
     {
@@ -39,7 +39,7 @@ final class TableReferenceTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertDefaultValuesStatement::class, $statement);
         self::assertInstanceOf(TableReference::class, $statement->insertion->target);
         self::assertSame(['', 'text'], $statement->insertion->target->name->parts);
-        $rebound = $binder->bind($statement->toString(), strict: false);
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertDefaultValuesStatement::class, $rebound);
         self::assertInstanceOf(TableReference::class, $rebound->insertion->target);
         self::assertSame(['', 'text'], $rebound->insertion->target->name->parts);

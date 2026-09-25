@@ -24,7 +24,7 @@ final class SetColumnStatisticsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER INDEX ix ALTER COLUMN 2 SET STATISTICS 500', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Column\SetColumnStatistics(2, 500), $statement->actions[0]);
-        self::assertSame('ALTER INDEX "ix" ALTER COLUMN 2 SET STATISTICS 500', $statement->toString());
+        self::assertSame('ALTER INDEX "ix" ALTER COLUMN 2 SET STATISTICS 500', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindsTheDefaultTargetAsMinusOne(): void
@@ -32,7 +32,7 @@ final class SetColumnStatisticsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER id SET STATISTICS DEFAULT', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Column\SetColumnStatistics('id', -1), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET STATISTICS DEFAULT', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET STATISTICS DEFAULT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith([0, 1])]

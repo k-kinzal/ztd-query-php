@@ -23,7 +23,7 @@ final class ResetStorageParametersTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t RESET (fillfactor, toast.autovacuum_enabled)', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Storage\ResetStorageParameters([new QualifiedName(['fillfactor']), new QualifiedName(['toast', 'autovacuum_enabled'])]), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" RESET("fillfactor", "toast"."autovacuum_enabled")', $statement->toString());
+        self::assertSame('ALTER TABLE "t" RESET("fillfactor", "toast"."autovacuum_enabled")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testNamesRejectAThreePartParameter(): void

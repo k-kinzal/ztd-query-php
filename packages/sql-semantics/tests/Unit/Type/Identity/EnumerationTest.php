@@ -28,7 +28,7 @@ final class EnumerationTest extends TestCase
         self::assertSame('enum', $identity->name());
         self::assertSame('latin1', $identity->characterSet);
         self::assertTrue($identity->binary);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsNumericLiteralsAsLabels(): void

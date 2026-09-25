@@ -24,22 +24,22 @@ final class CreateEnumTypeStatementTest extends TestCase
         $statement = $binder->bind("CREATE TYPE mood AS ENUM ('sad', E'it\\'s', \$\$ok\$\$)");
         self::assertInstanceOf(CreateEnumTypeStatement::class, $statement);
         self::assertSame(['sad', "it's", 'ok'], $statement->labels);
-        self::assertSame("CREATE TYPE \"mood\" AS ENUM('sad', 'it''s', 'ok')", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("CREATE TYPE \"mood\" AS ENUM('sad', 'it''s', 'ok')", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE mood AS ENUM ()');
         self::assertInstanceOf(CreateEnumTypeStatement::class, $statement);
-        self::assertSame('CREATE TYPE "mood" AS ENUM()', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE TYPE "mood" AS ENUM()', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE TYPE mood AS ENUM ('a')");
         self::assertInstanceOf(CreateEnumTypeStatement::class, $statement);
-        self::assertSame("CREATE TYPE \"feeling\" AS ENUM('a')", $statement->withName(new QualifiedName(['feeling']))->toString());
+        self::assertSame("CREATE TYPE \"feeling\" AS ENUM('a')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['feeling']))));
     }
 
     public function testWithLabelsReplacesTheOperand(): void

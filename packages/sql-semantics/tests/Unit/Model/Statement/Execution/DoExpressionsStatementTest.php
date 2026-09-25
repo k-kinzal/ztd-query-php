@@ -24,7 +24,7 @@ final class DoExpressionsStatementTest extends TestCase
         self::assertInstanceOf(DoExpressionsStatement::class, $statement);
         self::assertInstanceOf(DoExpressionsStatement::class, $other);
         $changed = $statement->withExpressions($other->expressions);
-        self::assertSame('DO 4, 5', $changed->toString());
+        self::assertSame('DO 4, 5', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertCount(1, $statement->expressions);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $statement->expressions[0]);
     }
@@ -36,7 +36,7 @@ final class DoExpressionsStatementTest extends TestCase
         $changed = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $changed);
         self::assertSame($statement->expressions, $changed->expressions);
-        self::assertSame('DO ?, (? + 1)', $changed->toString());
+        self::assertSame('DO ?, (? + 1)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithExpressionsRejectsAnotherDialect(): void

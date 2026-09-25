@@ -26,7 +26,7 @@ final class ShowCharacterSetsStatementTest extends TestCase
         self::assertInstanceOf(ShowCharacterSetsStatement::class, $statement);
         self::assertNull($statement->filter);
         self::assertSame(['Charset', 'Description', 'Default collation', 'Maxlen'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('SHOW CHARACTER SET', $statement->toString());
+        self::assertSame('SHOW CHARACTER SET', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithFilterReplacesTheRestrictionImmutably(): void
@@ -41,9 +41,9 @@ final class ShowCharacterSetsStatementTest extends TestCase
         $changed = $statement->withFilter($conditioned->filter);
         self::assertNotSame($statement, $changed);
         self::assertNotSame($statement->filter, $changed->filter);
-        self::assertSame("SHOW CHARACTER SET WHERE (`Charset` <> 'x')", $changed->toString());
-        self::assertSame('SHOW CHARACTER SET', $statement->withFilter(null)->toString());
-        self::assertSame("SHOW CHARACTER SET LIKE 'utf8%'", $statement->toString());
+        self::assertSame("SHOW CHARACTER SET WHERE (`Charset` <> 'x')", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SHOW CHARACTER SET', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withFilter(null)));
+        self::assertSame("SHOW CHARACTER SET LIKE 'utf8%'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginRetainsTheRestriction(): void
@@ -53,7 +53,7 @@ final class ShowCharacterSetsStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame($statement->filter, $copy->filter);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAnOriginFromAnotherDialect(): void

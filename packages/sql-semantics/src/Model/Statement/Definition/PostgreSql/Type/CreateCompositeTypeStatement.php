@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Creating a composite type
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE TYPE pair AS (label text, amount integer)');
  *     count($statement->attributes) // => 2
- *     $statement->toString() // => 'CREATE TYPE "pair" AS ("label" text, "amount" integer)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE TYPE "pair" AS ("label" text, "amount" integer)'
  * @example Rejecting a repeated attribute name
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE TYPE pair AS (a text)');
  *     $statement->withAttributes([$statement->attributes[0], $statement->attributes[0]]); // throws \SqlSemantics\Model\Validation\InvalidStructure

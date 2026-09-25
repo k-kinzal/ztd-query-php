@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Creating a dictionary
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("CREATE TEXT SEARCH DICTIONARY app.stem (TEMPLATE = snowball, Language = english, StopWords = 'english')");
  *     $statement->template->parts // => ['snowball']
- *     $statement->toString() // => 'CREATE TEXT SEARCH DICTIONARY "app"."stem"(TEMPLATE = "snowball", "language" = \'english\', "stopwords" = \'english\')'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE TEXT SEARCH DICTIONARY "app"."stem"(TEMPLATE = "snowball", "language" = \'english\', "stopwords" = \'english\')'
  */
 final class CreateTextSearchDictionaryStatement extends BoundStatement
 {

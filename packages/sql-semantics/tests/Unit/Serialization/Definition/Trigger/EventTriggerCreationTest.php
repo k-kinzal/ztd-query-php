@@ -21,7 +21,7 @@ final class EventTriggerCreationTest extends TestCase
     #[TestWith(['CREATE EVENT TRIGGER "x" ON "sql_drop" WHEN TAG IN(\'DROP TABLE\', \'DROP VIEW\') EXECUTE FUNCTION "s"."f"()'])]
     public function testWriteIsAFixedPoint(string $sql): void
     {
-        self::assertSame($sql, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     public function testWriteReturnsNullForOtherStatements(): void

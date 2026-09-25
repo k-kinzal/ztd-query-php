@@ -27,7 +27,7 @@ final class NamedRowLockTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Query\Locking\NamedRowLock::class, $lock);
         self::assertSame([$statement->relations[0]], $lock->relations);
         self::assertSame(\SqlSemantics\Model\Query\Locking\LockWait::SkipLocked, $lock->wait);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(BoundSelect::class, $rebound);
         self::assertInstanceOf(\SqlSemantics\Model\Query\Locking\NamedRowLock::class, $rebound->locks[0]);
         self::assertSame([$rebound->relations[0]], $rebound->locks[0]->relations);

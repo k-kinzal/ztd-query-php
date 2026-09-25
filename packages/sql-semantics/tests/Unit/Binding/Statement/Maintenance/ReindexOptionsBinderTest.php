@@ -25,7 +25,7 @@ final class ReindexOptionsBinderTest extends TestCase
         self::assertTrue($statement->options->concurrently);
         self::assertFalse($statement->options->verbose);
         self::assertSame('ts', $statement->options->tablespace);
-        self::assertSame('REINDEX(CONCURRENTLY, TABLESPACE "ts") TABLE "t"', $statement->toString());
+        self::assertSame('REINDEX(CONCURRENTLY, TABLESPACE "ts") TABLE "t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindCombinesTheKeywordFormWithQuotedOptionValues(): void
@@ -35,7 +35,7 @@ final class ReindexOptionsBinderTest extends TestCase
         self::assertTrue($statement->options->concurrently);
         self::assertTrue($statement->options->verbose);
         self::assertNull($statement->options->tablespace);
-        self::assertSame('REINDEX(CONCURRENTLY, VERBOSE) INDEX "ix"', $statement->toString());
+        self::assertSame('REINDEX(CONCURRENTLY, VERBOSE) INDEX "ix"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindLeavesEveryOptionOffByDefault(): void
@@ -62,6 +62,6 @@ final class ReindexOptionsBinderTest extends TestCase
     #[TestWith(['REINDEX (tablespace x, verbose) TABLE t', 'REINDEX(VERBOSE, TABLESPACE "x") TABLE "t"'])]
     public function testBindReadsEveryBooleanSpelling(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql)));
     }
 }

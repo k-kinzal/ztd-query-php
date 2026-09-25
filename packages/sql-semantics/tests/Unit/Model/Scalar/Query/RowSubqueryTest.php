@@ -34,7 +34,7 @@ final class RowSubqueryTest extends TestCase
         self::assertInstanceOf(RowSubquery::class, $value);
         self::assertCount(2, $value->query->resultColumns());
         self::assertSame('record', $value->type->name);
-        $rebound = $binder->bind($query->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query));
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $rebound);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $rebound->outputs[0]->expression);
         self::assertInstanceOf(RowSubquery::class, $rebound->outputs[0]->expression->right);
@@ -63,7 +63,7 @@ final class RowSubqueryTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $query->outputs[0]->expression);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $query->outputs[0]->expression->left);
         self::assertCount(1, $query->outputs[0]->expression->left->query->resultColumns());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
 

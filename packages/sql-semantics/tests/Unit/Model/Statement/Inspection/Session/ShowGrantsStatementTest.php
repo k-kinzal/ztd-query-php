@@ -33,8 +33,8 @@ final class ShowGrantsStatementTest extends TestCase
         self::assertSame(['app', 'localhost'], [$statement->account->username, $statement->account->host]);
         self::assertSame([], $statement->roles);
         self::assertSame(['Grants for app@localhost'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame("SHOW GRANTS FOR 'app'@'localhost'", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SHOW GRANTS FOR 'app'@'localhost'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith(['SHOW GRANTS'])]
@@ -46,7 +46,7 @@ final class ShowGrantsStatementTest extends TestCase
         self::assertInstanceOf(ShowGrantsStatement::class, $statement);
         self::assertSame(CurrentAccount::Authenticated, $statement->account);
         self::assertSame(['Grants for CURRENT_USER'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame('SHOW GRANTS', $statement->toString());
+        self::assertSame('SHOW GRANTS', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithAccountDescribesAnotherAccountImmutably(): void
@@ -56,7 +56,7 @@ final class ShowGrantsStatementTest extends TestCase
         $changed = $statement->withAccount(new AccountName('app'));
         self::assertNotSame($statement, $changed);
         self::assertSame(CurrentAccount::Authenticated, $statement->account);
-        self::assertSame("SHOW GRANTS FOR 'app'", $changed->toString());
+        self::assertSame("SHOW GRANTS FOR 'app'", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame('Grants for app@%', $changed->resultColumns()[0]->name);
     }
 
@@ -67,8 +67,8 @@ final class ShowGrantsStatementTest extends TestCase
         $changed = $statement->withRoles([new AccountName('reader', 'h'), CurrentAccount::Authenticated]);
         self::assertNotSame($statement, $changed);
         self::assertSame([], $statement->roles);
-        self::assertSame("SHOW GRANTS FOR CURRENT_USER USING 'reader'@'h', CURRENT_USER", $changed->toString());
-        self::assertSame('SHOW GRANTS', $changed->withRoles([])->toString());
+        self::assertSame("SHOW GRANTS FOR CURRENT_USER USING 'reader'@'h', CURRENT_USER", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SHOW GRANTS', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withRoles([])));
     }
 
     public function testWithOriginRetainsTheOperands(): void

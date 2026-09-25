@@ -37,8 +37,8 @@ final class CastExpressionTest extends TestCase
         self::assertSame([$cast->operand], $cast->inputs());
         self::assertSame('text', $cast->type->name);
         self::assertSame('integer', $cast->operand->type->name);
-        self::assertSame('SELECT CAST(1 AS text)', $statement->toString());
-        self::assertSame('SELECT CAST(1 AS text)', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT CAST(1 AS text)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('SELECT CAST(1 AS text)', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testInputsOfAnImplicitConversionSerializeWithoutCastSyntax(): void

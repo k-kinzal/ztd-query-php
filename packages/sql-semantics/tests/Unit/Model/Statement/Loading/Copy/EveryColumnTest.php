@@ -22,6 +22,6 @@ final class EveryColumnTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('COPY t TO STDOUT (FORMAT csv, FORCE_QUOTE *)');
         self::assertInstanceOf(CopyToStatement::class, $statement);
         self::assertInstanceOf(EveryColumn::class, $statement->options->forceQuote);
-        self::assertSame('COPY "public"."t" TO STDOUT WITH (FORMAT \'csv\', FORCE_QUOTE *)', $statement->toString());
+        self::assertSame('COPY "public"."t" TO STDOUT WITH (FORMAT \'csv\', FORCE_QUOTE *)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

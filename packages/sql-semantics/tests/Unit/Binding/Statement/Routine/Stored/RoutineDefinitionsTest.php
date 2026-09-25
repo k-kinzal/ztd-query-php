@@ -31,7 +31,7 @@ final class RoutineDefinitionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $statement = $binder->bind('CREATE PROCEDURE p(IN a INT, OUT b INT) SET b = a');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
-        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer, OUT `b` integer) SET `b` = `a`', $statement->toString());
+        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer, OUT `b` integer) SET `b` = `a`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testParametersDiagnosesARepeatedName(): void
@@ -91,7 +91,7 @@ final class RoutineDefinitionsTest extends TestCase
     public function testBindWritesEachStoredRoutine(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     #[TestWith(['CREATE PROCEDURE p() LEAVE x'])]

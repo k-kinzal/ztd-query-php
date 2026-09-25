@@ -31,6 +31,6 @@ final class DropBehaviorTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
         self::assertInstanceOf(DropTableTriggerStatement::class, $statement);
         self::assertSame($behavior, $statement->behavior);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -27,7 +27,7 @@ final class CloneRemoteStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame(CloneEncryption::Refused, $copy->encryption);
-        self::assertSame("CLONE INSTANCE FROM 'u'@'h':3306 IDENTIFIED BY 'p' DATA DIRECTORY = '/d' REQUIRE NO SSL", $copy->toString());
+        self::assertSame("CLONE INSTANCE FROM 'u'@'h':3306 IDENTIFIED BY 'p' DATA DIRECTORY = '/d' REQUIRE NO SSL", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithDonorReplacesAccountAndPort(): void
@@ -64,7 +64,7 @@ final class CloneRemoteStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CLONE INSTANCE FROM u@h:1 IDENTIFIED BY 'p'");
         self::assertInstanceOf(CloneRemoteStatement::class, $statement);
-        self::assertStringEndsWith('REQUIRE SSL', $statement->withEncryption(CloneEncryption::Required)->toString());
+        self::assertStringEndsWith('REQUIRE SSL', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withEncryption(CloneEncryption::Required)));
         self::assertNull($statement->encryption);
     }
 

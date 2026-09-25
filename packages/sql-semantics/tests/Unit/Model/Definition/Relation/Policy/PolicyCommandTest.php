@@ -29,6 +29,6 @@ final class PolicyCommandTest extends TestCase
         $statement = $binder->bind('CREATE POLICY p ON t FOR ' . $command->value);
         self::assertInstanceOf(CreatePolicyStatement::class, $statement);
         self::assertSame($command, $statement->command);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

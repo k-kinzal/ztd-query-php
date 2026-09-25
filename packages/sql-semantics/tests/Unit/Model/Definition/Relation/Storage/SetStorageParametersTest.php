@@ -23,6 +23,6 @@ final class SetStorageParametersTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertInstanceOf(Relation\Storage\SetStorageParameters::class, $statement->actions[0]);
         self::assertSame(['toast', 'autovacuum_enabled'], $statement->actions[0]->parameters[1]->name->parts);
-        self::assertSame('ALTER TABLE "t" SET ("fillfactor" = 70, "toast"."autovacuum_enabled" = false)', $statement->toString());
+        self::assertSame('ALTER TABLE "t" SET ("fillfactor" = 70, "toast"."autovacuum_enabled" = false)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

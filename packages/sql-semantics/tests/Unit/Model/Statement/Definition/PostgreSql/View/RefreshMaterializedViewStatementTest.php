@@ -28,7 +28,7 @@ final class RefreshMaterializedViewStatementTest extends TestCase
         self::assertSame(StatementKind::Refresh, $copy->kind);
         self::assertTrue($copy->concurrently);
         self::assertTrue($copy->withData);
-        self::assertSame('REFRESH MATERIALIZED VIEW CONCURRENTLY "s"."m"', $copy->toString());
+        self::assertSame('REFRESH MATERIALIZED VIEW CONCURRENTLY "s"."m"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherLanguage(): void
@@ -47,7 +47,7 @@ final class RefreshMaterializedViewStatementTest extends TestCase
         $changed = $statement->withName(new QualifiedName(['s', 'n']));
         self::assertSame(['m'], $statement->name->parts);
         self::assertSame(['s', 'n'], $changed->name->parts);
-        self::assertSame('REFRESH MATERIALIZED VIEW "s"."n" WITH NO DATA', $changed->toString());
+        self::assertSame('REFRESH MATERIALIZED VIEW "s"."n" WITH NO DATA', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAConcurrentRefreshWithoutData(): void

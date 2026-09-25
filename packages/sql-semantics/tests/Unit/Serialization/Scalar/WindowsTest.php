@@ -39,8 +39,8 @@ final class WindowsTest extends TestCase
         self::assertInstanceOf(WindowCall::class, $call);
         self::assertInstanceOf(WindowSpecification::class, $call->window);
         self::assertSame($expected, Windows::write($call->window, $dialect)->toString());
-        self::assertStringContainsString(' OVER ' . $expected, $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertStringContainsString(' OVER ' . $expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWriteQuotesANamedWindowReference(): void
@@ -52,7 +52,7 @@ final class WindowsTest extends TestCase
         self::assertInstanceOf(WindowCall::class, $call);
         self::assertInstanceOf(NamedWindow::class, $call->window);
         self::assertSame('"w"', Windows::write($call->window, Dialect::PostgreSql)->toString());
-        self::assertSame('SELECT "sum"("n") OVER "w" FROM "public"."t" WINDOW "w" AS (PARTITION BY "id")', $statement->toString());
+        self::assertSame('SELECT "sum"("n") OVER "w" FROM "public"."t" WINDOW "w" AS (PARTITION BY "id")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBoundaryDistinguishesOffsetsFromTheUnboundedAndCurrentRowForms(): void
@@ -82,7 +82,7 @@ final class WindowsTest extends TestCase
     public function testWriteSpellsEveryFrameBoundary(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

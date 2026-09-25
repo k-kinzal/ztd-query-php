@@ -40,10 +40,10 @@ final class MutationsTest extends TestCase
         $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INT, n INT)', 'CREATE TABLE s(id INT, n INT)'));
         $statement = $binder->bind($sql);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertInstanceOf($class, $rebound);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testUpdateInsideATriggerNamesTheBareTable(): void
@@ -67,7 +67,7 @@ final class MutationsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)'));
         $statement = $binder->bind('UPDATE t SET n = 1 ORDER BY id LIMIT 2');
         self::assertInstanceOf(UpdateTableStatement::class, $statement);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(UpdateTableStatement::class, $rebound);
         self::assertNotNull($rebound->limit);
         self::assertSame('2', $rebound->limit->spelling());

@@ -31,8 +31,8 @@ final class CreateCollationStatementTest extends TestCase
         self::assertSame('de_DE.utf8', $statement->lcCtype);
         self::assertSame('2.36', $statement->version);
         self::assertSame(StatementKind::Create, $statement->kind);
-        self::assertSame("CREATE COLLATION \"s\".\"c\"(LC_COLLATE = 'de_DE.utf8', LC_CTYPE = 'de_DE.utf8', VERSION = '2.36')", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("CREATE COLLATION \"s\".\"c\"(LC_COLLATE = 'de_DE.utf8', LC_CTYPE = 'de_DE.utf8', VERSION = '2.36')", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith([CollationProvider::Libc, 'C', 'C', null])]
@@ -57,7 +57,7 @@ final class CreateCollationStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE COLLATION c (locale = 'C')");
         self::assertInstanceOf(CreateCollationStatement::class, $statement);
-        self::assertSame("CREATE COLLATION \"c\"(LOCALE = 'C')", $statement->withOrigin($statement->origin)->toString());
+        self::assertSame("CREATE COLLATION \"c\"(LOCALE = 'C')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -72,7 +72,7 @@ final class CreateCollationStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE COLLATION c (locale = 'C')");
         self::assertInstanceOf(CreateCollationStatement::class, $statement);
-        self::assertSame("CREATE COLLATION \"c\"(PROVIDER = 'builtin', LOCALE = 'C')", $statement->withProvider(CollationProvider::Builtin)->toString());
+        self::assertSame("CREATE COLLATION \"c\"(PROVIDER = 'builtin', LOCALE = 'C')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withProvider(CollationProvider::Builtin)));
     }
 
     public function testWithLocaleReplacesTheOperand(): void
@@ -86,7 +86,7 @@ final class CreateCollationStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE COLLATION c (lc_collate = 'C', lc_ctype = 'C')");
         self::assertInstanceOf(CreateCollationStatement::class, $statement);
-        self::assertSame("CREATE COLLATION \"c\"(LC_COLLATE = 'POSIX', LC_CTYPE = 'C')", $statement->withCategories('POSIX', 'C')->toString());
+        self::assertSame("CREATE COLLATION \"c\"(LC_COLLATE = 'POSIX', LC_CTYPE = 'C')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withCategories('POSIX', 'C')));
     }
 
     public function testWithDeterministicReplacesTheOperand(): void
@@ -101,7 +101,7 @@ final class CreateCollationStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE COLLATION c (provider = icu, locale = 'und')");
         self::assertInstanceOf(CreateCollationStatement::class, $statement);
-        self::assertSame("CREATE COLLATION \"c\"(PROVIDER = 'icu', LOCALE = 'und', RULES = '&a < b')", $statement->withRules('&a < b')->toString());
+        self::assertSame("CREATE COLLATION \"c\"(PROVIDER = 'icu', LOCALE = 'und', RULES = '&a < b')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withRules('&a < b')));
     }
 
     public function testWithVersionReplacesTheOperand(): void
@@ -115,7 +115,7 @@ final class CreateCollationStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE COLLATION c (locale = 'C')");
         self::assertInstanceOf(CreateCollationStatement::class, $statement);
-        self::assertSame("CREATE COLLATION IF NOT EXISTS \"c\"(LOCALE = 'C')", $statement->withIfNotExists(true)->toString());
+        self::assertSame("CREATE COLLATION IF NOT EXISTS \"c\"(LOCALE = 'C')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIfNotExists(true)));
     }
 
     public function testDefaultsToADeterministicUnconditionalCreation(): void
@@ -125,7 +125,7 @@ final class CreateCollationStatementTest extends TestCase
         $rebuilt = new CreateCollationStatement($statement->origin, new QualifiedName(['c']), CollationProvider::Libc, 'C');
         self::assertTrue($rebuilt->deterministic);
         self::assertFalse($rebuilt->ifNotExists);
-        self::assertSame($statement->toString(), $rebuilt->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebuilt));
     }
 
     public function testRejectsAnotherDatabaseLanguage(): void

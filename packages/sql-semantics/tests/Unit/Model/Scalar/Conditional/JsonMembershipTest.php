@@ -31,8 +31,8 @@ final class JsonMembershipTest extends TestCase
         self::assertSame("'[1,2]'", $member->array->spelling());
         self::assertSame([$member->value, $member->array], $member->inputs());
         self::assertSame(Nullability::NotNull, $member->nullability);
-        self::assertSame('SELECT (1 MEMBER OF(\'[1,2]\'))', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT (1 MEMBER OF(\'[1,2]\'))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testSpellingIsIndependentOfTheOptionalOfKeyword(): void

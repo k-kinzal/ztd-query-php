@@ -31,6 +31,6 @@ final class DiscardResourceTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
         self::assertInstanceOf(DiscardStatement::class, $statement);
         self::assertSame($resource, $statement->resource);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

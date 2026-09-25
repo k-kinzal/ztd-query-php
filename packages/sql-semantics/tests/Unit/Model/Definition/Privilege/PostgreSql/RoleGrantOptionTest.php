@@ -38,7 +38,7 @@ final class RoleGrantOptionTest extends TestCase
         $statement = $binder->bind('GRANT staff TO alice ' . $clause);
         self::assertInstanceOf(GrantRolesStatement::class, $statement);
         self::assertEquals([new RoleGrantOption($attribute, $granted)], $statement->options);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($statement->toString())->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

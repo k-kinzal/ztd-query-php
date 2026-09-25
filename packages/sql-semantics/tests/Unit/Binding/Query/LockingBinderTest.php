@@ -33,7 +33,7 @@ final class LockingBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Query\Locking\NamedRowLock::class, $both);
         self::assertSame(\SqlSemantics\Model\Query\Locking\LockStrength::NoKeyUpdate, $both->strength);
         self::assertSame($statement->relations, $both->relations);
-        self::assertSame('SELECT "t"."a" AS "a" FROM "public"."t" CROSS JOIN "public"."u" FOR UPDATE OF "t" NOWAIT FOR SHARE SKIP LOCKED FOR NO KEY UPDATE OF "t", "u"', $statement->toString());
+        self::assertSame('SELECT "t"."a" AS "a" FROM "public"."t" CROSS JOIN "public"."u" FOR UPDATE OF "t" NOWAIT FOR SHARE SKIP LOCKED FOR NO KEY UPDATE OF "t", "u"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindTranslatesMySqlShareModeSyntax(): void
@@ -43,7 +43,7 @@ final class LockingBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Query\Locking\AllRowLock::class, $statement->locks[0]);
         self::assertSame(\SqlSemantics\Model\Query\Locking\LockStrength::Share, $statement->locks[0]->strength);
         self::assertSame(\SqlSemantics\Model\Query\Locking\LockWait::Wait, $statement->locks[0]->wait);
-        self::assertSame('SELECT `a` AS `a` FROM `t` LOCK IN SHARE MODE', $statement->toString());
+        self::assertSame('SELECT `a` AS `a` FROM `t` LOCK IN SHARE MODE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['mysql-5.6.51', 'FOR UPDATE'])]
@@ -56,7 +56,55 @@ final class LockingBinderTest extends TestCase
         $statement = $binder->bind('SELECT a FROM t WHERE a > 0 ' . $lock);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertCount(1, $statement->locks);
-        self::assertSame('SELECT `a` AS `a` FROM `t` WHERE (`a` > 0) ' . $lock, $statement->toString());
+        self::assertSame('SELECT `a` AS `a` FROM `t` WHERE (`a` > 0) ' . $lock, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+    }
+
+    #[TestWith(['SELECT a FROM t FOR UPDATE OF t FOR SHARE OF t'])]
+    #[TestWith(['SELECT a FROM t FOR UPDATE OF t, t'])]
+    #[TestWith(['SELECT a FROM t AS z FOR UPDATE OF z FOR SHARE OF z'])]
+    #[TestWith(['SELECT a FROM t FOR UPDATE FOR SHARE'])]
+    #[TestWith(['SELECT a FROM t FOR UPDATE FOR SHARE OF t'])]
+    #[TestWith(['SELECT t.a FROM t, u FOR UPDATE OF t LOCK IN SHARE MODE'])]
+    #[TestWith(['TABLE t FOR UPDATE FOR SHARE'])]
+    #[TestWith(['(SELECT a FROM t FOR SHARE) FOR UPDATE'])]
+    #[TestWith(['SELECT a FROM t UNION SELECT a FROM u FOR UPDATE OF u FOR SHARE OF u'])]
+    #[TestWith(['CREATE VIEW v AS SELECT a FROM t FOR UPDATE OF t FOR SHARE OF t'])]
+    public function testBindRejectsATableLockedByTwoMySqlClauses(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::RepeatedLock->message());
+        $binder->bind($sql);
+    }
+
+    #[TestWith(['SELECT t.a FROM t, u FOR UPDATE OF t FOR SHARE OF u', 'SELECT `t`.`a` AS `a` FROM `t` CROSS JOIN `u` FOR UPDATE OF `t` FOR SHARE OF `u`'])]
+    #[TestWith(['SELECT x.a FROM t x, t y FOR UPDATE OF x FOR SHARE OF y', 'SELECT `x`.`a` AS `a` FROM `t` AS `x` CROSS JOIN `t` AS `y` FOR UPDATE OF `x` FOR SHARE OF `y`'])]
+    #[TestWith(['SELECT 1 FOR UPDATE FOR SHARE', 'SELECT 1 FOR UPDATE LOCK IN SHARE MODE'])]
+    #[TestWith(['SELECT a FROM (SELECT 1 AS a) d FOR UPDATE FOR SHARE', 'SELECT `a` AS `a` FROM(SELECT 1 AS `a`) AS `d` FOR UPDATE LOCK IN SHARE MODE'])]
+    public function testBindKeepsMySqlClausesThatLockDifferentTables(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)'));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+    }
+
+    public function testBindKeepsRepeatedPostgreSqlTargetsWhichTheServerMerges(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('SELECT a FROM t FOR UPDATE OF t FOR SHARE OF t, t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertCount(2, $statement->locks);
+        self::assertSame('SELECT "a" AS "a" FROM "public"."t" FOR UPDATE OF "t" FOR SHARE OF "t", "t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+    }
+
+    #[TestWith(['mysql-5.6.51', 'SELECT a FROM (SELECT a FROM t FOR UPDATE) d', 'SELECT `a` AS `a` FROM(SELECT `a` AS `a` FROM `t` FOR UPDATE) AS `d`'])]
+    #[TestWith(['mysql-5.7.44', 'SELECT a FROM (SELECT a FROM t LOCK IN SHARE MODE) d FOR UPDATE', 'SELECT `a` AS `a` FROM(SELECT `a` AS `a` FROM `t` LOCK IN SHARE MODE) AS `d` FOR UPDATE'])]
+    #[TestWith(['mysql-8.0.44', 'SELECT a FROM (SELECT a FROM t FOR UPDATE) d', 'SELECT `a` AS `a` FROM(SELECT `a` AS `a` FROM `t` FOR UPDATE) AS `d`'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT a FROM ((SELECT a FROM t FOR SHARE OF t NOWAIT)) d', 'SELECT `a` AS `a` FROM(SELECT `a` AS `a` FROM `t` FOR SHARE OF `t` NOWAIT) AS `d`'])]
+    #[TestWith(['mysql-9.1.0', 'SELECT u.a FROM u, LATERAL (SELECT a FROM t FOR UPDATE SKIP LOCKED) d', 'SELECT `u`.`a` AS `a` FROM `u` CROSS JOIN LATERAL(SELECT `a` AS `a` FROM `t` FOR UPDATE SKIP LOCKED) AS `d`'])]
+    public function testBindKeepsTheLockingClauseOfADerivedTable(string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)'));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testTargetReportsAnUnknownLockRelationWithoutFailing(): void
@@ -149,6 +197,71 @@ final class LockingBinderTest extends TestCase
     public function testSetOperationLockOfAMySqlOperandIsKept(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('(SELECT a FROM t FOR UPDATE) UNION SELECT a FROM t');
-        self::assertSame('(SELECT `a` AS `a` FROM `t` FOR UPDATE) UNION SELECT `a` AS `a` FROM `t`', $statement->toString());
+        self::assertSame('(SELECT `a` AS `a` FROM `t` FOR UPDATE) UNION SELECT `a` AS `a` FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+    }
+
+    #[TestWith(['mysql-8.0.44', 'SELECT a FROM t UNION SELECT a FROM u FOR UPDATE', 'SELECT `a` AS `a` FROM `t` UNION (SELECT `a` AS `a` FROM `u` FOR UPDATE)'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT a FROM t UNION SELECT a FROM u LOCK IN SHARE MODE', 'SELECT `a` AS `a` FROM `t` UNION (SELECT `a` AS `a` FROM `u` LOCK IN SHARE MODE)'])]
+    #[TestWith(['mysql-9.1.0', 'SELECT a FROM t UNION SELECT a FROM u FOR SHARE OF u NOWAIT', 'SELECT `a` AS `a` FROM `t` UNION (SELECT `a` AS `a` FROM `u` FOR SHARE OF `u` NOWAIT)'])]
+    #[TestWith(['mysql-8.0.44', 'TABLE t UNION TABLE u FOR UPDATE', 'TABLE `t` UNION (TABLE `u` FOR UPDATE)'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT a FROM t EXCEPT SELECT a FROM u ORDER BY a LIMIT 5 FOR UPDATE SKIP LOCKED', 'SELECT `a` AS `a` FROM `t` EXCEPT (SELECT `a` AS `a` FROM `u` FOR UPDATE SKIP LOCKED) ORDER BY `a` ASC LIMIT 5'])]
+    #[TestWith(['mysql-9.1.0', 'SELECT a FROM t UNION VALUES ROW(1) FOR UPDATE', 'SELECT `a` AS `a` FROM `t` UNION (VALUES ROW(1) FOR UPDATE)'])]
+    #[TestWith(['mysql-8.0.44', '(SELECT a FROM t UNION SELECT a FROM u) FOR UPDATE', 'SELECT `a` AS `a` FROM `t` UNION (SELECT `a` AS `a` FROM `u` FOR UPDATE)'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT a FROM u UNION (SELECT a FROM u UNION SELECT a FROM t) FOR UPDATE OF t', 'SELECT `a` AS `a` FROM `u` UNION (SELECT `a` AS `a` FROM `u` UNION (SELECT `a` AS `a` FROM `t` FOR UPDATE OF `t`))'])]
+    #[TestWith(['mysql-9.1.0', 'SELECT a FROM t INTERSECT SELECT a FROM u UNION SELECT a FROM u FOR SHARE', 'SELECT `a` AS `a` FROM `t` INTERSECT SELECT `a` AS `a` FROM `u` UNION (SELECT `a` AS `a` FROM `u` LOCK IN SHARE MODE)'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT * FROM (SELECT a FROM t UNION SELECT a FROM u FOR UPDATE) x', 'SELECT `x`.`a` AS `a` FROM(SELECT `a` AS `a` FROM `t` UNION (SELECT `a` AS `a` FROM `u` FOR UPDATE)) AS `x`'])]
+    #[TestWith(['mysql-5.7.44', 'SELECT a FROM t UNION SELECT a FROM u FOR UPDATE', 'SELECT `a` AS `a` FROM `t` UNION (SELECT `a` AS `a` FROM `u` FOR UPDATE)'])]
+    #[TestWith(['mysql-5.6.51', 'SELECT a FROM t UNION SELECT a FROM u LOCK IN SHARE MODE', 'SELECT `a` AS `a` FROM `t` UNION (SELECT `a` AS `a` FROM `u` LOCK IN SHARE MODE)'])]
+    public function testTrailingLockOfASetOperationLocksTheLastQueryBlock(string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)'));
+        $statement = $binder->bind($sql);
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
+    }
+
+    public function testTrailingLockNamesOnlyTablesOfTheLastQueryBlock(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)'));
+        $statement = $binder->bind('SELECT a FROM t UNION SELECT a FROM u FOR SHARE OF t NOWAIT', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->left);
+        self::assertSame([], $statement->left->locks);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->right);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Locking\NamedRowLock::class, $statement->right->locks[0]);
+        self::assertSame(\SqlSemantics\Model\Query\Locking\LockStrength::Share, $statement->right->locks[0]->strength);
+        self::assertSame(\SqlSemantics\Model\Query\Locking\LockWait::NoWait, $statement->right->locks[0]->wait);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Locking\UnresolvedLockRelation::class, $statement->right->locks[0]->relations[0]);
+        self::assertSame('unknown-lock-relation', $statement->diagnostics[0]->reason);
+    }
+
+    #[TestWith(['SELECT a FROM t UNION SELECT a FROM u FOR UPDATE', 'FOR UPDATE'])]
+    #[TestWith(['(SELECT a FROM t UNION SELECT a FROM u FOR SHARE) FOR UPDATE', 'FOR SHARE|FOR UPDATE'])]
+    #[TestWith(['SELECT a FROM t UNION (SELECT a FROM u FOR UPDATE)', ''])]
+    #[TestWith(['SELECT a FROM t UNION SELECT a FROM u', ''])]
+    public function testTrailingFindsTheLockListsWrittenAfterTheSetOperation(string $sql, string $locks): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse($sql);
+        $found = LockingBinder::trailing($tree, \SqlSemantics\Binding\Query\QueryNodes::body($tree));
+        self::assertSame($locks, implode('|', array_map(\SqlSemantics\Ast\Tree::text(...), $found)));
+    }
+
+    public function testValuesKeepsTheLocksOfAMySqlValuesBlock(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('VALUES ROW(1), ROW(2) FOR SHARE SKIP LOCKED');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $statement);
+        self::assertSame(\SqlSemantics\Model\Query\Locking\LockStrength::Share, $statement->locks[0]->strength);
+        self::assertSame(\SqlSemantics\Model\Query\Locking\LockWait::SkipLocked, $statement->locks[0]->wait);
+        self::assertSame('VALUES ROW(1), ROW(2) FOR SHARE SKIP LOCKED', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+    }
+
+    #[TestWith(['VALUES (1) FOR UPDATE'])]
+    #[TestWith(['(VALUES (1)) FOR KEY SHARE'])]
+    public function testValuesRejectsAPostgreSqlLock(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::ValuesLock->message());
+        $binder->bind($sql);
     }
 }

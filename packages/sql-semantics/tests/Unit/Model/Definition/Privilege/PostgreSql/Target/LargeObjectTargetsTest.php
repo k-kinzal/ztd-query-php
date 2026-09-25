@@ -31,8 +31,8 @@ final class LargeObjectTargetsTest extends TestCase
         $statement = $binder->bind('GRANT SELECT, UPDATE ON LARGE OBJECT 12, 13 TO a');
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
         self::assertEquals(new LargeObjectTargets([12, 13]), $statement->target);
-        self::assertSame('GRANT SELECT, UPDATE ON LARGE OBJECT 12, 13 TO "a"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('GRANT SELECT, UPDATE ON LARGE OBJECT 12, 13 TO "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith([-1])]

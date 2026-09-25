@@ -34,7 +34,7 @@ final class SlicePathTest extends TestCase
         self::assertSame('a', $path->column()->columnBinding()?->column->name);
         self::assertSame('1', $path->lower?->spelling());
         self::assertSame('2', $path->upper?->spelling());
-        self::assertSame('UPDATE "public"."t" SET "a"[1 : 2] = "a"', $statement->toString());
+        self::assertSame('UPDATE "public"."t" SET "a"[1 : 2] = "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTypeIsTheWholeArrayType(): void
@@ -66,8 +66,8 @@ final class SlicePathTest extends TestCase
         self::assertSame('1', $tail->lower?->spelling());
         self::assertNull($tail->upper);
         $expected = 'UPDATE "public"."t" SET "a"[: 2] = "a", "a"[1 :] = "a"';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testRejectsABoundFromAnotherDialect(): void

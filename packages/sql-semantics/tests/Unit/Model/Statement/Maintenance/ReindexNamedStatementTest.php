@@ -24,7 +24,7 @@ final class ReindexNamedStatementTest extends TestCase
         self::assertInstanceOf(ReindexNamedStatement::class, $statement);
         self::assertSame(['main', 'ix'], $statement->target->parts);
         self::assertSame(StatementKind::Reindex, $statement->kind);
-        self::assertSame('REINDEX "main"."ix"', $statement->toString());
+        self::assertSame('REINDEX "main"."ix"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheTarget(): void
@@ -35,7 +35,7 @@ final class ReindexNamedStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->target, $copy->target);
-        self::assertSame('REINDEX "ix"', $copy->toString());
+        self::assertSame('REINDEX "ix"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAnotherDatabaseDialect(): void

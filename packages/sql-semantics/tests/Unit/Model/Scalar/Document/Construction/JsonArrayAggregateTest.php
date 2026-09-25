@@ -35,8 +35,8 @@ final class JsonArrayAggregateTest extends TestCase
         self::assertFalse($value->orderBy[0]->nullsFirst);
         self::assertSame([$value->element->expression, $value->orderBy[0]->key, $value->filter], $value->inputs());
         self::assertSame('jsonb', $value->type->name);
-        self::assertSame('SELECT JSON_ARRAYAGG("v" ORDER BY "k" DESC NULLS LAST NULL ON NULL RETURNING jsonb) FILTER (WHERE ("v" > 0)) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_ARRAYAGG("v" ORDER BY "k" DESC NULLS LAST NULL ON NULL RETURNING jsonb) FILTER (WHERE ("v" > 0)) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsBecomeAWindowCallWithOver(): void
@@ -47,8 +47,8 @@ final class JsonArrayAggregateTest extends TestCase
         $window = $query->outputs[0]->expression;
         self::assertInstanceOf(WindowCall::class, $window);
         self::assertInstanceOf(JsonArrayAggregate::class, $window->function);
-        self::assertSame('SELECT JSON_ARRAYAGG("v") OVER (PARTITION BY "k") FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_ARRAYAGG("v") OVER (PARTITION BY "k") FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAnOutputPositionOrdering(): void

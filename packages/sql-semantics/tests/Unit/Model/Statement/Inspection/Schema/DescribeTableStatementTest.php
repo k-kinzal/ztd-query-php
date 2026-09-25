@@ -26,7 +26,7 @@ final class DescribeTableStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertSame('i%', $copy->pattern);
         self::assertSame('DESCRIBE', $copy->kind->value);
-        self::assertSame("DESCRIBE `t` 'i%'", $copy->toString());
+        self::assertSame("DESCRIBE `t` 'i%'", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithTableDescribesAnotherTable(): void
@@ -45,8 +45,8 @@ final class DescribeTableStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('DESC t id');
         self::assertInstanceOf(DescribeTableStatement::class, $statement);
-        self::assertSame('DESCRIBE `t`', $statement->withPattern(null)->toString());
-        self::assertSame("DESCRIBE `t` 'x_'", $statement->withPattern('x_')->toString());
+        self::assertSame('DESCRIBE `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withPattern(null)));
+        self::assertSame("DESCRIBE `t` 'x_'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withPattern('x_')));
         self::assertSame('id', $statement->pattern);
     }
 

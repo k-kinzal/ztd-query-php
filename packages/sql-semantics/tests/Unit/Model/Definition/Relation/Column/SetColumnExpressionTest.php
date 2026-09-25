@@ -25,7 +25,7 @@ final class SetColumnExpressionTest extends TestCase
         self::assertInstanceOf(Relation\Column\SetColumnExpression::class, $statement->actions[0]);
         self::assertSame('twice', $statement->actions[0]->column);
         self::assertSame('("id" * 2)', $statement->actions[0]->expression->structure()->toString());
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "twice" SET EXPRESSION AS(("id" * 2))', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "twice" SET EXPRESSION AS(("id" * 2))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnExpressionFromAnotherDatabaseLanguage(): void

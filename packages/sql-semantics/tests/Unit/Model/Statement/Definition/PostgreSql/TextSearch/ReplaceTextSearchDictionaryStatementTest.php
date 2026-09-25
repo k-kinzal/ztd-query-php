@@ -26,8 +26,8 @@ final class ReplaceTextSearchDictionaryStatementTest extends TestCase
         self::assertInstanceOf(ReplaceTextSearchDictionaryStatement::class, $statement);
         self::assertSame(['word'], $statement->tokenTypes);
         self::assertSame(['s', 'a'], $statement->dictionary->parts);
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "s"."c" ALTER MAPPING FOR "word" REPLACE "s"."a" WITH "b"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "s"."c" ALTER MAPPING FOR "word" REPLACE "s"."a" WITH "b"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -50,7 +50,7 @@ final class ReplaceTextSearchDictionaryStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE a WITH b');
         self::assertInstanceOf(ReplaceTextSearchDictionaryStatement::class, $statement);
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" ALTER MAPPING REPLACE "a" WITH "b"', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" ALTER MAPPING REPLACE "a" WITH "b"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithConfigurationReplacesTheOperand(): void
@@ -83,6 +83,6 @@ final class ReplaceTextSearchDictionaryStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE a WITH b');
         self::assertInstanceOf(ReplaceTextSearchDictionaryStatement::class, $statement);
         $changed = $statement->withTokenTypes(['word']);
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" ALTER MAPPING FOR "word" REPLACE "a" WITH "b"', $changed->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" ALTER MAPPING FOR "word" REPLACE "a" WITH "b"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

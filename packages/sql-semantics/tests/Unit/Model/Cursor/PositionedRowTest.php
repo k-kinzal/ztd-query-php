@@ -28,8 +28,8 @@ final class PositionedRowTest extends TestCase
         self::assertInstanceOf(PositionedRow::class, $movement);
         self::assertSame(OffsetOrigin::Relative, $movement->origin);
         self::assertSame('0', $movement->offset->text);
-        self::assertSame('MOVE RELATIVE 0 FROM "cur"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('MOVE RELATIVE 0 FROM "cur"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testExposesTheSuppliedOperands(): void

@@ -34,8 +34,8 @@ final class XmlConstructorBinderTest extends TestCase
         self::assertInstanceOf(XmlElement::class, $element);
         self::assertSame('Item', $element->name);
         self::assertSame(['n', 'n2'], [$element->attributes[0]->label(), $element->attributes[1]->label()]);
-        self::assertSame('SELECT XMLELEMENT(NAME "Item", XMLATTRIBUTES("t"."n", \'k\' AS "n2"), "x") FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT XMLELEMENT(NAME "Item", XMLATTRIBUTES("t"."n", \'k\' AS "n2"), "x") FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     #[TestWith(['SELECT XMLELEMENT(NAME e, XMLATTRIBUTES(t.n, n)) FROM t'])]
@@ -95,7 +95,7 @@ final class XmlConstructorBinderTest extends TestCase
     #[TestWith(["SELECT XMLELEMENT(NAME e, XMLATTRIBUTES(a, b AS c), 'x', b) FROM t", 'SELECT XMLELEMENT(NAME "e", XMLATTRIBUTES("a", "b" AS "c"), \'x\', "b") FROM "public"."t"'])]
     public function testNamedAcceptsReferencesWithoutAliases(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b TEXT)')))->bind($sql, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b TEXT)')))->bind($sql, strict: false)));
     }
 
     #[TestWith(['SELECT XMLFOREST(a, 1) FROM t'])]

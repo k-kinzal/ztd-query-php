@@ -27,6 +27,6 @@ final class SequenceFlagTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER COLUMN id SET CYCLE SET NO MINVALUE', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Identity\SetColumnIdentity('id', [Relation\Identity\SequenceFlag::Cycle, Relation\Identity\SequenceFlag::NoMinValue]), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET CYCLE SET NO MINVALUE', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET CYCLE SET NO MINVALUE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

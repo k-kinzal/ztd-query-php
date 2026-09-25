@@ -32,7 +32,7 @@ final class InsertSetStatementTest extends TestCase
         self::assertSame(StatementKind::Insert, $statement->kind);
         self::assertContainsOnlyInstancesOf(ScalarAssignment::class, $statement->writes);
         self::assertSame(['id', 'n'], array_map(static fn ($write): ?string => $write->destinations()[0]->column()->columnBinding()?->column->name, $statement->writes));
-        self::assertSame('INSERT INTO `t` SET `id` = 1, `n` = 2', $statement->toString());
+        self::assertSame('INSERT INTO `t` SET `id` = 1, `n` = 2', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testReplaceModeChangesTheOperationIdentity(): void
@@ -41,7 +41,7 @@ final class InsertSetStatementTest extends TestCase
         self::assertInstanceOf(InsertSetStatement::class, $statement);
         self::assertSame(InsertMode::Replace, $statement->mode);
         self::assertSame(StatementKind::Replace, $statement->kind);
-        self::assertSame('REPLACE INTO `t` SET `id` = 1', $statement->toString());
+        self::assertSame('REPLACE INTO `t` SET `id` = 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheWrites(): void
@@ -53,7 +53,7 @@ final class InsertSetStatementTest extends TestCase
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->writes, $copy->writes);
         self::assertSame($statement->policy, $copy->policy);
-        self::assertSame('INSERT IGNORE INTO `t` SET `id` = 1', $copy->toString());
+        self::assertSame('INSERT IGNORE INTO `t` SET `id` = 1', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithReturningRejectsAMySqlProjection(): void

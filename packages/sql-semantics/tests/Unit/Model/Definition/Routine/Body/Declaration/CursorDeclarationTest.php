@@ -30,7 +30,7 @@ final class CursorDeclarationTest extends TestCase
         self::assertInstanceOf(BlockStatement::class, $statement->body);
         self::assertInstanceOf(CursorDeclaration::class, $statement->body->declarations[0]);
         self::assertSame('n', $statement->body->declarations[0]->query->resultColumns()[0]->name);
-        self::assertSame('CREATE PROCEDURE `p`(IN `k` integer) BEGIN DECLARE `c` CURSOR FOR SELECT `n` AS `n` FROM `t` WHERE (`n` > `k`); END', $statement->toString());
+        self::assertSame('CREATE PROCEDURE `p`(IN `k` integer) BEGIN DECLARE `c` CURSOR FOR SELECT `n` AS `n` FROM `t` WHERE (`n` > `k`); END', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnotherDialectQuery(): void

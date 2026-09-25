@@ -23,21 +23,21 @@ final class CreateShellTypeStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE app.box3d');
         self::assertInstanceOf(CreateShellTypeStatement::class, $statement);
         self::assertSame(['app', 'box3d'], $statement->name->parts);
-        self::assertSame('CREATE TYPE "app"."box3d"', $statement->toString());
+        self::assertSame('CREATE TYPE "app"."box3d"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t');
         self::assertInstanceOf(CreateShellTypeStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t');
         self::assertInstanceOf(CreateShellTypeStatement::class, $statement);
-        self::assertSame('CREATE TYPE "u"', $statement->withName(new QualifiedName(['u']))->toString());
+        self::assertSame('CREATE TYPE "u"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['u']))));
         self::assertSame(['t'], $statement->name->parts);
     }
 

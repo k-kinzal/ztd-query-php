@@ -30,7 +30,7 @@ final class ColumnPathTest extends TestCase
         self::assertSame($path->reference, $path->column());
         self::assertInstanceOf(ColumnReference::class, $path->reference);
         self::assertSame('id', $path->reference->binding->column->name);
-        self::assertSame('UPDATE "public"."t" SET "id" = 1', $statement->toString());
+        self::assertSame('UPDATE "public"."t" SET "id" = 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTypeIsTheDeclaredColumnType(): void
@@ -55,6 +55,6 @@ final class ColumnPathTest extends TestCase
         self::assertInstanceOf(UnresolvedColumnReference::class, $path->column());
         self::assertSame(['missing'], $path->column()->name);
         self::assertSame('unknown', $path->type()->name);
-        self::assertSame('UPDATE "public"."t" SET "missing" = 1', $statement->toString());
+        self::assertSame('UPDATE "public"."t" SET "missing" = 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

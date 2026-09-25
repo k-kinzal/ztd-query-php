@@ -33,7 +33,7 @@ final class ComparisonOperatorTest extends TestCase
         self::assertInstanceOf(QuantifiedComparison::class, $comparison);
         self::assertSame($expected, $comparison->operator);
         self::assertSame($operator, $expected->value);
-        self::assertSame('SELECT (1 ' . $operator . ' ALL (SELECT 2))', $statement->toString());
+        self::assertSame('SELECT (1 ' . $operator . ' ALL (SELECT 2))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindsTheMySqlNullSafeEquality(): void
@@ -43,7 +43,7 @@ final class ComparisonOperatorTest extends TestCase
         $comparison = $statement->outputs[0]->expression;
         self::assertInstanceOf(QuantifiedComparison::class, $comparison);
         self::assertSame(ComparisonOperator::NullSafeEqual, $comparison->operator);
-        self::assertSame('SELECT (1 <=> ANY(SELECT 2))', $statement->toString());
+        self::assertSame('SELECT (1 <=> ANY(SELECT 2))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testSpellsEachOperatorAsWrittenInSql(): void

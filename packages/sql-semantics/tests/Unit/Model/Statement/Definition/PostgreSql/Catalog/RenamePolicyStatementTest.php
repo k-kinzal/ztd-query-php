@@ -26,8 +26,8 @@ final class RenamePolicyStatementTest extends TestCase
         self::assertSame(['app', 'docs'], $statement->table->parts);
         self::assertTrue($statement->ifExists);
         self::assertSame('owners', $statement->newName);
-        self::assertSame('ALTER POLICY IF EXISTS "owner_only" ON "app"."docs" RENAME TO "owners"', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER POLICY IF EXISTS "owner_only" ON "app"."docs" RENAME TO "owners"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -36,7 +36,7 @@ final class RenamePolicyStatementTest extends TestCase
         self::assertInstanceOf(RenamePolicyStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -56,7 +56,7 @@ final class RenamePolicyStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('owner_only', $statement->name);
         self::assertEquals('p', $changed->name);
-        self::assertStringContainsString('"p" ON', $changed->toString());
+        self::assertStringContainsString('"p" ON', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTableReplacesTheOperand(): void
@@ -67,7 +67,7 @@ final class RenamePolicyStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(new QualifiedName(['app', 'docs']), $statement->table);
         self::assertEquals(new QualifiedName(['docs']), $changed->table);
-        self::assertStringContainsString('ON "docs" RENAME', $changed->toString());
+        self::assertStringContainsString('ON "docs" RENAME', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfExistsReplacesTheOperand(): void
@@ -78,7 +78,7 @@ final class RenamePolicyStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(true, $statement->ifExists);
         self::assertEquals(false, $changed->ifExists);
-        self::assertStringContainsString('ALTER POLICY "owner_only"', $changed->toString());
+        self::assertStringContainsString('ALTER POLICY "owner_only"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNewNameReplacesTheOperand(): void
@@ -89,7 +89,7 @@ final class RenamePolicyStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('owners', $statement->newName);
         self::assertEquals('q', $changed->newName);
-        self::assertStringContainsString('RENAME TO "q"', $changed->toString());
+        self::assertStringContainsString('RENAME TO "q"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAnEmptyNewName(): void

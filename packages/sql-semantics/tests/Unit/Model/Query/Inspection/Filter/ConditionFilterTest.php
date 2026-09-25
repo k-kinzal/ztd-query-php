@@ -30,7 +30,7 @@ final class ConditionFilterTest extends TestCase
         self::assertInstanceOf(BinaryExpression::class, $condition);
         self::assertInstanceOf(MetadataColumn::class, $condition->inputs()[0]);
         self::assertSame('Database', $condition->inputs()[0]->spelling());
-        self::assertSame("SHOW DATABASES WHERE (`Database` <> 'mysql')", $statement->toString());
+        self::assertSame("SHOW DATABASES WHERE (`Database` <> 'mysql')", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAConditionFromAnotherDialect(): void

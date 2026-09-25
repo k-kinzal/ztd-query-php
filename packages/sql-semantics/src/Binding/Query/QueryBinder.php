@@ -65,19 +65,19 @@ final class QueryBinder
         $tailSource = QueryNodes::modifierScope($source, $body);
         [$limit, $offset] = $tail->pagination($tailSource, $scope);
         $withTies = in_array('TIES', Tree::keywords(QueryNodes::local($tailSource, ['limit_clause'])[0] ?? new Node('empty', 0, [])), true);
-        $groups = $this->expressions($body, ['group_clause', 'opt_group_clause', 'groupby_opt'], $scope);
+        [$groups, $distinctGroupingSets] = Grouping\GroupingBinder::bind($body, $scope);
         $origin = new \SqlSemantics\Model\Statement\Origin($id, $source, $context->tables->identifiers->dialect);
         $ordering = $tail->ordering($tailSource, $scope, $outputs);
         if ($values !== []) {
-            return new \SqlSemantics\Model\Statement\ValuesStatement($origin, $values, $ordering, $limit, $offset, $withTies, ctes: (new CteBinder())->clause($source, $context));
+            return new \SqlSemantics\Model\Statement\ValuesStatement($origin, $values, $ordering, $limit, $offset, $withTies, (new CteBinder())->clause($source, $context), LockingBinder::values($source, $scope));
         }
         if (self::lead($body) === 'TABLE') {
             if (!$from?->relation instanceof \SqlSemantics\Model\Relation\NamedTableReference && !$from?->relation instanceof \SqlSemantics\Model\Relation\CteReference) {
                 Tree::invalid($source, 'TABLE relation');
             }
-            return new \SqlSemantics\Model\Statement\TableStatement($origin, $from->relation, $ordering, $limit, $offset, $withTies, (new CteBinder())->clause($source, $context));
+            return new \SqlSemantics\Model\Statement\TableStatement($origin, $from->relation, $ordering, $limit, $offset, $withTies, (new CteBinder())->clause($source, $context), LockingBinder::bind($source, $scope));
         }
-        return new \SqlSemantics\Model\BoundSelect($origin, $from?->relation, $outputs, $where, $quantifier, $ordering, $limit, $offset, $groups, $having, (new CteBinder())->clause($source, $context), withTies: $withTies, windows: $projectionOptions->windows($body, $scope), locks: LockingBinder::bind($source, $scope), hints: $origin->dialect === \SqlSemantics\Dialect::MySql ? OptimizerHints::bind($body) : [], options: QueryBlockOptions::bind($body, $context));
+        return new \SqlSemantics\Model\BoundSelect($origin, $from?->relation, $outputs, $where, $quantifier, $ordering, $limit, $offset, $groups, $having, (new CteBinder())->clause($source, $context), withTies: $withTies, windows: $projectionOptions->windows($body, $scope), locks: LockingBinder::bind($source, $scope), hints: $origin->dialect === \SqlSemantics\Dialect::MySql ? OptimizerHints::bind($body) : [], options: QueryBlockOptions::bind($body, $context), distinctGroupingSets: $distinctGroupingSets, qualify: $this->expressions($body, ['opt_qualify_clause'], $scope)[0] ?? null);
     }
 
     /**
@@ -148,7 +148,13 @@ final class QueryBinder
                 $definitions[] = $ctes[$name];
             }
         }
-        return new QueryContext($this->context->tables, $this->context->ids, $ctes, $definitions === [] ? null : new \SqlSemantics\Model\Query\WithClause($definitions, CteBinder::recursive($source, $clause)), $this->context->parameterTypes);
+        $recursive = CteBinder::recursive($source, $clause);
+        foreach ($definitions as $definition) {
+            if (!$recursive && ($definition->search !== null || $definition->cycle !== null)) {
+                throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::RecursiveQueryClause, $clause ?? $source);
+            }
+        }
+        return new QueryContext($this->context->tables, $this->context->ids, $ctes, $definitions === [] ? null : new \SqlSemantics\Model\Query\WithClause($definitions, $recursive), $this->context->parameterTypes);
     }
 
     /**
@@ -186,7 +192,12 @@ final class QueryBinder
         if ($lock !== null) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::SetOperationLock, $lock);
         }
-        $branches = array_map(static fn (Node $node): BoundQuery => $context->bind($node, $parent), $this->branches($body));
+        $operands = $this->branches($body);
+        $trailing = LockingBinder::trailing($source, $body);
+        if ($trailing !== []) {
+            $operands[1] = new Node('query_expression_with_opt_locking_clauses', $operands[1]->ordinal, [$operands[1], ...$trailing]);
+        }
+        $branches = array_map(static fn (Node $node): BoundQuery => $context->bind($node, $parent), $operands);
         QueryBlockOptions::nested($branches[1], $body, $context);
         $leftWidth = \SqlSemantics\Model\Validation\RowShape::width($branches[0]);
         $rightWidth = \SqlSemantics\Model\Validation\RowShape::width($branches[1]);

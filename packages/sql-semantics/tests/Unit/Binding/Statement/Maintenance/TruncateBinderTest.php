@@ -34,6 +34,6 @@ final class TruncateBinderTest extends TestCase
     public function testBindSpellsEachDialectTruncation(Dialect $dialect, string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)')))->bind($sql);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

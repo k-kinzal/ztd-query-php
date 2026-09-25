@@ -28,7 +28,7 @@ final class ProgramBodiesTest extends TestCase
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertInstanceOf(BlockStatement::class, $statement->body);
         self::assertSame('`main` : BEGIN DECLARE `done` integer DEFAULT 0; DECLARE `v` integer; DECLARE `c` CURSOR FOR SELECT `n` AS `n` FROM `t`; DECLARE CONTINUE HANDLER FOR NOT FOUND SET `done` = 1; OPEN `c`; `scan` : LOOP FETCH `c` INTO `v`; IF `done` THEN LEAVE `scan`; END IF; ITERATE `scan`; END LOOP `scan`; CLOSE `c`; END `main`', ProgramBodies::write($statement->body)->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testStatementsTerminatesEachStatement(): void

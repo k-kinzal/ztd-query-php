@@ -35,7 +35,7 @@ final class AccountNamesTest extends TestCase
         $statement = $binder->bind('SET ROLE ' . $spelling);
         self::assertInstanceOf(SetExplicitRolesStatement::class, $statement);
         self::assertSame($expected, $statement->roles[0]->username);
-        $again = $binder->bind($statement->toString());
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(SetExplicitRolesStatement::class, $again);
         self::assertSame($expected, $again->roles[0]->username);
     }

@@ -25,7 +25,7 @@ final class ShowCreateTriggerStatementTest extends TestCase
         self::assertSame(['app', 'it em'], $statement->trigger->parts);
         self::assertCount(7, $statement->resultColumns());
         self::assertSame('Trigger', $statement->resultColumns()[0]->name);
-        self::assertSame('SHOW CREATE TRIGGER `app`.`it em`', $statement->toString());
+        self::assertSame('SHOW CREATE TRIGGER `app`.`it em`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithTriggerNamesAnotherObjectImmutably(): void
@@ -36,7 +36,7 @@ final class ShowCreateTriggerStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame(['item'], $statement->trigger->parts);
         self::assertSame(['other', 'renamed'], $changed->trigger->parts);
-        self::assertSame('SHOW CREATE TRIGGER `other`.`renamed`', $changed->toString());
+        self::assertSame('SHOW CREATE TRIGGER `other`.`renamed`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheName(): void

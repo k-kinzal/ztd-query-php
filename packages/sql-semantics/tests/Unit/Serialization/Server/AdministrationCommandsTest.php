@@ -25,8 +25,8 @@ final class AdministrationCommandsTest extends TestCase
         $statement = $binder->bind("INSTALL COMPONENT 'a' SET PERSIST v = 1");
         self::assertInstanceOf(InstallComponentStatement::class, $statement);
         self::assertSame('install-component', AdministrationCommands::components($statement)->role);
-        self::assertSame("INSTALL COMPONENT 'a' SET PERSIST `v` = 1", $statement->toString());
-        self::assertSame("UNINSTALL COMPONENT 'a'", $binder->bind("UNINSTALL COMPONENT 'a'")->toString());
+        self::assertSame("INSTALL COMPONENT 'a' SET PERSIST `v` = 1", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame("UNINSTALL COMPONENT 'a'", (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind("UNINSTALL COMPONENT 'a'")));
     }
 
     public function testInstanceWritesTheActionAndOmitsTheDefaultChannel(): void
@@ -35,7 +35,7 @@ final class AdministrationCommandsTest extends TestCase
         $statement = $binder->bind('ALTER INSTANCE RELOAD TLS FOR CHANNEL mysql_main');
         self::assertInstanceOf(ReloadTlsStatement::class, $statement);
         self::assertSame('alter-instance', AdministrationCommands::instance($statement)->role);
-        self::assertSame('ALTER INSTANCE RELOAD TLS', $statement->toString());
+        self::assertSame('ALTER INSTANCE RELOAD TLS', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testCloneWritesTheDonorAndCredentials(): void
@@ -43,7 +43,7 @@ final class AdministrationCommandsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CLONE INSTANCE FROM u@h:1 IDENTIFIED BY 'p'");
         self::assertInstanceOf(CloneRemoteStatement::class, $statement);
         self::assertSame('clone-instance', AdministrationCommands::clone($statement)->role);
-        self::assertSame("CLONE INSTANCE FROM 'u'@'h':1 IDENTIFIED BY 'p'", $statement->toString());
+        self::assertSame("CLONE INSTANCE FROM 'u'@'h':1 IDENTIFIED BY 'p'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['alter instance rotate innodb master key', 'ALTER INSTANCE ROTATE INNODB MASTER KEY'])]
@@ -56,7 +56,7 @@ final class AdministrationCommandsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(["clone instance from 'u'@'h':3306 identified by 'p' require no ssl", "CLONE INSTANCE FROM 'u'@'h':3306 IDENTIFIED BY 'p' REQUIRE NO SSL"])]
     public function testInstanceWritesEveryInstanceAction(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)));
     }
 
 
@@ -69,7 +69,7 @@ final class AdministrationCommandsTest extends TestCase
         $statement = $binder->bind("CLONE INSTANCE FROM 'u'@'h':3306 IDENTIFIED BY 'p'");
         self::assertInstanceOf(CloneRemoteStatement::class, $statement);
         self::assertSame("'u'@'h':3306", AdministrationCommands::donor($statement)->toString());
-        self::assertSame("CLONE INSTANCE FROM 'u'@'h':3306 IDENTIFIED BY 'p'", $binder->bind($statement->toString())->toString());
+        self::assertSame("CLONE INSTANCE FROM 'u'@'h':3306 IDENTIFIED BY 'p'", (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testDonorWritesTheUnspacedAddress(): void

@@ -27,7 +27,7 @@ final class DomainConstraintIdentityTest extends TestCase
         self::assertInstanceOf(Catalog\DomainConstraintIdentity::class, $statement->object);
         self::assertSame('positive', $statement->object->name);
         self::assertSame(['app', 'money'], $statement->object->domain->parts);
-        self::assertSame("COMMENT ON CONSTRAINT \"positive\" ON DOMAIN \"app\".\"money\" IS 'x'", $statement->toString());
+        self::assertSame("COMMENT ON CONSTRAINT \"positive\" ON DOMAIN \"app\".\"money\" IS 'x'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

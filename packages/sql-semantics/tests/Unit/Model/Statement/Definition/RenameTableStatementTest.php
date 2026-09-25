@@ -25,7 +25,7 @@ final class RenameTableStatementTest extends TestCase
         self::assertSame(['main', 't'], $statement->table->parts);
         self::assertSame('u', $statement->newName);
         self::assertSame(StatementKind::Alter, $statement->kind);
-        self::assertSame('ALTER TABLE "main"."t" RENAME TO "u"', $statement->toString());
+        self::assertSame('ALTER TABLE "main"."t" RENAME TO "u"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesBothNames(): void
@@ -37,6 +37,6 @@ final class RenameTableStatementTest extends TestCase
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->table, $copy->table);
         self::assertSame('u', $copy->newName);
-        self::assertSame('ALTER TABLE "t" RENAME TO "u"', $copy->toString());
+        self::assertSame('ALTER TABLE "t" RENAME TO "u"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

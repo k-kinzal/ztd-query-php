@@ -33,7 +33,7 @@ final class ChangeReplicationFilterStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame($statement->filters, $copy->filters);
-        self::assertSame($sql, $copy->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($copy));
         self::assertSame(StatementKind::Change, $statement->kind);
     }
 
@@ -41,15 +41,15 @@ final class ChangeReplicationFilterStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CHANGE REPLICATION FILTER REPLICATE_DO_DB = (a)');
         self::assertInstanceOf(ChangeReplicationFilterStatement::class, $statement);
-        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_IGNORE_DB = (`b`)', $statement->withFilters([new DatabaseFilter(FilterRule::IgnoreDatabase, ['b'])])->toString());
-        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_DB = (`a`)', $statement->toString());
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_IGNORE_DB = (`b`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withFilters([new DatabaseFilter(FilterRule::IgnoreDatabase, ['b'])])));
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_DB = (`a`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithChannelReplacesTheChannelImmutably(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CHANGE REPLICATION FILTER REPLICATE_DO_DB = ()');
         self::assertInstanceOf(ChangeReplicationFilterStatement::class, $statement);
-        self::assertSame("CHANGE REPLICATION FILTER REPLICATE_DO_DB = () FOR CHANNEL 'x'", $statement->withChannel('x')->toString());
+        self::assertSame("CHANGE REPLICATION FILTER REPLICATE_DO_DB = () FOR CHANNEL 'x'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withChannel('x')));
         self::assertNull($statement->channel);
     }
 

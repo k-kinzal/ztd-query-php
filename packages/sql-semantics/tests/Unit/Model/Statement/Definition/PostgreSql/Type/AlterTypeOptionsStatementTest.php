@@ -30,8 +30,8 @@ final class AlterTypeOptionsStatementTest extends TestCase
         self::assertNull($statement->options[1]->value);
         self::assertSame('main', $statement->options[2]->value);
         self::assertSame(StatementKind::Alter, $statement->kind);
-        self::assertSame("ALTER TYPE \"t\" SET (TYPMOD_IN = \"s\".\"tin\", ANALYZE = NONE, STORAGE = 'main')", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("ALTER TYPE \"t\" SET (TYPMOD_IN = \"s\".\"tin\", ANALYZE = NONE, STORAGE = 'main')", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAStorageChangeWithoutStrategy(): void
@@ -46,14 +46,14 @@ final class AlterTypeOptionsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TYPE t SET (send = NONE)');
         self::assertInstanceOf(AlterTypeOptionsStatement::class, $statement);
-        self::assertSame('ALTER TYPE "t" SET (SEND = NONE)', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER TYPE "t" SET (SEND = NONE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithTypeReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TYPE t SET (send = NONE)');
         self::assertInstanceOf(AlterTypeOptionsStatement::class, $statement);
-        self::assertSame('ALTER TYPE "s"."u" SET (SEND = NONE)', $statement->withType(new QualifiedName(['s', 'u']))->toString());
+        self::assertSame('ALTER TYPE "s"."u" SET (SEND = NONE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withType(new QualifiedName(['s', 'u']))));
         self::assertSame(['t'], $statement->type->parts);
     }
 
@@ -61,7 +61,7 @@ final class AlterTypeOptionsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TYPE t SET (send = NONE)');
         self::assertInstanceOf(AlterTypeOptionsStatement::class, $statement);
-        self::assertSame("ALTER TYPE \"t\" SET (STORAGE = 'external')", $statement->withOptions([new DefinitionOption(BaseTypeAttribute::Storage, 'external')])->toString());
+        self::assertSame("ALTER TYPE \"t\" SET (STORAGE = 'external')", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOptions([new DefinitionOption(BaseTypeAttribute::Storage, 'external')])));
     }
 
     public function testRejectsAnAttributeThatCannotChange(): void

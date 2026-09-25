@@ -58,7 +58,7 @@ final class RowsFromRelationsTest extends TestCase
     #[TestWith(['SELECT * FROM ROWS FROM (json_to_record($1) AS (a int)) AS x(p)', 'SELECT "x"."p" AS "p" FROM ROWS FROM("json_to_record"($1) AS ("a" integer)) AS "x"("p")'])]
     public function testRelationNamesTheRelationAfterItsAliasOrFirstFunction(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     public function testOutputsNameFurtherColumnsOfTheLastOpenInvocation(): void

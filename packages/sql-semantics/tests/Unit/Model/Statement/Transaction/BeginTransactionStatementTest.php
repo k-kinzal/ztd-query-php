@@ -24,7 +24,7 @@ final class BeginTransactionStatementTest extends TestCase
         self::assertInstanceOf(BeginTransactionStatement::class, $statement);
         self::assertSame(\SqlSemantics\Model\Transaction\Mode::Immediate, $statement->mode);
         self::assertSame(StatementKind::Begin, $statement->kind);
-        self::assertSame('BEGIN IMMEDIATE', $statement->toString());
+        self::assertSame('BEGIN IMMEDIATE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindsPostgreSqlCharacteristicsWithoutAMode(): void
@@ -34,7 +34,7 @@ final class BeginTransactionStatementTest extends TestCase
         self::assertNull($statement->mode);
         self::assertSame('SERIALIZABLE', $statement->characteristics->isolation?->value);
         self::assertSame('READ ONLY', $statement->characteristics->access?->value);
-        self::assertSame('BEGIN ISOLATION LEVEL SERIALIZABLE, READ ONLY', $statement->toString());
+        self::assertSame('BEGIN ISOLATION LEVEL SERIALIZABLE, READ ONLY', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesModeAndCharacteristics(): void
@@ -46,6 +46,6 @@ final class BeginTransactionStatementTest extends TestCase
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->mode, $copy->mode);
         self::assertSame($statement->characteristics, $copy->characteristics);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

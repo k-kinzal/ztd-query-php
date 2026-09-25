@@ -31,8 +31,8 @@ final class PostgreSqlTablesTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(id INTEGER)'));
         $statement = $binder->bind($sql);
         self::assertInstanceOf(CreatePartitionStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testBindReadsATypedTable(): void
@@ -41,7 +41,7 @@ final class PostgreSqlTablesTest extends TestCase
         $statement = $binder->bind('CREATE TEMP TABLE IF NOT EXISTS t OF s.ty (a WITH OPTIONS NOT NULL) ON COMMIT DELETE ROWS');
         self::assertInstanceOf(CreateTypedTableStatement::class, $statement);
         self::assertSame(['s', 'ty'], $statement->type->parts);
-        self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS "t" OF "s"."ty"("a" WITH OPTIONS NOT NULL) ON COMMIT DELETE ROWS', $statement->toString());
+        self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS "t" OF "s"."ty"("a" WITH OPTIONS NOT NULL) ON COMMIT DELETE ROWS', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindLeavesAnOrdinaryDeclarationToTheTableBinder(): void
@@ -88,7 +88,7 @@ final class PostgreSqlTablesTest extends TestCase
     #[TestWith(['CREATE TABLE t OF s.ty', 'CREATE TABLE "t" OF "s"."ty"'])]
     public function testBindAcceptsTheQualificationOfEachForm(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a int) PARTITION BY LIST (a)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a int) PARTITION BY LIST (a)')))->bind($sql)));
     }
 
     #[TestWith(['CREATE TABLE x.c.s.t PARTITION OF p FOR VALUES IN (1)'])]

@@ -21,7 +21,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     count($statement->renamings) // => 3
  *     $statement->renamings[2]->table->declaration->name // => 'tmp'
  *     $statement->renamings[2]->table->declaration->columns[0]->name // => 'id'
- *     $statement->toString() // => 'RENAME TABLE `a` TO `tmp`, `b` TO `a`, `tmp` TO `b`'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'RENAME TABLE `a` TO `tmp`, `b` TO `a`, `tmp` TO `b`'
  * @example Rejecting an empty request
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE a(id INT)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('RENAME TABLE a TO b');

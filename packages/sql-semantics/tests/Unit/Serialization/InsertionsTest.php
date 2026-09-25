@@ -42,7 +42,7 @@ final class InsertionsTest extends TestCase
         self::assertSame($expected, Insertions::write($statement)->toString());
         $rebound = $binder->bind($expected);
         self::assertInstanceOf($class, $rebound);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteInsideATriggerNamesTheBareTable(): void
@@ -58,8 +58,8 @@ final class InsertionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)'));
         $statement = $binder->bind('INSERT INTO t () VALUES ()');
         self::assertInstanceOf(InsertValuesStatement::class, $statement);
-        self::assertSame('INSERT INTO `t` VALUES ()', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('INSERT INTO `t` VALUES ()', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testHeaderWritesModeSchedulingAndViolationPolicies(): void

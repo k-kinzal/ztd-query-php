@@ -42,6 +42,6 @@ final class ValueBehaviorTest extends TestCase
         self::assertInstanceOf(ValueColumn::class, $statement->from->table->columns[0]);
         self::assertSame($onEmpty, $statement->from->table->columns[0]->onEmpty);
         self::assertSame($onError, $statement->from->table->columns[0]->onError);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

@@ -34,7 +34,7 @@ final class DoBinderTest extends TestCase
         self::assertInstanceOf(DoExpressionsStatement::class, $statement);
         self::assertCount(2, $statement->expressions);
         self::assertSame('bigint', $statement->expressions[0]->type->name);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindRetainsSubqueryScopeAndDiscardsUnobservableLabels(): void
@@ -43,7 +43,7 @@ final class DoBinderTest extends TestCase
         self::assertInstanceOf(DoExpressionsStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $statement->expressions[0]);
         self::assertSame('id', $statement->expressions[0]->lineage()[0]->column->name);
-        self::assertStringNotContainsString('ignored', $statement->toString());
+        self::assertStringNotContainsString('ignored', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['DO *'])]

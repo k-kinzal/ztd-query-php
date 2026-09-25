@@ -38,8 +38,8 @@ final class ConnectionCharsetsTest extends TestCase
         self::assertInstanceOf(ConnectionCharacterSet::class, $charset);
         self::assertInstanceOf(AssignedSetting::class, $mode);
         self::assertSame(['utf8mb4', 'utf8mb4_bin', null], [$names->characterSet, $names->collation, $charset->characterSet]);
-        self::assertSame("SET NAMES `utf8mb4` COLLATE `utf8mb4_bin`, CHARACTER SET DEFAULT, `sql_mode` = ''", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SET NAMES `utf8mb4` COLLATE `utf8mb4_bin`, CHARACTER SET DEFAULT, `sql_mode` = ''", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindRejectsAssigningNames(): void

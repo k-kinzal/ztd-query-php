@@ -24,7 +24,7 @@ final class OpenHandlerStatementTest extends TestCase
         self::assertInstanceOf(OpenHandlerStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('HANDLER `t` OPEN AS `h`', $copy->toString());
+        self::assertSame('HANDLER `t` OPEN AS `h`', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
         self::assertSame('HANDLER', $copy->kind->value);
     }
 
@@ -45,8 +45,8 @@ final class OpenHandlerStatementTest extends TestCase
         $other = $binder->bind('HANDLER u OPEN AS v');
         self::assertInstanceOf(OpenHandlerStatement::class, $statement);
         self::assertInstanceOf(OpenHandlerStatement::class, $other);
-        self::assertSame('HANDLER `u` OPEN AS `v`', $statement->withTable($other->table)->toString());
-        self::assertSame('HANDLER `t` OPEN', $statement->toString());
+        self::assertSame('HANDLER `u` OPEN AS `v`', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withTable($other->table)));
+        self::assertSame('HANDLER `t` OPEN', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnotherDatabaseDialect(): void

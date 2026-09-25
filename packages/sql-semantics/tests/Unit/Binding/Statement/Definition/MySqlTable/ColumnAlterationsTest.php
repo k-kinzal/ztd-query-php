@@ -105,6 +105,6 @@ final class ColumnAlterationsTest extends TestCase
     public function testAlterationsBindEveryColumnForm(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(id INT, n INT)'));
-        self::assertSame($expected, $binder->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 }

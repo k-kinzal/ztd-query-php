@@ -34,7 +34,7 @@ final class AccountCommandsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
         self::assertSame($class, $statement::class);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindLeavesOtherCreateFormsToTheirFamilies(): void
@@ -55,7 +55,7 @@ final class AccountCommandsTest extends TestCase
         self::assertEquals(new AccountName('a', 'h'), $statement->renames[0]->from);
         self::assertSame(CurrentAccount::Authenticated, $statement->renames[0]->to);
         self::assertEquals(new AccountName('d'), $statement->renames[1]->to);
-        self::assertSame("RENAME USER 'a'@'h' TO CURRENT_USER, 'c' TO 'd'", $statement->toString());
+        self::assertSame("RENAME USER 'a'@'h' TO CURRENT_USER, 'c' TO 'd'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -70,13 +70,13 @@ final class AccountCommandsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
         self::assertInstanceOf($class, $statement);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRenamePairsParsedAccounts(): void
     {
         $origin = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('DO 1')->origin;
         $statement = AccountCommands::rename($origin, (new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('RENAME USER a TO b'), new \SqlSemantics\Ast\Identifiers(Dialect::MySql));
-        self::assertSame("RENAME USER 'a' TO 'b'", $statement->toString());
+        self::assertSame("RENAME USER 'a' TO 'b'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

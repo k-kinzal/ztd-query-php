@@ -36,8 +36,8 @@ final class UnconditionalOuterJoinTest extends TestCase
         self::assertSame($kind, $changed->kind);
         self::assertSame($join->right, $changed->left);
         self::assertSame($join->id, $changed->id);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith([JoinKind::Inner])]

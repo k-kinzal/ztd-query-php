@@ -36,7 +36,7 @@ final class UnresolvedVariableReferenceTest extends TestCase
         self::assertSame([], $reference->inputs());
         self::assertSame(BuiltinIdentity::Unknown, $reference->type->identity);
         self::assertCount(1, $statement->diagnostics);
-        self::assertSame('PREPARE `s` FROM @`sql`', $statement->toString());
+        self::assertSame('PREPARE `s` FROM @`sql`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testSpellingReturnsTheVariableName(): void
@@ -64,8 +64,8 @@ final class UnresolvedVariableReferenceTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.0.44'))->build());
         $statement = $binder->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected, strict: false)));
     }
 
     public function testWithFactsKeepsTheNameAndScope(): void

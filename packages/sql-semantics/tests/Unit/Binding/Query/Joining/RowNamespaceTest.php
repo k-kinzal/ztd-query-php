@@ -56,7 +56,7 @@ final class RowNamespaceTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertSame(['id', 'x', 'y', 'z', 'u', 'v'], array_column($query->outputs, 'name'));
         self::assertSame([0, 1, 2, 3, 4, 5], array_column($query->outputs, 'ordinal'));
-        $rebound = $binder->bind($query->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query));
         self::assertInstanceOf(BoundSelect::class, $rebound);
         self::assertSame(['id', 'x', 'y', 'z', 'u', 'v'], array_column($rebound->outputs, 'name'));
     }

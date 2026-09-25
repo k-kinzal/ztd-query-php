@@ -43,7 +43,7 @@ final class FlushesTest extends TestCase
         $export = $binder->bind('FLUSH TABLES t FOR EXPORT');
         self::assertInstanceOf(FlushTablesForExportStatement::class, $export);
         self::assertSame('t', $export->tables[0]->declaration->name);
-        self::assertSame($export->toString(), $binder->bind($export->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($export), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($export))));
         $options = $binder->bind('FLUSH PRIVILEGES, ERROR LOGS');
         self::assertInstanceOf(FlushServerStatement::class, $options);
         self::assertSame([ServerFlush::Privileges, ServerFlush::ErrorLogs], $options->targets);
@@ -73,7 +73,7 @@ final class FlushesTest extends TestCase
     #[TestWith(['flush binary logs, engine logs', 'FLUSH BINARY LOGS, ENGINE LOGS'])]
     public function testBindReadsLowerCaseForms(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind($sql)));
     }
 
     public function testTargetAndTablesReadParsedNodes(): void

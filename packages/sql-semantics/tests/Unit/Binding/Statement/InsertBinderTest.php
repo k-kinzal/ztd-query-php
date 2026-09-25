@@ -30,7 +30,7 @@ final class InsertBinderTest extends TestCase
         $set = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('INSERT INTO t SET a = 1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSetStatement::class, $set);
         self::assertCount(1, $set->writes);
-        self::assertSame('INSERT INTO `t` SET `a` = 1', $set->toString());
+        self::assertSame('INSERT INTO `t` SET `a` = 1', (new \SqlSemantics\SimpleSerializer())->serialize($set));
     }
 
     public function testStatementKeepsAnOrderedValuesInputAsAQuery(): void
@@ -39,7 +39,7 @@ final class InsertBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $statement->query);
         self::assertCount(1, $statement->query->orderBy);
-        self::assertSame('INSERT INTO "public"."t" VALUES (1) ORDER BY 1 ASC', $statement->toString());
+        self::assertSame('INSERT INTO "public"."t" VALUES (1) ORDER BY 1 ASC', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testStatementKeepsALimitedValuesInputAsAQuery(): void
@@ -48,6 +48,6 @@ final class InsertBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $statement->query);
         self::assertSame('1', $statement->query->limit?->spelling());
-        self::assertSame('INSERT INTO "public"."t" VALUES (1) LIMIT 1', $statement->toString());
+        self::assertSame('INSERT INTO "public"."t" VALUES (1) LIMIT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

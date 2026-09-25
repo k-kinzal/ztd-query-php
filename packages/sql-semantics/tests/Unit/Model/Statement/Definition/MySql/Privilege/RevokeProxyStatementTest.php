@@ -23,7 +23,7 @@ final class RevokeProxyStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('REVOKE PROXY ON p FROM u');
         self::assertInstanceOf(RevokeProxyStatement::class, $statement);
-        self::assertSame("REVOKE PROXY ON 'q'@'h' FROM 'u'", $statement->withProxied(new AccountName('q', 'h'))->toString());
+        self::assertSame("REVOKE PROXY ON 'q'@'h' FROM 'u'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withProxied(new AccountName('q', 'h'))));
         self::assertEquals(new AccountName('p'), $statement->proxied);
     }
 
@@ -31,7 +31,7 @@ final class RevokeProxyStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('REVOKE PROXY ON p FROM u');
         self::assertInstanceOf(RevokeProxyStatement::class, $statement);
-        self::assertSame("REVOKE PROXY ON 'p' FROM CURRENT_USER", $statement->withGrantees([CurrentAccount::Authenticated])->toString());
+        self::assertSame("REVOKE PROXY ON 'p' FROM CURRENT_USER", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withGrantees([CurrentAccount::Authenticated])));
         self::assertCount(1, $statement->grantees);
     }
 
@@ -39,7 +39,7 @@ final class RevokeProxyStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('REVOKE PROXY ON p FROM u');
         self::assertInstanceOf(RevokeProxyStatement::class, $statement);
-        self::assertSame("REVOKE IF EXISTS PROXY ON 'p' FROM 'u'", $statement->withIfExists(true)->toString());
+        self::assertSame("REVOKE IF EXISTS PROXY ON 'p' FROM 'u'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIfExists(true)));
         self::assertFalse($statement->ifExists);
     }
 
@@ -47,7 +47,7 @@ final class RevokeProxyStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('REVOKE PROXY ON p FROM u');
         self::assertInstanceOf(RevokeProxyStatement::class, $statement);
-        self::assertSame("REVOKE PROXY ON 'p' FROM 'u' IGNORE UNKNOWN USER", $statement->withIgnoreUnknownUser(true)->toString());
+        self::assertSame("REVOKE PROXY ON 'p' FROM 'u' IGNORE UNKNOWN USER", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIgnoreUnknownUser(true)));
         self::assertFalse($statement->ignoreUnknownUser);
     }
 
@@ -66,7 +66,7 @@ final class RevokeProxyStatementTest extends TestCase
         self::assertInstanceOf(RevokeProxyStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testDefaultsToAnUnconditionalRevocationOnMySql57(): void
@@ -75,6 +75,6 @@ final class RevokeProxyStatementTest extends TestCase
         $statement = new RevokeProxyStatement($origin, new AccountName('p'), [new AccountName('u'), CurrentAccount::Authenticated]);
         self::assertFalse($statement->ifExists);
         self::assertFalse($statement->ignoreUnknownUser);
-        self::assertSame("REVOKE PROXY ON 'p' FROM 'u', CURRENT_USER", $statement->toString());
+        self::assertSame("REVOKE PROXY ON 'p' FROM 'u', CURRENT_USER", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

@@ -26,6 +26,6 @@ final class PolicyModeTest extends TestCase
         $statement = $binder->bind('CREATE POLICY p ON t AS ' . strtolower($mode->value));
         self::assertInstanceOf(CreatePolicyStatement::class, $statement);
         self::assertSame($mode, $statement->mode);
-        self::assertStringContainsString('AS ' . $mode->value, $statement->toString());
+        self::assertStringContainsString('AS ' . $mode->value, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

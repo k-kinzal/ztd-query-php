@@ -41,6 +41,6 @@ final class OperatorSetMembersTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['CREATE OPERATOR CLASS c FOR TYPE int USING btree AS OPERATOR 1 <, FUNCTION 1 btint4cmp(int, int), STORAGE int', 'CREATE OPERATOR CLASS "c" FOR TYPE integer USING "btree" AS OPERATOR 1 <, FUNCTION 1 "btint4cmp"(integer, integer), STORAGE integer'])]
     public function testMemberAndRemovalWriteEveryOperand(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 }

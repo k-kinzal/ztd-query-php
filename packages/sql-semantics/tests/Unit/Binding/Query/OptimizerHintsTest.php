@@ -24,7 +24,7 @@ final class OptimizerHintsTest extends TestCase
         self::assertCount(3, $statement->hints);
         self::assertContainsOnlyInstancesOf(\SqlSemantics\Model\Query\Optimization\MaxExecutionTime::class, $statement->hints);
         self::assertSame(['1000', '2', '3'], array_column($statement->hints, 'milliseconds'));
-        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) MAX_EXECUTION_TIME(2) MAX_EXECUTION_TIME(3) */ `a` AS `a` FROM `t`', $statement->toString());
+        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) MAX_EXECUTION_TIME(2) MAX_EXECUTION_TIME(3) */ `a` AS `a` FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindIgnoresOrdinaryCommentsAndSelectsWithoutHints(): void
@@ -43,7 +43,7 @@ final class OptimizerHintsTest extends TestCase
     public function testBindReadsEveryExecutionTimeHint(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**

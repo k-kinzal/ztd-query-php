@@ -28,8 +28,8 @@ final class TruncateTableStatementTest extends TestCase
         self::assertInstanceOf(TruncateTableStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertSame($statement->table, $copy->table);
-        self::assertSame('TRUNCATE TABLE `t`', $copy->toString());
-        self::assertSame($copy->toString(), $binder->bind($copy->toString())->toString());
+        self::assertSame('TRUNCATE TABLE `t`', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($copy), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($copy))));
     }
 
     public function testWithTableChangesTheTargetImmutably(): void
@@ -40,8 +40,8 @@ final class TruncateTableStatementTest extends TestCase
         self::assertInstanceOf(TruncateTableStatement::class, $statement);
         self::assertInstanceOf(TruncateTableStatement::class, $other);
         $changed = $statement->withTable($other->table);
-        self::assertSame('TRUNCATE TABLE `u`', $changed->toString());
-        self::assertSame('TRUNCATE TABLE `t`', $statement->toString());
+        self::assertSame('TRUNCATE TABLE `u`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('TRUNCATE TABLE `t`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAliasedTargets(): void

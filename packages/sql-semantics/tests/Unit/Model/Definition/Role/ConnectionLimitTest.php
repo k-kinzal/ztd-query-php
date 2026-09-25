@@ -45,9 +45,9 @@ final class ConnectionLimitTest extends TestCase
         $option = $statement->options[0];
         self::assertInstanceOf(ConnectionLimit::class, $option);
         self::assertSame(10, $option->limit);
-        self::assertSame('CREATE ROLE "r" CONNECTION LIMIT 10', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('CREATE ROLE "r" CONNECTION LIMIT 10', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateRoleStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 }

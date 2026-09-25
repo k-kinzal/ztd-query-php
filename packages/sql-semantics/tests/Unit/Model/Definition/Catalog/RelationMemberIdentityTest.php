@@ -33,7 +33,7 @@ final class RelationMemberIdentityTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
         self::assertInstanceOf(Statement\CommentOnStatement::class, $statement);
         self::assertEquals(new Catalog\RelationMemberIdentity($kind, $name, new QualifiedName($relation)), $statement->object);
-        $rebound = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString());
+        $rebound = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(Statement\CommentOnStatement::class, $rebound);
         self::assertEquals($statement->object, $rebound->object);
     }

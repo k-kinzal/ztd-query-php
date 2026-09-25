@@ -35,8 +35,8 @@ final class MergeInsertDefaultsTest extends TestCase
         self::assertSame([], $action->insertion->columns);
         self::assertSame(['id'], array_column($action->insertion->omittedColumns, 'name'));
         $expected = 'MERGE INTO "public"."t" USING "public"."s" ON ("t"."id" = "s"."id") WHEN NOT MATCHED AND ("s"."id" > 0) THEN INSERT DEFAULT VALUES';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testRejectsAnExistingTarget(): void

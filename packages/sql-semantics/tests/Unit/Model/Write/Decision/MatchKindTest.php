@@ -36,6 +36,6 @@ final class MatchKindTest extends TestCase
         $statement = (new Binder($schema))->bind('MERGE INTO t USING s ON t.id=s.id ' . $clause);
         self::assertInstanceOf(MergeStatement::class, $statement);
         self::assertSame($match, $statement->merge->actions[0]->match);
-        self::assertStringEndsWith($expected, $statement->toString());
+        self::assertStringEndsWith($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

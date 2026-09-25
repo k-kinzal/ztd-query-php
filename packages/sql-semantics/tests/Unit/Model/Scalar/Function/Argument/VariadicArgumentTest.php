@@ -39,9 +39,9 @@ final class VariadicArgumentTest extends TestCase
         self::assertInstanceOf(FunctionCall::class, $namedCall);
         self::assertInstanceOf(VariadicArgument::class, $namedCall->arguments[0]);
         self::assertInstanceOf(NamedArgument::class, $namedCall->arguments[0]->value);
-        self::assertSame('SELECT "f"(1, VARIADIC ARRAY[2, 3])', $positional->toString());
-        self::assertSame('SELECT "f"(VARIADIC "items" => ARRAY[2])', $named->toString());
-        self::assertSame($named->toString(), $binder->bind($named->toString())->toString());
+        self::assertSame('SELECT "f"(1, VARIADIC ARRAY[2, 3])', (new \SqlSemantics\SimpleSerializer())->serialize($positional));
+        self::assertSame('SELECT "f"(VARIADIC "items" => ARRAY[2])', (new \SqlSemantics\SimpleSerializer())->serialize($named));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($named), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($named))));
     }
 
     public function testInputsContainsTheValue(): void

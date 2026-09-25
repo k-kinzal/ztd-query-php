@@ -27,8 +27,8 @@ final class TimestampBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(d DATETIME, e DATE)'));
         $query = $binder->bind('SELECT TIMESTAMPADD(DAY, 1, d), TIMESTAMPDIFF(SQL_TSI_MONTH, d, e) FROM t');
-        self::assertSame('SELECT TIMESTAMPADD(DAY, 1, `d`), TIMESTAMPDIFF(MONTH, `d`, `e`) FROM `t`', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT TIMESTAMPADD(DAY, 1, `d`), TIMESTAMPDIFF(MONTH, `d`, `e`) FROM `t`', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testBindRejectsARowOperand(): void
@@ -41,6 +41,6 @@ final class TimestampBinderTest extends TestCase
     public function testBindLeavesOtherFunctionsAlone(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("SELECT DATE_ADD('2020-01-01', INTERVAL 1 DAY)");
-        self::assertSame("SELECT DATE_ADD('2020-01-01', INTERVAL 1 DAY)", $query->toString());
+        self::assertSame("SELECT DATE_ADD('2020-01-01', INTERVAL 1 DAY)", (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 }

@@ -30,7 +30,7 @@ final class AnyConflictTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(InsertStatement::class, $statement);
         self::assertInstanceOf(AnyConflict::class, $statement->conflicts[0]->target);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertInstanceOf(InsertStatement::class, $rebound);
         self::assertInstanceOf(AnyConflict::class, $rebound->conflicts[0]->target);

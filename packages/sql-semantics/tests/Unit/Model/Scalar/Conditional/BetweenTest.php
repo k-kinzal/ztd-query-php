@@ -35,8 +35,8 @@ final class BetweenTest extends TestCase
         self::assertSame([$range->value, $range->lower, $range->upper], $range->inputs());
         self::assertTrue($range->negated);
         self::assertTrue($range->symmetric);
-        self::assertSame('SELECT (1 NOT BETWEEN SYMMETRIC 0 AND 2)', $statement->toString());
-        self::assertSame('SELECT (1 NOT BETWEEN SYMMETRIC 0 AND 2)', $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT (1 NOT BETWEEN SYMMETRIC 0 AND 2)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('SELECT (1 NOT BETWEEN SYMMETRIC 0 AND 2)', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     #[TestWith([false, 'BETWEEN'])]

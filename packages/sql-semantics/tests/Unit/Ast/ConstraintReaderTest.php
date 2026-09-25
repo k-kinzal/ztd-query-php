@@ -173,7 +173,7 @@ final class ConstraintReaderTest extends TestCase
     public function testColumnsSkipsPrefixLengthsAndDirectionsInUniqueKeys(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE TABLE t(name VARCHAR(10), n INT, UNIQUE KEY (n DESC, name(3)))');
-        self::assertSame('CREATE TABLE `t`(`name` varchar(10), `n` integer, UNIQUE(`n` DESC, `name`(3)))', $statement->toString());
+        self::assertSame('CREATE TABLE `t`(`name` varchar(10), `n` integer, UNIQUE(`n` DESC, `name`(3)))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testColumnsSkipsExpressionKeys(): void
@@ -216,23 +216,49 @@ final class ConstraintReaderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($statement->toString())->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51', 'CREATE TABLE t (a INT KEY, b INT)', 'CREATE TABLE `t`(`a` integer NOT NULL, `b` integer, PRIMARY KEY(`a`))'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44', 'CREATE TABLE t (a INT NOT NULL KEY)', 'CREATE TABLE `t`(`a` integer NOT NULL, PRIMARY KEY(`a`))'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'CREATE TABLE t (a INT KEY, KEY k (a))', 'CREATE TABLE `t`(`a` integer NOT NULL, PRIMARY KEY(`a`), INDEX `k`(`a`))'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0', 'CREATE TABLE t (a INT UNIQUE KEY)', 'CREATE TABLE `t`(`a` integer, UNIQUE(`a`))'])]
+    public function testReadTreatsABareMySqlColumnKeyAsItsPrimaryKey(string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['KEY', true, \SqlSemantics\Schema\ConstraintKind::PrimaryKey])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['KEY', false, null])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['REFERENCES', true, \SqlSemantics\Schema\ConstraintKind::ForeignKey])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['COMMENT', true, null])]
+    public function testKindClassifiesTheLeadingKeyword(string $keyword, bool $columnAttribute, ?\SqlSemantics\Schema\ConstraintKind $expected): void
+    {
+        self::assertSame($expected, \SqlSemantics\Ast\ConstraintReader::kind($keyword, $columnAttribute));
+    }
+
+    public function testReadKeepsTheBareKeyOfAnAddedMySqlColumn(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)'));
+        self::assertSame('ALTER TABLE `t` ADD COLUMN `b` integer PRIMARY KEY', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER TABLE t ADD COLUMN b INT KEY')));
     }
 
     public function testReadKeepsTheEnforcementOfAnAddedMySqlCheck(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)'));
-        self::assertSame('ALTER TABLE `t` ADD CONSTRAINT `c` CHECK ((`a` > 0)) NOT ENFORCED', $binder->bind('ALTER TABLE t ADD CONSTRAINT c CHECK (a > 0) NOT ENFORCED')->toString());
-        self::assertSame('ALTER TABLE `t` ADD COLUMN `b` integer CHECK ((`b` > 0)) NOT ENFORCED', $binder->bind('ALTER TABLE t ADD COLUMN b INT CHECK (b > 0) NOT ENFORCED')->toString());
+        self::assertSame('ALTER TABLE `t` ADD CONSTRAINT `c` CHECK ((`a` > 0)) NOT ENFORCED', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER TABLE t ADD CONSTRAINT c CHECK (a > 0) NOT ENFORCED')));
+        self::assertSame('ALTER TABLE `t` ADD COLUMN `b` integer CHECK ((`b` > 0)) NOT ENFORCED', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER TABLE t ADD COLUMN b INT CHECK (b > 0) NOT ENFORCED')));
     }
 
     public function testReadKeepsNoInheritOfAPostgreSqlCheck(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('CREATE TABLE t (a int CHECK (a > 0) NO INHERIT, b int CHECK (b > 0), CONSTRAINT c CHECK (a < 9) NO INHERIT)');
-        self::assertSame('CREATE TABLE "public"."t"("a" integer, "b" integer, CHECK (("a" > 0)) NO INHERIT, CHECK (("b" > 0)), CONSTRAINT "c" CHECK (("a" < 9)) NO INHERIT)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TABLE "public"."t"("a" integer, "b" integer, CHECK (("a" > 0)) NO INHERIT, CHECK (("b" > 0)), CONSTRAINT "c" CHECK (("a" < 9)) NO INHERIT)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testReadRejectsNoInheritOnAKey(): void

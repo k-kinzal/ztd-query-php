@@ -41,7 +41,7 @@ final class WrapperDeclarationsTest extends TestCase
         self::assertInstanceOf(CreateForeignDataWrapperStatement::class, $implicit);
         self::assertNull($implicit->handler);
         self::assertNull($implicit->validator);
-        self::assertSame($implicit->toString(), $explicit->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($implicit), (new \SqlSemantics\SimpleSerializer())->serialize($explicit));
     }
 
     public function testBindAlterationSeparatesAddsReplacementsAndRemovals(): void

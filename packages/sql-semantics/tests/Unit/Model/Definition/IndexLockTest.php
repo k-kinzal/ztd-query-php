@@ -32,6 +32,6 @@ final class IndexLockTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
         self::assertInstanceOf(DropTableIndexStatement::class, $statement);
         self::assertSame($lock, $statement->lock);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

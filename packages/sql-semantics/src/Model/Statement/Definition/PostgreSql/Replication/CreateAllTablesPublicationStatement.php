@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading a publication of all tables
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind("CREATE PUBLICATION pub FOR ALL TABLES WITH (publish = 'insert')");
  *     $statement->options->publish // => [\SqlSemantics\Model\Definition\Replication\Publication\PublishedOperation::Insert]
- *     $statement->toString() // => 'CREATE PUBLICATION "pub" FOR ALL TABLES WITH (publish = \'insert\')'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE PUBLICATION "pub" FOR ALL TABLES WITH (publish = \'insert\')'
  */
 final class CreateAllTablesPublicationStatement extends BoundStatement
 {

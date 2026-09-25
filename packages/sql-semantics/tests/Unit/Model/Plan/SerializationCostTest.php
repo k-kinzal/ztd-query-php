@@ -35,6 +35,6 @@ final class SerializationCostTest extends TestCase
         self::assertInstanceOf(ExplainStatement::class, $statement);
         self::assertInstanceOf(PostgreSqlPlan::class, $statement->options);
         self::assertSame($serialization, $statement->options->serialization);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

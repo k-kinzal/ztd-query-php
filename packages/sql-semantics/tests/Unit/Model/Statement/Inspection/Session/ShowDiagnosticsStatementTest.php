@@ -31,8 +31,8 @@ final class ShowDiagnosticsStatementTest extends TestCase
         self::assertSame(DiagnosticSelection::Errors, $statement->selection);
         self::assertSame(['Level', 'Code', 'Message'], array_column($statement->resultColumns(), 'name'));
         self::assertSame('integer', $statement->resultColumns()[1]->expression->type->name);
-        self::assertSame('SHOW ERRORS LIMIT 3 OFFSET 1', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SHOW ERRORS LIMIT 3 OFFSET 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithSelectionReplacesTheConditionsImmutably(): void
@@ -42,7 +42,7 @@ final class ShowDiagnosticsStatementTest extends TestCase
         $changed = $statement->withSelection(DiagnosticSelection::Errors);
         self::assertNotSame($statement, $changed);
         self::assertSame(DiagnosticSelection::Warnings, $statement->selection);
-        self::assertSame('SHOW ERRORS LIMIT 4', $changed->toString());
+        self::assertSame('SHOW ERRORS LIMIT 4', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithLimitReplacesTheWindowImmutably(): void
@@ -55,8 +55,8 @@ final class ShowDiagnosticsStatementTest extends TestCase
         $changed = $statement->withLimit($other->limit);
         self::assertNotSame($statement, $changed);
         self::assertNull($statement->limit);
-        self::assertSame('SHOW WARNINGS LIMIT ? OFFSET 2', $changed->toString());
-        self::assertSame('SHOW WARNINGS', $changed->withLimit(null)->toString());
+        self::assertSame('SHOW WARNINGS LIMIT ? OFFSET 2', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SHOW WARNINGS', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withLimit(null)));
     }
 
     public function testWithOriginRetainsTheOperands(): void

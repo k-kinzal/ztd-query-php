@@ -25,7 +25,7 @@ final class SetSequenceOwnerTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertInstanceOf(Relation\Identity\AddColumnIdentity::class, $statement->actions[0]);
         self::assertEquals(new Relation\Identity\SetSequenceOwner(new QualifiedName(['t', 'id'])), $statement->actions[0]->options[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY(OWNED BY "t"."id")', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY(OWNED BY "t"."id")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testOwnedByNoneHasNoColumn(): void
@@ -34,7 +34,7 @@ final class SetSequenceOwnerTest extends TestCase
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertInstanceOf(Relation\Identity\AddColumnIdentity::class, $statement->actions[0]);
         self::assertEquals(new Relation\Identity\SetSequenceOwner(null), $statement->actions[0]->options[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY(OWNED BY NONE)', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY(OWNED BY NONE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOverQualifiedColumn(): void

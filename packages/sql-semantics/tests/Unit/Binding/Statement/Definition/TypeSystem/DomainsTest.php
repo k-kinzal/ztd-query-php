@@ -89,7 +89,7 @@ final class DomainsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE DOMAIN d AS integer CHECK (VALUE + 1 > 0)');
         self::assertInstanceOf(Statement\CreateDomainStatement::class, $statement);
         self::assertSame([], $statement->diagnostics);
-        self::assertSame('CREATE DOMAIN "d" AS integer CHECK ((("value" + 1) > 0))', $statement->toString());
+        self::assertSame('CREATE DOMAIN "d" AS integer CHECK ((("value" + 1) > 0))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testExpressionBindsTheDefault(): void
@@ -128,7 +128,7 @@ final class DomainsTest extends TestCase
     #[TestWith(['ALTER DOMAIN d DROP CONSTRAINT k', 'ALTER DOMAIN "d" DROP CONSTRAINT "k"'])]
     public function testBindSpellsEachDomainForm(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     #[TestWith(['CREATE DOMAIN c.s.d AS int'])]

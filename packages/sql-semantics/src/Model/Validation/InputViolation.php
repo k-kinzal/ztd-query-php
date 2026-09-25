@@ -88,6 +88,10 @@ enum InputViolation: string
     case ValuesWidth = 'values-column-count';
     case SetWidth = 'set-column-count';
     case SetOperationLock = 'set-operation-lock';
+    case ValuesLock = 'values-lock';
+    case RepeatedLock = 'repeated-lock-target';
+    case TableCreationLock = 'table-creation-lock';
+    case CommitAction = 'temporary-commit-action';
     case AlterAlgorithm = 'invalid-alter-algorithm';
     case AlterLock = 'invalid-alter-lock';
     case ConcurrentEmptyRefresh = 'concurrent-empty-refresh';
@@ -187,6 +191,8 @@ enum InputViolation: string
     case ProgramDefinition = 'stored-program-definition';
     case SampleArguments = 'sample-arguments';
     case StoredTableClause = 'stored-table-clause';
+    case RecursiveQueryClause = 'recursive-query-clause';
+    case WindowModifier = 'window-modifier';
 
     /**
      * Describes the operand invariant identified by this diagnosis.

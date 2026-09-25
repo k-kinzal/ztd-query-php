@@ -16,7 +16,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(id INT)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('ALTER TABLE t ALTER COLUMN id SET DEFAULT 7');
  *     $statement->alterations[0]->default instanceof \SqlSemantics\Model\Scalar\Value\Literal // => true
- *     $statement->toString() // => 'ALTER TABLE `t` ALTER COLUMN `id` SET DEFAULT 7'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER TABLE `t` ALTER COLUMN `id` SET DEFAULT 7'
  * @example Setting an expression default
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(id INT)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('ALTER TABLE t ALTER COLUMN id SET DEFAULT (id + 1)');

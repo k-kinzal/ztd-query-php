@@ -40,8 +40,8 @@ final class ArrayComparisonTest extends TestCase
         self::assertInstanceOf(ArrayComparison::class, $pattern);
         self::assertSame(PatternOperator::ILike, $pattern->operator);
         self::assertTrue($pattern->negated);
-        self::assertSame("SELECT (1 <> ALL (ARRAY[1])), ('a' NOT ILIKE SOME(CAST('{b}' AS text [])))", $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame("SELECT (1 <> ALL (ARRAY[1])), ('a' NOT ILIKE SOME(CAST('{b}' AS text [])))", (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     #[TestWith([ComparisonOperator::NullSafeEqual, false])]

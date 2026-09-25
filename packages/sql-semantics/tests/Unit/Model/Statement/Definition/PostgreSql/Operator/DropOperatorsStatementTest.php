@@ -31,8 +31,8 @@ final class DropOperatorsStatementTest extends TestCase
         self::assertSame(['app', '+'], $statement->operators[0]->name->parts);
         self::assertSame('bigint', $statement->operators[1]->right?->name);
         self::assertSame(StatementKind::Drop, $statement->kind);
-        self::assertSame('DROP OPERATOR "app".+ (integer, text), - (NONE, bigint) RESTRICT', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('DROP OPERATOR "app".+ (integer, text), - (NONE, bigint) RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -47,7 +47,7 @@ final class DropOperatorsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP OPERATOR - (NONE, bigint)');
         self::assertInstanceOf(DropOperatorsStatement::class, $statement);
-        self::assertSame('DROP OPERATOR - (NONE, bigint)', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('DROP OPERATOR - (NONE, bigint)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithOperatorsReplacesTheOperand(): void
@@ -55,14 +55,14 @@ final class DropOperatorsStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP OPERATOR - (NONE, bigint)');
         self::assertInstanceOf(DropOperatorsStatement::class, $statement);
         $operator = new OperatorIdentity(new QualifiedName(['#']), TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'));
-        self::assertSame('DROP OPERATOR # (integer, integer)', $statement->withOperators([$operator])->toString());
+        self::assertSame('DROP OPERATOR # (integer, integer)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOperators([$operator])));
     }
 
     public function testWithIfExistsReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP OPERATOR - (NONE, bigint)');
         self::assertInstanceOf(DropOperatorsStatement::class, $statement);
-        self::assertSame('DROP OPERATOR IF EXISTS - (NONE, bigint)', $statement->withIfExists(true)->toString());
+        self::assertSame('DROP OPERATOR IF EXISTS - (NONE, bigint)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIfExists(true)));
     }
 
     public function testWithBehaviorReplacesTheOperand(): void

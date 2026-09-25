@@ -28,7 +28,7 @@ final class DropColumnStatementTest extends TestCase
         self::assertFalse($statement->ifExists);
         self::assertSame(DropBehavior::Default, $statement->behavior);
         self::assertSame(StatementKind::Alter, $statement->kind);
-        self::assertSame('ALTER TABLE "t" DROP COLUMN "n"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" DROP COLUMN "n"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheTargetAndBehavior(): void
@@ -41,6 +41,6 @@ final class DropColumnStatementTest extends TestCase
         self::assertSame($statement->table, $copy->table);
         self::assertSame('n', $copy->column);
         self::assertSame($statement->behavior, $copy->behavior);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

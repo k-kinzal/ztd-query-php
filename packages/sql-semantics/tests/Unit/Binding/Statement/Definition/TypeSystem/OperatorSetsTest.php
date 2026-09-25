@@ -115,7 +115,7 @@ final class OperatorSetsTest extends TestCase
     #[TestWith(['alter operator family f using btree drop operator 1 (integer, text)', 'ALTER OPERATOR FAMILY "f" USING "btree" DROP OPERATOR 1(integer, text)'])]
     public function testMemberReadsEachItemForm(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     #[TestWith(['CREATE OPERATOR CLASS c FOR TYPE point USING gist AS OPERATOR 1 <-> (point, point) FOR ORDER BY a.b.f', InputViolation::CatalogObjectName])]

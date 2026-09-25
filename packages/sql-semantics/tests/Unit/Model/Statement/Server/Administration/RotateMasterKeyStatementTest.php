@@ -26,14 +26,14 @@ final class RotateMasterKeyStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame(MasterKeyScope::InnoDb, $copy->scope);
-        self::assertSame('ALTER INSTANCE ROTATE INNODB MASTER KEY', $copy->toString());
+        self::assertSame('ALTER INSTANCE ROTATE INNODB MASTER KEY', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithScopeSelectsTheOtherKeyImmutably(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER INSTANCE ROTATE INNODB MASTER KEY');
         self::assertInstanceOf(RotateMasterKeyStatement::class, $statement);
-        self::assertSame('ALTER INSTANCE ROTATE BINLOG MASTER KEY', $statement->withScope(MasterKeyScope::BinaryLog)->toString());
+        self::assertSame('ALTER INSTANCE ROTATE BINLOG MASTER KEY', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withScope(MasterKeyScope::BinaryLog)));
         self::assertSame(MasterKeyScope::InnoDb, $statement->scope);
     }
 

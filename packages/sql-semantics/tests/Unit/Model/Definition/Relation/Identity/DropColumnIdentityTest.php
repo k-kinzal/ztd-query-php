@@ -23,7 +23,7 @@ final class DropColumnIdentityTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER COLUMN id DROP IDENTITY IF EXISTS', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Identity\DropColumnIdentity('id', true), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" DROP IDENTITY IF EXISTS', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" DROP IDENTITY IF EXISTS', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyColumn(): void

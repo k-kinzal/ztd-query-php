@@ -22,8 +22,8 @@ final class RolesTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $statement = $binder->bind('SET ROLE NONE');
-        self::assertSame('SET ROLE NONE', $statement->toString());
-        self::assertSame($statement::class, $binder->bind($statement->toString())::class);
+        self::assertSame('SET ROLE NONE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($statement::class, $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))::class);
     }
 
     public function testAccountsQuoteNamesWithSqlPunctuationAsSingleNames(): void
@@ -32,7 +32,7 @@ final class RolesTest extends TestCase
         $statement = $binder->bind("SET ROLE 'reader'");
         self::assertInstanceOf(SetExplicitRolesStatement::class, $statement);
         $changed = $statement->withRoles([new AccountName("x'; DROP TABLE t; --", 'local@host')]);
-        $again = $binder->bind($changed->toString());
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertInstanceOf(SetExplicitRolesStatement::class, $again);
         self::assertCount(1, $again->roles);
         self::assertSame("x'; DROP TABLE t; --", $again->roles[0]->username);
@@ -52,8 +52,8 @@ final class RolesTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build());
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
         self::assertSame("'r'@'h'", Roles::accounts([new AccountName('r', 'h')])->toString());
     }
 }

@@ -30,7 +30,7 @@ final class ReportsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build());
         $statement = $binder->bind($sql);
         self::assertSame($expected, Reports::write($statement)?->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
         self::assertNull(Reports::write($binder->bind('SHOW DATABASES')));
     }
 

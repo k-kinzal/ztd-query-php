@@ -127,7 +127,7 @@ final class TextSearchTest extends TestCase
     #[TestWith(['ALTER TEXT SEARCH CONFIGURATION b.c ALTER MAPPING FOR word REPLACE d1 WITH d2', 'ALTER TEXT SEARCH CONFIGURATION "b"."c" ALTER MAPPING FOR "word" REPLACE "d1" WITH "d2"'])]
     public function testCreateAndAlterKeepSchemaQualifiedNamesAndTheLastArgument(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 
     #[TestWith(['CREATE TEXT SEARCH PARSER a.b.c (start = s, gettoken = g, end = e, lextypes = l)'])]

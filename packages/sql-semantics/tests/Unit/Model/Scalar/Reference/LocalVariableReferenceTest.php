@@ -73,7 +73,7 @@ final class LocalVariableReferenceTest extends TestCase
         $statement = $binder->bind('CREATE FUNCTION f(n CHAR(1)) RETURNS INT RETURN (SELECT COUNT(*) FROM t WHERE n = 1)');
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
         self::assertCount(1, array_filter(\SqlSemantics\Model\Traversal\Expressions::all($statement), static fn ($expression): bool => $expression instanceof LocalVariableReference));
-        self::assertStringContainsString('WHERE (`n` = 1)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertStringContainsString('WHERE (`n` = 1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

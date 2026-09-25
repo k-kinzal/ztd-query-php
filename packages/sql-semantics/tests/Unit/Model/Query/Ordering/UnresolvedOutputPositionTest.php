@@ -29,7 +29,7 @@ final class UnresolvedOutputPositionTest extends TestCase
         $key = $statement->orderBy[0]->key;
         self::assertInstanceOf(UnresolvedOutputPosition::class, $key);
         self::assertSame('2', $key->position->spelling);
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testAcceptsLeadingZeros(): void

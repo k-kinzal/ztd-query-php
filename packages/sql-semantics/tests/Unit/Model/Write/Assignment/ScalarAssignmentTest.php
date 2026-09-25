@@ -34,7 +34,7 @@ final class ScalarAssignmentTest extends TestCase
         self::assertInstanceOf(Literal::class, $assignment->value);
         self::assertSame('7', $assignment->value->text);
         self::assertCount(1, $assignment->destinations());
-        self::assertSame('UPDATE "public"."t" SET "items"["id"] = 7', $statement->toString());
+        self::assertSame('UPDATE "public"."t" SET "items"["id"] = 7', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testDestinationsListsTheSingleTargetOfAScalarAssignment(): void

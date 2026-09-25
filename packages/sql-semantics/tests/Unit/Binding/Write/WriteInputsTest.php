@@ -24,7 +24,7 @@ final class WriteInputsTest extends TestCase
         self::assertSame(\SqlSemantics\Model\Write\DefaultSource::Column, $statement->rows[0][0]);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $statement->rows[0][1]);
         self::assertSame('1', $statement->rows[0][1]->text);
-        self::assertSame('INSERT INTO "public"."t" VALUES (DEFAULT, 1)', $statement->toString());
+        self::assertSame('INSERT INTO "public"."t" VALUES (DEFAULT, 1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testTupleBindsImplicitAndExplicitRowsWithDefaultSlots(): void
@@ -40,7 +40,7 @@ final class WriteInputsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $explicit);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\TupleRowAssignment::class, $explicit->writes[0]);
         self::assertSame(\SqlSemantics\Model\Write\DefaultSource::Column, $explicit->writes[0]->row->items[0]);
-        self::assertSame('UPDATE "public"."t" SET ("a", "b") = ROW(DEFAULT, 2)', $explicit->toString());
+        self::assertSame('UPDATE "public"."t" SET ("a", "b") = ROW(DEFAULT, 2)', (new \SqlSemantics\SimpleSerializer())->serialize($explicit));
     }
 
     public function testTupleReturnsNullForANonRowValue(): void

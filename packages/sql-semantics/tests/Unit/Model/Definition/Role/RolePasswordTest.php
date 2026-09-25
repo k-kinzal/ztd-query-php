@@ -61,9 +61,9 @@ final class RolePasswordTest extends TestCase
         $option = $statement->options[0];
         self::assertInstanceOf(RolePassword::class, $option);
         self::assertSame("'secret'", $option->secret->text);
-        self::assertSame('CREATE ROLE "r" PASSWORD \'secret\'', $statement->toString());
-        $rebound = $binder->bind($statement->toString());
+        self::assertSame('CREATE ROLE "r" PASSWORD \'secret\'', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateRoleStatement::class, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 }

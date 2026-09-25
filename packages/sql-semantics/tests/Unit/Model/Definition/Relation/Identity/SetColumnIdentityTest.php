@@ -23,7 +23,7 @@ final class SetColumnIdentityTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER COLUMN id SET GENERATED ALWAYS RESTART SET NO CYCLE', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Identity\SetColumnIdentity('id', [\SqlSemantics\Schema\Column\IdentityMode::Always, new Relation\Identity\RestartIdentity(null), Relation\Identity\SequenceFlag::NoCycle]), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET GENERATED ALWAYS RESTART SET NO CYCLE', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" SET GENERATED ALWAYS RESTART SET NO CYCLE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyColumn(): void

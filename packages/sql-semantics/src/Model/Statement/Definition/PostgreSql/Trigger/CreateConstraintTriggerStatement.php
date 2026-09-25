@@ -24,7 +24,7 @@ use SqlSemantics\Schema\Constraint\CheckingTime;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT); CREATE TABLE parent(a INT)')))->bind('CREATE CONSTRAINT TRIGGER audit AFTER DELETE ON t FROM parent DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION check_parent()');
  *     $statement->checking // => \SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred
  *     $statement->referenced?->name->parts // => ['public', 'parent']
- *     $statement->toString() // => 'CREATE CONSTRAINT TRIGGER "audit" AFTER DELETE ON "public"."t" FROM "public"."parent" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION "check_parent"()'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE CONSTRAINT TRIGGER "audit" AFTER DELETE ON "public"."t" FROM "public"."parent" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION "check_parent"()'
  */
 final class CreateConstraintTriggerStatement extends BoundStatement
 {

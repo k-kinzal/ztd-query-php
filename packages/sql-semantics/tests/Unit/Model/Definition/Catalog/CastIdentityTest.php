@@ -26,7 +26,7 @@ final class CastIdentityTest extends TestCase
         self::assertInstanceOf(Catalog\CastIdentity::class, $statement->object);
         self::assertSame('integer', $statement->object->source->name);
         self::assertSame('text', $statement->object->target->name);
-        self::assertSame("COMMENT ON CAST(integer AS text) IS 'widening'", $statement->toString());
+        self::assertSame("COMMENT ON CAST(integer AS text) IS 'widening'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsATypeFromAnotherDatabaseLanguage(): void

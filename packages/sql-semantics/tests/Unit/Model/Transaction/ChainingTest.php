@@ -34,7 +34,7 @@ final class ChainingTest extends TestCase
         self::assertInstanceOf(CommitTransactionStatement::class, $statement);
         self::assertSame($chaining, $statement->chaining);
         self::assertSame($sql, $statement->toString());
-        self::assertSame($sql, $binder->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 
     public function testClassifiesTheChainingOfARollback(): void

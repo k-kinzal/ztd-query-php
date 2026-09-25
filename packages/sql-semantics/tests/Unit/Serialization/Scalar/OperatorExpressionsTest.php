@@ -31,8 +31,8 @@ final class OperatorExpressionsTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INT)'));
         $statement = $binder->bind($sql);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testWritePlacesAPostfixOperatorAfterItsOperand(): void
@@ -70,7 +70,7 @@ final class OperatorExpressionsTest extends TestCase
         self::assertInstanceOf(CastExpression::class, $cast);
         self::assertSame(CastMode::Implicit, $cast->mode);
         self::assertSame("'2'", OperatorExpressions::write($cast)->toString());
-        self::assertSame("SELECT 1 UNION SELECT '2'", $statement->toString());
+        self::assertSame("SELECT 1 UNION SELECT '2'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWriteSpellsAnExplicitCastWithItsTargetType(): void
@@ -89,8 +89,8 @@ final class OperatorExpressionsTest extends TestCase
     public function testConversionWritesMySqlConversionForms(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
-        self::assertSame($expected, $binder->bind($sql)->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
     public function testNamedWritesInfixAndPrefixOperationsThroughTheirOperator(): void
     {

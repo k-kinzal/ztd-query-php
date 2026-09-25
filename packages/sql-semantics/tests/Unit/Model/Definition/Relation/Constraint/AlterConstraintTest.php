@@ -23,7 +23,7 @@ final class AlterConstraintTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER CONSTRAINT fk DEFERRABLE INITIALLY DEFERRED', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Constraint\AlterConstraint('fk', \SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER CONSTRAINT "fk" DEFERRABLE INITIALLY DEFERRED', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER CONSTRAINT "fk" DEFERRABLE INITIALLY DEFERRED', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testNotDeferrableIsTheEmptySpecification(): void
@@ -31,7 +31,7 @@ final class AlterConstraintTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER CONSTRAINT fk NOT DEFERRABLE', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Constraint\AlterConstraint('fk', \SqlSemantics\Schema\Constraint\CheckingTime::Immediate), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER CONSTRAINT "fk"', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER CONSTRAINT "fk"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyName(): void

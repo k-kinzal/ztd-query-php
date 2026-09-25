@@ -49,7 +49,7 @@ final class AlterUsersStatementTest extends TestCase
         self::assertInstanceOf(AlterUsersStatement::class, $statement);
         $changed = $statement->withAlterations([new FactorRemoval(new AccountName('b'), [AuthenticationFactor::Third]), new AccountTarget(new AccountName('c', 'h'))]);
         self::assertCount(1, $statement->alterations);
-        self::assertSame("ALTER USER 'b' DROP 3 FACTOR, 'c'@'h' ACCOUNT LOCK", $changed->toString());
+        self::assertSame("ALTER USER 'b' DROP 3 FACTOR, 'c'@'h' ACCOUNT LOCK", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithAlterationsRejectsTheClientAccountWithSharedClauses(): void
@@ -72,7 +72,7 @@ final class AlterUsersStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('ALTER USER a ACCOUNT LOCK');
         self::assertInstanceOf(AlterUsersStatement::class, $statement);
-        self::assertSame("ALTER USER IF EXISTS 'a' ACCOUNT LOCK", $statement->withIfExists(true)->toString());
+        self::assertSame("ALTER USER IF EXISTS 'a' ACCOUNT LOCK", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIfExists(true)));
         self::assertFalse($statement->ifExists);
     }
 
@@ -88,7 +88,7 @@ final class AlterUsersStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER USER a REQUIRE NONE');
         self::assertInstanceOf(AlterUsersStatement::class, $statement);
-        self::assertSame("ALTER USER 'a' REQUIRE SSL", $statement->withRequirement(ConnectionSecurity::Ssl)->toString());
+        self::assertSame("ALTER USER 'a' REQUIRE SSL", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withRequirement(ConnectionSecurity::Ssl)));
         self::assertSame(ConnectionSecurity::None, $statement->requirement);
     }
 
@@ -96,7 +96,7 @@ final class AlterUsersStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER USER a ACCOUNT UNLOCK');
         self::assertInstanceOf(AlterUsersStatement::class, $statement);
-        self::assertSame("ALTER USER 'a' WITH MAX_CONNECTIONS_PER_HOUR 4 ACCOUNT UNLOCK", $statement->withResourceLimits([new ResourceLimit(ResourceLimitKind::ConnectionsPerHour, 4)])->toString());
+        self::assertSame("ALTER USER 'a' WITH MAX_CONNECTIONS_PER_HOUR 4 ACCOUNT UNLOCK", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withResourceLimits([new ResourceLimit(ResourceLimitKind::ConnectionsPerHour, 4)])));
         self::assertSame([], $statement->resourceLimits);
     }
 
@@ -104,7 +104,7 @@ final class AlterUsersStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER USER a ACCOUNT UNLOCK');
         self::assertInstanceOf(AlterUsersStatement::class, $statement);
-        self::assertSame("ALTER USER 'a' PASSWORD REQUIRE CURRENT DEFAULT", $statement->withPolicies([AccountPolicy::DefaultCurrentPasswordRequirement])->toString());
+        self::assertSame("ALTER USER 'a' PASSWORD REQUIRE CURRENT DEFAULT", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withPolicies([AccountPolicy::DefaultCurrentPasswordRequirement])));
         self::assertSame([AccountPolicy::Unlock], $statement->policies);
     }
 
@@ -122,7 +122,7 @@ final class AlterUsersStatementTest extends TestCase
         self::assertInstanceOf(AlterUsersStatement::class, $statement);
         $text = (new LiteralBinder(Dialect::MySql))->bind(new Token(0, 'TEXT_STRING', "'ops'", 0));
         self::assertInstanceOf(Literal::class, $text);
-        self::assertSame("ALTER USER 'a' ACCOUNT UNLOCK COMMENT 'ops'", $statement->withAnnotation(new AccountAnnotation(AnnotationForm::Comment, $text))->toString());
+        self::assertSame("ALTER USER 'a' ACCOUNT UNLOCK COMMENT 'ops'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withAnnotation(new AccountAnnotation(AnnotationForm::Comment, $text))));
         self::assertNull($statement->annotation);
     }
 
@@ -132,14 +132,14 @@ final class AlterUsersStatementTest extends TestCase
         self::assertInstanceOf(AlterUsersStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame("ALTER USER 'a' PASSWORD EXPIRE, 'b' PASSWORD EXPIRE", $copy->toString());
+        self::assertSame("ALTER USER 'a' PASSWORD EXPIRE, 'b' PASSWORD EXPIRE", (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithAlterationsAcceptsTheClientAccountAlone(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER USER a DISCARD OLD PASSWORD');
         self::assertInstanceOf(AlterUsersStatement::class, $statement);
-        self::assertSame('ALTER USER USER() DISCARD OLD PASSWORD', $statement->withAlterations([new OldPasswordDiscard(ClientAccount::Connected)])->toString());
+        self::assertSame('ALTER USER USER() DISCARD OLD PASSWORD', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withAlterations([new OldPasswordDiscard(ClientAccount::Connected)])));
     }
 
     public function testWithAlterationsRejectsTheClientAccountAmongOthers(): void

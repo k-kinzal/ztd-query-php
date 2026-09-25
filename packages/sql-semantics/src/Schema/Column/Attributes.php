@@ -17,6 +17,9 @@ namespace SqlSemantics\Schema\Column;
  * @example Reading a PostgreSQL storage strategy and compression method
  *     $column = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(body text STORAGE EXTERNAL COMPRESSION pglz)')->tables[0]->columns[0];
  *     [$column->attributes->storageStrategy, $column->attributes->compression] // => [\SqlSemantics\Model\Definition\Relation\Column\ColumnStorageMode::External, 'pglz']
+ * @example Reading a MySQL column excluded from the secondary engine
+ *     $column = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(note TEXT NOT SECONDARY)')->tables[0]->columns[0];
+ *     $column->attributes->excludedFromSecondaryEngine // => true
  */
 final class Attributes
 {
@@ -24,6 +27,7 @@ final class Attributes
      * Constructs a valid declaration; the MySQL storage medium and the PostgreSQL storage strategy are never declared together.
      *
      * @param \SqlSemantics\Model\Definition\Relation\Column\ColumnStorageMode|null $storageStrategy PostgreSQL TOAST strategy (STORAGE PLAIN, EXTERNAL, EXTENDED, MAIN or DEFAULT)
+     * @param bool $excludedFromSecondaryEngine MySQL NOT SECONDARY: the column is not loaded into the secondary engine
      * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
     public function __construct(
@@ -40,6 +44,7 @@ final class Attributes
         public readonly bool $zeroFill = false,
         public readonly bool $binary = false,
         public readonly ?\SqlSemantics\Model\Definition\Relation\Column\ColumnStorageMode $storageStrategy = null,
+        public readonly bool $excludedFromSecondaryEngine = false,
     ) {
         if ($storage !== null && $storageStrategy !== null) {
             throw new \SqlSemantics\Model\Validation\InvalidStructure('A column declares either a MySQL storage medium or a PostgreSQL storage strategy.');

@@ -24,7 +24,7 @@ final class RulesTest extends TestCase
     #[TestWith(['CREATE RULE "r" AS ON UPDATE TO "public"."t" DO ALSO(NOTIFY "x"; NOTIFY "y", \'z\')'])]
     public function testWriteIsAFixedPoint(string $sql): void
     {
-        self::assertSame($sql, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql)->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql)));
     }
 
     public function testWriteReturnsNullForOtherStatements(): void

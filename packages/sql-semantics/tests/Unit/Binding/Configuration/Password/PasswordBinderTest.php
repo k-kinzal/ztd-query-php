@@ -27,9 +27,9 @@ final class PasswordBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf($expected, $statement);
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf($expected, $rebound);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     /**
@@ -87,7 +87,7 @@ final class PasswordBinderTest extends TestCase
     public function testBindReadsEveryPasswordForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
-        self::assertSame($expected, $statement::class . ' => ' . $statement->toString());
+        self::assertSame($expected, $statement::class . ' => ' . (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     /**
@@ -115,6 +115,6 @@ final class PasswordBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind("SET GLOBAL sql_mode = 1, PASSWORD = '*x'");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
-        self::assertSame("SET GLOBAL `sql_mode` = 1, GLOBAL `PASSWORD` = '*x'", $statement->toString());
+        self::assertSame("SET GLOBAL `sql_mode` = 1, GLOBAL `PASSWORD` = '*x'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

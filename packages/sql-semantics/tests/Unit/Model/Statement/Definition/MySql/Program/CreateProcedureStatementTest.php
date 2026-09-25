@@ -39,8 +39,8 @@ final class CreateProcedureStatementTest extends TestCase
         self::assertSame(['app', 'p'], $statement->name->parts);
         self::assertInstanceOf(AccountName::class, $statement->definer);
         self::assertFalse($statement->ifNotExists);
-        self::assertSame("CREATE DEFINER = 'app'@'%' PROCEDURE `app`.`p`(IN `a` integer, OUT `b` integer) COMMENT 'sum' SQL SECURITY INVOKER BEGIN SELECT sum(`n`) FROM `t` WHERE (`n` > `a`) INTO `b`; END", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("CREATE DEFINER = 'app'@'%' PROCEDURE `app`.`p`(IN `a` integer, OUT `b` integer) COMMENT 'sum' SQL SECURITY INVOKER BEGIN SELECT sum(`n`) FROM `t` WHERE (`n` > `a`) INTO `b`; END", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginPreservesTheDefinition(): void
@@ -49,7 +49,7 @@ final class CreateProcedureStatementTest extends TestCase
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithNameReplacesOnlyTheName(): void
@@ -57,7 +57,7 @@ final class CreateProcedureStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p() BEGIN END');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         $changed = $statement->withName(new QualifiedName(['db', 'q']));
-        self::assertSame('CREATE PROCEDURE `db`.`q`() BEGIN END', $changed->toString());
+        self::assertSame('CREATE PROCEDURE `db`.`q`() BEGIN END', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame(['p'], $statement->name->parts);
     }
 
@@ -66,7 +66,7 @@ final class CreateProcedureStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p(a INT, b INT) SET a = b');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         $changed = $statement->withParameters(array_reverse($statement->parameters));
-        self::assertSame('CREATE PROCEDURE `p`(IN `b` integer, IN `a` integer) SET `a` = `b`', $changed->toString());
+        self::assertSame('CREATE PROCEDURE `p`(IN `b` integer, IN `a` integer) SET `a` = `b`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithCharacteristicsReplacesAllCharacteristics(): void
@@ -74,7 +74,7 @@ final class CreateProcedureStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p() DETERMINISTIC BEGIN END');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         $changed = $statement->withCharacteristics(new RoutineCharacteristics(security: RoutineSecurity::Invoker));
-        self::assertSame('CREATE PROCEDURE `p`() SQL SECURITY INVOKER BEGIN END', $changed->toString());
+        self::assertSame('CREATE PROCEDURE `p`() SQL SECURITY INVOKER BEGIN END', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertTrue($statement->characteristics->deterministic);
     }
 
@@ -83,14 +83,14 @@ final class CreateProcedureStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p() DO 1');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         $changed = $statement->withBody(new BlockStatement('main'));
-        self::assertSame('CREATE PROCEDURE `p`() `main` : BEGIN END `main`', $changed->toString());
+        self::assertSame('CREATE PROCEDURE `p`() `main` : BEGIN END `main`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithDefinerRemovesTheDefiner(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE DEFINER = CURRENT_USER PROCEDURE p() BEGIN END');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
-        self::assertSame('CREATE PROCEDURE `p`() BEGIN END', $statement->withDefiner(null)->toString());
+        self::assertSame('CREATE PROCEDURE `p`() BEGIN END', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withDefiner(null)));
     }
 
     public function testRejectsRepeatedParameterNames(): void

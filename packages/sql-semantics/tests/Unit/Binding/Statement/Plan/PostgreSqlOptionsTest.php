@@ -95,6 +95,6 @@ final class PostgreSqlOptionsTest extends TestCase
     #[TestWith(['EXPLAIN (GENERIC_PLAN) SELECT $1', 'EXPLAIN(ANALYZE FALSE, VERBOSE FALSE, COSTS TRUE, SETTINGS FALSE, GENERIC_PLAN TRUE, BUFFERS FALSE, WAL FALSE, MEMORY FALSE, SERIALIZE NONE, FORMAT TEXT) SELECT $1'])]
     public function testBindReadsEveryFlagOption(string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)));
     }
 }

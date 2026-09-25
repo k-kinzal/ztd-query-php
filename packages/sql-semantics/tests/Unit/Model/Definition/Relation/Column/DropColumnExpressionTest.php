@@ -23,7 +23,7 @@ final class DropColumnExpressionTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER COLUMN id DROP EXPRESSION IF EXISTS', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Column\DropColumnExpression('id', true), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" DROP EXPRESSION IF EXISTS', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" DROP EXPRESSION IF EXISTS', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnEmptyColumn(): void

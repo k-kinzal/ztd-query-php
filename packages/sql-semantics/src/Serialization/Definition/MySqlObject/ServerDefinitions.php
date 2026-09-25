@@ -64,7 +64,7 @@ final class ServerDefinitions
     public static function view(AlterViewStatement $statement): Tree
     {
         return new Tree('alter-view', [
-            Build::keyword('ALTER'), ...Views::mysql($statement->properties, Dialect::MySql), Build::keyword('VIEW'), Build::identifier($statement->name->parts, Dialect::MySql),
+            Build::keyword('ALTER'), ...Views::mysql($statement->properties, Dialect::MySql, true), Build::keyword('VIEW'), Build::identifier($statement->name->parts, Dialect::MySql),
             ...($statement->columns === [] ? [] : [Constraints::columns($statement->columns, Dialect::MySql)]),
             Build::keyword('AS'), Queries::write($statement->query),
             ...($statement->check === ViewCheck::None ? [] : [Build::keyword('WITH ' . $statement->check->value . ' CHECK OPTION')]),

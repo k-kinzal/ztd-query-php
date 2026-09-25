@@ -30,8 +30,8 @@ final class JsonScalarConversionTest extends TestCase
         self::assertSame([$value->value], $value->inputs());
         self::assertSame('json', $value->type->name);
         self::assertSame(Nullability::NotNull, $value->nullability);
-        self::assertSame('SELECT JSON_SCALAR(("n" + 1)) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_SCALAR(("n" + 1)) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAnotherDialect(): void

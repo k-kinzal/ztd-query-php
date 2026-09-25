@@ -56,7 +56,7 @@ final class SharedOutputsTest extends TestCase
         $query = $binder->bind('SELECT * FROM a ' . $kind . ' b USING(k,id)');
         self::assertInstanceOf(BoundSelect::class, $query);
         self::assertSame($expected, array_column($query->outputs, 'name'));
-        $rebound = $binder->bind($query->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query));
         self::assertInstanceOf(BoundSelect::class, $rebound);
         self::assertSame($expected, array_column($rebound->outputs, 'name'));
     }

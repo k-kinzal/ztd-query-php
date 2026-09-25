@@ -346,8 +346,8 @@ final class QueryBinderTest extends TestCase
         $query = $binder->bind($sql);
         self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $query);
         self::assertTrue($query->withTies);
-        self::assertSame($expected, $query->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testLeadSkipsOpeningParenthesesOfAValuesBody(): void
@@ -355,7 +355,7 @@ final class QueryBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $values = $binder->bind('( ( VALUES ROW (NULL) ) )');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $values);
-        self::assertSame('VALUES ROW(NULL)', $values->toString());
+        self::assertSame('VALUES ROW(NULL)', (new \SqlSemantics\SimpleSerializer())->serialize($values));
         self::assertSame('VALUES', \SqlSemantics\Binding\Query\QueryBinder::lead((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('((VALUES ROW(1)))')));
         self::assertSame('', \SqlSemantics\Binding\Query\QueryBinder::lead(new \SqlParser\Parser\Node('empty', 0, [])));
     }
@@ -380,7 +380,7 @@ final class QueryBinderTest extends TestCase
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT * FROM nope UNION SELECT 1', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
-        self::assertSame('SELECT "nope".* FROM "public"."nope" UNION SELECT 1', $query->toString());
+        self::assertSame('SELECT "nope".* FROM "public"."nope" UNION SELECT 1', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testCompoundRejectsALockedPostgreSqlOperand(): void
@@ -394,20 +394,20 @@ final class QueryBinderTest extends TestCase
     {
         $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('(SELECT id FROM t) UNION (SELECT n FROM t FOR UPDATE)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
-        self::assertSame('SELECT `id` AS `id` FROM `t` UNION (SELECT `n` AS `n` FROM `t` FOR UPDATE)', $query->toString());
+        self::assertSame('SELECT `id` AS `id` FROM `t` UNION (SELECT `n` AS `n` FROM `t` FOR UPDATE)', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testCompoundKeepsTheSqliteTailOnTheCompound(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1 AS k UNION SELECT 2 ORDER BY k LIMIT 1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
-        self::assertSame('SELECT 1 AS "k" UNION SELECT 2 ORDER BY "k" ASC LIMIT 1', $query->toString());
+        self::assertSame('SELECT 1 AS "k" UNION SELECT 2 ORDER BY "k" ASC LIMIT 1', (new \SqlSemantics\SimpleSerializer())->serialize($query));
         self::assertCount(1, $query->orderBy);
         self::assertSame('1', $query->limit?->spelling());
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->right);
         self::assertSame([], $query->right->orderBy);
         self::assertNull($query->right->limit);
-        self::assertSame('SELECT 2', $query->right->toString());
+        self::assertSame('SELECT 2', (new \SqlSemantics\SimpleSerializer())->serialize($query->right));
     }
 
     public function testWithRejectsADuplicateCteName(): void
@@ -431,7 +431,7 @@ final class QueryBinderTest extends TestCase
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('with c as (select 1 as x) table c');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $query);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\CteReference::class, $query->from);
-        self::assertSame('WITH "c" AS (SELECT 1 AS "x") TABLE "c"', $query->toString());
+        self::assertSame('WITH "c" AS (SELECT 1 AS "x") TABLE "c"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testBindReadsLowerCaseValuesWithTies(): void
@@ -439,7 +439,7 @@ final class QueryBinderTest extends TestCase
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('values (1) order by 1 fetch first row with ties');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $query);
         self::assertTrue($query->withTies);
-        self::assertSame('VALUES (1) ORDER BY 1 ASC FETCH FIRST 1 ROWS WITH TIES', $query->toString());
+        self::assertSame('VALUES (1) ORDER BY 1 ASC FETCH FIRST 1 ROWS WITH TIES', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testBindKeepsOptimizerHintsOnlyForMySql(): void
@@ -450,7 +450,7 @@ final class QueryBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
         self::assertCount(1, $mysql->hints);
         self::assertSame([], $postgres->hints);
-        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1', $mysql->toString());
+        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1', (new \SqlSemantics\SimpleSerializer())->serialize($mysql));
     }
 
 
@@ -458,7 +458,7 @@ final class QueryBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)'));
         $ties = $binder->bind('SELECT a FROM t ORDER BY a FETCH FIRST 2 ROWS WITH TIES');
-        self::assertSame('SELECT "a" AS "a" FROM "public"."t" ORDER BY "a" ASC FETCH FIRST 2 ROWS WITH TIES', $ties->toString());
-        self::assertSame($ties->toString(), $binder->bind($ties->toString())->toString());
+        self::assertSame('SELECT "a" AS "a" FROM "public"."t" ORDER BY "a" ASC FETCH FIRST 2 ROWS WITH TIES', (new \SqlSemantics\SimpleSerializer())->serialize($ties));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($ties), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($ties))));
     }
 }

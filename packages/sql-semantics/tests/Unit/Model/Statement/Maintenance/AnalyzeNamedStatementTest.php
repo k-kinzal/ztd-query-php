@@ -24,7 +24,7 @@ final class AnalyzeNamedStatementTest extends TestCase
         self::assertInstanceOf(AnalyzeNamedStatement::class, $statement);
         self::assertSame(['main', 't'], $statement->target->parts);
         self::assertSame(StatementKind::Analyze, $statement->kind);
-        self::assertSame('ANALYZE "main"."t"', $statement->toString());
+        self::assertSame('ANALYZE "main"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheTarget(): void
@@ -35,6 +35,6 @@ final class AnalyzeNamedStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->target, $copy->target);
-        self::assertSame('ANALYZE "t"', $copy->toString());
+        self::assertSame('ANALYZE "t"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

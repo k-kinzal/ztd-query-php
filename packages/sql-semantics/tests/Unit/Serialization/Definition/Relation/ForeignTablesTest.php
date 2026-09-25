@@ -29,7 +29,7 @@ final class ForeignTablesTest extends TestCase
     public function testWriteProducesTheStatementText(string $sql): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind($sql, strict: false);
-        self::assertSame($statement->toString(), ForeignTables::write($statement)?->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), ForeignTables::write($statement)?->toString());
     }
 
     public function testServerWritesTheServerAndOptions(): void
@@ -80,6 +80,6 @@ final class ForeignTablesTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Schema\Constraint\Check::class, $check);
         self::assertSame($noInherit, $check->noInherit);
         self::assertSame($expected, ForeignTables::write($statement)?->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }

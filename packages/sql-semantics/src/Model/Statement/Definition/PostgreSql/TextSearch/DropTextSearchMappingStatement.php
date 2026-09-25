@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Dropping mappings when they exist
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH CONFIGURATION app.english DROP MAPPING IF EXISTS FOR email, url');
  *     $statement->ifExists // => true
- *     $statement->toString() // => 'ALTER TEXT SEARCH CONFIGURATION "app"."english" DROP MAPPING IF EXISTS FOR "email", "url"'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER TEXT SEARCH CONFIGURATION "app"."english" DROP MAPPING IF EXISTS FOR "email", "url"'
  */
 final class DropTextSearchMappingStatement extends BoundStatement
 {

@@ -34,16 +34,16 @@ final class VacuumStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('VACUUM t');
         self::assertInstanceOf(VacuumStatement::class, $statement);
-        self::assertSame('VACUUM(FREEZE, TRUNCATE FALSE) "public"."t"', $statement->withOptions(new VacuumOptions(freeze: true, truncate: false))->toString());
-        self::assertSame('VACUUM "public"."t"', $statement->toString());
+        self::assertSame('VACUUM(FREEZE, TRUNCATE FALSE) "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOptions(new VacuumOptions(freeze: true, truncate: false))));
+        self::assertSame('VACUUM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithTargetsReplacesTheRelations(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('VACUUM ANALYZE t');
         self::assertInstanceOf(VacuumStatement::class, $statement);
-        self::assertSame('VACUUM(ANALYZE)', $statement->withTargets([])->toString());
-        self::assertSame('VACUUM(ANALYZE) "public"."t"("a")', $statement->withTargets([new MaintenanceTarget($statement->targets[0]->table, ['a'])])->toString());
+        self::assertSame('VACUUM(ANALYZE)', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withTargets([])));
+        self::assertSame('VACUUM(ANALYZE) "public"."t"("a")', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withTargets([new MaintenanceTarget($statement->targets[0]->table, ['a'])])));
     }
 
     public function testRejectsAColumnListWithoutAnalyze(): void

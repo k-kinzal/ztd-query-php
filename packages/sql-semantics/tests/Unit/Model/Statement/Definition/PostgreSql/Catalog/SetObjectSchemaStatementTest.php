@@ -25,8 +25,8 @@ final class SetObjectSchemaStatementTest extends TestCase
         self::assertInstanceOf(SetObjectSchemaStatement::class, $statement);
         self::assertInstanceOf(Catalog\AggregateIdentity::class, $statement->object);
         self::assertSame('stats', $statement->schema);
-        self::assertSame('ALTER AGGREGATE "app"."median"(numeric) SET SCHEMA "stats"', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('ALTER AGGREGATE "app"."median"(numeric) SET SCHEMA "stats"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -35,7 +35,7 @@ final class SetObjectSchemaStatementTest extends TestCase
         self::assertInstanceOf(SetObjectSchemaStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -55,7 +55,7 @@ final class SetObjectSchemaStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals($statement->object, $statement->object);
         self::assertEquals(new Catalog\NamedIdentity(Kind\NamedObjectKind::Extension, 'postgis'), $changed->object);
-        self::assertStringContainsString('ALTER EXTENSION "postgis" SET SCHEMA', $changed->toString());
+        self::assertStringContainsString('ALTER EXTENSION "postgis" SET SCHEMA', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithSchemaReplacesTheOperand(): void
@@ -66,7 +66,7 @@ final class SetObjectSchemaStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals('stats', $statement->schema);
         self::assertEquals('archive', $changed->schema);
-        self::assertStringContainsString('SET SCHEMA "archive"', $changed->toString());
+        self::assertStringContainsString('SET SCHEMA "archive"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAnObjectOutsideSchemas(): void

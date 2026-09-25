@@ -34,8 +34,8 @@ final class NormalizationTest extends TestCase
         self::assertSame([$explicit->string], $explicit->inputs());
         self::assertSame('text', $explicit->type->name);
         self::assertSame(Nullability::NotNull, $explicit->nullability);
-        self::assertSame("SELECT NORMALIZE('a', NFKD), NORMALIZE('b', NFC)", $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame("SELECT NORMALIZE('a', NFKD), NORMALIZE('b', NFC)", (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectsMySql(): void

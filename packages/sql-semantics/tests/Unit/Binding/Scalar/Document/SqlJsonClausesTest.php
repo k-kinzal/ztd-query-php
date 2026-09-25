@@ -88,6 +88,6 @@ final class SqlJsonClausesTest extends TestCase
         $value = $query->outputs[0]->expression;
         self::assertInstanceOf(JsonObjectConstructor::class, $value);
         self::assertSame(Format::Json, $value->members[0]->value->format);
-        self::assertSame("SELECT JSON_OBJECT('a' : '{}' FORMAT JSON)", $query->toString());
+        self::assertSame("SELECT JSON_OBJECT('a' : '{}' FORMAT JSON)", (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 }

@@ -21,7 +21,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("ALTER TYPE mood ADD VALUE IF NOT EXISTS 'calm' BEFORE 'happy'");
  *     $statement->label // => 'calm'
  *     $statement->ifNotExists // => true
- *     $statement->toString() // => 'ALTER TYPE "mood" ADD VALUE IF NOT EXISTS \'calm\' BEFORE \'happy\''
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'ALTER TYPE "mood" ADD VALUE IF NOT EXISTS \'calm\' BEFORE \'happy\''
  */
 final class AddEnumLabelStatement extends BoundStatement
 {

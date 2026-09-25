@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("CREATE SUBSCRIPTION sub CONNECTION 'host=primary dbname=app' PUBLICATION pub, audit WITH (enabled = false)");
  *     $statement->connection // => 'host=primary dbname=app'
  *     $statement->publications // => ['pub', 'audit']
- *     $statement->toString() // => 'CREATE SUBSCRIPTION "sub" CONNECTION \'host=primary dbname=app\' PUBLICATION "pub", "audit" WITH (enabled = false)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE SUBSCRIPTION "sub" CONNECTION \'host=primary dbname=app\' PUBLICATION "pub", "audit" WITH (enabled = false)'
  */
 final class CreateSubscriptionStatement extends BoundStatement
 {

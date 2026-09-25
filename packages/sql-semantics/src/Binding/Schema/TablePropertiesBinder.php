@@ -43,8 +43,12 @@ final class TablePropertiesBinder
         if ($partitioning !== null && $parents !== []) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::PartitionedTable, Tree::child($table->source, ['OptInherit']) ?? $table->source);
         }
+        $persistence = str_contains(substr($words, 0, $tablePosition === false ? 0 : $tablePosition), 'TEMP') ? Table\Persistence::Temporary : (isset($options['unlogged']) ? Table\Persistence::Unlogged : Table\Persistence::Permanent);
+        if (isset($options['on_commit']) && $persistence !== Table\Persistence::Temporary) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::CommitAction, Tree::outer($table->source, ['OnCommitOption'])[0] ?? $table->source);
+        }
         return new Table\PostgreSqlProperties(
-            str_contains(substr($words, 0, $tablePosition === false ? 0 : $tablePosition), 'TEMP') ? Table\Persistence::Temporary : (isset($options['unlogged']) ? Table\Persistence::Unlogged : Table\Persistence::Permanent),
+            $persistence,
             str_contains($words, 'ON COMMIT DROP') ? Table\CommitAction::Drop : (str_contains($words, 'ON COMMIT DELETE ROWS') ? Table\CommitAction::DeleteRows : Table\CommitAction::PreserveRows),
             OptionBinding::string($options, 'using'),
             OptionBinding::string($options, 'tablespace'),

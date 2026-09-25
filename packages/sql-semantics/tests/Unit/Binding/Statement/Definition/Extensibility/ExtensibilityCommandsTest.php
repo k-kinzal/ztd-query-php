@@ -41,8 +41,8 @@ final class ExtensibilityCommandsTest extends TestCase
     public function testBindLeavesOtherStatementsToTheirFamilies(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        self::assertSame('ALTER EXTENSION "e" SET SCHEMA "s"', $binder->bind('ALTER EXTENSION e SET SCHEMA s')->toString());
-        self::assertSame('ALTER FUNCTION "f"() RENAME TO "g"', $binder->bind('ALTER FUNCTION f() RENAME TO g')->toString());
+        self::assertSame('ALTER EXTENSION "e" SET SCHEMA "s"', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER EXTENSION e SET SCHEMA s')));
+        self::assertSame('ALTER FUNCTION "f"() RENAME TO "g"', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind('ALTER FUNCTION f() RENAME TO g')));
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\MySql\AlterFunctionStatement::class, (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER FUNCTION f COMMENT \'x\''));
     }
 }

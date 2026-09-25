@@ -63,7 +63,7 @@ final class VariableReferenceTest extends TestCase
         $reference = $statement->outputs[0]->expression;
         self::assertInstanceOf(VariableReference::class, $reference);
         self::assertSame([], $reference->inputs());
-        self::assertSame('SELECT @`x`', $statement->toString());
+        self::assertSame('SELECT @`x`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testSpellingReturnsTheDeclaredName(): void

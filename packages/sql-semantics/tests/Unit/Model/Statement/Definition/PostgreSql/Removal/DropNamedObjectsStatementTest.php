@@ -27,8 +27,8 @@ final class DropNamedObjectsStatementTest extends TestCase
         self::assertSame(['app', 'archive'], $statement->names);
         self::assertTrue($statement->ifExists);
         self::assertSame(DropBehavior::Cascade, $statement->behavior);
-        self::assertSame('DROP SCHEMA IF EXISTS "app", "archive" CASCADE', $statement->toString());
-        self::assertSame($statement->toString(), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('DROP SCHEMA IF EXISTS "app", "archive" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)->toString());
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -37,7 +37,7 @@ final class DropNamedObjectsStatementTest extends TestCase
         self::assertInstanceOf(DropNamedObjectsStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -57,7 +57,7 @@ final class DropNamedObjectsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(Kind\NamedObjectKind::Schema, $statement->objectKind);
         self::assertEquals(Kind\NamedObjectKind::Extension, $changed->objectKind);
-        self::assertStringContainsString('DROP EXTENSION', $changed->toString());
+        self::assertStringContainsString('DROP EXTENSION', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithNamesReplacesTheOperand(): void
@@ -68,7 +68,7 @@ final class DropNamedObjectsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(['app', 'archive'], $statement->names);
         self::assertEquals(['x'], $changed->names);
-        self::assertStringContainsString('EXISTS "x" CASCADE', $changed->toString());
+        self::assertStringContainsString('EXISTS "x" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfExistsReplacesTheOperand(): void
@@ -79,7 +79,7 @@ final class DropNamedObjectsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(true, $statement->ifExists);
         self::assertEquals(false, $changed->ifExists);
-        self::assertStringContainsString('DROP SCHEMA "app"', $changed->toString());
+        self::assertStringContainsString('DROP SCHEMA "app"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithBehaviorReplacesTheOperand(): void
@@ -90,7 +90,7 @@ final class DropNamedObjectsStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals(DropBehavior::Cascade, $statement->behavior);
         self::assertEquals(DropBehavior::Restrict, $changed->behavior);
-        self::assertStringContainsString('"archive" RESTRICT', $changed->toString());
+        self::assertStringContainsString('"archive" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testRejectsAServerRemovedByItsOwnForm(): void

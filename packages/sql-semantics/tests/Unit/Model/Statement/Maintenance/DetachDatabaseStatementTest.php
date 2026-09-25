@@ -24,7 +24,7 @@ final class DetachDatabaseStatementTest extends TestCase
         self::assertInstanceOf(DetachDatabaseStatement::class, $statement);
         self::assertSame('archive', $statement->schema->spelling());
         self::assertSame(StatementKind::Detach, $statement->kind);
-        self::assertSame('DETACH DATABASE "archive"', $statement->toString());
+        self::assertSame('DETACH DATABASE "archive"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginPreservesTheSchema(): void
@@ -35,6 +35,6 @@ final class DetachDatabaseStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertSame('s9', $copy->scopeId);
         self::assertSame($statement->schema, $copy->schema);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 }

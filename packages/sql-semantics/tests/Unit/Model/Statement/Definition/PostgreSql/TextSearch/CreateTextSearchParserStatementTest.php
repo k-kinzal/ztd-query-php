@@ -26,8 +26,8 @@ final class CreateTextSearchParserStatementTest extends TestCase
         self::assertInstanceOf(CreateTextSearchParserStatement::class, $statement);
         self::assertSame(['s2'], $statement->start->parts);
         self::assertSame(['h'], $statement->headline?->parts);
-        self::assertSame('CREATE TEXT SEARCH PARSER "s"."p"(START = "s2", GETTOKEN = "g", END = "e", LEXTYPES = "x"."l", HEADLINE = "h")', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE TEXT SEARCH PARSER "s"."p"(START = "s2", GETTOKEN = "g", END = "e", LEXTYPES = "x"."l", HEADLINE = "h")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -50,7 +50,7 @@ final class CreateTextSearchParserStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH PARSER p (start = s, gettoken = g, end = e, lextypes = l)');
         self::assertInstanceOf(CreateTextSearchParserStatement::class, $statement);
-        self::assertSame('CREATE TEXT SEARCH PARSER "p"(START = "s", GETTOKEN = "g", END = "e", LEXTYPES = "l")', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE TEXT SEARCH PARSER "p"(START = "s", GETTOKEN = "g", END = "e", LEXTYPES = "l")', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameReplacesTheOperand(): void
@@ -99,6 +99,6 @@ final class CreateTextSearchParserStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TEXT SEARCH PARSER p (start = s, gettoken = g, end = e, lextypes = l)');
         self::assertInstanceOf(CreateTextSearchParserStatement::class, $statement);
         $changed = $statement->withHeadline(new QualifiedName(['h1']));
-        self::assertSame('CREATE TEXT SEARCH PARSER "p"(START = "s", GETTOKEN = "g", END = "e", LEXTYPES = "l", HEADLINE = "h1")', $changed->toString());
+        self::assertSame('CREATE TEXT SEARCH PARSER "p"(START = "s", GETTOKEN = "g", END = "e", LEXTYPES = "l", HEADLINE = "h1")', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

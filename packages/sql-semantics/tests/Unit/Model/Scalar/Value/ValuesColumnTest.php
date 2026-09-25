@@ -34,7 +34,7 @@ final class ValuesColumnTest extends TestCase
         self::assertSame('integer', $column->type->name);
         self::assertSame(Nullability::MaybeNull, $column->nullability);
         self::assertSame('VALUES (1), (NULL)', $statement->toString());
-        self::assertSame('VALUES (1), (NULL)', $binder->bind($statement->toString())->toString());
+        self::assertSame('VALUES (1), (NULL)', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testSpellingIsTheValuesKeyword(): void

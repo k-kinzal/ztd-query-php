@@ -20,7 +20,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading a suppressing rule
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE RULE keep AS ON DELETE TO t WHERE OLD.a > 0 DO INSTEAD NOTHING');
  *     $statement->instead // => true
- *     $statement->toString() // => 'CREATE RULE "keep" AS ON DELETE TO "public"."t" WHERE ("old"."a" > 0) DO INSTEAD NOTHING'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'CREATE RULE "keep" AS ON DELETE TO "public"."t" WHERE ("old"."a" > 0) DO INSTEAD NOTHING'
  */
 final class CreateEmptyRuleStatement extends BoundStatement
 {

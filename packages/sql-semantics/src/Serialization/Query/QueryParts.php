@@ -32,7 +32,7 @@ final class QueryParts
             $policy = match ($definition->materialization) {
                 \SqlSemantics\Model\Query\Materialization::Default => 'AS', \SqlSemantics\Model\Query\Materialization::Materialized => 'AS MATERIALIZED', \SqlSemantics\Model\Query\Materialization::Inline => 'AS NOT MATERIALIZED',
             };
-            $items[] = new Tree('cte', [Build::identifier([$definition->name], $dialect), ...($labels === [] ? [] : [Build::parentheses(Build::separated($labels))]), Build::keyword($policy), Build::parentheses(Statements::write($definition->query))]);
+            $items[] = new Tree('cte', [Build::identifier([$definition->name], $dialect), ...($labels === [] ? [] : [Build::parentheses(Build::separated($labels))]), Build::keyword($policy), Build::parentheses(Statements::write($definition->query)), ...RecursionClauses::write($definition, $dialect)]);
         }
         return new Tree('with', [Build::keyword($clause->recursive ? 'WITH RECURSIVE' : 'WITH'), Build::separated($items)]);
     }

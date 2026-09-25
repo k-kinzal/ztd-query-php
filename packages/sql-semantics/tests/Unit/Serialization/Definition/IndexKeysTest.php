@@ -26,11 +26,11 @@ final class IndexKeysTest extends TestCase
         $elements = $statement->index->definition->elements;
         self::assertSame('("lower"("n")) COLLATE "C" "text_pattern_ops" ASC NULLS FIRST', IndexKeys::write($elements[0], Dialect::PostgreSql)->toString());
         self::assertSame('"id"', IndexKeys::write($elements[1], Dialect::PostgreSql)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(CreateIndexStatement::class, $rebound);
         self::assertSame('ASC', $rebound->index->definition->elements[0]->direction?->value);
         self::assertSame('FIRST', $rebound->index->definition->elements[0]->nulls?->value);
-        self::assertSame($statement->toString(), $rebound->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteKeepsTheMysqlPrefixLengthAfterTheColumn(): void

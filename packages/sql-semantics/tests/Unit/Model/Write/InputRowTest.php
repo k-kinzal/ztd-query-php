@@ -25,7 +25,7 @@ final class InputRowTest extends TestCase
         self::assertSame(\SqlSemantics\Model\Write\DefaultSource::Column, $assignment->row->items[0]);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $assignment->row->items[1]);
         self::assertSame('1', $assignment->row->items[1]->text);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsDefaultsInSqliteInputRows(): void

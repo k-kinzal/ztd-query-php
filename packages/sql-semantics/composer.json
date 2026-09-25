@@ -124,7 +124,29 @@
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:unit": "phpunit --testsuite unit",
-        "tree-guard": "tree-guard --config=tree.yaml"
+        "tree-guard": "tree-guard --config=tree.yaml",
+        "fuzz:seeds": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:seeds:mysql",
+            "@fuzz:seeds:pg",
+            "@fuzz:seeds:sqlite"
+        ],
+        "fuzz:seeds:mysql": [
+            "Composer\\Config::disableProcessTimeout",
+            "@putenv MYSQL_VERSION=8.4.7",
+            "@putenv SQLFAKER_COVERAGE=0",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_semantics.php ../sql-faker/seeds/mysql/mysql-8.4.7/ --max-runs=0 --timeout=60"
+        ],
+        "fuzz:seeds:pg": [
+            "Composer\\Config::disableProcessTimeout",
+            "@putenv SQLFAKER_COVERAGE=0",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_semantics.php ../sql-faker/seeds/pg/pg-17.2/ --max-runs=0 --timeout=60"
+        ],
+        "fuzz:seeds:sqlite": [
+            "Composer\\Config::disableProcessTimeout",
+            "@putenv SQLFAKER_COVERAGE=0",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_semantics.php ../sql-faker/seeds/sqlite/sqlite-3.47.2/ --max-runs=0 --timeout=60"
+        ]
     },
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
@@ -132,6 +154,7 @@
     },
     "scripts-descriptions": {
         "fuzz": "Run every fuzz target with the bounded smoke budget.",
-        "fuzz:smoke": "Run each fuzz target for 100 mutation iterations after corpus replay; individual fuzz:* commands run continuously."
+        "fuzz:smoke": "Run each fuzz target for 100 mutation iterations after corpus replay; individual fuzz:* commands run continuously.",
+        "fuzz:seeds": "Replay sql-faker's grammar coverage seeds through each fuzz target once, without mutation (local check; not run in CI)."
     }
 }

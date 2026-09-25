@@ -23,6 +23,6 @@ final class ColumnForeignOptionsTest extends TestCase
         self::assertInstanceOf(CreateForeignTableStatement::class, $statement);
         self::assertSame('a', $statement->columnOptions[0]->column);
         self::assertSame('column_name', $statement->columnOptions[0]->options[0]->name);
-        self::assertSame('CREATE FOREIGN TABLE "public"."ft"("a" integer OPTIONS("column_name" \'remote_a\')) SERVER "s"', $statement->toString());
+        self::assertSame('CREATE FOREIGN TABLE "public"."ft"("a" integer OPTIONS("column_name" \'remote_a\')) SERVER "s"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

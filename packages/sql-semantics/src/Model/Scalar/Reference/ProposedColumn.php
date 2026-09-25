@@ -20,7 +20,7 @@ use SqlSemantics\Type\Nullability;
  * @example Reading the column whose proposed value is used
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t (id INT PRIMARY KEY, n INT)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('INSERT INTO t (id, n) VALUES (1, 2) ON DUPLICATE KEY UPDATE n = VALUES(n)');
- *     $statement->toString() // => 'INSERT INTO `t`(`id`, `n`) VALUES (1, 2) ON DUPLICATE KEY UPDATE `n` = VALUES (`n`)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'INSERT INTO `t`(`id`, `n`) VALUES (1, 2) ON DUPLICATE KEY UPDATE `n` = VALUES (`n`)'
  */
 final class ProposedColumn extends Expression
 {

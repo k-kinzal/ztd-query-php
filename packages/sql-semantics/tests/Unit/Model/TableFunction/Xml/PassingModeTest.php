@@ -38,6 +38,6 @@ final class PassingModeTest extends TestCase
         self::assertInstanceOf(XmlTable::class, $statement->from->table);
         self::assertSame($input, $statement->from->table->inputMode);
         self::assertSame($output, $statement->from->table->outputMode);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

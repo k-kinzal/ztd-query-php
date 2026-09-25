@@ -23,7 +23,7 @@ use SqlSemantics\Type\TypeDescriptor;
  *     $literal = $query->outputs[0]->expression;
  *     $literal->category // => \SqlSemantics\Model\Scalar\Value\LiteralKind::Timestamp
  *     $literal->type->name // => 'datetime'
- *     $query->toString() // => "SELECT TIMESTAMP '2024-01-02 03:04:05'"
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($query) // => "SELECT TIMESTAMP '2024-01-02 03:04:05'"
  */
 final class TemporalLiteral extends Expression
 {

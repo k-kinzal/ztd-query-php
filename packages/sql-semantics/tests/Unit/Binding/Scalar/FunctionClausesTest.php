@@ -33,7 +33,7 @@ final class FunctionClausesTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\AggregateCall::class, $inner->function);
         self::assertNotNull($inner->function->filter);
         self::assertSame('?1', $inner->function->filter->spelling());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString(), strict: false)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)));
     }
 
     public function testAllRowsDetectsOnlyTheStarArgumentOfTheOwningCall(): void
@@ -57,8 +57,8 @@ final class FunctionClausesTest extends TestCase
         $statement = $binder->bind('DO ( ( ( ( COUNT( ALL * ) ) ) ) )');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Execution\DoExpressionsStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\AllRowsAggregate::class, $statement->expressions[0]);
-        self::assertSame('DO count(*)', $statement->toString());
-        self::assertSame('DO count(*)', $binder->bind($statement->toString())->toString());
+        self::assertSame('DO count(*)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('DO count(*)', (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testOrderedInputsBindsEachWithinGroupKeyOrNothing(): void

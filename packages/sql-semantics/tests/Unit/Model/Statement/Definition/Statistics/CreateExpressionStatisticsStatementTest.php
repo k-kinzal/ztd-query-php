@@ -24,8 +24,8 @@ final class CreateExpressionStatisticsStatementTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, b TEXT)'));
         $statement = $binder->bind('CREATE STATISTICS s ON (a + 1) FROM t');
         self::assertInstanceOf(CreateExpressionStatisticsStatement::class, $statement);
-        self::assertSame('CREATE STATISTICS "s" ON (("a" + 1)) FROM "public"."t"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE STATISTICS "s" ON (("a" + 1)) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -34,7 +34,7 @@ final class CreateExpressionStatisticsStatementTest extends TestCase
         self::assertInstanceOf(CreateExpressionStatisticsStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('CREATE STATISTICS ON ("upper"("b")) FROM "public"."t"', $copy->toString());
+        self::assertSame('CREATE STATISTICS ON ("upper"("b")) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -49,7 +49,7 @@ final class CreateExpressionStatisticsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, b TEXT)')))->bind('CREATE STATISTICS ON upper(b) FROM t');
         self::assertInstanceOf(CreateExpressionStatisticsStatement::class, $statement);
-        self::assertSame('CREATE STATISTICS "app"."s" ON ("upper"("b")) FROM "public"."t"', $statement->withName(new QualifiedName(['app', 's']))->toString());
+        self::assertSame('CREATE STATISTICS "app"."s" ON ("upper"("b")) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['app', 's']))));
         self::assertNull($statement->name);
     }
 
@@ -57,7 +57,7 @@ final class CreateExpressionStatisticsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, b TEXT)')))->bind('CREATE STATISTICS s ON upper(b) FROM t');
         self::assertInstanceOf(CreateExpressionStatisticsStatement::class, $statement);
-        self::assertSame('CREATE STATISTICS IF NOT EXISTS "s" ON ("upper"("b")) FROM "public"."t"', $statement->withIfNotExists(true)->toString());
+        self::assertSame('CREATE STATISTICS IF NOT EXISTS "s" ON ("upper"("b")) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIfNotExists(true)));
         self::assertFalse($statement->ifNotExists);
     }
 
@@ -68,7 +68,7 @@ final class CreateExpressionStatisticsStatementTest extends TestCase
         $columns = $binder->bind('CREATE STATISTICS s ON a, (a * 2) FROM t');
         self::assertInstanceOf(CreateExpressionStatisticsStatement::class, $statement);
         self::assertInstanceOf(CreateStatisticsStatement::class, $columns);
-        self::assertSame('CREATE STATISTICS "s" ON (("a" * 2)) FROM "public"."t"', $statement->withExpression($columns->elements[1])->toString());
+        self::assertSame('CREATE STATISTICS "s" ON (("a" * 2)) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withExpression($columns->elements[1])));
         $this->expectException(InvalidStructure::class);
         $statement->withExpression($columns->elements[0]);
     }

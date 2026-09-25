@@ -40,8 +40,8 @@ final class JsonScalarExtractionTest extends TestCase
         self::assertSame([$value->document, $value->path, $value->onEmpty->expression], $value->inputs());
         self::assertSame('char', $value->type->name);
         self::assertSame(Nullability::MaybeNull, $value->nullability);
-        self::assertSame("SELECT JSON_VALUE('{}', '$.a' RETURNING CHAR(3) DEFAULT 'x' ON EMPTY ERROR ON ERROR)", $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame("SELECT JSON_VALUE('{}', '$.a' RETURNING CHAR(3) DEFAULT 'x' ON EMPTY ERROR ON ERROR)", (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsDefaultToAStringWithoutResponses(): void
@@ -85,8 +85,8 @@ final class JsonScalarExtractionTest extends TestCase
         self::assertCount(4, $value->inputs());
         self::assertSame('integer', $value->type->name);
         self::assertSame(Nullability::MaybeNull, $value->nullability);
-        self::assertSame('SELECT JSON_VALUE("d", CAST("p" AS "jsonpath") PASSING "n" AS "x" RETURNING integer DEFAULT "n" ON ERROR) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_VALUE("d", CAST("p" AS "jsonpath") PASSING "n" AS "x" RETURNING integer DEFAULT "n" ON ERROR) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAReturnedTypeOfAnotherDialect(): void

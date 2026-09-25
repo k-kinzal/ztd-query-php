@@ -23,8 +23,8 @@ final class UpdateExtensionStatementTest extends TestCase
         $statement = $binder->bind('ALTER EXTENSION hstore UPDATE TO v2');
         self::assertInstanceOf(UpdateExtensionStatement::class, $statement);
         self::assertSame(['hstore', 'v2'], [$statement->name, $statement->version]);
-        self::assertSame('ALTER EXTENSION "hstore" UPDATE TO \'v2\'', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER EXTENSION "hstore" UPDATE TO \'v2\'', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginRetainsTheOperands(): void
@@ -33,7 +33,7 @@ final class UpdateExtensionStatementTest extends TestCase
         self::assertInstanceOf(UpdateExtensionStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('ALTER EXTENSION "hstore" UPDATE', $copy->toString());
+        self::assertSame('ALTER EXTENSION "hstore" UPDATE', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -50,7 +50,7 @@ final class UpdateExtensionStatementTest extends TestCase
         self::assertInstanceOf(UpdateExtensionStatement::class, $statement);
         $changed = $statement->withName('citext');
         self::assertSame('hstore', $statement->name);
-        self::assertSame('ALTER EXTENSION "citext" UPDATE', $changed->toString());
+        self::assertSame('ALTER EXTENSION "citext" UPDATE', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithVersionReplacesTheTarget(): void
@@ -59,7 +59,7 @@ final class UpdateExtensionStatementTest extends TestCase
         self::assertInstanceOf(UpdateExtensionStatement::class, $statement);
         $changed = $statement->withVersion('1.8');
         self::assertNull($statement->version);
-        self::assertSame('ALTER EXTENSION "hstore" UPDATE TO \'1.8\'', $changed->toString());
+        self::assertSame('ALTER EXTENSION "hstore" UPDATE TO \'1.8\'', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         $this->expectException(InvalidStructure::class);
         $statement->withVersion('');
     }

@@ -24,7 +24,7 @@ final class ResetColumnOptionsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('ALTER TABLE t ALTER COLUMN id RESET (n_distinct)', strict: false);
         self::assertInstanceOf(AlterRelationStatement::class, $statement);
         self::assertEquals(new Relation\Storage\ResetColumnOptions('id', [new QualifiedName(['n_distinct'])]), $statement->actions[0]);
-        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" RESET("n_distinct")', $statement->toString());
+        self::assertSame('ALTER TABLE "t" ALTER COLUMN "id" RESET("n_distinct")', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnOverQualifiedName(): void

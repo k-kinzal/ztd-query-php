@@ -42,7 +42,7 @@ final class RoutinesTest extends TestCase
         self::assertInstanceOf(PostgreSql\DropProceduresStatement::class, $statement);
         self::assertInstanceOf(Routine\RoutineBySignature::class, $statement->targets[0]);
         self::assertSame('IN "some arg" numeric(10, 2)', \SqlSemantics\Serialization\Definition\Routines::parameter($statement->targets[0]->parameters[0])->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWriteSpellsTheMySqlFunctionRemovalWithItsGuard(): void

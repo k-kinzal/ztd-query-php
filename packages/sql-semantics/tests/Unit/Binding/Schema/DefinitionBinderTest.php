@@ -198,7 +198,7 @@ final class DefinitionBinderTest extends TestCase
     public function testExpressionReadsSqliteBareWordDefaultsAsText(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind("CREATE TABLE t (a TEXT default hello, b TEXT DEFAULT indexed, c int default -1, d int default (1+2), e text default 'x', f text default \"q\")");
-        self::assertSame('CREATE TABLE "main"."t"("a" "text" DEFAULT \'hello\', "b" "text" DEFAULT \'indexed\', "c" "int" DEFAULT - 1, "d" "int" DEFAULT ((1 + 2)), "e" "text" DEFAULT \'x\', "f" "text" DEFAULT \'q\')', $statement->toString());
+        self::assertSame('CREATE TABLE "main"."t"("a" "text" DEFAULT \'hello\', "b" "text" DEFAULT \'indexed\', "c" "int" DEFAULT - 1, "d" "int" DEFAULT ((1 + 2)), "e" "text" DEFAULT \'x\', "f" "text" DEFAULT \'q\')', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
         $generation = $statement->definition->table->columns[0]->generation;
         self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $generation);

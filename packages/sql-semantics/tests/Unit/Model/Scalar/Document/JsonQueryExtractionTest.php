@@ -41,8 +41,8 @@ final class JsonQueryExtractionTest extends TestCase
         self::assertSame('text', $value->type->name);
         self::assertSame(Nullability::MaybeNull, $value->nullability);
         self::assertSame(ExpressionKind::JsonQuery, $value->kind);
-        self::assertSame('SELECT JSON_QUERY("d", \'$[$i]\' PASSING "n" AS "i" RETURNING text WITHOUT WRAPPER OMIT QUOTES EMPTY ARRAY ON EMPTY DEFAULT \'[]\' ON ERROR) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT JSON_QUERY("d", \'$[$i]\' PASSING "n" AS "i" RETURNING text WITHOUT WRAPPER OMIT QUOTES EMPTY ARRAY ON EMPTY DEFAULT \'[]\' ON ERROR) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsDefaultToJsonb(): void

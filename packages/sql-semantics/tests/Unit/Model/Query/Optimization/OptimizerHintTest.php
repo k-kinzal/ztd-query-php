@@ -25,7 +25,7 @@ final class OptimizerHintTest extends TestCase
         self::assertCount(1, $statement->hints);
         self::assertInstanceOf(MaxExecutionTime::class, $statement->hints[0]);
         self::assertSame('1000', $statement->hints[0]->milliseconds);
-        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1', $statement->toString());
+        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testIsAbsentWhenTheDialectHasNoHintSyntax(): void

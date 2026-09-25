@@ -29,8 +29,8 @@ final class CreateSequenceStatementTest extends TestCase
         $increment = $statement->options[0];
         self::assertInstanceOf(Identity\SequenceValueChange::class, $increment);
         self::assertSame('-2', $increment->value->text);
-        self::assertSame('CREATE SEQUENCE IF NOT EXISTS "app"."s" INCREMENT BY -2 MINVALUE -3 START WITH -3 NO MAXVALUE', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE SEQUENCE IF NOT EXISTS "app"."s" INCREMENT BY -2 MINVALUE -3 START WITH -3 NO MAXVALUE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsATemporarySequenceInAPermanentSchema(): void
@@ -47,7 +47,7 @@ final class CreateSequenceStatementTest extends TestCase
         self::assertInstanceOf(CreateSequenceStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
-        self::assertSame('CREATE UNLOGGED SEQUENCE "s" CYCLE', $copy->toString());
+        self::assertSame('CREATE UNLOGGED SEQUENCE "s" CYCLE', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -62,7 +62,7 @@ final class CreateSequenceStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE SEQUENCE s');
         self::assertInstanceOf(CreateSequenceStatement::class, $statement);
-        self::assertSame('CREATE SEQUENCE "app"."s2"', $statement->withName(new QualifiedName(['app', 's2']))->toString());
+        self::assertSame('CREATE SEQUENCE "app"."s2"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withName(new QualifiedName(['app', 's2']))));
         self::assertSame(['s'], $statement->name->parts);
     }
 
@@ -70,7 +70,7 @@ final class CreateSequenceStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE SEQUENCE s');
         self::assertInstanceOf(CreateSequenceStatement::class, $statement);
-        self::assertSame('CREATE TEMPORARY SEQUENCE "s"', $statement->withPersistence(SequencePersistence::Temporary)->toString());
+        self::assertSame('CREATE TEMPORARY SEQUENCE "s"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withPersistence(SequencePersistence::Temporary)));
         self::assertSame(SequencePersistence::Permanent, $statement->persistence);
     }
 
@@ -78,7 +78,7 @@ final class CreateSequenceStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE SEQUENCE s');
         self::assertInstanceOf(CreateSequenceStatement::class, $statement);
-        self::assertSame('CREATE SEQUENCE IF NOT EXISTS "s"', $statement->withIfNotExists(true)->toString());
+        self::assertSame('CREATE SEQUENCE IF NOT EXISTS "s"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withIfNotExists(true)));
         self::assertFalse($statement->ifNotExists);
     }
 
@@ -86,7 +86,7 @@ final class CreateSequenceStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE SEQUENCE s CYCLE');
         self::assertInstanceOf(CreateSequenceStatement::class, $statement);
-        self::assertSame('CREATE SEQUENCE "s" NO CYCLE OWNED BY NONE', $statement->withOptions([Identity\SequenceFlag::NoCycle, new Identity\SetSequenceOwner(null)])->toString());
+        self::assertSame('CREATE SEQUENCE "s" NO CYCLE OWNED BY NONE', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOptions([Identity\SequenceFlag::NoCycle, new Identity\SetSequenceOwner(null)])));
         $this->expectException(InvalidStructure::class);
         $statement->withOptions([Identity\SequenceFlag::Unlogged]);
     }

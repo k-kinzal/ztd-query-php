@@ -32,6 +32,6 @@ final class LockStrengthTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT id FROM t FOR ' . $strength->value);
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertSame($strength, $statement->locks[0]->strength);
-        self::assertSame('SELECT "id" AS "id" FROM "public"."t" FOR ' . $strength->value, $statement->toString());
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" FOR ' . $strength->value, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

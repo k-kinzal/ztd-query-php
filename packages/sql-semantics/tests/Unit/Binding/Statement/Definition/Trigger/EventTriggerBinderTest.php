@@ -83,7 +83,7 @@ final class EventTriggerBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('drop event trigger e cascade');
         self::assertInstanceOf(DropEventTriggersStatement::class, $statement);
-        self::assertSame('DROP EVENT TRIGGER "e" CASCADE', $statement->toString());
+        self::assertSame('DROP EVENT TRIGGER "e" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertFalse($statement->ifExists);
     }
 }

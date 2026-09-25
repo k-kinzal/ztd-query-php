@@ -44,6 +44,6 @@ final class RowLockTest extends TestCase
         self::assertInstanceOf(BoundSelect::class, $statement);
         self::assertInstanceOf(AllRowLock::class, $statement->locks[0]);
         self::assertInstanceOf(NamedRowLock::class, $statement->locks[1]);
-        self::assertSame('SELECT "a"."id" AS "id" FROM "public"."t" AS "a" FOR UPDATE FOR SHARE OF "a"', $statement->toString());
+        self::assertSame('SELECT "a"."id" AS "id" FROM "public"."t" AS "a" FOR UPDATE FOR SHARE OF "a"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

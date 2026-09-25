@@ -33,6 +33,17 @@ final class DomainsTest extends TestCase
         self::assertSame($collation, Domains::read($parameter, new Identifiers(Dialect::MySql))->collation);
     }
 
+    #[TestWith(['mysql-5.6.51', 'CREATE FUNCTION f() RETURNS INT ZEROFILL RETURN 1', 'CREATE FUNCTION `f`() RETURNS integer UNSIGNED ZEROFILL RETURN 1'])]
+    #[TestWith(['mysql-5.7.44', 'CREATE PROCEDURE p(IN a TINYINT(3) ZEROFILL) BEGIN END', 'CREATE PROCEDURE `p`(IN `a` tinyint(3) UNSIGNED ZEROFILL) BEGIN END'])]
+    #[TestWith(['mysql-8.4.7', 'CREATE PROCEDURE p() BEGIN DECLARE b DECIMAL(5,2) UNSIGNED ZEROFILL; END', 'CREATE PROCEDURE `p`() BEGIN DECLARE `b` numeric(5, 2) UNSIGNED ZEROFILL; END'])]
+    #[TestWith(['mysql-9.1.0', 'CREATE FUNCTION f() RETURNS INT UNSIGNED RETURN 1', 'CREATE FUNCTION `f`() RETURNS integer UNSIGNED RETURN 1'])]
+    public function testReadKeepsZerofill(string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
+    }
+
     public function testReadDiagnosesALegacyCollationWithoutACharacterSet(): void
     {
         $this->expectException(InvalidSql::class);

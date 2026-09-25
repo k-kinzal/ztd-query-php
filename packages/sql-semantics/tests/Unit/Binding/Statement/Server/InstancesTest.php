@@ -43,14 +43,14 @@ final class InstancesTest extends TestCase
         self::assertInstanceOf(AlterRedoLogStatement::class, $redo);
         self::assertFalse($redo->enabled);
         self::assertInstanceOf(ReloadKeyringStatement::class, $binder->bind('ALTER INSTANCE RELOAD KEYRING'));
-        self::assertSame($redo->toString(), $binder->bind($redo->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($redo), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($redo))));
     }
 
     public function testBindReadsTheLegacyRotation(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('ALTER INSTANCE ROTATE INNODB MASTER KEY');
         self::assertInstanceOf(RotateMasterKeyStatement::class, $statement);
-        self::assertSame('ALTER INSTANCE ROTATE INNODB MASTER KEY', $statement->toString());
+        self::assertSame('ALTER INSTANCE ROTATE INNODB MASTER KEY', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindDiagnosesAnUnknownRedoLogTarget(): void
@@ -72,7 +72,7 @@ final class InstancesTest extends TestCase
         $statement = $binder->bind('ALTER INSTANCE RELOAD TLS FOR CHANNEL mysql_main NO ROLLBACK ON ERROR');
         self::assertInstanceOf(ReloadTlsStatement::class, $statement);
         self::assertSame(TlsChannel::Main, $statement->channel);
-        self::assertSame('ALTER INSTANCE RELOAD TLS NO ROLLBACK ON ERROR', $statement->toString());
+        self::assertSame('ALTER INSTANCE RELOAD TLS NO ROLLBACK ON ERROR', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $this->expectException(InvalidSql::class);
         $binder->bind('ALTER INSTANCE RELOAD TLS FOR CHANNEL replication');
     }

@@ -27,6 +27,6 @@ final class DefaultAssignmentTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\DefaultAssignment::class, $assignment);
         self::assertSame([$assignment->target], $assignment->destinations());
         self::assertSame('id', $assignment->target->column()->columnBinding()?->column->name);
-        self::assertSame($update->toString(), $binder->bind($update->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($update), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($update))));
     }
 }

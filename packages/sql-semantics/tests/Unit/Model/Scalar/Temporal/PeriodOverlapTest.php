@@ -32,8 +32,8 @@ final class PeriodOverlapTest extends TestCase
         self::assertSame('interval', $overlap->rightEnd->type->name);
         self::assertSame('boolean', $overlap->type->name);
         self::assertSame(Nullability::MaybeNull, $overlap->nullability);
-        self::assertSame('SELECT (("s", "e") OVERLAPS(CAST(\'2001-01-01\' AS date), CAST(\'1 day\' AS INTERVAL))) FROM "public"."t"', $query->toString());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame('SELECT (("s", "e") OVERLAPS(CAST(\'2001-01-01\' AS date), CAST(\'1 day\' AS INTERVAL))) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testInputsRejectAnotherDialect(): void

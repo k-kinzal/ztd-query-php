@@ -35,7 +35,7 @@ final class NestedColumnsTest extends TestCase
         self::assertSame('sub', $nested->name);
         self::assertCount(2, $nested->columns);
         self::assertSame(['child', 'v'], array_column($statement->from->outputs, 'name'));
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testMySqlNestedPathsAreUnnamed(): void

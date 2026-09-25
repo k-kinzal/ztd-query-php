@@ -22,7 +22,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $query = (new \SqlSemantics\Binder($schema))->bind('SELECT 1 OPERATOR(geo.<->) 2');
  *     $operation = $query->outputs[0]->expression;
  *     [$operation->operator->qualifier, $operation->operator->symbol, $operation->left->spelling(), $operation->type->name] // => [['geo'], '<->', '1', 'unknown']
- *     $query->toString() // => 'SELECT (1 OPERATOR("geo".<->) 2)'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($query) // => 'SELECT (1 OPERATOR("geo".<->) 2)'
  */
 final class QualifiedInfixOperation extends Expression
 {

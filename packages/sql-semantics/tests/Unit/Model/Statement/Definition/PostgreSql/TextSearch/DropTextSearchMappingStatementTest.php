@@ -26,8 +26,8 @@ final class DropTextSearchMappingStatementTest extends TestCase
         self::assertInstanceOf(DropTextSearchMappingStatement::class, $statement);
         self::assertTrue($statement->ifExists);
         self::assertSame(['word', 'url'], $statement->tokenTypes);
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "s"."c" DROP MAPPING IF EXISTS FOR "word", "url"', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "s"."c" DROP MAPPING IF EXISTS FOR "word", "url"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsAnotherDialect(): void
@@ -50,7 +50,7 @@ final class DropTextSearchMappingStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING FOR word');
         self::assertInstanceOf(DropTextSearchMappingStatement::class, $statement);
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" DROP MAPPING FOR "word"', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" DROP MAPPING FOR "word"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithConfigurationReplacesTheOperand(): void
@@ -75,6 +75,6 @@ final class DropTextSearchMappingStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING FOR word');
         self::assertInstanceOf(DropTextSearchMappingStatement::class, $statement);
         $changed = $statement->withIfExists(true);
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" DROP MAPPING IF EXISTS FOR "word"', $changed->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION "c" DROP MAPPING IF EXISTS FOR "word"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 }

@@ -29,8 +29,8 @@ final class CodeCommandsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(LoadLibraryStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(["DO 'a''b'", null, "DO 'a''b'"])]
@@ -42,8 +42,8 @@ final class CodeCommandsTest extends TestCase
         $statement = $binder->bind($sql);
         self::assertInstanceOf(DoBlockStatement::class, $statement);
         self::assertSame($language, $statement->language);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     #[TestWith(['DO LANGUAGE plpgsql'])]

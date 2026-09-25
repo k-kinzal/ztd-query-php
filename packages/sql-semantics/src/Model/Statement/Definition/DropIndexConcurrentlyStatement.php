@@ -17,7 +17,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Reading the operation's structure
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('DROP INDEX CONCURRENTLY IF EXISTS ix', strict: false);
- *     $statement->toString() // => 'DROP INDEX CONCURRENTLY IF EXISTS "ix"'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'DROP INDEX CONCURRENTLY IF EXISTS "ix"'
  *
  * @visibility public
  */

@@ -51,7 +51,7 @@ final class QueryExpressionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\RowSubquery::class, $comparison->right);
         self::assertSame('record', $comparison->right->type->name);
         self::assertCount(2, $comparison->right->query->resultColumns());
-        self::assertSame('SELECT (ROW("a", "a") = (SELECT 1, 2)) FROM "public"."t"', $statement->toString());
+        self::assertSame('SELECT (ROW("a", "a") = (SELECT 1, 2)) FROM "public"."t"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testScalarRejectsAWideQueryInScalarPosition(): void
@@ -79,8 +79,8 @@ final class QueryExpressionBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind("SELECT 'a' NOT LIKE ALL (SELECT 'b'), 1 OPERATOR(geo.<->) SOME (SELECT 2)");
-        self::assertSame("SELECT ('a' NOT LIKE ALL (SELECT 'b')), (1 OPERATOR(\"geo\".<->) SOME(SELECT 2))", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SELECT ('a' NOT LIKE ALL (SELECT 'b')), (1 OPERATOR(\"geo\".<->) SOME(SELECT 2))", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     /**
@@ -103,7 +103,7 @@ final class QueryExpressionBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertSame($expected, [$statement->outputs[0]->expression::class, $statement->toString()]);
+        self::assertSame($expected, [$statement->outputs[0]->expression::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     #[TestWith([Dialect::PostgreSql, 'SELECT 1 + ANY (SELECT 1)'])]

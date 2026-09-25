@@ -18,7 +18,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('PARTITION BY KEY (id) PARTITIONS 4', strict: false);
  *     $statement->partitioning->partitionCount // => 4
- *     $statement->toString() // => 'PARTITION BY KEY(`id`) PARTITIONS 4'
+ *     (new \SqlSemantics\SimpleSerializer())->serialize($statement) // => 'PARTITION BY KEY(`id`) PARTITIONS 4'
  * @example Rejecting a release without the entry
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build();
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('PARTITION BY KEY (id)', strict: false);

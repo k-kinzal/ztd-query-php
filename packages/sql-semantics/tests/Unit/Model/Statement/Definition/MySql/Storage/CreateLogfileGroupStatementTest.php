@@ -26,7 +26,7 @@ final class CreateLogfileGroupStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind("CREATE LOGFILE GROUP lg ADD UNDOFILE 'u.log' REDO_BUFFER_SIZE 1M COMMENT = 'c'");
         self::assertInstanceOf(CreateLogfileGroupStatement::class, $statement);
-        self::assertSame("CREATE LOGFILE GROUP `lg` ADD UNDOFILE 'u.log' REDO_BUFFER_SIZE = 1048576 COMMENT = 'c' WAIT", $statement->withOrigin($statement->origin)->toString());
+        self::assertSame("CREATE LOGFILE GROUP `lg` ADD UNDOFILE 'u.log' REDO_BUFFER_SIZE = 1048576 COMMENT = 'c' WAIT", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithNameKeepsTheFile(): void
@@ -49,6 +49,6 @@ final class CreateLogfileGroupStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE LOGFILE GROUP lg ADD UNDOFILE 'u.log'");
         self::assertInstanceOf(CreateLogfileGroupStatement::class, $statement);
-        self::assertSame("CREATE LOGFILE GROUP `lg` ADD UNDOFILE 'u.log' NODEGROUP = 2 ENGINE = `NDB` WAIT", $statement->withOptions(new LogfileGroupOptions(nodegroup: 2, engine: 'NDB'))->toString());
+        self::assertSame("CREATE LOGFILE GROUP `lg` ADD UNDOFILE 'u.log' NODEGROUP = 2 ENGINE = `NDB` WAIT", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOptions(new LogfileGroupOptions(nodegroup: 2, engine: 'NDB'))));
     }
 }

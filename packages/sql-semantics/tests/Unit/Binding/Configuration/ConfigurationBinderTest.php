@@ -26,7 +26,7 @@ final class ConfigurationBinderTest extends TestCase
         self::assertSame(['sql_mode'], $statement->settings[0]->name);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedUserVariable::class, $statement->settings[1]);
         self::assertSame(['b'], $statement->settings[1]->name);
-        self::assertSame("SET `sql_mode` = 'x', @`b` = 2", $statement->toString());
+        self::assertSame("SET `sql_mode` = 'x', @`b` = 2", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testBindRoutesTransactionSettingsBeforeOrdinaryAssignments(): void
@@ -68,7 +68,7 @@ final class ConfigurationBinderTest extends TestCase
     public function testBindKeepsEveryMySqlSettingForm(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     #[TestWith(['SET work_mem FROM CURRENT', \SqlSemantics\Model\Statement\Configuration\SetStatement::class, 'SET "work_mem" FROM CURRENT'])]
@@ -77,6 +77,6 @@ final class ConfigurationBinderTest extends TestCase
     public function testBindKeepsEveryPostgreSqlSettingForm(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

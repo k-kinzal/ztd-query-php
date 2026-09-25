@@ -36,7 +36,7 @@ final class WindowSpecificationTest extends TestCase
         self::assertTrue($window->orderBy[0]->descending);
         self::assertInstanceOf(Offset::class, $window->frame?->start);
         self::assertSame(['x', 'id', '1', '2'], array_map(static fn ($expression): ?string => $expression->columnBinding()?->column->name ?? $expression->spelling(), $window->expressions()));
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 
     public function testRefinesANamedBaseWindow(): void
@@ -51,7 +51,7 @@ final class WindowSpecificationTest extends TestCase
         self::assertSame('w', $window->base);
         self::assertSame([], $window->partitionBy);
         self::assertSame(['1'], array_map(static fn ($expression): ?string => $expression->spelling(), $window->expressions()));
-        self::assertSame('SELECT "sum"("id") OVER ("w" ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) FROM "public"."t" WINDOW "w" AS (PARTITION BY "x")', $query->toString());
+        self::assertSame('SELECT "sum"("id") OVER ("w" ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) FROM "public"."t" WINDOW "w" AS (PARTITION BY "x")', (new \SqlSemantics\SimpleSerializer())->serialize($query));
     }
 
     public function testRejectsOrderingByAProjectedOutput(): void

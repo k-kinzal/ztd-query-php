@@ -33,6 +33,6 @@ final class WindowTest extends TestCase
         self::assertInstanceOf(NamedWindow::class, $named->window);
         self::assertSame(['x', 'id'], array_map(static fn ($expression): ?string => $expression->columnBinding()?->column->name, $inline->window->expressions()));
         self::assertSame([], $named->window->expressions());
-        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($query), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($query))));
     }
 }

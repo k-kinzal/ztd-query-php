@@ -30,7 +30,7 @@ final class OutputPositionTest extends TestCase
         self::assertSame($statement->outputs[0], $key->output);
         self::assertSame([], $statement->left->orderBy);
         self::assertSame([], $statement->right->orderBy);
-        self::assertSame('SELECT 1 UNION SELECT 2 ORDER BY 1 ASC LIMIT 2 OFFSET 1', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SELECT 1 UNION SELECT 2 ORDER BY 1 ASC LIMIT 2 OFFSET 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

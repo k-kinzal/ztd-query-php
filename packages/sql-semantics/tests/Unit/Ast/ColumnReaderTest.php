@@ -201,8 +201,8 @@ final class ColumnReaderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build());
         $statement = $binder->bind("CREATE TABLE t (a INT, d INT GENERATED ALWAYS AS (a) STORED NOT NULL COMMENT 'x')");
-        self::assertSame("CREATE TABLE `t`(`a` integer, `d` integer GENERATED ALWAYS AS(`a`) STORED COMMENT 'x' NOT NULL)", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("CREATE TABLE `t`(`a` integer, `d` integer GENERATED ALWAYS AS(`a`) STORED COMMENT 'x' NOT NULL)", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
 

@@ -28,29 +28,29 @@ final class AddEnumLabelStatementTest extends TestCase
         self::assertSame('dat', $statement->label);
         self::assertTrue($statement->ifNotExists);
         self::assertEquals(new EnumLabelPosition(EnumLabelPlacement::After, 'sad'), $statement->position);
-        self::assertSame("ALTER TYPE \"app\".\"mood\" ADD VALUE IF NOT EXISTS 'dat' AFTER 'sad'", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("ALTER TYPE \"app\".\"mood\" ADD VALUE IF NOT EXISTS 'dat' AFTER 'sad'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithOriginRetainsTheOperands(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("ALTER TYPE mood ADD VALUE 'a'");
         self::assertInstanceOf(AddEnumLabelStatement::class, $statement);
-        self::assertSame("ALTER TYPE \"mood\" ADD VALUE 'a'", $statement->withOrigin($statement->origin)->toString());
+        self::assertSame("ALTER TYPE \"mood\" ADD VALUE 'a'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithTypeReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("ALTER TYPE mood ADD VALUE 'a'");
         self::assertInstanceOf(AddEnumLabelStatement::class, $statement);
-        self::assertSame("ALTER TYPE \"f\" ADD VALUE 'a'", $statement->withType(new QualifiedName(['f']))->toString());
+        self::assertSame("ALTER TYPE \"f\" ADD VALUE 'a'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withType(new QualifiedName(['f']))));
     }
 
     public function testWithLabelReplacesTheOperand(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("ALTER TYPE mood ADD VALUE 'a'");
         self::assertInstanceOf(AddEnumLabelStatement::class, $statement);
-        self::assertSame("ALTER TYPE \"mood\" ADD VALUE 'b'", $statement->withLabel('b')->toString());
+        self::assertSame("ALTER TYPE \"mood\" ADD VALUE 'b'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withLabel('b')));
     }
 
     public function testWithIfNotExistsReplacesTheOperand(): void
@@ -65,7 +65,7 @@ final class AddEnumLabelStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("ALTER TYPE mood ADD VALUE 'a'");
         self::assertInstanceOf(AddEnumLabelStatement::class, $statement);
-        self::assertSame("ALTER TYPE \"mood\" ADD VALUE 'a' BEFORE 'z'", $statement->withPosition(new EnumLabelPosition(EnumLabelPlacement::Before, 'z'))->toString());
+        self::assertSame("ALTER TYPE \"mood\" ADD VALUE 'a' BEFORE 'z'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withPosition(new EnumLabelPosition(EnumLabelPlacement::Before, 'z'))));
     }
 
     public function testRejectsALabelLongerThanSixtyThreeBytes(): void

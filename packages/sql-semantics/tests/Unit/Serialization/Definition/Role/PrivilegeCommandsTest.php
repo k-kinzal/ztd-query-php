@@ -62,11 +62,11 @@ final class PrivilegeCommandsTest extends TestCase
         $tree = PrivilegeCommands::write($statement);
         self::assertNotNull($tree);
         self::assertSame($expected, $tree->toString());
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertSame($statement::class, $rebound::class);
         self::assertSame($statement->kind, $rebound->kind);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testPrivilegesWritesColumnListsAfterThePrivilege(): void

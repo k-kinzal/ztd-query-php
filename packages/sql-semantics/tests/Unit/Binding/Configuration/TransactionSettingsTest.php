@@ -40,7 +40,7 @@ final class TransactionSettingsTest extends TestCase
         self::assertInstanceOf(Statement\SetNextTransactionStatement::class, $statement);
         self::assertSame(Isolation::ReadCommitted, $statement->isolation);
         self::assertSame(Access::ReadOnly, $statement->access);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     /**
@@ -82,8 +82,8 @@ final class TransactionSettingsTest extends TestCase
         $statement = $binder->bind('SET TRANSACTION READ ONLY READ WRITE READ ONLY');
         self::assertInstanceOf(Statement\SetCurrentTransactionStatement::class, $statement);
         self::assertSame([Access::ReadOnly, Access::ReadWrite, Access::ReadOnly], $statement->modes);
-        self::assertSame('SET TRANSACTION READ ONLY, READ WRITE, READ ONLY', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('SET TRANSACTION READ ONLY, READ WRITE, READ ONLY', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testBindDistinguishesSnapshotImportFromCharacteristicChanges(): void
@@ -107,7 +107,7 @@ final class TransactionSettingsTest extends TestCase
     public function testBindReadsLowercaseMySqlModes(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
     #[TestWith(['set transaction isolation level serializable, read only, deferrable', Statement\SetCurrentTransactionStatement::class, 'SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY, DEFERRABLE'])]
@@ -116,6 +116,6 @@ final class TransactionSettingsTest extends TestCase
     public function testBindReadsLowercasePostgreSqlModes(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

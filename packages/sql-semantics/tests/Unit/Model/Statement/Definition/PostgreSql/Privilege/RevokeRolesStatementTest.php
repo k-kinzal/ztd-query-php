@@ -38,7 +38,7 @@ final class RevokeRolesStatementTest extends TestCase
     public function testToStringWritesTheOptionClauseAndThePolicy(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('REVOKE ADMIN OPTION FOR staff FROM alice RESTRICT');
-        self::assertSame('REVOKE ADMIN OPTION FOR "staff" FROM "alice" RESTRICT', $statement->toString());
+        self::assertSame('REVOKE ADMIN OPTION FOR "staff" FROM "alice" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[TestWith(['REVOKE ADMIN OPTION FOR staff FROM alice RESTRICT', 'REVOKE ADMIN OPTION FOR "staff" FROM "alice" RESTRICT'])]
@@ -50,10 +50,10 @@ final class RevokeRolesStatementTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind($sql);
         self::assertInstanceOf(RevokeRolesStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        $again = $binder->bind($statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(RevokeRolesStatement::class, $again);
-        self::assertSame($expected, $again->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithRolesReplacesTheRevokedRoles(): void
@@ -65,7 +65,7 @@ final class RevokeRolesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new NamedRole('staff')], $statement->roles);
         self::assertEquals($roles, $changed->roles);
-        self::assertSame('REVOKE ADMIN OPTION FOR "a", "x""y" FROM "alice" RESTRICT', $changed->toString());
+        self::assertSame('REVOKE ADMIN OPTION FOR "a", "x""y" FROM "alice" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithGranteesReplacesTheRolesLosingMembership(): void
@@ -77,7 +77,7 @@ final class RevokeRolesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new NamedRole('alice')], $statement->grantees);
         self::assertEquals($grantees, $changed->grantees);
-        self::assertSame('REVOKE ADMIN OPTION FOR "staff" FROM CURRENT_USER RESTRICT', $changed->toString());
+        self::assertSame('REVOKE ADMIN OPTION FOR "staff" FROM CURRENT_USER RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOptionRemovesOrReplacesTheOptionOnlyRestriction(): void
@@ -88,10 +88,10 @@ final class RevokeRolesStatementTest extends TestCase
         self::assertNotSame($statement, $membership);
         self::assertSame(RoleGrantAttribute::Admin, $statement->option);
         self::assertNull($membership->option);
-        self::assertSame('REVOKE "staff" FROM "alice" RESTRICT', $membership->toString());
+        self::assertSame('REVOKE "staff" FROM "alice" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($membership));
         $set = $statement->withOption(RoleGrantAttribute::Set);
         self::assertSame(RoleGrantAttribute::Set, $set->option);
-        self::assertSame('REVOKE SET OPTION FOR "staff" FROM "alice" RESTRICT', $set->toString());
+        self::assertSame('REVOKE SET OPTION FOR "staff" FROM "alice" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($set));
     }
 
     public function testWithGrantorAddsTheGrantorBeforeThePolicy(): void
@@ -102,7 +102,7 @@ final class RevokeRolesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertNull($statement->grantor);
         self::assertEquals(new NamedRole('bob'), $changed->grantor);
-        self::assertSame('REVOKE ADMIN OPTION FOR "staff" FROM "alice" GRANTED BY "bob" RESTRICT', $changed->toString());
+        self::assertSame('REVOKE ADMIN OPTION FOR "staff" FROM "alice" GRANTED BY "bob" RESTRICT', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithBehaviorReplacesTheDependentGrantPolicy(): void
@@ -113,8 +113,8 @@ final class RevokeRolesStatementTest extends TestCase
         self::assertNotSame($statement, $cascade);
         self::assertSame(DropBehavior::Restrict, $statement->behavior);
         self::assertSame(DropBehavior::Cascade, $cascade->behavior);
-        self::assertSame('REVOKE ADMIN OPTION FOR "staff" FROM "alice" CASCADE', $cascade->toString());
-        self::assertSame('REVOKE ADMIN OPTION FOR "staff" FROM "alice"', $statement->withBehavior(DropBehavior::Default)->toString());
+        self::assertSame('REVOKE ADMIN OPTION FOR "staff" FROM "alice" CASCADE', (new \SqlSemantics\SimpleSerializer())->serialize($cascade));
+        self::assertSame('REVOKE ADMIN OPTION FOR "staff" FROM "alice"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withBehavior(DropBehavior::Default)));
     }
 
     public function testWithOriginRetainsEveryOperand(): void
@@ -128,7 +128,7 @@ final class RevokeRolesStatementTest extends TestCase
         self::assertSame($statement->option, $copy->option);
         self::assertSame($statement->grantor, $copy->grantor);
         self::assertSame($statement->behavior, $copy->behavior);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

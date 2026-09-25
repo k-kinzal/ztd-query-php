@@ -241,8 +241,8 @@ final class ConflictBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
         self::assertCount(2, $statement->conflicts[0]->assignments);
-        self::assertSame('INSERT INTO `t`(`n`) VALUES (1) ON DUPLICATE KEY UPDATE `n` = VALUES (`t`.`n`), `m` = VALUES (`m`)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('INSERT INTO `t`(`n`) VALUES (1) ON DUPLICATE KEY UPDATE `n` = VALUES (`t`.`n`), `m` = VALUES (`m`)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     /**
@@ -267,7 +267,7 @@ final class ConflictBinderTest extends TestCase
     public function testBindReadsEachConflictHandler(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INTEGER PRIMARY KEY, n INTEGER)')))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString()]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 
 
@@ -276,9 +276,9 @@ final class ConflictBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER PRIMARY KEY, n INT)'));
         $update = $binder->bind('INSERT INTO t VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET n = 3 WHERE n > 0');
         $both = $binder->bind('INSERT INTO t VALUES (1, 2) ON CONFLICT (id) WHERE n > 1 DO UPDATE SET n = 3 WHERE n > 0');
-        self::assertSame('INSERT INTO "main"."t" VALUES (1, 2) ON CONFLICT("id") DO UPDATE SET "n" = 3 WHERE ("n" > 0)', $update->toString());
-        self::assertSame('INSERT INTO "main"."t" VALUES (1, 2) ON CONFLICT("id") WHERE ("n" > 1) DO UPDATE SET "n" = 3 WHERE ("n" > 0)', $both->toString());
-        self::assertSame($update->toString(), $binder->bind($update->toString())->toString());
+        self::assertSame('INSERT INTO "main"."t" VALUES (1, 2) ON CONFLICT("id") DO UPDATE SET "n" = 3 WHERE ("n" > 0)', (new \SqlSemantics\SimpleSerializer())->serialize($update));
+        self::assertSame('INSERT INTO "main"."t" VALUES (1, 2) ON CONFLICT("id") WHERE ("n" > 1) DO UPDATE SET "n" = 3 WHERE ("n" > 0)', (new \SqlSemantics\SimpleSerializer())->serialize($both));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($update), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($update))));
     }
 
     public function testActionReadsDoNothingFromItsKeywordsNotFromLiterals(): void
@@ -297,6 +297,6 @@ final class ConflictBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
         $destination = $statement->conflicts[0]->assignments[0]->destinations()[0]->column();
         self::assertSame($statement->insertion->target->id, $destination->columnBinding()?->relationId);
-        self::assertSame('INSERT INTO `t` VALUES (1, 2) AS `r` ON DUPLICATE KEY UPDATE `n` = `r`.`n`', $statement->toString());
+        self::assertSame('INSERT INTO `t` VALUES (1, 2) AS `r` ON DUPLICATE KEY UPDATE `n` = `r`.`n`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

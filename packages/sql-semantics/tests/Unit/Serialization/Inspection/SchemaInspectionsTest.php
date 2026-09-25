@@ -25,7 +25,7 @@ final class SchemaInspectionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE users(id INT)'));
         $statement = $binder->bind($sql);
         self::assertSame($sql, SchemaInspections::write($statement)?->toString());
-        self::assertSame($sql, $binder->bind($statement->toString())->toString());
+        self::assertSame($sql, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWriteReturnsNullForOtherStatements(): void

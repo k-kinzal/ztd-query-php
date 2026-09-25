@@ -26,8 +26,8 @@ final class PartitionSchemeStatementTest extends TestCase
         $statement = $binder->bind('PARTITION BY RANGE COLUMNS (a) (PARTITION p VALUES LESS THAN (1))', strict: false);
         self::assertInstanceOf(PartitionSchemeStatement::class, $statement);
         self::assertSame(StatementKind::Partition, $statement->kind);
-        self::assertSame('PARTITION BY RANGE COLUMNS(`a`)(PARTITION `p` VALUES LESS THAN(1))', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString(), strict: false)->toString());
+        self::assertSame('PARTITION BY RANGE COLUMNS(`a`)(PARTITION `p` VALUES LESS THAN(1))', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement), strict: false)));
     }
 
     public function testWithPartitioningReplacesTheClause(): void
@@ -37,7 +37,7 @@ final class PartitionSchemeStatementTest extends TestCase
         $other = $binder->bind('PARTITION BY KEY (b) PARTITIONS 2', strict: false);
         self::assertInstanceOf(PartitionSchemeStatement::class, $statement);
         self::assertInstanceOf(PartitionSchemeStatement::class, $other);
-        self::assertSame('PARTITION BY KEY(`b`) PARTITIONS 2', $statement->withPartitioning($other->partitioning)->toString());
+        self::assertSame('PARTITION BY KEY(`b`) PARTITIONS 2', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withPartitioning($other->partitioning)));
         self::assertSame($statement->partitioning, $statement->withOrigin($statement->origin)->partitioning);
     }
 
@@ -45,6 +45,6 @@ final class PartitionSchemeStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('PARTITION BY KEY (a)', strict: false);
         self::assertInstanceOf(PartitionSchemeStatement::class, $statement);
-        self::assertSame($statement->toString(), $statement->withOrigin($statement->origin)->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 }

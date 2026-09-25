@@ -31,7 +31,7 @@ final class XmlTablesTest extends TestCase
         self::assertInstanceOf(XmlTable::class, $table);
         $expected = "XMLTABLE(XMLNAMESPACES('http://x' AS \"x\", DEFAULT 'http://y'), '/rows/row' PASSING BY VALUE '<rows/>' BY REF COLUMNS \"id\" FOR ORDINALITY, \"n\" integer PATH 'n' DEFAULT 0 NOT NULL, \"t\" text)";
         self::assertSame($expected, XmlTables::write($table, Dialect::PostgreSql)->toString());
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(BoundSelect::class, $rebound);
         $again = $rebound->from;
         self::assertInstanceOf(DocumentRelation::class, $again);
@@ -49,8 +49,8 @@ final class XmlTablesTest extends TestCase
         $statement = $binder->bind("SELECT * FROM XMLTABLE('/r' PASSING '<r/>' COLUMNS a TEXT PATH 'a') AS xt");
         self::assertInstanceOf(BoundSelect::class, $statement);
         $expected = "SELECT \"xt\".\"a\" AS \"a\" FROM XMLTABLE('/r' PASSING '<r/>' COLUMNS \"a\" text PATH 'a') AS \"xt\"";
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testNamespaceQuotesPrefixesIndependentlyOfUris(): void

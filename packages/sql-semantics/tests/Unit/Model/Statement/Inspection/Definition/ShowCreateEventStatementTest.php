@@ -25,7 +25,7 @@ final class ShowCreateEventStatementTest extends TestCase
         self::assertSame(['app', 'it em'], $statement->event->parts);
         self::assertCount(7, $statement->resultColumns());
         self::assertSame('Event', $statement->resultColumns()[0]->name);
-        self::assertSame('SHOW CREATE EVENT `app`.`it em`', $statement->toString());
+        self::assertSame('SHOW CREATE EVENT `app`.`it em`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithEventNamesAnotherObjectImmutably(): void
@@ -36,7 +36,7 @@ final class ShowCreateEventStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertSame(['item'], $statement->event->parts);
         self::assertSame(['other', 'renamed'], $changed->event->parts);
-        self::assertSame('SHOW CREATE EVENT `other`.`renamed`', $changed->toString());
+        self::assertSame('SHOW CREATE EVENT `other`.`renamed`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheName(): void

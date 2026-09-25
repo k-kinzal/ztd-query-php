@@ -312,7 +312,7 @@ final class MutationBinderTest extends TestCase
         $statement = $binder->bind('INSERT INTO t SELECT 1 UNION SELECT 2 ORDER BY 1 LIMIT 1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $statement->query);
-        self::assertSame('INSERT INTO `t` SELECT 1 UNION SELECT 2 ORDER BY 1 ASC LIMIT 1', $statement->toString());
+        self::assertSame('INSERT INTO `t` SELECT 1 UNION SELECT 2 ORDER BY 1 ASC LIMIT 1', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'INSERT INTO t (id) VALUES (1) UNION VALUES (1)', 'INSERT INTO "public"."t"("id") VALUES (1) UNION VALUES (1)'])]
@@ -323,8 +323,8 @@ final class MutationBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER)'));
         $statement = $binder->bind($sql);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     /**
@@ -354,7 +354,7 @@ final class MutationBinderTest extends TestCase
     public function testBindResolvesTheWrittenRelations(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INTEGER PRIMARY KEY, n INTEGER); CREATE TABLE u(id INTEGER, n INTEGER)')))->bind($sql, strict: false);
-        self::assertSame($expected, [$statement::class, $statement->toString(), array_map(static fn ($diagnostic): string => $diagnostic->reason, $statement->diagnostics)]);
+        self::assertSame($expected, [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement), array_map(static fn ($diagnostic): string => $diagnostic->reason, $statement->diagnostics)]);
     }
 
 
@@ -363,9 +363,9 @@ final class MutationBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INT PRIMARY KEY, n INT)'));
         $delete = $binder->bind('DELETE FROM t AS x WHERE x.id = 1');
         $insert = $binder->bind('INSERT INTO t AS x VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET n = x.n + 1');
-        self::assertSame('DELETE FROM "main"."t" AS "x" WHERE ("x"."id" = 1)', $delete->toString());
-        self::assertSame('INSERT INTO "main"."t" AS "x" VALUES (1, 2) ON CONFLICT("id") DO UPDATE SET "n" = ("x"."n" + 1)', $insert->toString());
-        self::assertSame($insert->toString(), $binder->bind($insert->toString())->toString());
+        self::assertSame('DELETE FROM "main"."t" AS "x" WHERE ("x"."id" = 1)', (new \SqlSemantics\SimpleSerializer())->serialize($delete));
+        self::assertSame('INSERT INTO "main"."t" AS "x" VALUES (1, 2) ON CONFLICT("id") DO UPDATE SET "n" = ("x"."n" + 1)', (new \SqlSemantics\SimpleSerializer())->serialize($insert));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($insert), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($insert))));
     }
 
     public function testBindReadsTheReturningClauseOfASqliteUpsert(): void
@@ -373,8 +373,8 @@ final class MutationBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INT PRIMARY KEY, n TEXT)'));
         $statement = $binder->bind("INSERT INTO t VALUES (1, 'x') ON CONFLICT (id) DO NOTHING ON CONFLICT DO UPDATE SET n = 'RETURNING' RETURNING id");
         $plain = $binder->bind("DELETE FROM t WHERE n = 'RETURNING'");
-        self::assertSame('INSERT INTO "main"."t" VALUES (1, \'x\') ON CONFLICT("id") DO NOTHING ON CONFLICT DO UPDATE SET "n" = \'RETURNING\' RETURNING "id" AS "id"', $statement->toString());
-        self::assertSame('DELETE FROM "main"."t" WHERE ("n" = \'RETURNING\')', $plain->toString());
+        self::assertSame('INSERT INTO "main"."t" VALUES (1, \'x\') ON CONFLICT("id") DO NOTHING ON CONFLICT DO UPDATE SET "n" = \'RETURNING\' RETURNING "id" AS "id"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('DELETE FROM "main"."t" WHERE ("n" = \'RETURNING\')', (new \SqlSemantics\SimpleSerializer())->serialize($plain));
     }
 
 
@@ -387,6 +387,6 @@ final class MutationBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $statement->target);
         self::assertSame(['x', ['p0']], [$statement->target->alias, $statement->target->partitions?->names]);
-        self::assertSame('DELETE FROM `t` AS `x` PARTITION(`p0`) WHERE (`x`.`id` = 1)', $statement->toString());
+        self::assertSame('DELETE FROM `t` AS `x` PARTITION(`p0`) WHERE (`x`.`id` = 1)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

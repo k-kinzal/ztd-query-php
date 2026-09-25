@@ -35,8 +35,8 @@ final class SelectIntoOutfileStatementTest extends TestCase
         $statement = $binder->bind("SELECT a FROM t INTO OUTFILE '/tmp/a.csv' CHARACTER SET latin1 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES STARTING BY '>' TERMINATED BY ';'");
         self::assertInstanceOf(SelectIntoOutfileStatement::class, $statement);
         self::assertSame(["'/tmp/a.csv'", 'latin1', "','", true, "'>'", "';'"], [$statement->file->text, $statement->characterSet, $statement->fields->terminator?->text, $statement->fields->optionallyEnclosed, $statement->lines->start?->text, $statement->lines->terminator?->text]);
-        self::assertSame("SELECT `a` AS `a` FROM `t` INTO OUTFILE '/tmp/a.csv' CHARACTER SET `latin1` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES STARTING BY '>' TERMINATED BY ';'", $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame("SELECT `a` AS `a` FROM `t` INTO OUTFILE '/tmp/a.csv' CHARACTER SET `latin1` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES STARTING BY '>' TERMINATED BY ';'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testWithLayoutReplacesTheSeparators(): void
@@ -46,7 +46,7 @@ final class SelectIntoOutfileStatementTest extends TestCase
         $comma = Expression::literal(',', Dialect::MySql);
         self::assertInstanceOf(Literal::class, $comma);
         $changed = $statement->withLayout(new FieldLayout($comma), new LineLayout());
-        self::assertSame("SELECT `a` AS `a` FROM `t` INTO OUTFILE 'f' FIELDS TERMINATED BY ','", $changed->toString());
+        self::assertSame("SELECT `a` AS `a` FROM `t` INTO OUTFILE 'f' FIELDS TERMINATED BY ','", (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertNull($statement->fields->terminator);
     }
 
@@ -57,8 +57,8 @@ final class SelectIntoOutfileStatementTest extends TestCase
         $query = $binder->bind('SELECT 2');
         self::assertInstanceOf(SelectIntoOutfileStatement::class, $statement);
         self::assertInstanceOf(BoundSelect::class, $query);
-        self::assertSame("SELECT 2 INTO OUTFILE 'f'", $statement->withQuery($query)->toString());
-        self::assertSame("SELECT 1 INTO OUTFILE 'f'", $statement->toString());
+        self::assertSame("SELECT 2 INTO OUTFILE 'f'", (new \SqlSemantics\SimpleSerializer())->serialize($statement->withQuery($query)));
+        self::assertSame("SELECT 1 INTO OUTFILE 'f'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testWithOriginKeepsTheOperands(): void

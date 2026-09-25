@@ -256,7 +256,7 @@ final class IndexKeysTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)'));
         $statement = $binder->bind('CREATE INDEX ON t (a COLLATE "C" int4_ops (x = 1) DESC)');
-        self::assertSame('CREATE INDEX ON "public"."t"("a" COLLATE "C" "int4_ops"("x" = 1) DESC)', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE INDEX ON "public"."t"("a" COLLATE "C" "int4_ops"("x" = 1) DESC)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 }

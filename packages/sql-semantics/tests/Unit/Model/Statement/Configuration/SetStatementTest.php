@@ -25,8 +25,8 @@ final class SetStatementTest extends TestCase
         $assignment = $statement->settings[0];
         self::assertInstanceOf(AssignedUserVariable::class, $assignment);
         $changed = $statement->withVariableValue($assignment, Expression::literal(3, Dialect::MySql));
-        self::assertSame('SET @`a` = 1, @`b` = 2', $statement->toString());
-        self::assertSame('SET @`a` = 3, @`b` = 2', $changed->toString());
+        self::assertSame('SET @`a` = 1, @`b` = 2', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame('SET @`a` = 3, @`b` = 2', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertSame([['a'], ['b']], array_column($changed->settings, 'name'));
     }
 
@@ -51,7 +51,7 @@ final class SetStatementTest extends TestCase
         $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::MySql, [], $statement->origin->context));
         self::assertSame('other', $changed->scopeId);
         self::assertSame($statement->settings, $changed->settings);
-        self::assertSame('SET @`a` = 1, @`b` = 2', $changed->toString());
+        self::assertSame('SET @`a` = 1, @`b` = 2', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testAssignmentsExcludeCurrentValueSettings(): void
@@ -80,8 +80,8 @@ final class SetStatementTest extends TestCase
         $setting = $statement->settings[0];
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $setting);
         $changed = $statement->withValues($setting, [Expression::literal('128MB', Dialect::PostgreSql)]);
-        self::assertSame('SET LOCAL "work_mem" = \'128MB\'', $changed->toString());
-        self::assertSame('SET LOCAL "work_mem" = \'64MB\'', $statement->toString());
+        self::assertSame('SET LOCAL "work_mem" = \'128MB\'', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SET LOCAL "work_mem" = \'64MB\'', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $changed->settings[0]);
         self::assertSame(['work_mem'], $changed->settings[0]->name);
     }

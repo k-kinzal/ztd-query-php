@@ -28,7 +28,7 @@ final class ShowIndexesStatementTest extends TestCase
         self::assertFalse($statement->extended);
         self::assertCount(15, $statement->resultColumns());
         self::assertSame('Visible', $statement->resultColumns()[13]->name);
-        self::assertSame('SHOW INDEX FROM `users`', $statement->toString());
+        self::assertSame('SHOW INDEX FROM `users`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testResultColumnsOmitLaterFieldsOnLegacyReleases(): void
@@ -50,8 +50,8 @@ final class ShowIndexesStatementTest extends TestCase
         $changed = $statement->withCondition($conditioned->condition);
         self::assertNotSame($statement, $changed);
         self::assertNull($statement->condition);
-        self::assertSame('SHOW INDEX FROM `users` WHERE (`Non_unique` = 0)', $changed->toString());
-        self::assertSame('SHOW INDEX FROM `users`', $changed->withCondition(null)->toString());
+        self::assertSame('SHOW INDEX FROM `users` WHERE (`Non_unique` = 0)', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
+        self::assertSame('SHOW INDEX FROM `users`', (new \SqlSemantics\SimpleSerializer())->serialize($changed->withCondition(null)));
     }
 
     public function testWithExtendedIncludesHiddenKeyPartsImmutably(): void
@@ -62,7 +62,7 @@ final class ShowIndexesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertFalse($statement->extended);
         self::assertTrue($changed->extended);
-        self::assertSame('SHOW EXTENDED INDEX FROM `users`', $changed->toString());
+        self::assertSame('SHOW EXTENDED INDEX FROM `users`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTableListsAnotherTableImmutably(): void
@@ -75,7 +75,7 @@ final class ShowIndexesStatementTest extends TestCase
         $changed = $statement->withTable($other->table);
         self::assertSame('users', $statement->table->declaration->name);
         self::assertSame('orders', $changed->table->declaration->name);
-        self::assertSame('SHOW INDEX FROM `orders`', $changed->toString());
+        self::assertSame('SHOW INDEX FROM `orders`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheOperands(): void

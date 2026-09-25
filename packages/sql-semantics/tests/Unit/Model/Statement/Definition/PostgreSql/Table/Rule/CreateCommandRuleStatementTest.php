@@ -23,8 +23,8 @@ final class CreateCommandRuleStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE RULE r AS ON UPDATE TO t DO (NOTIFY ch; DELETE FROM t WHERE a = OLD.a)');
         self::assertInstanceOf(CreateCommandRuleStatement::class, $statement);
         $copy = $statement->withOrigin($statement->origin);
-        self::assertSame($statement->toString(), $copy->toString());
-        self::assertSame('CREATE RULE "r" AS ON UPDATE TO "public"."t" DO ALSO(NOTIFY "ch"; DELETE FROM "public"."t" WHERE ("a" = "old"."a"))', $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
+        self::assertSame('CREATE RULE "r" AS ON UPDATE TO "public"."t" DO ALSO(NOTIFY "ch"; DELETE FROM "public"."t" WHERE ("a" = "old"."a"))', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithNameLeavesTheOriginalUnchanged(): void

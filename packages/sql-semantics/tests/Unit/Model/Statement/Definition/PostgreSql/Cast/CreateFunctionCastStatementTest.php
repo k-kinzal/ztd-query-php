@@ -28,8 +28,8 @@ final class CreateFunctionCastStatementTest extends TestCase
         self::assertInstanceOf(CreateFunctionCastStatement::class, $statement);
         self::assertSame(['app', 'clamp'], $statement->function->name->parts);
         self::assertSame(CastContext::Assignment, $statement->castContext);
-        self::assertSame('CREATE CAST(integer AS integer) WITH FUNCTION "app"."clamp"(integer, integer, boolean) AS ASSIGNMENT', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE CAST(integer AS integer) WITH FUNCTION "app"."clamp"(integer, integer, boolean) AS ASSIGNMENT', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRejectsATypeFromAnotherDialect(): void
@@ -44,7 +44,7 @@ final class CreateFunctionCastStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE CAST (integer AS text) WITH FUNCTION f');
         self::assertInstanceOf(CreateFunctionCastStatement::class, $statement);
-        self::assertSame('CREATE CAST(integer AS text) WITH FUNCTION "f"', $statement->withOrigin($statement->origin)->toString());
+        self::assertSame('CREATE CAST(integer AS text) WITH FUNCTION "f"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withOrigin($statement->origin)));
     }
 
     public function testWithSourceTypeReplacesTheOperand(): void
@@ -59,7 +59,7 @@ final class CreateFunctionCastStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE CAST (integer AS text) WITH FUNCTION f');
         self::assertInstanceOf(CreateFunctionCastStatement::class, $statement);
-        self::assertSame('CREATE CAST(integer AS bigint) WITH FUNCTION "f"', $statement->withTargetType(TypeDescriptor::builtin(Dialect::PostgreSql, 'bigint'))->toString());
+        self::assertSame('CREATE CAST(integer AS bigint) WITH FUNCTION "f"', (new \SqlSemantics\SimpleSerializer())->serialize($statement->withTargetType(TypeDescriptor::builtin(Dialect::PostgreSql, 'bigint'))));
     }
 
     public function testWithFunctionReplacesTheOperand(): void

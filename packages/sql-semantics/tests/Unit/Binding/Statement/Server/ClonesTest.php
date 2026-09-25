@@ -39,7 +39,7 @@ final class ClonesTest extends TestCase
         self::assertSame('3306', $statement->port->text);
         self::assertSame("'/d'", $statement->directory?->text);
         self::assertSame(CloneEncryption::Required, $statement->encryption);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
         self::assertInstanceOf(CloneLocalStatement::class, $binder->bind("CLONE LOCAL DATA DIRECTORY '/x'"));
     }
 
@@ -48,6 +48,6 @@ final class ClonesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CLONE INSTANCE FROM CURRENT_USER():1 IDENTIFIED BY 'p'");
         self::assertInstanceOf(CloneRemoteStatement::class, $statement);
         self::assertSame(CurrentAccount::Authenticated, $statement->donor);
-        self::assertSame("CLONE INSTANCE FROM CURRENT_USER:1 IDENTIFIED BY 'p'", $statement->toString());
+        self::assertSame("CLONE INSTANCE FROM CURRENT_USER:1 IDENTIFIED BY 'p'", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

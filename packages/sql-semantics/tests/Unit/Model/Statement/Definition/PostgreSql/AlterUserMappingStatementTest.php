@@ -36,7 +36,7 @@ final class AlterUserMappingStatementTest extends TestCase
         self::assertInstanceOf(NamedRole::class, $changed->target->user);
         self::assertSame('CURRENT_USER', $changed->target->user->name);
         self::assertSame('other"server', $changed->target->server);
-        self::assertStringContainsString('FOR "CURRENT_USER" SERVER "other""server"', $changed->toString());
+        self::assertStringContainsString('FOR "CURRENT_USER" SERVER "other""server"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
         self::assertNotSame($statement, $changed);
     }
 
@@ -47,7 +47,7 @@ final class AlterUserMappingStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame($statement->target, $copy->target);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDatabaseLanguage(): void
@@ -86,6 +86,6 @@ final class AlterUserMappingStatementTest extends TestCase
     public function testOptionsAcceptEveryChangeForm(string $sql, string $class, string $expected): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
-        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+        self::assertSame([$class, $expected], [$statement::class, (new \SqlSemantics\SimpleSerializer())->serialize($statement)]);
     }
 }

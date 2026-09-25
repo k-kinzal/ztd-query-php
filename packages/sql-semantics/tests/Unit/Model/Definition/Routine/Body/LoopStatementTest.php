@@ -25,8 +25,8 @@ final class LoopStatementTest extends TestCase
         $statement = $binder->bind('CREATE PROCEDURE p() spin: LOOP LEAVE spin; END LOOP');
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertInstanceOf(LoopStatement::class, $statement->body);
-        self::assertSame('CREATE PROCEDURE `p`() `spin` : LOOP LEAVE `spin`; END LOOP `spin`', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('CREATE PROCEDURE `p`() `spin` : LOOP LEAVE `spin`; END LOOP `spin`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
 
     public function testRequiresStatements(): void

@@ -31,9 +31,9 @@ final class CreateTableLikeStatementTest extends TestCase
         self::assertSame($schema->tables[0], $statement->template->declaration);
         self::assertTrue($statement->temporary);
         self::assertTrue($statement->ifNotExists);
-        self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS `copied` LIKE `original`', $statement->toString());
+        self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS `copied` LIKE `original`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame($statement->template, $statement->withOrigin($statement->origin)->template);
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
         self::assertCount(1, $schema->tables);
     }
 
@@ -46,7 +46,7 @@ final class CreateTableLikeStatementTest extends TestCase
         self::assertSame(['copied'], $statement->target->parts);
         self::assertSame(['archive','copy'], $changed->target->parts);
         self::assertSame('original', $changed->template->declaration->name);
-        self::assertSame('CREATE TABLE `archive`.`copy` LIKE `original`', $changed->toString());
+        self::assertSame('CREATE TABLE `archive`.`copy` LIKE `original`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithTemplateRebindsTheRequiredSourceDefinition(): void
@@ -60,7 +60,7 @@ final class CreateTableLikeStatementTest extends TestCase
         $changed = $original->withTemplate($replacement->template);
         self::assertSame('id', $original->template->declaration->columns[0]->name);
         self::assertSame('label', $changed->template->declaration->columns[0]->name);
-        self::assertSame('CREATE TABLE `copied` LIKE `replacement`', $changed->toString());
+        self::assertSame('CREATE TABLE `copied` LIKE `replacement`', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testDefaultsToAPermanentUnguardedTable(): void
@@ -70,7 +70,7 @@ final class CreateTableLikeStatementTest extends TestCase
         $copy = new CreateTableLikeStatement($statement->origin, $statement->target, $statement->template);
         self::assertFalse($copy->temporary);
         self::assertFalse($copy->ifNotExists);
-        self::assertSame('CREATE TABLE `copied` LIKE `original`', $copy->toString());
+        self::assertSame('CREATE TABLE `copied` LIKE `original`', (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testRejectsAThreePartTarget(): void

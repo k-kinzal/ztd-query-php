@@ -34,7 +34,7 @@ final class MySqlTablesTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\MySql\CheckTablesStatement::class, $statement);
         self::assertSame(['t', 'u'], array_map(static fn ($table): string => $table->declaration->name, $statement->tables));
         self::assertSame(['QUICK', 'FAST', 'MEDIUM', 'EXTENDED', 'CHANGED', 'FOR UPGRADE'], array_column($statement->options, 'value'));
-        $rebound = $binder->bind($statement->toString());
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\MySql\CheckTablesStatement::class, $rebound);
         self::assertSame($statement->options, $rebound->options);
     }
@@ -63,7 +63,7 @@ final class MySqlTablesTest extends TestCase
     public function testBindReadsEachVerbWithItsOptionsInAnyCase(string $sql, string $expected): void
     {
         $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(id INT)');
-        self::assertSame($expected, (new Binder($schema))->bind($sql)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize((new Binder($schema))->bind($sql)));
     }
 
     public function testBindLeavesPostgreSqlAnalyzeToItsOwnBinder(): void

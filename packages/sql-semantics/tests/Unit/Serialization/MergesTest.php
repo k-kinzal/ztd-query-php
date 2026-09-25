@@ -31,7 +31,7 @@ final class MergesTest extends TestCase
         $rebound = $binder->bind($expected);
         self::assertInstanceOf(MergeStatement::class, $rebound);
         self::assertSame([MergeUpdate::class, MergeDelete::class, MergeNothing::class, MergeRowInsertion::class], array_map(static fn ($action): string => $action::class, $rebound->merge->actions));
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteIncludesTheWithClauseAndDefaultInsertions(): void
@@ -40,8 +40,8 @@ final class MergesTest extends TestCase
         $statement = $binder->bind('WITH c AS (SELECT 1) MERGE INTO t USING s ON t.id = s.id WHEN NOT MATCHED THEN INSERT DEFAULT VALUES WHEN NOT MATCHED THEN INSERT VALUES (1, 2)');
         self::assertInstanceOf(MergeStatement::class, $statement);
         $expected = 'WITH "c" AS (SELECT 1) MERGE INTO "public"."t" USING "public"."s" ON ("t"."id" = "s"."id") WHEN NOT MATCHED THEN INSERT DEFAULT VALUES WHEN NOT MATCHED THEN INSERT VALUES (1, 2)';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testActionWritesTheConditionBeforeTheEffect(): void

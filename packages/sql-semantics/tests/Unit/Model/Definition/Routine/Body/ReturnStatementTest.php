@@ -27,7 +27,7 @@ final class ReturnStatementTest extends TestCase
         $statement = $binder->bind('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
         self::assertInstanceOf(CreateFunctionStatement::class, $statement);
         self::assertInstanceOf(ReturnStatement::class, $statement->body);
-        self::assertSame('CREATE FUNCTION `f`(`a` integer) RETURNS integer RETURN `a`', $statement->toString());
+        self::assertSame('CREATE FUNCTION `f`(`a` integer) RETURNS integer RETURN `a`', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRejectsAnotherDialectValue(): void

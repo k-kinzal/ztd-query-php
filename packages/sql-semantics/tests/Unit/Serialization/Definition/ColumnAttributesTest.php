@@ -24,13 +24,13 @@ final class ColumnAttributesTest extends TestCase
         $statement = $binder->bind("CREATE TABLE t (a VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'c' ENGINE_ATTRIBUTE '{}' SECONDARY_ENGINE_ATTRIBUTE '{}' STORAGE DISK COLUMN_FORMAT FIXED INVISIBLE, b INT ZEROFILL, c POINT SRID 4326, e CHAR(3) BINARY, f INT VISIBLE)");
         self::assertInstanceOf(CreateTableStatement::class, $statement);
         $expected = "CREATE TABLE `t`(`a` varchar(10) CHARACTER SET `utf8mb4` COLLATE `utf8mb4_bin` COMMENT 'c' ENGINE_ATTRIBUTE '{}' SECONDARY_ENGINE_ATTRIBUTE '{}' STORAGE DISK COLUMN_FORMAT FIXED INVISIBLE, `b` integer UNSIGNED ZEROFILL, `c` point SRID 4326, `e` char(3) BINARY, `f` integer VISIBLE)";
-        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         $rebound = $binder->bind($expected);
         self::assertInstanceOf(CreateTableStatement::class, $rebound);
         self::assertSame('c', $rebound->definition->table->columns[0]->attributes->comment);
         self::assertSame(4326, $rebound->definition->table->columns[2]->attributes->spatialReferenceId);
         self::assertTrue($rebound->definition->table->columns[1]->attributes->zeroFill);
-        self::assertSame($expected, $rebound->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($rebound));
     }
 
     public function testWriteOrdersStorageBeforeFormatRegardlessOfSourceOrder(): void
@@ -56,7 +56,28 @@ final class ColumnAttributesTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)'));
         $statement = $binder->bind('ALTER TABLE t ADD COLUMN c text STORAGE EXTERNAL COMPRESSION pglz COLLATE "C" NOT NULL');
-        self::assertSame('ALTER TABLE "t" ADD COLUMN "c" text STORAGE EXTERNAL COMPRESSION "pglz" COLLATE "C" NOT NULL', $statement->toString());
-        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+        self::assertSame('ALTER TABLE "t" ADD COLUMN "c" text STORAGE EXTERNAL COMPRESSION "pglz" COLLATE "C" NOT NULL', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.0.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.1.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.2.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.3.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.0.1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0'])]
+    public function testWriteKeepsNotSecondaryThroughStructuralSerialization(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build());
+        $statement = $binder->bind("CREATE TABLE t (a INT NOT SECONDARY, b TEXT COMMENT 'x' NOT SECONDARY)");
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        self::assertTrue($statement->definition->table->columns[0]->attributes->excludedFromSecondaryEngine);
+        self::assertSame('NOT SECONDARY', ColumnAttributes::write($statement->definition->table->columns[0]->attributes, Dialect::MySql)->toString());
+        $written = (new \SqlSemantics\SimpleSerializer())->serialize($statement);
+        self::assertSame("CREATE TABLE `t`(`a` integer NOT SECONDARY, `b` text COMMENT 'x' NOT SECONDARY)", $written);
+        $rebound = $binder->bind($written);
+        self::assertInstanceOf(CreateTableStatement::class, $rebound);
+        self::assertTrue($rebound->definition->table->columns[1]->attributes->excludedFromSecondaryEngine);
     }
 }

@@ -31,16 +31,16 @@ final class DropRolesStatementTest extends TestCase
     public function testToStringWritesTheRoleKeywordAndQuotesEachName(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP USER IF EXISTS alice, bob');
-        self::assertSame('DROP ROLE IF EXISTS "alice", "bob"', $statement->toString());
+        self::assertSame('DROP ROLE IF EXISTS "alice", "bob"', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 
     public function testRebindingTheOutputReachesAFixedPoint(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('DROP GROUP IF EXISTS alice, bob');
-        $again = $binder->bind($statement->toString());
+        $again = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertInstanceOf(DropRolesStatement::class, $again);
-        self::assertSame($statement->toString(), $again->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($again));
     }
 
     public function testWithRolesReplacesAndQuotesTheCompleteSelection(): void
@@ -52,7 +52,7 @@ final class DropRolesStatementTest extends TestCase
         self::assertNotSame($statement, $changed);
         self::assertEquals([new NamedRole('alice'), new NamedRole('bob')], $statement->roles);
         self::assertEquals($roles, $changed->roles);
-        self::assertSame('DROP ROLE IF EXISTS "x""y"', $changed->toString());
+        self::assertSame('DROP ROLE IF EXISTS "x""y"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithIfExistsChangesTheExistencePolicy(): void
@@ -64,7 +64,7 @@ final class DropRolesStatementTest extends TestCase
         self::assertTrue($statement->ifExists);
         self::assertFalse($changed->ifExists);
         self::assertEquals($statement->roles, $changed->roles);
-        self::assertSame('DROP ROLE "alice", "bob"', $changed->toString());
+        self::assertSame('DROP ROLE "alice", "bob"', (new \SqlSemantics\SimpleSerializer())->serialize($changed));
     }
 
     public function testWithOriginRetainsTheSelectionAndThePolicy(): void
@@ -75,7 +75,7 @@ final class DropRolesStatementTest extends TestCase
         self::assertNotSame($statement, $copy);
         self::assertEquals($statement->roles, $copy->roles);
         self::assertSame($statement->ifExists, $copy->ifExists);
-        self::assertSame($statement->toString(), $copy->toString());
+        self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($copy));
     }
 
     public function testWithOriginRejectsAnotherDialect(): void

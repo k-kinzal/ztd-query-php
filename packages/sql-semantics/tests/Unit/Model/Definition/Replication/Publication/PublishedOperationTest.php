@@ -27,6 +27,6 @@ final class PublishedOperationTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)')))->bind("CREATE PUBLICATION p WITH (publish = ' " . strtoupper($operation->value) . "')");
         self::assertInstanceOf(Statement\CreatePublicationStatement::class, $statement);
         self::assertSame([$operation], $statement->options->publish);
-        self::assertSame("CREATE PUBLICATION \"p\" WITH (publish = '" . $operation->value . "')", $statement->toString());
+        self::assertSame("CREATE PUBLICATION \"p\" WITH (publish = '" . $operation->value . "')", (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
 }

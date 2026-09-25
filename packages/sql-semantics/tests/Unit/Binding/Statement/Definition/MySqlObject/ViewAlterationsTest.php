@@ -38,8 +38,8 @@ final class ViewAlterationsTest extends TestCase
         self::assertSame([['d', 'v'], ['a', 'b'], ViewCheck::Local, ViewAlgorithm::Merge, ViewSecurity::Invoker, 2], [$statement->name->parts, $statement->columns, $statement->check, $statement->properties->algorithm, $statement->properties->security, count($statement->query->resultColumns())]);
         self::assertInstanceOf(CurrentAccount::class, $statement->properties->definer);
         $expected = 'ALTER ALGORITHM = MERGE DEFINER = CURRENT_USER SQL SECURITY INVOKER VIEW `d`.`v`(`a`, `b`) AS SELECT 1, 2 WITH LOCAL CHECK OPTION';
-        self::assertSame($expected, $statement->toString());
-        self::assertSame($expected, $binder->bind($expected)->toString());
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 
     public function testBindReturnsNullForAnotherAlteration(): void
@@ -57,5 +57,31 @@ final class ViewAlterationsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql);
         self::assertSame($check, ViewAlterations::check($statement->source));
+    }
+
+    #[TestWith(['mysql-5.6.51', 'ALTER VIEW v AS SELECT a FROM t FOR UPDATE', 'ALTER VIEW `v` AS SELECT `a` AS `a` FROM `t` FOR UPDATE'])]
+    #[TestWith(['mysql-5.7.44', 'ALTER VIEW v AS SELECT a FROM t LOCK IN SHARE MODE', 'ALTER VIEW `v` AS SELECT `a` AS `a` FROM `t` LOCK IN SHARE MODE'])]
+    #[TestWith(['mysql-8.4.7', 'ALTER VIEW v AS SELECT a FROM t FOR UPDATE OF t SKIP LOCKED', 'ALTER VIEW `v` AS SELECT `a` AS `a` FROM `t` FOR UPDATE OF `t` SKIP LOCKED'])]
+    #[TestWith(['mysql-9.1.0', 'ALTER VIEW v AS SELECT a FROM t FOR SHARE NOWAIT WITH CHECK OPTION', 'ALTER VIEW `v` AS SELECT `a` AS `a` FROM `t` FOR SHARE NOWAIT WITH CASCADED CHECK OPTION'])]
+    public function testBindKeepsTheLockingClauseOfTheViewQuery(string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)'));
+        $statement = $binder->bind($sql);
+        self::assertInstanceOf(AlterViewStatement::class, $statement);
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
+    }
+
+    #[TestWith(['mysql-5.6.51', 'ALTER SQL SECURITY DEFINER VIEW v AS SELECT 1', ViewSecurity::Definer, 'ALTER SQL SECURITY DEFINER VIEW `v` AS SELECT 1'])]
+    #[TestWith(['mysql-8.4.7', 'ALTER ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW v AS SELECT 1', ViewSecurity::Definer, 'ALTER SQL SECURITY DEFINER VIEW `v` AS SELECT 1'])]
+    #[TestWith(['mysql-9.1.0', 'ALTER VIEW v AS SELECT 1', null, 'ALTER VIEW `v` AS SELECT 1'])]
+    public function testBindKeepsAnExplicitDefinerSecurityApartFromAnOmittedOne(string $version, string $sql, ?ViewSecurity $security, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
+        $statement = $binder->bind($sql);
+        self::assertInstanceOf(AlterViewStatement::class, $statement);
+        self::assertSame($security, $statement->properties->security);
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
     }
 }
