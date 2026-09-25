@@ -4,15 +4,8 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html;
 
-use SqlCatalog\Catalog\StatementPart;
-use SqlFormatter\FormatOptions;
-use SqlFormatter\Formatter;
-use SqlFormatter\FormattingException;
-use SqlFormatter\Style;
-use SqlParser\Lexer\SourceException;
-use SqlParser\MySql\MySqlParser;
-use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlParser\Sqlite\SqliteParser;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlFormatter\Core\FormattingException;
 
 /**
  * Formats report SQL with sql-formatter's expanded layout.
@@ -26,9 +19,11 @@ use SqlParser\Sqlite\SqliteParser;
 final class SqlFormatter
 {
     /**
-     * @var list<Formatter>|null
+     * @param list<\SqlCatalog\Core\Reporter\SqlFormatter> $formatters Ordered application policies
      */
-    private ?array $formatters = null;
+    public function __construct(private readonly array $formatters = [])
+    {
+    }
 
     /**
      * The statement laid out for reading, with gap metadata preserved.
@@ -42,15 +37,13 @@ final class SqlFormatter
         if ($sql === '' || array_filter($parts, static fn (StatementPart $part): bool => !$part->isGap) === []) {
             return $parts;
         }
-        $this->formatters ??= [
-            new Formatter(new MySqlParser(), new FormatOptions(style: Style::Expanded)),
-            new Formatter(new PostgreSqlParser(), new FormatOptions(style: Style::Expanded)),
-            new Formatter(new SqliteParser(), new FormatOptions(style: Style::Expanded)),
-        ];
         foreach ($this->formatters as $formatter) {
             try {
-                return $this->restore($formatter->format($sql), $gaps);
-            } catch (SourceException|FormattingException) {
+                $formatted = $formatter->format($sql);
+                if ($formatted !== null) {
+                    return $this->restore($formatted, $gaps);
+                }
+            } catch (FormattingException) {
                 continue;
             }
         }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html;
 
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
 
 /**
  * The pages the report is made of, and the address of everything on them.
@@ -76,7 +76,7 @@ final class ReportSite
     /**
      * Lays a catalog out as pages.
      */
-    public function __construct(Catalog $catalog, ?HtmlText $text = null)
+    public function __construct(Catalog $catalog, ?HtmlText $text = null, public readonly SqlFormatter $formatter = new SqlFormatter())
     {
         $this->text = $text ?? new HtmlText();
         $this->catalog = $catalog->sorted();

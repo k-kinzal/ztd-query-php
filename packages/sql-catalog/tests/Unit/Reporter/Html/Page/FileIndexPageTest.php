@@ -7,17 +7,23 @@ namespace Tests\Unit\Reporter\Html\Page;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\AnalysisProblem;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Finding;
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Placeholder;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Catalog\StatementPart;
-use SqlCatalog\Catalog\ValueDomain;
+use SqlCatalog\Core\Catalog\AnalysisProblem;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Finding;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Placeholder;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\ValueDomain;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
@@ -30,12 +36,6 @@ use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
 use SqlCatalog\Reporter\Html\StatementRow;
 use SqlCatalog\Reporter\Html\TableName;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(FileIndexPage::class)]
 #[UsesClass(CallSite::class)]
@@ -74,12 +74,12 @@ final class FileIndexPageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('src/a.php', 1, 'f', 'pdo.query'), []),
             new CatalogEntry('b1', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('index.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $page = (new FileIndexPage())->render(new ReportSite($catalog));
+        $page = (new FileIndexPage())->render(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()));
 
         self::assertStringContainsString('<h1>Files<span class="count">2 files</span></h1>', $page);
         self::assertStringContainsString('<h2 id="dir-root"><code>(root)</code><span class="count">1 file</span></h2>', $page);
         self::assertStringContainsString('<h2 id="dir-src"><code>src/</code><span class="count">1 file</span></h2>', $page);
-        self::assertStringContainsString('No statement was found.', (new FileIndexPage())->render(new ReportSite(new Catalog())));
+        self::assertStringContainsString('No statement was found.', (new FileIndexPage())->render(new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())));
     }
 
     public function testSectionIsASortableTableOfTheDirectorysFiles(): void
@@ -87,7 +87,7 @@ final class FileIndexPageTest extends TestCase
         $catalog = new Catalog([
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('src/a.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $section = (new FileIndexPage())->section(new ReportSite($catalog), 'src', ['src/a.php']);
+        $section = (new FileIndexPage())->section(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'src', ['src/a.php']);
 
         self::assertStringContainsString('<table class="sortable filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">File</th>', $section);
         self::assertStringContainsString('href="files/src-a-php.html">a.php</a>', $section);
@@ -102,7 +102,7 @@ final class FileIndexPageTest extends TestCase
 
         self::assertSame(
             '<tr><td><a class="mono" href="files/src-a-php.html">a.php</a></td><td class="num">2</td><td class="num">2</td><td class="num">1</td><td class="num"><span class="none">0</span></td></tr>',
-            (new FileIndexPage())->row(new ReportSite(new Catalog($entries)), 'src/a.php', $entries),
+            (new FileIndexPage())->row(new ReportSite(new Catalog($entries), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'src/a.php', $entries),
         );
     }
 
@@ -112,7 +112,7 @@ final class FileIndexPageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('src/a.php', 1, 'f', 'pdo.query'), []),
         ]);
 
-        self::assertSame([['src/', 'dir-src']], (new FileIndexPage())->anchors(new ReportSite($catalog)));
+        self::assertSame([['src/', 'dir-src']], (new FileIndexPage())->anchors(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())));
     }
 
     public function testRenderIsWrittenExactly(): void
@@ -157,7 +157,7 @@ final class FileIndexPageTest extends TestCase
             ]),
         ];
         $catalog = new Catalog($entries, [new AnalysisProblem('src/broken.php', 'broken')]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<h1>Files<span class="count">11 files</span></h1><p class="lede">Every file a statement is written in, by directory. Open a file to read its statement'

@@ -6,6 +6,11 @@ includes:
 parameters:
     toolkit:
         visibilityExemptNamespacePrefixes: ['Tests', 'Bench', 'Fuzz']
+        forbiddenTermsByPath:
+            'src/Core/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Platform/MySql/*': [postgres, pgsql, sqlite]
+            'src/Platform/PostgreSql/*': [mysql, mariadb, sqlite]
+            'src/Platform/Sqlite/*': [mysql, mariadb, postgres, pgsql]
         forbiddenNamespacePrefixes: ['Tests\Fixture', 'Tests\Fixtures']
     phpVersion: 80100
     level: max

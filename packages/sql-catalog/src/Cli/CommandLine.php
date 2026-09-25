@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Cli;
 
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Configuration;
-use SqlCatalog\Filter\CatalogFilter;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Filter\CatalogFilter;
+use SqlCatalog\Facade\Configuration;
 
 /**
  * What the command was asked to do.

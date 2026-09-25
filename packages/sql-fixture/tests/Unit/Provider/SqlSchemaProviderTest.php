@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\Provider\SqlSchemaProvider as Subject;
 
 #[CoversClass(Subject::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\FixtureGenerator::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\FixtureProvider::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Provider\FixtureGenerator::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Provider\FixtureProvider::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\FixtureSet::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\GenerationRun::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\OverrideRows::class)]
@@ -34,7 +34,7 @@ use SqlFixture\Provider\SqlSchemaProvider as Subject;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\MySqlSchemaFetcher::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\MySqlSchemaParser::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\MySqlTypeMapper::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PlatformFactory::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Provider\PlatformFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlSchemaFetcher::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper::class)]
@@ -63,7 +63,7 @@ use SqlFixture\Provider\SqlSchemaProvider as Subject;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Exception\InvalidOverrideException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
@@ -155,7 +155,7 @@ final class SqlSchemaProviderTest extends TestCase
 {
     public function testCachesSchemasThroughThePublicProviderContract(): void
     {
-        $provider = new \SqlFixture\FixtureProvider(Factory::create());
+        $provider = new \SqlFixture\Provider\FixtureProvider(Factory::create());
         $provider->fixture('CREATE TABLE users (id INT)', overrides: ['id' => 5]);
         $first = $provider->getSchemaResolver()->resolve('users');
         $provider->fixture('CREATE TABLE users (id INT)', overrides: ['id' => 6]);

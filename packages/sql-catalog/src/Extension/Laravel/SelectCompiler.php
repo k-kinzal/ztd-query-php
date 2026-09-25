@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Extension\Laravel;
 
-use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\Domain;
 
 /**
  * Compiles a read after all query mutations have run.

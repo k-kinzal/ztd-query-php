@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Extension\Laravel;
 
-use SqlCatalog\Evaluation\ArrayEntry;
-use SqlCatalog\Evaluation\ArrayTerm;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Type\TypeShape;
+use SqlCatalog\Core\Evaluation\ArrayEntry;
+use SqlCatalog\Core\Evaluation\ArrayTerm;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Type\TypeShape;
 
 /**
  * A query's immutable fields, carried through the shared object memory.

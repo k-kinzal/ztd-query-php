@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Benchmark;
-use SqlFormatter\FormatOptions;
-use SqlFormatter\Formatter;
-use SqlFormatter\Style;
+use SqlFormatter\Core\FormatOptions;
+use SqlFormatter\Core\Style;
+use SqlFormatter\Facade\Formatter;
 use SqlParser\Sqlite\SqliteParser;
 
 /**

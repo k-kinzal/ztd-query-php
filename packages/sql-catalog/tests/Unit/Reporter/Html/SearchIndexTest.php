@@ -7,19 +7,19 @@ namespace Tests\Unit\Reporter\Html;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\TextPattern;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
 use SqlCatalog\Reporter\Html\SearchIndex;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\TextPattern;
 
 #[CoversClass(SearchIndex::class)]
 #[UsesClass(CallSite::class)]
@@ -34,11 +34,11 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(StatementKind::class)]
 #[UsesClass(LiteralText::class)]
 #[UsesClass(TextPattern::class)]
-#[UsesClass(\SqlCatalog\Catalog\StatementPart::class)]
+#[UsesClass(\SqlCatalog\Core\Catalog\StatementPart::class)]
 #[UsesClass(\SqlCatalog\Reporter\Html\SqlHighlighter::class)]
-#[UsesClass(\SqlCatalog\Text\TextHole::class)]
-#[UsesClass(\SqlCatalog\Text\Origin::class)]
-#[UsesClass(\SqlCatalog\Type\TypeShape::class)]
+#[UsesClass(\SqlCatalog\Core\Text\TextHole::class)]
+#[UsesClass(\SqlCatalog\Core\Text\Origin::class)]
+#[UsesClass(\SqlCatalog\Core\Type\TypeShape::class)]
 final class SearchIndexTest extends TestCase
 {
     public function testRenderWritesTheIndexAsAScriptThePagesLoad(): void
@@ -49,9 +49,9 @@ final class SearchIndexTest extends TestCase
 
         self::assertSame(
             'window.__CATALOG_INDEX__ = [{"q":"SELECT 1","w":"a.php:1","f":"f","t":"","u":"statements/a1.html","k":"SELECT","r":"resolved"}];' . "\n",
-            (new SearchIndex())->render(new ReportSite($catalog)),
+            (new SearchIndex())->render(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())),
         );
-        self::assertSame("window.__CATALOG_INDEX__ = [];\n", (new SearchIndex())->render(new ReportSite(new Catalog())));
+        self::assertSame("window.__CATALOG_INDEX__ = [];\n", (new SearchIndex())->render(new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())));
     }
 
     public function testEntryToArrayCarriesWhatTheSearchReads(): void
@@ -60,16 +60,16 @@ final class SearchIndexTest extends TestCase
 
         self::assertSame(
             ['q' => 'DELETE FROM users WHERE id = 1', 'w' => 'a.php:3', 'f' => 'App\\R::gone', 't' => 'users', 'u' => 'statements/a1.html', 'k' => 'DELETE', 'r' => 'resolved'],
-            (new SearchIndex())->entryToArray(new ReportSite(new Catalog([$entry])), $entry),
+            (new SearchIndex())->entryToArray(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry),
         );
     }
     public function testEntryToArrayMakesTheVariableNameSearchable(): void
     {
         $entry = new CatalogEntry('q', StatementKind::Unknown, TextPattern::fromHole(
-            new \SqlCatalog\Text\TextHole(\SqlCatalog\Text\Origin::Parameter, \SqlCatalog\Type\TypeShape::unknown(), '$sql'),
+            new \SqlCatalog\Core\Text\TextHole(\SqlCatalog\Core\Text\Origin::Parameter, \SqlCatalog\Core\Type\TypeShape::unknown(), '$sql'),
         ), [], [], new CallSite('query.php', 4, 'f', 'pdo.prepare'), []);
 
-        self::assertSame('{$sql}', (new SearchIndex())->entryToArray(new ReportSite(new Catalog([$entry])), $entry)['q']);
+        self::assertSame('{$sql}', (new SearchIndex())->entryToArray(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry)['q']);
     }
 
 }

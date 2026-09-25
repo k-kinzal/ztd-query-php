@@ -13,7 +13,7 @@ final class SqlVersion
 {
     /**
      * @param string $dialect Dialect the release belongs to
-     * @param string $name Release tag, such as `mysql-8.4.7`
+     * @param string $name Release tag as declared by the resource manifest
      * @param string $tablePath Absolute path of the parse table
      * @param string $keywordPath Absolute path of the keyword table
      */

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Extension\Laravel;
 
-use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\Domain;
 
 /**
  * Projection, ordering, grouping and join effects on a query state.
@@ -93,7 +93,7 @@ final class Clauses
             return $state->reject('Laravel raw clause bindings are incomplete');
         }
 
-        return $state->append($field, [$arguments[0]])->append($bindings, array_map(static fn (\SqlCatalog\Evaluation\ArrayEntry $entry): Domain => $entry->value, $values->entries));
+        return $state->append($field, [$arguments[0]])->append($bindings, array_map(static fn (\SqlCatalog\Core\Evaluation\ArrayEntry $entry): Domain => $entry->value, $values->entries));
     }
 
     /**

@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\StatementPart;
 use SqlCatalog\Reporter\Html\SqlFormatter;
-use SqlFormatter\FormattingException;
+use SqlFormatter\Core\FormattingException;
 
 #[CoversClass(SqlFormatter::class)]
 #[UsesClass(StatementPart::class)]
@@ -34,7 +34,7 @@ final class SqlFormatterTest extends TestCase
     #[DataProvider('providerFormat')]
     public function testFormatExpandsSqlAcrossSupportedDialects(string $sql, string $expected): void
     {
-        $formatter = new SqlFormatter();
+        $formatter = \SqlCatalog\Facade\Builtins::sqlFormatter();
         $parts = $formatter->format([new StatementPart($sql)]);
 
         self::assertSame($expected, implode('', array_map(static fn (StatementPart $part): string => $part->text, $parts)));
@@ -45,7 +45,7 @@ final class SqlFormatterTest extends TestCase
     {
         $table = new StatementPart('', true, 'parameter', 'a parameter', '$table');
         $id = new StatementPart('', true, 'call', 'a call result', 'readId()', '$id');
-        $parts = (new SqlFormatter())->format([new StatementPart('SELECT * FROM '), $table, new StatementPart(' WHERE id = '), $id]);
+        $parts = (\SqlCatalog\Facade\Builtins::sqlFormatter())->format([new StatementPart('SELECT * FROM '), $table, new StatementPart(' WHERE id = '), $id]);
 
         self::assertSame("SELECT\n    *\nFROM\n    ", $parts[0]->text);
         self::assertSame($table, $parts[1]);
@@ -57,7 +57,7 @@ final class SqlFormatterTest extends TestCase
     public function testMaskPreservesLiteralMarkersAndRestoresGapsWithoutCollisions(): void
     {
         $gap = new StatementPart('', true, 'external', 'external input', '$value');
-        $parts = (new SqlFormatter())->format([
+        $parts = (\SqlCatalog\Facade\Builtins::sqlFormatter())->format([
             new StatementPart("SELECT '__sql_catalog_gap_0__', '{\$}', 'prefix"),
             $gap,
             new StatementPart("suffix' FROM `table_"),
@@ -74,7 +74,7 @@ final class SqlFormatterTest extends TestCase
 
     public function testFormatPreservesLiteralWhitespaceAndLineCommentBoundaries(): void
     {
-        $parts = (new SqlFormatter())->format([new StatementPart("SELECT 'a  b', 1 -- keep this\nFROM users WHERE id = ?")]);
+        $parts = (\SqlCatalog\Facade\Builtins::sqlFormatter())->format([new StatementPart("SELECT 'a  b', 1 -- keep this\nFROM users WHERE id = ?")]);
 
         self::assertStringContainsString("'a  b'", $parts[0]->text);
         self::assertStringContainsString("-- keep this\n", $parts[0]->text);
@@ -83,7 +83,7 @@ final class SqlFormatterTest extends TestCase
 
     public function testFormatLeavesUnsupportedAndUnknownStatementsIntact(): void
     {
-        $formatter = new SqlFormatter();
+        $formatter = \SqlCatalog\Facade\Builtins::sqlFormatter();
         $gap = new StatementPart('', true, 'call', 'a call result', 'sql()');
         $invalid = [new StatementPart("SELECT (\n "), $gap];
 
@@ -95,7 +95,7 @@ final class SqlFormatterTest extends TestCase
 
     public function testMaskParametersPreservesClientPlaceholdersAndPostgresCasts(): void
     {
-        $formatter = new SqlFormatter();
+        $formatter = \SqlCatalog\Facade\Builtins::sqlFormatter();
         $sql = "SELECT :id::integer, '%s', :id FROM users WHERE name = %s";
         [$masked, $replacements] = $formatter->maskParameters($sql, [], '__test_');
 
@@ -108,6 +108,6 @@ final class SqlFormatterTest extends TestCase
     {
         $this->expectException(FormattingException::class);
 
-        (new SqlFormatter())->restore('SELECT 1', ['missing' => new StatementPart('', true)]);
+        (\SqlCatalog\Facade\Builtins::sqlFormatter())->restore('SELECT 1', ['missing' => new StatementPart('', true)]);
     }
 }

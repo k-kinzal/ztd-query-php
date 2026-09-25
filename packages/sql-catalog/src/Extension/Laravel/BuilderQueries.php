@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace SqlCatalog\Extension\Laravel;
 
 use PhpParser\Node\Expr;
-use SqlCatalog\Analysis\SinkFinder;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Extension\Model\QueryModelInterface;
-use SqlCatalog\Extension\Model\QueryOutput;
-use SqlCatalog\Php\ProgramIndex;
+use SqlCatalog\Core\Analysis\SinkFinder;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Extension\Model\QueryModelInterface;
+use SqlCatalog\Core\Extension\Model\QueryOutput;
+use SqlCatalog\Core\Php\ProgramIndex;
 
 /**
  * Derives receiver state and arguments together, then compiles at the existing sink.
@@ -22,7 +22,7 @@ final class BuilderQueries implements QueryModelInterface
     /**
      * Configures the source metadata and SQL grammar used by this model.
      */
-    public function __construct(private readonly ProgramIndex $index)
+    public function __construct(private readonly ProgramIndex $index, private readonly \SqlCatalog\Core\Sql\Dialects $dialects = new \SqlCatalog\Core\Sql\Dialects())
     {
     }
 
@@ -67,10 +67,10 @@ final class BuilderQueries implements QueryModelInterface
      */
     public function compile(QueryState $state, string $method, array $arguments): array
     {
-        if (!in_array($state->string('dialect'), ['mysql', 'pgsql', 'sqlite'], true)) {
+        if ($this->dialects->find($state->string('dialect')) === null) {
             $state = $state->reject('Laravel connection dialect is unresolved');
         }
-        $grammar = new Grammar($state->string('dialect'));
+        $grammar = new Grammar($this->dialects->find($state->string('dialect')));
         if ($state->get('softDeletes')->soleLiteral()?->value === true && $state->string('trashed') !== 'withtrashed') {
             $state = (new Predicates($grammar))->groupDisjunction($state);
             $column = $state->get('table')->concat(Domain::literal('.'))->concat($state->get('deletedColumn'));

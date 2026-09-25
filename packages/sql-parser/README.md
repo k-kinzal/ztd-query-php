@@ -96,3 +96,19 @@ composer build-sqlite
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+## Architecture
+
+`Grammar`, `Compiler`, `Automaton`, `Table`, `Lexer`, `Parser`, and `Resource`
+are independent core concepts. They do not name or depend on a database
+implementation. `Parser\SqlParser` is the consumer-facing contract for parsing,
+tokenization, and the selected grammar release.
+
+`MySql`, `PostgreSql`, and `Sqlite` implement that contract and compose the core
+with their own lexers, version capabilities, and grammar-source readers. No
+platform depends on another platform. The scripts in `bin/` build resources;
+they are development tooling, not a public CLI layer.
+
+Deptrac enforces the directions in `deptrac.yaml`. PHPStan's file-term rule also
+rejects database names anywhere in every core directory and other database
+names anywhere in a platform, including strings and documentation.

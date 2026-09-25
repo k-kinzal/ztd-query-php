@@ -21,9 +21,9 @@ and link the sibling parser.
 ## Usage
 
 ```php
-use SqlFormatter\Formatter;
-use SqlFormatter\FormatOptions;
-use SqlFormatter\Style;
+use SqlFormatter\Facade\Formatter;
+use SqlFormatter\Core\FormatOptions;
+use SqlFormatter\Core\Style;
 use SqlParser\MySql\MySqlParser;
 
 $formatter = new Formatter(
@@ -82,9 +82,9 @@ verbatim, including bodies inactive in the selected MySQL release. Newlines insi
 literals, identifiers, and directives can still appear in compact output.
 
 ```php
-$compact = new \SqlFormatter\Formatter(
+$compact = new \SqlFormatter\Facade\Formatter(
     new \SqlParser\Sqlite\SqliteParser(),
-    new \SqlFormatter\FormatOptions(\SqlFormatter\Style::Compact),
+    new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact),
 );
 $compact->format('select all (a) as x from t where a != 1 order by a asc;');
 // SELECT a x FROM t WHERE a<>1 ORDER BY a
@@ -207,3 +207,22 @@ corpora, and a nightly workflow runs every target. See [`fuzz/README.md`](fuzz/R
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Architecture
+
+`Core` owns formatting, layout, syntax traversal, canonicalization, and the `Dialect`
+contract. It receives the sql-parser core interface and injected grammar roles,
+keyword declarations, reduction rules, and lexical callbacks. It contains no
+concrete parser references, database names, or database-selection branches.
+
+Each `Platform` implementation declares its own grammar and lexical behavior.
+The platforms depend only on core contracts and never on each other. Grammar
+role lists cover the symbols shipped across each platform's supported releases.
+
+`Facade` selects built-in rules for an existing parser and preserves its version
+and lexical modes. A caller can supply a custom `Core\Dialect` through the optional
+third constructor argument. Shared options, styles, and exceptions live in `Core`.
+
+Deptrac rejects both internal and sql-parser platform dependencies from Core.
+PHPStan rejects database words anywhere under `src/Core`, including comments,
+and other database names in each platform. Development scripts are not a CLI layer.

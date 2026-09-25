@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html;
 
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
 
 /**
  * A listing of statements that a reader can narrow down on the page.
