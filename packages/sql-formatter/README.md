@@ -181,6 +181,9 @@ and [verification](docs/verification.md) for the checks behind these guarantees.
 
 ## Development
 
+The execution regression tests require `ext-pdo_sqlite`; no database server is
+needed. This extension is a development dependency only.
+
 ```bash
 composer install
 composer lint
