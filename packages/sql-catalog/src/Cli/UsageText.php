@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Cli;
 
-use SqlCatalog\Extension\ExtensionRegistry;
-use SqlCatalog\Reporter\ReporterRegistry;
+use SqlCatalog\Core\Extension\ExtensionRegistry;
+use SqlCatalog\Core\Reporter\ReporterRegistry;
 
 /**
  * What the command prints when it is asked how to be used.

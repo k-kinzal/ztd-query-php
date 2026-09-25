@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Extension\Laravel;
 
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Type\TypeShape;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Type\TypeShape;
 
 /**
  * Laravel identifier wrapping and ordered SQL fragments for the selected grammar.
@@ -19,7 +19,7 @@ final class Grammar
     /**
      * Uses the configured framework SQL grammar.
      */
-    public function __construct(public readonly ?string $dialect)
+    public function __construct(public readonly ?\SqlCatalog\Core\Sql\Dialect $dialect)
     {
     }
 
@@ -33,13 +33,13 @@ final class Grammar
             return QueryState::from($raw)->get('sql');
         }
         $name = $value->soleLiteral()?->value;
-        if (!is_string($name) || !in_array($this->dialect, ['mysql', 'pgsql', 'sqlite'], true)) {
+        if (!is_string($name) || $this->dialect === null) {
             return Domain::opaque(TypeShape::of(['string']), Origin::Call, 'Laravel identifier or connection dialect is unresolved');
         }
         if (str_contains($name, '->')) {
             return Domain::opaque(TypeShape::of(['string']), Origin::Call, 'Laravel JSON selectors are not modelled');
         }
-        $quote = $this->dialect === 'mysql' ? '`' : '"';
+        $quote = $this->dialect->identifierQuote();
         $alias = preg_split('/\s+as\s+/i', $name);
         if ($alias !== false && count($alias) >= 2) {
             return $this->wrap(Domain::literal($alias[0]))->concat(Domain::literal(' as '))->concat(Domain::literal($alias[1] === '*' ? '*' : $quote . str_replace($quote, $quote . $quote, $alias[1]) . $quote));

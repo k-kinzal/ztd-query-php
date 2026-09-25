@@ -2,7 +2,7 @@
 
 An `ExtensionInterface` declares database sinks and known globals. It remains
 sufficient for APIs that receive SQL directly. An extension can additionally
-implement `SqlCatalog\Extension\Model\ModelProviderInterface` and return a
+implement `SqlCatalog\Core\Extension\Model\ModelProviderInterface` and return a
 `ModelSet` from `models(ModelContext $context)`.
 
 The registry instantiates providers only for enabled extensions, separately for
@@ -29,15 +29,15 @@ leave it disabled.
 For example, this extension models an application's `today_sql()` helper:
 
 ```php
-use SqlCatalog\AnalysisOptions;
-use SqlCatalog\Analyzer;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Extension\ExtensionRegistry;
-use SqlCatalog\Extension\Model\CallContext;
-use SqlCatalog\Extension\Model\ModelContext;
-use SqlCatalog\Extension\Model\ModelProviderInterface;
-use SqlCatalog\Extension\Model\ModelSet;
-use SqlCatalog\Extension\PdoExtension;
+use SqlCatalog\Facade\AnalysisOptions;
+use SqlCatalog\Facade\Analyzer;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Extension\ExtensionRegistry;
+use SqlCatalog\Core\Extension\Model\CallContext;
+use SqlCatalog\Core\Extension\Model\ModelContext;
+use SqlCatalog\Core\Extension\Model\ModelProviderInterface;
+use SqlCatalog\Core\Extension\Model\ModelSet;
+use SqlCatalog\Extension\Pdo\PdoExtension;
 
 final class ApplicationSql implements ModelProviderInterface
 {

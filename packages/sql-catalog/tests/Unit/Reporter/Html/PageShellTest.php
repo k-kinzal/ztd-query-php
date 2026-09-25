@@ -7,17 +7,23 @@ namespace Tests\Unit\Reporter\Html;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\AnalysisProblem;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Finding;
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Placeholder;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Catalog\StatementPart;
-use SqlCatalog\Catalog\ValueDomain;
+use SqlCatalog\Core\Catalog\AnalysisProblem;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Finding;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Placeholder;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\ValueDomain;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
@@ -31,12 +37,6 @@ use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
 use SqlCatalog\Reporter\Html\StatementRow;
 use SqlCatalog\Reporter\Html\TableName;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(PageShell::class)]
 #[UsesClass(CallSite::class)]
@@ -72,7 +72,7 @@ final class PageShellTest extends TestCase
 {
     public function testRenderWritesOneCompleteDocumentWithLinksRelativeToTheRoot(): void
     {
-        $page = (new PageShell())->render(new ReportSite(new Catalog()), 'tables/users.html', 'users', [['Overview', 'index.html'], ['users', null]], '<p>body</p>', [['On this page', [['Reads', '#reads', null, false]], null]]);
+        $page = (new PageShell())->render(new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'tables/users.html', 'users', [['Overview', 'index.html'], ['users', null]], '<p>body</p>', [['On this page', [['Reads', '#reads', null, false]], null]]);
 
         self::assertStringStartsWith('<!DOCTYPE html>' . "\n" . '<html lang="en" data-dd-theme-key="sql-catalog-theme">', $page);
         self::assertStringContainsString('<title>users</title>', $page);
@@ -97,7 +97,7 @@ final class PageShellTest extends TestCase
         $catalog = new Catalog([
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $sidebar = (new PageShell())->sidebar(new ReportSite($catalog), 'tables/t.html', [['Tables', [['t', 'tables/t.html', 1, true]], 'tables.html']]);
+        $sidebar = (new PageShell())->sidebar(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'tables/t.html', [['Tables', [['t', 'tables/t.html', 1, true]], 'tables.html']]);
 
         self::assertStringStartsWith('<div class="sidebar-section"><p class="sidebar-title">Browse</p>', $sidebar);
         self::assertStringEndsWith('<div class="sidebar-section"><p class="sidebar-title">Tables</p><ul class="sidebar-list sidebar-context"><li class="is-active"><a href="../tables/t.ht'
@@ -110,7 +110,7 @@ final class PageShellTest extends TestCase
         $catalog = new Catalog([
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $routes = (new PageShell())->routes(new ReportSite($catalog), 'tables/users.html');
+        $routes = (new PageShell())->routes(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'tables/users.html');
 
         self::assertStringContainsString('<li class="is-active"><a href="../tables.html" aria-current="page">Tables</a><span class="sidebar-count">1</span></li>', $routes);
         self::assertStringContainsString('<li><a href="../index.html">Overview</a></li>', $routes);
@@ -221,7 +221,7 @@ final class PageShellTest extends TestCase
             ]),
         ];
         $catalog = new Catalog($entries, [new AnalysisProblem('src/broken.php', 'broken')]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<!DOCTYPE html>

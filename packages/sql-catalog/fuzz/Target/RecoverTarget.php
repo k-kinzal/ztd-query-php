@@ -7,7 +7,7 @@ namespace Fuzz\Target;
 use Error;
 use Faker\Factory;
 use Faker\Generator;
-use SqlCatalog\Analyzer;
+use SqlCatalog\Facade\Analyzer;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Choice\PlanBuilder;
 use SqlFaker\Generation\Plan\GenerationPlan;

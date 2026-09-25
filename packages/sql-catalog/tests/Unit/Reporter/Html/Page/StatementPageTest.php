@@ -7,17 +7,23 @@ namespace Tests\Unit\Reporter\Html\Page;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\AnalysisProblem;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Finding;
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Placeholder;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Catalog\StatementPart;
-use SqlCatalog\Catalog\ValueDomain;
+use SqlCatalog\Core\Catalog\AnalysisProblem;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Finding;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Placeholder;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\ValueDomain;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
@@ -31,12 +37,6 @@ use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
 use SqlCatalog\Reporter\Html\StatementRow;
 use SqlCatalog\Reporter\Html\TableName;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(StatementPage::class)]
 #[UsesClass(CallSite::class)]
@@ -76,7 +76,7 @@ final class StatementPageTest extends TestCase
             new Placeholder('?', 0, null, new ValueDomain('int', [7], true, [])),
         ], new CallSite('src/a.php', 12, 'App\\R::find', 'pdo.prepare'), [Finding::of(FindingRule::DynamicSql, 'spliced')]);
         $other = new CatalogEntry('a2', StatementKind::Delete, TextPattern::fromText('DELETE FROM users'), ['users'], [], new CallSite('src/a.php', 20, 'App\\R::find', 'pdo.query'), []);
-        $page = (new StatementPage())->render(new ReportSite(new Catalog([$entry, $other])), $entry);
+        $page = (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->render(new ReportSite(new Catalog([$entry, $other]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry);
 
         self::assertStringContainsString('<h1><span class="chip tone-blue">SELECT</span><span>on users</span></h1>', $page);
         self::assertStringContainsString('<pre class="code code-lead"><span class="tok-kw">SELECT</span>' . "\n    " . 'id' . "\n" . '<span class="tok-kw">FROM</span>' . "\n    " . 'users', $page);
@@ -90,7 +90,7 @@ final class StatementPageTest extends TestCase
     public function testRenderLeavesOutTheValuesWhenTheStatementTakesNone(): void
     {
         $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, '{main}', 'pdo.query'), []);
-        $page = (new StatementPage())->render(new ReportSite(new Catalog([$entry])), $entry);
+        $page = (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->render(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry);
 
         self::assertStringNotContainsString('class="split"', $page);
         self::assertStringNotContainsString('Bound values', $page);
@@ -99,7 +99,7 @@ final class StatementPageTest extends TestCase
 
     public function testTitleNamesTheTablesOrSaysWhyThereAreNone(): void
     {
-        $page = new StatementPage();
+        $page = new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
         $site = new CallSite('a.php', 1, 'f', 'pdo.query');
 
         self::assertSame('on {$}posts, users', $page->title(new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['{$}posts', 'users'], [], $site, [])));
@@ -115,14 +115,14 @@ final class StatementPageTest extends TestCase
             'Issued at <a class="mono" href="../files/src-a-php.html">src/a.php:12</a> in <a class="mono" href="../classes/app-r.html#fn-app-r-find">App\\R::find</'
                 . 'a> through <span class="chip chip-sm chip-ghost" title="The database call that was matched">pdo.prepare</span>, reached by way of <code>App\\R::run → '
                 . 'App\\R::find</code>.',
-            (new StatementPage())->where(new ReportSite(new Catalog([$entry])), $entry),
+            (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->where(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry),
         );
     }
 
     public function testBodyLaysTheStatementOutAndKeepsTheSourceForm(): void
     {
         $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText("SELECT 1\n  FROM t"), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []);
-        $body = (new StatementPage())->body($entry);
+        $body = (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->body($entry);
 
         self::assertStringContainsString('<button type="button" class="btn copy" data-dd-copy title="Copy the statement">Copy</button>', $body);
         self::assertStringContainsString('<pre class="code code-lead"><span class="tok-kw">SELECT</span>' . "\n    " . '<span class="tok-num">1</span>' . "\n" . '<span class="tok-kw">FROM</span>' . "\n    " . 't</pre>', $body);
@@ -139,13 +139,13 @@ final class StatementPageTest extends TestCase
 
         self::assertSame(
             '<pre class="code code-lead"><span class="tok-com">-- no statement was read from this call</span>' . "\n" . '$db-&gt;query($sql)</pre>',
-            (new StatementPage())->body($entry),
+            (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->body($entry),
         );
     }
 
     public function testCaveatsWarnAboutWhatTheStatementDoesNotSay(): void
     {
-        $page = new StatementPage();
+        $page = new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
         $site = new CallSite('a.php', 1, 'f', 'pdo.query');
         $open = new CatalogEntry('a', StatementKind::Select, TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown())), [], [], $site, [], false);
         $cut = new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], $site, [], true, [], true);
@@ -160,7 +160,7 @@ final class StatementPageTest extends TestCase
     public function testFactsLinkTheTablesAndExplainTheReading(): void
     {
         $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown())), ['users'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []);
-        $facts = (new StatementPage())->facts(new ReportSite(new Catalog([$entry])), $entry);
+        $facts = (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->facts(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry);
 
         self::assertStringContainsString('<dt>Resolution</dt><dd><span class="chip chip-ghost">incomplete</span>', $facts);
         self::assertStringContainsString('<dt>Search</dt><dd><span class="muted">left open: candidates or dependencies remain unknown</span></dd>', $facts);
@@ -174,13 +174,13 @@ final class StatementPageTest extends TestCase
             new Placeholder(':id', 0, 'id', new ValueDomain('string', ['a', 'b'], true, [])),
         ], new CallSite('a.php', 3, 'f', 'pdo.query'), []);
 
-        self::assertStringContainsString('<code>&#039;a&#039;|&#039;b&#039;</code>', (new StatementPage())->values($entry));
-        self::assertSame('', (new StatementPage())->values(new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 3, 'f', 'pdo.query'), [])));
+        self::assertStringContainsString('<code>&#039;a&#039;|&#039;b&#039;</code>', (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->values($entry));
+        self::assertSame('', (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->values(new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 3, 'f', 'pdo.query'), [])));
     }
 
     public function testValueRowSaysWhenNothingWasBoundOrPinnedDown(): void
     {
-        $page = new StatementPage();
+        $page = new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<tr><td class="tight"><code>?</code></td><td class="tight"><code>?</code></td><td><span class="none">unbound</span></td></tr>',
@@ -194,7 +194,7 @@ final class StatementPageTest extends TestCase
 
     public function testOpenValueSaysSoWhenNothingIsKnownAboutWhereItCameFrom(): void
     {
-        self::assertSame('not pinned down', (new StatementPage())->openValue([]));
+        self::assertSame('not pinned down', (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->openValue([]));
     }
 
     public function testFindingsCarryTheirRuleAndSeverity(): void
@@ -203,9 +203,9 @@ final class StatementPageTest extends TestCase
 
         self::assertSame(
             '<h2 id="findings">Findings</h2><ul class="finding-list"><li><span class="chip tone-warn">medium</span><span><code>dynamic-sql</code> spliced</span></li></ul>',
-            (new StatementPage())->findings($entry),
+            (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->findings($entry),
         );
-        self::assertSame('', (new StatementPage())->findings(new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 3, 'f', 'pdo.query'), [])));
+        self::assertSame('', (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->findings(new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 3, 'f', 'pdo.query'), [])));
     }
 
     public function testRelatedPointsAtTheRestWhenThereIsMoreThanItLists(): void
@@ -214,7 +214,7 @@ final class StatementPageTest extends TestCase
             static fn (int $n): CatalogEntry => new CatalogEntry('s' . $n, StatementKind::Select, TextPattern::fromText('SELECT ' . $n), ['users'], [], new CallSite('a.php', $n, 'f', 'pdo.query'), []),
             range(1, 10),
         );
-        $related = (new StatementPage())->related(new ReportSite(new Catalog($entries)), 'statements/s1.html', $entries[0]);
+        $related = (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->related(new ReportSite(new Catalog($entries), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'statements/s1.html', $entries[0]);
 
         self::assertStringContainsString('<a href="../files/a-php.html#fn-f">Every statement of this function</a>', $related);
         self::assertStringContainsString('<a href="../tables/users.html">Every statement on this table</a>', $related);
@@ -229,7 +229,7 @@ final class StatementPageTest extends TestCase
             static fn (int $n): CatalogEntry => new CatalogEntry('s' . $n, StatementKind::Select, TextPattern::fromText('SELECT ' . $n), ['users', 'posts', 'meta'], [], new CallSite('a.php', $n, 'f', 'pdo.query'), []),
             range(1, 10),
         );
-        $related = (new StatementPage())->related(new ReportSite(new Catalog($entries)), 'statements/s1.html', $entries[0]);
+        $related = (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->related(new ReportSite(new Catalog($entries), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'statements/s1.html', $entries[0]);
 
         self::assertStringContainsString('href="../statements/s2.html"', $related);
         self::assertStringNotContainsString('href="../statements/s10.html"', $related);
@@ -242,7 +242,7 @@ final class StatementPageTest extends TestCase
     {
         $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), [], true, ['f']);
 
-        self::assertStringEndsWith('pdo.query</span>.', (new StatementPage())->where(new ReportSite(new Catalog([$entry])), $entry));
+        self::assertStringEndsWith('pdo.query</span>.', (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->where(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry));
     }
 
     public function testContextLeadsToEveryPlaceTheStatementBelongsToAndTheRestOfItsFunction(): void
@@ -263,7 +263,7 @@ final class StatementPageTest extends TestCase
                     ['DELETE', 'statements/a2.html', null, false],
                 ], 'classes/app-r.html#fn-app-r-find'],
             ],
-            (new StatementPage())->context(new ReportSite(new Catalog([$entry, $other])), $entry),
+            (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->context(new ReportSite(new Catalog([$entry, $other]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry),
         );
     }
 
@@ -273,7 +273,7 @@ final class StatementPageTest extends TestCase
 
         self::assertSame(
             ['Belongs to', [['File index.php', 'files/index-php.html', 1, false]], null],
-            (new StatementPage())->context(new ReportSite(new Catalog([$entry])), $entry)[0],
+            (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->context(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry)[0],
         );
     }
 
@@ -319,7 +319,7 @@ final class StatementPageTest extends TestCase
             ]),
         ];
         $catalog = new Catalog($entries, [new AnalysisProblem('src/broken.php', 'broken')]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<h1><span class="chip tone-blue">SELECT</span><span>on posts</span></h1><p class="lede">Issued at <a class="mono" href="../files/src-a-php.h'
@@ -398,7 +398,7 @@ final class StatementPageTest extends TestCase
                 . '<p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a href="../classes/app-r.html#fn-app-r-find">R::find</a><a class="chip'
                 . ' chip-ghost" href="../tables/posts.html">posts</a><a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-war'
                 . 'n" title="The most serious finding on this statement">medium</span></p></li></ol></section>',
-            (new StatementPage())->render($site, $entries[0]),
+            (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->render($site, $entries[0]),
         );
     }
 
@@ -444,7 +444,7 @@ final class StatementPageTest extends TestCase
             ]),
         ];
         $catalog = new Catalog($entries, [new AnalysisProblem('src/broken.php', 'broken')]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<h1><span class="chip tone-slate">UNKNOWN</span><span>a call nothing was read from</span></h1><p class="lede">Issued at <a class="mono" href="../files'
@@ -458,27 +458,27 @@ $db-&gt;query($sql)</pre><div class="notice tone-warn"><ul><'
                 . '><div><dt>Identifier</dt><dd><code>c2</code> <span class="muted">stable across runs while the statement is unchanged</span></dd></div></dl></section><'
                 . 'h2 id="findings">Findings</h2><ul class="finding-list"><li><span class="chip tone-neutral">low</span><span><code>call-not-analyzed</code> unseen</span'
                 . '></li></ul>',
-            (new StatementPage())->render($site, $entries[6]),
+            (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->render($site, $entries[6]),
         );
     }
 
     public function testRenderShowsUnanalyzedSourceBetweenTheCaveatAndStatementFacts(): void
     {
         $entry = new CatalogEntry('unknown', StatementKind::Unknown, TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown(), '$db->query($sql)')), [], [], new CallSite('a.php', 1, 'f', 'unmatched'), []);
-        $site = new ReportSite(new Catalog([$entry], [], ['a.php' => '<?php $db->query($sql);']));
-        $page = (new StatementPage())->render($site, $entry);
+        $site = new ReportSite(new Catalog([$entry], [], ['a.php' => '<?php $db->query($sql);']), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
+        $page = (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->render($site, $entry);
 
         self::assertStringContainsString('examined, so nothing was read from it.</li></ul></div><section><h2 id="source">Source code</h2>', $page);
         self::assertStringContainsString('</a>&lt;?php $db-&gt;query($sql);</span>', $page);
         self::assertStringContainsString('</code></pre></section><section><h2 id="facts">About this statement</h2>', $page);
-        self::assertSame(['Source code', '#source', null, false], (new StatementPage())->context($site, $entry)[0][1][0]);
+        self::assertSame(['Source code', '#source', null, false], (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->context($site, $entry)[0][1][0]);
     }
     public function testBodyUsesTheSameNamedGapInTheCopyableAndSourceBlocks(): void
     {
         $entry = new CatalogEntry('q', StatementKind::Unknown, TextPattern::fromHole(
             new TextHole(Origin::Parameter, TypeShape::unknown(), '$sql'),
         ), [], [], new CallSite('query.php', 4, 'f', 'pdo.prepare'), []);
-        $body = (new StatementPage())->body($entry);
+        $body = (new StatementPage(formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()))->body($entry);
 
         self::assertSame(2, substr_count($body, '>{$sql}</span>'));
         self::assertStringContainsString('data-dd-copy', $body);

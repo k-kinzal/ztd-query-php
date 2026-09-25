@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Error;
-use SqlCatalog\Analyzer;
+use SqlCatalog\Facade\Analyzer;
 
 /**
  * Feeds arbitrary bytes to the analyzer as if they were a source file.

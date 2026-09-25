@@ -64,7 +64,7 @@ database APIs this build recognises and `--list-reporters` for the output format
 ### From PHP
 
 ```php
-use SqlCatalog\Analyzer;
+use SqlCatalog\Facade\Analyzer;
 
 $catalog = (new Analyzer())->analyzePaths(['src']);
 
@@ -168,7 +168,7 @@ without booting Laravel or loading the application's classes. Unknown effects
 remain visible as incomplete statements. See [Laravel support](docs/laravel.md)
 for supported operations, configuration and limitations.
 
-Implement `SqlCatalog\Extension\ExtensionInterface` and register it on an
+Implement `SqlCatalog\Core\Extension\ExtensionInterface` and register it on an
 `ExtensionRegistry` to recognise an API this package does not ship. An extension
 also says which global variables hold its handle, which is what makes the
 `global $wpdb;` idiom readable as the database calls that follow it. The
@@ -257,9 +257,9 @@ namespace.
 From PHP, register a callable directly:
 
 ~~~php
-use SqlCatalog\Analysis\FunctionModel\Registry;
-use SqlCatalog\Analyzer;
-use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Core\Analysis\FunctionModel\Registry;
+use SqlCatalog\Facade\Analyzer;
+use SqlCatalog\Core\Evaluation\Domain;
 
 $models = Registry::withBuiltins();
 $models->register('App\\table_name', static fn (array $arguments): Domain => Domain::literal('users'));
@@ -360,3 +360,8 @@ See [How the analysis works](docs/analysis.md) and
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+## Dependency layers
+
+See [the layer contracts and composition rules](docs/layers.md) for the Core,
+independent Extension/Reporter/Platform implementations, Facade, and CLI.

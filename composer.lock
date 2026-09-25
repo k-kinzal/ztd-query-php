@@ -319,7 +319,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-catalog",
-                "reference": "20f06efa517de3c1159599a6800a8f4c12def6fb"
+                "reference": "2784df2e2214c79b7f49827f0ef897c61610def0"
             },
             "require": {
                 "ext-json": "*",

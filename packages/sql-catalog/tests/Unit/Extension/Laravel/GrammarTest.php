@@ -7,20 +7,20 @@ namespace Tests\Unit\Extension\Laravel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Evaluation\ArrayEntry;
-use SqlCatalog\Evaluation\ArrayTerm;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\LiteralTerm;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Evaluation\OpaqueTerm;
-use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Core\Evaluation\ArrayEntry;
+use SqlCatalog\Core\Evaluation\ArrayTerm;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\LiteralTerm;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Evaluation\OpaqueTerm;
+use SqlCatalog\Core\Evaluation\PatternTerm;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\TextGeneralization;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Extension\Laravel\Grammar;
 use SqlCatalog\Extension\Laravel\QueryState;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\TextGeneralization;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(Grammar::class)]
 #[UsesClass(Domain::class)]
@@ -40,18 +40,18 @@ final class GrammarTest extends TestCase
 {
     public function testWrapQuotesIdentifiersAliasesAndEmbeddedQuotes(): void
     {
-        self::assertSame('`users`.`id`', (new Grammar('mysql'))->wrap(Domain::literal('users.id'))->soleLiteral()?->value);
-        self::assertSame('"users" as "u"', (new Grammar('pgsql'))->wrap(Domain::literal('users AS u'))->soleLiteral()?->value);
-        self::assertSame('"odd""name"', (new Grammar('sqlite'))->wrap(Domain::literal('odd"name'))->soleLiteral()?->value);
-        self::assertSame('"users".*', (new Grammar('sqlite'))->wrap(Domain::literal('users.*'))->soleLiteral()?->value);
-        self::assertFalse((new Grammar(null))->wrap(Domain::literal('users'))->isExact());
-        self::assertFalse((new Grammar('sqlite'))->wrap(Domain::unknown())->isExact());
-        self::assertFalse((new Grammar('sqlite'))->wrap(Domain::literal('data->name'))->isExact());
+        self::assertSame('`users`.`id`', (new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('mysql')))->wrap(Domain::literal('users.id'))->soleLiteral()?->value);
+        self::assertSame('"users" as "u"', (new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('pgsql')))->wrap(Domain::literal('users AS u'))->soleLiteral()?->value);
+        self::assertSame('"odd""name"', (new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')))->wrap(Domain::literal('odd"name'))->soleLiteral()?->value);
+        self::assertSame('"users".*', (new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')))->wrap(Domain::literal('users.*'))->soleLiteral()?->value);
+        self::assertFalse((new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find(null)))->wrap(Domain::literal('users'))->isExact());
+        self::assertFalse((new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')))->wrap(Domain::unknown())->isExact());
+        self::assertFalse((new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')))->wrap(Domain::literal('data->name'))->isExact());
     }
 
     public function testJoinPreservesOrderAndGaps(): void
     {
-        $grammar = new Grammar('sqlite');
+        $grammar = new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite'));
         self::assertSame('a / b', $grammar->join([Domain::literal('a'), Domain::literal('b')], ' / ')->soleLiteral()?->value);
         self::assertFalse($grammar->join([Domain::literal('a'), Domain::unknown()])->isExact());
         self::assertSame('', $grammar->join([])->soleLiteral()?->value);
@@ -59,7 +59,7 @@ final class GrammarTest extends TestCase
 
     public function testParameterOnlySplicesExplicitExpressions(): void
     {
-        $grammar = new Grammar('sqlite');
+        $grammar = new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite'));
         $raw = Domain::of(new ObjectTerm('Illuminate\Database\Query\Expression', state: (new QueryState(['sql' => Domain::literal('count(*)')]))->array()));
         self::assertSame('count(*)', $grammar->parameter($raw)->soleLiteral()?->value);
         self::assertSame('count(*)', $grammar->wrap($raw)->soleLiteral()?->value);
@@ -71,12 +71,12 @@ final class GrammarTest extends TestCase
         $a = Domain::literal(1);
         $b = Domain::literal(null);
         $raw = Domain::of(new ObjectTerm('Illuminate\Database\Query\Expression'));
-        self::assertSame([$a, $b], (new Grammar('mysql'))->bindings([$a, $raw, $b]));
+        self::assertSame([$a, $b], (new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('mysql')))->bindings([$a, $raw, $b]));
     }
     public function testWrapTreatsAnAliasAsOneIdentifierEvenWhenItContainsDots(): void
     {
-        self::assertSame('"users"."id" as "user.key"', (new Grammar('sqlite'))->wrap(Domain::literal('users.id as user.key'))->soleLiteral()?->value);
-        self::assertSame('`users`.`id` as `odd``alias`', (new Grammar('mysql'))->wrap(Domain::literal('users.id as odd`alias'))->soleLiteral()?->value);
+        self::assertSame('"users"."id" as "user.key"', (new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')))->wrap(Domain::literal('users.id as user.key'))->soleLiteral()?->value);
+        self::assertSame('`users`.`id` as `odd``alias`', (new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('mysql')))->wrap(Domain::literal('users.id as odd`alias'))->soleLiteral()?->value);
     }
 
 }

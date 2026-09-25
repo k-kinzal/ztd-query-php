@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace SqlCatalog\Extension\Laravel;
 
 use PhpParser\Node\Expr;
-use SqlCatalog\Analysis\Derivation\Objects\CallbackEffects;
-use SqlCatalog\Analysis\ExpressionEvaluator;
-use SqlCatalog\Analysis\FunctionScope;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\Environment;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Php\ProgramIndex;
+use SqlCatalog\Core\Analysis\Derivation\Objects\CallbackEffects;
+use SqlCatalog\Core\Analysis\ExpressionEvaluator;
+use SqlCatalog\Core\Analysis\FunctionScope;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\Environment;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Php\ProgramIndex;
 
 /**
  * Models nested predicates and source-declared local scopes through shared callback execution.
@@ -23,7 +23,7 @@ final class CallbackModel
     /**
      * Uses source metadata and the current derivation's callback runner.
      */
-    public function __construct(private readonly ProgramIndex $index, private readonly CallbackEffects $effects)
+    public function __construct(private readonly ProgramIndex $index, private readonly CallbackEffects $effects, private readonly \SqlCatalog\Core\Sql\Dialects $dialects = new \SqlCatalog\Core\Sql\Dialects())
     {
     }
 
@@ -62,7 +62,7 @@ final class CallbackModel
     public function nested(Expr\Closure|Expr\ArrowFunction $callback, ObjectTerm $object, string $method, Environment $environment, FunctionScope $scope, ExpressionEvaluator $expressions): Domain
     {
         $outer = QueryState::from($object);
-        foreach ((new \SqlCatalog\Analysis\Derivation\FreeNames())->read($callback) as $name => $_) {
+        foreach ((new \SqlCatalog\Core\Analysis\Derivation\FreeNames())->read($callback) as $name => $_) {
             $captured = $environment->read($name);
             if ($captured->soleObject()?->identity !== null || $captured->soleArray() !== null) {
                 (new BuilderCalls($this->index))->unsupported($captured, $environment, 'Captured callback object effects are not modelled');
@@ -73,7 +73,7 @@ final class CallbackModel
         $nested = new ObjectTerm($object->className, identity: $object->identity . ':nested:' . spl_object_id($callback), state: $state->array());
         $result = $this->effects->apply($callback, [Domain::of($nested)], $environment, $scope, $expressions);
         $terms = [];
-        $grammar = new Grammar($outer->string('dialect'));
+        $grammar = new Grammar($this->dialects->find($outer->string('dialect')));
         foreach ($result->terms as $term) {
             if (!$term instanceof ObjectTerm) {
                 $terms[] = $outer->reject('Nested Laravel predicate could not be read')->object($object);

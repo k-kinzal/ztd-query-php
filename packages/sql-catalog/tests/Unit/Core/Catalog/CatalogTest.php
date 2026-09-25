@@ -1,0 +1,105 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Core\Catalog;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use SqlCatalog\Core\Catalog\AnalysisProblem;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Facade\AnalysisOptions;
+use SqlCatalog\Facade\Analyzer;
+
+#[CoversClass(Catalog::class)]
+#[UsesClass(AnalysisOptions::class)]
+#[UsesClass(Analyzer::class)]
+#[UsesClass(AnalysisProblem::class)]
+#[UsesClass(CallSite::class)]
+#[UsesClass(CatalogEntry::class)]
+#[UsesClass(LiteralText::class)]
+#[UsesClass(TextPattern::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\BuiltinCallModel::class)]
+final class CatalogTest extends TestCase
+{
+    public function testEntriesAreReturnedInTheOrderTheyWereGiven(): void
+    {
+        $first = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('b.php', 2, 'f', 's'), []);
+        $second = new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 1, 'f', 's'), []);
+        self::assertSame([$first, $second], (new Catalog([$first, $second]))->entries());
+    }
+
+    public function testProblemsAreKept(): void
+    {
+        $problem = new AnalysisProblem('a.php', 'broken');
+        self::assertSame([$problem], (new Catalog([], [$problem]))->problems());
+    }
+
+    public function testFindLooksUpAStatementByItsIdentifier(): void
+    {
+        $entry = new CatalogEntry('abc', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 's'), []);
+        $catalog = new Catalog([$entry]);
+        self::assertSame($entry, $catalog->find('abc'));
+        self::assertNull($catalog->find('missing'));
+    }
+
+    public function testFilterKeepsOnlyWhatTheTestAccepts(): void
+    {
+        $kept = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 's'), []);
+        $dropped = new CatalogEntry('b', StatementKind::Insert, TextPattern::fromText('INSERT INTO t VALUES (1)'), [], [], new CallSite('a.php', 2, 'f', 's'), []);
+        $filtered = (new Catalog([$dropped, $kept]))->filter(
+            static fn (CatalogEntry $entry): bool => $entry->kind === StatementKind::Select,
+        );
+        self::assertSame([$kept], $filtered->entries());
+    }
+
+    public function testMergeJoinsStatementsAndProblems(): void
+    {
+        $left = new Catalog([], [new AnalysisProblem('a.php', 'x')]);
+        $right = new Catalog([], [new AnalysisProblem('b.php', 'y')]);
+        self::assertCount(2, $left->merge($right)->problems());
+    }
+
+    public function testSortedOrdersByWhereTheStatementIsIssued(): void
+    {
+        $later = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('b.php', 2, 'f', 's'), []);
+        $earlier = new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 1, 'f', 's'), []);
+        $sorted = (new Catalog([$later, $earlier], [new AnalysisProblem('z.php', 'x'), new AnalysisProblem('a.php', 'y')]))->sorted();
+        self::assertSame([$earlier, $later], $sorted->entries());
+        self::assertSame('a.php', $sorted->problems()[0]->file);
+    }
+
+    public function testCountIsTheNumberOfStatements(): void
+    {
+        self::assertCount(0, new Catalog());
+    }
+
+    public function testGetIteratorWalksTheStatements(): void
+    {
+        $entry = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 's'), []);
+        self::assertSame([$entry], iterator_to_array(new Catalog([$entry])));
+    }
+
+    public function testSourceSurvivesFilteringSortingAndMerging(): void
+    {
+        $source = '<?php $db->query($sql);';
+        $left = new Catalog([], [], ['a.php' => $source, 'empty.php' => '']);
+        $right = new Catalog([], [], ['b.php' => '<?php function {']);
+        $catalog = $left->filter(static fn (CatalogEntry $entry): bool => false)->sorted()->merge($right);
+
+        self::assertSame($source, $catalog->source('a.php'));
+        self::assertSame('<?php function {', $catalog->source('b.php'));
+        self::assertSame('', $catalog->source('empty.php'));
+        self::assertNull($catalog->source('missing.php'));
+        self::assertSame('updated', $left->merge(new Catalog([], [], ['a.php' => 'updated']))->source('a.php'));
+        self::assertSame($source, $left->source('a.php'));
+    }
+
+}

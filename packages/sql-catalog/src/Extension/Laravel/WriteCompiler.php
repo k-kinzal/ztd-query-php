@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Extension\Laravel;
 
-use SqlCatalog\Evaluation\ArrayTerm;
-use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\ArrayTerm;
+use SqlCatalog\Core\Evaluation\Domain;
 
 /**
  * Compiles literal-shaped writes while preserving their value domains.
@@ -88,15 +88,11 @@ final class WriteCompiler
             $groups[] = Domain::literal('(')->concat($this->grammar->join(array_map($this->grammar->parameter(...), $items)))->concat(Domain::literal(')'));
             $bindings = array_merge($bindings, $this->grammar->bindings($items));
         }
-        $prefix = !$ignore ? 'insert into ' : match ($this->grammar->dialect) {
-            'mysql' => 'insert ignore into ', 'sqlite' => 'insert or ignore into ', default => 'insert into '
-        };
+        $prefix = $this->grammar->dialect?->insertPrefix($ignore) ?? 'insert into ';
         $sql = Domain::literal($prefix)->concat($this->grammar->wrap($state->get('table')))->concat(Domain::literal(' ('))
             ->concat($this->grammar->join(array_map(fn (string $column): Domain => $this->grammar->wrap(Domain::literal($column)), $columns)))
             ->concat(Domain::literal(') values '))->concat($this->grammar->join($groups));
-        if ($ignore && $this->grammar->dialect === 'pgsql') {
-            $sql = $sql->concat(Domain::literal(' on conflict do nothing'));
-        }
+        $sql = $sql->concat(Domain::literal($this->grammar->dialect?->insertSuffix($ignore) ?? ''));
 
         return [$sql, QueryState::list($bindings)];
     }

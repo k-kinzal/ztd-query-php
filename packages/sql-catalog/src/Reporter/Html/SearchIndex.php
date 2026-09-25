@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html;
 
-use SqlCatalog\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\CatalogEntry;
 
 /**
  * The index the search box reads, written as a script beside the pages.

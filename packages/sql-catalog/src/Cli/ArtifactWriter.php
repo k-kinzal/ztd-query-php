@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Cli;
 
-use SqlCatalog\Reporter\CatalogArtifacts;
+use SqlCatalog\Core\Reporter\CatalogArtifacts;
 
 /**
  * Writes what a reporter produced into a directory.
