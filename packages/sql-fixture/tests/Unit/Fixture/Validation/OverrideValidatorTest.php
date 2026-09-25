@@ -11,7 +11,7 @@ use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(Subject::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Exception\InvalidOverrideException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(TableSchema::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Exception\UnknownOverrideColumnException::class)]

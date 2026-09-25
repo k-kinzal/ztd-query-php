@@ -2,15 +2,16 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture;
+namespace SqlFixture\Provider;
 
 use Faker\Generator;
+use SqlFixture\Fixture;
 use SqlFixture\Fixture\FixtureSet;
 use SqlFixture\Fixture\PlanGenerator;
 use SqlFixture\Fixture\TableOverrides;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Plan\FixturePlan;
-use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Provider;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
@@ -21,17 +22,17 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
  *
  * @visibility public
  * @example Generate a row while leaving the auto-increment key to the database
- *     $provider = new \SqlFixture\FixtureProvider(\Faker\Factory::create());
+ *     $provider = new \SqlFixture\Provider\FixtureProvider(\Faker\Factory::create());
  *     $provider->fixture('CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30))', ['name' => 'Alice']) // => ['name' => 'Alice']
  *
  * @example Generate linked rows from registered schemas
- *     $provider = new \SqlFixture\FixtureProvider(\Faker\Factory::create());
+ *     $provider = new \SqlFixture\Provider\FixtureProvider(\Faker\Factory::create());
  *     $provider->registerSchema('CREATE TABLE users (id INT PRIMARY KEY)');
  *     $provider->registerSchema('CREATE TABLE posts (user_id INT)');
  *     $rows = $provider->fixtures('users.id < posts.user_id', ['users' => ['id' => 9], 'posts' => 2]);
  *     $rows->rows('posts') // => [['user_id' => 9], ['user_id' => 9]]
  */
-class FixtureProvider extends Provider\SqlSchemaProvider
+class FixtureProvider extends SqlSchemaProvider
 {
     private FixtureGenerator $fixtureGenerator;
     private string $dialect;

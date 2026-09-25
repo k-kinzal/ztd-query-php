@@ -8,7 +8,7 @@ use Faker\Factory;
 use Faker\Generator;
 use mysqli;
 use RuntimeException;
-use SqlFixture\FixtureProvider;
+use SqlFixture\Provider\FixtureProvider;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;

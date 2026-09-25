@@ -15,7 +15,6 @@ use SqlFixture\Fixture\PlanSchemaException;
 use SqlFixture\Fixture\PlanSchemaValidator;
 use SqlFixture\Fixture\RowSpec;
 use SqlFixture\Fixture\TableOverrides;
-use SqlFixture\FixtureGenerator;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Plan\PlanParser;
@@ -25,6 +24,7 @@ use SqlFixture\Plan\RelationKind;
 use SqlFixture\Plan\RelationSide;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
+use SqlFixture\Provider\FixtureGenerator;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\StaticSchemaResolver;
@@ -73,7 +73,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
-#[UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\InvalidOverrideException::class)]
 #[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
 #[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
 #[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
@@ -141,6 +141,7 @@ use SqlFixture\Schema\TableSchema;
 #[CoversClass(\SqlFixture\Fixture\Generation\RowBindings::class)]
 #[UsesClass(\SqlFixture\Fixture\Generation\RelationValueException::class)]
 #[UsesClass(\SqlFixture\Fixture\Generation\RecursiveRelationException::class)]
+#[UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
 final class PlanGeneratorTest extends TestCase
 {
     #[Test]

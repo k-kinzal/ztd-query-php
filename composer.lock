@@ -620,7 +620,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "039d0fc7952200272302628c0ec7ba86b38e5b07"
+                "reference": "67a1d17b5298af87c7aa50302ca54f2111db422c"
             },
             "require": {
                 "fakerphp/faker": "^1.23",

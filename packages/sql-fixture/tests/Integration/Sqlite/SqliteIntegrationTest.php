@@ -10,14 +10,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFixture\DatabaseFixtureProvider;
-use SqlFixture\FixtureGenerator;
-use SqlFixture\FixtureProvider;
 use SqlFixture\Hydrator\ReflectionHydrator;
-use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
+use SqlFixture\Provider\DatabaseFixtureProvider;
+use SqlFixture\Provider\FixtureGenerator;
+use SqlFixture\Provider\FixtureProvider;
+use SqlFixture\Provider\PlatformFactory;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 
@@ -76,7 +76,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
-#[UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\InvalidOverrideException::class)]
 #[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
 #[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
 #[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
@@ -165,6 +165,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Fixture\Generation\RowBindings::class)]
 #[UsesClass(\SqlFixture\Fixture\Generation\RecursiveRelationException::class)]
 #[UsesClass(\SqlFixture\Fixture\Generation\RelationValueException::class)]
+#[UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
 final class SqliteIntegrationTest extends TestCase
 {
     #[Test]

@@ -11,8 +11,8 @@ use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Choice\PlanBuilder;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySql\MySqlProvider;
-use SqlFixture\FixtureGenerator;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
+use SqlFixture\Provider\FixtureGenerator;
 use SqlFixture\Schema\SchemaParseException;
 
 /**

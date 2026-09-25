@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Provider;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -10,12 +10,12 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use SqlFixture\FileFixtureProvider;
-use SqlFixture\FixtureGenerator;
 use SqlFixture\Hydrator\ReflectionHydrator;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
-use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Provider\FileFixtureProvider;
+use SqlFixture\Provider\FixtureGenerator;
+use SqlFixture\Provider\PlatformFactory;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
@@ -49,7 +49,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
-#[UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\InvalidOverrideException::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableQuery::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
@@ -106,6 +106,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
+#[UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
 final class FileFixtureProviderTest extends TestCase
 {
     #[Test]

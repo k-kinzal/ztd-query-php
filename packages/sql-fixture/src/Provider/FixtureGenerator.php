@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture;
+namespace SqlFixture\Provider;
 
 use Faker\Generator;
+use SqlFixture\Fixture;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Hydrator\ReflectionHydrator;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
@@ -50,30 +51,7 @@ final class FixtureGenerator implements Fixture\RowGeneration
         array $overrides = [],
         ?string $className = null,
     ): array|object {
-        (new Fixture\Validation\OverrideValidator())->assertOverridesFitSchema($schema, $overrides);
-
-        $data = [];
-
-        foreach ($schema->columns as $column) {
-            $columnName = $column->name;
-
-            if (array_key_exists($columnName, $overrides)) {
-                $data[$columnName] = $overrides[$columnName];
-                continue;
-            }
-
-            if ($column->autoIncrement || $column->generated) {
-                continue;
-            }
-
-            $data[$columnName] = $this->typeMapper->generate($this->faker, $column);
-        }
-
-        if ($className === null) {
-            return $data;
-        }
-
-        return $this->hydrator->hydrate($data, $className);
+        return (new Fixture\RowGenerator($this->faker, $this->typeMapper, $this->hydrator))->generate($schema, $overrides, $className);
     }
 
     /**
