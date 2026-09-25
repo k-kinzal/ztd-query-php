@@ -12,6 +12,7 @@ use SqlParser\MySql\Lexer\KeywordTable;
 use SqlParser\MySql\Lexer\MySqlLexer;
 use SqlParser\Parser\LrParser;
 use SqlParser\Parser\Node;
+use SqlParser\Parser\SqlParser;
 use SqlParser\Parser\SyntaxException;
 use SqlParser\Resource\VersionRegistry;
 use SqlParser\Table\ParseTable;
@@ -41,7 +42,7 @@ use SqlParser\Table\TableFile;
  * @example Rejecting an unsupported release
  *     new \SqlParser\MySql\MySqlParser('mysql-4.1.0') // throws \RuntimeException: Unsupported
  */
-final class MySqlParser
+final class MySqlParser implements SqlParser
 {
     private readonly MySqlVersion $version;
 
