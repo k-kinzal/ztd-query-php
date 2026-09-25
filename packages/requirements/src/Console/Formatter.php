@@ -1,0 +1,33 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Requirements\Console;
+
+use Requirements\Config\DocumentReader;
+use RuntimeException;
+
+final class Formatter
+{
+    /**
+     * @param list<string> $files
+     * @param array<string, mixed> $markdown
+     * @return list<string>
+     */
+    public function format(array $files, bool $check, array $markdown = []): array
+    {
+        $changed = [];
+        foreach ($files as $index => $file) {
+            $reader = new DocumentReader();
+            $data = $reader->read($file, $index === 0 ? 'config' : 'definition', $markdown, dirname($files[0]));
+            $text = DocumentReader::isMarkdown($file) ? $reader->markdown->render($data) : DocumentReader::yaml($data);
+            if ($text !== file_get_contents($file)) {
+                $changed[] = $file;
+                if (!$check && file_put_contents($file, $text) === false) {
+                    throw new RuntimeException("Cannot format $file");
+                }
+            }
+        }
+        return $changed;
+    }
+}

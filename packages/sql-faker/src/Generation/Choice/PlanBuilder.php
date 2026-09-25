@@ -6,23 +6,22 @@ namespace SqlFaker\Generation\Choice;
 
 use Closure;
 use Faker\Generator;
-use SqlFaker\Generation\Derivation\CompletionCosts;
-use SqlFaker\Generation\Derivation\ConstrainedCompletion;
 use SqlFaker\Generation\Derivation\TokenGenerator;
+use SqlFaker\Generation\Exception\GenerationException;
+use SqlFaker\Generation\Exception\LexicalException;
 use SqlFaker\Generation\Lexeme\Lexeme;
 use SqlFaker\Generation\Lexeme\LexicalGrammar;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Model\Grammar;
-use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
 
 /**
  * Compiles choices through the production generation pipeline into immutable instructions.
  */
 final class PlanBuilder
 {
-    private readonly CompletionCosts $costs;
     private readonly TokenGenerator $tokens;
 
     /**
@@ -34,7 +33,6 @@ final class PlanBuilder
         private readonly ?TokenRewriter $rewriter = null,
         private readonly ?Closure $startSymbol = null,
     ) {
-        $this->costs = new CompletionCosts($grammar, $lexical->isNonOutput(...));
         $this->tokens = new TokenGenerator($grammar, new Generator(), $lexical->isNonOutput(...));
     }
 
@@ -44,13 +42,7 @@ final class PlanBuilder
      */
     public function minimumExpansions(GenerationPlan $plan): int
     {
-        return (new ConstrainedCompletion($this->grammar, $this->costs))->minimum(
-            [new NonTerminal($this->root($plan))],
-            $plan,
-            [],
-            $plan->requiresNonEmpty(),
-            $plan->expansionBudget() ?? 5000,
-        );
+        return $this->tokens->minimumExpansions($this->root($plan), $plan);
     }
 
     /**
@@ -68,9 +60,11 @@ final class PlanBuilder
      * Freezes original production ordinals and every rewritten terminal's complete candidate.
      * @template T of bool
      * @param GenerationPlan<T> $constraints
-     * @param Closure(int): ?int $productionChoice
+     * @param Closure(int, non-empty-list<Production>): ?int $productionChoice
      * @param Closure(int): ?int $lexicalChoice
      * @return GenerationPlan<T>
+     * @throws GenerationException When the grammar cannot complete the plan within the budget
+     * @throws LexicalException When a terminal has no compatible realization
      */
     public function build(GenerationPlan $constraints, int $budget, Closure $productionChoice, Closure $lexicalChoice): GenerationPlan
     {
@@ -80,7 +74,8 @@ final class PlanBuilder
             $patterns[$production->rule][] = ProductionPattern::at($production->ordinal);
         }
         $sequence = $this->rewriter?->rewrite($sequence) ?? $sequence;
-        $output = $this->lexical->resolveSequence($sequence, $constraints, static fn (int $count): int => $lexicalChoice($count) ?? 0, $lexicalChoice);
+        $lexicalPlan = $this->tokens->lastScope?->lexicalPlan($sequence, $constraints, static fn (int $count): int => $lexicalChoice($count) ?? 0) ?? $constraints;
+        $output = $this->lexical->resolveSequence($sequence, $lexicalPlan, static fn (int $count): int => $lexicalChoice($count) ?? 0, $lexicalChoice);
         $lexemes = [];
         $keys = [];
         foreach ($sequence->terminals as $index => $terminal) {

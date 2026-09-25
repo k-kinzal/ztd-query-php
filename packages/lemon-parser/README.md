@@ -77,3 +77,11 @@ The specification covers the language of grammar files. What Lemon checks on the
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+## Source traceability
+
+[Requirements definitions](requirements/README.md) trace selected sections of the
+SQLite 3.47.2 Lemon manual to Behat scenarios and keep this reader's independent
+strictness decisions explicit. Run `php ../requirements/bin/requirements coverage`,
+`spec` or `spec --no-test --without-source` from this directory after installing
+`../requirements` in the monorepo.

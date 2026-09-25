@@ -252,6 +252,132 @@ Feature: Symbols, Terminal and Nonterminal
       """
 
   @manual:Symbols
+  Scenario: Every nonnull character of the basic execution character set of Standard C may be a character token
+    Given the grammar file:
+      """
+      %%
+      digits: '0' '1' '2' '3' '4' '5' '6' '7' '8' '9';
+      letters:
+        'a' 'b' 'c' 'd' 'e' 'f' 'g' 'h' 'i' 'j' 'k' 'l' 'm' 'n' 'o' 'p' 'q' 'r' 's' 't' 'u' 'v' 'w' 'x' 'y' 'z'
+        'A' 'B' 'C' 'D' 'E' 'F' 'G' 'H' 'I' 'J' 'K' 'L' 'M' 'N' 'O' 'P' 'Q' 'R' 'S' 'T' 'U' 'V' 'W' 'X' 'Y' 'Z'
+      ;
+      others:
+        '\a' '\b' '\t' '\n' '\v' '\f' '\r' ' ' '!' '"' '#' '%' '&' '\'' '(' ')' '*' '+' ','
+        '-' '.' '/' ':' ';' '<' '=' '>' '?' '[' '\\' ']' '^' '_' '{' '|' '}' '~'
+      ;
+      """
+    When the file is parsed
+    Then the tree is:
+      """
+      %%
+      Rule digits
+        Alternative
+          SymbolItem '0'
+          SymbolItem '1'
+          SymbolItem '2'
+          SymbolItem '3'
+          SymbolItem '4'
+          SymbolItem '5'
+          SymbolItem '6'
+          SymbolItem '7'
+          SymbolItem '8'
+          SymbolItem '9'
+      Rule letters
+        Alternative
+          SymbolItem 'a'
+          SymbolItem 'b'
+          SymbolItem 'c'
+          SymbolItem 'd'
+          SymbolItem 'e'
+          SymbolItem 'f'
+          SymbolItem 'g'
+          SymbolItem 'h'
+          SymbolItem 'i'
+          SymbolItem 'j'
+          SymbolItem 'k'
+          SymbolItem 'l'
+          SymbolItem 'm'
+          SymbolItem 'n'
+          SymbolItem 'o'
+          SymbolItem 'p'
+          SymbolItem 'q'
+          SymbolItem 'r'
+          SymbolItem 's'
+          SymbolItem 't'
+          SymbolItem 'u'
+          SymbolItem 'v'
+          SymbolItem 'w'
+          SymbolItem 'x'
+          SymbolItem 'y'
+          SymbolItem 'z'
+          SymbolItem 'A'
+          SymbolItem 'B'
+          SymbolItem 'C'
+          SymbolItem 'D'
+          SymbolItem 'E'
+          SymbolItem 'F'
+          SymbolItem 'G'
+          SymbolItem 'H'
+          SymbolItem 'I'
+          SymbolItem 'J'
+          SymbolItem 'K'
+          SymbolItem 'L'
+          SymbolItem 'M'
+          SymbolItem 'N'
+          SymbolItem 'O'
+          SymbolItem 'P'
+          SymbolItem 'Q'
+          SymbolItem 'R'
+          SymbolItem 'S'
+          SymbolItem 'T'
+          SymbolItem 'U'
+          SymbolItem 'V'
+          SymbolItem 'W'
+          SymbolItem 'X'
+          SymbolItem 'Y'
+          SymbolItem 'Z'
+      Rule others
+        Alternative
+          SymbolItem '\x07' spelled '\a'
+          SymbolItem '\x08' spelled '\b'
+          SymbolItem '\t'
+          SymbolItem '\n'
+          SymbolItem '\x0b' spelled '\v'
+          SymbolItem '\x0c' spelled '\f'
+          SymbolItem '\r'
+          SymbolItem ' '
+          SymbolItem '!'
+          SymbolItem '"'
+          SymbolItem '#'
+          SymbolItem '%'
+          SymbolItem '&'
+          SymbolItem '\''
+          SymbolItem '('
+          SymbolItem ')'
+          SymbolItem '*'
+          SymbolItem '+'
+          SymbolItem ','
+          SymbolItem '-'
+          SymbolItem '.'
+          SymbolItem '/'
+          SymbolItem ':'
+          SymbolItem ';'
+          SymbolItem '<'
+          SymbolItem '='
+          SymbolItem '>'
+          SymbolItem '?'
+          SymbolItem '['
+          SymbolItem '\\'
+          SymbolItem ']'
+          SymbolItem '^'
+          SymbolItem '_'
+          SymbolItem '{'
+          SymbolItem '|'
+          SymbolItem '}'
+          SymbolItem '~'
+      """
+
+  @manual:Symbols
   Scenario: error is a terminal symbol reserved for error recovery and may be used in rules
     Given the grammar file:
       """

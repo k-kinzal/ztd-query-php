@@ -1,0 +1,99 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+# Layers follow the path a run takes: source in, values reasoned about, statements out.
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Type
+      collectors:
+        - type: directory
+          value: 'src/Type/'
+    - name: Text
+      collectors:
+        - type: directory
+          value: 'src/Text/'
+    - name: Sql
+      collectors:
+        - type: directory
+          value: 'src/Sql/'
+    - name: Evaluation
+      collectors:
+        - type: directory
+          value: 'src/Evaluation/'
+    - name: Php
+      collectors:
+        - type: directory
+          value: 'src/Php/'
+    - name: Source
+      collectors:
+        - type: directory
+          value: 'src/Source/'
+    - name: Extension
+      collectors:
+        - type: directory
+          value: 'src/Extension/(?!LaravelExtension\.php)[^/]+\.php$'
+    - name: ExtensionModel
+      collectors:
+        - type: directory
+          value: 'src/Extension/Model/'
+    - name: Laravel
+      collectors:
+        - type: directory
+          value: 'src/Extension/Laravel/'
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\LaravelExtension$'
+    - name: Catalog
+      collectors:
+        - type: directory
+          value: 'src/Catalog/'
+    - name: Analysis
+      collectors:
+        - type: directory
+          value: 'src/Analysis/'
+    - name: Filter
+      collectors:
+        - type: directory
+          value: 'src/Filter/'
+    - name: Reporter
+      collectors:
+        - type: directory
+          value: 'src/Reporter/'
+        # The JSON document shape is written as @phpstan-type aliases, which resolve
+        # against the declaring namespace and would otherwise be uncovered names.
+        - type: classLike
+          value: '^SqlCatalog\\Reporter\\.*'
+    - name: Facade
+      collectors:
+        - type: directory
+          value: 'src/[^/]+\.php$'
+    - name: Cli
+      collectors:
+        - type: directory
+          value: 'src/Cli/'
+    - name: Yaml
+      collectors:
+        - type: classLike
+          value: '^Symfony\\Component\\Yaml\\.*'
+    - name: PhpParser
+      collectors:
+        - type: classLike
+          value: '^PhpParser\\.*'
+  ruleset:
+    Type: []
+    Text: [Type]
+    Sql: [Text]
+    Evaluation: [Text, Type]
+    Php: [Type, PhpParser]
+    Source: []
+    Extension: [Sql, ExtensionModel, Laravel]
+    ExtensionModel: [Analysis, Evaluation, Extension, Php, PhpParser]
+    Laravel: [Analysis, Evaluation, Extension, ExtensionModel, Php, Sql, Text, Type, PhpParser]
+    Catalog: [Evaluation, Sql, Text, Type]
+    Analysis: [Catalog, Evaluation, Extension, ExtensionModel, Php, Sql, Text, Type, PhpParser]
+    Filter: [Catalog, Sql]
+    Reporter: [Catalog]
+    Facade: [Analysis, Catalog, Extension, Php, Source, Yaml]
+    Cli: [Catalog, Extension, Facade, Filter, Reporter, Source, Sql]
+    Yaml: []
+    PhpParser: []

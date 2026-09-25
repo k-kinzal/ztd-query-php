@@ -1,0 +1,109 @@
+{
+    "name": "k-kinzal/sql-formatter",
+    "description": "SQL formatting with Compact, Expanded, Tabular, and River layouts for MySQL, PostgreSQL, and SQLite",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.1",
+        "k-kinzal/sql-parser": "dev-main"
+    },
+    "require-dev": {
+        "brianium/paratest": "^7.3",
+        "deptrac/deptrac": "^3.0",
+        "fakerphp/faker": "^1.23",
+        "friendsofphp/php-cs-fixer": "^3.95.25",
+        "k-kinzal/php-ai-toolkit": "dev-main",
+        "k-kinzal/sql-faker": "dev-main",
+        "phpbench/phpbench": "^1.4",
+        "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^10.5",
+        "squizlabs/php_codesniffer": "^4.0.4"
+    },
+    "repositories": [
+        {
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
+        {
+            "type": "path",
+            "url": "../sql-parser",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-parser": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-faker",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-faker": "dev-main"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SqlFormatter\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Bench\\": "bench/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "platform": {
+            "php": "8.1.0"
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
+        "bench": "phpbench run --report=aggregate",
+        "bench:full": "@bench",
+        "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
+        "compat": "phpcs",
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
+        "docgen": "docgen --packages=. --title=k-kinzal/sql-formatter",
+        "docgen:diff": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --diff=origin/main --serve"
+        ],
+        "docgen:fresh": "@docgen --no-cache",
+        "docgen:serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --serve"
+        ],
+        "doctest": "phpunit --testsuite doctest",
+        "format": "php-cs-fixer fix --allow-risky=yes",
+        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "lint": [
+            "@autoload:check",
+            "@format:check",
+            "@phpstan",
+            "@compat",
+            "@loc-guard",
+            "@tree-guard",
+            "@deptrac"
+        ],
+        "loc-guard": "loc-guard --config=loc.yaml",
+        "phpstan": "phpstan analyse --memory-limit=1G",
+        "test": "@php -d memory_limit=512M vendor/bin/paratest --processes=auto --passthru-php='-d memory_limit=512M'",
+        "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit --testsuite unit",
+        "tree-guard": "tree-guard --config=tree.yaml"
+    },
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-formatter",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-formatter/"
+    }
+}

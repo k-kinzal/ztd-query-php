@@ -20,15 +20,20 @@ final class ProductionPattern
     private const EXACT = 'exact';
     private const NON_EMPTY = 'non-empty';
     private const ORDINAL = 'ordinal';
+    private const ANY = 'any';
+    private const ALL = 'all';
+    private const NOT = 'not';
 
     /**
      * @param array<array-key, string> $symbols Symbols the pattern is written in terms of
-     * @param self::CONTAINING|self::EXACT|self::NON_EMPTY|self::ORDINAL $mode How those symbols are compared against an alternative
+     * @param self::CONTAINING|self::EXACT|self::NON_EMPTY|self::ORDINAL|self::ANY|self::ALL|self::NOT $mode How those symbols are compared against an alternative
+     * @param list<self> $patterns
      */
     public function __construct(
         private readonly array $symbols,
         private readonly string $mode,
         private readonly ?int $ordinal = null,
+        private readonly array $patterns = [],
     ) {
     }
 
@@ -75,10 +80,42 @@ final class ProductionPattern
     }
 
     /**
+     * Retains alternatives accepted by at least one condition.
+     */
+    public static function anyOf(self $first, self ...$others): self
+    {
+        return new self([], self::ANY, patterns: [$first, ...array_values($others)]);
+    }
+
+    /**
+     * Requires every condition at the same production.
+     */
+    public static function allOf(self $first, self ...$others): self
+    {
+        return new self([], self::ALL, patterns: [$first, ...array_values($others)]);
+    }
+
+    /**
+     * Excludes a condition without enumerating all other productions.
+     */
+    public static function excluding(self $pattern): self
+    {
+        return new self([], self::NOT, patterns: [$pattern]);
+    }
+
+    /**
      * @param list<string> $symbols
      */
     public function matches(array $symbols, ?int $ordinal = null): bool
     {
+        if ($this->mode === self::ANY || $this->mode === self::ALL || $this->mode === self::NOT) {
+            $matches = array_map(static fn (self $pattern): bool => $pattern->matches($symbols, $ordinal), $this->patterns);
+            return match ($this->mode) {
+                self::ANY => in_array(true, $matches, true),
+                self::ALL => !in_array(false, $matches, true),
+                self::NOT => !($matches[0] ?? false),
+            };
+        }
         if ($this->mode === self::ORDINAL) {
             return $ordinal !== null && $ordinal === $this->ordinal;
         }

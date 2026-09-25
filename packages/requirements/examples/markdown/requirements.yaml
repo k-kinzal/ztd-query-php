@@ -1,0 +1,6 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/config.schema.json'
+version: 1
+definitions:
+  - '*.md'
+markdown:
+  experimental: true

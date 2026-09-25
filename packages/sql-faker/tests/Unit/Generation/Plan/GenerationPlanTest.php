@@ -13,6 +13,7 @@ use SqlFaker\Generation\Plan\ProductionPattern;
 
 #[CoversClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\RulePlan::class)]
 final class GenerationPlanTest extends TestCase
 {
     public function testAllCoversTheGrammarWithoutProductionConstraints(): void
@@ -246,4 +247,50 @@ final class GenerationPlanTest extends TestCase
         self::assertSame(['leaf' => 1, 'other' => 0], $plan->patternState(['leaf' => 1, 'other' => 8, 'unused' => 4]));
         self::assertSame(['leaf' => 2, 'other' => 0], $plan->patternState(['leaf' => 8]));
     }
+    public function testWithRuleConditionsSurviveEveryImmutableModifier(): void
+    {
+        $rules = \SqlFaker\Generation\Plan\RulePlan::any();
+        $original = GenerationPlan::fromRule('stmt');
+        $plan = $original->withRule('name', $rules)->requiringNonEmpty()->withMaxDepth(3)
+            ->withExpansionBudget(50)->withStepBudget()->withLexemes(['ID' => ['users']])
+            ->withCandidateKeys(['ID' => ['key']])->withPatternForEveryOccurrence('stmt', ProductionPattern::nonEmpty());
+        self::assertSame([], $original->rules());
+        self::assertSame(['name' => $rules], $plan->rules());
+    }
+
+
+    public function testRulesExposeMergedConditionsWithoutMutatingTheOriginal(): void
+    {
+        $original = GenerationPlan::all()->withRule('stmt', \SqlFaker\Generation\Plan\RulePlan::any()->allowing(ProductionPattern::containing('SELECT')));
+        $refined = $original->withRule('stmt', \SqlFaker\Generation\Plan\RulePlan::any()->allowing(ProductionPattern::excluding(ProductionPattern::containing('WITH'))));
+        self::assertTrue($original->rules()['stmt']->pattern?->matches(['WITH', 'SELECT']));
+        self::assertFalse($refined->rules()['stmt']->pattern?->matches(['WITH', 'SELECT']));
+        self::assertTrue($refined->rules()['stmt']->pattern->matches(['SELECT']));
+    }
+
+
+    public function testRefineCanClearOptionalInstructionsWhilePreservingOtherSettings(): void
+    {
+        $original = GenerationPlan::statement('stmt', 5)->withRule('name', \SqlFaker\Generation\Plan\RulePlan::any())
+            ->withLexemes(['ID' => ['users']])->withCandidateKeys(['ID' => ['key']])->withStepBudget();
+        $refined = $original->refine(lexemes: [], candidateKeys: [], rules: [], reserveSteps: false);
+        self::assertSame('stmt', $refined->startRule());
+        self::assertSame(5, $refined->maxDepth());
+        self::assertNull($refined->lexemeAt('ID', 0));
+        self::assertNull($refined->candidateKeyAt('ID', 0));
+        self::assertSame([], $refined->rules());
+        self::assertFalse($refined->usesStepBudget());
+        self::assertSame('users', $original->lexemeAt('ID', 0));
+        self::assertTrue($original->usesStepBudget());
+    }
+
+
+    public function testWithExpansionBudgetReplacesThePreviousBudgetWithoutChangingTheOriginal(): void
+    {
+        $original = GenerationPlan::fromRule('stmt')->withExpansionBudget(10);
+        self::assertSame(30, $original->withExpansionBudget(30)->expansionBudget());
+        self::assertSame(5, $original->withExpansionBudget(5)->expansionBudget());
+        self::assertSame(10, $original->expansionBudget());
+    }
+
 }

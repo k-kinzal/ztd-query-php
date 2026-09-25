@@ -1,6 +1,8 @@
 # Generation plans
 
-A `SqlFaker\Generation\Plan\GenerationPlan` selects what to generate and which choices to constrain. Pass it to a provider's `generate()` method or to [SqlGenerator](generator.md).
+A `SqlFaker\Generation\Plan\GenerationPlan` declares the allowed SQL. Pass it to a provider's `generate()` method or to [SqlGenerator](generator.md). A constraint plan leaves unspecified choices random; it is not itself a frozen SQL statement. Compile it with `planner()->build()` or `BytePlanCompiler` when every choice must be reproducible independently of Faker's state.
+
+`all()` retains the whole grammar. `withRule()` adds conditions on selected grammar subtrees. The caller supplies table names, column relationships and value domains; SQL Faker neither reads CREATE TABLE statements nor manages database state. The same planning mechanism applies to statements and fragments in all three dialects.
 
 ## Common
 
@@ -86,7 +88,113 @@ $integer = $provider->generate($integerPlan);
 
 `exactly()` matches the complete sequence of immediate symbols. `containing()` accepts an alternative containing all the named symbols, while `nonEmpty()` excludes a production with no symbols. Rule and symbol names are case-sensitive and belong to the selected grammar.
 
-### Constrain repeated occurrences
+### Plan related names, operands and values
+
+Use `RulePlan` when a condition belongs to a SQL role rather than to the nth token in the entire statement. This SQLite expression allows addition or subtraction, requires the left operand to reference `score`, and generates an integer from 1 through 10 on the right:
+
+```php
+use SqlFaker\Generation\Plan\RulePlan;
+use SqlFaker\Generation\Plan\LexemeConstraint;
+
+$column = RulePlan::any()
+    ->allowing(ProductionPattern::exactly('idj'))
+    ->withRule('idj', RulePlan::any()
+        ->allowing(ProductionPattern::exactly('ID')))
+    ->withLexeme('ID', LexemeConstraint::oneOf('score'));
+
+$integer = RulePlan::any()
+    ->allowing(ProductionPattern::exactly('term'))
+    ->withRule('term', RulePlan::any()
+        ->allowing(ProductionPattern::exactly('INTEGER'))
+        ->withLexeme('INTEGER', LexemeConstraint::integers(1, 10)));
+
+$calculation = RulePlan::any()
+    ->allowing(ProductionPattern::anyOf(
+        ProductionPattern::exactly('expr', 'PLUS', 'expr'),
+        ProductionPattern::exactly('expr', 'MINUS', 'expr'),
+    ))
+    ->withChild('expr', 0, $column)
+    ->withChild('expr', 1, $integer);
+
+$calculationPlan = GenerationPlan::fromRule('expr')
+    ->withRule('expr', $calculation)
+    ->requiringNonEmpty();
+$sql = $provider->generate($calculationPlan);
+```
+
+`withChild('expr', 1, ...)` selects the second immediate `expr` child of the production being planned. Earlier expressions elsewhere in the statement do not change that selection. A production lacking the required child is excluded. `withRule()` applies whenever the named rule is visited inside its scope. Descendants of a selected child also inherit that child's scope.
+
+`anyOf()` keeps the union of matching alternatives, `allOf()` keeps their intersection, and `excluding()` negates a pattern. Repeated `allowing()`, `withRule()`, `withChild()` and `withLexeme()` calls on the same scope intersect their conditions. A nearer nested rule or lexical declaration overrides the corresponding inherited default. Conditions on unvisited rules are conditional; use a production pattern or a required child when a clause must occur.
+
+Lexical constraints belong to terminal names. `oneOf()` takes complete SQL spellings, such as `users`, `'Alice'`, or a quoted identifier, not unquoted application string values. `integers()` restricts an unsigned integer token; unary signs belong to the grammar. Every selected spelling still goes through the dialect's lexical validation. Unspecified terminals keep their normal lexical choices.
+
+### Plan ordered lists
+
+`withItems()` describes the non-recursive part of each production in a directly recursive list. Items are in SQL output order, regardless of whether the grammar uses left or right recursion. For example, the values for an SQLite table whose declared column order is `(id, name, score)` can share reusable expression plans:
+
+```php
+$name = RulePlan::any()
+    ->allowing(ProductionPattern::exactly('term'))
+    ->withRule('term', RulePlan::any()
+        ->allowing(ProductionPattern::exactly('STRING'))
+        ->withLexeme('STRING', LexemeConstraint::oneOf("'Alice'", "'Bob'")));
+
+$row = RulePlan::any()->withItems(
+    RulePlan::any()->withRule('expr', $integer),
+    RulePlan::any()->withRule('expr', $name),
+    RulePlan::any()->withRule('expr', $integer),
+);
+
+$rowPlan = GenerationPlan::fromRule('nexprlist')
+    ->withRule('nexprlist', $row)
+    ->requiringNonEmpty();
+$sql = $provider->generate($rowPlan);
+```
+
+List length, item types and item order are fixed here; values remain random within their domains. Every compatible list production remains available. This API accepts one or more items and supports direct recursion at either end. For indirect lists, compose nested `RulePlan` scopes for the intervening grammar rules; SQLite's `selcollist`/`sclp` projection list is one such case.
+
+### Target a writable table
+
+Attach the same conditions to a complete statement. This plan writes the row above to the caller-supplied `users` table:
+
+```php
+$table = RulePlan::any()
+    ->allowing(ProductionPattern::exactly('nm'))
+    ->withRule('nm', RulePlan::any()->allowing(ProductionPattern::exactly('idj')))
+    ->withRule('idj', RulePlan::any()->allowing(ProductionPattern::exactly('ID')))
+    ->withLexeme('ID', LexemeConstraint::oneOf('users'));
+
+$insert = RulePlan::any()
+    ->allowing(ProductionPattern::containing('insert_cmd', 'select', 'upsert'))
+    ->withRule('xfullname', $table)
+    ->withRule('insert_cmd', RulePlan::any()
+        ->allowing(ProductionPattern::exactly('INSERT', 'orconf')))
+    ->withRule('select', RulePlan::any()
+        ->allowing(ProductionPattern::exactly('selectnowith')))
+    ->withRule('selectnowith', RulePlan::any()
+        ->allowing(ProductionPattern::exactly('oneselect')))
+    ->withRule('oneselect', RulePlan::any()
+        ->allowing(ProductionPattern::exactly('values')))
+    ->withRule('values', RulePlan::any()
+        ->allowing(ProductionPattern::exactly('VALUES', 'LP', 'nexprlist', 'RP')))
+    ->withRule('nexprlist', $row);
+
+$insertPlan = GenerationPlan::fromRule('cmd')->withRule('cmd', $insert)
+    ->requiringNonEmpty()->withExpansionBudget(128);
+foreach (['with', 'orconf', 'idlist_opt', 'upsert'] as $optional) {
+    $insertPlan = $insertPlan->withRule($optional,
+        RulePlan::any()->allowing(ProductionPattern::exactly()));
+}
+$sql = $provider->generate($insertPlan);
+```
+
+This example deliberately selects VALUES for brevity. To keep VALUES and SELECT available, allow both `oneselect` productions and attach the same expression plans to their respective row and projection lists. The SQLite [semantic fuzz plans](../../ztd-query-sqlite/fuzz/Semantics/StatementPlans.php) demonstrate that composition, plus UPDATE assignment/predicate scopes and DELETE predicates. MySQL's optional INTO and VALUE/VALUES choices likewise remain random unless constrained.
+
+A schema-compatible plan must account for every reachable form it allows: target names, corresponding columns and values, expression types, and any optional clauses relevant to the caller. SQL Faker does not infer these relationships from identifier spellings, enforce database constraints such as uniqueness or foreign keys, or synthesize defaults from a live schema.
+
+Unknown declared rule names are rejected before generation. Alternatives that cannot complete under their scoped conditions are excluded; if no finite derivation remains, generation fails. Conflicting conditions in a single declaration are rejected rather than silently overwritten. Rule names are dialect- and release-specific, just like the existing production patterns.
+
+### Constrain repeated occurrences (low-level replay)
 
 Each rule maps to a list of patterns, applied to successive visits during leftmost derivation. This example selects addition, then requires each operand to be a term:
 
@@ -132,7 +240,7 @@ $literalPlan = GenerationPlan::lexical('integer_literal', [
 $literal = $provider->generate($literalPlan);
 
 $quoted = $provider->generate(
-    \SqlFaker\Sqlite\GenerationPlans::quotedIdentifier(minLength: 4, maxLength: 8),
+    \SqlFaker\Sqlite\Generation\GenerationPlans::quotedIdentifier(minLength: 4, maxLength: 8),
 );
 ```
 
@@ -158,7 +266,7 @@ $second = $provider->generate($replayPlan);
 $sameSql = $first === $second;
 ```
 
-The compiled plan retains production ordinals, token spellings, and candidate keys, including boundary choices. Keep it with the same dialect, grammar version, and SQL Faker version used to compile it.
+Both scoped `RulePlan` conditions and positional constraints use this compiler. The compiled plan retains source production ordinals, token spellings, and candidate keys, including boundary choices; it no longer needs the scoped declarations to replay. Keep it with the same dialect, grammar version, and SQL Faker version used to compile it.
 
 ### Compile a plan from bytes
 
@@ -179,6 +287,27 @@ $sameSql = $first === $second;
 
 The first four bytes choose an expansion budget within the feasible range. Remaining bytes supply production and lexical choices; omitted bytes use defaults. The input must be a grammar plan with a feasible positive expansion count and a maximum budget no greater than 1,000,000. Use direct lexical generation for lexical-value plans.
 
+
+### Encode choices as fuzzer input
+
+`BytePlanEncoder` is the inverse of `BytePlanCompiler`: it runs `planner()->build()` once with callbacks that also receive the candidate productions, and returns the bytes the compiler decodes to that very plan. Lexical choices left to `null` are made the way the compiler will make them from the padding bytes:
+
+```php
+$builder = $provider->planner();
+$constraints = GenerationPlan::fromRule('cmd')->requiringNonEmpty();
+
+$input = (new BytePlanEncoder())->encode(
+    $builder,
+    $constraints,
+    $builder->minimumExpansions($constraints),
+    static fn (int $count, array $candidates): int => $count - 1,
+);
+
+$plan = (new BytePlanCompiler())->compile($input, $builder, $constraints);
+$sql = $provider->generate($plan);
+```
+
+The budget must lie between `minimumExpansions()` and the constraints' expansion budget, 5000 without one. `bin/seeds.php` uses the encoder to write one such input for every production a start rule can reach; the package's `seeds/` directory holds the results for the default grammar versions.
 ## MySQL
 
 ### Require non-empty row values
@@ -190,7 +319,7 @@ $mysqlFaker = \Faker\Factory::create();
 $mysql = new \SqlFaker\MySqlProvider($mysqlFaker, 'mysql-8.4.7');
 $mysqlFaker->seed(7);
 
-$rowsPlan = \SqlFaker\MySql\GenerationPlans::withoutEmptyRows(
+$rowsPlan = \SqlFaker\MySql\Generation\GenerationPlans::withoutEmptyRows(
     \SqlFaker\MySql\StatementType::Insert->value,
 )->withMaxDepth(6);
 
@@ -204,7 +333,7 @@ The plan takes a rule-name string; the corresponding Faker `sqlWithoutEmptyRows(
 A preset supplies the production constraints for a particular SQL form:
 
 ```php
-$fullTextPlan = \SqlFaker\MySql\GenerationPlans::fullTextSearchStatement()
+$fullTextPlan = \SqlFaker\MySql\Generation\GenerationPlans::fullTextSearchStatement()
     ->withMaxDepth(6);
 
 $sql = $mysql->generate($fullTextPlan);
@@ -223,7 +352,7 @@ $pgFaker = \Faker\Factory::create();
 $postgres = new \SqlFaker\PostgreSqlProvider($pgFaker, 'pg-17.2');
 $pgFaker->seed(7);
 
-$fullTextPlan = \SqlFaker\PostgreSql\GenerationPlans::fullTextSearchStatement()
+$fullTextPlan = \SqlFaker\PostgreSql\Generation\GenerationPlans::fullTextSearchStatement()
     ->withMaxDepth(6);
 
 $sql = $postgres->generate($fullTextPlan);
@@ -236,7 +365,7 @@ The preset includes the operator spelling. The names and values remain generated
 `domainDmlStatements()` returns three plans, in INSERT, UPDATE, DELETE order. Choose a plan before generating its SQL:
 
 ```php
-$plans = \SqlFaker\PostgreSql\GenerationPlans::domainDmlStatements();
+$plans = \SqlFaker\PostgreSql\Generation\GenerationPlans::domainDmlStatements();
 $insertPlan = $plans[0]->withMaxDepth(3);
 
 $insert = $postgres->generate($insertPlan);
@@ -265,7 +394,7 @@ Starting at `create_table` alone selects only the opening fragment. The `cmd` al
 Pass a choice for each statement: `0` selects INSERT, `1` UPDATE, and `2` DELETE.
 
 ```php
-$twoStatements = \SqlFaker\Sqlite\GenerationPlans::multiDmlStatement(
+$twoStatements = \SqlFaker\Sqlite\Generation\GenerationPlans::multiDmlStatement(
     firstChoice: 0,
     secondChoice: 1,
 )->withMaxDepth(6);

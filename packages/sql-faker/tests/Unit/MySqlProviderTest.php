@@ -13,7 +13,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\Derivation\TerminationAnalyzer;
 use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\LexemeConstraint;
 use SqlFaker\Generation\Plan\ProductionPattern;
+use SqlFaker\Generation\Plan\RulePlan;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\Grammar\Model\NonTerminal;
@@ -225,6 +227,12 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(RulePlan::class)]
+#[UsesClass(LexemeConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\GrammarCompiler::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\Scope::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\PreparedGrammar::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\ScopedGeneration::class)]
 final class MySqlProviderTest extends TestCase
 {
     #[Override]
@@ -1503,4 +1511,42 @@ final class MySqlProviderTest extends TestCase
         $faker->numberBetween(0, 1000);
         self::assertSame($first, $provider->generate($plan));
     }
+
+    /**
+     * @param GenerationPlan<true> $constraints
+     */
+    #[DataProvider('providerScopedInsertPlan')]
+    public function testGenerateSchemaBoundInsertAndFreezeChoices(GenerationPlan $constraints, int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker, 'mysql-8.4.7');
+        self::assertMatchesRegularExpression("/^INSERT(?: INTO)? users VALUES? \( (?:1[0-9]|20) , '(?:Alice|Bob)' \)$/", $provider->generate($constraints));
+        $frozen = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile(str_repeat(chr($seed), 64), $provider->planner(), $constraints);
+        $sql = $provider->generate($frozen);
+        $faker->seed(999);
+        self::assertSame($sql, $provider->generate($frozen));
+        self::assertMatchesRegularExpression("/^INSERT(?: INTO)? users VALUES? \( (?:1[0-9]|20) , '(?:Alice|Bob)' \)$/", $sql);
+    }
+
+    /**
+     * @return iterable<string, array{GenerationPlan<true>, int}>
+     */
+    public static function providerScopedInsertPlan(): iterable
+    {
+        $number = RulePlan::any()->allowing(ProductionPattern::exactly('NUM_literal'))->withRule('NUM_literal', RulePlan::any()->allowing(ProductionPattern::exactly('int64_literal')))->withRule('int64_literal', RulePlan::any()->allowing(ProductionPattern::exactly('NUM')))->withLexeme('NUM', LexemeConstraint::integers(10, 20));
+        $string = RulePlan::any()->allowing(ProductionPattern::exactly('text_literal'))->withRule('text_literal', RulePlan::any()->allowing(ProductionPattern::exactly('TEXT_STRING')))->withLexeme('TEXT_STRING', LexemeConstraint::oneOf("'Alice'", "'Bob'"));
+        $plan = GenerationPlan::fromRule('insert_stmt')->withRule('insert_stmt', RulePlan::any()->allowing(ProductionPattern::containing('insert_from_constructor')))
+         ->withRule('table_ident', RulePlan::any()->allowing(ProductionPattern::exactly('ident'))->withLexeme('IDENT', LexemeConstraint::oneOf('users')))
+         ->withRule('values', RulePlan::any()->withItems(RulePlan::any()->withRule('literal', $number), RulePlan::any()->withRule('literal', $string)))
+         ->requiringNonEmpty()->withExpansionBudget(100);
+        foreach (['insert_lock_option' => [], 'opt_ignore' => [], 'opt_use_partition' => [], 'opt_values_reference' => [], 'opt_insert_update_list' => [], 'ident' => ['IDENT_sys'],'IDENT_sys' => ['IDENT'],'insert_from_constructor' => ['insert_values'],'values_list' => ['row_value'],'opt_values' => ['values'],'expr_or_default' => ['expr'],'expr' => ['bool_pri'],'bool_pri' => ['predicate'],'predicate' => ['bit_expr'],'bit_expr' => ['simple_expr'],'simple_expr' => ['literal_or_null'],'literal_or_null' => ['literal']] as $name => $symbols) {
+            $plan = $plan->withRule($name, RulePlan::any()->allowing(ProductionPattern::exactly(...$symbols)));
+        }
+
+        foreach ([0, 1, 7, 31] as $seed) {
+            yield 'seed ' . $seed => [$plan, $seed];
+        }
+    }
+
 }
