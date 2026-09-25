@@ -407,66 +407,70 @@
 <span class="src-line" id="L369"><a class="ln" href="#L369">369</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L370"><a class="ln" href="#L370">370</a><span class="tok-com">     * The environment split into one per value of the names just written, when any has several.</span></span>
 <span class="src-line" id="L371"><a class="ln" href="#L371">371</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L372"><a class="ln" href="#L372">372</a><span class="tok-com">     * @param array&lt;string, true&gt; $names</span></span>
-<span class="src-line" id="L373"><a class="ln" href="#L373">373</a><span class="tok-com">     * @return list&lt;Environment&gt;</span></span>
-<span class="src-line" id="L374"><a class="ln" href="#L374">374</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L375"><a class="ln" href="#L375">375</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">split</span>(<span class="tok-id">Environment</span> <span class="tok-var">$environment</span>, <span class="tok-kw">array</span> <span class="tok-var">$names</span>, <span class="tok-id">int</span> <span class="tok-var">$limit</span> = <span class="tok-id">self</span>::<span class="tok-id">MAX_RUNS</span>): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L376"><a class="ln" href="#L376">376</a>    {</span>
-<span class="src-line" id="L377"><a class="ln" href="#L377">377</a>        <span class="tok-kw">if</span> (<span class="tok-var">$limit</span> &lt; <span class="tok-num">2</span>) {</span>
-<span class="src-line" id="L378"><a class="ln" href="#L378">378</a>            <span class="tok-kw">return</span> [<span class="tok-var">$environment</span>];</span>
-<span class="src-line" id="L379"><a class="ln" href="#L379">379</a>        }</span>
-<span class="src-line" id="L380"><a class="ln" href="#L380">380</a>        <span class="tok-var">$environments</span> = [<span class="tok-var">$environment</span>];</span>
-<span class="src-line" id="L381"><a class="ln" href="#L381">381</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$names</span> <span class="tok-kw">as</span> <span class="tok-var">$name</span> =&gt; <span class="tok-var">$_</span>) {</span>
-<span class="src-line" id="L382"><a class="ln" href="#L382">382</a>            <span class="tok-kw">if</span> (!<span class="tok-var">$environment</span>-&gt;<span class="tok-id">has</span>(<span class="tok-var">$name</span>)) {</span>
-<span class="src-line" id="L383"><a class="ln" href="#L383">383</a>                <span class="tok-kw">continue</span>;</span>
-<span class="src-line" id="L384"><a class="ln" href="#L384">384</a>            }</span>
-<span class="src-line" id="L385"><a class="ln" href="#L385">385</a>            <span class="tok-var">$domain</span> = <span class="tok-var">$environment</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$name</span>);</span>
-<span class="src-line" id="L386"><a class="ln" href="#L386">386</a>            <span class="tok-kw">if</span> (<span class="tok-var">$domain</span>-&gt;<span class="tok-id">widened</span> || <span class="tok-id">count</span>(<span class="tok-var">$domain</span>-&gt;<span class="tok-id">terms</span>) &lt; <span class="tok-num">2</span>) {</span>
+<span class="src-line" id="L372"><a class="ln" href="#L372">372</a><span class="tok-com">     * Bound each name&#039;s expansion before splitting the next one. Waiting until</span></span>
+<span class="src-line" id="L373"><a class="ln" href="#L373">373</a><span class="tok-com">     * every name has been split materializes their full Cartesian product,</span></span>
+<span class="src-line" id="L374"><a class="ln" href="#L374">374</a><span class="tok-com">     * even though only a handful of runs will survive the bound.</span></span>
+<span class="src-line" id="L375"><a class="ln" href="#L375">375</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L376"><a class="ln" href="#L376">376</a><span class="tok-com">     * @param array&lt;string, true&gt; $names</span></span>
+<span class="src-line" id="L377"><a class="ln" href="#L377">377</a><span class="tok-com">     * @return list&lt;Environment&gt;</span></span>
+<span class="src-line" id="L378"><a class="ln" href="#L378">378</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L379"><a class="ln" href="#L379">379</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">split</span>(<span class="tok-id">Environment</span> <span class="tok-var">$environment</span>, <span class="tok-kw">array</span> <span class="tok-var">$names</span>, <span class="tok-id">int</span> <span class="tok-var">$limit</span> = <span class="tok-id">self</span>::<span class="tok-id">MAX_RUNS</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L380"><a class="ln" href="#L380">380</a>    {</span>
+<span class="src-line" id="L381"><a class="ln" href="#L381">381</a>        <span class="tok-kw">if</span> (<span class="tok-var">$limit</span> &lt; <span class="tok-num">2</span>) {</span>
+<span class="src-line" id="L382"><a class="ln" href="#L382">382</a>            <span class="tok-kw">return</span> [<span class="tok-var">$environment</span>];</span>
+<span class="src-line" id="L383"><a class="ln" href="#L383">383</a>        }</span>
+<span class="src-line" id="L384"><a class="ln" href="#L384">384</a>        <span class="tok-var">$environments</span> = [<span class="tok-var">$environment</span>];</span>
+<span class="src-line" id="L385"><a class="ln" href="#L385">385</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$names</span> <span class="tok-kw">as</span> <span class="tok-var">$name</span> =&gt; <span class="tok-var">$_</span>) {</span>
+<span class="src-line" id="L386"><a class="ln" href="#L386">386</a>            <span class="tok-kw">if</span> (!<span class="tok-var">$environment</span>-&gt;<span class="tok-id">has</span>(<span class="tok-var">$name</span>)) {</span>
 <span class="src-line" id="L387"><a class="ln" href="#L387">387</a>                <span class="tok-kw">continue</span>;</span>
 <span class="src-line" id="L388"><a class="ln" href="#L388">388</a>            }</span>
-<span class="src-line" id="L389"><a class="ln" href="#L389">389</a>            <span class="tok-var">$split</span> = [];</span>
-<span class="src-line" id="L390"><a class="ln" href="#L390">390</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$environments</span> <span class="tok-kw">as</span> <span class="tok-var">$current</span>) {</span>
-<span class="src-line" id="L391"><a class="ln" href="#L391">391</a>                <span class="tok-kw">foreach</span> (<span class="tok-var">$domain</span>-&gt;<span class="tok-id">terms</span> <span class="tok-kw">as</span> <span class="tok-var">$term</span>) {</span>
-<span class="src-line" id="L392"><a class="ln" href="#L392">392</a>                    <span class="tok-var">$one</span> = <span class="tok-var">$current</span>-&gt;<span class="tok-id">copy</span>();</span>
-<span class="src-line" id="L393"><a class="ln" href="#L393">393</a>                    <span class="tok-var">$one</span>-&gt;<span class="tok-id">narrow</span>(<span class="tok-var">$name</span>, <span class="tok-id">Domain</span>::<span class="tok-id">of</span>(<span class="tok-var">$term</span>));</span>
-<span class="src-line" id="L394"><a class="ln" href="#L394">394</a>                    <span class="tok-var">$split</span>[] = <span class="tok-var">$one</span>;</span>
-<span class="src-line" id="L395"><a class="ln" href="#L395">395</a>                }</span>
-<span class="src-line" id="L396"><a class="ln" href="#L396">396</a>            }</span>
-<span class="src-line" id="L397"><a class="ln" href="#L397">397</a>            <span class="tok-var">$environments</span> = <span class="tok-var">$split</span>;</span>
-<span class="src-line" id="L398"><a class="ln" href="#L398">398</a>        }</span>
-<span class="src-line" id="L399"><a class="ln" href="#L399">399</a></span>
-<span class="src-line" id="L400"><a class="ln" href="#L400">400</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">bound</span>(<span class="tok-var">$environments</span>, <span class="tok-var">$limit</span>);</span>
-<span class="src-line" id="L401"><a class="ln" href="#L401">401</a>    }</span>
-<span class="src-line" id="L402"><a class="ln" href="#L402">402</a></span>
-<span class="src-line" id="L403"><a class="ln" href="#L403">403</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L404"><a class="ln" href="#L404">404</a><span class="tok-com">     * The environments with repeats dropped and the rest joined once there are too many to keep apart.</span></span>
-<span class="src-line" id="L405"><a class="ln" href="#L405">405</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L406"><a class="ln" href="#L406">406</a><span class="tok-com">     * @param list&lt;Environment&gt; $environments</span></span>
-<span class="src-line" id="L407"><a class="ln" href="#L407">407</a><span class="tok-com">     * @return list&lt;Environment&gt;</span></span>
-<span class="src-line" id="L408"><a class="ln" href="#L408">408</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L409"><a class="ln" href="#L409">409</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">bound</span>(<span class="tok-kw">array</span> <span class="tok-var">$environments</span>, <span class="tok-id">int</span> <span class="tok-var">$limit</span> = <span class="tok-id">self</span>::<span class="tok-id">MAX_RUNS</span>): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L410"><a class="ln" href="#L410">410</a>    {</span>
-<span class="src-line" id="L411"><a class="ln" href="#L411">411</a>        <span class="tok-var">$unique</span> = [];</span>
-<span class="src-line" id="L412"><a class="ln" href="#L412">412</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$environments</span> <span class="tok-kw">as</span> <span class="tok-var">$environment</span>) {</span>
-<span class="src-line" id="L413"><a class="ln" href="#L413">413</a>            <span class="tok-var">$unique</span>[<span class="tok-var">$environment</span>-&gt;<span class="tok-id">signature</span>()] ??= <span class="tok-var">$environment</span>;</span>
-<span class="src-line" id="L414"><a class="ln" href="#L414">414</a>        }</span>
-<span class="src-line" id="L415"><a class="ln" href="#L415">415</a>        <span class="tok-var">$unique</span> = <span class="tok-id">array_values</span>(<span class="tok-var">$unique</span>);</span>
-<span class="src-line" id="L416"><a class="ln" href="#L416">416</a>        <span class="tok-kw">if</span> (<span class="tok-id">count</span>(<span class="tok-var">$unique</span>) &lt;= <span class="tok-var">$limit</span>) {</span>
-<span class="src-line" id="L417"><a class="ln" href="#L417">417</a>            <span class="tok-kw">return</span> <span class="tok-var">$unique</span>;</span>
+<span class="src-line" id="L389"><a class="ln" href="#L389">389</a>            <span class="tok-var">$domain</span> = <span class="tok-var">$environment</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$name</span>);</span>
+<span class="src-line" id="L390"><a class="ln" href="#L390">390</a>            <span class="tok-kw">if</span> (<span class="tok-var">$domain</span>-&gt;<span class="tok-id">widened</span> || <span class="tok-id">count</span>(<span class="tok-var">$domain</span>-&gt;<span class="tok-id">terms</span>) &lt; <span class="tok-num">2</span>) {</span>
+<span class="src-line" id="L391"><a class="ln" href="#L391">391</a>                <span class="tok-kw">continue</span>;</span>
+<span class="src-line" id="L392"><a class="ln" href="#L392">392</a>            }</span>
+<span class="src-line" id="L393"><a class="ln" href="#L393">393</a>            <span class="tok-var">$split</span> = [];</span>
+<span class="src-line" id="L394"><a class="ln" href="#L394">394</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$environments</span> <span class="tok-kw">as</span> <span class="tok-var">$current</span>) {</span>
+<span class="src-line" id="L395"><a class="ln" href="#L395">395</a>                <span class="tok-kw">foreach</span> (<span class="tok-var">$domain</span>-&gt;<span class="tok-id">terms</span> <span class="tok-kw">as</span> <span class="tok-var">$term</span>) {</span>
+<span class="src-line" id="L396"><a class="ln" href="#L396">396</a>                    <span class="tok-var">$one</span> = <span class="tok-var">$current</span>-&gt;<span class="tok-id">copy</span>();</span>
+<span class="src-line" id="L397"><a class="ln" href="#L397">397</a>                    <span class="tok-var">$one</span>-&gt;<span class="tok-id">narrow</span>(<span class="tok-var">$name</span>, <span class="tok-id">Domain</span>::<span class="tok-id">of</span>(<span class="tok-var">$term</span>));</span>
+<span class="src-line" id="L398"><a class="ln" href="#L398">398</a>                    <span class="tok-var">$split</span>[] = <span class="tok-var">$one</span>;</span>
+<span class="src-line" id="L399"><a class="ln" href="#L399">399</a>                }</span>
+<span class="src-line" id="L400"><a class="ln" href="#L400">400</a>            }</span>
+<span class="src-line" id="L401"><a class="ln" href="#L401">401</a>            <span class="tok-var">$environments</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">bound</span>(<span class="tok-var">$split</span>, <span class="tok-var">$limit</span>);</span>
+<span class="src-line" id="L402"><a class="ln" href="#L402">402</a>        }</span>
+<span class="src-line" id="L403"><a class="ln" href="#L403">403</a></span>
+<span class="src-line" id="L404"><a class="ln" href="#L404">404</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">bound</span>(<span class="tok-var">$environments</span>, <span class="tok-var">$limit</span>);</span>
+<span class="src-line" id="L405"><a class="ln" href="#L405">405</a>    }</span>
+<span class="src-line" id="L406"><a class="ln" href="#L406">406</a></span>
+<span class="src-line" id="L407"><a class="ln" href="#L407">407</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L408"><a class="ln" href="#L408">408</a><span class="tok-com">     * The environments with repeats dropped and the rest joined once there are too many to keep apart.</span></span>
+<span class="src-line" id="L409"><a class="ln" href="#L409">409</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L410"><a class="ln" href="#L410">410</a><span class="tok-com">     * @param list&lt;Environment&gt; $environments</span></span>
+<span class="src-line" id="L411"><a class="ln" href="#L411">411</a><span class="tok-com">     * @return list&lt;Environment&gt;</span></span>
+<span class="src-line" id="L412"><a class="ln" href="#L412">412</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L413"><a class="ln" href="#L413">413</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">bound</span>(<span class="tok-kw">array</span> <span class="tok-var">$environments</span>, <span class="tok-id">int</span> <span class="tok-var">$limit</span> = <span class="tok-id">self</span>::<span class="tok-id">MAX_RUNS</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L414"><a class="ln" href="#L414">414</a>    {</span>
+<span class="src-line" id="L415"><a class="ln" href="#L415">415</a>        <span class="tok-var">$unique</span> = [];</span>
+<span class="src-line" id="L416"><a class="ln" href="#L416">416</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$environments</span> <span class="tok-kw">as</span> <span class="tok-var">$environment</span>) {</span>
+<span class="src-line" id="L417"><a class="ln" href="#L417">417</a>            <span class="tok-var">$unique</span>[<span class="tok-var">$environment</span>-&gt;<span class="tok-id">signature</span>()] ??= <span class="tok-var">$environment</span>;</span>
 <span class="src-line" id="L418"><a class="ln" href="#L418">418</a>        }</span>
-<span class="src-line" id="L419"><a class="ln" href="#L419">419</a>        <span class="tok-var">$kept</span> = <span class="tok-id">array_slice</span>(<span class="tok-var">$unique</span>, <span class="tok-num">0</span>, <span class="tok-var">$limit</span> - <span class="tok-num">1</span>);</span>
-<span class="src-line" id="L420"><a class="ln" href="#L420">420</a>        <span class="tok-var">$joined</span> = <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L421"><a class="ln" href="#L421">421</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">array_slice</span>(<span class="tok-var">$unique</span>, <span class="tok-var">$limit</span> - <span class="tok-num">1</span>) <span class="tok-kw">as</span> <span class="tok-var">$environment</span>) {</span>
-<span class="src-line" id="L422"><a class="ln" href="#L422">422</a>            <span class="tok-var">$joined</span> = <span class="tok-var">$joined</span> === <span class="tok-id">null</span> ? <span class="tok-var">$environment</span> : <span class="tok-var">$joined</span>-&gt;<span class="tok-id">join</span>(<span class="tok-var">$environment</span>);</span>
-<span class="src-line" id="L423"><a class="ln" href="#L423">423</a>        }</span>
-<span class="src-line" id="L424"><a class="ln" href="#L424">424</a>        <span class="tok-kw">if</span> (<span class="tok-var">$joined</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L425"><a class="ln" href="#L425">425</a>            <span class="tok-var">$kept</span>[] = <span class="tok-var">$joined</span>;</span>
-<span class="src-line" id="L426"><a class="ln" href="#L426">426</a>        }</span>
-<span class="src-line" id="L427"><a class="ln" href="#L427">427</a></span>
-<span class="src-line" id="L428"><a class="ln" href="#L428">428</a>        <span class="tok-kw">return</span> <span class="tok-var">$kept</span>;</span>
-<span class="src-line" id="L429"><a class="ln" href="#L429">429</a>    }</span>
-<span class="src-line" id="L430"><a class="ln" href="#L430">430</a>}</span>
+<span class="src-line" id="L419"><a class="ln" href="#L419">419</a>        <span class="tok-var">$unique</span> = <span class="tok-id">array_values</span>(<span class="tok-var">$unique</span>);</span>
+<span class="src-line" id="L420"><a class="ln" href="#L420">420</a>        <span class="tok-kw">if</span> (<span class="tok-id">count</span>(<span class="tok-var">$unique</span>) &lt;= <span class="tok-var">$limit</span>) {</span>
+<span class="src-line" id="L421"><a class="ln" href="#L421">421</a>            <span class="tok-kw">return</span> <span class="tok-var">$unique</span>;</span>
+<span class="src-line" id="L422"><a class="ln" href="#L422">422</a>        }</span>
+<span class="src-line" id="L423"><a class="ln" href="#L423">423</a>        <span class="tok-var">$kept</span> = <span class="tok-id">array_slice</span>(<span class="tok-var">$unique</span>, <span class="tok-num">0</span>, <span class="tok-var">$limit</span> - <span class="tok-num">1</span>);</span>
+<span class="src-line" id="L424"><a class="ln" href="#L424">424</a>        <span class="tok-var">$joined</span> = <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L425"><a class="ln" href="#L425">425</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">array_slice</span>(<span class="tok-var">$unique</span>, <span class="tok-var">$limit</span> - <span class="tok-num">1</span>) <span class="tok-kw">as</span> <span class="tok-var">$environment</span>) {</span>
+<span class="src-line" id="L426"><a class="ln" href="#L426">426</a>            <span class="tok-var">$joined</span> = <span class="tok-var">$joined</span> === <span class="tok-id">null</span> ? <span class="tok-var">$environment</span> : <span class="tok-var">$joined</span>-&gt;<span class="tok-id">join</span>(<span class="tok-var">$environment</span>);</span>
+<span class="src-line" id="L427"><a class="ln" href="#L427">427</a>        }</span>
+<span class="src-line" id="L428"><a class="ln" href="#L428">428</a>        <span class="tok-kw">if</span> (<span class="tok-var">$joined</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L429"><a class="ln" href="#L429">429</a>            <span class="tok-var">$kept</span>[] = <span class="tok-var">$joined</span>;</span>
+<span class="src-line" id="L430"><a class="ln" href="#L430">430</a>        }</span>
 <span class="src-line" id="L431"><a class="ln" href="#L431">431</a></span>
+<span class="src-line" id="L432"><a class="ln" href="#L432">432</a>        <span class="tok-kw">return</span> <span class="tok-var">$kept</span>;</span>
+<span class="src-line" id="L433"><a class="ln" href="#L433">433</a>    }</span>
+<span class="src-line" id="L434"><a class="ln" href="#L434">434</a>}</span>
+<span class="src-line" id="L435"><a class="ln" href="#L435">435</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
