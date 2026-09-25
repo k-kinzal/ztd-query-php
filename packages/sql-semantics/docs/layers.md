@@ -14,8 +14,7 @@ implementations of those policies and compose their matching syntax parser.
 A platform may use Core's binding operations, but cannot use another platform.
 
 `Facade/Dialect` retains the built-in enum and selects the corresponding platform.
-`Compatibility/ClassAliases.php` preserves the original public class names.
-Internal AST and binding helpers now live under `Core`.
+Semantic values, AST helpers, and binding operations live under `Core`.
 
 Deptrac checks namespace boundaries with one collector per layer. PHPStan's
 `forbiddenTermsByPath` additionally rejects database names anywhere in Core,

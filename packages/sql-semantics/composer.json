@@ -38,10 +38,7 @@
     "autoload": {
         "psr-4": {
             "SqlSemantics\\": "src/"
-        },
-        "files": [
-            "src/Compatibility/ClassAliases.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

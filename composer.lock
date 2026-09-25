@@ -1149,7 +1149,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics",
-                "reference": "f4b25bef080ebbd17e0da9eda05384af4cad786e"
+                "reference": "6ef716489a0674b9d3c9011e868b89ef65e584e3"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1171,10 +1171,7 @@
             "autoload": {
                 "psr-4": {
                     "SqlSemantics\\": "src/"
-                },
-                "files": [
-                    "src/Compatibility/ClassAliases.php"
-                ]
+                }
             },
             "autoload-dev": {
                 "psr-4": {
