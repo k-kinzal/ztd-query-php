@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\TypeMapper;
+namespace Tests\Unit\Compatibility;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Compatibility\MySqlTypeMapper;
 use SqlFixture\Platform\MySql\MySqlTypeMapper as PlatformMySqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\TypeMapper\MySqlTypeMapper;
 
 #[CoversClass(MySqlTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]

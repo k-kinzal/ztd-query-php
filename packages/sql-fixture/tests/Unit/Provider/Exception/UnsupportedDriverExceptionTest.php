@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Platform\Exception;
+namespace Tests\Unit\Provider\Exception;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFixture\Platform\Exception\UnsupportedDriverException;
+use SqlFixture\Provider\Exception\UnsupportedDriverException;
 
 #[CoversClass(UnsupportedDriverException::class)]
 final class UnsupportedDriverExceptionTest extends TestCase

@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture;
+namespace SqlFixture\Provider;
 
 use Faker\Generator;
 use Faker\Provider\Base;
 use RuntimeException;
+use SqlFixture\Fixture;
 use SqlFixture\Hydrator\HydratorInterface;
-use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Provider;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 
@@ -40,7 +41,7 @@ class FileFixtureProvider extends Base
         $schemaParser = PlatformFactory::createSchemaParser($dialect);
 
         $this->fixtureGenerator = new FixtureGenerator($faker, $typeMapper, $hydrator, $schemaParser);
-        $this->schemas = (new Provider\DdlDirectory())->loadSchemas($ddlPath, $schemaParser);
+        $this->schemas = (new DdlDirectory())->loadSchemas($ddlPath, $schemaParser);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Platform\Exception;
+namespace SqlFixture\Provider\Exception;
 
 use InvalidArgumentException;
 

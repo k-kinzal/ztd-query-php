@@ -10,6 +10,15 @@ parameters:
         visibilityExemptNamespacePrefixes:
             - 'Tests'
             - 'Bench'
+        forbiddenTermsByPath:
+            'src/Schema/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/TypeMapper/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Hydrator/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Plan/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Fixture/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Platform/MySql/*': [postgres, pgsql, sqlite]
+            'src/Platform/PostgreSql/*': [mysql, mariadb, sqlite]
+            'src/Platform/Sqlite/*': [mysql, mariadb, postgres, pgsql]
         forbiddenNamespacePrefixes:
             - 'Tests\Fixture'
             - 'Tests\Fixtures'

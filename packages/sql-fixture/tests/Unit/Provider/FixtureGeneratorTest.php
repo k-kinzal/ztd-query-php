@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Provider;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFixture\FixtureGenerator;
+use SqlFixture\Fixture\Exception\InvalidOverrideException;
 use SqlFixture\Hydrator\ReflectionHydrator;
-use SqlFixture\InvalidOverrideException;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
+use SqlFixture\Provider\FixtureGenerator;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 
@@ -63,6 +63,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
+#[UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
 final class FixtureGeneratorTest extends TestCase
 {
     #[Test]

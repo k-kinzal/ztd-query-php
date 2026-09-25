@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Platform;
+namespace Tests\Unit\Provider;
 
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -12,13 +12,13 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\MySql\MySqlSchemaFetcher;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
-use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Platform\PostgreSql\PostgreSqlSchemaFetcher;
 use SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser;
 use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
+use SqlFixture\Provider\PlatformFactory;
 
 #[CoversClass(PlatformFactory::class)]
 #[UsesClass(SqliteSchemaFetcher::class)]

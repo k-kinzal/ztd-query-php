@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture;
+namespace SqlFixture\Provider;
 
 use Faker\Generator;
 use Faker\Provider\Base;
 use PDO;
+use SqlFixture\Fixture;
 use SqlFixture\Hydrator\HydratorInterface;
-use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Provider;
 use SqlFixture\Schema\SchemaFetcherInterface;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 
@@ -22,7 +23,7 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
  * @example Generate a fixture from a live SQLite table
  *     $pdo = new \PDO('sqlite::memory:');
  *     $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
- *     $provider = new \SqlFixture\DatabaseFixtureProvider(\Faker\Factory::create(), $pdo);
+ *     $provider = new \SqlFixture\Provider\DatabaseFixtureProvider(\Faker\Factory::create(), $pdo);
  *     $provider->fixture('users', ['name' => 'Alice']) // => ['name' => 'Alice']
  */
 class DatabaseFixtureProvider extends Base
@@ -31,7 +32,7 @@ class DatabaseFixtureProvider extends Base
     private SchemaFetcherInterface $schemaFetcher;
     private string $driver;
 
-    private Provider\DatabaseSchemaCache $schemaCache;
+    private DatabaseSchemaCache $schemaCache;
 
     /**
      * Initializes the collaborators and declared state for this object.
@@ -51,7 +52,7 @@ class DatabaseFixtureProvider extends Base
         $schemaParser = PlatformFactory::createSchemaParser($this->driver);
 
         $this->schemaFetcher = $schemaFetcher ?? PlatformFactory::createSchemaFetcher($this->driver);
-        $this->schemaCache = new Provider\DatabaseSchemaCache($connection, $this->schemaFetcher);
+        $this->schemaCache = new DatabaseSchemaCache($connection, $this->schemaFetcher);
         $this->fixtureGenerator = new FixtureGenerator($faker, $typeMapper, $hydrator, $schemaParser);
     }
 

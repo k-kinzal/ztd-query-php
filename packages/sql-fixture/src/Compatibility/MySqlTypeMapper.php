@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\TypeMapper;
+namespace SqlFixture\Compatibility;
 
 use Faker\Generator;
 use SqlFixture\Platform\MySql\MySqlTypeMapper as PlatformMySqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\TypeMapper\TypeMapperInterface;
 
 /**
  * @deprecated Use SqlFixture\Platform\MySql\MySqlTypeMapper instead

@@ -11,7 +11,7 @@ use SqlFixture\Schema\TableSchema;
  * Simple regex-based parser for SQLite CREATE TABLE statements.
  *
  * SQLite has a simpler type system based on "type affinity" rather than
- * strict types like MySQL. This parser handles the basic SQLite column
+ * a rigid type system. This parser handles the basic SQLite column
  * definitions and extracts type affinity information.
  *
  * @visibility public

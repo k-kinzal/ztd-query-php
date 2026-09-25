@@ -2,11 +2,9 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Platform;
+namespace SqlFixture\Provider;
 
 use PDO;
-use SqlFixture\Platform\Exception\DriverDetectionException;
-use SqlFixture\Platform\Exception\UnsupportedDriverException;
 use SqlFixture\Platform\MySql\MySqlSchemaFetcher;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
@@ -16,6 +14,8 @@ use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
+use SqlFixture\Provider\Exception\DriverDetectionException;
+use SqlFixture\Provider\Exception\UnsupportedDriverException;
 use SqlFixture\Schema\SchemaFetcherInterface;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\TypeMapper\TypeMapperInterface;

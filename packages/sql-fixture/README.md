@@ -35,7 +35,7 @@ Use `FixtureProvider` when you have CREATE TABLE SQL available:
 
 ```php
 use Faker\Factory;
-use SqlFixture\FixtureProvider;
+use SqlFixture\Provider\FixtureProvider;
 
 $faker = Factory::create();
 $faker->addProvider(new FixtureProvider($faker));
@@ -61,7 +61,7 @@ Use `DatabaseFixtureProvider` with a PDO connection to generate fixtures from yo
 
 ```php
 use Faker\Factory;
-use SqlFixture\DatabaseFixtureProvider;
+use SqlFixture\Provider\DatabaseFixtureProvider;
 
 $pdo = new PDO('mysql:host=localhost;dbname=myapp', 'user', 'password');
 $faker = Factory::create();
@@ -78,7 +78,7 @@ Use `FileFixtureProvider` with a directory containing `.sql` files:
 
 ```php
 use Faker\Factory;
-use SqlFixture\FileFixtureProvider;
+use SqlFixture\Provider\FileFixtureProvider;
 
 // Directory contains: users.sql, posts.sql, comments.sql
 $faker = Factory::create();
@@ -154,8 +154,8 @@ The hydrator handles:
 ### SQLite Support
 
 ```php
-use SqlFixture\FixtureProvider;
-use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Provider\FixtureProvider;
+use SqlFixture\Provider\PlatformFactory;
 
 // Specify dialect explicitly
 $faker->addProvider(new FixtureProvider($faker, dialect: PlatformFactory::DRIVER_SQLITE));
@@ -216,7 +216,7 @@ $faker->addProvider(new DatabaseFixtureProvider($faker, $pdo));
 Customize behavior by providing your own implementations:
 
 ```php
-use SqlFixture\FixtureProvider;
+use SqlFixture\Provider\FixtureProvider;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Hydrator\HydratorInterface;
@@ -253,3 +253,21 @@ composer format
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+## Architecture
+
+The core concepts are `Schema`, `Plan`, `Fixture`, `TypeMapper`, and `Hydrator`.
+Schema and type-mapping contracts are implemented by independent `Platform/MySql`,
+`Platform/PostgreSql`, and `Platform/Sqlite` directories. Core source contains no
+database names and never chooses an implementation.
+
+`Fixture\RowGenerator` accepts value-mapping and hydration contracts explicitly.
+`Fixture\PlanGenerator` depends on `Fixture\RowGeneration`, so any row generator
+can participate in linked fixture generation without provider dependencies.
+
+`Provider` owns the Faker entry points, driver selection, and default collaborator
+assembly. `Compatibility` preserves old entry-point names and deprecated wrappers
+outside core. Deptrac enforces these directions with one collector per namespace;
+PHPStan's file-term rule protects all core directories and rejects references to
+other databases inside each platform. Build and fuzz scripts are development tools,
+not a public CLI layer.

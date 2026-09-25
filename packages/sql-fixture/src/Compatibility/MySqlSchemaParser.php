@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Schema;
+namespace SqlFixture\Compatibility;
 
 use SqlFixture\Platform\MySql\MySqlSchemaParser as PlatformMySqlSchemaParser;
+use SqlFixture\Schema\SchemaParserInterface;
+use SqlFixture\Schema\TableSchema;
 
 /**
  * @deprecated Use SqlFixture\Platform\MySql\MySqlSchemaParser instead
