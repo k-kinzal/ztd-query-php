@@ -1476,7 +1476,7 @@
             "dist": {
                 "type": "path",
                 "url": "../container",
-                "reference": "6478c853dbf8368cfd2ff4ffaffcb57bdc0369ec"
+                "reference": "f825a526b2cd9ba9fa97421aaf4579ab76413227"
             },
             "require": {
                 "ext-pdo": "*",
@@ -1573,7 +1573,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Shared database containers for integration and fuzz testing",
+            "description": "Shared container definitions for ZTD Query integration and fuzz testing",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/container",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
@@ -1739,7 +1739,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "d8deed35a9e3659c14031f2aafcfff3f441789bd"
+                "reference": "bc601271f0c8e718d6d698495f19383cad7f2368"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1749,7 +1749,9 @@
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
                 "k-kinzal/container": "dev-main",
+                "k-kinzal/lemon-parser": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
@@ -1759,6 +1761,10 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4",
                 "symfony/filesystem": "^6.4"
+            },
+            "suggest": {
+                "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL grammar resources with bin/build-mysql.php and bin/build-pg.php",
+                "k-kinzal/lemon-parser": "To rebuild the SQLite grammar resources with bin/build-sqlite.php"
             },
             "type": "library",
             "autoload": {

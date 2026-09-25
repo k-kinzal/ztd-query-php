@@ -1,7 +1,8 @@
-# Database Containers
+# Containers
 
-Shared database container definitions for PHP 8.1+ and Docker. Every consumer uses
-one definition per database version from the `Container` namespace.
+Shared container definitions for ZTD Query integration and fuzz tests, for PHP 8.1+
+and Docker. Every consumer uses one definition per image version from the
+`Container` namespace.
 
 ## Versions
 

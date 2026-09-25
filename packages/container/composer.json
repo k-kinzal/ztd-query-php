@@ -1,6 +1,6 @@
 {
     "name": "k-kinzal/container",
-    "description": "Shared database containers for integration and fuzz testing",
+    "description": "Shared container definitions for ZTD Query integration and fuzz testing",
     "type": "library",
     "license": "MIT",
     "require": {

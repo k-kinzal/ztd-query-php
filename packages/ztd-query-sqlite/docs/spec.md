@@ -1,6 +1,6 @@
 # SQLite SQL Specification for ZTD
 
-This document defines how ZTD (Zero Downtime Deployment) handles SQLite SQL statements. ZTD simulates query results without modifying the physical database by using CTEs to shadow tables and virtualize writes.
+This document defines how ZTD (Zero Table Dependency) handles SQLite SQL statements. ZTD simulates query results without modifying the physical database by using CTEs to shadow tables and virtualize writes.
 
 **Grammar Reference:** SQLite 3.47.2 official Lemon grammar (`parse.y`). The `cmd` rule defines 40 production alternatives. This spec covers all 40 alternatives. Additionally, the `explain` rule wraps `cmd` to add `EXPLAIN` and `EXPLAIN QUERY PLAN` prefixes.
 

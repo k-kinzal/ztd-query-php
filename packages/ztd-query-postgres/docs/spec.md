@@ -1,6 +1,6 @@
 # PostgreSQL SQL Specification for ZTD
 
-This document defines how ZTD (Zero Downtime Deployment) handles PostgreSQL SQL statements. ZTD simulates query results without modifying the physical database by using CTEs to shadow tables and virtualize writes.
+This document defines how ZTD (Zero Table Dependency) handles PostgreSQL SQL statements. ZTD simulates query results without modifying the physical database by using CTEs to shadow tables and virtualize writes.
 
 **Grammar Reference:** PostgreSQL 17.2 official Bison grammar (`gram.y`). The `stmt` rule defines 125 statement alternatives (124 named + 1 empty production). This spec covers all 124 named alternatives.
 

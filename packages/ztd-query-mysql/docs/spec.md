@@ -1,6 +1,6 @@
 # MySQL SQL Specification for ZTD
 
-This document defines how ZTD (Zero Downtime Deployment) handles MySQL SQL statements. ZTD simulates query results without modifying the physical database by using CTEs to shadow tables and virtualize writes.
+This document defines how ZTD (Zero Table Dependency) handles MySQL SQL statements. ZTD simulates query results without modifying the physical database by using CTEs to shadow tables and virtualize writes.
 
 ## Overview
 
