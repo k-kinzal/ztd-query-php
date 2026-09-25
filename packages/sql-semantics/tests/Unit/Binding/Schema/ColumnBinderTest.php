@@ -112,4 +112,10 @@ final class ColumnBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('ALTER TABLE t ADD COLUMN c INT NOT SECONDARY');
         self::assertSame('ALTER TABLE `t` ADD COLUMN `c` integer NOT SECONDARY', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
     }
+
+    public function testBindRecordsAWrittenNullOnlyForANullableColumn(): void
+    {
+        $columns = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build('CREATE TABLE t (a INT NULL, b INT, c INT NULL NOT NULL, e INT NULL PRIMARY KEY)')->tables[0]->columns;
+        self::assertSame([true, false, false, false], array_map(static fn (\SqlSemantics\Schema\ColumnDefinition $column): bool => $column->nullDeclared, $columns));
+    }
 }

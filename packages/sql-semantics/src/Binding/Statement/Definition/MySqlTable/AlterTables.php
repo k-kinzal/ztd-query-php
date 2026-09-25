@@ -47,6 +47,7 @@ final class AlterTables
         }
         $commands = self::commands($statement);
         $scope = self::scope($table, $commands, $context);
+        ColumnDeclarations::nullKeys($commands, $scope);
         $declaration = $table->declaration;
         $keys = new KeyAlterations($declaration->schema, $table->name->parts);
         $alterations = [];

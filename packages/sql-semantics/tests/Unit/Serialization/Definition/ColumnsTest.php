@@ -80,4 +80,18 @@ final class ColumnsTest extends TestCase
         self::assertSame('CREATE TABLE `t`(`a` integer, `d` integer GENERATED ALWAYS AS(`a`) STORED NOT NULL)', (new \SqlSemantics\SimpleSerializer())->serialize($statement));
         self::assertSame((new \SqlSemantics\SimpleSerializer())->serialize($statement), (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement))));
     }
+
+    #[TestWith([Dialect::MySql, 'mysql-5.6.51', 'ALTER TABLE t MODIFY a INT NULL PRIMARY KEY', 'ALTER TABLE `t` MODIFY COLUMN `a` integer NULL PRIMARY KEY'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'ALTER TABLE t ADD c INT NULL DEFAULT 1', 'ALTER TABLE `t` ADD COLUMN `c` integer NULL DEFAULT 1'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'CREATE TABLE u (c INT NULL, d INT)', 'CREATE TABLE `u`(`c` integer NULL, `d` integer)'])]
+    #[TestWith([Dialect::PostgreSql, null, 'CREATE TABLE u (c int NULL)', 'CREATE TABLE "public"."u"("c" integer NULL)'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'CREATE TABLE u (c INT AUTO_INCREMENT NULL, KEY (c))', 'CREATE TABLE `u`(`c` integer AUTO_INCREMENT NULL, INDEX(`c`))'])]
+    #[TestWith([Dialect::MySql, 'mysql-5.7.44', 'ALTER TABLE t MODIFY a INT NOT NULL NULL', 'ALTER TABLE `t` MODIFY COLUMN `a` integer NULL'])]
+    public function testWriteKeepsADeclaredNull(Dialect $dialect, ?string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t (a INT)'));
+        $written = (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql));
+        self::assertSame($expected, $written);
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($written)));
+    }
 }

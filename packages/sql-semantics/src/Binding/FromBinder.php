@@ -51,7 +51,7 @@ final class FromBinder
         if ($this->tables->identifiers->dialect === \SqlSemantics\Dialect::MySql && str_starts_with(strtoupper(Tree::text($from)) . ' ', 'FROM DUAL ')) {
             return null;
         }
-        $nodes = Tree::outer($from, ['table_ref', 'table_reference', 'seltablist']);
+        $nodes = Tree::outer(QueryNodes::fromList($from), ['table_ref', 'table_reference', 'seltablist']);
         $result = null;
         foreach ($nodes as $node) {
             $lateral = str_starts_with(strtoupper(Tree::text($node)), 'LATERAL') || QueryNodes::local($node, ['func_table', 'table_function', 'json_table', 'xmltable']) !== [];
@@ -159,7 +159,7 @@ final class FromBinder
         if ($nested !== null) {
             return $this->joined($nested);
         }
-        $references = Tree::outer($node, ['table_ref', 'table_reference', 'table_factor']);
+        $references = QueryNodes::joinOperands($node);
         if (count($references) !== 2) {
             Tree::invalid($node, 'join operands');
         }

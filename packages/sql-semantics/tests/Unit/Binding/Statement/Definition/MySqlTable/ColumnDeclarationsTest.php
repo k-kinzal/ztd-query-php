@@ -60,6 +60,35 @@ final class ColumnDeclarationsTest extends TestCase
         self::assertSame(['c', 'd', 'e'], array_map(static fn ($column): string => $column->name, ColumnDeclarations::declared($items, new Scope(new Identifiers(Dialect::MySql)))));
     }
 
+    public function testWrittenListsTheDeclarationNodesInSqlOrder(): void
+    {
+        $items = (new DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('ALTER TABLE t ADD c INT, ADD (d INT, e INT), DROP f, MODIFY g INT')->find('alter_list_item');
+        self::assertSame(['c INT', 'd INT', 'e INT', 'g INT'], array_map(\SqlSemantics\Ast\Tree::text(...), ColumnDeclarations::written($items)));
+    }
+
+    #[TestWith(['mysql-5.7.44', 'ALTER TABLE t MODIFY a INT NULL PRIMARY KEY'])]
+    #[TestWith(['mysql-5.7.44', 'ALTER TABLE t ADD c INT NULL, ADD PRIMARY KEY (c)'])]
+    #[TestWith(['mysql-8.0.44', 'ALTER TABLE t CHANGE a a INT NULL, ADD PRIMARY KEY (a)'])]
+    #[TestWith(['mysql-8.4.7', 'ALTER TABLE t ADD c INT NULL KEY'])]
+    #[TestWith(['mysql-9.1.0', 'ALTER TABLE t ADD (c INT NULL, PRIMARY KEY (c))'])]
+    public function testNullKeysRejectsANullPrimaryKeyPartFromMySql573(string $version, string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::NullablePrimaryKey->message());
+        $binder->bind($sql);
+    }
+
+    #[TestWith(['mysql-5.6.51', 'ALTER TABLE t ADD c INT NULL, ADD PRIMARY KEY (c)', 'ALTER TABLE `t` ADD COLUMN `c` integer NULL, ADD PRIMARY KEY(`c`)'])]
+    #[TestWith(['mysql-5.6.51', 'ALTER TABLE t MODIFY a INT NULL PRIMARY KEY', 'ALTER TABLE `t` MODIFY COLUMN `a` integer NULL PRIMARY KEY'])]
+    #[TestWith(['mysql-8.4.7', 'ALTER TABLE t ADD c INT NULL, ADD UNIQUE (c)', 'ALTER TABLE `t` ADD COLUMN `c` integer NULL, ADD UNIQUE(`c`)'])]
+    #[TestWith(['mysql-8.4.7', 'ALTER TABLE t ADD PRIMARY KEY (a)', 'ALTER TABLE `t` ADD PRIMARY KEY(`a`)'])]
+    public function testNullKeysKeepsWhatTheServerAccepts(string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)'));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+    }
+
     public function testParseReadsTheColumnConstraints(): void
     {
         $item = (new DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('ALTER TABLE t ADD c INT UNIQUE')->find('alter_list_item')[0];

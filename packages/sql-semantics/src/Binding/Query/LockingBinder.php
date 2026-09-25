@@ -19,7 +19,8 @@ final class LockingBinder
 {
     /**
      * Binds the locking clauses of one query block, looking inside the parentheses of a MySQL derived table, whose
-     * MySQL 5 grammar writes the query block as a table factor; MySQL rejects a table locked by more than one clause.
+     * MySQL 5 grammar writes the query block as a table factor; MySQL rejects a table locked by more than one clause
+     * and a derived table or JSON_TABLE named after OF.
      *
      * @return list<Locking\RowLock>
      * @throws \SqlSemantics\InvalidSql
@@ -45,6 +46,9 @@ final class LockingBinder
         }
         if ($scope->identifiers->dialect === \SqlSemantics\Dialect::MySql && Locking\LockPlacement::repeated($locks, $scope->relations)) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::RepeatedLock, $source);
+        }
+        if ($scope->identifiers->dialect === \SqlSemantics\Dialect::MySql && Locking\LockPlacement::derived($locks)) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::DerivedLockTarget, $source);
         }
         return $locks;
     }

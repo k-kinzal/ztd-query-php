@@ -243,4 +243,119 @@ final class TableAlterationTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a text NOT NULL)', "ALTER TABLE t ALTER COLUMN a SET DEFAULT 'DROP NOT NULL'");
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $schema->tables[0]->columns[0]->nullability);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-5.6.51', 'ALTER TABLE t ADD c INT PRIMARY KEY'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-8.4.7', 'ALTER TABLE t ADD c INT PRIMARY KEY'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-9.1.0', 'ALTER TABLE t ADD COLUMN c INT KEY'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-8.4.7', 'ALTER TABLE t ADD (c INT PRIMARY KEY)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'pg-17.2', 'ALTER TABLE t ADD COLUMN c int PRIMARY KEY'])]
+    public function testApplyAddsAColumnWithItsPrimaryKey(Dialect $dialect, string $version, string $alter): void
+    {
+        $table = (new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t (a INT)', $alter)->tables[0];
+        self::assertSame(['a', 'c'], array_column($table->columns, 'name'));
+        self::assertSame([\SqlSemantics\Type\Nullability::MaybeNull, \SqlSemantics\Type\Nullability::NotNull], array_column($table->columns, 'nullability'));
+        self::assertCount(1, $table->constraints);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $table->constraints[0]);
+        self::assertSame(['c'], $table->constraints[0]->localColumns());
+    }
+
+    /**
+     * @param class-string<\SqlSemantics\Schema\TableConstraint> $kind
+     */
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-8.4.7', 'ALTER TABLE t ADD COLUMN c INT UNIQUE', \SqlSemantics\Schema\Constraint\UniqueKey::class])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-8.4.7', 'ALTER TABLE t ADD COLUMN c INT CHECK (c > a)', \SqlSemantics\Schema\Constraint\Check::class])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-9.1.0', 'ALTER TABLE t ADD COLUMN c INT REFERENCES t (a)', \SqlSemantics\Schema\Constraint\ForeignKey::class])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'pg-17.2', 'ALTER TABLE t ADD COLUMN c int UNIQUE', \SqlSemantics\Schema\Constraint\UniqueKey::class])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'pg-17.2', 'ALTER TABLE t ADD COLUMN c int CHECK (c > a)', \SqlSemantics\Schema\Constraint\Check::class])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'pg-17.2', 'ALTER TABLE t ADD COLUMN c int REFERENCES t (a)', \SqlSemantics\Schema\Constraint\ForeignKey::class])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'sqlite-3.47.2', 'ALTER TABLE t ADD COLUMN c INT CHECK (c > a)', \SqlSemantics\Schema\Constraint\Check::class])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'sqlite-3.47.2', 'ALTER TABLE t ADD COLUMN c INT REFERENCES t (a)', \SqlSemantics\Schema\Constraint\ForeignKey::class])]
+    public function testApplyBindsTheConstraintsOfAnAddedColumnAgainstIt(Dialect $dialect, string $version, string $alter, string $kind): void
+    {
+        $table = (new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t (a INT)', $alter)->tables[0];
+        self::assertSame(['a', 'c'], array_column($table->columns, 'name'));
+        self::assertSame(\SqlSemantics\Type\Nullability::MaybeNull, $table->columns[1]->nullability);
+        self::assertCount(1, $table->constraints);
+        self::assertInstanceOf($kind, $table->constraints[0]);
+    }
+
+    /**
+     * @param list<string> $names
+     */
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51', 'ALTER TABLE t MODIFY a INT NULL PRIMARY KEY', ['a', 'b'], 0])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'ALTER TABLE t MODIFY COLUMN a BIGINT PRIMARY KEY', ['a', 'b'], 0])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'ALTER TABLE t CHANGE a c INT PRIMARY KEY', ['c', 'b'], 0])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44', 'ALTER TABLE t CHANGE COLUMN t.a c INT KEY AFTER b', ['b', 'c'], 1])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0', 'ALTER TABLE t MODIFY b INT PRIMARY KEY FIRST', ['b', 'a'], 0])]
+    public function testApplyRedeclaresAMySqlColumnWithItsKey(string $version, string $alter, array $names, int $key): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t (a INT, b INT)', $alter)->tables[0];
+        self::assertSame($names, array_column($table->columns, 'name'));
+        self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $table->columns[$key]->nullability);
+        self::assertSame(\SqlSemantics\Type\Nullability::MaybeNull, $table->columns[1 - $key]->nullability);
+        self::assertCount(1, $table->constraints);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $table->constraints[0]);
+        self::assertSame([$names[$key]], $table->constraints[0]->localColumns());
+    }
+
+    public function testApplyReplacesTheWholeMySqlDeclaration(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT NOT NULL DEFAULT 1, b INT)', 'ALTER TABLE t MODIFY a BIGINT UNIQUE, CHANGE b c INT NULL')->tables[0];
+        self::assertSame(['a', 'c'], array_column($table->columns, 'name'));
+        self::assertSame(['bigint', 'integer'], array_map(static fn ($column): string => $column->type->name, $table->columns));
+        self::assertSame(\SqlSemantics\Type\Nullability::MaybeNull, $table->columns[0]->nullability);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $table->columns[0]->generation);
+        self::assertNull($table->columns[0]->generation->default);
+        self::assertTrue($table->columns[1]->nullDeclared);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $table->constraints[0]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['ALTER TABLE t ADD c INT PRIMARY KEY'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['ALTER TABLE t ADD COLUMN c INT UNIQUE'])]
+    public function testApplyRejectsASqliteAddedColumnKey(string $alter): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::AddedColumnKey->message());
+        (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INT)', $alter);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['ALTER TABLE t ADD c INT NULL PRIMARY KEY'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['ALTER TABLE t MODIFY a INT NULL, ADD PRIMARY KEY (a)'])]
+    public function testApplyRejectsANullablePrimaryKeyPart(string $alter): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::NullablePrimaryKey->message());
+        (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.0.44'))->build('CREATE TABLE t (a INT)', $alter);
+    }
+
+    public function testAttributesReadsTheColumnAttributesOfEachDialect(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INT)');
+        $alteration = new \SqlSemantics\Binding\Schema\TableAlteration(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite), 'main'));
+        $statement = (new \SqlSemantics\Ast\DialectParser(Dialect::Sqlite))->parse('ALTER TABLE t ADD c INT NOT NULL DEFAULT 1');
+        $column = \SqlSemantics\Binding\Schema\Alter\AddedColumns::read($statement)[0];
+        self::assertSame(['NOT NULL', 'DEFAULT 1'], array_map(\SqlSemantics\Ast\Tree::text(...), $alteration->attributes($statement, $column)));
+        $pg = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('ALTER TABLE t ADD c int NOT NULL UNIQUE');
+        self::assertSame(['NOT NULL', 'UNIQUE'], array_map(\SqlSemantics\Ast\Tree::text(...), $alteration->attributes($pg, \SqlSemantics\Binding\Schema\Alter\AddedColumns::read($pg)[0])));
+    }
+
+    public function testScopeResolvesTheGivenColumnsUnderTheQualifiedTableName(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a int)');
+        $alteration = new \SqlSemantics\Binding\Schema\TableAlteration(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
+        $table = $schema->tables[0];
+        $scope = $alteration->scope($table, $table->source, [...$table->columns, $table->columns[0]->withName('c')]);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\ColumnReference::class, $scope->column(['public', 't', 'c'], $table->source));
+        self::assertSame(['a'], array_column($table->columns, 'name'));
+    }
+
+    public function testPrimaryKeysDeclaresKeyColumnsNotNullOutsideSqlite(): void
+    {
+        $pg = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a int, b int)', 'CREATE TABLE k (a int PRIMARY KEY)');
+        $alteration = new \SqlSemantics\Binding\Schema\TableAlteration(new \SqlSemantics\Binding\TableResolver($pg, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
+        self::assertSame([\SqlSemantics\Type\Nullability::NotNull, \SqlSemantics\Type\Nullability::MaybeNull], array_column($alteration->primaryKeys($pg->tables[0]->columns, $pg->tables[1]->constraints), 'nullability'));
+        $sqlite = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a TEXT PRIMARY KEY)');
+        $kept = new \SqlSemantics\Binding\Schema\TableAlteration(new \SqlSemantics\Binding\TableResolver($sqlite, new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite), 'main'));
+        self::assertSame($sqlite->tables[0]->columns, $kept->primaryKeys($sqlite->tables[0]->columns, $sqlite->tables[0]->constraints));
+    }
 }

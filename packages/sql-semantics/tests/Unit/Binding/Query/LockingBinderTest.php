@@ -87,6 +87,31 @@ final class LockingBinderTest extends TestCase
         self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
     }
 
+    #[TestWith(['mysql-8.0.44', 'SELECT * FROM (SELECT a FROM t) AS d FOR UPDATE OF d'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT * FROM t, (SELECT a FROM u) AS d FOR SHARE OF d'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT * FROM t, (SELECT a FROM u) AS d FOR UPDATE OF t, d'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT * FROM JSON_TABLE(JSON_ARRAY(1), "$[*]" COLUMNS (x INT PATH "$")) AS j FOR UPDATE OF j'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT * FROM t JOIN LATERAL (SELECT t.a) AS d ON TRUE FOR UPDATE OF d'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT * FROM (VALUES ROW(1)) AS v FOR UPDATE OF v'])]
+    #[TestWith(['mysql-9.1.0', 'SELECT a FROM t WHERE a IN (SELECT a FROM (SELECT a FROM u) AS d FOR SHARE OF d)'])]
+    public function testBindRejectsADerivedTableNamedAsAMySqlLockTarget(string $version, string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::DerivedLockTarget->message());
+        $binder->bind($sql);
+    }
+
+    #[TestWith(['WITH c AS (SELECT a FROM t) SELECT * FROM c FOR UPDATE OF c', 'WITH `c` AS (SELECT `a` AS `a` FROM `t`) SELECT `c`.`a` AS `a` FROM `c` FOR UPDATE OF `c`'])]
+    #[TestWith(['SELECT * FROM t, (SELECT a FROM u) AS d FOR UPDATE OF t', 'SELECT `t`.`a` AS `a`, `d`.`a` AS `a` FROM `t` CROSS JOIN(SELECT `a` AS `a` FROM `u`) AS `d` FOR UPDATE OF `t`'])]
+    #[TestWith(['SELECT * FROM (SELECT a FROM t) AS d FOR UPDATE', 'SELECT `d`.`a` AS `a` FROM(SELECT `a` AS `a` FROM `t`) AS `d` FOR UPDATE'])]
+    public function testBindKeepsMySqlLockTargetsThatAreTablesOrCommonTableExpressions(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)'));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql)));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
+    }
+
     public function testBindKeepsRepeatedPostgreSqlTargetsWhichTheServerMerges(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('SELECT a FROM t FOR UPDATE OF t FOR SHARE OF t, t');

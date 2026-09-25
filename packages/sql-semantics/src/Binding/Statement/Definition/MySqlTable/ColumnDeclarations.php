@@ -88,18 +88,54 @@ final class ColumnDeclarations
      */
     public static function declared(array $items, Scope $scope, array $columns = []): array
     {
+        foreach (self::written($items) as $node) {
+            $parsed = self::parse($node, $scope)[0];
+            $columns = array_values(array_filter($columns, static fn (ColumnDefinition $column): bool => strtolower($column->name) !== strtolower($parsed->name)));
+            $columns[] = new ColumnDefinition($parsed->name, $parsed->type, $parsed->nullability, $parsed->source);
+        }
+        return $columns;
+    }
+
+    /**
+     * Lists the declaration nodes written by ADD, CHANGE, or MODIFY items, in SQL order.
+     * @param list<Node> $items
+     * @return list<Node>
+     */
+    public static function written(array $items): array
+    {
+        $written = [];
         foreach ($items as $item) {
             $nodes = $item->name === 'alter_list_item' ? [self::node($item)] : [];
             $list = Tree::child($item, ['table_element_list', 'create_field_list']);
             if ($list !== null) {
                 $nodes = Tree::outer($list, ['column_def']);
             }
-            foreach (array_filter($nodes) as $node) {
-                $parsed = self::parse($node, $scope)[0];
-                $columns = array_values(array_filter($columns, static fn (ColumnDefinition $column): bool => strtolower($column->name) !== strtolower($parsed->name)));
-                $columns[] = new ColumnDefinition($parsed->name, $parsed->type, $parsed->nullability, $parsed->source);
+            array_push($written, ...array_filter($nodes));
+        }
+        return $written;
+    }
+
+    /**
+     * Rejects a declaration written NULL that joins a primary key written in the same statement, as MySQL 5.7.3 and later do.
+     * @param list<Node> $items
+     * @throws \SqlSemantics\InvalidSql
+     */
+    public static function nullKeys(array $items, Scope $scope): void
+    {
+        $columns = [];
+        $constraints = [];
+        foreach (self::written($items) as $node) {
+            [$columns[], $local] = self::parse($node, $scope);
+            array_push($constraints, ...$local);
+        }
+        foreach ($items as $item) {
+            foreach ((new \SqlSemantics\Ast\ConstraintGroups())->read(Tree::outer($item, ['table_constraint_def', 'key_def'])) as $key) {
+                $constraint = (new \SqlSemantics\Ast\ConstraintReader($scope->identifiers))->read($key);
+                if ($constraint !== null) {
+                    $constraints[] = $constraint;
+                }
             }
         }
-        return $columns;
+        \SqlSemantics\Ast\Definition\PrimaryKeyNulls::reject($columns, $constraints, $scope->identifiers->dialect, $scope->queries?->tables->schema->grammarVersion);
     }
 }

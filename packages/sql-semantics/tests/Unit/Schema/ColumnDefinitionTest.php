@@ -212,4 +212,13 @@ final class ColumnDefinitionTest extends TestCase
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         new \SqlSemantics\Schema\ColumnDefinition('a', $column->type, $column->nullability, $column->source, nullConflict: \SqlSemantics\Model\Write\Policy\ConstraintResponse::Ignore);
     }
+
+    public function testNullDeclaredIsKeptByTransformationsAndRequiresANullableColumn(): void
+    {
+        $column = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT NULL)')->tables[0]->columns[0];
+        self::assertTrue($column->nullDeclared);
+        self::assertTrue($column->withName('b')->withType($column->type)->withGeneration($column->generation)->nullDeclared);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new \SqlSemantics\Schema\ColumnDefinition('a', $column->type, Nullability::NotNull, $column->source, nullDeclared: true);
+    }
 }

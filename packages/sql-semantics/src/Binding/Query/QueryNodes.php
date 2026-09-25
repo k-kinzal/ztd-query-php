@@ -289,6 +289,32 @@ final class QueryNodes
     }
 
     /**
+     * Returns the table list of a FROM clause: MySQL 5.6 `select_from` also holds WHERE, GROUP BY,
+     * HAVING, ORDER BY and LIMIT, whose subqueries must not contribute relations to this FROM.
+     */
+    public static function fromList(Node $from): Node
+    {
+        return $from->name === 'select_from' ? (Tree::child($from, ['join_table_list']) ?? $from) : $from;
+    }
+
+    /**
+     * Returns the two operands of a joined table without entering its ON condition or USING list,
+     * whose subqueries own their relations.
+     *
+     * @return list<Node>
+     */
+    public static function joinOperands(Node $join): array
+    {
+        $operands = [];
+        foreach ($join->children as $child) {
+            if ($child instanceof Node && !in_array($child->name, ['expr', 'a_expr', 'join_qual', 'using_list'], true)) {
+                array_push($operands, ...Tree::outer($child, ['table_ref', 'table_reference', 'table_factor']));
+            }
+        }
+        return $operands;
+    }
+
+    /**
      * Reads only this production's set operator, not operators in its operands.
      */
     public static function setOperator(Node $node): ?string

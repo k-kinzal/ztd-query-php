@@ -7,8 +7,13 @@ namespace SqlSemantics\Binding\Schema;
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\ColumnReader;
 use SqlSemantics\Ast\Tree;
+use SqlSemantics\Binding\Query\QueryContext;
+use SqlSemantics\Binding\Scope;
+use SqlSemantics\Binding\Statement\Definition\MySqlTable\ColumnDeclarations;
 use SqlSemantics\Binding\TableResolver;
+use SqlSemantics\Dialect;
 use SqlSemantics\Schema\ColumnDefinition;
+use SqlSemantics\Schema\TableConstraint;
 use SqlSemantics\Schema\TableDefinition;
 use SqlSemantics\SemanticException;
 use SqlSemantics\Type\Nullability;
@@ -28,8 +33,13 @@ final class TableAlteration
     }
 
     /**
+     * Applies the statement's column declarations and actions in SQL order; the constraints written on an added or
+     * redeclared column join the table, table-level keys, constraints, and indexes are added after the ones the
+     * statement drops, and every primary key column outside SQLite becomes NOT NULL.
      * @return list<TableDefinition>
      * @throws SemanticException
+     * @throws \SqlSemantics\InvalidSql
+     * @throws \SqlSemantics\Binding\Statement\UnclassifiedSql
      */
     public function apply(Node $statement): array
     {
@@ -38,25 +48,81 @@ final class TableAlteration
             throw new SemanticException('invalid-declaration', 'ALTER TABLE requires a table name.', $statement);
         }
         $table = $this->tables->resolve($this->tables->identifiers->parts($nameNode), $nameNode);
+        $mysql = $this->tables->identifiers->dialect === Dialect::MySql;
+        $items = $mysql ? Tree::outer($statement, ['alter_list_item']) : [];
+        $added = $mysql ? [] : array_map(fn (Node $column): array => (new ColumnReader($this->tables->identifiers))->read($column, $this->attributes($statement, $column)), Alter\AddedColumns::read($statement));
+        $scope = $this->scope($table, $statement, ColumnDeclarations::declared($items, new Scope($this->tables->identifiers, queries: new QueryContext($this->tables)), [...$table->columns, ...array_map(static fn (array $declaration): ColumnDefinition => new ColumnDefinition($declaration[0]->name, $declaration[0]->type, $declaration[0]->nullability, $declaration[0]->source), $added)]));
+        ColumnDeclarations::nullKeys($items, $scope);
         $columns = $table->columns;
-        $constraints = $table->constraints;
-        foreach (Alter\AddedColumns::read($statement) as $column) {
-            $attributes = Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute', 'gcol_attribute']);
-            if ($column->name === 'columnname') {
-                $attributes = Tree::outer($statement, ['ccons']);
-            }
-            [$definition, $local] = (new ColumnReader($this->tables->identifiers))->read($column, $attributes);
-            $context = new \SqlSemantics\Binding\Query\QueryContext($this->tables);
-            $scope = new \SqlSemantics\Binding\Scope($this->tables->identifiers, [new \SqlSemantics\Model\Relation\TableReference('declaration', 'declaration', $table, new \SqlSemantics\Model\Relation\QualifiedName($table->schema === '' ? [$table->name] : [$table->schema, $table->name]), null, $statement)], queries: $context);
+        $constraints = [];
+        foreach ($added as [$definition, $local]) {
             $columns[] = ColumnBinder::bind($definition, $scope);
-            array_push($constraints, ...array_map(static fn ($constraint): \SqlSemantics\Schema\TableConstraint => ConstraintBinder::bind($constraint, $scope), $local));
+            array_push($constraints, ...array_map(static fn ($constraint): TableConstraint => ConstraintBinder::bind($constraint, $scope), $local));
+        }
+        if ($this->tables->identifiers->dialect === Dialect::Sqlite && array_filter($constraints, static fn (TableConstraint $constraint): bool => $constraint instanceof \SqlSemantics\Schema\Constraint\PrimaryKey || $constraint instanceof \SqlSemantics\Schema\Constraint\UniqueKey) !== []) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::AddedColumnKey, $statement);
         }
         $name = $table->name;
+        $keys = new Alter\KeyChanges($table, [...$table->constraints, ...$constraints], $table->indexes);
+        $context = new QueryContext($this->tables);
         foreach (Tree::outer($statement, ['alter_table_cmd', 'alter_list_item', 'RenameStmt', 'cmd']) as $action) {
+            $redeclared = $mysql ? Alter\ColumnRedeclarations::apply($action, $columns, $scope) : null;
+            if ($redeclared !== null) {
+                [$columns, $local] = $redeclared;
+                $keys = new Alter\KeyChanges($table, [...$keys->constraints, ...$local], $keys->indexes, $keys->additions);
+                continue;
+            }
+            $changed = $keys->action($action, $scope, $context);
+            if ($changed !== null) {
+                $keys = $changed;
+                continue;
+            }
             [$columns, $name] = $this->action($action, $columns, $name);
         }
-        $replacement = new TableDefinition($table->schema, $name, $columns, $constraints, $statement, indexes: $table->indexes, properties: $table->properties);
+        [$constraints, $indexes] = $keys->add($scope, $context);
+        $replacement = new TableDefinition($table->schema, $name, $this->primaryKeys($columns, $constraints), $constraints, $statement, indexes: $indexes, properties: $table->properties);
         return array_map(static fn (TableDefinition $candidate): TableDefinition => $candidate === $table ? $replacement : $candidate, $this->tables->schema->tables);
+    }
+
+    /**
+     * Returns the attribute nodes of a PostgreSQL or SQLite added column; SQLite writes them after its columnname node.
+     * @return list<Node>
+     */
+    public function attributes(Node $statement, Node $column): array
+    {
+        return $column->name === 'columnname' ? Tree::outer($statement, ['ccons']) : Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute', 'gcol_attribute']);
+    }
+
+    /**
+     * Builds the column namespace of the altered table, holding the given columns under the table's qualified name.
+     * @param list<ColumnDefinition> $columns
+     */
+    public function scope(TableDefinition $table, Node $statement, array $columns): Scope
+    {
+        $declaration = new TableDefinition($table->schema, $table->name, $columns, $table->constraints, $table->source, $table->resolved, $table->indexes, $table->properties);
+        $name = new \SqlSemantics\Model\Relation\QualifiedName($table->schema === '' ? [$table->name] : [$table->schema, $table->name]);
+        return new Scope($this->tables->identifiers, [new \SqlSemantics\Model\Relation\TableReference('declaration', 'declaration', $declaration, $name, null, $statement)], queries: new QueryContext($this->tables));
+    }
+
+    /**
+     * Declares every primary key column NOT NULL, as MySQL and PostgreSQL do; a SQLite primary key keeps its columns' nullability.
+     * @param list<ColumnDefinition> $columns
+     * @param list<TableConstraint> $constraints
+     * @return list<ColumnDefinition>
+     */
+    public function primaryKeys(array $columns, array $constraints): array
+    {
+        $identifiers = $this->tables->identifiers;
+        if ($identifiers->dialect === Dialect::Sqlite) {
+            return $columns;
+        }
+        $primary = [];
+        foreach ($constraints as $constraint) {
+            if ($constraint instanceof \SqlSemantics\Schema\Constraint\PrimaryKey) {
+                array_push($primary, ...$constraint->localColumns());
+            }
+        }
+        return array_map(static fn (ColumnDefinition $column): ColumnDefinition => $column->nullability !== Nullability::NotNull && array_filter($primary, static fn (string $name): bool => $identifiers->equal($name, $column->name)) !== [] ? new ColumnDefinition($column->name, $column->type, Nullability::NotNull, $column->source, $column->generation, $column->attributes) : $column, $columns);
     }
 
     /**
@@ -95,7 +161,7 @@ final class TableAlteration
     public function columnAttributes(Node $action, array $columns): array
     {
         $operation = strtoupper($action->tokens()[0]->text ?? '');
-        if (!in_array($operation, ['ALTER', 'MODIFY', 'CHANGE'], true)) {
+        if ($operation !== 'ALTER' && ($operation === '' || $this->tables->identifiers->dialect === Dialect::MySql || !in_array($operation, ['MODIFY', 'CHANGE'], true))) {
             return $columns;
         }
         $nameNode = Tree::child($action, ['ColId', 'ident']);
@@ -124,10 +190,10 @@ final class TableAlteration
             }
             if (str_contains($text, 'SET DEFAULT')) {
                 $default = Tree::outer($action, ['a_expr', 'expr'])[0] ?? $action;
-                $scope = new \SqlSemantics\Binding\Scope($this->tables->identifiers, queries: new \SqlSemantics\Binding\Query\QueryContext($this->tables));
+                $scope = new Scope($this->tables->identifiers, queries: new QueryContext($this->tables));
                 $generation = new \SqlSemantics\Schema\Column\SuppliedColumn((new DefinitionBinder())->expression($default, $scope));
             }
-            $result[] = new ColumnDefinition($column->name, $type, $nullability, $action, $generation, $column->attributes);
+            $result[] = new ColumnDefinition($column->name, $type, $nullability, $action, $generation, $column->attributes, nullDeclared: $column->nullDeclared && $nullability === $column->nullability);
         }
         return $result;
     }

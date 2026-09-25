@@ -319,6 +319,59 @@ final class QueryNodesTest extends TestCase
     }
 
 
+    /**
+     * @return iterable<string, array{string, string, list<string>, string}>
+     */
+    public static function providerSubqueryRelationsStayInTheirOwnQuery(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44'] as $version) {
+            yield $version . ' IN in WHERE' => [$version, 'SELECT a FROM t WHERE a IN (SELECT a FROM u)', ['t'], 'SELECT `a` AS `a` FROM `t` WHERE (`a` IN (SELECT `a` AS `a` FROM `u`))'];
+            yield $version . ' EXISTS in WHERE' => [$version, 'SELECT a FROM t WHERE EXISTS (SELECT 1 FROM u)', ['t'], 'SELECT `a` AS `a` FROM `t` WHERE EXISTS(SELECT 1 FROM `u`)'];
+            yield $version . ' scalar in WHERE' => [$version, 'SELECT a FROM t WHERE a = (SELECT MAX(a) FROM u)', ['t'], 'SELECT `a` AS `a` FROM `t` WHERE (`a` = (SELECT max(`a`) FROM `u`))'];
+            yield $version . ' quantified in WHERE' => [$version, 'SELECT a FROM t WHERE a > ANY (SELECT a FROM u)', ['t'], 'SELECT `a` AS `a` FROM `t` WHERE (`a` > ANY(SELECT `a` AS `a` FROM `u`))'];
+            yield $version . ' IN in HAVING' => [$version, 'SELECT a FROM t GROUP BY a HAVING a IN (SELECT a FROM u)', ['t'], 'SELECT `a` AS `a` FROM `t` GROUP BY `a` HAVING (`a` IN (SELECT `a` AS `a` FROM `u`))'];
+            yield $version . ' EXISTS in HAVING' => [$version, 'SELECT a FROM t GROUP BY a HAVING EXISTS (SELECT 1 FROM u)', ['t'], 'SELECT `a` AS `a` FROM `t` GROUP BY `a` HAVING EXISTS(SELECT 1 FROM `u`)'];
+            yield $version . ' scalar in GROUP BY' => [$version, 'SELECT a FROM t GROUP BY (SELECT MAX(a) FROM u)', ['t'], 'SELECT `a` AS `a` FROM `t` GROUP BY(SELECT max(`a`) FROM `u`)'];
+            yield $version . ' scalar in ORDER BY' => [$version, 'SELECT a FROM t ORDER BY (SELECT MAX(a) FROM u)', ['t'], 'SELECT `a` AS `a` FROM `t` ORDER BY(SELECT max(`a`) FROM `u`) ASC'];
+            yield $version . ' scalar in the SELECT list' => [$version, 'SELECT (SELECT MAX(a) FROM u) FROM t', ['t'], 'SELECT (SELECT max(`a`) FROM `u`) FROM `t`'];
+            yield $version . ' IN in JOIN ON' => [$version, 'SELECT t.a FROM t JOIN u ON t.a IN (SELECT a FROM u AS v)', ['t', 'u'], 'SELECT `t`.`a` AS `a` FROM `t` INNER JOIN `u` ON (`t`.`a` IN (SELECT `a` AS `a` FROM `u` AS `v`))'];
+            yield $version . ' EXISTS in JOIN ON' => [$version, 'SELECT t.a FROM t LEFT JOIN u ON EXISTS (SELECT 1 FROM u AS v WHERE v.a = t.a)', ['t', 'u'], 'SELECT `t`.`a` AS `a` FROM `t` LEFT JOIN `u` ON EXISTS(SELECT 1 FROM `u` AS `v` WHERE (`v`.`a` = `t`.`a`))'];
+            yield $version . ' scalar in STRAIGHT_JOIN ON' => [$version, 'SELECT t.a FROM t STRAIGHT_JOIN u ON t.a = (SELECT MAX(a) FROM u AS v)', ['t', 'u'], 'SELECT `t`.`a` AS `a` FROM `t` STRAIGHT_JOIN `u` ON (`t`.`a` = (SELECT max(`a`) FROM `u` AS `v`))'];
+            yield $version . ' quantified in JOIN ON' => [$version, 'SELECT t.a FROM t JOIN u ON t.a > ALL (SELECT a FROM u AS v)', ['t', 'u'], 'SELECT `t`.`a` AS `a` FROM `t` INNER JOIN `u` ON (`t`.`a` > ALL (SELECT `a` AS `a` FROM `u` AS `v`))'];
+        }
+    }
+
+    /**
+     * @param list<string> $relations
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerSubqueryRelationsStayInTheirOwnQuery')]
+    public function testFromListAndJoinOperandsKeepSubqueryRelationsInTheirOwnQuery(string $version, string $sql, array $relations, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t (a INT); CREATE TABLE u (a INT)'));
+        $query = $binder->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame($relations, array_map(static fn (\SqlSemantics\Model\TableUse $relation): string => $relation->alias ?? $relation->declaration->name, $query->relations));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($query));
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($expected)));
+    }
+
+    public function testFromListIsTheLegacyTableListWithoutTheTrailingClauses(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.6.51'))->parse('SELECT a FROM t WHERE a IN (SELECT a FROM u)');
+        $from = $tree->find('select_from')[0];
+        self::assertSame('join_table_list', \SqlSemantics\Binding\Query\QueryNodes::fromList($from)->name);
+        self::assertSame('t', \SqlSemantics\Ast\Tree::text(\SqlSemantics\Binding\Query\QueryNodes::fromList($from)));
+        $modern = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('SELECT a FROM t')->find('from_clause')[0];
+        self::assertSame($modern, \SqlSemantics\Binding\Query\QueryNodes::fromList($modern));
+    }
+
+    public function testJoinOperandsSkipTheJoinCondition(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('SELECT 1 FROM t JOIN u ON t.a IN (SELECT a FROM v)');
+        $operands = \SqlSemantics\Binding\Query\QueryNodes::joinOperands($tree->find('joined_table')[0]);
+        self::assertSame(['t', 'u'], array_map(\SqlSemantics\Ast\Tree::text(...), $operands));
+    }
+
     public function testLocalDoesNotEnterAFunctionArgumentOrdering(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());

@@ -33,6 +33,9 @@ final class LockPlacement
         if ($origin->dialect === Dialect::MySql && self::repeated($locks, $relations)) {
             throw new InvalidStructure('A MySQL query block locks each of its tables in at most one locking clause.');
         }
+        if ($origin->dialect === Dialect::MySql && self::derived($locks)) {
+            throw new InvalidStructure('A MySQL locking clause names only stored tables and common table expressions.');
+        }
         foreach ($locks as $lock) {
             if ($origin->dialect === Dialect::MySql && in_array($lock->strength, [LockStrength::KeyShare, LockStrength::NoKeyUpdate], true)) {
                 throw new InvalidStructure('This lock strength is specific to PostgreSQL.');
@@ -45,6 +48,24 @@ final class LockPlacement
                 }
             }
         }
+    }
+
+    /**
+     * Reports whether a named lock target is a derived table, a VALUES table or JSON_TABLE, which MySQL rejects
+     * (error 3569); stored tables and common table expressions are lockable.
+     *
+     * @param list<RowLock> $locks
+     */
+    public static function derived(array $locks): bool
+    {
+        foreach ($locks as $lock) {
+            foreach ($lock instanceof NamedRowLock ? $lock->relations : [] as $relation) {
+                if ($relation instanceof TableUse && !$relation instanceof \SqlSemantics\Model\Relation\NamedTableReference && !$relation instanceof \SqlSemantics\Model\Relation\CteReference) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

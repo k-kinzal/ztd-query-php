@@ -75,6 +75,9 @@ enum InputViolation: string
     case TriggerIndexHint = 'trigger-index-hint';
     case AddedColumnKey = 'added-column-key';
     case MultiplePrimaryKeys = 'multiple-primary-keys';
+    case NullablePrimaryKey = 'nullable-primary-key';
+    case NullDefault = 'null-default';
+    case ConflictingNullability = 'conflicting-nullability';
     case AutoIncrementKey = 'autoincrement-key';
     case QueryBlockOption = 'query-block-option';
     case OutputPosition = 'invalid-output-position';
@@ -90,6 +93,7 @@ enum InputViolation: string
     case SetOperationLock = 'set-operation-lock';
     case ValuesLock = 'values-lock';
     case RepeatedLock = 'repeated-lock-target';
+    case DerivedLockTarget = 'derived-lock-target';
     case TableCreationLock = 'table-creation-lock';
     case CommitAction = 'temporary-commit-action';
     case AlterAlgorithm = 'invalid-alter-algorithm';

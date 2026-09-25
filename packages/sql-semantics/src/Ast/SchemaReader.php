@@ -102,6 +102,7 @@ final class SchemaReader
                 $constraints[] = $constraint;
             }
         }
+        Definition\PrimaryKeyNulls::reject($columns, $constraints, $this->identifiers->dialect, $this->grammarVersion);
         $columns = $this->autoIncrement($this->primaryKeys($columns, $constraints, $create), $constraints);
 
         $namespace = $this->namespace($header, $parts);

@@ -21,7 +21,8 @@ use SqlSemantics\Serialization\TypeDeclaration;
 final class Columns
 {
     /**
-     * Writes declaration-level nullability and generation behavior; a MySQL generated column writes its expression before the other attributes, as its grammar requires.
+     * Writes declaration-level nullability and generation behavior; a MySQL generated column writes its expression before the other attributes, as its grammar requires,
+     * and a nullable MySQL AUTO_INCREMENT column writes NULL after AUTO_INCREMENT, because the later of the two decides.
      * @param ConstraintResponse $keyConflict ON CONFLICT resolution of the SQLite primary key an AUTOINCREMENT column declares
      */
     public static function write(ColumnDefinition $column, Dialect $dialect, ConstraintResponse $keyConflict = ConstraintResponse::Default): Tree
@@ -31,6 +32,10 @@ final class Columns
         $parts = [Build::identifier([$column->name], $dialect), TypeDeclaration::write($column->type), ...$computed, ColumnAttributes::write($column->attributes, $dialect)];
         if ($column->nullability === \SqlSemantics\Type\Nullability::NotNull) {
             array_push($parts, Build::keyword('NOT NULL'), ...Constraints::resolution($column->nullConflict));
+        }
+        $trailingNull = $column->nullDeclared && $dialect === Dialect::MySql && $generation instanceof Column\AutoIncrementColumn;
+        if ($column->nullDeclared && !$trailingNull) {
+            $parts[] = Build::keyword('NULL');
         }
         if ($generation instanceof Column\SuppliedColumn) {
             if ($generation->default !== null) {
@@ -45,6 +50,9 @@ final class Columns
             array_push($parts, Build::keyword('GENERATED ' . ($generation->mode === Column\IdentityMode::Always ? 'ALWAYS' : 'BY DEFAULT') . ' AS IDENTITY'), Sequence::write($generation->sequence));
         } elseif ($generation instanceof Column\AutoIncrementColumn) {
             array_push($parts, ...($dialect === Dialect::Sqlite ? [Build::keyword('PRIMARY KEY'), ...Constraints::resolution($keyConflict), Build::keyword('AUTOINCREMENT')] : [Build::keyword('AUTO_INCREMENT')]));
+        }
+        if ($trailingNull) {
+            $parts[] = Build::keyword('NULL');
         }
         return new Tree('column', $parts);
     }

@@ -78,4 +78,26 @@ final class LockPlacementTest extends TestCase
         self::assertFalse(LockPlacement::repeated([new AllRowLock(LockStrength::Update)], $statement->relations));
         self::assertFalse(LockPlacement::repeated([new AllRowLock(LockStrength::Update), new AllRowLock(LockStrength::Share)], []));
     }
+
+    public function testValidateRejectsADerivedMySqlLockTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('SELECT * FROM t, (SELECT id FROM t) AS d FOR UPDATE OF t');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        LockPlacement::validate([new NamedRowLock(LockStrength::Update, [$statement->relations[1]])], $statement->origin, $statement->relations);
+    }
+
+    public function testDerivedFindsANamedTargetThatIsNotAStoredTableOrACommonTableExpression(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('SELECT * FROM t, (SELECT id FROM t) AS d FOR UPDATE OF t');
+        $common = $binder->bind('WITH c AS (SELECT id FROM t) SELECT * FROM c FOR UPDATE OF c');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        self::assertInstanceOf(BoundSelect::class, $common);
+        self::assertFalse(LockPlacement::derived($statement->locks));
+        self::assertFalse(LockPlacement::derived($common->locks));
+        self::assertFalse(LockPlacement::derived([new AllRowLock(LockStrength::Update)]));
+        self::assertTrue(LockPlacement::derived([new NamedRowLock(LockStrength::Update, [$statement->relations[1]])]));
+    }
 }
