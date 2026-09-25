@@ -34,6 +34,9 @@ final class JUnit
             if ($xml === false || stripos($xml, '<!DOCTYPE') !== false || stripos($xml, '<!ENTITY') !== false) {
                 return new TestResult('error', 0, 'Unsafe or unreadable JUnit report.');
             }
+            if (trim($xml) === '') {
+                return new TestResult('error', 0, 'Malformed JUnit report.');
+            }
             $document = new DOMDocument();
             $previous = libxml_use_internal_errors(true);
             try {
