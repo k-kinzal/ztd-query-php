@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fuzzing the formatter — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/436/k-kinzal/sql-formatter/doc/fuzz/README.md.html">
+<meta name="description" content="Fuzzing the formatter, a document of the k-kinzal/sql-formatter package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Fuzzing the formatter — ZTD Query PHP">
+<meta property="og:description" content="Fuzzing the formatter, a document of the k-kinzal/sql-formatter package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/436/k-kinzal/sql-formatter/doc/fuzz/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/436/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="modified"><a href="../../../../k-kinzal/sql-formatter/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../../k-kinzal/sql-formatter/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/index.html" title="SqlFormatter">SqlFormatter</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/Layout/index.html" title="SqlFormatter\Layout">SqlFormatter\Layout</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/SqlFormatter/Syntax/index.html" title="SqlFormatter\Syntax">SqlFormatter\Syntax</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">fuzz/README.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing f36bc821f8 to working tree">f36bc821f8 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between f36bc821f8 and working tree." data-off="This page documents what f36bc821f8 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Fuzzing the formatter</h1><div class="symbol-meta"><span class="source-link">fuzz/README.md</span></div></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to f36bc821f8.</div>
+<section class="readme prose" data-diff="added"><div class="doc-block" data-diff="added"><h2>Fuzzing the formatter</h2>
+</div><div class="doc-block" data-diff="added"><p>Two kinds of PHP-Fuzzer targets, one of each per database. The format targets feed the formatter raw bytes; the equivalence targets feed it statements sql-faker generates and send both texts to the database.</p>
+</div><div class="doc-block" data-diff="added"><div class="table-wrap"><table><thead><tr><th>Target</th><th>Input</th><th>Finding</th></tr></thead><tbody><tr><td><code>fuzz_mysql_format.php</code>, <code>fuzz_pg_format.php</code>, <code>fuzz_sqlite_format.php</code></td><td>A selector byte, then bytes read as SQL text</td><td>Formatting fails its own verification, throws anything but the parser&#039;s rejection, dies, times out, or is not idempotent</td></tr><tr><td><code>fuzz_mysql_equivalence.php</code>, <code>fuzz_pg_equivalence.php</code>, <code>fuzz_sqlite_equivalence.php</code></td><td>A sql-faker generation plan</td><td>The database answers the formatted statement differently from the original, or formatting fails its own verification</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="added"><p><code>composer fuzz</code> runs the smoke set: the three format targets and the SQLite equivalence target, 100 mutations each. A finding is saved as <code>crash-&lt;hash&gt;.txt</code> in the package directory and replayed with the target that found it:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code"><code>vendor/bin/php-fuzzer run-single fuzz/fuzz_pg_format.php crash-&lt;hash&gt;.txt</code></pre>
+</div><div class="doc-block" data-diff="added"><h3>Format targets</h3>
+</div><div class="doc-block" data-diff="added"><pre class="code"><code>composer fuzz:format:mysql
+composer fuzz:format:pg
+composer fuzz:format:sqlite</code></pre>
+</div><div class="doc-block" data-diff="added"><p>The first input byte selects the layout: its two low bits pick the preset and the next four bits the indentation width, so every mutation of that byte reaches another of the 64 layouts. The remaining bytes are the SQL text. Text the parser rejects is not a finding: the parser&#039;s lexical and syntax exceptions are the documented answer to invalid input. Every other exception is one, and so is a <code>FormattingException</code>, because the formatter has then produced text whose syntax tree differs from the input&#039;s. Output that formats to something else the second time is a finding as well. Inputs are limited to a selector byte and 4 KiB of text. <code>MYSQL_VERSION</code> selects the MySQL grammar (default <code>8.4.7</code>).</p>
+</div><div class="doc-block" data-diff="added"><h3>Equivalence targets</h3>
+</div><div class="doc-block" data-diff="added"><pre class="code"><code>composer fuzz:equivalence:mysql            # SQLFORMATTER_STYLE selects the layout, default expanded
+composer fuzz:equivalence:pg:river         # one script per database and preset
+composer fuzz:equivalence:sqlite:compact</code></pre>
+</div><div class="doc-block" data-diff="added"><p>The input is compiled into a sql-faker generation plan exactly as sql-faker&#039;s own syntax targets compile it: the first four bytes select an expansion budget, the rest supply the production and lexical decisions, from the statement rule of the database&#039;s default grammar release (<code>simple_statement_or_begin</code>, <code>stmt</code> and <code>cmd</code>). The statement is formatted with the preset the script name or <code>SQLFORMATTER_STYLE</code> selects, and the original and the formatted text are sent to the database one after the other. The two answers must be the same: the same rows in the same order, the same command tag, or the same error code and message. Result column names are not compared, because MySQL and SQLite name an unaliased expression column after its source text, which the layout changes by design. A statement whose answer differs is run once more; if the original does not answer the same way twice, as with <code>CURRENT_TIMESTAMP</code>, nothing is reported.</p>
+</div><div class="doc-block" data-diff="added"><p>A statement the parser rejects is skipped rather than reported: whether every generated statement parses is what the sql-parser fuzz targets check.</p>
+</div><div class="doc-block" data-diff="added"><p>How a statement reaches the database differs per engine, because a fuzz run has no schema and must leave nothing behind:</p>
+</div><div class="doc-block" data-diff="added"><ul><li><strong>MySQL</strong> starts a disposable Testcontainer (<code>MYSQL_VERSION</code> selects the release, default <code>8.4.7</code>) that other test runs may share. Every statement goes through the server&#039;s own <code>PREPARE</code>, which parses and resolves it without running it; a top-level <code>SELECT</code> is then executed as well and its rows compared. Line numbers and whitespace are removed from the message of a parse error before it is compared, since a parse error quotes the text.</li><li><strong>PostgreSQL</strong> starts the 17.2 Testcontainer. Every statement runs inside a transaction that is rolled back; statements PostgreSQL refuses in a transaction block fail the same way both times. Errors are compared by SQLSTATE and primary message, which carry no position. A statement that leaves the session unusable, a <code>COPY</code> or one that ends the backend, is followed by a fresh connection. A statement timeout of two seconds applies.</li><li><strong>SQLite</strong> runs every statement on its own in-memory database through PDO, with the process temporarily inside a scratch directory so that file names in <code>ATTACH</code> or <code>VACUUM INTO</code> resolve there. The linked SQLite release is reported; any release serves, since both texts meet the same one.</li></ul>
+</div><div class="doc-block" data-diff="added"><p>The plan compiler reads bytes only when compiling a plan, so repeating an input produces the same SQL, which is what lets PHP-Fuzzer shrink and replay a finding. The provider records grammar coverage under <code>fuzz/coverage/&lt;database&gt;/</code>; set <code>SQLFAKER_COVERAGE=0</code> to run without it. A lost database connection ends the run with exit status 2 instead of a finding. The equivalence scripts pass <code>--timeout=60</code> so that the provider&#039;s one-time grammar analysis fits into the first input.</p>
+</div><div class="doc-block" data-diff="added"><h3>Seeds</h3>
+</div><div class="doc-block" data-diff="added"><p>sql-faker ships <span class="md-target" title="../../sql-faker/seeds/">seed corpora</span> that together select every production of each default grammar. <code>composer fuzz:seed</code> writes them into the corpus directories before a run:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code"><code>composer fuzz:seed                               # every corpus
+composer fuzz:seed -- format-pg equivalence-pg   # the named corpora</code></pre>
+</div><div class="doc-block" data-diff="added"><p>The equivalence targets decode their input under the same contract as sql-faker&#039;s targets, so the seed files are copied as they are. The format targets take the statement each seed generates, recorded in the manifest next to the seed corpus, behind a selector byte that cycles through the 64 layouts. Seeds exist for MySQL 8.4.7 only; with another <code>MYSQL_VERSION</code> the MySQL corpora are left as they are. <code>SQLFAKER_SEEDS</code> points at another seeds directory.</p>
+</div><div class="doc-block" data-diff="added"><p>Replaying the seeds without mutating them checks every statement form once:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code"><code>composer fuzz:seed -- equivalence-sqlite
+composer fuzz:equivalence:sqlite:river -- --max-runs=0</code></pre>
+</div><div class="doc-block" data-diff="added"><p>PHP-Fuzzer keeps the coverage features of every corpus entry in memory, and the MySQL and PostgreSQL corpora exceed PHP&#039;s default <code>memory_limit</code>, so the scripts start it with <code>php -d memory_limit=-1</code>. The corpus and coverage directories are ignored by git.</p>
+</div><div class="doc-block" data-diff="added"><h3>Continuous integration</h3>
+</div><div class="doc-block" data-diff="added"><p><code>.github/workflows/sql-formatter-fuzz.yml</code> runs nightly and on demand: one job per format target and one per database and preset for the equivalence targets, 15 jobs in all. Each job seeds its corpus, restores the corpus that earlier runs evolved, fuzzes for the configured number of mutations, opens an issue for a new finding, and saves the corpus and the input that caused the finding as artifacts.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
