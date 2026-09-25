@@ -88,9 +88,8 @@ lexical behavior, rewrites, and generator factory. Each implementation depends
 on core contracts; implementations never depend on one another. Build utilities
 in `bin/` are development tools, not a shipped CLI layer.
 
-`Compatibility` preserves the original provider names and convenience factory
-as inward-facing adapters. New code should use the providers and factories in
-the database namespaces. Core and platform code cannot depend on compatibility.
+Providers, statement rules, and generator factories are exposed directly from
+their database namespaces.
 
 `composer deptrac` enforces dependency direction without exceptions or uncovered
 classes. `composer phpstan` also rejects database terms anywhere in core source,

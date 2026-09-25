@@ -44,7 +44,7 @@ use Fuzz\Target\MySqlEquivalence;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\MySqlProvider;
 use SqlFormatter\FormatOptions;
 use SqlFormatter\Formatter;
 use SqlFormatter\Style;

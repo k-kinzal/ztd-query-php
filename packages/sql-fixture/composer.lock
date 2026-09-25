@@ -1739,7 +1739,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "534778f975c34972cbf053fedce5ab67f4fe560b"
+                "reference": "3abb12ca287d64843fff42dbb2a31c1e4483be77"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1770,13 +1770,7 @@
             "autoload": {
                 "psr-4": {
                     "SqlFaker\\": "src/"
-                },
-                "files": [
-                    "src/MySql/StatementType.php",
-                    "src/PostgreSql/StatementType.php",
-                    "src/Sqlite/StatementType.php",
-                    "src/Compatibility/ClassAliases.php"
-                ]
+                }
             },
             "autoload-dev": {
                 "psr-4": {

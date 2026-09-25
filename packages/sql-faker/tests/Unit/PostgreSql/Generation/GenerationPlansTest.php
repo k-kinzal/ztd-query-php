@@ -323,12 +323,12 @@ final class GenerationPlansTest extends TestCase
     {
         $faker = \Faker\Factory::create();
         $faker->seed(17);
-        $plan = GenerationPlans::statementOfType($faker, \SqlFaker\PostgreSql\StatementType::Select, 6);
+        $plan = GenerationPlans::statementOfType($faker, \SqlFaker\PostgreSql\Generation\StatementRule::Select, 6);
         $next = $faker->randomNumber();
         $faker->seed(17);
 
         self::assertSame($faker->randomNumber(), $next);
-        self::assertSame(\SqlFaker\PostgreSql\StatementType::Select->value, $plan->startRule());
+        self::assertSame(\SqlFaker\PostgreSql\Generation\StatementRule::Select->value, $plan->startRule());
         self::assertSame(6, $plan->maxDepth());
         self::assertSame(false, $plan->usesStepBudget());
     }
@@ -339,8 +339,8 @@ final class GenerationPlansTest extends TestCase
         $faker->seed(17);
         $plan = GenerationPlans::statementOfType($faker, null, 8);
         $faker->seed(17);
-        /** @var \SqlFaker\PostgreSql\StatementType $expected */
-        $expected = $faker->randomElement(\SqlFaker\PostgreSql\StatementType::cases());
+        /** @var \SqlFaker\PostgreSql\Generation\StatementRule $expected */
+        $expected = $faker->randomElement(\SqlFaker\PostgreSql\Generation\StatementRule::cases());
 
         self::assertSame($expected->value, $plan->startRule());
         self::assertSame(8, $plan->maxDepth());

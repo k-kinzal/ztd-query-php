@@ -1,4 +1,4 @@
-# Core concepts and independent database implementations. Compatibility only points inward.
+# Core concepts and independent database implementations.
 deptrac:
   paths: [./src]
   analyser:
@@ -28,10 +28,6 @@ deptrac:
       collectors:
         - type: classLike
           value: '^SqlFaker\\Sqlite\\.*'
-    - name: Compatibility
-      collectors:
-        - type: classLike
-          value: '^SqlFaker\\Compatibility\\.*'
     - name: Faker
       collectors:
         - type: classLike
@@ -51,7 +47,6 @@ deptrac:
     MySql: [Grammar, Generation, Faker]
     PostgreSql: [Grammar, Generation, Faker]
     Sqlite: [Grammar, Generation, Faker]
-    Compatibility: [MySql, PostgreSql, Sqlite, Grammar, Generation, Faker]
     Faker: []
     BisonParser: []
     LemonParser: []

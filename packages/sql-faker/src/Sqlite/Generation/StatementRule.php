@@ -13,8 +13,6 @@ namespace SqlFaker\Sqlite\Generation;
  * @visibility public
  * @example Enumerate the supported statement choices
  *     array_column(\SqlFaker\Sqlite\Generation\StatementRule::cases(), 'name') // => ['Select', 'Insert', 'Update', 'Delete', 'CreateTable', 'AlterTable', 'DropTable', 'SimpleStatement']
- * @example Use the existing StatementType alias
- *     \SqlFaker\Sqlite\StatementType::Select === \SqlFaker\Sqlite\Generation\StatementRule::Select // => true
  */
 enum StatementRule: string
 {

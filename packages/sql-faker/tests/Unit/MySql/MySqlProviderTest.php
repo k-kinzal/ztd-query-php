@@ -26,9 +26,9 @@ use SqlFaker\Grammar\Model\TerminalInventory;
 use SqlFaker\Grammar\Resource\SqlVersion;
 use SqlFaker\MySql\Generation\GenerationPlans;
 use SqlFaker\MySql\Generation\LexicalGrammar;
+use SqlFaker\MySql\Generation\StatementRule;
 use SqlFaker\MySql\Generation\Value\LiteralGenerator;
 use SqlFaker\MySql\MySqlProvider;
-use SqlFaker\MySql\StatementType;
 
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(LiteralGenerator::class)]
@@ -39,7 +39,7 @@ use SqlFaker\MySql\StatementType;
 #[CoversClass(ProductionRule::class)]
 #[CoversClass(Terminal::class)]
 #[CoversClass(TerminationAnalyzer::class)]
-#[CoversClass(StatementType::class)]
+#[CoversClass(StatementRule::class)]
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(GenerationPlans::class)]
@@ -411,18 +411,18 @@ final class MySqlProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
-    public function testSqlWithStatementType(): void
+    public function testSqlWithStatementRule(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
         $provider = new MySqlProvider($faker);
 
-        $result = $provider->sql(StatementType::Select, maxDepth: 3);
+        $result = $provider->sql(StatementRule::Select, maxDepth: 3);
 
         self::assertMatchesRegularExpression('/\bSELECT\b/i', $result);
     }
 
-    public function testSqlWithNullStatementTypeUsesDefault(): void
+    public function testSqlWithNullStatementRuleUsesDefault(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -451,7 +451,7 @@ final class MySqlProviderTest extends TestCase
         $faker->seed(12345);
         $provider = new MySqlProvider($faker, $version);
 
-        $result = $provider->sqlWithoutEmptyRows(StatementType::Insert, maxDepth: 10);
+        $result = $provider->sqlWithoutEmptyRows(StatementRule::Insert, maxDepth: 10);
 
         self::assertMatchesRegularExpression('/\bINSERT\b/i', $result);
         self::assertDoesNotMatchRegularExpression('/\bVALUES?\s*(?:ROW\s*)?\(\s*\)/i', $result);
@@ -1114,8 +1114,8 @@ final class MySqlProviderTest extends TestCase
         self::assertNotSame('', $sql);
     }
 
-    #[DataProvider('providerStatementTypeValue')]
-    public function testSqlWithAllStatementTypes(StatementType $type): void
+    #[DataProvider('providerStatementRuleValue')]
+    public function testSqlWithAllStatementRules(StatementRule $type): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1412,18 +1412,18 @@ final class MySqlProviderTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{StatementType}>
+     * @return iterable<string, array{StatementRule}>
      */
-    public static function providerStatementTypeValue(): iterable
+    public static function providerStatementRuleValue(): iterable
     {
-        yield 'Select' => [StatementType::Select];
-        yield 'Insert' => [StatementType::Insert];
-        yield 'Update' => [StatementType::Update];
-        yield 'Delete' => [StatementType::Delete];
-        yield 'CreateTable' => [StatementType::CreateTable];
-        yield 'AlterTable' => [StatementType::AlterTable];
-        yield 'DropTable' => [StatementType::DropTable];
-        yield 'SimpleStatement' => [StatementType::SimpleStatement];
+        yield 'Select' => [StatementRule::Select];
+        yield 'Insert' => [StatementRule::Insert];
+        yield 'Update' => [StatementRule::Update];
+        yield 'Delete' => [StatementRule::Delete];
+        yield 'CreateTable' => [StatementRule::CreateTable];
+        yield 'AlterTable' => [StatementRule::AlterTable];
+        yield 'DropTable' => [StatementRule::DropTable];
+        yield 'SimpleStatement' => [StatementRule::SimpleStatement];
     }
 
     /**

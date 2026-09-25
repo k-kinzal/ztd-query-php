@@ -210,9 +210,9 @@ final class FormatterTest extends TestCase
         $faker = \Faker\Factory::create();
         $faker->seed(927);
         $releases = [
-            ...array_map(static fn (string $version): array => [MySqlParser::class, \SqlFaker\MySqlProvider::class, $version, in_array($version, ['mysql-5.6.51', 'mysql-5.7.44'], true) ? 'statement' : 'simple_statement_or_begin'], MySqlParser::versions()),
-            [PostgreSqlParser::class, \SqlFaker\PostgreSqlProvider::class, 'pg-17.2', 'stmt'],
-            [SqliteParser::class, \SqlFaker\SqliteProvider::class, 'sqlite-3.47.2', 'cmd'],
+            ...array_map(static fn (string $version): array => [MySqlParser::class, \SqlFaker\MySql\MySqlProvider::class, $version, in_array($version, ['mysql-5.6.51', 'mysql-5.7.44'], true) ? 'statement' : 'simple_statement_or_begin'], MySqlParser::versions()),
+            [PostgreSqlParser::class, \SqlFaker\PostgreSql\PostgreSqlProvider::class, 'pg-17.2', 'stmt'],
+            [SqliteParser::class, \SqlFaker\Sqlite\SqliteProvider::class, 'sqlite-3.47.2', 'cmd'],
         ];
         foreach ($releases as [$parserClass, $providerClass, $version, $root]) {
             $provider = new $providerClass($faker, $version);

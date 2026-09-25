@@ -26,10 +26,10 @@ use SqlFaker\Grammar\Model\TerminalInventory;
 use SqlFaker\Grammar\Resource\SqlVersion;
 use SqlFaker\PostgreSql\Generation\GenerationPlans;
 use SqlFaker\PostgreSql\Generation\LexicalGrammar;
+use SqlFaker\PostgreSql\Generation\StatementRule;
 use SqlFaker\PostgreSql\Generation\Value\LiteralGenerator;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\PostgreSqlProvider;
-use SqlFaker\PostgreSql\StatementType;
 
 #[CoversClass(PostgreSqlProvider::class)]
 #[CoversClass(LiteralGenerator::class)]
@@ -41,7 +41,7 @@ use SqlFaker\PostgreSql\StatementType;
 #[CoversClass(ProductionRule::class)]
 #[CoversClass(Terminal::class)]
 #[CoversClass(TerminationAnalyzer::class)]
-#[CoversClass(StatementType::class)]
+#[CoversClass(StatementRule::class)]
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
@@ -420,18 +420,18 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
-    public function testSqlWithStatementType(): void
+    public function testSqlWithStatementRule(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
         $provider = new PostgreSqlProvider($faker);
 
-        $result = $provider->sql(StatementType::Select, maxDepth: 6);
+        $result = $provider->sql(StatementRule::Select, maxDepth: 6);
 
         self::assertMatchesRegularExpression('/SELECT|VALUES|TABLE/', $result);
     }
 
-    public function testSqlWithNullStatementTypeUsesRandom(): void
+    public function testSqlWithNullStatementRuleUsesRandom(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1056,8 +1056,8 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertSame($sql1, $sql2, 'Same seed should produce same output');
     }
 
-    #[DataProvider('providerStatementTypeValue')]
-    public function testSqlWithAllStatementTypes(StatementType $type): void
+    #[DataProvider('providerStatementRuleValue')]
+    public function testSqlWithAllStatementRules(StatementRule $type): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1239,19 +1239,19 @@ final class PostgreSqlProviderTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{StatementType}>
+     * @return iterable<string, array{StatementRule}>
      */
-    public static function providerStatementTypeValue(): iterable
+    public static function providerStatementRuleValue(): iterable
     {
-        yield 'Select' => [StatementType::Select];
-        yield 'Insert' => [StatementType::Insert];
-        yield 'Update' => [StatementType::Update];
-        yield 'Delete' => [StatementType::Delete];
-        yield 'CreateTable' => [StatementType::CreateTable];
-        yield 'CreateTableAs' => [StatementType::CreateTableAs];
-        yield 'CreateDomain' => [StatementType::CreateDomain];
-        yield 'AlterTable' => [StatementType::AlterTable];
-        yield 'DropTable' => [StatementType::DropTable];
+        yield 'Select' => [StatementRule::Select];
+        yield 'Insert' => [StatementRule::Insert];
+        yield 'Update' => [StatementRule::Update];
+        yield 'Delete' => [StatementRule::Delete];
+        yield 'CreateTable' => [StatementRule::CreateTable];
+        yield 'CreateTableAs' => [StatementRule::CreateTableAs];
+        yield 'CreateDomain' => [StatementRule::CreateDomain];
+        yield 'AlterTable' => [StatementRule::AlterTable];
+        yield 'DropTable' => [StatementRule::DropTable];
     }
 
     #[DataProvider('providerTargetedGenerationSeed')]

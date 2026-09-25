@@ -12,7 +12,7 @@ Load the grammar and pass it to the matching factory with the same version tag. 
 use Faker\Factory;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySql\Grammar\MySqlGrammar;
-use SqlFaker\MySql\StatementType;
+use SqlFaker\MySql\Generation\StatementRule;
 use SqlFaker\MySql\Generation\SqlGeneratorFactory;
 
 require 'vendor/autoload.php';
@@ -31,14 +31,14 @@ $faker->seed(12345);
 Pass the desired rule to `GenerationPlan::fromRule()`, then call `generate()`:
 
 ```php
-$plan = GenerationPlan::fromRule(StatementType::Select->value)
+$plan = GenerationPlan::fromRule(StatementRule::Select->value)
     ->requiringNonEmpty()
     ->withMaxDepth(6);
 
 $sql = $generator->generate($plan);
 ```
 
-The return value is SQL text. `StatementType::Insert`, `Update`, and `Delete` select other statement families. `requiringNonEmpty()` requires a non-empty result; a rule for a fragment still produces a fragment.
+The return value is SQL text. `StatementRule::Insert`, `Update`, and `Delete` select other statement families. `requiringNonEmpty()` requires a non-empty result; a rule for a fragment still produces a fragment.
 
 ### Generate SQL without selecting a statement family
 
@@ -79,7 +79,7 @@ $string = $generator->generate(
 The same plan can be used for a series of generated inputs:
 
 ```php
-$selectPlan = GenerationPlan::fromRule(StatementType::Select->value)
+$selectPlan = GenerationPlan::fromRule(StatementRule::Select->value)
     ->requiringNonEmpty()
     ->withMaxDepth(3)
     ->withExpansionBudget(100);
@@ -140,7 +140,7 @@ $mysqlGenerator = SqlGeneratorFactory::create($mysqlFaker, $mysqlGrammar, $mysql
 $mysqlFaker->seed(7);
 
 $sql = $mysqlGenerator->generate(
-    GenerationPlan::fromRule(\SqlFaker\MySql\StatementType::Select->value)
+    GenerationPlan::fromRule(\SqlFaker\MySql\Generation\StatementRule::Select->value)
         ->requiringNonEmpty()
         ->withMaxDepth(3),
 );
@@ -162,7 +162,7 @@ $pgGenerator = \SqlFaker\PostgreSql\Generation\SqlGeneratorFactory::create($pgFa
 $pgFaker->seed(7);
 
 $sql = $pgGenerator->generate(
-    GenerationPlan::fromRule(\SqlFaker\PostgreSql\StatementType::Select->value)
+    GenerationPlan::fromRule(\SqlFaker\PostgreSql\Generation\StatementRule::Select->value)
         ->requiringNonEmpty()
         ->withMaxDepth(3),
 );
@@ -189,7 +189,7 @@ $sqliteFaker->seed(7);
 
 $sql = $sqliteGenerator->generate(
     \SqlFaker\Sqlite\GenerationPlans::statement(
-        \SqlFaker\Sqlite\StatementType::Select->value,
+        \SqlFaker\Sqlite\Generation\StatementRule::Select->value,
         maxDepth: 3,
     ),
 );

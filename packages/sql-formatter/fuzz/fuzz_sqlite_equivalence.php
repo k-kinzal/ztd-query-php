@@ -23,7 +23,7 @@ use Fuzz\Target\SqliteEquivalence;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\SqliteProvider;
+use SqlFaker\Sqlite\SqliteProvider;
 use SqlFormatter\FormatOptions;
 use SqlFormatter\Formatter;
 use SqlFormatter\Style;

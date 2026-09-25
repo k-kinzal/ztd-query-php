@@ -29,7 +29,7 @@ $expression = $provider->generate($expressionPlan);
 Use an enum value for a statement family, or `all()` for the grammar's entry point:
 
 ```php
-$selectPlan = GenerationPlan::fromRule(\SqlFaker\Sqlite\StatementType::Select->value)
+$selectPlan = GenerationPlan::fromRule(\SqlFaker\Sqlite\Generation\StatementRule::Select->value)
     ->requiringNonEmpty()
     ->withMaxDepth(3);
 $select = $provider->generate($selectPlan);
@@ -320,7 +320,7 @@ $mysql = new \SqlFaker\MySql\MySqlProvider($mysqlFaker, 'mysql-8.4.7');
 $mysqlFaker->seed(7);
 
 $rowsPlan = \SqlFaker\MySql\Generation\GenerationPlans::withoutEmptyRows(
-    \SqlFaker\MySql\StatementType::Insert->value,
+    \SqlFaker\MySql\Generation\StatementRule::Insert->value,
 )->withMaxDepth(6);
 
 $sql = $mysql->generate($rowsPlan);

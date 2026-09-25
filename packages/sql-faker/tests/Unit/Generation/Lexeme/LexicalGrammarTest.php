@@ -14,8 +14,8 @@ use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySql\Generation\LexicalGrammar as MySqlLexicalGrammar;
 use SqlFaker\MySql\MySqlProvider;
 use SqlFaker\PostgreSql\Generation\LexicalGrammar as PostgreSqlLexicalGrammar;
+use SqlFaker\PostgreSql\Generation\StatementRule as PostgreSqlStatementRule;
 use SqlFaker\PostgreSql\PostgreSqlProvider;
-use SqlFaker\PostgreSql\StatementType as PostgreSqlStatementType;
 use SqlFaker\Sqlite\Generation\LexicalGrammar as SqliteLexicalGrammar;
 use SqlFaker\Sqlite\SqliteProvider;
 
@@ -106,8 +106,8 @@ final class LexicalGrammarTest extends TestCase
         yield 'MySQL 9.1' => ['mysql-9.1.0'];
     }
 
-    #[DataProvider('providerPostgreSqlStatementType')]
-    public function testSupportedPostgreSqlVersionBindsGrammarAndLexerProfileTogether(PostgreSqlStatementType $type): void
+    #[DataProvider('providerPostgreSqlStatementRule')]
+    public function testSupportedPostgreSqlVersionBindsGrammarAndLexerProfileTogether(PostgreSqlStatementRule $type): void
     {
         $faker = Factory::create();
         $faker->seed(20260814);
@@ -117,11 +117,11 @@ final class LexicalGrammarTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{PostgreSqlStatementType}>
+     * @return iterable<string, array{PostgreSqlStatementRule}>
      */
-    public static function providerPostgreSqlStatementType(): iterable
+    public static function providerPostgreSqlStatementRule(): iterable
     {
-        foreach (PostgreSqlStatementType::cases() as $type) {
+        foreach (PostgreSqlStatementRule::cases() as $type) {
             yield $type->name => [$type];
         }
     }
