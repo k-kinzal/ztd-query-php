@@ -190,12 +190,19 @@ composer lint
 composer test:unit
 composer test
 composer bench:quick
+composer fuzz
 ```
 
 The package uses the monorepo's PHP-AI-Toolkit reporter and executable PHPDoc
 examples, PHPStan at maximum level, PHP-CS-Fixer, PHPCompatibility, LOC and tree
 guards, Deptrac, ParaTest, and PHPBench. CI runs tests on PHP 8.1 through 8.5 and
 mutation testing with Infection.
+
+PHP-Fuzzer targets under [`fuzz/`](fuzz/) feed the formatter raw bytes and, per
+database and layout preset, statements sql-faker generates whose original and
+formatted texts must draw the same answer from MySQL, PostgreSQL, and SQLite.
+`composer fuzz` runs a smoke set, the equivalence targets replay sql-faker's seed
+corpora, and a nightly workflow runs every target. See [`fuzz/README.md`](fuzz/README.md).
 
 ## License
 

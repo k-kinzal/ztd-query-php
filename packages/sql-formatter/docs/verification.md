@@ -28,6 +28,13 @@ The checks serve different purposes:
   Compact uses canonical terminal and operand-nesting signatures instead of exact
   original grammar alternatives, and checks each parenthesis removal separately.
 - PHPDoc examples run as doctests. ParaTest exercises independent worker processes.
+- PHP-Fuzzer targets under `fuzz/` run nightly. The format targets hand the formatter
+  arbitrary bytes behind a layout selector and accept only the parser's rejection, a
+  verified result, and an idempotent second pass. The equivalence targets format
+  statements sql-faker generates, per database and preset, and require MySQL,
+  PostgreSQL, and SQLite to answer the original and the formatted text alike, rows
+  and errors included; they replay sql-faker's seed corpora first, so every statement
+  form of the default grammars is covered on each run. See `fuzz/README.md`.
 - CI installs the locked development graph and tests PHP 8.1–8.5. Lint runs on
   PHP 8.3; Infection checks changed source lines on pull requests and the whole
   package on main.

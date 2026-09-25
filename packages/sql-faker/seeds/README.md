@@ -65,6 +65,7 @@ composer fuzz:robustness
 |---------|---------|-------|
 | sql-faker | `fuzz_mysql_syntax.php`, `fuzz_pg_syntax.php`, `fuzz_sqlite_syntax.php` | As they are; a database is required |
 | sql-parser | `fuzz_mysql_parse.php`, `fuzz_pg_parse.php`, `fuzz_sqlite_parse.php` | As they are |
+| sql-formatter | `fuzz_mysql_equivalence.php`, `fuzz_pg_equivalence.php`, `fuzz_sqlite_equivalence.php` | As they are; a database is required |
 | ztd-query-mysql | `fuzz_robustness.php`, `fuzz_robustness_classify.php`, `fuzz_robustness_rewrite.php` | As they are; the targets' budget of 500 exceeds every seed's |
 | ztd-query-postgres | `fuzz_robustness.php`, `fuzz_robustness_classify.php`, `fuzz_robustness_rewrite.php` | With one leading `\0` byte: the target's first byte selects the statement family, and `\0` selects `stmt` |
 | ztd-query-sqlite | `fuzz_robustness*.php`, `fuzz_semantics.php` | Not compatible: the targets read their own selector byte and stop consulting the input after eight expansions |

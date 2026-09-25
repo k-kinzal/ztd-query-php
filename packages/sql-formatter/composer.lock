@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fec1cce980518d9dd7ab48267855d491",
+    "content-hash": "decd1d748c9cf8c8e1ed5cee51292866",
     "packages": [
         {
             "name": "k-kinzal/sql-parser",
@@ -1248,6 +1248,118 @@
             "time": "2025-03-19T14:43:43+00:00"
         },
         {
+            "name": "k-kinzal/container",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../container",
+                "reference": "6478c853dbf8368cfd2ff4ffaffcb57bdc0369ec"
+            },
+            "require": {
+                "ext-pdo": "*",
+                "k-kinzal/testcontainers-php": "^0.5.1",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "suggest": {
+                "ext-pdo_mysql": "Required for MySQL containers",
+                "ext-pdo_pgsql": "Required for PostgreSQL containers"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Container\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/container"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=512M"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Shared database containers for integration and fuzz testing",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/container",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "k-kinzal/php-ai-toolkit",
             "version": "dev-main",
             "source": {
@@ -1565,6 +1677,57 @@
             }
         },
         {
+            "name": "k-kinzal/testcontainers-php",
+            "version": "v0.5.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/k-kinzal/testcontainers-php.git",
+                "reference": "baf7898b6490f9eb5b94734fa06917f862fd001f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/k-kinzal/testcontainers-php/zipball/baf7898b6490f9eb5b94734fa06917f862fd001f",
+                "reference": "baf7898b6490f9eb5b94734fa06917f862fd001f",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "php": "~5.6 || ~7.0 || ~7.1 || ~7.2 || ~7.3 || ~7.4 || ~8.0 || ~8.1 || ~8.2 || ~8.3 || ~8.4 || ~8.5",
+                "psr/log": "*",
+                "symfony/process": "*"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "*",
+                "phpunit/phpunit": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ],
+                "psr-4": {
+                    "Testcontainers\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "k-kinzal",
+                    "email": "keen.flag7803@logn.in"
+                }
+            ],
+            "description": "PHP library for Testcontainers",
+            "support": {
+                "issues": "https://github.com/k-kinzal/testcontainers-php/issues",
+                "source": "https://github.com/k-kinzal/testcontainers-php/tree/v0.5.1"
+            },
+            "time": "2026-01-10T04:16:06+00:00"
+        },
+        {
             "name": "myclabs/deep-copy",
             "version": "1.14.0",
             "source": {
@@ -1623,6 +1786,96 @@
                 }
             ],
             "time": "2026-08-11T10:17:44+00:00"
+        },
+        {
+            "name": "nikic/include-interceptor",
+            "version": "v0.1.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nikic/include-interceptor.git",
+                "reference": "6a074d12c391b0906df0c2527ee8b16514025577"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nikic/include-interceptor/zipball/6a074d12c391b0906df0c2527ee8b16514025577",
+                "reference": "6a074d12c391b0906df0c2527ee8b16514025577",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^7 || ^8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Nikic\\IncludeInterceptor\\": "src/",
+                    "Nikic\\IncludeInterceptor\\Tests\\": "tests/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Robin Appelman",
+                    "email": "icewind@owncloud.com"
+                }
+            ],
+            "description": "Intercept PHP includes",
+            "support": {
+                "issues": "https://github.com/nikic/include-interceptor/issues",
+                "source": "https://github.com/nikic/include-interceptor/tree/v0.1.2"
+            },
+            "time": "2021-11-27T21:03:08+00:00"
+        },
+        {
+            "name": "nikic/php-fuzzer",
+            "version": "v0.0.11",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nikic/PHP-Fuzzer.git",
+                "reference": "5ebe3dafec828c80391db7adb1d63f79c8185c91"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nikic/PHP-Fuzzer/zipball/5ebe3dafec828c80391db7adb1d63f79c8185c91",
+                "reference": "5ebe3dafec828c80391db7adb1d63f79c8185c91",
+                "shasum": ""
+            },
+            "require": {
+                "nikic/include-interceptor": "^0.1.1",
+                "nikic/php-parser": "^5.0",
+                "php": ">= 7.4",
+                "ulrichsg/getopt-php": "^4.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^9"
+            },
+            "suggest": {
+                "ext-pcntl": "Needed for timeout support"
+            },
+            "bin": [
+                "bin/php-fuzzer"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PhpFuzzer\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "support": {
+                "issues": "https://github.com/nikic/PHP-Fuzzer/issues",
+                "source": "https://github.com/nikic/PHP-Fuzzer/tree/v0.0.11"
+            },
+            "time": "2025-05-21T19:53:32+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -6092,6 +6345,57 @@
             "time": "2025-11-17T20:03:58+00:00"
         },
         {
+            "name": "ulrichsg/getopt-php",
+            "version": "v4.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/getopt-php/getopt-php.git",
+                "reference": "9313ecde04f7bed262716e3a4d32a5e2cea3ffad"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/getopt-php/getopt-php/zipball/9313ecde04f7bed262716e3a4d32a5e2cea3ffad",
+                "reference": "9313ecde04f7bed262716e3a4d32a5e2cea3ffad",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "php": "^7.1 || ^8.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "*",
+                "squizlabs/php_codesniffer": "^3.5.8",
+                "tflori/phpunit-printer": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "GetOpt\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ulrich Schmidt-Goertz",
+                    "email": "ulrich@schmidt-goertz.de"
+                },
+                {
+                    "name": "Thomas Flori",
+                    "email": "thflori@gmail.com"
+                }
+            ],
+            "description": "Command line arguments parser for PHP 7.1 and above",
+            "homepage": "http://getopt-php.github.io/getopt-php",
+            "support": {
+                "issues": "https://github.com/getopt-php/getopt-php/issues",
+                "source": "https://github.com/getopt-php/getopt-php/tree/v4.0.4"
+            },
+            "time": "2025-02-11T14:42:04+00:00"
+        },
+        {
             "name": "webmozart/glob",
             "version": "4.7.0",
             "source": {
@@ -6144,6 +6448,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "k-kinzal/container": 20,
         "k-kinzal/php-ai-toolkit": 20,
         "k-kinzal/sql-faker": 20,
         "k-kinzal/sql-parser": 20,
