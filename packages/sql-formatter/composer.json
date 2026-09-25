@@ -61,7 +61,10 @@
     "autoload": {
         "psr-4": {
             "SqlFormatter\\": "src/"
-        }
+        },
+        "files": [
+            "src/Compatibility/ClassAliases.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

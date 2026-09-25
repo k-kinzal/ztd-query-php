@@ -24,9 +24,9 @@ use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Sqlite\SqliteProvider;
-use SqlFormatter\FormatOptions;
-use SqlFormatter\Formatter;
-use SqlFormatter\Style;
+use SqlFormatter\Core\FormatOptions;
+use SqlFormatter\Core\Style;
+use SqlFormatter\Facade\Formatter;
 use SqlParser\Sqlite\SqliteParser;
 
 $styleName = getenv('SQLFORMATTER_STYLE');
