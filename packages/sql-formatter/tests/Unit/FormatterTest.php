@@ -36,6 +36,16 @@ use SqlParser\Sqlite\SqliteParser;
 #[CoversClass(\SqlFormatter\Syntax\Rules::class)]
 #[Medium]
 #[CoversClass(\SqlFormatter\Syntax\Lists::class)]
+#[CoversClass(\SqlFormatter\Compact\Reductions::class)]
+#[CoversClass(\SqlFormatter\Compact\Document::class)]
+#[CoversClass(\SqlFormatter\Compact\Visitor::class)]
+#[CoversClass(\SqlFormatter\Compact\Rules::class)]
+#[CoversClass(\SqlFormatter\Compact\Keywords::class)]
+#[CoversClass(\SqlFormatter\Compact\Grouping::class)]
+#[CoversClass(\SqlFormatter\Compact\Shape::class)]
+#[CoversClass(\SqlFormatter\Compact\Renderer::class)]
+#[CoversClass(\SqlFormatter\Compact\Spacing::class)]
+#[CoversClass(\SqlFormatter\Compact\Trivia::class)]
 final class FormatterTest extends TestCase
 {
     /**
@@ -55,7 +65,7 @@ final class FormatterTest extends TestCase
     public static function providerStyles(): iterable
     {
         $layouts = [
-            'compact' => 'SELECT id, name FROM users WHERE active = 1 AND age >= 18 ORDER BY name;',
+            'compact' => 'SELECT id,name FROM users WHERE active=1 AND age>=18 ORDER BY name',
             'expanded' => "SELECT\n    id,\n    name\nFROM\n    users\nWHERE\n    active = 1\n    AND age >= 18\nORDER BY\n    name;",
             'tabular' => "SELECT   id,\n         name\nFROM     users\nWHERE    active = 1\nAND      age >= 18\nORDER BY name;",
             'river' => "  SELECT id,\n         name\n    FROM users\n   WHERE active = 1\n     AND age >= 18\nORDER BY name;",
@@ -72,7 +82,7 @@ final class FormatterTest extends TestCase
     /**
      * @param class-string<MySqlParser|PostgreSqlParser|SqliteParser> $parserClass
      */
-    #[DataProvider('providerPreservation')]
+    #[DataProvider('providerTokenPreservation')]
     public function testFormatPreservesTokensAndIsIdempotent(string $parserClass, ?string $version, Style $style, string $sql): void
     {
         $parser = new $parserClass($version);
@@ -80,6 +90,30 @@ final class FormatterTest extends TestCase
         $result = $formatter->format($sql);
         self::assertSame(array_column($parser->parse($sql)->tokens(), 'text'), array_column($parser->parse($result)->tokens(), 'text'));
         self::assertSame($result, $formatter->format($result));
+    }
+
+    /**
+     * @param class-string<MySqlParser|PostgreSqlParser|SqliteParser> $parserClass
+     */
+    #[DataProvider('providerPreservation')]
+    public function testFormatRemainsCanonicalAcrossLayouts(string $parserClass, ?string $version, Style $style, string $sql): void
+    {
+        $parser = new $parserClass($version);
+        $layout = new Formatter($parser, new FormatOptions($style));
+        $compact = new Formatter($parser, new FormatOptions(Style::Compact));
+        self::assertSame($compact->format($sql), $compact->format($layout->format($sql)));
+    }
+
+    /**
+     * @return iterable<string, array{class-string<MySqlParser|PostgreSqlParser|SqliteParser>, string|null, Style, string}>
+     */
+    public static function providerTokenPreservation(): iterable
+    {
+        foreach (self::providerPreservation() as $name => $case) {
+            if ($case[2] !== Style::Compact) {
+                yield $name => $case;
+            }
+        }
     }
 
     /**
@@ -164,6 +198,8 @@ final class FormatterTest extends TestCase
         $formatter = new Formatter(new $parserClass($version), new FormatOptions($style));
         $output = $formatter->format($sql);
         self::assertSame($output, $formatter->format($output));
+        $compact = new Formatter(new $parserClass($version), new FormatOptions(Style::Compact));
+        self::assertSame($compact->format($sql), $compact->format($output));
     }
 
     /**
@@ -231,7 +267,7 @@ final class FormatterTest extends TestCase
     public function testFormatPreservesMysqlSqlMode(): void
     {
         $formatter = new Formatter(new MySqlParser(mode: new SqlMode(ansiQuotes: true, pipesAsConcat: true)), new FormatOptions(Style::Compact));
-        self::assertSame('SELECT "name" || \'!\' FROM "users";', $formatter->format('SELECT "name"||\'!\' FROM "users";'));
+        self::assertSame('SELECT"name"||\'!\'FROM"users"', $formatter->format('SELECT "name"||\'!\' FROM "users";'));
     }
 
     public function testFormatRejectsInvalidInput(): void

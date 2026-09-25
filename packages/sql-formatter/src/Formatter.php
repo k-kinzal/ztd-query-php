@@ -15,8 +15,8 @@ use SqlParser\Sqlite\SqliteParser;
 /**
  * Formats SQL with the dialect, release, and lexical settings of a supplied parser.
  *
- * Tokens, identifiers, literals, comments, and explicit parentheses are preserved.
- * Output is parsed again to verify that formatting preserves the grammar derivation.
+ * Compact canonicalizes optional syntax and keywords; other styles preserve tokens.
+ * Output is parsed again to verify the selected style's preservation contract.
  *
  * @visibility public
  * @example Formatting a query
@@ -24,7 +24,7 @@ use SqlParser\Sqlite\SqliteParser;
  *     $formatter->format('SELECT id,name FROM users') // => "SELECT\n    id,\n    name\nFROM\n    users"
  * @example Selecting compact output
  *     $formatter = new \SqlFormatter\Formatter(new \SqlParser\MySql\MySqlParser(), new \SqlFormatter\FormatOptions(\SqlFormatter\Style::Compact));
- *     $formatter->format("SELECT  id, name\nFROM users") // => 'SELECT id, name FROM users'
+ *     $formatter->format("SELECT  id, name\nFROM users") // => 'SELECT id,name FROM users'
  */
 final class Formatter
 {
@@ -44,6 +44,9 @@ final class Formatter
     public function format(string $sql): string
     {
         $tree = $this->parser->parse($sql);
+        if ($this->options->style === Style::Compact) {
+            return (new Compact\Renderer($this->parser))->render($tree);
+        }
         $result = (new Renderer(Document::from($tree), $this->options))->render();
         try {
             $formatted = $this->parser->parse($result);

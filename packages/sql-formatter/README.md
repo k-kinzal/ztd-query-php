@@ -56,12 +56,47 @@ accepts 1 through 16. Both options are immutable.
 ### Compact
 
 ```sql
-SELECT id, name FROM users WHERE active = 1 AND age >= 18 ORDER BY name;
+SELECT id,name FROM users WHERE active=1 AND age>=18 ORDER BY name
 ```
 
-Removes optional layout line breaks. Line comments and newlines inside literals
-or quoted identifiers are preserved, so output is not necessarily one physical
-line. Token boundaries retain any whitespace that affects lexical interpretation.
+Produces a compact canonical spelling for the selected dialect and release:
+
+- Removes ordinary comments, optional whitespace, and optional final statement
+  terminators. Separators inside statement lists and stored programs, and
+  terminators anchoring retained directives, remain.
+- Uppercases grammar keywords while preserving identifiers, including keywords
+  used as names. Quoting, literal contents, and parameter markers remain intact.
+- Uses `<>` for inequality and `=` for SQLite's `==`. MySQL also normalizes
+  `DISTINCTROW` to `DISTINCT`, `REGEXP` to `RLIKE`, `INTEGER` to `INT`, and
+  `DECIMAL` to `DEC`.
+- Omits redundant `SELECT ALL`, ascending sort directions, `INNER` and `OUTER`
+  join modifiers, explicit set-operation `DISTINCT`, and optional alias `AS`.
+  `UNION ALL`, `SELECT DISTINCT`, `DESC`, and SQLite's `CROSS JOIN` remain distinct.
+- Removes expression parentheses only when reparsing confirms the same operand
+  nesting. For example, `a+(b*c)` becomes `a+b*c`, while `a-(b-c)` retains its
+  parentheses.
+
+Optimizer hints (`/*+ ... */`), executable/version comments (`/*! ... */`), and
+MariaDB-style directives (`/*M! ... */`) are retained. Executable bodies are kept
+verbatim, including bodies inactive in the selected MySQL release. Newlines inside
+literals, identifiers, and directives can still appear in compact output.
+
+```php
+$compact = new \SqlFormatter\Formatter(
+    new \SqlParser\Sqlite\SqliteParser(),
+    new \SqlFormatter\FormatOptions(\SqlFormatter\Style::Compact),
+);
+$compact->format('select all (a) as x from t where a != 1 order by a asc;');
+// SELECT a x FROM t WHERE a<>1 ORDER BY a
+```
+
+This normal form is useful when comparing generated and serialized statements in
+fuzz tests. Equality covers the documented syntax normalizations; it is not a
+complete SQL equivalence decision procedure or a guarantee of the globally shortest
+possible query. No schema, collation, function catalog, or data is consulted.
+Identifier quoting, literal representations, join order, and algebraic expression
+rewrites are deliberately outside this contract. As with other SQL reformatting,
+database-generated labels for expressions without explicit aliases may change.
 
 ### Expanded
 
@@ -113,6 +148,8 @@ all naming and query-design recommendations in a particular SQL style guide.
 
 ## Preservation
 
+Expanded, Tabular, and River preserve source spelling:
+
 - Keyword case, identifier spelling and quoting, literal contents, placeholders,
   parentheses, semicolons, and token order are preserved.
 - Comment-bearing trivia is retained verbatim, including optimizer hints and both
@@ -125,6 +162,14 @@ all naming and query-design recommendations in a particular SQL style guide.
   of positions and layout whitespace. A mismatch raises `FormattingException`
   instead of returning SQL whose syntax changed.
 - Reformatting an already formatted string produces the same output.
+
+Compact instead verifies a canonical syntax signature. It retains token kinds,
+identifier and literal spellings, directives, and operand nesting after the
+documented reductions. Every candidate parenthesis removal must parse with the
+same signature; required parentheses remain. Whitespace decisions use the supplied
+parser's lexer, including MySQL SQL modes and function-name adjacency rules.
+Compact is also idempotent. Parseability and canonical structure are checked at
+runtime; these checks do not prove arbitrary SQL transformations equivalent.
 
 Layout rules cover SELECT clauses, CTEs, joins, set operations, CASE expressions,
 window specifications, write statements, and table definitions. Other grammar constructs retain their

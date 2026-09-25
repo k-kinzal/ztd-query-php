@@ -13,9 +13,20 @@ The checks serve different purposes:
   not replace the exact layout expectations.
 - Unit tests exercise lexical spacing, block widths, comment handling, grammar
   annotations, and syntax signatures independently.
+- Compact has exact canonical-output cases across all 11 grammar releases,
+  including equivalent spellings, keyword-shaped identifiers, mandatory syntax,
+  operator association, executable comments, hints, nested comments, placeholders,
+  and MySQL lexical modes. SQLite execution tests compare rows and explicit column
+  aliases before and after compaction, including NULLs and precedence-sensitive
+  arithmetic and predicates.
+- The deterministic generated cases also require identical Compact output from
+  each multiline layout. This checks the normal form used for generated-versus-
+  serialized SQL comparisons without introducing a dependency on sql-semantics.
 - Runtime reparsing verifies the selected grammar derivation and every token's
   kind and spelling. This is a structural check, not a database execution test or
   a proof of semantic equivalence for an arbitrary transformation.
+  Compact uses canonical terminal and operand-nesting signatures instead of exact
+  original grammar alternatives, and checks each parenthesis removal separately.
 - PHPDoc examples run as doctests. ParaTest exercises independent worker processes.
 - CI installs the locked development graph and tests PHP 8.1–8.5. Lint runs on
   PHP 8.3; Infection checks changed source lines on pull requests and the whole

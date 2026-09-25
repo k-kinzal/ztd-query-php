@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlFormatter;
 
 /**
- * The four supported layouts. All preserve the spelling and order of SQL tokens.
+ * Compact canonicalizes SQL; the three multiline layouts preserve token spelling.
  *
  * @example Naming a preset
  *     \SqlFormatter\Style::Expanded->value // => 'expanded'
