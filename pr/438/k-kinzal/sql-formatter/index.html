@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>k-kinzal/sql-formatter — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/438/k-kinzal/sql-formatter/">
+<meta name="description" content="SQL formatting with Compact, Expanded, Tabular, and River layouts for MySQL, PostgreSQL, and SQLite">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="k-kinzal/sql-formatter — ZTD Query PHP">
+<meta property="og:description" content="SQL formatting with Compact, Expanded, Tabular, and River layouts for MySQL, PostgreSQL, and SQLite">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/438/k-kinzal/sql-formatter/">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/438/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a></div><nav class="sidebar-section"><div class="sidebar-title">On this page</div><ul class="sidebar-list"><li data-diff="same"><a href="#namespaces">Namespaces</a></li><li data-diff="same"><a href="#documents">Documents</a></li><li data-diff="same"><a href="#readme">README</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../k-kinzal/sql-formatter/all-items.html">All items</a></li><li data-diff="same"><a href="../../k-kinzal/sql-formatter/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../k-kinzal/sql-formatter/SqlFormatter/index.html" title="SqlFormatter">SqlFormatter</a></li><li data-diff="same"><a href="../../k-kinzal/sql-formatter/SqlFormatter/Compact/index.html" title="SqlFormatter\Compact">SqlFormatter\Compact</a></li><li data-diff="same"><a href="../../k-kinzal/sql-formatter/SqlFormatter/Layout/index.html" title="SqlFormatter\Layout">SqlFormatter\Layout</a></li><li data-diff="same"><a href="../../k-kinzal/sql-formatter/SqlFormatter/Syntax/index.html" title="SqlFormatter\Syntax">SqlFormatter\Syntax</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><span class="breadcrumb-current">k-kinzal/sql-formatter</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing dcda762b77 to working tree">dcda762b77 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between dcda762b77 and working tree." data-off="This page documents what dcda762b77 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-package">package</span>k-kinzal/sql-formatter</h1></div>
+<p class="lede">SQL formatting with Compact, Expanded, Tabular, and River layouts for MySQL, PostgreSQL, and SQLite</p>
+<div class="relation-row"><span class="relation-label">Repository</span> <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com/k-kinzal/ztd-query-php</a></div>
+<div class="relation-row"><span class="relation-label">Depends on</span> <a href="../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a>, <a href="../../k-kinzal/container/index.html">k-kinzal/container</a> <span class="chip chip-sm chip-ghost">require-dev</span>, <a href="../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a> <span class="chip chip-sm chip-ghost">require-dev</span></div>
+<div class="relation-row"><span class="relation-label">Required by</span> <a href="../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a>, <a href="../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div>
+<section data-diff="same"><h2 id="namespaces">Namespaces<a class="anchor" href="#namespaces">§</a></h2><div class="table-wrap"><table class="symbol-table"><tr data-diff="same"><td><a href="../../k-kinzal/sql-formatter/SqlFormatter/index.html">SqlFormatter</a></td><td class="ns-counts"> <span class="ns-count k-class">3 classes</span> <span class="ns-count k-enum">1 enum</span></td></tr><tr data-diff="same"><td><a href="../../k-kinzal/sql-formatter/SqlFormatter/Compact/index.html">SqlFormatter\Compact</a></td><td class="ns-counts"> <span class="ns-count k-class">10 classes</span></td></tr><tr data-diff="same"><td><a href="../../k-kinzal/sql-formatter/SqlFormatter/Layout/index.html">SqlFormatter\Layout</a></td><td class="ns-counts"> <span class="ns-count k-class">7 classes</span></td></tr><tr data-diff="same"><td><a href="../../k-kinzal/sql-formatter/SqlFormatter/Syntax/index.html">SqlFormatter\Syntax</a></td><td class="ns-counts"> <span class="ns-count k-class">9 classes</span></td></tr></table></div></section>
+<section data-diff="same"><h2 id="documents">Documents <span class="count">4</span><a class="anchor" href="#documents">§</a></h2><div class="table-wrap"><table class="symbol-table"><tr data-diff="same"><td><a href="../../k-kinzal/sql-formatter/doc/README.md.html">SQL Formatter</a></td><td class="item-ns">README.md</td></tr><tr data-diff="same"><td><a href="../../k-kinzal/sql-formatter/doc/docs/design.md.html">Design</a></td><td class="item-ns">docs/design.md</td></tr><tr data-diff="same"><td><a href="../../k-kinzal/sql-formatter/doc/docs/verification.md.html">Verification</a></td><td class="item-ns">docs/verification.md</td></tr><tr data-diff="same"><td><a href="../../k-kinzal/sql-formatter/doc/fuzz/README.md.html">Fuzzing the formatter</a></td><td class="item-ns">fuzz/README.md</td></tr></table></div></section>
+<section class="readme prose" data-diff="same"><h2 id="readme">README<a class="anchor" href="#readme">§</a></h2><h2>SQL Formatter</h2>
+<p><span class="md-target" title="LICENSE"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></span> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a></p>
+<p>Format MySQL, PostgreSQL, and SQLite strings with <strong>Compact</strong>, <strong>Expanded</strong>, <strong>Tabular</strong>, or <strong>River</strong> layouts. SQL Formatter uses the concrete syntax tree from <span class="md-target" title="../sql-parser/">sql-parser</span> to identify clauses, lists, expressions, and nested queries. It needs no schema or database connection.</p>
+<h3>Installation</h3>
+<pre class="code"><code>composer require k-kinzal/sql-formatter</code></pre>
+<p>Requires PHP 8.1+ and <code>k-kinzal/sql-parser</code> (which requires <code>ext-zlib</code>). In the monorepo, run <code>composer install</code> in this package to install its development tools and link the sibling parser.</p>
+<h3>Usage</h3>
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlFormatter\Formatter</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFormatter\FormatOptions</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFormatter\Style</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlParser\MySql\MySqlParser</span>;
+
+<span class="tok-var">$formatter</span> = <span class="tok-kw">new</span> <span class="tok-id">Formatter</span>(
+    <span class="tok-kw">new</span> <span class="tok-id">MySqlParser</span>(<span class="tok-str">&#039;mysql-8.4.7&#039;</span>),
+    <span class="tok-kw">new</span> <span class="tok-id">FormatOptions</span>(<span class="tok-id">style</span>: <span class="tok-id">Style</span>::<span class="tok-id">Expanded</span>, <span class="tok-id">indentWidth</span>: <span class="tok-num">4</span>),
+);
+
+<span class="tok-kw">echo</span> <span class="tok-var">$formatter</span>-&gt;<span class="tok-id">format</span>(
+    <span class="tok-str">&#039;SELECT id,name FROM users WHERE active=1 AND age&gt;=18 ORDER BY name;&#039;</span>,
+);</code></pre>
+<p>Pass <code>PostgreSqlParser</code> or <code>SqliteParser</code> for those dialects. The supplied parser selects the grammar release and MySQL <code>SqlMode</code>; reuse it and the formatter across calls. <code>MySqlParser::versions()</code>, <code>PostgreSqlParser::versions()</code>, and <code>SqliteParser::versions()</code> list the available releases. All 11 currently shipped releases are exercised by the tests.</p>
+<p><code>format(string $sql): string</code> accepts the same input as the supplied parser: MySQL parses one statement, including a compound statement; PostgreSQL and SQLite also accept semicolon-separated statements. Client commands such as MySQL <code>DELIMITER</code> are not server SQL. The parser&#039;s lexical and syntax exceptions are propagated for invalid input.</p>
+<h3>Layouts</h3>
+<p>The default is <code>Style::Expanded</code> with four spaces per nested block. <code>indentWidth</code> accepts 1 through 16. Both options are immutable.</p>
+<h4>Compact</h4>
+<pre class="code"><code>SELECT id,name FROM users WHERE active=1 AND age&gt;=18 ORDER BY name</code></pre>
+<p>Produces a compact canonical spelling for the selected dialect and release:</p>
+<ul><li>Removes ordinary comments, optional whitespace, and optional final statement terminators. Separators inside statement lists and stored programs, and terminators anchoring retained directives, remain.</li><li>Uppercases grammar keywords while preserving identifiers, including keywords used as names. Quoting, literal contents, and parameter markers remain intact.</li><li>Uses <code>&lt;&gt;</code> for inequality and <code>=</code> for SQLite&#039;s <code>==</code>. MySQL also normalizes <code>DISTINCTROW</code> to <code>DISTINCT</code>, <code>REGEXP</code> to <code>RLIKE</code>, <code>INTEGER</code> to <code>INT</code>, and <code>DECIMAL</code> to <code>DEC</code>.</li><li>Omits redundant <code>SELECT ALL</code>, ascending sort directions, <code>INNER</code> and <code>OUTER</code> join modifiers, explicit set-operation <code>DISTINCT</code>, and optional alias <code>AS</code>. <code>UNION ALL</code>, <code>SELECT DISTINCT</code>, <code>DESC</code>, and SQLite&#039;s <code>CROSS JOIN</code> remain distinct.</li><li>Removes expression parentheses only when reparsing confirms the same operand nesting. For example, <code>a+(b*c)</code> becomes <code>a+b*c</code>, while <code>a-(b-c)</code> retains its parentheses.</li></ul>
+<p>Optimizer hints (<code>/*+ ... */</code>), executable/version comments (<code>/*! ... */</code>), and MariaDB-style directives (<code>/*M! ... */</code>) are retained. Executable bodies are kept verbatim, including bodies inactive in the selected MySQL release. Newlines inside literals, identifiers, and directives can still appear in compact output.</p>
+<pre class="code"><code><span class="tok-var">$compact</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlFormatter\Formatter</span>(
+    <span class="tok-kw">new</span> <span class="tok-id">\SqlParser\Sqlite\SqliteParser</span>(),
+    <span class="tok-kw">new</span> <span class="tok-id">\SqlFormatter\FormatOptions</span>(<span class="tok-id">\SqlFormatter\Style</span>::<span class="tok-id">Compact</span>),
+);
+<span class="tok-var">$compact</span>-&gt;<span class="tok-id">format</span>(<span class="tok-str">&#039;select all (a) as x from t where a != 1 order by a asc;&#039;</span>);
+<span class="tok-com">// SELECT a x FROM t WHERE a&lt;&gt;1 ORDER BY a</span></code></pre>
+<p>This normal form is useful when comparing generated and serialized statements in fuzz tests. Equality covers the documented syntax normalizations; it is not a complete SQL equivalence decision procedure or a guarantee of the globally shortest possible query. No schema, collation, function catalog, or data is consulted. Identifier quoting, literal representations, join order, and algebraic expression rewrites are deliberately outside this contract. As with other SQL reformatting, database-generated labels for expressions without explicit aliases may change.</p>
+<h4>Expanded</h4>
+<pre class="code"><code>SELECT
+    id,
+    name
+FROM
+    users
+WHERE
+    active = 1
+    AND age &gt;= 18
+ORDER BY
+    name;</code></pre>
+<p>Places clause bodies below their headers and list items on separate lines. Nested query and CASE blocks receive another indentation level.</p>
+<h4>Tabular</h4>
+<pre class="code"><code>SELECT   id,
+         name
+FROM     users
+WHERE    active = 1
+AND      age &gt;= 18
+ORDER BY name;</code></pre>
+<p>Left-aligns clause keywords and pads their right side to align their bodies. Continuation items use the body column.</p>
+<h4>River</h4>
+<pre class="code"><code>  SELECT id,
+         name
+    FROM users
+   WHERE active = 1
+     AND age &gt;= 18
+ORDER BY name;</code></pre>
+<p>Right-aligns clause keywords, creating a vertical boundary before their bodies. Alignment width is calculated from the headers in the enclosing block; nested queries have independent widths. This is a layout preset, not enforcement of all naming and query-design recommendations in a particular SQL style guide.</p>
+<h3>Preservation</h3>
+<p>Expanded, Tabular, and River preserve source spelling:</p>
+<ul><li>Keyword case, identifier spelling and quoting, literal contents, placeholders, parentheses, semicolons, and token order are preserved.</li><li>Comment-bearing trivia is retained verbatim, including optimizer hints and both active and inactive MySQL version comments. Such trivia takes precedence over layout whitespace; comments are not reflowed or moved between tokens.</li><li>Formatting does not resolve names, expand stars, add aliases, rewrite expressions, change dialect, or execute SQL.</li><li>Every output is parsed again with the same parser. Its grammar nodes, alternatives, token kinds, and token texts must match the input, independently of positions and layout whitespace. A mismatch raises <code>FormattingException</code> instead of returning SQL whose syntax changed.</li><li>Reformatting an already formatted string produces the same output.</li></ul>
+<p>Compact instead verifies a canonical syntax signature. It retains token kinds, identifier and literal spellings, directives, and operand nesting after the documented reductions. Every candidate parenthesis removal must parse with the same signature; required parentheses remain. Whitespace decisions use the supplied parser&#039;s lexer, including MySQL SQL modes and function-name adjacency rules. Compact is also idempotent. Parseability and canonical structure are checked at runtime; these checks do not prove arbitrary SQL transformations equivalent.</p>
+<p>Layout rules cover SELECT clauses, CTEs, joins, set operations, CASE expressions, window specifications, write statements, and table definitions. Other grammar constructs retain their syntax and receive token spacing; accepting a grammar construct does not imply a specialized multiline layout for every administrative or procedural statement.</p>
+<p>See <a href="../../k-kinzal/sql-formatter/doc/docs/design.md.html">the design</a> for the dependency decision and layout pipeline, and <a href="../../k-kinzal/sql-formatter/doc/docs/verification.md.html">verification</a> for the checks behind these guarantees.</p>
+<h3>Development</h3>
+<p>The execution regression tests require <code>ext-pdo_sqlite</code>; no database server is needed. This extension is a development dependency only.</p>
+<pre class="code"><code>composer install
+composer lint
+composer test:unit
+composer test
+composer bench:quick
+composer fuzz</code></pre>
+<p>The package uses the monorepo&#039;s PHP-AI-Toolkit reporter and executable PHPDoc examples, PHPStan at maximum level, PHP-CS-Fixer, PHPCompatibility, LOC and tree guards, Deptrac, ParaTest, and PHPBench. CI runs tests on PHP 8.1 through 8.5 and mutation testing with Infection.</p>
+<p>PHP-Fuzzer targets under <span class="md-target" title="fuzz/"><code>fuzz/</code></span> feed the formatter raw bytes and, per database and layout preset, statements sql-faker generates whose original and formatted texts must draw the same answer from MySQL, PostgreSQL, and SQLite. <code>composer fuzz</code> runs a smoke set, the equivalence targets replay sql-faker&#039;s seed corpora, and a nightly workflow runs every target. See <a href="../../k-kinzal/sql-formatter/doc/fuzz/README.md.html"><code>fuzz/README.md</code></a>.</p>
+<h3>License</h3>
+<p>MIT. See <span class="md-target" title="LICENSE">LICENSE</span>.</p>
+</section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../assets/search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</body>
+</html>
