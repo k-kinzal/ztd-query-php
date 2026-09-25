@@ -158,6 +158,33 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Extension\Model\QueryOutput::class)]
 final class AnalyzerTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+    #[\PHPUnit\Framework\Attributes\PreserveGlobalState(false)]
+    public function testAnalyzeSourceBoundsDestructuredAlternativesBeforeTheyExhaustMemory(): void
+    {
+        $previousLimit = ini_set('memory_limit', '128M');
+        self::assertIsString($previousLimit);
+        try {
+            $variables = array_map(static fn (int $index): string => '$v' . $index, range(0, 19));
+            $source = '<?php function run(PDO $db, bool $flag) {'
+                . '[' . implode(', ', $variables) . '] = ['
+                . implode(', ', array_fill(0, 20, '$flag ? "1" : "2"')) . '];'
+                . '$db->query("SELECT " . ' . implode(' . ", " . ', $variables) . '); }';
+
+            $catalog = (new Analyzer())->analyzeSource(['query.php' => $source]);
+
+            self::assertSame([], $catalog->problems());
+            self::assertCount(12, $catalog->entries());
+            self::assertContains('SELECT ' . implode(', ', array_fill(0, 20, '1')), array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries()));
+            $joined = array_values(array_filter($catalog->entries(), static fn (CatalogEntry $entry): bool => !$entry->correlated));
+            self::assertCount(1, $joined);
+            self::assertFalse($joined[0]->isExact());
+            self::assertFalse($joined[0]->searchClosed());
+        } finally {
+            ini_set('memory_limit', $previousLimit);
+        }
+    }
+
     public function testIssetGuardsAConditionallyAssignedSqlFragment(): void
     {
         $catalog = (new Analyzer())->analyzeSource([

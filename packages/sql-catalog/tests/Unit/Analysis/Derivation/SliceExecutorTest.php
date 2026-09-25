@@ -1033,6 +1033,40 @@ final class SliceExecutorTest extends TestCase
         ], array_map(static fn (Environment $one): string => $one->signature(), $split));
     }
 
+    #[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+    #[\PHPUnit\Framework\Attributes\PreserveGlobalState(false)]
+    public function testSplitBoundsIntermediateProductsWithoutLosingValues(): void
+    {
+        $previousLimit = ini_set('memory_limit', '128M');
+        self::assertIsString($previousLimit);
+        try {
+            $names = array_fill_keys(array_map(static fn (int $index): string => 'v' . $index, range(0, 23)), true);
+            $domain = Domain::literal('a')->union(Domain::literal('b'));
+            $environment = new Environment(array_fill_keys(array_keys($names), $domain) + ['unchanged' => Domain::literal('kept')]);
+            $environment->markAbsent('absent');
+            $original = $environment->signature();
+
+            $split = (new SliceExecutor())->split($environment, $names, 3);
+
+            self::assertCount(3, $split);
+            self::assertFalse($split[0]->combined);
+            self::assertFalse($split[1]->combined);
+            self::assertTrue($split[2]->combined);
+            self::assertSame(
+                array_fill(0, 24, $domain->signature()),
+                array_map(static fn (string $name): string => $split[2]->read($name)->signature(), array_keys($names)),
+            );
+            self::assertSame(['kept', 'kept', 'kept'], array_map(static fn (Environment $run): mixed => $run->read('unchanged')->soleLiteral()?->value, $split));
+            self::assertSame(
+                array_fill(0, 3, \SqlCatalog\Evaluation\Presence::Absent),
+                array_map(static fn (Environment $run): \SqlCatalog\Evaluation\Presence => $run->presence('absent'), $split),
+            );
+            self::assertSame($original, $environment->signature());
+        } finally {
+            ini_set('memory_limit', $previousLimit);
+        }
+    }
+
     public function testBoundDropsRepeatsKeepingTheFirst(): void
     {
         $first = new Environment(['a' => Domain::literal(1)]);
