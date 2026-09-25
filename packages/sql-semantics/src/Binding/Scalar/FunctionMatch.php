@@ -75,6 +75,6 @@ final class FunctionMatch
         $numeric = ['smallint', 'integer', 'bigint', 'numeric', 'real', 'double precision'];
         $from = array_search($actual, $numeric, true);
         $to = array_search($expected, $numeric, true);
-        return ($from !== false && $to !== false && $from <= $to) || (in_array($actual, ['char', 'varchar', 'text'], true) && in_array($expected, ['char', 'varchar', 'text'], true));
+        return ($from !== false && $to !== false && $from <= $to) || (in_array($actual, ['char', 'bpchar', 'varchar', 'text'], true) && in_array($expected, ['char', 'bpchar', 'varchar', 'text'], true));
     }
 }

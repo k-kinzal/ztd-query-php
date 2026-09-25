@@ -48,6 +48,7 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\SchemaEvolution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\DefinitionBinder::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\Alter\KeyChanges::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
@@ -239,5 +240,18 @@ final class IndexEvolutionTest extends TestCase
         $evolution = new \SqlSemantics\Binding\Schema\IndexEvolution(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
         self::assertSame($schema->tables, $evolution->apply((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('CREATE TABLE u(a INTEGER)')));
         self::assertSame([], $evolution->drop((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('DROP INDEX ix'))[0]->indexes);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51', 'DROP INDEX u ON t', 'primary-key,unique', 'i'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44', 'DROP INDEX a ON t', 'primary-key,unique', 'i'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.0.44', 'DROP INDEX `PRIMARY` ON t', 'unique,unique', 'i'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'DROP INDEX i ON t', 'primary-key,unique,unique', ''])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0', 'DROP INDEX missing ON t', 'primary-key,unique,unique', 'i'])]
+    public function testDropKeyRemovesMySqlKeysAsAlterTableDropIndexDoes(string $version, string $drop, string $constraints, string $indexes): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE o (a INT UNIQUE)', 'CREATE TABLE t (id INT PRIMARY KEY, a INT UNIQUE, b INT, CONSTRAINT u UNIQUE (b), INDEX i (b))', $drop);
+        self::assertSame($constraints, implode(',', array_map(static fn (\SqlSemantics\Schema\TableConstraint $constraint): string => $constraint->kind->value, $schema->tables[1]->constraints)));
+        self::assertSame($indexes, implode(',', array_map(static fn (\SqlSemantics\Schema\IndexDefinition $index): string => (string) $index->name, $schema->tables[1]->indexes)));
+        self::assertCount(1, $schema->tables[0]->constraints);
     }
 }

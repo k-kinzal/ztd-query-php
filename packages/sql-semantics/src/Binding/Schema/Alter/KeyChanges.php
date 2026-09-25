@@ -105,7 +105,8 @@ final class KeyChanges
 
     /**
      * Returns the name the server gives a constraint: MySQL names a primary key PRIMARY and an unnamed unique key after
-     * its first column; PostgreSQL names an unnamed key table_pkey, table_columns_key, or table_columns_fkey.
+     * its first column; a PostgreSQL constraint carries the name the schema gave it when it was created, and one not
+     * yet named takes the name {@see \SqlSemantics\Binding\Schema\Constraint\PostgreSqlConstraintNames} derives.
      */
     public function name(TableConstraint $constraint, Dialect $dialect): string
     {
@@ -115,14 +116,7 @@ final class KeyChanges
             }
             return $constraint instanceof Constraint\UniqueKey ? $constraint->index->name ?? $constraint->name ?? $constraint->localColumns()[0] ?? '' : $constraint->name ?? '';
         }
-        $suffix = match ($constraint->kind) {
-            ConstraintKind::PrimaryKey => 'pkey',
-            ConstraintKind::Unique => 'key',
-            ConstraintKind::ForeignKey => 'fkey',
-            ConstraintKind::Check => null,
-        };
-        $columns = $constraint->kind === ConstraintKind::PrimaryKey ? [] : $constraint->localColumns();
-        return $constraint->name ?? ($suffix === null ? '' : implode('_', [$this->table->name, ...$columns, $suffix]));
+        return $constraint->name ?? \SqlSemantics\Binding\Schema\Constraint\PostgreSqlConstraintNames::choose($this->table->name, ...[...\SqlSemantics\Binding\Schema\Constraint\PostgreSqlConstraintNames::parts($constraint), []]);
     }
 
     /**

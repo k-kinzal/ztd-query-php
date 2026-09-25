@@ -50,7 +50,7 @@ final class AssignmentRules
             return;
         }
         $numeric = ['smallint', 'integer', 'bigint', 'numeric', 'real', 'double precision'];
-        $text = ['text', 'varchar', 'char'];
+        $text = ['text', 'varchar', 'char', 'bpchar'];
         if ((in_array($targetName, $numeric, true) && in_array($sourceName, $numeric, true)) || in_array($targetName, $text, true)) {
             return;
         }

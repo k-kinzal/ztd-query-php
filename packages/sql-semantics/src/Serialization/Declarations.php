@@ -47,13 +47,14 @@ final class Declarations
         $columns = [];
         $columnKey = self::columnKey($table, $dialect);
         $keyConflict = self::keyConflict($table);
+        $constraints = Definition\Columns::unserial($table->columns, $table->constraints);
         foreach ($table->columns as $position => $column) {
             array_push($columns, ...Definition\Table\PostgreSqlTables::templates($templates, $position));
-            $written = Definition\Columns::write($column, $dialect, $keyConflict);
+            $written = Definition\Columns::write($column, $dialect, $keyConflict, Definition\Columns::serialKey($column, $table->constraints) !== null);
             $columns[] = $columnKey !== null && $columnKey->localColumns() === [$column->name] ? new Tree('column', [$written, Definition\Constraints::column($columnKey, $dialect)]) : $written;
         }
         array_push($columns, ...Definition\Table\PostgreSqlTables::templates($templates, count($table->columns)));
-        foreach ($table->constraints as $constraint) {
+        foreach ($constraints as $constraint) {
             if ($constraint === $columnKey || $dialect === \SqlSemantics\Dialect::Sqlite && $constraint instanceof PrimaryKey && array_filter($table->columns, static fn ($column): bool => $column->generation instanceof AutoIncrementColumn) !== []) {
                 continue;
             }

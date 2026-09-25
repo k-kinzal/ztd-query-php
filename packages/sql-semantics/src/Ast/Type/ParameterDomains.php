@@ -43,7 +43,7 @@ final class ParameterDomains
             BuiltinIdentity::Float => $dialect === Dialect::MySql ? 2 : 1,
             BuiltinIdentity::TinyInt, BuiltinIdentity::SmallInt, BuiltinIdentity::MediumInt, BuiltinIdentity::Integer, BuiltinIdentity::BigInt, BuiltinIdentity::Year => $dialect === Dialect::MySql ? 1 : 0,
             BuiltinIdentity::Time, BuiltinIdentity::Timestamp, BuiltinIdentity::Datetime, BuiltinIdentity::Timetz, BuiltinIdentity::Timestamptz,
-            BuiltinIdentity::Char, BuiltinIdentity::Varchar, BuiltinIdentity::Bit, BuiltinIdentity::Varbit => 1,
+            BuiltinIdentity::Char, BuiltinIdentity::Bpchar, BuiltinIdentity::Varchar, BuiltinIdentity::Bit, BuiltinIdentity::Varbit => 1,
             BuiltinIdentity::Text, BuiltinIdentity::TinyText, BuiltinIdentity::MediumText, BuiltinIdentity::LongText,
             BuiltinIdentity::Binary, BuiltinIdentity::Varbinary, BuiltinIdentity::Blob, BuiltinIdentity::TinyBlob, BuiltinIdentity::MediumBlob, BuiltinIdentity::LongBlob, BuiltinIdentity::Vector => $dialect === Dialect::MySql ? 1 : 0,
             default => 0,

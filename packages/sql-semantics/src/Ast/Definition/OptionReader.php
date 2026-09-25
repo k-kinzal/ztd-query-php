@@ -44,6 +44,10 @@ final class OptionReader
             if (in_array('AUTOINCREMENT', $words, true) || in_array('AUTO_INCREMENT', $words, true)) {
                 $result['auto_increment'] = true;
             }
+            if ($words === ['SERIAL', 'DEFAULT', 'VALUE']) {
+                $result['auto_increment'] = true;
+                $result['serial_default'] = true;
+            }
             if (in_array('IDENTITY', $words, true)) {
                 $result['identity'] = in_array('ALWAYS', $words, true) ? 'always' : 'by-default';
                 $result = array_replace($result, self::read($attribute, $identifiers));

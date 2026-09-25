@@ -36,7 +36,7 @@ final class ColumnChanges
             $alteration instanceof Column\AddColumn => new Tree('add-column', [Build::keyword('ADD COLUMN'), self::declaration($alteration->column, $alteration->constraints), self::position($alteration->position)]),
             $alteration instanceof Column\AddColumns => new Tree('add-columns', [Build::keyword('ADD COLUMN'), Build::parentheses(Build::separated([
                 ...array_map(static fn (ColumnDefinition $column): Tree => Columns::write($column, Dialect::MySql), $alteration->columns),
-                ...array_map(static fn (TableConstraint $constraint): Tree => Constraints::write($constraint, Dialect::MySql), $alteration->constraints),
+                ...array_map(static fn (TableConstraint $constraint): Tree => Constraints::write($constraint, Dialect::MySql), Columns::unserial($alteration->columns, $alteration->constraints)),
                 ...array_map(static fn ($index): Tree => self::index($index), $alteration->indexes),
             ]))]),
             $alteration instanceof Column\ChangeColumn => new Tree('change-column', [Build::keyword('CHANGE COLUMN'), self::name($alteration->column), self::declaration($alteration->definition, $alteration->constraints), self::position($alteration->position)]),
@@ -62,7 +62,7 @@ final class ColumnChanges
      */
     public static function declaration(ColumnDefinition $column, array $constraints): Tree
     {
-        return new Tree('column-declaration', [Columns::write($column, Dialect::MySql), ...array_map(static fn (TableConstraint $constraint): Tree => Constraints::column($constraint, Dialect::MySql), $constraints)]);
+        return new Tree('column-declaration', [Columns::write($column, Dialect::MySql), ...array_map(static fn (TableConstraint $constraint): Tree => Constraints::column($constraint, Dialect::MySql), Columns::unserial([$column], $constraints))]);
     }
 
     /**

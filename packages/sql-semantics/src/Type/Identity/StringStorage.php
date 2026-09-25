@@ -32,7 +32,7 @@ final class StringStorage implements TypeIdentity
         if ($length !== null && !$length instanceof Numeric\NumericParameter && !in_array($base, [BuiltinIdentity::Bit, BuiltinIdentity::Varbit], true)) {
             throw new InvalidStructure('Only PostgreSQL bit-string syntax accepts nonnumeric length operands.');
         }
-        if (!in_array($base, [BuiltinIdentity::Char, BuiltinIdentity::Varchar, BuiltinIdentity::Text, BuiltinIdentity::TinyText, BuiltinIdentity::MediumText, BuiltinIdentity::LongText, BuiltinIdentity::Binary, BuiltinIdentity::Varbinary, BuiltinIdentity::Blob, BuiltinIdentity::TinyBlob, BuiltinIdentity::MediumBlob, BuiltinIdentity::LongBlob, BuiltinIdentity::Bit, BuiltinIdentity::Varbit, BuiltinIdentity::Vector], true)) {
+        if (!in_array($base, [BuiltinIdentity::Char, BuiltinIdentity::Bpchar, BuiltinIdentity::Varchar, BuiltinIdentity::Text, BuiltinIdentity::TinyText, BuiltinIdentity::MediumText, BuiltinIdentity::LongText, BuiltinIdentity::Binary, BuiltinIdentity::Varbinary, BuiltinIdentity::Blob, BuiltinIdentity::TinyBlob, BuiltinIdentity::MediumBlob, BuiltinIdentity::LongBlob, BuiltinIdentity::Bit, BuiltinIdentity::Varbit, BuiltinIdentity::Vector], true)) {
             throw new InvalidStructure('A string type requires a character, binary or bit storage family.');
         }
     }

@@ -46,6 +46,9 @@ final class ColumnDefinition
         if ($nullConflict !== \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default && $nullability !== Nullability::NotNull) {
             throw new InvalidStructure('An ON CONFLICT resolution for NULL values requires a NOT NULL column.');
         }
+        if ($generation instanceof Column\SerialColumn && $type->dialect !== \SqlSemantics\Dialect::PostgreSql) {
+            throw new InvalidStructure('A serial column requires the PostgreSQL dialect.');
+        }
         foreach ($generation->expressions() as $expression) {
             if ($expression->type->dialect !== $type->dialect) {
                 throw new InvalidStructure('A column and its generation expressions must use the same dialect.');

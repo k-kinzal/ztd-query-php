@@ -61,7 +61,7 @@ final class TypeReader
             'BIT VARYING' => 'varbit',
             'NATIONAL CHARACTER', 'NATIONAL CHAR', 'NCHAR' => 'char',
             'NATIONAL CHARACTER VARYING', 'NATIONAL CHAR VARYING', 'NCHAR VARYING' => 'varchar',
-            'UUID', 'BYTEA', 'JSONB', 'TIMESTAMPTZ', 'TIMETZ', 'INTERVAL' => strtolower($name),
+            'UUID', 'BYTEA', 'JSONB', 'TIMESTAMPTZ', 'TIMETZ', 'INTERVAL', 'BPCHAR' => strtolower($name),
             default => null,
         };
     }

@@ -82,7 +82,26 @@ final class StandardTypeReaderTest extends TestCase
         yield 'qualified builtin name' => ['public.text', Identity\NamedIdentity::class, 'public.text'];
         yield 'quoted builtin name' => ['"integer"', Identity\NamedIdentity::class, 'integer'];
         yield 'unclassified catalog type' => ['money', Identity\NamedIdentity::class, 'money'];
-        yield 'unclassified catalog type with operands' => ['bpchar(3)', Identity\NamedIdentity::class, 'bpchar'];
+        yield 'unclassified catalog type with operands' => ['money(3)', Identity\NamedIdentity::class, 'money'];
+        yield 'blank-padded catalog name with a length' => ['bpchar(3)', Identity\StringStorage::class, 'char'];
+        yield 'blank-padded catalog name of any length' => ['bpchar', Identity\StringStorage::class, 'bpchar'];
+        yield 'two-byte integer catalog name' => ['int2', Identity\Numeric\IntegerStorage::class, 'smallint'];
+        yield 'four-byte integer catalog name' => ['int4', Identity\Numeric\IntegerStorage::class, 'integer'];
+        yield 'eight-byte integer catalog name' => ['int8', Identity\Numeric\IntegerStorage::class, 'bigint'];
+        yield 'four-byte float catalog name' => ['float4', Identity\Numeric\NumericStorage::class, 'real'];
+        yield 'eight-byte float catalog name' => ['float8', Identity\Numeric\NumericStorage::class, 'double precision'];
+        yield 'boolean catalog name' => ['bool', Identity\BuiltinIdentity::class, 'boolean'];
+        yield 'varying character catalog name' => ['varchar(4)', Identity\StringStorage::class, 'varchar'];
+        yield 'zoned timestamp catalog name' => ['timestamptz(3)', Identity\TemporalStorage::class, 'timestamptz'];
+        yield 'zoned time catalog name' => ['timetz', Identity\TemporalStorage::class, 'timetz'];
+        yield 'serial2 column' => ['serial2', Identity\Numeric\IntegerStorage::class, 'smallint'];
+        yield 'smallserial column' => ['smallserial', Identity\Numeric\IntegerStorage::class, 'smallint'];
+        yield 'serial column' => ['serial', Identity\Numeric\IntegerStorage::class, 'integer'];
+        yield 'serial4 column' => ['serial4', Identity\Numeric\IntegerStorage::class, 'integer'];
+        yield 'quoted serial column' => ['"serial"', Identity\Numeric\IntegerStorage::class, 'integer'];
+        yield 'serial8 column' => ['serial8', Identity\Numeric\IntegerStorage::class, 'bigint'];
+        yield 'bigserial column' => ['bigserial', Identity\Numeric\IntegerStorage::class, 'bigint'];
+        yield 'qualified serial name' => ['pg_catalog.serial', Identity\NamedIdentity::class, 'pg_catalog.serial'];
     }
 
     /**

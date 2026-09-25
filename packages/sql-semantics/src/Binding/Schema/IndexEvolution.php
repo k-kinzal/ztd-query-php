@@ -79,6 +79,9 @@ final class IndexEvolution
         $names = Tree::outer($statement, ['any_name', 'fullname', 'ident', 'table_ident']);
         $tableNode = Tree::outer($statement, ['table_ident'])[0] ?? null;
         $target = $tableNode === null ? null : $this->tables->resolve($this->tables->identifiers->parts($tableNode), $tableNode);
+        if ($target !== null && $this->tables->identifiers->dialect === \SqlSemantics\Dialect::MySql) {
+            return $this->dropKey($target, $names);
+        }
         $drop = [];
         foreach ($names as $name) {
             if ($name->name !== 'table_ident') {
@@ -98,4 +101,24 @@ final class IndexEvolution
         return $result;
     }
 
+    /**
+     * Applies a MySQL DROP INDEX as ALTER TABLE DROP INDEX does: the name reaches an index, a unique key, or, as
+     * PRIMARY, the primary key of the named table.
+     *
+     * @param list<Node> $names
+     * @return list<TableDefinition>
+     */
+    public function dropKey(TableDefinition $target, array $names): array
+    {
+        $identifiers = $this->tables->identifiers;
+        $keys = new Alter\KeyChanges($target, $target->constraints, $target->indexes);
+        foreach ($names as $name) {
+            if ($name->name !== 'table_ident') {
+                $parts = $identifiers->parts($name);
+                $keys = $keys->drop(\SqlSemantics\Model\Definition\MySqlTable\Key\KeyKind::Index, $parts[count($parts) - 1], new \SqlSemantics\Binding\Scope($identifiers));
+            }
+        }
+        $replacement = new TableDefinition($target->schema, $target->name, $target->columns, $keys->constraints, $target->source, $target->resolved, $keys->indexes, $target->properties);
+        return array_map(static fn (TableDefinition $table): TableDefinition => $table === $target ? $replacement : $table, $this->tables->schema->tables);
+    }
 }

@@ -38,7 +38,12 @@ final class ColumnReader
             Tree::invalid($node, 'column declaration');
         }
         $name = $this->identifiers->parts($nameNode)[0];
-        $type = $typeNode === null ? new TypeDescriptor($this->identifiers->dialect, new \SqlSemantics\Type\Identity\SqliteDeclaration('', \SqlSemantics\Type\Identity\StorageAffinity::Blob)) : (new TypeReader($this->identifiers->dialect))->read($typeNode);
+        $serial = $typeNode === null || $this->identifiers->dialect !== Dialect::PostgreSql ? null : $this->serial($typeNode);
+        $type = match (true) {
+            $serial !== null => new TypeDescriptor(Dialect::PostgreSql, new \SqlSemantics\Type\Identity\Numeric\IntegerStorage($serial)),
+            $typeNode === null => new TypeDescriptor($this->identifiers->dialect, new \SqlSemantics\Type\Identity\SqliteDeclaration('', \SqlSemantics\Type\Identity\StorageAffinity::Blob)),
+            default => (new TypeReader($this->identifiers->dialect))->read($typeNode),
+        };
         $default = null;
         $constraints = [];
         $generated = self::generatedExpression($node);
@@ -56,9 +61,30 @@ final class ColumnReader
                 $generated = Tree::outer($attribute, ['a_expr', 'expr'])[0] ?? $attribute;
             }
         }
-        $nullability = self::nullability($type, $groups);
+        $nullability = self::nullability($type, $groups, $serial !== null);
+        $options = Definition\OptionReader::column($node, $attributes, $this->identifiers);
 
-        return [new ColumnDefinition($name, $type, $nullability, $node, $default, $attributes, $generated, Definition\OptionReader::column($node, $attributes, $this->identifiers)), $constraints];
+        return [new ColumnDefinition($name, $type, $nullability, $node, $default, $attributes, $generated, $serial === null ? $options : [...$options, 'serial' => true]), $constraints];
+    }
+
+    /**
+     * Returns the integer type a PostgreSQL serial type name stands for: smallserial and serial2 for smallint, serial
+     * and serial4 for integer, bigserial and serial8 for bigint; null for any other type. As on the server, only an
+     * unqualified name without modifiers or array bounds declares a serial column, quoted or not.
+     */
+    public function serial(Node $type): ?\SqlSemantics\Type\Identity\BuiltinIdentity
+    {
+        $generic = Tree::outer($type, ['GenericType'])[0] ?? null;
+        $name = $generic === null ? null : Tree::child($generic, ['type_function_name']);
+        if ($generic === null || $name === null || array_filter(Tree::outer($type, ['attrs', 'opt_type_modifiers', 'opt_array_bounds']), Tree::hasTokens(...)) !== [] || array_filter($type->tokens(), static fn (\SqlParser\Lexer\Token $token): bool => in_array(strtoupper($token->text), ['ARRAY', 'SETOF', '%'], true)) !== []) {
+            return null;
+        }
+        return match ($this->identifiers->parts($name)[0]) {
+            'smallserial', 'serial2' => \SqlSemantics\Type\Identity\BuiltinIdentity::SmallInt,
+            'serial', 'serial4' => \SqlSemantics\Type\Identity\BuiltinIdentity::Integer,
+            'bigserial', 'serial8' => \SqlSemantics\Type\Identity\BuiltinIdentity::BigInt,
+            default => null,
+        };
     }
 
     /**
@@ -68,12 +94,13 @@ final class ColumnReader
      * rejects NULL written beside NOT NULL, an identity, or a serial type.
      *
      * @param list<Node> $attributes Column attributes in SQL order
+     * @param bool $serial Whether a PostgreSQL serial type declared the column
      * @throws \SqlSemantics\InvalidSql
      */
-    public static function nullability(TypeDescriptor $type, array $attributes): Nullability
+    public static function nullability(TypeDescriptor $type, array $attributes, bool $serial = false): Nullability
     {
         $dialect = $type->dialect;
-        $serial = $dialect === Dialect::PostgreSql ? in_array($type->name, ['serial', 'serial4', 'bigserial', 'serial8', 'smallserial', 'serial2'], true) : $dialect === Dialect::MySql && $type->name === 'serial';
+        $serial = $serial || $dialect === Dialect::MySql && $type->name === 'serial';
         $notNull = $serial;
         $declaredNull = null;
         $declaredNotNull = $serial;

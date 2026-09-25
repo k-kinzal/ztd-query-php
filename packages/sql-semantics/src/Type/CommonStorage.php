@@ -37,7 +37,7 @@ final class CommonStorage
             }
             return TypeDescriptor::builtin($dialect, $numeric[$rank]);
         }
-        if (array_diff($names, ['varchar', 'text', 'char']) === []) {
+        if (array_diff($names, ['varchar', 'text', 'char', 'bpchar']) === []) {
             return TypeDescriptor::builtin($dialect, 'text');
         }
         return TypeDescriptor::builtin($dialect, 'unknown');

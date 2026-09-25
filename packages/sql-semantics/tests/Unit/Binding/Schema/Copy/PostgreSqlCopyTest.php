@@ -94,4 +94,16 @@ final class PostgreSqlCopyTest extends TestCase
         self::assertCount(1, $schema->tables[1]->constraints);
         self::assertCount(1, $schema->tables[2]->constraints);
     }
+
+    public function testLayoutRenamesCopiedKeysAndInheritsOnlyChecks(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql, grammarVersion: 'pg-17.2'))->build(
+            'CREATE TABLE p (a int, b int, CHECK (a > 0), CHECK (b > 0) NO INHERIT, UNIQUE (a), CONSTRAINT named_u UNIQUE (b), FOREIGN KEY (a) REFERENCES p (a))',
+            'CREATE TABLE c (LIKE p INCLUDING ALL)',
+            'CREATE TABLE d (x int) INHERITS (p)',
+        );
+        self::assertSame(['p_a_check', 'p_b_check', 'p_a_key', 'named_u', 'p_a_fkey'], array_map(static fn (\SqlSemantics\Schema\TableConstraint $constraint): ?string => $constraint->name, $schema->tables[0]->constraints));
+        self::assertSame(['p_a_check', 'c_a_key', 'c_b_key'], array_map(static fn (\SqlSemantics\Schema\TableConstraint $constraint): ?string => $constraint->name, $schema->tables[1]->constraints));
+        self::assertSame(['p_a_check'], array_map(static fn (\SqlSemantics\Schema\TableConstraint $constraint): ?string => $constraint->name, $schema->tables[2]->constraints));
+    }
 }

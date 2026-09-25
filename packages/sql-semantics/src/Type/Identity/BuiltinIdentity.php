@@ -31,6 +31,7 @@ enum BuiltinIdentity: string implements TypeIdentity
     case DoublePrecision = 'double precision';
     case Float = 'float';
     case Char = 'char';
+    case Bpchar = 'bpchar';
     case Varchar = 'varchar';
     case Text = 'text';
     case TinyText = 'tinytext';

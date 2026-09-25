@@ -140,7 +140,17 @@ final class KeyChangesTest extends TestCase
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a int, b int, c int, PRIMARY KEY (a), UNIQUE (b, c), FOREIGN KEY (c) REFERENCES t (a), CHECK (a > 0), CONSTRAINT named UNIQUE (c))')->tables[0];
         $changes = new KeyChanges($table, $table->constraints, $table->indexes);
-        self::assertSame(['t_pkey', 't_b_c_key', 't_c_fkey', '', 'named'], array_map(static fn (TableConstraint $constraint): string => $changes->name($constraint, Dialect::PostgreSql), $table->constraints));
+        self::assertSame(['t_pkey', 't_b_c_key', 't_c_fkey', 't_a_check', 'named'], array_map(static fn (TableConstraint $constraint): string => $changes->name($constraint, Dialect::PostgreSql), $table->constraints));
+    }
+
+    public function testNameDerivesThePostgreSqlNameOfAConstraintNotYetNamed(): void
+    {
+        $statement = (new \SqlSemantics\Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t (a int CHECK (a > 0), b int, c int, PRIMARY KEY (a), UNIQUE (b, c), FOREIGN KEY (c) REFERENCES t (a), CHECK (a > b))');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        $table = $statement->definition->table;
+        $changes = new KeyChanges($table, $table->constraints, $table->indexes);
+        self::assertSame([null, null, null, null, null], array_map(static fn (TableConstraint $constraint): ?string => $constraint->name, $table->constraints));
+        self::assertSame(['t_a_check', 't_pkey', 't_b_c_key', 't_c_fkey', 't_check'], array_map(static fn (TableConstraint $constraint): string => $changes->name($constraint, Dialect::PostgreSql), $table->constraints));
     }
 
     #[TestWith(['mysql-5.6.51', 'ALTER TABLE t ADD PRIMARY KEY (a), ADD UNIQUE (b), ADD INDEX (c)'])]

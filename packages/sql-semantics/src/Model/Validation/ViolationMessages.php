@@ -71,6 +71,7 @@ final class ViolationMessages
         'multiple-primary-keys' => 'A table can declare only one primary key.',
         'nullable-primary-key' => 'MySQL 5.7.3 and later reject a PRIMARY KEY column declared NULL or DEFAULT NULL; every part of a primary key is NOT NULL.',
         'null-default' => 'MySQL rejects DEFAULT NULL on a NOT NULL column, including a column its own PRIMARY KEY attribute makes NOT NULL, unless the column is AUTO_INCREMENT (error 1067).',
+        'serial-default' => 'PostgreSQL rejects a DEFAULT, an identity, or a generation expression on a serial column, whose default draws from the sequence it declares.',
         'conflicting-nullability' => 'PostgreSQL rejects a column declared both NULL and NOT NULL, including NULL on a serial or identity column, which is NOT NULL by definition.',
         'query-block-option' => 'HIGH_PRIORITY, SQL_CALC_FOUND_ROWS and SQL_BUFFER_RESULT, and before MySQL 8.0 SQL_CACHE and SQL_NO_CACHE, apply only to the first query block of the outermost query, and SQL_CACHE excludes SQL_NO_CACHE.',
         'autoincrement-key' => 'SQLite AUTOINCREMENT is only allowed on an INTEGER PRIMARY KEY that aliases the rowid.',

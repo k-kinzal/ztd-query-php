@@ -46,7 +46,7 @@ final class TypeResolution
         if ($type->name !== 'unknown') {
             return $type;
         }
-        if ($this->dialect === Dialect::PostgreSql && array_diff($names, [...$numeric, 'text', 'varchar', 'char', 'boolean']) === []) {
+        if ($this->dialect === Dialect::PostgreSql && array_diff($names, [...$numeric, 'text', 'varchar', 'char', 'bpchar', 'boolean']) === []) {
             $this->diagnostics->report('incompatible-types', 'Cannot establish a common type for: ' . implode(', ', $names), $source);
         }
         return TypeDescriptor::builtin($this->dialect, 'unknown');

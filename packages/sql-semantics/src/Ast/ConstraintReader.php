@@ -54,7 +54,8 @@ final class ConstraintReader
 
     /**
      * Classifies a constraint by its leading keyword; a bare KEY is a PRIMARY KEY only as a MySQL column attribute,
-     * while a table element KEY declares an index.
+     * while a table element KEY declares an index, and the MySQL column attribute SERIAL DEFAULT VALUE declares a
+     * unique key besides AUTO_INCREMENT and NOT NULL.
      */
     public static function kind(string $keyword, bool $columnAttribute): ?ConstraintKind
     {
@@ -62,6 +63,7 @@ final class ConstraintReader
             'PRIMARY' => ConstraintKind::PrimaryKey,
             'KEY' => $columnAttribute ? ConstraintKind::PrimaryKey : null,
             'UNIQUE' => ConstraintKind::Unique,
+            'SERIAL' => $columnAttribute ? ConstraintKind::Unique : null,
             'FOREIGN', 'REFERENCES' => ConstraintKind::ForeignKey,
             'CHECK' => ConstraintKind::Check,
             default => null,

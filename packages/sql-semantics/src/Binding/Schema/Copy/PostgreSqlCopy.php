@@ -94,7 +94,7 @@ final class PostgreSqlCopy
         foreach ($parents as $parent) {
             $base = $resolver->resolve($resolver->identifiers->parts($parent), $parent);
             $columns = self::merge($columns, $base->columns);
-            array_push($constraints, ...$base->constraints);
+            array_push($constraints, ...\SqlSemantics\Binding\Schema\Constraint\PostgreSqlConstraintNames::copied($base->constraints, true));
         }
         $pending = $declared;
         foreach (Tree::outer($source, ['columnDef', 'TableLikeClause']) as $element) {
@@ -105,7 +105,7 @@ final class PostgreSqlCopy
             $template = Tree::child($element, ['qualified_name']) ?? $element;
             $base = $resolver->resolve($resolver->identifiers->parts($template), $template);
             $columns = self::merge($columns, $base->columns);
-            array_push($constraints, ...$base->constraints);
+            array_push($constraints, ...\SqlSemantics\Binding\Schema\Constraint\PostgreSqlConstraintNames::copied($base->constraints, false));
         }
         return [self::merge($columns, $pending), $constraints];
     }

@@ -42,6 +42,7 @@ final class SchemaEvolution
         foreach ($trees as $tree) {
             foreach (StatementList::read($tree, $schema->dialect) as $statement) {
                 $tables = $this->apply($schema, $statement);
+                $tables = $schema->dialect === Dialect::PostgreSql ? Constraint\PostgreSqlConstraintNames::assign($tables) : $tables;
                 $schema = new Schema($schema->dialect, $tables, $schema->defaultSchema, $schema->grammarVersion, [...$schema->statements, $statement], $schema->functions, $schema->variables);
             }
         }

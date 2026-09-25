@@ -11,7 +11,8 @@ use SqlSemantics\Dialect;
 use SqlSemantics\Type\Identity;
 
 /**
- * Constructs each built-in family's applicable parameters.
+ * Constructs each built-in family's applicable parameters; PostgreSQL bpchar with a length is char of that length,
+ * while bpchar without one is the blank-padded string of any length.
  * @visibility SqlSemantics
  */
 final class TypeFamilies
@@ -37,7 +38,10 @@ final class TypeFamilies
             };
             return new Identity\TemporalStorage($base, $first, $timezone);
         }
-        if (in_array($base, [Identity\BuiltinIdentity::Char, Identity\BuiltinIdentity::Varchar, Identity\BuiltinIdentity::Text, Identity\BuiltinIdentity::TinyText, Identity\BuiltinIdentity::MediumText, Identity\BuiltinIdentity::LongText, Identity\BuiltinIdentity::Binary, Identity\BuiltinIdentity::Varbinary, Identity\BuiltinIdentity::Blob, Identity\BuiltinIdentity::TinyBlob, Identity\BuiltinIdentity::MediumBlob, Identity\BuiltinIdentity::LongBlob, Identity\BuiltinIdentity::Bit, Identity\BuiltinIdentity::Varbit, Identity\BuiltinIdentity::Vector], true)) {
+        if ($base === Identity\BuiltinIdentity::Bpchar && $first !== null) {
+            $base = Identity\BuiltinIdentity::Char;
+        }
+        if (in_array($base, [Identity\BuiltinIdentity::Char, Identity\BuiltinIdentity::Bpchar, Identity\BuiltinIdentity::Varchar, Identity\BuiltinIdentity::Text, Identity\BuiltinIdentity::TinyText, Identity\BuiltinIdentity::MediumText, Identity\BuiltinIdentity::LongText, Identity\BuiltinIdentity::Binary, Identity\BuiltinIdentity::Varbinary, Identity\BuiltinIdentity::Blob, Identity\BuiltinIdentity::TinyBlob, Identity\BuiltinIdentity::MediumBlob, Identity\BuiltinIdentity::LongBlob, Identity\BuiltinIdentity::Bit, Identity\BuiltinIdentity::Varbit, Identity\BuiltinIdentity::Vector], true)) {
             return new Identity\StringStorage($base, $first, $parts->characterSet, $parts->binary, $parts->national);
         }
         if ($parameters !== [] || $parts->unsigned || $parts->characterSet !== null || $parts->binary) {

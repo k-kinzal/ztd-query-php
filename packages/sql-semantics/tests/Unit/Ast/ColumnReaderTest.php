@@ -284,7 +284,7 @@ final class ColumnReaderTest extends TestCase
     #[TestWith(['mysql', 'CREATE TABLE t (c INT NOT NULL NULL, d INT NULL NOT NULL)', 'CREATE TABLE `t`(`c` integer NULL, `d` integer NOT NULL)'])]
     #[TestWith(['mysql', 'CREATE TABLE t (c INT AUTO_INCREMENT NULL, KEY (c))', 'CREATE TABLE `t`(`c` integer AUTO_INCREMENT NULL, INDEX(`c`))'])]
     #[TestWith(['mysql', 'CREATE TABLE t (c SERIAL NULL, d SERIAL)', 'CREATE TABLE `t`(`c` serial NULL, `d` serial NOT NULL)'])]
-    #[TestWith(['postgresql', 'CREATE TABLE t (c int NULL NULL, d serial)', 'CREATE TABLE "public"."t"("c" integer NULL, "d" serial NOT NULL)'])]
+    #[TestWith(['postgresql', 'CREATE TABLE t (c int NULL NULL, d serial)', 'CREATE TABLE "public"."t"("c" integer NULL, "d" serial)'])]
     #[TestWith(['postgresql', 'CREATE TABLE t (c int NULL, d int NULL, CONSTRAINT pk PRIMARY KEY (c, d))', 'CREATE TABLE "public"."t"("c" integer NOT NULL, "d" integer NOT NULL, CONSTRAINT "pk" PRIMARY KEY("c", "d"))'])]
     #[TestWith(['sqlite', 'CREATE TABLE t (c int NOT NULL NULL)', 'CREATE TABLE "main"."t"("c" "int" NOT NULL)'])]
     public function testNullabilitySurvivesSimpleSerialization(string $dialect, string $sql, string $expected): void
@@ -293,5 +293,28 @@ final class ColumnReaderTest extends TestCase
         $written = (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql));
         self::assertSame($expected, $written);
         self::assertSame($written, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($written)));
+    }
+
+    #[TestWith(['a serial', 'integer'])]
+    #[TestWith(['a "serial4"', 'integer'])]
+    #[TestWith(['a SERIAL2', 'smallint'])]
+    #[TestWith(['a bigserial', 'bigint'])]
+    public function testSerialReadsTheIntegerTypeOfAPostgreSqlSerialName(string $declaration, string $type): void
+    {
+        $column = (new SchemaBuilder(Dialect::PostgreSql, grammarVersion: 'pg-17.2'))->build('CREATE TABLE t (' . $declaration . ')')->tables[0]->columns[0];
+        self::assertSame($type, $column->type->name);
+        self::assertSame(Nullability::NotNull, $column->nullability);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SerialColumn::class, $column->generation);
+    }
+
+    #[TestWith(['a pg_catalog.serial', 'pg_catalog.serial'])]
+    #[TestWith(['a serial4[]', 'serial4[]'])]
+    #[TestWith(['a int4', 'integer'])]
+    public function testSerialLeavesOtherTypeNamesAlone(string $declaration, string $type): void
+    {
+        $column = (new SchemaBuilder(Dialect::PostgreSql, grammarVersion: 'pg-17.2'))->build('CREATE TABLE t (' . $declaration . ')')->tables[0]->columns[0];
+        self::assertSame($type, $column->type->name);
+        self::assertSame(Nullability::MaybeNull, $column->nullability);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $column->generation);
     }
 }

@@ -94,4 +94,64 @@ final class ColumnsTest extends TestCase
         self::assertSame($expected, $written);
         self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($written)));
     }
+
+    #[TestWith(['mysql-5.6.51', 'CREATE TABLE u (a INT SERIAL DEFAULT VALUE, b INT)', 'CREATE TABLE `u`(`a` integer SERIAL DEFAULT VALUE, `b` integer)'])]
+    #[TestWith(['mysql-5.7.44', 'CREATE TABLE u (a BIGINT UNSIGNED SERIAL DEFAULT VALUE NULL)', 'CREATE TABLE `u`(`a` bigint UNSIGNED SERIAL DEFAULT VALUE NULL)'])]
+    #[TestWith(['mysql-8.0.44', 'CREATE TABLE u (a INT NULL SERIAL DEFAULT VALUE, UNIQUE (a))', 'CREATE TABLE `u`(`a` integer SERIAL DEFAULT VALUE, UNIQUE(`a`))'])]
+    #[TestWith(['mysql-8.4.7', 'ALTER TABLE t ADD COLUMN b INT SERIAL DEFAULT VALUE', 'ALTER TABLE `t` ADD COLUMN `b` integer SERIAL DEFAULT VALUE'])]
+    #[TestWith(['mysql-8.4.7', 'ALTER TABLE t ADD COLUMN (b INT SERIAL DEFAULT VALUE, c INT)', 'ALTER TABLE `t` ADD COLUMN(`b` integer SERIAL DEFAULT VALUE, `c` integer)'])]
+    #[TestWith(['mysql-9.1.0', 'ALTER TABLE t MODIFY a INT SERIAL DEFAULT VALUE', 'ALTER TABLE `t` MODIFY COLUMN `a` integer SERIAL DEFAULT VALUE'])]
+    public function testWriteKeepsTheMySqlSerialDefaultValueAttribute(string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t (a INT)'));
+        $written = (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($sql));
+        self::assertSame($expected, $written);
+        self::assertSame($expected, (new \SqlSemantics\SimpleSerializer())->serialize($binder->bind($written)));
+    }
+
+    public function testWriteFallsBackToAutoIncrementWhenTheSerialKeyIsGone(): void
+    {
+        $column = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT SERIAL DEFAULT VALUE)')->tables[0]->columns[0];
+        self::assertSame('`a` integer SERIAL DEFAULT VALUE', Columns::write($column, Dialect::MySql)->toString());
+        self::assertSame('`a` integer NOT NULL AUTO_INCREMENT', Columns::write($column, Dialect::MySql, serialKey: false)->toString());
+    }
+
+    public function testSerialKeyFindsTheUniqueKeyTheAttributeDeclares(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT SERIAL DEFAULT VALUE, b INT AUTO_INCREMENT UNIQUE, CONSTRAINT named UNIQUE (a))')->tables[0];
+        self::assertSame(['a'], Columns::serialKey($table->columns[0], $table->constraints)?->localColumns());
+        self::assertNull(Columns::serialKey($table->columns[0], array_slice($table->constraints, 2)));
+        self::assertNull(Columns::serialKey($table->columns[1], $table->constraints));
+    }
+
+    public function testUnserialLeavesOutOnlyTheKeysSerialDefaultValueDeclares(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT SERIAL DEFAULT VALUE, b INT UNIQUE, UNIQUE (a))')->tables[0];
+        self::assertCount(3, $table->constraints);
+        self::assertSame([$table->constraints[1], $table->constraints[2]], Columns::unserial($table->columns, $table->constraints));
+    }
+
+    #[TestWith(['a serial', '"a" serial', 'integer'])]
+    #[TestWith(['a serial4', '"a" serial', 'integer'])]
+    #[TestWith(['a smallserial', '"a" smallserial', 'smallint'])]
+    #[TestWith(['a serial2', '"a" smallserial', 'smallint'])]
+    #[TestWith(['a bigserial', '"a" bigserial', 'bigint'])]
+    #[TestWith(['a serial8 PRIMARY KEY', '"a" bigserial', 'bigint'])]
+    #[TestWith(['a int4', '"a" integer', 'integer'])]
+    public function testTypeWritesThePostgreSqlSerialTypeOfTheIntegerWidth(string $declaration, string $expected, string $type): void
+    {
+        $column = (new SchemaBuilder(Dialect::PostgreSql, grammarVersion: 'pg-17.2'))->build('CREATE TABLE t (' . $declaration . ')')->tables[0]->columns[0];
+        self::assertSame($type, $column->type->name);
+        self::assertSame($expected, Columns::write($column, Dialect::PostgreSql)->toString());
+        self::assertSame(substr($expected, 4), Columns::type($column)->toString());
+    }
+
+    public function testGenerationWritesTheValueSourceInTheDialectSpelling(): void
+    {
+        self::assertSame('AUTO_INCREMENT', (new \SqlSemantics\Model\Sql\Tree('column', Columns::generation(new AutoIncrementColumn(), Dialect::MySql, \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default, false, true)))->toString());
+        self::assertSame('SERIAL DEFAULT VALUE', (new \SqlSemantics\Model\Sql\Tree('column', Columns::generation(new AutoIncrementColumn(true), Dialect::MySql, \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default, true, true)))->toString());
+        self::assertSame('PRIMARY KEY AUTOINCREMENT', (new \SqlSemantics\Model\Sql\Tree('column', Columns::generation(new AutoIncrementColumn(), Dialect::Sqlite, \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default, false, true)))->toString());
+        self::assertSame('', (new \SqlSemantics\Model\Sql\Tree('column', Columns::generation(new SuppliedColumn(), Dialect::PostgreSql, \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default, false, true)))->toString());
+        self::assertSame('', (new \SqlSemantics\Model\Sql\Tree('column', Columns::generation(new \SqlSemantics\Schema\Column\SerialColumn(), Dialect::PostgreSql, \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default, false, true)))->toString());
+    }
 }

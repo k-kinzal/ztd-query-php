@@ -221,4 +221,10 @@ final class ColumnDefinitionTest extends TestCase
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         new \SqlSemantics\Schema\ColumnDefinition('a', $column->type, Nullability::NotNull, $column->source, nullDeclared: true);
     }
+
+    public function testSerialColumnRequiresThePostgreSqlDialect(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new \SqlSemantics\Schema\ColumnDefinition('a', \SqlSemantics\Type\TypeDescriptor::builtin(Dialect::MySql, 'integer'), Nullability::NotNull, new \SqlParser\Parser\Node('column', 0, []), new \SqlSemantics\Schema\Column\SerialColumn());
+    }
 }

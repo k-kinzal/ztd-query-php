@@ -235,6 +235,8 @@ final class ConstraintReaderTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['KEY', false, null])]
     #[\PHPUnit\Framework\Attributes\TestWith(['REFERENCES', true, \SqlSemantics\Schema\ConstraintKind::ForeignKey])]
     #[\PHPUnit\Framework\Attributes\TestWith(['COMMENT', true, null])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SERIAL', true, \SqlSemantics\Schema\ConstraintKind::Unique])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SERIAL', false, null])]
     public function testKindClassifiesTheLeadingKeyword(string $keyword, bool $columnAttribute, ?\SqlSemantics\Schema\ConstraintKind $expected): void
     {
         self::assertSame($expected, \SqlSemantics\Ast\ConstraintReader::kind($keyword, $columnAttribute));
@@ -274,5 +276,14 @@ final class ConstraintReaderTest extends TestCase
         $postgres = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('CREATE TABLE t (a int, CONSTRAINT c CHECK (a > 0) NO INHERIT)');
         self::assertSame([false, false], \SqlSemantics\Ast\ConstraintReader::checkAttributes(\SqlSemantics\Ast\Tree::outer($mysql, ['table_constraint_def'])[0]));
         self::assertSame([true, true], \SqlSemantics\Ast\ConstraintReader::checkAttributes(\SqlSemantics\Ast\Tree::outer($postgres, ['TableConstraint'])[0]));
+    }
+
+    public function testReadGivesSerialDefaultValueItsUniqueKey(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT SERIAL DEFAULT VALUE, b INT)')->tables[0];
+        self::assertCount(1, $table->constraints);
+        self::assertSame(\SqlSemantics\Schema\ConstraintKind::Unique, $table->constraints[0]->kind);
+        self::assertSame(['a'], $table->constraints[0]->localColumns());
+        self::assertNull($table->constraints[0]->name);
     }
 }

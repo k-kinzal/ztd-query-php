@@ -48,7 +48,7 @@ final class ColumnBinder
             storageStrategy: ($value = OptionBinding::string($options, 'storage')) === null || !$postgreSql ? null : (\SqlSemantics\Model\Definition\Relation\Column\ColumnStorageMode::tryFrom(strtoupper($value)) ?? throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::ColumnStorage, $column->source)),
             excludedFromSecondaryEngine: isset($options['not_secondary']),
         );
-        OptionBinding::classified($options, ['collation', 'character_set', 'comment', 'invisible', 'visible', 'storage', 'column_format', 'compression', 'engine_attribute', 'secondary_engine_attribute', 'srid', 'zerofill', 'binary', 'signed', 'unsigned', 'auto_increment', 'identity', 'start', 'increment', 'minvalue', 'maxvalue', 'cache', 'cycle', 'no', 'as', 'sequence', 'restart', 'owned', 'logged', 'unlogged', 'generated_storage', 'on_update', 'not_secondary']);
+        OptionBinding::classified($options, ['collation', 'character_set', 'comment', 'invisible', 'visible', 'storage', 'column_format', 'compression', 'engine_attribute', 'secondary_engine_attribute', 'srid', 'zerofill', 'binary', 'signed', 'unsigned', 'auto_increment', 'serial_default', 'serial', 'identity', 'start', 'increment', 'minvalue', 'maxvalue', 'cache', 'cycle', 'no', 'as', 'sequence', 'restart', 'owned', 'logged', 'unlogged', 'generated_storage', 'on_update', 'not_secondary']);
         $nullDeclared = $column->nullability !== \SqlSemantics\Type\Nullability::NotNull && array_filter($column->attributes, static fn (\SqlParser\Parser\Node $attribute): bool => \SqlSemantics\Ast\ColumnReader::attributeWords($attribute) === ['NULL']) !== [];
         return new ColumnDefinition($column->name, $column->type, $column->nullability, $column->source, $generation, $attributes, self::nullConflict($column), $nullDeclared);
     }
@@ -80,7 +80,13 @@ final class ColumnBinder
             if ($scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite && ($column->type->name !== 'integer' || array_filter($column->attributes, static fn (\SqlParser\Parser\Node $attribute): bool => strtoupper(trim(Tree::text(Tree::outer($attribute, ['sortorder'])[0] ?? new \SqlParser\Parser\Node('sortorder', 0, [])))) === 'DESC') !== [])) {
                 throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::AutoIncrementKey, $column->source);
             }
-            return new Column\AutoIncrementColumn();
+            return new Column\AutoIncrementColumn(isset($column->options['serial_default']));
+        }
+        if (isset($column->options['serial'])) {
+            if ($column->defaultExpression !== null || isset($column->options['identity']) || $column->generatedExpression !== null) {
+                throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::SerialDefault, $column->source);
+            }
+            return new Column\SerialColumn();
         }
         if (isset($column->options['identity'])) {
             return new Column\IdentityColumn(Column\IdentityMode::from(OptionBinding::string($column->options, 'identity') ?? 'by-default'), SequenceBinding::read($column->attributes, $scope));

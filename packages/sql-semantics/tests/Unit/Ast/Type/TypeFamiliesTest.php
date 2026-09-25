@@ -91,4 +91,17 @@ final class TypeFamiliesTest extends TestCase
         self::assertSame(Identity\BuiltinIdentity::Date, $table->columns[1]->type->identity);
         self::assertSame(Identity\BuiltinIdentity::Jsonb, $table->columns[2]->type->identity);
     }
+
+    public function testMakeReadsBpcharAsCharOnlyWithALength(): void
+    {
+        $columns = (new SchemaBuilder(Dialect::PostgreSql, grammarVersion: 'pg-17.2'))->build('CREATE TABLE t(a bpchar, b bpchar(3), c char)')->tables[0]->columns;
+        self::assertInstanceOf(Identity\StringStorage::class, $columns[0]->type->identity);
+        self::assertSame(Identity\BuiltinIdentity::Bpchar, $columns[0]->type->identity->base);
+        self::assertNull($columns[0]->type->identity->length);
+        self::assertInstanceOf(Identity\StringStorage::class, $columns[1]->type->identity);
+        self::assertSame(Identity\BuiltinIdentity::Char, $columns[1]->type->identity->base);
+        self::assertInstanceOf(Identity\Numeric\NumericParameter::class, $columns[1]->type->identity->length);
+        self::assertSame('3', $columns[1]->type->identity->length->spelling);
+        self::assertSame('char', $columns[2]->type->name);
+    }
 }
