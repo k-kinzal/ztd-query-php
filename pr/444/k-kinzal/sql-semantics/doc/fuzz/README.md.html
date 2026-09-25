@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semantic round-trip property — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/444/k-kinzal/sql-semantics/doc/fuzz/README.md.html">
+<meta name="description" content="Semantic round-trip property, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Semantic round-trip property — ZTD Query PHP">
+<meta property="og:description" content="Semantic round-trip property, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/444/k-kinzal/sql-semantics/doc/fuzz/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/444/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/index.html" title="SqlSemantics\Core">SqlSemantics\Core</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Ast/index.html" title="SqlSemantics\Core\Ast">SqlSemantics\Core\Ast</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Binding/index.html" title="SqlSemantics\Core\Binding">SqlSemantics\Core\Binding</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Model/index.html" title="SqlSemantics\Core\Model">SqlSemantics\Core\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Policy/index.html" title="SqlSemantics\Core\Policy">SqlSemantics\Core\Policy</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Schema/index.html" title="SqlSemantics\Core\Schema">SqlSemantics\Core\Schema</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Type/index.html" title="SqlSemantics\Core\Type">SqlSemantics\Core\Type</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Facade/index.html" title="SqlSemantics\Facade">SqlSemantics\Facade</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Platform/MySql/index.html" title="SqlSemantics\Platform\MySql">SqlSemantics\Platform\MySql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Platform/PostgreSql/index.html" title="SqlSemantics\Platform\PostgreSql">SqlSemantics\Platform\PostgreSql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Platform/Sqlite/index.html" title="SqlSemantics\Platform\Sqlite">SqlSemantics\Platform\Sqlite</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">fuzz/README.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing f93d0df444 to working tree">f93d0df444 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between f93d0df444 and working tree." data-off="This page documents what f93d0df444 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Semantic round-trip property</h1><div class="symbol-meta"><span class="source-link">fuzz/README.md</span></div></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to f93d0df444.</div>
+<section class="readme prose" data-diff="added"><div class="doc-block" data-diff="added"><h2>Semantic round-trip property</h2>
+</div><div class="doc-block" data-diff="added"><p>Each target compiles the input bytes with sql-faker&#039;s <code>BytePlanCompiler</code>, generates SQL from the same statement root as sql-faker, sends it through semantic analysis, and compares the original SQL with <code>Statement::toString()</code> after formatting both with sql-formatter&#039;s Compact preset. An empty generated statement, a rejection, a missing serializer, a serialization failure, a formatting failure, or a difference is a finding. No statement category or exception is skipped.</p>
+</div><div class="doc-block" data-diff="added"><p><strong>Implementation status:</strong> the current SELECT-only <code>Binder</code> does not satisfy this contract. It rejects generated DDL and DML, requires declarations for named tables, and returns <code>BoundSelect</code>, which has no <code>toString()</code> method. These targets expose those gaps and currently fail. They must pass against a complete statement model before this change is ready to merge. Keeping the source SQL or parser tree in a result and printing it back is not an implementation of the contract.</p>
+</div><div class="doc-block" data-diff="added"><h3>Run</h3>
+</div><div class="doc-block" data-diff="added"><pre class="code"><code>composer install
+composer fuzz:seeds
+composer fuzz:sqlite -- --max-runs=0
+composer fuzz:mysql -- --max-runs=0
+composer fuzz:pg -- --max-runs=0
+composer fuzz:smoke</code></pre>
+</div><div class="doc-block" data-diff="added"><p>Every <code>fuzz:&lt;database&gt;</code> command copies the sql-faker seed plans into that target&#039;s corpus first. The existing corpus remains available. <code>--max-runs=0</code> replays the corpus without further mutations; <code>fuzz:smoke</code> adds 100 mutations per target. Individual targets run continuously unless a run budget is supplied. There is no database connection and no container dependency.</p>
+</div><div class="doc-block" data-diff="added"><div class="table-wrap"><table><thead><tr><th>Target</th><th>Default grammar</th><th>Statement root</th><th>Seed directory in sql-faker</th></tr></thead><tbody><tr><td><code>fuzz_mysql_roundtrip.php</code></td><td><code>mysql-8.4.7</code></td><td><code>simple_statement_or_begin</code></td><td><code>seeds/mysql/mysql-8.4.7</code></td></tr><tr><td><code>fuzz_pg_roundtrip.php</code></td><td><code>pg-17.2</code></td><td><code>stmt</code></td><td><code>seeds/pg/pg-17.2</code></td></tr><tr><td><code>fuzz_sqlite_roundtrip.php</code></td><td><code>sqlite-3.47.2</code></td><td><code>cmd</code></td><td><code>seeds/sqlite/sqlite-3.47.2</code></td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="added"><p>Set <code>MYSQL_VERSION</code> to select another shipped release. MySQL 5.6 and 5.7 use <code>statement</code> as their generation root. When sql-faker does not ship seeds for a release, seeding reports zero inputs and the fuzzer uses its existing corpus and newly generated plans. The default corpora contain 2,135 MySQL, 2,639 PostgreSQL, and 294 SQLite inputs. The plan format is unchanged; no SQL-text conversion or seed filtering is performed.</p>
+</div><div class="doc-block" data-diff="added"><p>Grammar coverage accumulates under <code>fuzz/coverage/&lt;database&gt;</code>. Set <code>SQLFAKER_COVERAGE=0</code> to disable it. Composer starts PHP-Fuzzer without a PHP memory limit and with a 60-second per-input timeout to accommodate grammar initialization.</p>
+</div><div class="doc-block" data-diff="added"><h3>Replay a finding</h3>
+</div><div class="doc-block" data-diff="added"><pre class="code"><code>SQLFAKER_COVERAGE=0 php -d memory_limit=-1 vendor/bin/php-fuzzer run-single \
+  fuzz/fuzz_sqlite_roundtrip.php fuzz/corpus/sqlite/refact-1.txt --timeout=60</code></pre>
+</div><div class="doc-block" data-diff="added"><p>The report includes the grammar release, the raw plan in hexadecimal, and the generated SQL. A mutated finding is saved as <code>crash-&lt;hash&gt;.txt</code>; an initial corpus failure names the original seed. Replay it with the same target and MySQL release. PHP-Fuzzer 0.0.11 can exit successfully after reporting a crash; inspect its output. The workflow explicitly fails when the log contains a finding.</p>
+</div><div class="doc-block" data-diff="added"><h3>Continuous integration</h3>
+</div><div class="doc-block" data-diff="added"><p><code>.github/workflows/sql-semantics-fuzz.yml</code> runs one job per database on relevant pull requests, nightly, and on demand. Pull requests replay seeds and run 100 mutations; scheduled and manual runs default to 10,000 mutations. Each job restores the corpus and coverage, copies the seeds, and uploads its log and inputs even on failure. Only scheduled/manual runs save caches and open deduplicated finding issues; pull requests do not publish findings as issues.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
