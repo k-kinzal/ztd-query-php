@@ -7,6 +7,8 @@ on:
     paths:
       - 'packages/sql-semantics/**'
       - 'packages/sql-parser/**'
+      - 'packages/bison-parser/**'
+      - 'packages/lemon-parser/**'
       - 'packages/sql-faker/**'
       - 'packages/sql-formatter/**'
       - '.github/workflows/sql-semantics-fuzz.yml'

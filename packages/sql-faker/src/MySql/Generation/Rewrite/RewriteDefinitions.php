@@ -41,6 +41,7 @@ final class RewriteDefinitions
     public function create(string $version = 'mysql-8.4.7'): TokenRewriter
     {
         $defaultTerminal = in_array($version, ['mysql-5.6.51', 'mysql-5.7.44'], true) ? 'DEFAULT' : 'DEFAULT_SYM';
+        $partitionScalar = $defaultTerminal === 'DEFAULT' ? 'part_value_expr_item' : 'part_value_item';
         return new TokenRewriter(
             new UniqueOptionRule('require_clause', 'require_list_element', [
                 'SUBJECT_SYM' => 'subject', 'ISSUER_SYM' => 'issuer', 'CIPHER_SYM' => 'cipher',
@@ -81,8 +82,8 @@ final class RewriteDefinitions
             new FieldLengthRule(),
             new LoadSourceCountRule(),
             new FlushExportRule(),
-            new ExpressionGroupingRule(['expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', 'part_value_item'], 'sql_yacc.yy:simple_expr:parenthesized-operands'),
-            new ListValueRule(),
+            new ExpressionGroupingRule(['expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', $partitionScalar], 'sql_yacc.yy:simple_expr:parenthesized-operands'),
+            new ListValueRule($partitionScalar),
             new ValueArityRule(),
         );
     }
