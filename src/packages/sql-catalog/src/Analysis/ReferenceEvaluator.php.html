@@ -140,7 +140,7 @@
 <span class="src-line" id="L102"><a class="ln" href="#L102">102</a>            <span class="tok-kw">return</span> <span class="tok-id">Domain</span>::<span class="tok-id">opaque</span>(<span class="tok-id">TypeShape</span>::<span class="tok-id">unknown</span>(), <span class="tok-id">Origin</span>::<span class="tok-id">External</span>, <span class="tok-str">&#039;$&#039;</span> . <span class="tok-var">$node</span>-&gt;<span class="tok-id">name</span>);</span>
 <span class="src-line" id="L103"><a class="ln" href="#L103">103</a>        }</span>
 <span class="src-line" id="L104"><a class="ln" href="#L104">104</a></span>
-<span class="src-line" id="L105"><a class="ln" href="#L105">105</a>        <span class="tok-kw">return</span> <span class="tok-var">$environment</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">name</span>);</span>
+<span class="src-line" id="L105"><a class="ln" href="#L105">105</a>        <span class="tok-kw">return</span> <span class="tok-var">$environment</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">name</span>)-&gt;<span class="tok-id">withVariable</span>(<span class="tok-str">&#039;$&#039;</span> . <span class="tok-var">$node</span>-&gt;<span class="tok-id">name</span>);</span>
 <span class="src-line" id="L106"><a class="ln" href="#L106">106</a>    }</span>
 <span class="src-line" id="L107"><a class="ln" href="#L107">107</a></span>
 <span class="src-line" id="L108"><a class="ln" href="#L108">108</a>    <span class="tok-com">/**</span></span>
