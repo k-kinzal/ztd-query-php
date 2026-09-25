@@ -56,30 +56,40 @@
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $mysql-&gt;columns[0]-&gt;generation instanceof \SqlSemantics\Schema\Column\AutoIncrementColumn // =&gt; true</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $serial = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))-&gt;build(&#039;CREATE TABLE s(id INT SERIAL DEFAULT VALUE)&#039;)-&gt;tables[0];</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $serial-&gt;columns[0]-&gt;generation-&gt;serialDefault // =&gt; true</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">AutoIncrementColumn</span> <span class="tok-kw">implements</span> <span class="tok-id">Generation</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>{</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * Constructs a valid declaration.</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     * @param bool $serialDefault Whether MySQL SERIAL DEFAULT VALUE declared the column, which also declares it NOT</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     *                            NULL and gives it a unique key, rather than AUTO_INCREMENT</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$serialDefault</span> = <span class="tok-id">false</span>,</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    ) {</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    }</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * Returns no generation expression: the storage engine supplies this column.</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">expressions</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    {</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">return</span> [];</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    }</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>}</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $type = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))-&gt;build(&#039;CREATE TABLE s(id SERIAL)&#039;)-&gt;tables[0];</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $type-&gt;columns[0]-&gt;generation-&gt;serialType // =&gt; true</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $type-&gt;columns[0]-&gt;type-&gt;name // =&gt; &#039;bigint unsigned&#039;</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">AutoIncrementColumn</span> <span class="tok-kw">implements</span> <span class="tok-id">Generation</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>{</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * Constructs a valid declaration.</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @param bool $serialDefault Whether MySQL SERIAL DEFAULT VALUE declared the column, which also declares it NOT</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     *                            NULL and gives it a unique key, rather than AUTO_INCREMENT</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param bool $serialType Whether the MySQL SERIAL type declared the column, which stands for BIGINT UNSIGNED NOT</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     *                         NULL AUTO_INCREMENT UNIQUE</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @throws \SqlSemantics\Model\Validation\InvalidStructure</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$serialDefault</span> = <span class="tok-id">false</span>,</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$serialType</span> = <span class="tok-id">false</span>,</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    ) {</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">if</span> (<span class="tok-var">$serialDefault</span> &amp;&amp; <span class="tok-var">$serialType</span>) {</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Model\Validation\InvalidStructure</span>(<span class="tok-str">&#039;A counter column is declared by one spelling: AUTO_INCREMENT, SERIAL DEFAULT VALUE, or the SERIAL type.&#039;</span>);</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        }</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    }</span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     * Returns no generation expression: the storage engine supplies this column.</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">expressions</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    {</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-kw">return</span> [];</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    }</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>}</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
