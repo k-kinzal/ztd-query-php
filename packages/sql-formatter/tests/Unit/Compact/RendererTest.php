@@ -79,6 +79,13 @@ final class RendererTest extends TestCase
                 }
                 yield $parser . '-' . $version . '-' . $index => [$parser, $version, $input, $expected];
             }
+            if ($parser === MySqlParser::class) {
+                yield $version . '-conflicting-options' => [$parser, $version, 'SELECT ALL DISTINCT 1', 'SELECT ALL DISTINCT 1'];
+                yield $version . '-reversed-conflicting-options' => [$parser, $version, 'select distinctrow all 1', 'SELECT DISTINCT ALL 1'];
+                yield $version . '-separated-conflicting-options' => [$parser, $version, 'SELECT ALL SQL_SMALL_RESULT DISTINCT 1', 'SELECT ALL SQL_SMALL_RESULT DISTINCT 1'];
+                yield $version . '-repeated-default' => [$parser, $version, 'SELECT ALL ALL 1', 'SELECT 1'];
+                yield $version . '-scoped-options' => [$parser, $version, 'SELECT ALL (SELECT DISTINCT 1)', 'SELECT(SELECT DISTINCT 1)'];
+            }
         }
         foreach ([MySqlParser::class, PostgreSqlParser::class] as $parser) {
             yield $parser . '-set-distinct' => [$parser, null, 'SELECT a FROM t UNION DISTINCT SELECT a FROM u', 'SELECT a FROM t UNION SELECT a FROM u'];

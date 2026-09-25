@@ -26,6 +26,9 @@ final class Rules
         if (self::default($node->name, $words, $parent)) {
             return [];
         }
+        if ($node->name === 'select_options' && !in_array('DISTINCT', $words, true)) {
+            return array_values(array_filter($tokens, static fn (Token $token): bool => $token->name !== 'ALL'));
+        }
         if (in_array($node->name, ['normal_join', 'inner_join_type', 'outer_join_type', 'natural_join_type', 'join_type', 'joinop'], true)) {
             if ($node->name !== 'joinop' || preg_match('/^(?:NATURAL )?(?:INNER|(?:LEFT|RIGHT|FULL)(?: OUTER)?) JOIN$/D', implode(' ', $words)) === 1) {
                 return array_values(array_filter($tokens, static fn (Token $token): bool => !in_array(strtoupper($token->text), ['INNER', 'OUTER'], true)));
@@ -42,7 +45,7 @@ final class Rules
         if ($words === ['OUTER'] && $rule === 'opt_outer') {
             return true;
         }
-        if ($words === ['ALL'] && in_array($rule, ['query_spec_option', 'select_option', 'select_opts', 'opt_all_clause', 'distinct'], true)) {
+        if ($words === ['ALL'] && in_array($rule, ['opt_all_clause', 'distinct'], true)) {
             return true;
         }
         if ($words === ['ASC'] && in_array($rule, ['order_dir', 'ordering_direction', 'opt_ordering_direction', 'opt_asc_desc', 'sortorder'], true)) {
