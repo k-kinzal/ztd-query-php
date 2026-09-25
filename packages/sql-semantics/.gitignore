@@ -8,3 +8,7 @@
 /phpcs.xml
 /.php-cs-fixer.php
 !/composer.lock
+/fuzz/corpus/
+/fuzz/coverage/
+/crash-*.txt
+/timeout-*.txt

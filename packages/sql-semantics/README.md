@@ -113,8 +113,7 @@ nodes in the semantic graph.
 This is a bounded semantic implementation, not a full database binder. CTEs,
 subqueries, set operations, grouping/aggregates, window functions, USING/NATURAL
 joins, explicit casts, collations, arbitrary functions, generated columns,
-DDL schema evolution, and DML are rejected rather than silently omitted. See
-[the support contract](docs/support.md) for dialect assumptions and exact limits.
+DDL schema evolution, and DML are rejected rather than silently omitted.
 
 ## Consumers
 
@@ -144,8 +143,8 @@ PHPCompatibility, Deptrac, ParaTest, and PHPBench follow the other packages'
 conventions.
 
 - [Semantic design and evaluation requirements](docs/design.md)
-- [Supported language and conservative facts](docs/support.md)
 - [Verification](docs/verification.md)
+- [Full-language round-trip fuzz contract and implementation status](fuzz/README.md)
 
 ## License
 

@@ -29,3 +29,10 @@ infection --configuration=infection.json5 --with-uncovered --threads=4 --only-co
 
 The CI workflow checks PHP 8.1 through 8.5 and runs lint, mutation testing, and the
 benchmark smoke test. The library and these checks require no live database.
+
+The [round-trip fuzz targets](../fuzz/README.md) reuse all three sql-faker seed
+corpora and compare original and reconstructed SQL with the Compact formatter.
+This is a stricter contract than the current binder implements: all three targets
+currently find rejected statements, and `BoundSelect` cannot yet serialize its
+own data. The fuzz workflow fails on these findings. Passing the existing unit
+suite does not establish full-language structural coverage or round-trip support.

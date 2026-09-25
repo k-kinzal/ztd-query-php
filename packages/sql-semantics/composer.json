@@ -10,8 +10,12 @@
     "require-dev": {
         "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",
+        "fakerphp/faker": "^1.23",
         "friendsofphp/php-cs-fixer": "^3.95.25",
         "k-kinzal/php-ai-toolkit": "dev-main",
+        "k-kinzal/sql-faker": "dev-main",
+        "k-kinzal/sql-formatter": "dev-main",
+        "nikic/php-fuzzer": "^0.0.11",
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
@@ -33,6 +37,24 @@
                     "k-kinzal/sql-parser": "dev-main"
                 }
             }
+        },
+        {
+            "type": "path",
+            "url": "../sql-faker",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-faker": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-formatter",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-formatter": "dev-main"
+                }
+            }
         }
     ],
     "autoload": {
@@ -43,7 +65,8 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
-            "Bench\\": "bench/"
+            "Bench\\": "bench/",
+            "Fuzz\\": "fuzz/"
         }
     },
     "config": {
@@ -75,6 +98,36 @@
         "doctest": "phpunit --testsuite doctest",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "fuzz": "@fuzz:smoke",
+        "fuzz:mysql": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:seeds:mysql --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_roundtrip.php fuzz/corpus/mysql/ --timeout=60"
+        ],
+        "fuzz:pg": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:seeds:pg --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_roundtrip.php fuzz/corpus/pg/ --timeout=60"
+        ],
+        "fuzz:seeds": [
+            "@fuzz:seeds:mysql",
+            "@fuzz:seeds:pg",
+            "@fuzz:seeds:sqlite"
+        ],
+        "fuzz:seeds:mysql": "@php fuzz/seed.php mysql",
+        "fuzz:seeds:pg": "@php fuzz/seed.php pg",
+        "fuzz:seeds:sqlite": "@php fuzz/seed.php sqlite",
+        "fuzz:smoke": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:mysql --max-runs=100",
+            "@fuzz:pg --max-runs=100",
+            "@fuzz:sqlite --max-runs=100"
+        ],
+        "fuzz:sqlite": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:seeds:sqlite --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_roundtrip.php fuzz/corpus/sqlite/ --timeout=60"
+        ],
         "lint": [
             "@autoload:check",
             "@format:check",
@@ -94,5 +147,10 @@
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"
+    },
+    "scripts-descriptions": {
+        "fuzz": "Run the round-trip property for all three databases with a bounded smoke budget.",
+        "fuzz:seeds": "Copy the sql-faker seed plans into each corpus.",
+        "fuzz:smoke": "Replay the corpus and run 100 mutations per database."
     }
 }
