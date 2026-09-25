@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html\Page;
 
-use SqlCatalog\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\CatalogEntry;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\TableName;

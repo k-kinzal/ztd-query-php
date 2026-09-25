@@ -7,19 +7,19 @@ namespace Tests\Unit\Extension\Laravel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Evaluation\ArrayEntry;
-use SqlCatalog\Evaluation\ArrayTerm;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\LiteralTerm;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Evaluation\OpaqueTerm;
-use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Core\Evaluation\ArrayEntry;
+use SqlCatalog\Core\Evaluation\ArrayTerm;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\LiteralTerm;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Evaluation\OpaqueTerm;
+use SqlCatalog\Core\Evaluation\PatternTerm;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\TextGeneralization;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Extension\Laravel\QueryState;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\TextGeneralization;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(QueryState::class)]
 #[UsesClass(Domain::class)]

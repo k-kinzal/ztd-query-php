@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html;
 
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
 
 /**
  * The counts the report is read through.

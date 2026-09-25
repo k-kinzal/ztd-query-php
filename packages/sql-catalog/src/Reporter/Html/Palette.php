@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html;
 
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
 
 /**
  * Which hue each fact about a statement is written in.

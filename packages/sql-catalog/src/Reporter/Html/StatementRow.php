@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html;
 
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
 
 /**
  * One statement as a row of a listing.
@@ -54,7 +54,7 @@ final class StatementRow
         return '<li class="row"' . $this->attributes($entry) . '>'
             . '<a class="row-main" href="' . $this->text->escape($prefix . $site->statementPage($entry->id)) . '">'
             . $this->text->chip(strtoupper($entry->kind->value), $this->palette->kind($entry->kind->value))
-            . '<pre class="code">' . $this->sql($entry) . '</pre></a>'
+            . '<pre class="code">' . $this->sql($entry, $site->formatter) . '</pre></a>'
             . '<p class="row-meta">' . $this->meta($site, $prefix, $entry, $omit) . '</p>'
             . '</li>';
     }
@@ -93,10 +93,10 @@ final class StatementRow
     /**
      * The formatted statement, or the call it was not read from.
      */
-    public function sql(CatalogEntry $entry): string
+    public function sql(CatalogEntry $entry, ?SqlFormatter $formatter = null): string
     {
         if ($entry->resolution() !== Resolution::NotAnalyzed) {
-            return $this->sql->render($this->formatter->format($entry->parts()));
+            return $this->sql->render(($formatter ?? $this->formatter)->format($entry->parts()));
         }
         $written = $entry->firstGap()?->expression;
 

@@ -7,17 +7,23 @@ namespace Tests\Unit\Reporter\Html\Page;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\AnalysisProblem;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Finding;
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Placeholder;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Catalog\StatementPart;
-use SqlCatalog\Catalog\ValueDomain;
+use SqlCatalog\Core\Catalog\AnalysisProblem;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Finding;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Placeholder;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\ValueDomain;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
@@ -31,12 +37,6 @@ use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
 use SqlCatalog\Reporter\Html\StatementRow;
 use SqlCatalog\Reporter\Html\TableName;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(FilePage::class)]
 #[UsesClass(CallSite::class)]
@@ -76,7 +76,7 @@ final class FilePageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users'], [], new CallSite('src/a.php', 9, 'helper', 'pdo.query'), []),
             new CatalogEntry('a2', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('src/a.php', 1, '{main}', 'pdo.query'), []),
         ]);
-        $page = (new FilePage())->render(new ReportSite($catalog), 'src/a.php');
+        $page = (new FilePage())->render(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'src/a.php');
 
         self::assertStringContainsString('<h1><code>src/a.php</code><span class="count">2 statements</span></h1>', $page);
         self::assertStringContainsString('2 statements issued from 2 functions in this file.', $page);
@@ -89,7 +89,7 @@ final class FilePageTest extends TestCase
 
         self::assertSame(
             '<h2 id="tables">Tables</h2><div class="chips"><a class="chip chip-ghost" href="../tables/users.html">users<span class="facet-count">1</span></a></div>',
-            (new FilePage())->tables(new ReportSite(new Catalog([$entry])), [$entry]),
+            (new FilePage())->tables(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), [$entry]),
         );
     }
 
@@ -106,7 +106,7 @@ final class FilePageTest extends TestCase
     public function testSectionsLeadFromAMethodToItsClass(): void
     {
         $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 9, 'App\\R::find', 'pdo.query'), []);
-        $site = new ReportSite(new Catalog([$entry]));
+        $site = new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertStringStartsWith(
             '<section class="group" id="fn-app-r-find"><h3><a class="mono" href="../classes/app-r.html">R::find</a><span class="count">1</span><span class="muted">line 9</span>',
@@ -118,7 +118,7 @@ final class FilePageTest extends TestCase
     {
         $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 9, '{main}', 'pdo.query'), []);
 
-        self::assertSame([['Tables', 'tables'], ['top-level code', 'fn-main']], (new FilePage())->anchors(new ReportSite(new Catalog([$entry])), [$entry]));
+        self::assertSame([['Tables', 'tables'], ['top-level code', 'fn-main']], (new FilePage())->anchors(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), [$entry]));
     }
 
 
@@ -135,7 +135,7 @@ final class FilePageTest extends TestCase
                 ['On this page', [['Tables', '#tables', null, false], ['f', '#fn-f', null, false]], null],
                 ['Files in src/', [['a.php', 'files/src-a-php.html', 1, true], ['b.php', 'files/src-b-php.html', 1, false]], 'files.html'],
             ],
-            (new FilePage())->context(new ReportSite($catalog), 'src/a.php'),
+            (new FilePage())->context(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'src/a.php'),
         );
     }
 
@@ -147,7 +147,7 @@ final class FilePageTest extends TestCase
 
         self::assertSame(
             ['Files in (root)', [['index.php', 'files/index-php.html', 1, true]], 'files.html'],
-            (new FilePage())->context(new ReportSite($catalog), 'index.php')[1],
+            (new FilePage())->context(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'index.php')[1],
         );
     }
 
@@ -193,7 +193,7 @@ final class FilePageTest extends TestCase
             ]),
         ];
         $catalog = new Catalog($entries, [new AnalysisProblem('src/broken.php', 'broken')]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<h1><code>lib/c.php</code><span class="count">2 statements</span></h1><p class="lede">2 statements issued from 2 functions in this file.</p>'
@@ -224,7 +224,7 @@ final class FilePageTest extends TestCase
 
     public function testProblemsExplainsWhyThisFileCouldNotBeParsed(): void
     {
-        $site = new ReportSite(new Catalog([], [new AnalysisProblem('broken.php', 'Unexpected <token>'), new AnalysisProblem('other.php', 'Other problem'), new AnalysisProblem('broken.php', 'Another error')]));
+        $site = new ReportSite(new Catalog([], [new AnalysisProblem('broken.php', 'Unexpected <token>'), new AnalysisProblem('other.php', 'Other problem'), new AnalysisProblem('broken.php', 'Another error')]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
         $page = new FilePage();
 
         self::assertSame(
@@ -238,7 +238,7 @@ final class FilePageTest extends TestCase
 
     public function testRenderShowsTheParseErrorBeforeTheFileContents(): void
     {
-        $site = new ReportSite(new Catalog([], [new AnalysisProblem('src/broken.php', 'Unexpected <token>')], ['src/broken.php' => '<?php function {']));
+        $site = new ReportSite(new Catalog([], [new AnalysisProblem('src/broken.php', 'Unexpected <token>')], ['src/broken.php' => '<?php function {']), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
         $page = (new FilePage())->render($site, 'src/broken.php');
 
         self::assertStringContainsString('in this file.</p><div class="notice tone-warn"><p>This file could not be parsed.</p>', $page);
@@ -250,7 +250,7 @@ final class FilePageTest extends TestCase
 
     public function testContextLinksToTheSourceEvenWhenParsingFailed(): void
     {
-        $site = new ReportSite(new Catalog([], [new AnalysisProblem('src/broken.php', 'Syntax error')], ['src/broken.php' => '<?php function {']));
+        $site = new ReportSite(new Catalog([], [new AnalysisProblem('src/broken.php', 'Syntax error')], ['src/broken.php' => '<?php function {']), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             ['On this page', [['Tables', '#tables', null, false], ['Source code', '#source', null, false]], null],

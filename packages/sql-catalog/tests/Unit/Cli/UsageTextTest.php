@@ -8,15 +8,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Cli\UsageText;
-use SqlCatalog\Extension\DoctrineExtension;
-use SqlCatalog\Extension\ExtensionRegistry;
-use SqlCatalog\Extension\LaravelExtension;
-use SqlCatalog\Extension\MysqliExtension;
-use SqlCatalog\Extension\PdoExtension;
-use SqlCatalog\Reporter\HtmlReporter;
-use SqlCatalog\Reporter\JsonReporter;
-use SqlCatalog\Reporter\ReporterRegistry;
-use SqlCatalog\Reporter\TextReporter;
+use SqlCatalog\Extension\Doctrine\DoctrineExtension;
+use SqlCatalog\Extension\Mysqli\MysqliExtension;
+use SqlCatalog\Extension\Pdo\PdoExtension;
+use SqlCatalog\Facade\ExtensionRegistry;
+use SqlCatalog\Facade\HtmlReporter;
+use SqlCatalog\Facade\LaravelExtension;
+use SqlCatalog\Facade\ReporterRegistry;
+use SqlCatalog\Reporter\Json\JsonReporter;
+use SqlCatalog\Reporter\Text\TextReporter;
 
 #[CoversClass(UsageText::class)]
 #[UsesClass(DoctrineExtension::class)]
@@ -28,7 +28,7 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(JsonReporter::class)]
 #[UsesClass(ReporterRegistry::class)]
 #[UsesClass(TextReporter::class)]
-#[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
+#[UsesClass(\SqlCatalog\Extension\WordPress\WordPressExtension::class)]
 final class UsageTextTest extends TestCase
 {
     public function testHelpDocumentsEveryOptionTheParserTakes(): void

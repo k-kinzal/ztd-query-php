@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlCatalog\Extension\Laravel;
 
 use PhpParser\Node\Expr;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Extension\Model\CallContext;
-use SqlCatalog\Extension\Model\ModelContext;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Extension\Model\CallContext;
+use SqlCatalog\Core\Extension\Model\ModelContext;
 
 /**
  * Registers Laravel call semantics through the framework-neutral model API.
@@ -22,9 +22,9 @@ final class CallModel
     /**
      * Creates fresh allocation state for this analysis and uses its shared callback runner.
      */
-    public function __construct(private readonly ModelContext $context)
+    public function __construct(private readonly ModelContext $context, private readonly \SqlCatalog\Core\Sql\Dialects $dialects = new \SqlCatalog\Core\Sql\Dialects())
     {
-        $this->builders = new BuilderCalls($context->index, $context->dialect, new CallbackModel($context->index, $context->callbacks));
+        $this->builders = new BuilderCalls($context->index, $context->dialect, new CallbackModel($context->index, $context->callbacks, $this->dialects), $this->dialects);
     }
 
     /**

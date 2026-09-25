@@ -7,27 +7,36 @@ namespace Tests\Unit\Extension\Laravel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Analysis\Derivation\FreeNames;
-use SqlCatalog\Analysis\Derivation\ModifiedNames;
-use SqlCatalog\Analysis\Derivation\Objects\CallbackEffects;
-use SqlCatalog\Analysis\Derivation\Objects\ObjectEffects;
-use SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer;
-use SqlCatalog\Analysis\Derivation\SliceExecutor;
-use SqlCatalog\Analysis\Derivation\Solution;
-use SqlCatalog\Analysis\Derivation\SourceTree;
-use SqlCatalog\Analysis\EvaluationBudget;
-use SqlCatalog\Analysis\FunctionScope;
-use SqlCatalog\Analysis\Interpreter;
-use SqlCatalog\Analysis\SinkFinder;
-use SqlCatalog\Evaluation\ArrayEntry;
-use SqlCatalog\Evaluation\ArrayTerm;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\Environment;
-use SqlCatalog\Evaluation\LiteralTerm;
-use SqlCatalog\Evaluation\ObjectMemory;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Evaluation\OpaqueTerm;
-use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Core\Analysis\Derivation\FreeNames;
+use SqlCatalog\Core\Analysis\Derivation\ModifiedNames;
+use SqlCatalog\Core\Analysis\Derivation\Objects\CallbackEffects;
+use SqlCatalog\Core\Analysis\Derivation\Objects\ObjectEffects;
+use SqlCatalog\Core\Analysis\Derivation\Slice\BackwardSlicer;
+use SqlCatalog\Core\Analysis\Derivation\SliceExecutor;
+use SqlCatalog\Core\Analysis\Derivation\Solution;
+use SqlCatalog\Core\Analysis\Derivation\SourceTree;
+use SqlCatalog\Core\Analysis\EvaluationBudget;
+use SqlCatalog\Core\Analysis\FunctionScope;
+use SqlCatalog\Core\Analysis\Interpreter;
+use SqlCatalog\Core\Analysis\SinkFinder;
+use SqlCatalog\Core\Evaluation\ArrayEntry;
+use SqlCatalog\Core\Evaluation\ArrayTerm;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\Environment;
+use SqlCatalog\Core\Evaluation\LiteralTerm;
+use SqlCatalog\Core\Evaluation\ObjectMemory;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Evaluation\OpaqueTerm;
+use SqlCatalog\Core\Evaluation\PatternTerm;
+use SqlCatalog\Core\Php\ParsedFile;
+use SqlCatalog\Core\Php\ProgramIndex;
+use SqlCatalog\Core\Php\ProgramIndexBuilder;
+use SqlCatalog\Core\Php\SourceParser;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\TextGeneralization;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Extension\Laravel\BuilderCalls;
 use SqlCatalog\Extension\Laravel\BuilderQueries;
 use SqlCatalog\Extension\Laravel\Clauses;
@@ -36,16 +45,7 @@ use SqlCatalog\Extension\Laravel\Predicates;
 use SqlCatalog\Extension\Laravel\QueryState;
 use SqlCatalog\Extension\Laravel\SelectCompiler;
 use SqlCatalog\Extension\Laravel\WriteCompiler;
-use SqlCatalog\Extension\LaravelExtension;
-use SqlCatalog\Php\ParsedFile;
-use SqlCatalog\Php\ProgramIndex;
-use SqlCatalog\Php\ProgramIndexBuilder;
-use SqlCatalog\Php\SourceParser;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\TextGeneralization;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
+use SqlCatalog\Facade\LaravelExtension;
 
 #[CoversClass(BuilderQueries::class)]
 #[UsesClass(Domain::class)]
@@ -86,38 +86,38 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(Grammar::class)]
 #[UsesClass(Predicates::class)]
 #[UsesClass(Clauses::class)]
-#[UsesClass(\SqlCatalog\Analysis\CallEvaluator::class)]
-#[UsesClass(\SqlCatalog\Analysis\ConstantReader::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Binding::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\CalleeReturns::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\CallerIndex::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Callers::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Deriver::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\EntryBinder::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\PropertyWrites::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Arrival::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\AssignmentSteps::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\LoopPasses::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Pending::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\SliceStep::class)]
-#[UsesClass(\SqlCatalog\Analysis\ExpressionEvaluator::class)]
-#[UsesClass(\SqlCatalog\Analysis\ExternalInput::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\CallEvaluator::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ConstantReader::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Binding::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\CalleeReturns::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\CallerIndex::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Callers::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Deriver::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\EntryBinder::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\PropertyWrites::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\Arrival::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\AssignmentSteps::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\LoopPasses::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\Pending::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Derivation\Slice\SliceStep::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ExpressionEvaluator::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ExternalInput::class)]
 #[UsesClass(\SqlCatalog\Extension\Laravel\CallbackModel::class)]
-#[UsesClass(\SqlCatalog\Analysis\ReferenceEvaluator::class)]
-#[UsesClass(\SqlCatalog\Analysis\SinkMatcher::class)]
-#[UsesClass(\SqlCatalog\Extension\SinkSpec::class)]
-#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
-#[UsesClass(\SqlCatalog\Php\NodeText::class)]
-#[UsesClass(\SqlCatalog\Analysis\Model\ModelQueries::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\ReferenceEvaluator::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\SinkMatcher::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\SinkSpec::class)]
+#[UsesClass(\SqlCatalog\Core\Php\DeclaredGlobals::class)]
+#[UsesClass(\SqlCatalog\Core\Php\NodeText::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Model\ModelQueries::class)]
 #[UsesClass(\SqlCatalog\Extension\Laravel\CallModel::class)]
-#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
-#[UsesClass(\SqlCatalog\Extension\Model\ModelContext::class)]
-#[UsesClass(\SqlCatalog\Extension\Model\ModelSet::class)]
-#[UsesClass(\SqlCatalog\Extension\Model\QueryOutput::class)]
-#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
-#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
-#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
-#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\Model\CallContext::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\Model\ModelContext::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\Model\ModelSet::class)]
+#[UsesClass(\SqlCatalog\Core\Extension\Model\QueryOutput::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Core\Analysis\FunctionModel\Registry::class)]
 final class BuilderQueriesTest extends TestCase
 {
     public function testStatementsCompilesReceiverAndBindingsDerivedFromTheSameBranch(): void
@@ -126,7 +126,7 @@ final class BuilderQueriesTest extends TestCase
         $index = (new ProgramIndexBuilder())->build([$file]);
         $calls = (new \PhpParser\NodeFinder())->findInstanceOf($file->statements, \PhpParser\Node\Expr\MethodCall::class);
         $deriver = (new Interpreter($index, (new LaravelExtension())->sinks(), dialect: 'sqlite', modelProviders: [new LaravelExtension()]))->deriverFor([$file]);
-        $solutions = (new \SqlCatalog\Analysis\Model\ModelQueries())->solve($calls[0], new BuilderQueries($index), $deriver);
+        $solutions = (new \SqlCatalog\Core\Analysis\Model\ModelQueries())->solve($calls[0], new BuilderQueries($index, dialects: \SqlCatalog\Facade\Builtins::dialects()), $deriver);
         self::assertCount(1, $solutions);
         self::assertSame('select * from "users" where "id" = ?', $solutions[0]->values[0]->soleLiteral()?->value);
         self::assertSame(7, $solutions[0]->values[1]->soleArray()?->positional()[0]->soleLiteral()?->value);
@@ -135,7 +135,7 @@ final class BuilderQueriesTest extends TestCase
     public function testCompileAppliesSoftDeletesOnlyAtExecution(): void
     {
         $state = new QueryState(['dialect' => Domain::literal('sqlite'), 'table' => Domain::literal('users'), 'softDeletes' => Domain::literal(true), 'deletedColumn' => Domain::literal('deleted_at')]);
-        $queries = new BuilderQueries(new ProgramIndex());
+        $queries = new BuilderQueries(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         self::assertSame('select * from "users" where "users"."deleted_at" is null', $queries->compile($state, 'get', [])[0]->soleLiteral()?->value);
         self::assertSame('select * from "users"', $queries->compile($state->with('trashed', Domain::literal('withtrashed')), 'get', [])[0]->soleLiteral()?->value);
         self::assertSame('select * from "users" where "users"."deleted_at" is not null', $queries->compile($state->with('trashed', Domain::literal('onlytrashed')), 'get', [])[0]->soleLiteral()?->value);
@@ -145,7 +145,7 @@ final class BuilderQueriesTest extends TestCase
 
     public function testCompileKeepsUnknownEffectsAndMissingDialectsOpen(): void
     {
-        $queries = new BuilderQueries(new ProgramIndex());
+        $queries = new BuilderQueries(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         self::assertFalse($queries->compile(new QueryState(['table' => Domain::literal('users')]), 'get', [])[0]->isExact());
         self::assertFalse($queries->compile((new QueryState())->reject('macro'), 'get', [])[0]->isExact());
     }
@@ -153,7 +153,7 @@ final class BuilderQueriesTest extends TestCase
     public function testCompileGroupsDisjunctionsBeforeApplyingSoftDeletes(): void
     {
         $state = new QueryState(['dialect' => Domain::literal('sqlite'), 'table' => Domain::literal('users'), 'softDeletes' => Domain::literal(true), 'deletedColumn' => Domain::literal('deleted_at'), 'where' => QueryState::list([Domain::literal('"a" = ?'), Domain::literal('or "b" = ?')]), 'whereBindings' => QueryState::list([Domain::literal(1), Domain::literal(2)])]);
-        [$sql, $bindings] = (new BuilderQueries(new ProgramIndex()))->compile($state, 'get', []);
+        [$sql, $bindings] = (new BuilderQueries(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects()))->compile($state, 'get', []);
         self::assertSame('select * from "users" where ("a" = ? or "b" = ?) and "users"."deleted_at" is null', $sql->soleLiteral()?->value);
         self::assertCount(2, $bindings->soleArray()->entries ?? []);
     }
@@ -161,17 +161,17 @@ final class BuilderQueriesTest extends TestCase
     {
         $raw = Domain::of(new ObjectTerm('Illuminate\Database\Query\Expression', state: (new QueryState(['sql' => Domain::literal('users')]))->array()));
         $state = new QueryState(['table' => $raw, 'columns' => QueryState::list([Domain::literal('*')]), 'offset' => Domain::literal(1)]);
-        self::assertFalse((new BuilderQueries(new ProgramIndex()))->compile($state, 'get', [])[0]->isExact());
+        self::assertFalse((new BuilderQueries(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects()))->compile($state, 'get', [])[0]->isExact());
     }
 
     public function testInputsUsesTheReceiverOrModelFactoryBeforeTheArguments(): void
     {
-        $queries = new BuilderQueries(new ProgramIndex());
+        $queries = new BuilderQueries(new ProgramIndex(), dialects: \SqlCatalog\Facade\Builtins::dialects());
         $receiver = new \PhpParser\Node\Expr\Variable('builder');
         $argument = new \PhpParser\Node\Scalar\Int_(7);
         self::assertSame([$receiver, $argument], $queries->inputs(new \PhpParser\Node\Expr\MethodCall($receiver, 'find', [new \PhpParser\Node\Arg($argument)])));
         $inputs = $queries->inputs(new \PhpParser\Node\Expr\StaticCall(new \PhpParser\Node\Name('User'), 'get'));
-        self::assertSame('User::query()', (new \SqlCatalog\Php\NodeText())->render($inputs[0]));
+        self::assertSame('User::query()', (new \SqlCatalog\Core\Php\NodeText())->render($inputs[0]));
         self::assertSame([], $queries->inputs(new \PhpParser\Node\Expr\FuncCall(new \PhpParser\Node\Name('other'))));
     }
 

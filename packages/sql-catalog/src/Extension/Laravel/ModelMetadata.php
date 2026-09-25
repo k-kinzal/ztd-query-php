@@ -7,8 +7,8 @@ namespace SqlCatalog\Extension\Laravel;
 use PhpParser\ConstExprEvaluationException;
 use PhpParser\ConstExprEvaluator;
 use PhpParser\Node\Expr;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Php\ProgramIndex;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Php\ProgramIndex;
 
 /**
  * Reads source-declared model metadata without loading model or framework code.
@@ -98,7 +98,7 @@ final class ModelMetadata
     /**
      * Rejects unresolved defaults and implicit additional queries.
      */
-    public function guardDefaults(\SqlCatalog\Php\ClassShape $shape, QueryState $state): QueryState
+    public function guardDefaults(\SqlCatalog\Core\Php\ClassShape $shape, QueryState $state): QueryState
     {
         foreach (['table', 'primaryKey', 'connection', 'timestamps', 'with', 'withCount'] as $property) {
             $expression = $shape->propertyDefaults[$property] ?? null;

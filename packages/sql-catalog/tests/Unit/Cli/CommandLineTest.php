@@ -7,13 +7,13 @@ namespace Tests\Unit\Cli;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\Severity;
 use SqlCatalog\Cli\CommandLine;
-use SqlCatalog\Filter\CatalogFilter;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Filter\CatalogFilter;
 
 #[CoversClass(CommandLine::class)]
 #[UsesClass(CatalogFilter::class)]
-#[UsesClass(\SqlCatalog\Configuration::class)]
+#[UsesClass(\SqlCatalog\Facade\Configuration::class)]
 final class CommandLineTest extends TestCase
 {
     public function testIsQueryWhenTheCommandWasAskedForInformation(): void

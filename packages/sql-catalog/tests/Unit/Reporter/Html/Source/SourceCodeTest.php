@@ -8,18 +8,18 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\TextPattern;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
 use SqlCatalog\Reporter\Html\Source\SourceCode;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\TextPattern;
 
 #[CoversClass(SourceCode::class)]
 #[UsesClass(CallSite::class)]
@@ -37,7 +37,7 @@ final class SourceCodeTest extends TestCase
     public function testExcerptShowsContextAndLinksToTheHighlightedCallInTheFullFile(): void
     {
         $entry = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('src/a.php', 12, 'f', 'pdo.query'), []);
-        $site = new ReportSite(new Catalog([$entry], [], ['src/a.php' => implode("\n", range(1, 30))]));
+        $site = new ReportSite(new Catalog([$entry], [], ['src/a.php' => implode("\n", range(1, 30))]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
         $html = (new SourceCode())->excerpt($site, $entry);
 
         self::assertStringStartsWith(
@@ -59,7 +59,7 @@ final class SourceCodeTest extends TestCase
     {
         $source = "<?php\n\t\$db->query(\n\t\t\$sql\n\t);";
         $entry = new CatalogEntry('a', StatementKind::Unknown, TextPattern::fromText(''), [], [], new CallSite('a.php', $line, 'f', 'pdo.query'), []);
-        $html = (new SourceCode())->excerpt(new ReportSite(new Catalog([$entry], [], ['a.php' => $source])), $entry);
+        $html = (new SourceCode())->excerpt(new ReportSite(new Catalog([$entry], [], ['a.php' => $source]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry);
         self::assertStringContainsString('id="L1"', $html);
         self::assertStringContainsString('id="L4"', $html);
         self::assertStringNotContainsString('id="L0"', $html);
@@ -79,14 +79,14 @@ final class SourceCodeTest extends TestCase
     public function testExcerptOmitsUnavailableSourceWithoutReadingTheFilesystem(): void
     {
         $entry = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite(__FILE__, 1, 'f', 'pdo.query'), []);
-        self::assertSame('', (new SourceCode())->excerpt(new ReportSite(new Catalog([$entry])), $entry));
+        self::assertSame('', (new SourceCode())->excerpt(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), $entry));
     }
 
     public function testFileIncludesAllLinesAndMarksEveryCall(): void
     {
         $first = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 2, 'f', 'pdo.query'), []);
         $last = new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 30, 'f', 'pdo.query'), []);
-        $site = new ReportSite(new Catalog([$first, $last], [], ['a.php' => implode("\n", range(1, 30))]));
+        $site = new ReportSite(new Catalog([$first, $last], [], ['a.php' => implode("\n", range(1, 30))]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
         $html = (new SourceCode())->file($site, 'a.php');
 
         self::assertStringStartsWith(
