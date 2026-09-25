@@ -8,6 +8,9 @@ use Symfony\Component\Process\Process;
 
 /**
  * Runs the package's bin/requirements in a working directory, as a user would.
+ *
+ * SHELL_VERBOSITY is removed from the child's environment: an in-process console run with
+ * --quiet leaves it set to -1, which would silence every later command.
  */
 final class CommandLine
 {
@@ -21,7 +24,7 @@ final class CommandLine
      */
     public static function run(array $arguments, string $directory): Process
     {
-        $process = new Process([PHP_BINARY, dirname(__DIR__, 2) . '/bin/requirements', ...$arguments], $directory);
+        $process = new Process([PHP_BINARY, dirname(__DIR__, 2) . '/bin/requirements', ...$arguments], $directory, ['SHELL_VERBOSITY' => false]);
         $process->run();
         return $process;
     }
