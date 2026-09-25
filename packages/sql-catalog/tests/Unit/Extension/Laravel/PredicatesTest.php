@@ -108,6 +108,8 @@ final class PredicatesTest extends TestCase
         self::assertSame('`id` not between ? and ?', $state->items('where')[0]->soleLiteral()?->value);
         self::assertSame([2, 9], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $state->items('whereBindings')));
         self::assertFalse($p->between(new QueryState(), [], 'and', false)->get('problem')->isExact());
+        self::assertSame([1, 2], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $p->between(new QueryState(), [Domain::literal('id'), QueryState::list([Domain::literal(1), Domain::literal(2), Domain::literal(3)])], 'and', false)->items('whereBindings')));
+        self::assertFalse($p->between(new QueryState(), [Domain::literal('id'), QueryState::list([Domain::literal(1)])], 'and', false)->get('problem')->isExact());
     }
 
     public function testColumnDoesNotTurnTheRightIdentifierIntoABinding(): void
@@ -211,7 +213,7 @@ final class PredicatesTest extends TestCase
         $entries = new ArrayTerm([new ArrayEntry(Domain::literal('a'), Domain::literal(1)), new ArrayEntry(Domain::literal('b'), Domain::literal(null)), new ArrayEntry(null, QueryState::list([Domain::literal('c'), Domain::literal('>'), Domain::literal(2)]))]);
         $state = $p->basic(new QueryState(), [Domain::literal('x'), Domain::literal(0)], 'and');
         $state = $p->group($state, $entries, 'or');
-        self::assertSame('or ("a" = ? or "b" is null and "c" > ?)', $state->items('where')[1]->soleLiteral()?->value);
+        self::assertSame('or ("a" = ? or "b" is null or "c" > ?)', $state->items('where')[1]->soleLiteral()?->value);
         self::assertSame([0, 1, 2], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $state->items('whereBindings')));
         self::assertSame($state, $p->group($state, new ArrayTerm([]), 'and'));
         self::assertFalse($p->group(new QueryState(), new ArrayTerm([], false), 'and')->get('problem')->isExact());
@@ -223,8 +225,26 @@ final class PredicatesTest extends TestCase
         $p = new Predicates(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         self::assertSame('"a" = ?', $p->entry(new QueryState(), new ArrayEntry(Domain::literal('a'), Domain::literal(1)), 'and')->items('where')[0]->soleLiteral()?->value);
         self::assertSame('"a" < ?', $p->entry(new QueryState(), new ArrayEntry(Domain::literal(0), QueryState::list([Domain::literal('a'), Domain::literal('<'), Domain::literal(1)])), 'and')->items('where')[0]->soleLiteral()?->value);
+        $row = QueryState::list([Domain::literal('a'), Domain::literal('<'), Domain::literal(1)]);
+        self::assertSame('or "a" < ?', $p->entry($p->basic(new QueryState(), [Domain::literal('x'), Domain::literal(0)], 'and'), new ArrayEntry(Domain::literal(0), $row), 'or')->items('where')[1]->soleLiteral()?->value);
+        self::assertFalse($p->entry(new QueryState(), new ArrayEntry(null, QueryState::list([Domain::literal('a'), Domain::literal('<'), Domain::literal(1), Domain::literal('or')])), 'and')->get('problem')->isExact());
         self::assertFalse($p->entry(new QueryState(), new ArrayEntry(null, Domain::literal('a')), 'and')->get('problem')->isExact());
         self::assertFalse($p->entry(new QueryState(), new ArrayEntry(null, Domain::of(new ArrayTerm([], false))), 'and')->get('problem')->isExact());
         self::assertFalse($p->entry(new QueryState(), new ArrayEntry(Domain::unknown(), Domain::literal(1)), 'and')->get('problem')->isExact());
+    }
+
+    public function testComparisonBindsNullLiterallyForClausesWithoutNullNormalization(): void
+    {
+        $p = new Predicates(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
+        $comparison = $p->comparison([Domain::literal('total'), Domain::literal(null)]);
+        self::assertNotNull($comparison);
+        self::assertSame('"total" = ?', $comparison[0]->soleLiteral()?->value);
+        self::assertNull($comparison[1][0]->soleLiteral()?->value);
+        $like = $p->comparison([Domain::literal('a'), Domain::literal('LIKE'), Domain::literal('x%')]);
+        self::assertNotNull($like);
+        self::assertSame('"a" LIKE ?', $like[0]->soleLiteral()?->value);
+        self::assertNull($p->comparison([Domain::literal('a')]));
+        self::assertNull($p->comparison([Domain::literal('a'), Domain::literal('between'), Domain::literal(1)]));
+        self::assertNull($p->comparison([Domain::literal('a'), QueryState::list([])]));
     }
 }

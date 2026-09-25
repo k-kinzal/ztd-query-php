@@ -97,21 +97,37 @@ final class Predicates
         }
         [$column, $operator, $value] = count($arguments) === 2 ? [$arguments[0], Domain::literal('='), $arguments[1]] : $arguments;
         $op = $operator->soleLiteral()?->value;
-        if (!is_string($op) || !in_array(strtolower($op), self::OPERATORS, true)) {
-            return $state->reject('Laravel comparison operator is unresolved');
-        }
         $literal = $value->soleLiteral();
-        if ($literal !== null && $literal->value === null) {
+        if (is_string($op) && $literal !== null && $literal->value === null) {
             return in_array($op, ['=', '<>', '!='], true)
                 ? $this->nulls($state, [$column], $boolean, $op !== '=')
                 : $state->reject('Invalid Laravel null comparison');
         }
-        if ($value->soleArray() !== null) {
-            return $state->reject('Array-valued Laravel comparison is not modelled');
+        $comparison = $this->comparison($arguments);
+        if ($comparison === null) {
+            return $state->reject('Laravel comparison operator or value is not modelled');
+        }
+
+        return $this->add($state, $comparison[0], $comparison[1], $boolean);
+    }
+
+    /**
+     * @param list<Domain> $arguments
+     * @return array{Domain, list<Domain>}|null A column, operator and bound value, or null for an unmodelled form.
+     */
+    public function comparison(array $arguments): ?array
+    {
+        if (!in_array(count($arguments), [2, 3], true)) {
+            return null;
+        }
+        [$column, $operator, $value] = count($arguments) === 2 ? [$arguments[0], Domain::literal('='), $arguments[1]] : $arguments;
+        $op = $operator->soleLiteral()?->value;
+        if (!is_string($op) || !in_array(strtolower($op), self::OPERATORS, true) || $value->soleArray() !== null) {
+            return null;
         }
         $sql = $this->grammar->wrap($column)->concat(Domain::literal(' ' . $op . ' '))->concat($this->grammar->parameter($value));
 
-        return $this->add($state, $sql, $this->grammar->bindings([$value]), $boolean);
+        return [$sql, $this->grammar->bindings([$value])];
     }
 
     /**
@@ -147,11 +163,11 @@ final class Predicates
             return $this->basic($inner, [Domain::literal($key), Domain::literal('='), $entry->value], $boolean);
         }
         $row = $entry->value->soleArray();
-        if ($row === null || !$row->complete || $row->named() !== [] || ($entry->key !== null && $key === null)) {
+        if ($row === null || !$row->complete || $row->named() !== [] || count($row->entries) > 3 || ($entry->key !== null && $key === null)) {
             return $inner->reject('Laravel where array entry is not modelled');
         }
 
-        return $this->basic($inner, $row->positional(), 'and');
+        return $this->basic($inner, array_merge($row->positional(), [Domain::literal($boolean)]), $boolean);
     }
 
     /**
@@ -210,7 +226,7 @@ final class Predicates
         $values = $arguments[1]->soleArray();
         $items = $values === null || !$values->complete
             ? [$this->grammar->element($arguments[1]), $this->grammar->element($arguments[1])]
-            : array_map(static fn (ArrayEntry $entry): Domain => $entry->value, $values->entries);
+            : array_slice(array_map(static fn (ArrayEntry $entry): Domain => $entry->value, $values->entries), 0, 2);
         if (count($items) !== 2) {
             return $state->reject('Laravel BETWEEN bounds are incomplete');
         }

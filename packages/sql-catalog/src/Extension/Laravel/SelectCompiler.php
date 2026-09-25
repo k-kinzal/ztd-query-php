@@ -43,7 +43,7 @@ final class SelectCompiler
             $state = $this->key($state, $arguments[0] ?? Domain::unknown());
             $arguments = array_slice($arguments, 1);
         }
-        if (in_array($method, ['chunk', 'each', 'paginate', 'simplepaginate'], true)) {
+        if (in_array($method, ['chunk', 'each', 'lazy', 'paginate', 'simplepaginate'], true)) {
             $state = $this->page($state, $method, $arguments);
             $arguments = in_array($method, ['paginate', 'simplepaginate'], true) ? array_slice($arguments, 1, 1) : [];
         }
@@ -71,11 +71,24 @@ final class SelectCompiler
     public function key(QueryState $state, Domain $id): QueryState
     {
         $predicates = new Predicates($this->grammar);
-        if ($id->soleArray() !== null || $id->type()->names === ['array']) {
+        $list = $id->soleArray() !== null || $id->type()->names === ['array'];
+        if (!$list || $state->string('model') === null) {
+            return $predicates->basic($state, [$state->get('key'), $id], 'and')->with('limit', Domain::literal(1));
+        }
+        $values = $id->soleArray();
+        if ($values === null || !$values->complete || !in_array($state->string('keyType') ?? 'int', ['int', 'integer'], true)) {
             return $predicates->in($state, [$state->get('key'), $id], 'and', false);
         }
+        $parts = [];
+        foreach ($values->entries as $entry) {
+            $literal = $entry->value->soleLiteral();
+            $parts[] = $literal === null ? $entry->value : Domain::literal((string) (int) $literal->value);
+        }
+        if ($parts === []) {
+            return $predicates->add($state, Domain::literal('0 = 1'), []);
+        }
 
-        return $predicates->basic($state, [$state->get('key'), $id], 'and')->with('limit', Domain::literal(1));
+        return $predicates->add($state, $this->grammar->wrap($state->get('key'))->concat(Domain::literal(' in ('))->concat($this->grammar->join($parts))->concat(Domain::literal(')')), []);
     }
 
     /**
@@ -83,15 +96,20 @@ final class SelectCompiler
      */
     public function page(QueryState $state, string $method, array $arguments): QueryState
     {
-        $size = $arguments[0] ?? Domain::literal(15);
+        $looped = in_array($method, ['chunk', 'each', 'lazy'], true);
+        $default = in_array($method, ['lazy', 'each'], true) ? Domain::literal(1000) : ($state->fields['perPage'] ?? Domain::literal(15));
+        $size = $arguments[$method === 'each' ? 1 : 0] ?? $default;
         $literal = $size->soleLiteral();
+        if ($literal !== null && $literal->value === null) {
+            $size = $default;
+            $literal = $size->soleLiteral();
+        }
         if ($literal !== null && is_int($literal->value) && $method === 'simplepaginate') {
             $size = Domain::literal($literal->value + 1);
         }
         $state = (new Clauses($this->grammar))->number($state, [$size], 'limit');
-        $origin = in_array($method, ['chunk', 'each'], true) ? Origin::Loop : Origin::External;
 
-        return $state->with('offset', Domain::opaque(TypeShape::of(['int']), $origin, in_array($method, ['chunk', 'each'], true) ? 'Laravel chunk offset' : 'Laravel page offset'));
+        return $state->with('offset', Domain::opaque(TypeShape::of(['int']), $looped ? Origin::Loop : Origin::External, $looped ? 'Laravel chunk offset' : 'Laravel page offset'));
     }
 
     /**
@@ -134,11 +152,9 @@ final class SelectCompiler
             $state = $state->reject('Laravel aggregate overload is not modelled');
         }
         $column = $arguments[0] ?? Domain::literal('*');
-        $aggregate = Domain::literal($method . '(')->concat($this->grammar->wrap($column))->concat(Domain::literal(') as '))->concat($this->grammar->wrap(Domain::literal('aggregate')));
-        if ($state->get('distinct')->soleLiteral()?->value === true) {
-            $state = $state->reject('Distinct Laravel aggregates are not modelled');
-        }
-        $state = $state->with('columns', QueryState::list([$aggregate]))->with('selectBindings', QueryState::list([]));
+        $distinct = $state->get('distinct')->soleLiteral()?->value === true && $column->soleLiteral()?->value !== '*' ? 'distinct ' : '';
+        $aggregate = Domain::literal($method . '(' . $distinct)->concat($this->grammar->wrap($column))->concat(Domain::literal(') as '))->concat($this->grammar->wrap(Domain::literal('aggregate')));
+        $state = $state->with('columns', QueryState::list([$aggregate]))->with('selectBindings', QueryState::list([]))->with('distinct', Domain::literal(null));
         if ($state->items('groups') === []) {
             $state = $state->with('orders', QueryState::list([]))->with('orderBindings', QueryState::list([]));
         }
@@ -151,11 +167,17 @@ final class SelectCompiler
      */
     public function total(QueryState $state): array
     {
-        $state = $state->with('limit', Domain::literal(null))->with('offset', Domain::literal(null))->with('columns', QueryState::list([]));
-        if ($state->items('groups') !== [] || $state->items('having') !== [] || $state->get('distinct')->soleLiteral()?->value === true) {
-            $state = $state->reject('Laravel pagination over grouped or distinct queries is not modelled');
+        $state = $state->with('limit', Domain::literal(null))->with('offset', Domain::literal(null))->with('orders', QueryState::list([]))->with('orderBindings', QueryState::list([]));
+        if ($state->items('groups') === [] && $state->items('having') === []) {
+            return $this->aggregate($state->with('columns', QueryState::list([])), 'count', []);
         }
+        if ($state->items('columns') === []) {
+            $state = (new Clauses($this->grammar))->select($state, [QueryState::list([Domain::literal($state->items('joins') === [] ? '*' : $state->string('table') . '.*')])]);
+        }
+        [$inner, $bindings] = $this->select($state);
+        $sql = Domain::literal('select count(*) as ')->concat($this->grammar->wrap(Domain::literal('aggregate')))->concat(Domain::literal(' from ('))->concat($inner)
+            ->concat(Domain::literal(') as '))->concat($this->grammar->wrap(Domain::literal('aggregate_table')));
 
-        return $this->aggregate($state, 'count', []);
+        return [$sql, $bindings];
     }
 }

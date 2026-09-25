@@ -255,7 +255,9 @@ final class BuilderCallsTest extends TestCase
         self::assertNotNull($with);
         self::assertNotNull($only);
         self::assertSame('withtrashed', QueryState::from($with)->string('trashed'));
-        self::assertSame('onlytrashed', QueryState::from($only)->string('trashed'));
+        self::assertSame([], QueryState::from($with)->items('where'));
+        self::assertSame('withtrashed', QueryState::from($only)->string('trashed'));
+        self::assertFalse(QueryState::from($only)->items('where')[0]->isExact());
         $plain = $calls->allocate(ModelMetadata::BUILDER, new QueryState());
         $unsupported = $calls->mutate($plain, 'withtrashed', [], $env)->soleObject();
         self::assertNotNull($unsupported);
@@ -336,9 +338,11 @@ final class BuilderCallsTest extends TestCase
         $plain = $calls->mutate($calls->allocate(BuilderCalls::QUERY, new QueryState(['dialect' => Domain::literal('sqlite')])), 'with', [Domain::literal('posts')], $env)->soleObject();
         self::assertNotNull($plain);
         self::assertFalse(QueryState::from($plain)->get('problem')->isExact());
-        $restored = $calls->mutate($calls->mutate($query, 'onlytrashed', [], $env)->soleObject() ?? $query, 'withouttrashed', [], $env)->soleObject();
+        $posts = $calls->allocate(BuilderCalls::QUERY, new QueryState(['dialect' => Domain::literal('sqlite'), 'model' => Domain::literal('Post'), 'table' => Domain::literal('posts'), 'softDeletes' => Domain::literal(true), 'deletedColumn' => Domain::literal('deleted_at')]));
+        $restored = $calls->mutate($calls->mutate($posts, 'onlytrashed', [], $env)->soleObject() ?? $posts, 'withouttrashed', [], $env)->soleObject();
         self::assertNotNull($restored);
-        self::assertNull(QueryState::from($restored)->string('trashed'));
+        self::assertSame('withtrashed', QueryState::from($restored)->string('trashed'));
+        self::assertSame(['"posts"."deleted_at" is not null', 'and "posts"."deleted_at" is null'], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, QueryState::from($restored)->items('where')));
     }
 
     public function testExecutionRetainsTheWindowOfSingleRowReadsAndTheirReturnTypes(): void
@@ -351,8 +355,8 @@ final class BuilderCallsTest extends TestCase
         self::assertSame(1, QueryState::from($env->objects()->read(Domain::of($query))->soleObject() ?? $query)->get('limit')->soleLiteral()?->value);
         $calls->execution(Domain::of($query), 'sole', [], $env);
         self::assertSame(2, QueryState::from($env->objects()->read(Domain::of($query))->soleObject() ?? $query)->get('limit')->soleLiteral()->value);
-        self::assertSame('stdClass', $calls->execution(Domain::of($query), 'findorfail', [QueryState::list([Domain::literal(1)])], $env)->type()->display());
-        self::assertSame('"id" in (?)', QueryState::from($env->objects()->read(Domain::of($query))->soleObject() ?? $query)->items('where')[0]->soleLiteral()?->value);
+        self::assertSame('stdClass', $calls->execution(Domain::of($query), 'findorfail', [Domain::literal(1)], $env)->type()->display());
+        self::assertSame('"id" = ?', QueryState::from($env->objects()->read(Domain::of($query))->soleObject() ?? $query)->items('where')[0]->soleLiteral()?->value);
         self::assertSame('Illuminate\\Pagination\\LengthAwarePaginator', $calls->execution(Domain::of($query), 'paginate', [], $env)->type()->display());
         self::assertArrayNotHasKey('problem', QueryState::from($env->objects()->read(Domain::of($query))->soleObject() ?? $query)->fields);
     }

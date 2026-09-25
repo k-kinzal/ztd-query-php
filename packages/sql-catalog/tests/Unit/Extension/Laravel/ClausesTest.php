@@ -111,6 +111,9 @@ final class ClausesTest extends TestCase
         $kept = $c->number(new QueryState(['limit' => Domain::literal(5)]), [Domain::literal(-1)], 'limit');
         self::assertSame(5, $kept->get('limit')->soleLiteral()?->value);
         self::assertNull($c->number($kept, [Domain::literal(null)], 'limit')->get('limit')->soleLiteral()?->value);
+        self::assertSame(0, $c->number(new QueryState(), [Domain::literal(null)], 'offset')->get('offset')->soleLiteral()?->value);
+        self::assertSame(0, $c->number(new QueryState(['offset' => Domain::literal(4)]), [Domain::literal(-3)], 'offset')->get('offset')->soleLiteral()?->value);
+        self::assertSame(3, $c->number(new QueryState(), [Domain::literal('3')], 'offset')->get('offset')->soleLiteral()?->value);
         $open = $c->number(new QueryState(), [Domain::unknown()], 'limit');
         self::assertArrayNotHasKey('problem', $open->fields);
         self::assertFalse($open->get('limit')->isExact());
@@ -187,8 +190,8 @@ final class ClausesTest extends TestCase
         $c = new Clauses(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('mysql')));
         $state = $c->having(new QueryState(), [Domain::literal('total'), Domain::literal('>'), Domain::literal(100)], 'and');
         $state = $c->having($state, [Domain::literal('count'), Domain::literal(null)], 'or');
-        self::assertSame(['`total` > ?', 'or `count` is null'], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $state->items('having')));
-        self::assertSame([100], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $state->items('havingBindings')));
+        self::assertSame(['`total` > ?', 'or `count` = ?'], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $state->items('having')));
+        self::assertSame([100, null], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $state->items('havingBindings')));
         self::assertFalse($c->having(new QueryState(), [], 'and')->get('problem')->isExact());
         self::assertFalse($c->having(new QueryState(), [QueryState::list([Domain::literal(1), Domain::literal(2)])], 'and')->get('problem')->isExact());
     }

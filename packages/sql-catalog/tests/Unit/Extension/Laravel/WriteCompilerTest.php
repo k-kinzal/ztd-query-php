@@ -182,7 +182,7 @@ final class WriteCompilerTest extends TestCase
         $compiler = new WriteCompiler(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
         $state = new QueryState(['table' => Domain::literal('users'), 'key' => Domain::literal('id')]);
         [$sql, $bindings] = $compiler->compile($state, 'delete', [Domain::literal(7)]);
-        self::assertSame('delete from "users" where "id" = ?', $sql->soleLiteral()?->value);
+        self::assertSame('delete from "users" where "users"."id" = ?', $sql->soleLiteral()?->value);
         self::assertSame([7], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $bindings->soleArray()?->positional() ?? []));
         self::assertFalse($compiler->compile($state, 'delete', [QueryState::list([])])[0]->isExact());
     }

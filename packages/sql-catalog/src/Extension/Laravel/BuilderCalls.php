@@ -221,7 +221,11 @@ final class BuilderCalls
         if (in_array($method, self::IDENTITY, true) && $arguments === []) {
             $updated = $state;
         } elseif (in_array($method, ['withtrashed', 'onlytrashed', 'withouttrashed'], true) && $arguments === [] && $state->get('softDeletes')->soleLiteral()?->value === true) {
-            $updated = $state->with('trashed', Domain::literal($method === 'withouttrashed' ? null : $method));
+            $updated = $state->with('trashed', Domain::literal('withtrashed'));
+            if ($method !== 'withtrashed') {
+                $column = $state->get('table')->concat(Domain::literal('.'))->concat($state->get('deletedColumn'));
+                $updated = (new Predicates($grammar))->nulls($updated, [$column], 'and', $method === 'onlytrashed');
+            }
         } elseif (in_array($method, ['with', 'withonly'], true) && $state->string('model') !== null) {
             $updated = $state->with('eager', Domain::literal(true));
         } else {

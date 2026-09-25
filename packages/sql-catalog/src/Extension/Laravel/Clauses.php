@@ -155,17 +155,19 @@ final class Clauses
      */
     public function having(QueryState $state, array $arguments, string $boolean): QueryState
     {
-        $predicate = (new Predicates($this->grammar))->basic(new QueryState(), $arguments, 'and');
-        if (isset($predicate->fields['problem']) || count($predicate->items('where')) !== 1) {
+        $comparison = (new Predicates($this->grammar))->comparison($arguments);
+        if ($comparison === null) {
             return $state->reject('Laravel having overload is not modelled');
         }
         $prefix = $state->items('having') === [] ? '' : $boolean . ' ';
 
-        return $state->append('having', [Domain::literal($prefix)->concat($predicate->items('where')[0])])->append('havingBindings', $predicate->items('whereBindings'));
+        return $state->append('having', [Domain::literal($prefix)->concat($comparison[0])])->append('havingBindings', $comparison[1]);
     }
 
     /**
-     * @param list<Domain> $arguments Sets a limit or offset, leaving an unresolved number open.
+     * @param list<Domain> $arguments Sets a limit or offset the way Laravel normalizes them, leaving an unresolved number open.
+     *
+     * A null or negative limit leaves the window unlimited or unchanged; an offset is clamped to zero.
      */
     public function number(QueryState $state, array $arguments, string $field): QueryState
     {
@@ -178,10 +180,13 @@ final class Clauses
             return $state->with($field, $value);
         }
         if ($literal->value === null) {
-            return $state->with($field, Domain::literal(null));
+            return $state->with($field, $field === 'offset' ? Domain::literal(0) : Domain::literal(null));
         }
         if (!is_int($literal->value) && !is_numeric($literal->value)) {
             return $state->reject('Laravel ' . $field . ' is not a number');
+        }
+        if ($field === 'offset') {
+            return $state->with($field, Domain::literal(max(0, (int) $literal->value)));
         }
 
         return (int) $literal->value >= 0 ? $state->with($field, Domain::literal((int) $literal->value)) : $state;

@@ -31,7 +31,7 @@ final class WriteCompiler
             return $this->unknown('Laravel write modifiers are not modelled');
         }
         if ($method === 'delete' && count($arguments) <= 1) {
-            $state = $arguments === [] ? $state : (new Predicates($this->grammar))->basic($state, [$state->get('key'), $arguments[0]], 'and');
+            $state = $arguments === [] ? $state : (new Predicates($this->grammar))->basic($state, [$state->get('table')->concat(Domain::literal('.id')), $arguments[0]], 'and');
 
             return isset($state->fields['problem']) ? [$state->get('problem'), Domain::unknown()]
                 : [Domain::literal('delete from ')->concat($this->grammar->wrap($state->get('table')))->concat($this->where($state)), QueryState::list($state->items('whereBindings'))];

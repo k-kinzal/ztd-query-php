@@ -108,10 +108,21 @@ complete array shapes. Named or unpacked arguments are currently incomplete.
 | Eloquent scopes | Traditional source-declared `scopeX` methods with supported mutations; standard `SoftDeletes` reads, `withTrashed()`, `onlyTrashed()` and `withoutTrashed()` |
 
 Raw fragments with an unknown binding array bind one open value per `?` in the
-fragment. `paginate` lists both the count and the page statement; the page
-offset is external input, since Laravel reads the page from the request. A
-`chunk` or `each` window is a gap built by the loop. An Eloquent `with` keeps
+fragment. `paginate` lists both the count and the page statement, including the
+subquery Laravel counts through when the query is grouped; the page offset is
+external input, since Laravel reads the page from the request. A `chunk`,
+`each` or `lazy` window is a gap built by the loop. An Eloquent `with` keeps
 the main statement and adds one open statement for the eager load it issues.
+An Eloquent `find` with a list of integer keys writes the keys into the
+statement the way `whereIntegerInRaw` does; a model's `$perPage` and `$keyType`
+declarations are read from the source.
+
+These forms were checked against Illuminate Database 13.33 for the MySQL,
+PostgreSQL and SQLite grammars. Known differences: an Eloquent `find([])`
+issues no query but is reported as `0 = 1`, a negative literal such as
+`limit(-1)` is not folded by the analyzer and stays open, and a `when` or
+`unless` callback is reported with both outcomes since the condition is not
+evaluated.
 
 An explicit `$table` is required when conventional pluralization is not known.
 Local scopes with early returns, replacement builders or boolean regrouping
