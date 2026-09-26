@@ -83,7 +83,7 @@
 <span class="src-line" id="L45"><a class="ln" href="#L45">45</a>            <span class="tok-str">&#039;UUID&#039;</span> =&gt; <span class="tok-var">$faker</span>-&gt;<span class="tok-id">uuid</span>(),</span>
 <span class="src-line" id="L46"><a class="ln" href="#L46">46</a></span>
 <span class="src-line" id="L47"><a class="ln" href="#L47">47</a>            <span class="tok-str">&#039;INET&#039;</span> =&gt; <span class="tok-var">$faker</span>-&gt;<span class="tok-id">ipv4</span>(),</span>
-<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>            <span class="tok-str">&#039;CIDR&#039;</span> =&gt; <span class="tok-var">$faker</span>-&gt;<span class="tok-id">ipv4</span>() . <span class="tok-str">&#039;/24&#039;</span>,</span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>            <span class="tok-str">&#039;CIDR&#039;</span> =&gt; (<span class="tok-kw">new</span> <span class="tok-id">StructuredGenerator</span>())-&gt;<span class="tok-id">generateCidr</span>(<span class="tok-var">$faker</span>),</span>
 <span class="src-line" id="L49"><a class="ln" href="#L49">49</a>            <span class="tok-str">&#039;MACADDR&#039;</span> =&gt; <span class="tok-var">$faker</span>-&gt;<span class="tok-id">macAddress</span>(),</span>
 <span class="src-line" id="L50"><a class="ln" href="#L50">50</a></span>
 <span class="src-line" id="L51"><a class="ln" href="#L51">51</a>            <span class="tok-str">&#039;INTEGER_ARRAY&#039;</span>, <span class="tok-str">&#039;INT_ARRAY&#039;</span> =&gt; (<span class="tok-kw">new</span> <span class="tok-id">StructuredGenerator</span>())-&gt;<span class="tok-id">generateIntArray</span>(<span class="tok-var">$faker</span>),</span>

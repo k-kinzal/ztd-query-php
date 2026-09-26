@@ -61,7 +61,7 @@
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testResolveTypeNormalizesArrayElements</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a>    {</span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a>        <span class="tok-var">$column</span> = [<span class="tok-str">&#039;data_type&#039;</span> =&gt; <span class="tok-str">&#039;ARRAY&#039;</span>, <span class="tok-str">&#039;character_maximum_length&#039;</span> =&gt; <span class="tok-id">null</span>, <span class="tok-str">&#039;numeric_precision&#039;</span> =&gt; <span class="tok-id">null</span>, <span class="tok-str">&#039;numeric_scale&#039;</span> =&gt; <span class="tok-id">null</span>, <span class="tok-str">&#039;udt_name&#039;</span> =&gt; <span class="tok-str">&#039;_int4&#039;</span>];</span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;INT4_ARRAY&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Subject</span>())-&gt;<span class="tok-id">resolveType</span>(<span class="tok-var">$column</span>));</span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;INTEGER_ARRAY&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Subject</span>())-&gt;<span class="tok-id">resolveType</span>(<span class="tok-var">$column</span>));</span>
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a>    }</span>
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a></span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testParseDefaultRemovesCastsAndRecognizesSequences</span>(): <span class="tok-id">void</span></span>
@@ -95,41 +95,51 @@
 <span class="src-line" id="L57"><a class="ln" href="#L57">57</a>            [<span class="tok-str">&#039;numeric&#039;</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;8&#039;</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;numeric&#039;</span>, <span class="tok-str">&#039;NUMERIC(8)&#039;</span>, <span class="tok-str">&#039;NUMERIC&#039;</span>],</span>
 <span class="src-line" id="L58"><a class="ln" href="#L58">58</a>            [<span class="tok-str">&#039;numeric&#039;</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;8&#039;</span>, <span class="tok-str">&#039;0&#039;</span>, <span class="tok-str">&#039;numeric&#039;</span>, <span class="tok-str">&#039;NUMERIC(8)&#039;</span>, <span class="tok-str">&#039;NUMERIC&#039;</span>],</span>
 <span class="src-line" id="L59"><a class="ln" href="#L59">59</a>            [<span class="tok-str">&#039;numeric&#039;</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;8&#039;</span>, <span class="tok-str">&#039;2&#039;</span>, <span class="tok-str">&#039;numeric&#039;</span>, <span class="tok-str">&#039;NUMERIC(8, 2)&#039;</span>, <span class="tok-str">&#039;NUMERIC&#039;</span>],</span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>            [<span class="tok-str">&#039;array&#039;</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;_int4&#039;</span>, <span class="tok-str">&#039;_INT4&#039;</span>, <span class="tok-str">&#039;INT4_ARRAY&#039;</span>],</span>
-<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>            [<span class="tok-str">&#039;user-defined&#039;</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;mood&#039;</span>, <span class="tok-str">&#039;MOOD&#039;</span>, <span class="tok-str">&#039;MOOD&#039;</span>],</span>
-<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>            [<span class="tok-str">&#039;integer&#039;</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;32&#039;</span>, <span class="tok-str">&#039;0&#039;</span>, <span class="tok-str">&#039;int4&#039;</span>, <span class="tok-str">&#039;INTEGER&#039;</span>, <span class="tok-str">&#039;INTEGER&#039;</span>],</span>
-<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>        ];</span>
-<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>    }</span>
-<span class="src-line" id="L65"><a class="ln" href="#L65">65</a></span>
-<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>    #[<span class="tok-id">\PHPUnit\Framework\Attributes\DataProvider</span>(<span class="tok-str">&#039;providerCatalogDefaults&#039;</span>)]</span>
-<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testParseDefaultInterpretsCatalogLiterals</span>(?<span class="tok-id">string</span> <span class="tok-var">$input</span>, <span class="tok-id">int</span>|<span class="tok-id">float</span>|<span class="tok-id">bool</span>|<span class="tok-id">string</span>|<span class="tok-id">null</span> <span class="tok-var">$expected</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>    {</span>
-<span class="src-line" id="L69"><a class="ln" href="#L69">69</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$expected</span>, (<span class="tok-kw">new</span> <span class="tok-id">Subject</span>())-&gt;<span class="tok-id">parseDefault</span>(<span class="tok-var">$input</span>));</span>
-<span class="src-line" id="L70"><a class="ln" href="#L70">70</a>    }</span>
-<span class="src-line" id="L71"><a class="ln" href="#L71">71</a></span>
-<span class="src-line" id="L72"><a class="ln" href="#L72">72</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L73"><a class="ln" href="#L73">73</a><span class="tok-com">     * @return list&lt;array{?string, int|float|bool|string|null}&gt;</span></span>
-<span class="src-line" id="L74"><a class="ln" href="#L74">74</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerCatalogDefaults</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>    {</span>
-<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>        <span class="tok-kw">return</span> [</span>
-<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>            [<span class="tok-id">null</span>, <span class="tok-id">null</span>],</span>
-<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>            [<span class="tok-str">&#039;null&#039;</span>, <span class="tok-id">null</span>],</span>
-<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>            [<span class="tok-str">&#039;null::&#039;</span>, <span class="tok-id">null</span>],</span>
-<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>            [<span class="tok-str">&quot;nextval(&#039;orders_id_seq&#039;::regclass)&quot;</span>, <span class="tok-id">null</span>],</span>
-<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>            [<span class="tok-str">&quot;&#039;line\nvalue&#039;::text&quot;</span>, <span class="tok-str">&quot;line\nvalue&quot;</span>],</span>
-<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>            [<span class="tok-str">&quot;&#039;ready&#039;&quot;</span>, <span class="tok-str">&#039;ready&#039;</span>],</span>
-<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>            [<span class="tok-str">&quot;&#039;line\nvalue&#039;&quot;</span>, <span class="tok-str">&quot;line\nvalue&quot;</span>],</span>
-<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>            [<span class="tok-str">&#039;FALSE&#039;</span>, <span class="tok-id">false</span>],</span>
-<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>            [<span class="tok-str">&#039;TRUE&#039;</span>, <span class="tok-id">true</span>],</span>
-<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>            [<span class="tok-str">&#039;0&#039;</span>, <span class="tok-num">0</span>],</span>
-<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>            [<span class="tok-str">&#039;-12&#039;</span>, -<span class="tok-num">12</span>],</span>
-<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>            [<span class="tok-str">&#039;-0.25&#039;</span>, -<span class="tok-num">0.25</span>],</span>
-<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>            [<span class="tok-str">&#039;CURRENT_TIMESTAMP&#039;</span>, <span class="tok-str">&#039;CURRENT_TIMESTAMP&#039;</span>],</span>
-<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>        ];</span>
-<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>    }</span>
-<span class="src-line" id="L93"><a class="ln" href="#L93">93</a>}</span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>            [<span class="tok-str">&#039;array&#039;</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;_int4&#039;</span>, <span class="tok-str">&#039;INTEGER[]&#039;</span>, <span class="tok-str">&#039;INTEGER_ARRAY&#039;</span>],</span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>            [<span class="tok-str">&#039;array&#039;</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;_text&#039;</span>, <span class="tok-str">&#039;TEXT[]&#039;</span>, <span class="tok-str">&#039;TEXT_ARRAY&#039;</span>],</span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>            [<span class="tok-str">&#039;user-defined&#039;</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;mood&#039;</span>, <span class="tok-str">&#039;MOOD&#039;</span>, <span class="tok-str">&#039;MOOD&#039;</span>],</span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>            [<span class="tok-str">&#039;integer&#039;</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;32&#039;</span>, <span class="tok-str">&#039;0&#039;</span>, <span class="tok-str">&#039;int4&#039;</span>, <span class="tok-str">&#039;INTEGER&#039;</span>, <span class="tok-str">&#039;INTEGER&#039;</span>],</span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>        ];</span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>    }</span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a></span>
+<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>    #[<span class="tok-id">\PHPUnit\Framework\Attributes\DataProvider</span>(<span class="tok-str">&#039;providerCatalogDefaults&#039;</span>)]</span>
+<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testParseDefaultInterpretsCatalogLiterals</span>(?<span class="tok-id">string</span> <span class="tok-var">$input</span>, <span class="tok-id">int</span>|<span class="tok-id">float</span>|<span class="tok-id">bool</span>|<span class="tok-id">string</span>|<span class="tok-id">null</span> <span class="tok-var">$expected</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L69"><a class="ln" href="#L69">69</a>    {</span>
+<span class="src-line" id="L70"><a class="ln" href="#L70">70</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$expected</span>, (<span class="tok-kw">new</span> <span class="tok-id">Subject</span>())-&gt;<span class="tok-id">parseDefault</span>(<span class="tok-var">$input</span>));</span>
+<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>    }</span>
+<span class="src-line" id="L72"><a class="ln" href="#L72">72</a></span>
+<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L74"><a class="ln" href="#L74">74</a><span class="tok-com">     * @return list&lt;array{?string, int|float|bool|string|null}&gt;</span></span>
+<span class="src-line" id="L75"><a class="ln" href="#L75">75</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerCatalogDefaults</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>    {</span>
+<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>        <span class="tok-kw">return</span> [</span>
+<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>            [<span class="tok-id">null</span>, <span class="tok-id">null</span>],</span>
+<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>            [<span class="tok-str">&#039;null&#039;</span>, <span class="tok-id">null</span>],</span>
+<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>            [<span class="tok-str">&#039;null::&#039;</span>, <span class="tok-id">null</span>],</span>
+<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>            [<span class="tok-str">&quot;nextval(&#039;orders_id_seq&#039;::regclass)&quot;</span>, <span class="tok-id">null</span>],</span>
+<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>            [<span class="tok-str">&quot;&#039;line\nvalue&#039;::text&quot;</span>, <span class="tok-str">&quot;line\nvalue&quot;</span>],</span>
+<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>            [<span class="tok-str">&quot;&#039;ready&#039;&quot;</span>, <span class="tok-str">&#039;ready&#039;</span>],</span>
+<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>            [<span class="tok-str">&quot;&#039;line\nvalue&#039;&quot;</span>, <span class="tok-str">&quot;line\nvalue&quot;</span>],</span>
+<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>            [<span class="tok-str">&#039;FALSE&#039;</span>, <span class="tok-id">false</span>],</span>
+<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>            [<span class="tok-str">&#039;TRUE&#039;</span>, <span class="tok-id">true</span>],</span>
+<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>            [<span class="tok-str">&#039;0&#039;</span>, <span class="tok-num">0</span>],</span>
+<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>            [<span class="tok-str">&#039;-12&#039;</span>, -<span class="tok-num">12</span>],</span>
+<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>            [<span class="tok-str">&#039;-0.25&#039;</span>, -<span class="tok-num">0.25</span>],</span>
+<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>            [<span class="tok-str">&#039;CURRENT_TIMESTAMP&#039;</span>, <span class="tok-str">&#039;CURRENT_TIMESTAMP&#039;</span>],</span>
+<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>        ];</span>
+<span class="src-line" id="L93"><a class="ln" href="#L93">93</a>    }</span>
 <span class="src-line" id="L94"><a class="ln" href="#L94">94</a></span>
+<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testElementTypeNamesTheDeclaredType</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>    {</span>
+<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>        <span class="tok-var">$column</span> = <span class="tok-kw">new</span> <span class="tok-id">Subject</span>();</span>
+<span class="src-line" id="L98"><a class="ln" href="#L98">98</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;INTEGER&#039;</span>, <span class="tok-var">$column</span>-&gt;<span class="tok-id">elementType</span>(<span class="tok-str">&#039;_int4&#039;</span>));</span>
+<span class="src-line" id="L99"><a class="ln" href="#L99">99</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;BIGINT&#039;</span>, <span class="tok-var">$column</span>-&gt;<span class="tok-id">elementType</span>(<span class="tok-str">&#039;_int8&#039;</span>));</span>
+<span class="src-line" id="L100"><a class="ln" href="#L100">100</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;TEXT&#039;</span>, <span class="tok-var">$column</span>-&gt;<span class="tok-id">elementType</span>(<span class="tok-str">&#039;_text&#039;</span>));</span>
+<span class="src-line" id="L101"><a class="ln" href="#L101">101</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;UUID&#039;</span>, <span class="tok-var">$column</span>-&gt;<span class="tok-id">elementType</span>(<span class="tok-str">&#039;_uuid&#039;</span>));</span>
+<span class="src-line" id="L102"><a class="ln" href="#L102">102</a>    }</span>
+<span class="src-line" id="L103"><a class="ln" href="#L103">103</a>}</span>
+<span class="src-line" id="L104"><a class="ln" href="#L104">104</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
