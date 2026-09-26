@@ -75,6 +75,18 @@ final class ColumnDefinitionTest extends TestCase
         $column = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (score INTEGER DEFAULT 42)')->tables[0]->columns[0];
         self::assertSame(Nullability::MaybeNull, $column->nullability);
         self::assertNotNull($column->defaultExpression);
-        self::assertSame('DEFAULT 42', trim($column->defaultExpression->toString()));
+        self::assertSame('DEFAULT 42', trim(\SqlSemantics\Statement\Writer::render($column->defaultExpression)));
     }
+
+    public function testWithNullabilityPreservesAllTypedAttributes(): void
+    {
+        $column = (new \SqlSemantics\Facade\Schema(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE t (label TEXT COLLATE "C" DEFAULT \'hello\')')->tables[0]->columns[0];
+        $refined = $column->withNullability(Nullability::NotNull);
+        self::assertSame(Nullability::MaybeNull, $column->nullability);
+        self::assertSame(Nullability::NotNull, $refined->nullability);
+        self::assertSame($column->attributes, $refined->attributes);
+        self::assertSame($column->collation, $refined->collation);
+        self::assertSame($column->defaultExpression, $refined->defaultExpression);
+    }
+
 }

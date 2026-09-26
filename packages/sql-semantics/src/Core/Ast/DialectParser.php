@@ -37,6 +37,44 @@ final class DialectParser
     }
 
     /**
+     * Reads a script using lexer boundaries and complete grammar acceptance.
+     * Compound statements keep their internal semicolons because incomplete
+     * prefixes cannot be parsed as complete commands.
+     * @return list<Node>
+     * @throws \SqlParser\Lexer\SourceException When any command is invalid
+     */
+    public function parseScript(string $sql): array
+    {
+        try {
+            return [$this->parse($sql)];
+        } catch (\SqlParser\Parser\SyntaxException $original) {
+            $trees = [];
+            $start = 0;
+            foreach ($this->parser->tokenize($sql) as $token) {
+                if ($token->text !== ';') {
+                    continue;
+                }
+                try {
+                    $tree = $this->parse(substr($sql, $start, $token->end() - $start));
+                } catch (\SqlParser\Parser\SyntaxException) {
+                    continue;
+                }
+                $trees[] = $tree;
+                $start = $token->end();
+            }
+            if ($start === 0) {
+                throw $original;
+            }
+            $tail = substr($sql, $start);
+            $tokens = $this->parser->tokenize($tail);
+            if (array_filter($tokens, static fn ($token): bool => $token->text !== '') !== []) {
+                $trees[] = $this->parse($tail);
+            }
+            return $trees;
+        }
+    }
+
+    /**
      * Returns the resolved grammar release so binding can reuse the declaration language.
      */
     public function version(): string

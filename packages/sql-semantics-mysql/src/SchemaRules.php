@@ -20,14 +20,31 @@ use SqlSemantics\Core\Schema\TableDefinition;
 final class SchemaRules implements Contract
 {
     /**
-     * Rejects table options that change the declared schema semantics.
+     * Rejects declarations whose column state requires evaluating another relation.
      */
     public function validate(Node $source, Node $header): void
     {
-        Tree::assertChildren($source, ['qualified_name', 'OptTableElementList', 'table_ident', 'table_element_list'], ['CREATE', 'TABLE', '(', ')']);
-        foreach ($source->find('field_def') as $field) {
-            Tree::assertChildren($field, ['type', 'opt_column_attribute_list'], []);
+        foreach (Tree::outer($source, ['opt_create_table_options_etc', 'create3']) as $options) {
+            foreach (Tree::outer($options, ['query_expression', 'query_expression_with_opt_locking_clauses', 'create_table_query_expression', 'create_select']) as $query) {
+                Tree::unsupported($query, 'catalog columns derived from a query');
+            }
         }
+    }
+
+    /**
+     * @return list<Node>
+     */
+    public function options(Node $source): array
+    {
+        return array_values(array_filter(Tree::outer($source, ['create_table_option', 'opt_partitioning', 'table_constraint_def']), static fn (Node $node): bool => $node->tokens() !== []));
+    }
+
+    /**
+     * Reports table-level primary key nullability.
+     */
+    public function primaryOptionsNotNull(Node $source): bool
+    {
+        return false;
     }
 
     /**
@@ -37,7 +54,7 @@ final class SchemaRules implements Contract
     {
         $columns = [];
         foreach (Tree::outer($create, ['columnDef', 'column_def']) as $column) {
-            $columns[] = [$column, Tree::outer($column, ['ColConstraint', 'column_attribute'])];
+            $columns[] = [$column, Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute'])];
         }
         return $columns;
     }

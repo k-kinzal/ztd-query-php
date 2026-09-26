@@ -5,7 +5,7 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official SQLite grammars and the SQLite rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and `Dialect::Sqlite` selects SQLite in the runtime's `Semantics`, `SchemaBuilder`, and `Binder`. No database connection is needed.
+SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official SQLite grammars and the SQLite rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and `Dialect::Sqlite` selects SQLite in the runtime's `Semantics`, `Schema`, and `Binder`. No database connection is needed.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kin
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the version tag as the second argument of `Semantics` or the third argument of `SchemaBuilder`; omitting it uses the default.
+The following grammar versions are supported. Pass the version tag as the second argument of `Semantics` or the third argument of `Schema`; omitting it uses the default.
 
 | Version | Version tag | Default |
 |---------|-------------|---------|

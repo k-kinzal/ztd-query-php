@@ -62,9 +62,14 @@ final class Platform implements Contract
     public function syntax(): Policy\SyntaxRules
     {
         return new Policy\SyntaxRules([
+            'autoIncrement' => [],
+            'dropTableName' => ['any_name'],
+            'generationStorage' => ['ColConstraintElem'],
+            'generationClause' => [],
             'columnName' => ['ColId'],
             'declaredType' => ['Typename'],
             'expression' => ['a_expr'],
+            'tableElements' => ['OptTableElementList'],
             'createTable' => ['CreateStmt'],
             'createHeader' => [],
             'tableName' => ['qualified_name'],
