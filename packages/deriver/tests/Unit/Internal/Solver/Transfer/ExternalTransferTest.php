@@ -117,6 +117,6 @@ final class ExternalTransferTest extends TestCase
         $transfer = new \Deriver\Internal\Solver\Transfer\ExternalTransfer(\Tests\Fake\SolverFixture::context());
         self::assertSame('array', $transfer->environmentType([]));
         self::assertSame('string|false', $transfer->environmentType([\Deriver\Value\Term::constant('NAME')]));
-        self::assertSame('array|string|false',$transfer->environmentType([\Deriver\Value\Term::parameter('name','string|null')]));
+        self::assertSame('array|string|false', $transfer->environmentType([\Deriver\Value\Term::parameter('name', 'string|null')]));
     }
 }
