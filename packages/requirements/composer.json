@@ -1,8 +1,12 @@
 {
     "name": "k-kinzal/requirements",
-    "description": "Specification verification and source traceability for PHP projects",
+    "description": "Links source text, EARS specifications, and tests for PHP projects",
     "type": "library",
     "license": "MIT",
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/requirements",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/requirements/"
+    },
     "require": {
         "php": "^8.1",
         "ext-dom": "*",
@@ -49,13 +53,18 @@
             "@phpstan"
         ]
     },
+    "scripts-descriptions": {
+        "autoload:check": "Check that the PSR-4 autoload mapping is strict and unambiguous.",
+        "test": "Run the tests.",
+        "phpstan": "Run PHPStan.",
+        "format": "Fix the code style with PHP-CS-Fixer.",
+        "format:check": "Check the code style with PHP-CS-Fixer without changing files.",
+        "lint": "Run the static checks: autoload, formatting, and PHPStan."
+    },
     "config": {
         "platform": {
             "php": "8.1.0"
         },
         "sort-packages": true
-    },
-    "support": {
-        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/requirements"
     }
 }

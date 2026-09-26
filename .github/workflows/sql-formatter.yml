@@ -7,9 +7,12 @@ on:
   pull_request:
     paths:
       - 'packages/sql-formatter/**'
-      - '.github/workflows/sql-formatter.yml'
-      - 'packages/sql-parser/**'
+      - 'packages/container/**'
       - 'packages/sql-faker/**'
+      - 'packages/sql-parser/**'
+      - '.github/workflows/sql-formatter.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read

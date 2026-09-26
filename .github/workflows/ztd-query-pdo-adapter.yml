@@ -5,15 +5,17 @@ name: CI (ztd-query-pdo-adapter)
     - main
   pull_request:
     paths:
-    - packages/container/**
     - packages/ztd-query-pdo-adapter/**
+    - packages/container/**
+    - packages/sql-faker/**
+    - packages/sql-fixture/**
+    - packages/ztd-query-core/**
     - packages/ztd-query-mysql/**
     - packages/ztd-query-postgres/**
     - packages/ztd-query-sqlite/**
-    - packages/ztd-query-core/**
-    - packages/sql-faker/**
-    - packages/sql-fixture/**
     - .github/workflows/ztd-query-pdo-adapter.yml
+    - '!packages/**/README.md'
+    - '!packages/**/docs/**'
   workflow_dispatch: null
 permissions:
   contents: read

@@ -7,12 +7,14 @@ on:
   pull_request:
     paths:
       - 'packages/sql-catalog/**'
-      - 'packages/sql-formatter/**'
-      - 'packages/sql-parser/**'
       - 'packages/sql-faker/**'
       - 'packages/sql-fixture/**'
+      - 'packages/sql-formatter/**'
+      - 'packages/sql-parser/**'
       - '.github/workflows/sql-catalog.yml'
       - '.github/workflows/sql-catalog-fuzz.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read

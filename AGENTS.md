@@ -1,126 +1,83 @@
 <!-- NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you. -->
 # AGENTS
 
-This file is for agents to understand the context of the project.
+## This Project
 
-## Project Goal
+This project builds a complete Zero Table Dependency (ZTD) implementation for PHP.
 
-Implement a Zero Table Dependencies (ZTD) mechanism for PHP 8.1+ using a PDO Proxy.
-The goal is to enable testing without modifying the physical database by using CTEs to shadow tables and simulate writes.
+ZTD runs tests on a real database engine without ever touching a physical table. Before a query reaches the database, every table it references is replaced by a CTE holding fixture rows (CTE shadowing), and every INSERT, UPDATE and DELETE is turned into a SELECT that returns the rows the write would produce (result select query). Those rows are kept in the session, so later queries see the writes. One empty schema serves every test: no migrations, no seeding, no cleanup, and tests run in parallel without interfering.
 
-## Core Concepts
+The hard part is "complete". A rewrite must keep the meaning of whatever SQL the application sends, in every dialect and version, and a rewrite that is slightly wrong does not fail: it silently returns wrong test results. Hand-picked test cases cannot establish that. ZTD has to understand SQL exactly as the server does, and its behavior has to be checked against the server itself.
 
-- **CTE Shadowing**: Using `WITH` clauses to mock table data for SELECT queries.
-- **Result Select Query**: Converting INSERT/UPDATE/DELETE queries into SELECT queries that return the data that would have been modified.
+That is why the repository holds so many packages. The `ztd-query-*` packages are the product, split only so that users install the dialect and driver they need. Everything else exists for quality, and it is the core of this project: reading the official grammars instead of approximating them, parsing and binding SQL the way the server does, generating every statement form the grammars allow, running the statements against the real servers and comparing the results, and tracing each specification back to the manual it comes from. Correctness comes from that machinery, not from examples.
 
-## Tech Stack
+The repository is also an experiment in how AI agents can build something this complex correctly, so every claim about behavior has to be backed by tests, fuzzing, or a specification.
+
+## Supported Versions
+
+### ZTD Query (ztd-query-*)
 
 - PHP 8.1+
-- MySQL, PostgreSQL, SQLite
-- PHPStan (Level Max)
-- PHP-CS-Fixer
-- PHPUnit
-- Infection
-- PHP-Fuzzer
+- MySQL 8.0–9.1
+- PostgreSQL 16–17
+- SQLite 3.x
 
-## Coding Rule
+### Other packages
 
-- Follow the fix instructions provided in lint error messages
+- PHP 8.1+
+- MySQL 5.6–9.1
+- PostgreSQL 16–17
+- SQLite 3.x
 
-## Packages
+## Development Rules
 
-### packages/ztd-query-core
-
-Core library for ZTD Query. Provides the foundational interfaces, session management, and query routing logic.
-Contains `Session`, query classification interfaces, rewriter contracts, and schema abstractions.
-No platform-specific or adapter code — those live in separate packages.
-
-### packages/ztd-query-mysql
-
-MySQL platform support for ZTD Query. Handles SQL parsing, classification, rewriting, error classification, schema reflection, and mutation resolution using phpmyadmin/sql-parser.
-Provides `MySqlSessionFactory` for creating ZTD sessions with MySQL support.
-Depends on ztd-query-php core. Includes fuzz testing for robustness (classify, rewrite, full).
-
-### packages/ztd-query-postgres
-
-PostgreSQL platform support for ZTD Query. Handles SQL parsing, classification, rewriting, error classification, schema reflection, and mutation resolution.
-Provides `PgSqlSessionFactory` for creating ZTD sessions with PostgreSQL support.
-Depends on ztd-query-php core. Includes fuzz testing for robustness (classify, rewrite, full).
-
-### packages/ztd-query-sqlite
-
-SQLite platform support for ZTD Query. Handles SQL parsing, classification, rewriting, error classification, schema reflection, and mutation resolution.
-Provides `SqliteSessionFactory` for creating ZTD sessions with SQLite support.
-Depends on ztd-query-php core. Includes fuzz testing for robustness (classify, rewrite, full).
-
-### packages/ztd-query-pdo-adapter
-
-PDO adapter for ZTD Query. Provides `ZtdPdo` (extends PDO) and `ZtdPdoStatement` (extends PDOStatement) that transparently apply ZTD rewriting via delegation pattern.
-Depends on ztd-query-php core and ztd-query-mysql. Integration tests use MySQL Testcontainers.
-
-### packages/ztd-query-mysqli-adapter
-
-MySQLi adapter for ZTD Query. Provides `ZtdMysqli` (extends mysqli) and `ZtdMysqliStatement` (extends mysqli_stmt) that transparently apply ZTD rewriting via delegation pattern.
-Depends on ztd-query-php core and ztd-query-mysql. Integration tests use MySQL Testcontainers.
-
-### packages/sql-faker
-
-Faker Provider for generating syntactically valid SQL statements for MySQL, PostgreSQL, and SQLite.
-Based on official grammar definitions, can generate any statement type (DML, DDL, TCL, etc.) and SQL fragments (expressions, clauses, subqueries, CTEs).
-Supports MySQL 5.6–9.1, PostgreSQL, and SQLite. Used for fuzz testing.
-
-### packages/sql-catalog
-
-Static analysis tool that catalogs the SQL statements a PHP application can issue.
-Derives each statement backward from the call that issues it: walks back to the start of the body keeping only the assignments the SQL depends on, binds what is still needed from the callers (climbing as far as the budget allows), the class's property writes or the extensions' globals, then runs the kept assignments forward once per way in.
-Branches, loop passes and callers each become alternatives, and a run splits wherever a variable takes several values, so values decided together stay together; runs joined to stay within the budget are marked as such.
-Every statement says how far the search got (`resolved`, `external-input`, `incomplete-model`, `incomplete`, `not-analyzed`) and whether it closed, including when a bound on loop passes or callers cut it short, so stopping early is never reported as having found nothing.
-Ships the `sql-catalog` command, an extension mechanism for framework database APIs (pdo, mysqli, doctrine, laravel, wordpress), swappable reporters (json, html, text) and a JSON Schema for the catalog format.
-Verification is contract-based: finding the call, covering the dependencies, keeping the correspondence, recovering faithfully, and judging completion honestly, with fuzz targets that look for inputs breaking them and a cross-check of the call graph it climbs against peq.
-
-### packages/sql-fixture
-
-Faker Provider for generating test fixture data from SQL schemas.
-Parses CREATE TABLE statements and generates type-appropriate fake data using PHP-Faker.
-Provides three usage modes: SQL string-based (`FixtureProvider`), PDO connection-based (`DatabaseFixtureProvider`), and DDL file directory-based (`FileFixtureProvider`).
-Supports MySQL, PostgreSQL, and SQLite. Includes object hydration via `ReflectionHydrator`. Used for fuzz testing and integration tests.
-
-### packages/lemon-parser
-
-Parser for grammar files of the Lemon parser generator (SQLite's `parse.y`), producing a lossless syntax tree: every rule with its aliases, multi-terminal positions, precedence mark and action, and every declaration from `%token_prefix` to `%token_class`, each with its position.
-Follows `lemon.c` itself: the `%ifdef` preprocessor with defines, the tokenizer and the reading states, so it reads what Lemon reads and rejects what Lemon rejects with Lemon's messages; a `Printer` writes a tree back out and printing is stable.
-General-purpose and standalone with no dependencies beyond PHP; not tied to SQL. Used by sql-faker and sql-parser to read the SQLite grammar.
-### packages/bison-parser
-
-Parser for GNU Bison grammar files (`.y`, `.yy`), producing a lossless syntax tree: every declaration, rule, alternative, action, predicate, tag, token number, alias, named reference and precedence modifier, each with its position.
-Follows Bison 3.8's own `scan-gram.l` and `parse-gram.y`, so it reads what Bison reads and rejects what Bison rejects; a `Printer` writes a tree back out and printing is stable.
-General-purpose and standalone with no dependencies beyond PHP; not tied to SQL. Used by sql-faker and sql-parser to read the MySQL and PostgreSQL grammars.
-### packages/sql-parser
-
-Standalone LALR(1) SQL parsers for MySQL, PostgreSQL, and SQLite, built from the official Bison and Lemon grammars.
-Provides `MySqlParser`, `PostgreSqlParser`, and `SqliteParser`, each taking a grammar release tag (the same tags as sql-faker) and returning a concrete syntax tree named after the upstream grammar rules.
-Parsing is lossless: a token carries the whitespace and comments written before it and the tree carries what follows its last token, so `Node::toString()` writes the parsed text back byte for byte.
-Ships its own Bison/Lemon readers, LALR(1) table generator, and per-dialect lexers ported from the server sources; parse tables are generated by `bin/build-*.php` and committed under `resources/`.
-Has no runtime dependency on other packages. Fuzz testing generates statements with sql-faker and requires every one of them to parse and to write back as the same text.
-
-### packages/sql-formatter
-
-SQL formatter for MySQL, PostgreSQL, and SQLite with Compact, Expanded, Tabular, and River layout presets.
-Builds on the concrete syntax tree of sql-parser, preserves every token and comment, and reparses its output to verify that the grammar derivation is unchanged.
-Depends on sql-parser only. Includes fuzz testing per database: format targets that feed the formatter raw bytes, and equivalence targets that format statements sql-faker generates and require the database to answer the original and the formatted text alike; both read the sql-faker seed corpora.
-
-### packages/phpstan-custom-rules
-
-Project-specific PHPStan rules package shared across ztd-query packages.
-Provides custom rules for code quality and consistency, including forbidden comments (`@phpstan-ignore*`, `//`), restrictions in test classes (no properties/constants/private methods), and source/unit test pairing checks.
-Loaded from each package `phpstan.neon` via `vendor/k-kinzal/phpstan-custom-rules/extension.neon`.
+- Work in a dedicated git worktree branched from `main`; do not work in the main checkout.
+- Deliver every change through a pull request.
+- This is an English project: write every artifact in English, including code, comments, commit messages, pull requests, and documentation.
+- Write documentation for the users of the libraries. `AGENTS.md` is the only exception.
 
 ## Documents
 
-- [docs/ztd-mechanism.md](docs/ztd-mechanism.md) - Overview and design of the ZTD mechanism
-- [docs/mysql-spec.md](docs/mysql-spec.md) - How ZTD handles MySQL SQL statements
-- [docs/postgres-spec.md](docs/postgres-spec.md) - How ZTD handles PostgreSQL SQL statements
-- [docs/sqlite-spec.md](docs/sqlite-spec.md) - How ZTD handles SQLite SQL statements
-- [docs/sql-support-matrix.md](docs/sql-support-matrix.md) - Supported SQL statements and their status
-- [packages/sql-catalog/docs/analysis.md](packages/sql-catalog/docs/analysis.md) - How sql-catalog reconstructs the SQL a PHP application issues
-- [packages/sql-catalog/docs/verification.md](packages/sql-catalog/docs/verification.md) - How sql-catalog's accuracy is checked and what it measures
+- [packages/bison-parser/README.md](packages/bison-parser/README.md) - Reading GNU Bison grammar files into a lossless syntax tree, and printing it back
+- [packages/container/README.md](packages/container/README.md) - Container definitions for testcontainers-php used across the repository, their image versions, and how to use them
+- [packages/lemon-parser/README.md](packages/lemon-parser/README.md) - Reading Lemon grammar files into a lossless syntax tree, and printing it back
+- [packages/requirements/README.md](packages/requirements/README.md) - Linking source text, EARS specifications, and tests; requirements and getting started
+- [packages/requirements/docs/cli.md](packages/requirements/docs/cli.md) - Commands, options, exit codes, coverage and test results, and CI gates
+- [packages/requirements/docs/configuration.md](packages/requirements/docs/configuration.md) - The configuration file (version 1): definition files, bootstrap, extensions, runners and coverage gates
+- [packages/requirements/docs/definitions.md](packages/requirements/docs/definitions.md) - Definition documents (version 1): sources, items, selectors and the experimental Markdown profile
+- [packages/requirements/docs/extensions.md](packages/requirements/docs/extensions.md) - Writing and registering source and runner extensions
+- [packages/requirements/docs/lint.md](packages/requirements/docs/lint.md) - What lint checks, and the EARS patterns specifications must follow
+- [packages/requirements/docs/traceability.md](packages/requirements/docs/traceability.md) - What requirements traces: the model, the workflow, and what it does not prove
+- [packages/sql-catalog/README.md](packages/sql-catalog/README.md) - Cataloging the SQL a PHP application can issue: requirements and getting started
+- [packages/sql-catalog/docs/analysis.md](packages/sql-catalog/docs/analysis.md) - What the analysis reports: statements, resolution, origins, findings and limits
+- [packages/sql-catalog/docs/api.md](packages/sql-catalog/docs/api.md) - The PHP API: Analyzer, options, the catalog model and reporters
+- [packages/sql-catalog/docs/cli.md](packages/sql-catalog/docs/cli.md) - Command line options, filters, exit codes and CI usage
+- [packages/sql-catalog/docs/configuration.md](packages/sql-catalog/docs/configuration.md) - The .catalog.yaml configuration file and function models
+- [packages/sql-catalog/docs/extensions.md](packages/sql-catalog/docs/extensions.md) - Built-in extensions, writing extensions, and source models
+- [packages/sql-catalog/docs/format.md](packages/sql-catalog/docs/format.md) - The text, JSON and HTML reports
+- [packages/sql-catalog/docs/extensions/doctrine.md](packages/sql-catalog/docs/extensions/doctrine.md) - Doctrine DBAL support: recognised calls and limits
+- [packages/sql-catalog/docs/extensions/laravel.md](packages/sql-catalog/docs/extensions/laravel.md) - Laravel support: the dialect and the supported operations
+- [packages/sql-catalog/docs/extensions/mysqli.md](packages/sql-catalog/docs/extensions/mysqli.md) - mysqli support: recognised calls and limits
+- [packages/sql-catalog/docs/extensions/pdo.md](packages/sql-catalog/docs/extensions/pdo.md) - PDO support: recognised calls, bindings and limits
+- [packages/sql-catalog/docs/extensions/wordpress.md](packages/sql-catalog/docs/extensions/wordpress.md) - WordPress support: wpdb calls, wpdb::prepare(), the $wpdb global and limits
+- [packages/sql-faker/README.md](packages/sql-faker/README.md) - Grammar-based SQL generation for MySQL, PostgreSQL, and SQLite: requirements, supported versions, installation, and usage
+- [packages/sql-faker/docs/algorithm.md](packages/sql-faker/docs/algorithm.md) - How SQL is derived from the official grammars, and its limitations
+- [packages/sql-fixture/README.md](packages/sql-fixture/README.md) - Generating fixture data from CREATE TABLE statements, databases, or DDL files: requirements, supported databases, installation, and usage
+- [packages/sql-formatter/README.md](packages/sql-formatter/README.md) - Formatting SQL with layout presets: requirements, supported versions, installation, and usage
+- [packages/sql-parser/README.md](packages/sql-parser/README.md) - Lossless LALR(1) SQL parsers built from the official grammars
+- [packages/sql-semantics/README.md](packages/sql-semantics/README.md) - Typed statement models and schema binding for MySQL, PostgreSQL, and SQLite: requirements, supported versions, installation, and usage
+- [packages/sql-semantics/docs/binding.md](packages/sql-semantics/docs/binding.md) - Binding SELECT statements to a schema: the result, NULL facts, and the supported surface
+- [packages/sql-semantics/docs/statements.md](packages/sql-semantics/docs/statements.md) - Typed statement models and SQL reconstruction
+- [packages/sql-semantics-mysql/README.md](packages/sql-semantics-mysql/README.md) - MySQL support for SQL Semantics: requirements, supported versions, installation, and usage
+- [packages/sql-semantics-postgres/README.md](packages/sql-semantics-postgres/README.md) - PostgreSQL support for SQL Semantics: requirements, supported versions, installation, and usage
+- [packages/sql-semantics-sqlite/README.md](packages/sql-semantics-sqlite/README.md) - SQLite support for SQL Semantics: requirements, supported versions, installation, and usage
+- [packages/ztd-query-core/README.md](packages/ztd-query-core/README.md) - ZTD Query core: requirements, installation, usage, configuration, and SQL support
+- [packages/ztd-query-core/docs/mechanism.md](packages/ztd-query-core/docs/mechanism.md) - The Zero Table Dependency model: what it is, how it works, and its scope
+- [packages/ztd-query-mysql/README.md](packages/ztd-query-mysql/README.md) - MySQL platform: requirements, installation, usage, configuration, and SQL support
+- [packages/ztd-query-mysql/docs/spec.md](packages/ztd-query-mysql/docs/spec.md) - How ZTD handles MySQL SQL statements
+- [packages/ztd-query-mysqli-adapter/README.md](packages/ztd-query-mysqli-adapter/README.md) - MySQLi adapter: requirements, installation, usage, configuration, and SQL support
+- [packages/ztd-query-pdo-adapter/README.md](packages/ztd-query-pdo-adapter/README.md) - PDO adapter: requirements, installation, usage, configuration, and SQL support
+- [packages/ztd-query-postgres/README.md](packages/ztd-query-postgres/README.md) - PostgreSQL platform: requirements, installation, usage, configuration, and SQL support
+- [packages/ztd-query-postgres/docs/spec.md](packages/ztd-query-postgres/docs/spec.md) - How ZTD handles PostgreSQL SQL statements
+- [packages/ztd-query-sqlite/README.md](packages/ztd-query-sqlite/README.md) - SQLite platform: requirements, installation, usage, configuration, and SQL support
+- [packages/ztd-query-sqlite/docs/spec.md](packages/ztd-query-sqlite/docs/spec.md) - How ZTD handles SQLite SQL statements

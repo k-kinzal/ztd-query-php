@@ -53,7 +53,8 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           repository="${GITHUB_REPOSITORY,,}"
-          composer docgen -- --diff="$BASE_SHA" --base-url="https://${repository%%/*}.github.io/${repository#*/}/pr/${PR_NUMBER}"
+          # The generated statement models of the sql-semantics database packages are documented on the published site but left out of the comparison: diffing them class by class exceeds the memory limit and says nothing a reviewer needs.
+          composer docgen -- --diff="$BASE_SHA" --exclude='packages/sql-semantics-*/resources/*' --base-url="https://${repository%%/*}.github.io/${repository#*/}/pr/${PR_NUMBER}"
       - name: Upload the documentation site
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:

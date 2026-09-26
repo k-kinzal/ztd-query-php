@@ -6,11 +6,13 @@ on:
     branches: [main]
   pull_request:
     paths:
-      - 'packages/container/**'
       - 'packages/sql-fixture/**'
+      - 'packages/container/**'
       - 'packages/sql-faker/**'
       - '.github/workflows/sql-fixture.yml'
       - '.github/workflows/sql-fixture-fuzz.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read

@@ -39,6 +39,17 @@ final class ValueLexemeGeneratorTest extends TestCase
         self::assertSame($input->terminal(), $candidate->lexemes[0]->origin);
     }
 
+    public function testGenerateOffersOnlyTheDefaultRepresentativesWhenNoValueIsRequested(): void
+    {
+        $generator = new ValueLexemeGenerator('NUMBER', new \SqlFaker\Generation\Value\CharacterDomain(str_split('0123456789'), 1, 20), ['1', '0', '2'], 'number', 'scanner:digits');
+        $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['NUMBER']), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertSame(
+            ['1', '0', '2'],
+            array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]),
+        );
+    }
+
     public function testGenerateRejectsAnInvalidValueWithoutFallingBackToADefault(): void
     {
         $generator = new ValueLexemeGenerator('NUMBER', new \SqlFaker\Generation\Value\CharacterDomain(str_split('0123456789'), 1, 20), ['1'], 'number', 'scanner:digits');

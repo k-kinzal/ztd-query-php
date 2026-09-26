@@ -71,7 +71,7 @@ final class ExtensionTest extends TestCase
     {
         $package = dirname(__DIR__, 2);
         foreach (['lint', 'check', 'coverage', 'spec'] as $command) {
-            $process = new Process([PHP_BINARY, $package . '/bin/requirements', $command, '--config', $package . '/examples/extensions/requirements.yaml', '--json']);
+            $process = new Process([PHP_BINARY, $package . '/bin/requirements', $command, '--config', $package . '/tests/Fixtures/Examples/Extensions/requirements.yaml', '--json']);
             self::assertSame(0, $process->run(), $process->getOutput() . $process->getErrorOutput());
             self::assertStringContainsString('"passed": true', $process->getOutput());
             if ($command === 'spec') {
