@@ -54,6 +54,14 @@ use SqlParser\Sqlite\SqliteParser;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFormatter\Facade\DialectFactory::class)]
 final class FormatterTest extends TestCase
 {
+    public function testFormatKeepsHostnamesAdjacentToAtSigns(): void
+    {
+        $formatter = new Formatter(new MySqlParser(), new FormatOptions(Style::Compact));
+        $sql = 'DROP ROLE IF EXISTS user_name @$tag$host';
+        self::assertSame('DROP ROLE IF EXISTS user_name @$tag$host', $formatter->format($sql));
+        self::assertSame($formatter->format($sql), $formatter->format($formatter->format($sql)));
+    }
+
     /**
      * @param class-string<MySqlParser|PostgreSqlParser|SqliteParser> $parserClass
      */

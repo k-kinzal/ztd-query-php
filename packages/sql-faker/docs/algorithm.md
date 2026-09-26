@@ -36,7 +36,7 @@ Recursive alternatives need a finite route to terminal symbols. Before selecting
 
 When additional conditions restrict production choices, completion also considers those conditions in descendant rules and repeated occurrences. If output must contain text, completion must include a terminal that contributes text rather than only empty productions or parser markers.
 
-Early choices are random among eligible alternatives. Once the expansion count reaches its complexity threshold, selection favors shorter completions: fewer terminal symbols, or fewer rule expansions followed by fewer terminal symbols. This allows recursive SQL structures to terminate without cutting off an unfinished statement.
+Until the expansion count reaches its complexity threshold, each choice is made uniformly at random among the eligible alternatives. From the threshold on, the choice is no longer random: the eligible alternative with the shortest completion is selected, measured as the fewest terminal symbols, or as the fewest rule expansions followed by the fewest terminal symbols. This allows recursive SQL structures to terminate without cutting off an unfinished statement.
 
 ## Applying structural constraints
 
@@ -44,20 +44,20 @@ A context-free grammar describes the shapes of SQL, but database parsers also ap
 
 ## Choosing token text
 
-The terminal sequence still contains token classes such as IDENT and NUM. Lexical generation replaces them with concrete text, selecting identifiers, literal values, keyword spellings, and operators for the target dialect and version.
+The terminal sequence still contains token classes such as IDENT and NUM. Lexical generation replaces each of them with concrete text chosen from the token's candidates, which are defined for the target dialect and version. Keywords and operators have their possible spellings as candidates. Identifiers and literals have a few representative values of their lexical domain, such as `_sqlfaker_identifier` for a MySQL identifier or `0`, `1` and `2` for a MySQL integer; any other value of the domain is used only when a generation plan supplies it.
 
 For the SELECT example, one realization is:
 
 ```text
 SELECT IDENT + NUM FROM IDENT
-→ SELECT price + 1 FROM products
+→ SELECT _sqlfaker_identifier + 1 FROM _sqlfaker_identifier
 ```
 
 Lexical forms are selected from right to left. A candidate must be compatible with the already selected text to its right and allow the remaining text to its left to be completed. This matters because a token's spelling and its neighbors can determine whether whitespace is required or forbidden.
 
 ## Joining the text
 
-Once lexical forms have been selected, their boundary requirements determine the separators. For example, `SELECT` and `price` need separation so they are not read as the single identifier `SELECTprice`. Other forms require adjacent characters, such as a prefix and its quoted literal.
+Once lexical forms have been selected, the boundary between each pair of neighboring forms is either allowed to hold a space or required to have none. A single space is placed wherever one is allowed, and nothing where the forms must be adjacent. For example, `SELECT` and `_sqlfaker_identifier` are separated so they are not read as the single identifier `SELECT_sqlfaker_identifier`, while a prefix and its quoted literal are joined. As a result, the tokens of a generated statement are separated by single spaces except where adjacency is required, so it reads like `SELECT ( 1 , 2 )` rather than `SELECT (1, 2)`.
 
 The resolved token text and separators are then concatenated to produce the SQL string. Selecting the spellings and boundaries before concatenation preserves the intended token structure.
 

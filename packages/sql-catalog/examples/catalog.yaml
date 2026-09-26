@@ -1,5 +1,0 @@
-paths: [src]
-exclude: [vendor, tests]
-extensions: [pdo, mysqli]
-reporter: html
-output: catalog

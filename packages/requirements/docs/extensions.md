@@ -1,19 +1,8 @@
-# Source and test extensions
+# Extensions
 
-A **source extension** retrieves reference material and selects its traceable units.
-A **test extension** runs a selected test and translates its result into specification
-verification. The test extension interface is named `RunnerExtension`; configuration
-registers it under `extensions.runners`.
-
-Both extension mechanisms are implemented by the core. Built-in HTML, JSON and other
-sources use `SourceExtension`, and the PHPUnit/Behat runners use `RunnerExtension`.
-Custom implementations run through the same `check`, `coverage` and `spec` commands.
-They can be used without changing the requirements package or installing a plugin
-into PHPUnit or Behat.
+Extensions add source formats and test runners. A **source extension** reads a kind of document, for example an issue tracker, and returns its units. A **runner extension** runs a kind of test and returns its result. The built-in formats and the PHPUnit and Behat runners are implemented the same way.
 
 ## Source extensions
-
-A source extension implements this interface:
 
 ```php
 namespace Requirements\Source;
@@ -27,38 +16,20 @@ interface SourceExtension
 }
 ```
 
-`Source` supplies `id`, `uri`, `format`, `selector`, optional `snapshot` and `sha256`,
-and an `options` mapping for service-specific settings. `$directory` is the directory
-containing the project's configuration. `$live` requests current upstream content
-rather than a pinned local cache; custom adapters decide how this applies to their
-service.
+| Argument | Description |
+|----------|-------------|
+| `$source` | The definition's source: `id`, `uri`, `format`, `selector`, `snapshot`, `sha256` and `options`. |
+| `$selector` | The scope selector first, then each evidence selector. |
+| `$directory` | Directory of the configuration file. |
+| `$live` | `true` when `--live` asks for current content instead of a cache. |
 
-The core calls `select()` first with the source's scope selector to enumerate the
-coverage denominator. It then calls it for each evidence selector. Scope selection
-may return many units; an evidence selection must return exactly one unit from that
-scope. Return `new Unit($stableLocation, $completeText)` for each unit:
+Return `new Unit($location, $text)` for every unit the selector matches, or an empty list when it matches nothing. Throw when the document cannot be read or the selector is invalid.
 
-- Locations identify the same entry across requests and revisions. Use a stable
-  issue criterion ID, message ID or document section location, rather than its text.
-- Locations and text must be nonempty. Equal locations in one resource must have
-  equal text. Distinct locations can contain equal text.
-- Enumerate the scope independently of known specifications; otherwise missing
-  specifications disappear from the coverage denominator.
-- Interpret supported selectors consistently. Return an empty list for a valid
-  selector with no match; throw for retrieval failures or unsupported syntax.
-  The core reports these failures and checks quote equality and scope membership.
+- **Enumerate the whole scope**, independently of what the definitions quote. Otherwise untraced units disappear from coverage. Follow every page of a paged API.
+- **Use stable locations**, such as an issue or section ID, not the text. The same location must always have the same text.
+- **Keep secrets out of definitions.** Read credentials from the environment and use `options` for other settings.
 
-A Slack or Jira adapter owns service retrieval, pagination and selector semantics.
-It can load its client from the consuming project's Composer autoloader, read
-credentials from the environment, and use `Source::options` for non-secret settings.
-When an API returns multiple pages, scope selection must enumerate every selected
-page. The core does not assume those services behave like HTML.
-
-### Create a source adapter
-
-The runnable [CatalogSource](../examples/extensions/CatalogSource.php) reads a JSON
-mapping of stable IDs to source text. `*` selects the whole catalog; an entry ID
-selects one quotation:
+This extension reads a JSON object of IDs to texts. `*` selects every entry:
 
 ```php
 use Requirements\Model\Source;
@@ -92,15 +63,9 @@ final class CatalogSource implements SourceExtension
 }
 ```
 
-`ResourceLoader` is optional. It supplies bounded HTTP(S)/local reads, ignored local
-snapshot caching and digest verification. Service adapters can use their own
-retrieval client and enforce their own time/size limits. The example catalog is
-project-authored synthetic data, so it can be committed; upstream snapshots remain
-untracked caches.
+`ResourceLoader` reads local files and HTTP(S) URIs with the same size and time limits, snapshots and SHA-256 checks as the built-in formats. It is optional.
 
-## Test extensions
-
-A test extension implements:
+## Runner extensions
 
 ```php
 namespace Requirements\Test;
@@ -111,31 +76,11 @@ interface RunnerExtension
 }
 ```
 
-`RunnerConfig` contains an argument-array `command`, absolute working `directory`,
-positive `timeout` in seconds and the registered `extension` name. `$target` is the
-test selection from an item's `tests` entry. Configuration chooses **how** to execute;
-definitions choose **which** test to execute.
+`$config` holds the runner's `command`, working `directory`, `timeout` and `extension` from the [configuration](configuration.md). `$target` is the `target` of a test in a definition file. `run()` is called once per distinct target and is not called with `--no-test`.
 
-Return `new TestResult($status, $executedTests, $message)`. A passing result requires
-`status: passed` and a positive executed-test count. `failed`, `error` and
-`unverified` fail specification verification. A zero-test result never verifies a
-specification, even if the adapter returns `passed`. Include a useful failure
-message. Unsupported specifications are skipped by the core; an adapter must not
-turn failed or missing tests into an unsupported decision.
+Return `new TestResult($status, $executedTests, $message)`. Only `passed` with at least one executed test verifies a specification; `failed`, `error` and `unverified` fail it. Do not report success only because a process exited with `0`.
 
-The core executes each distinct runner-name/target pair once per `spec` invocation
-and shares that result across linked specifications. All linked results must pass.
-The CLI counts each successful target once in its passed/linked ratio, regardless
-of the adapter's executed-case count. That case count remains in the JSON `tests`
-field. For example, a successful method with 33 data-provider cases contributes
-`1/1` linked targets and `tests: 33`. `spec --no-test` displays `-/1` and never calls
-`run()`; extensions do not need to implement test discovery or result caching.
-A custom extension owns actual selection, execution and result interpretation; it
-must not report success solely because a process exited zero.
-
-### Create a test adapter
-
-For a command that writes JUnit XML, use `ProcessRunner`:
+For a command that writes JUnit XML, `ProcessRunner` does the work:
 
 ```php
 use Requirements\Test\ProcessRunner;
@@ -157,24 +102,11 @@ final class ScenarioRunner implements RunnerExtension
 }
 ```
 
-`ProcessRunner` appends those arguments to `command` without a shell, applies the
-working directory and timeout, reads reports from a fresh temporary directory, and
-removes them afterwards. Its `JUnit` reader rejects missing/malformed reports,
-zero executed tests, skips, pending/undefined cases, failures, errors and nonzero
-process exits. For another report protocol, execute and parse it in your adapter
-and enforce equivalent success rules.
+It appends the returned arguments to `command`, runs it without a shell in the working directory with the timeout, and reads the reports from a fresh temporary directory. The run fails when the report is missing or malformed, reports no test, or reports a failure, error, skip or pending test, or when the process exits nonzero.
 
-The complete [ScenarioRunner](../examples/extensions/ScenarioRunner.php) and
-[example command](../examples/extensions/scenario.php) exercise this contract by
-actually checking ASCII uppercase conversion. Replace the example assertion with
-your application tests. The built-in PHPUnit runner uses exact `Class::method`
-selection, including datasets; Behat uses `file.feature:line` scenario selection,
-including all outline examples.
+## Registering extensions
 
-## Register and use extensions
-
-Put extension classes in your project's Composer PSR-4 autoload paths, run
-`composer dump-autoload`, and load that autoloader with `bootstrap`:
+Autoload the classes from your project and load the autoloader with `bootstrap`:
 
 ```yaml
 version: 1
@@ -189,17 +121,9 @@ runners:
   acceptance:
     extension: scenario
     command: [php, tests/scenario.php]
-    cwd: .
-    timeout: 30
 ```
 
-Classes are instantiated with no arguments; use a no-argument constructor or
-constructor defaults. `lint` checks interface registration. The bootstrap and
-extensions are project code, just like the project's test suite. Names may override
-built-ins deliberately; normal built-in usage needs no explicit registration.
-
-Select the source adapter with `source.format` and the configured test runner with
-`tests[].runner`:
+A definition then uses the source extension as its `format` and the runner by its configured name:
 
 ```yaml
 version: 1
@@ -219,21 +143,4 @@ items:
         target: ascii-uppercase
 ```
 
-Here `catalog` and `scenario` are extension names; `acceptance` is the configured
-runner instance. Several runner instances may share one extension with different
-commands, working directories or timeouts. Definition paths, source files and
-runner working directories are resolved relative to the configuration directory.
-
-From `packages/requirements`, run the complete bundled example:
-
-```console
-php bin/requirements lint --config examples/extensions/requirements.yaml
-php bin/requirements check --config examples/extensions/requirements.yaml
-php bin/requirements coverage --config examples/extensions/requirements.yaml
-php bin/requirements spec --config examples/extensions/requirements.yaml
-```
-
-The sample bootstrap loads the two supplied classes directly, so these commands
-work after `composer install` without preparing another project. The integration
-tests execute this example through the real CLI and verify that both extension
-contracts participate in source coverage and test execution.
+Classes are created without constructor arguments, and lint checks that each implements its interface. Several runners can use the same extension with different commands. A registered name that equals a built-in one replaces it.

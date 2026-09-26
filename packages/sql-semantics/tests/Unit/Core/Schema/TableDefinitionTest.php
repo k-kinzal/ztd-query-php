@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Schema\TableDefinition::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,7 +71,7 @@ final class TableDefinitionTest extends TestCase
 {
     public function testQualifiesUnqualifiedNamesWithTheResolutionContext(): void
     {
-        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)')->tables[0];
+        $table = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)')->tables[0];
         self::assertSame('public', $table->schema);
         self::assertSame('users', $table->name);
         self::assertSame('CreateStmt', $table->source->name);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Generation\Derivation;
 
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -147,6 +148,38 @@ final class DerivationTest extends TestCase
             [new Terminal('A')],
             $derivation->of('stmt', GenerationPlan::all()->withMaxDepth(1)),
         );
+    }
+
+    public function testSelectProductionDrawsUniformlyAmongTheEligibleAlternativesBeforeTheThreshold(): void
+    {
+        $alternatives = [
+            new Production([new Terminal('A')]),
+            new Production([new Terminal('B'), new Terminal('C')]),
+            new Production([new Terminal('D'), new Terminal('E'), new Terminal('F')]),
+        ];
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', $alternatives)]);
+        $faker = new class () extends \Faker\Generator {
+            /** @var list<array{int, int}> */
+            public array $draws = [];
+
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                $minimum = is_int($int1) ? $int1 : -1;
+                $maximum = is_int($int2) ? $int2 : -1;
+                $this->draws[] = [$minimum, $maximum];
+
+                return $maximum;
+            }
+        };
+        $derivation = new Derivation($grammar, $faker, new TerminationAnalyzer($grammar));
+
+        self::assertSame($alternatives[2], $derivation->selectProduction($alternatives, GenerationPlan::all()->withMaxDepth(2)));
+        self::assertSame([[0, 2]], $faker->draws);
     }
 
     public function testSelectProductionChoosesFreelyWhileThePlanStillAllowsDepth(): void

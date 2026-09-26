@@ -49,7 +49,7 @@ final class Dialect implements FormattingDialect
             new Grouping(['expr' => ['expr'], 'simple_expr' => ['expr']]),
             ['select_alias' => null, 'opt_as' => 'opt_table_alias', 'table_alias' => 'opt_table_alias'],
             static fn (string $text, int $start, int $offset, int $depth, bool $executable): bool => !$executable && $depth === 1 && substr($text, $start + 2, 1) !== '!' && substr($text, $offset + 2, 1) === '!',
-            static fn (Token $left, Token $right, ?Token $before): ?string => (($left->text === '@' && ($right->text === '@' || $before?->text === '@')) || ($before?->text === '@' && $right->text === '.')) ? '' : null,
+            static fn (Token $left, Token $right, ?Token $before): ?string => ($left->text === '@' || ($before?->text === '@' && $right->text === '.')) ? '' : null,
         );
     }
 }

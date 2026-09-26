@@ -36,4 +36,12 @@ final class Dialect implements Contract
     {
         return $ignore ? ' on conflict do nothing' : '';
     }
+
+    /**
+     * The generated key clause of an insert.
+     */
+    public function returningSuffix(): string
+    {
+        return ' returning ';
+    }
 }

@@ -11,7 +11,7 @@ use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Schema\ColumnDefinition::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -72,7 +72,7 @@ final class ColumnDefinitionTest extends TestCase
 {
     public function testKeepsDefaultsAsOriginalSyntax(): void
     {
-        $column = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (score INTEGER DEFAULT 42)')->tables[0]->columns[0];
+        $column = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (score INTEGER DEFAULT 42)')->tables[0]->columns[0];
         self::assertSame(Nullability::MaybeNull, $column->nullability);
         self::assertNotNull($column->defaultExpression);
         self::assertSame('DEFAULT 42', trim($column->defaultExpression->toString()));

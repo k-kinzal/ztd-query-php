@@ -1,172 +1,107 @@
 # ZTD Query PDO Adapter
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docs](https://img.shields.io/badge/docs-ztd--query--pdo--adapter-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-pdo-adapter/)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-PDO adapter for [ZTD Query PHP](https://github.com/k-kinzal/ztd-query-core). Drop-in replacement for PDO that transparently applies Zero Table Dependency query transformation.
-
-## Overview
-
-This package provides `ZtdPdo` and `ZtdPdoStatement`, which extend `PDO` and `PDOStatement` respectively. They intercept SQL queries and transform them using CTE (Common Table Expression) shadowing, enabling SQL unit testing without modifying physical databases.
-
-- **Drop-in replacement** - `ZtdPdo` extends `PDO` and is type-compatible everywhere `PDO` is expected
-- **Transparent rewriting** - All queries are automatically rewritten at `prepare()`/`query()`/`exec()` time
-- **Toggle on/off** - Enable or disable ZTD mode at runtime with `enableZtd()`/`disableZtd()`
-- **Wrap existing connections** - Use `ZtdPdo::fromPdo()` to wrap an existing PDO instance without creating a new connection
+ZTD Query is a Zero Table Dependency testing library for PHP: it runs the SQL of an application on a real database engine without reading or writing any physical table. Before a query reaches the database, every table it references is replaced by a CTE holding the rows the test has written, and every INSERT, UPDATE, and DELETE is turned into a SELECT whose result is kept in the session, so later queries see the change. Tests therefore need no migrations, seeding, or cleanup, and they can run in parallel against one empty database. This package is the PDO adapter: `ZtdPdo` extends `PDO` and applies ZTD to every query it runs, with the platform package of the connected database.
 
 ## Requirements
 
-- PHP 8.1 or higher
-- PDO extension
-- MySQL 8.0.11 - 9.1
-- [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-core) (core)
-- [k-kinzal/ztd-query-mysql](https://github.com/k-kinzal/ztd-query-mysql) (MySQL platform)
+- PHP 8.1+ with the PDO extension and the driver of your database
+- MySQL 8.0.11–9.1, PostgreSQL 16–17, or SQLite 3.x
 
 ## Installation
 
+MySQL:
+
 ```bash
-composer require --dev k-kinzal/ztd-query-pdo-adapter
+composer require --dev k-kinzal/ztd-query-pdo-adapter k-kinzal/ztd-query-mysql
+```
+
+PostgreSQL:
+
+```bash
+composer require --dev k-kinzal/ztd-query-pdo-adapter k-kinzal/ztd-query-postgres
+```
+
+SQLite:
+
+```bash
+composer require --dev k-kinzal/ztd-query-pdo-adapter k-kinzal/ztd-query-sqlite
 ```
 
 ## Usage
 
-### Creating a New Connection
+`ZtdPdo` extends `PDO`, so it can be passed wherever the application expects a PDO connection. Tables are created and filled through the same connection; they exist only in the session.
+
+```php
+use PDO;
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Adapter\Pdo\ZtdPdo;
+
+final class UserQueryTest extends TestCase
+{
+    public function testSelectsActiveUsers(): void
+    {
+        $pdo = new ZtdPdo('mysql:host=127.0.0.1;dbname=test', 'root', 'root');
+        $pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, active BOOLEAN NOT NULL)');
+        $pdo->exec("INSERT INTO users (id, name, active) VALUES (1, 'Alice', TRUE), (2, 'Bob', FALSE)");
+
+        $statement = $pdo->prepare('SELECT name FROM users WHERE active = ? ORDER BY id');
+        $statement->execute([1]);
+
+        self::assertSame(['Alice'], $statement->fetchAll(PDO::FETCH_COLUMN));
+    }
+}
+```
+
+`ZtdPdo::fromPdo($pdo)` wraps an existing connection instead of opening a new one, and `disableZtd()` and `enableZtd()` switch between the physical database and the session.
+
+## Configuration
 
 ```php
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
-
-$pdo = new ZtdPdo('mysql:host=localhost;dbname=test', 'user', 'password');
-
-// Define schema and insert fixture data
-$pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255))');
-$pdo->exec("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')");
-$pdo->exec("INSERT INTO users (id, name, email) VALUES (2, 'Bob', 'bob@example.com')");
-
-// Query against fixture data (no physical table access)
-$stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-$stmt->execute([1]);
-$result = $stmt->fetchAll();
-// [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]
-```
-
-### Wrapping an Existing PDO Instance
-
-```php
-use ZtdQuery\Adapter\Pdo\ZtdPdo;
-
-$existingPdo = new PDO('mysql:host=localhost;dbname=test', 'user', 'password');
-$ztdPdo = ZtdPdo::fromPdo($existingPdo);
-```
-
-### Testing Write Operations
-
-INSERT/UPDATE/DELETE statements are converted to SELECT queries that return the affected rows:
-
-```php
-$pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
-$pdo->exec("INSERT INTO users (id, name) VALUES (1, 'Alice')");
-
-// INSERT returns the inserted row data
-$stmt = $pdo->prepare('INSERT INTO users (id, name) VALUES (?, ?)');
-$stmt->execute([2, 'Bob']);
-$inserted = $stmt->fetchAll();
-// [['id' => 2, 'name' => 'Bob']]
-
-// UPDATE returns the updated row data
-$stmt = $pdo->prepare('UPDATE users SET name = ? WHERE id = ?');
-$stmt->execute(['Alice Updated', 1]);
-$updated = $stmt->fetchAll();
-// [['id' => 1, 'name' => 'Alice Updated']]
-
-// DELETE returns the deleted row data
-$stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-$stmt->execute([1]);
-$deleted = $stmt->fetchAll();
-// [['id' => 1, 'name' => 'Alice']]
-```
-
-### Enabling/Disabling ZTD Mode
-
-```php
-$pdo = new ZtdPdo($dsn, $user, $password);
-
-// Disable ZTD to execute against physical database
-$pdo->disableZtd();
-$pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
-
-// Re-enable ZTD for testing
-$pdo->enableZtd();
-
-// Check current status
-$pdo->isZtdEnabled(); // true
-```
-
-### Configuration
-
-```php
-use ZtdQuery\Adapter\Pdo\ZtdPdo;
-use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\UnknownSchemaBehavior;
+use ZtdQuery\Config\UnsupportedSqlBehavior;
+use ZtdQuery\Config\ZtdConfig;
 
 $config = new ZtdConfig(
+    // Unsupported statements: Exception (default), Notice, or Ignore
     unsupportedBehavior: UnsupportedSqlBehavior::Exception,
+
+    // Tables the session does not know: Passthrough to the database (default), or Exception
     unknownSchemaBehavior: UnknownSchemaBehavior::Exception,
+
+    // Per-statement overrides of unsupportedBehavior; the first matching rule wins
     behaviorRules: [
-        'BEGIN' => UnsupportedSqlBehavior::Ignore,
-        'COMMIT' => UnsupportedSqlBehavior::Ignore,
-        'ROLLBACK' => UnsupportedSqlBehavior::Ignore,
+        'CREATE INDEX' => UnsupportedSqlBehavior::Ignore,       // case-insensitive prefix
+        '/^SET\s+/i' => UnsupportedSqlBehavior::Notice,          // regular expression
     ],
 );
 
 $pdo = new ZtdPdo($dsn, $user, $password, config: $config);
 ```
 
-| Option | Values | Description |
-|--------|--------|-------------|
-| `unsupportedBehavior` | `Ignore`, `Notice`, `Exception` | Default behavior when unsupported SQL is executed |
-| `unknownSchemaBehavior` | `Passthrough`, `Exception` | Behavior when unknown table is referenced |
-| `behaviorRules` | `array<string, UnsupportedSqlBehavior>` | Per-pattern behavior overrides (first match wins) |
+`Ignore` skips the statement, `Notice` skips it and raises a PHP notice, and `Exception` throws an exception.
 
-## API Reference
+## SQL Support
 
-### ZtdPdo
+| Statement | MySQL | PostgreSQL | SQLite |
+|-----------|-------|------------|--------|
+| SELECT, including joins, grouping, set operations, subqueries, CTEs, recursive CTEs, and window functions | Supported | Supported | Supported |
+| INSERT with VALUES or SELECT | Supported | Supported | Supported |
+| Upsert | `ON DUPLICATE KEY UPDATE`, `INSERT IGNORE`, `REPLACE` | `ON CONFLICT` | `ON CONFLICT`, `INSERT OR ...`, `REPLACE` |
+| UPDATE and DELETE | Supported, including multi-table forms and `ORDER BY ... LIMIT` | Supported, including `UPDATE ... FROM` and `DELETE ... USING` | Supported, including `UPDATE ... FROM` |
+| `RETURNING` | – | Supported | Supported |
+| TRUNCATE | Supported | Supported | – |
+| CREATE TABLE, DROP TABLE | Supported | Supported | Supported |
+| ALTER TABLE | Supported | Unsupported | Supported |
+| BEGIN, COMMIT, ROLLBACK | Applied to the session: ROLLBACK discards the writes made since BEGIN | Same | Same |
+| Views, indexes, routines, triggers, SET, and server or user administration | Unsupported | Unsupported | Unsupported |
 
-| Method | Description |
-|--------|-------------|
-| `__construct($dsn, $username, $password, $options, $config)` | Create a new ZTD-wrapped PDO connection |
-| `ZtdPdo::fromPdo($pdo, $config)` | Wrap an existing PDO instance |
-| `enableZtd()` | Enable ZTD mode |
-| `disableZtd()` | Disable ZTD mode |
-| `isZtdEnabled()` | Check whether ZTD mode is enabled |
-| `prepare($query, $options)` | Prepare a statement (rewritten if ZTD enabled) |
-| `query($query, $fetchMode, ...$fetchModeArgs)` | Execute a query and return the statement |
-| `exec($statement)` | Execute a statement and return affected row count |
-
-All other PDO methods (`beginTransaction`, `commit`, `rollBack`, `quote`, etc.) are delegated to the inner PDO instance.
-
-### ZtdPdoStatement
-
-Extends `PDOStatement` with ZTD-aware behavior. All fetch methods (`fetch`, `fetchAll`, `fetchColumn`, `fetchObject`) and parameter binding methods (`bindValue`, `bindParam`, `bindColumn`) work transparently. `rowCount()` returns the ZTD-aware affected row count for write operations.
-
-## Development
-
-```bash
-# Run unit tests
-composer test:unit
-
-# Run integration tests (requires Docker)
-composer test:integration
-
-# Run all tests
-composer test
-
-# Run linter (PHP-CS-Fixer + PHPStan level max)
-composer lint
-
-# Fix code style
-composer format
-```
+Unsupported statements are handled as configured by `unsupportedBehavior`. The full specification of each database is in [ztd-query-mysql](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/ztd-query-mysql/docs/spec.md), [ztd-query-postgres](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/ztd-query-postgres/docs/spec.md), and [ztd-query-sqlite](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/ztd-query-sqlite/docs/spec.md).
 
 ## License
 

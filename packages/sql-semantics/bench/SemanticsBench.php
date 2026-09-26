@@ -7,7 +7,7 @@ namespace Bench;
 use PhpBench\Attributes as Benchmark;
 use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 /**
  * Measures the public SQL-to-bound-statement pipeline with a reusable schema.
@@ -21,7 +21,7 @@ final class SemanticsBench
      */
     public function setUp(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->binder = new Binder($schema);
     }
 

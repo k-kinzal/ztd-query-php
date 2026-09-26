@@ -11,7 +11,7 @@ use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Schema\TableConstraint::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -72,7 +72,7 @@ final class TableConstraintTest extends TestCase
 {
     public function testRetainsCompositeKeyOrder(): void
     {
-        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER, score INTEGER, PRIMARY KEY (score, id))')->tables[0];
+        $table = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER, score INTEGER, PRIMARY KEY (score, id))')->tables[0];
         self::assertSame(['score', 'id'], $table->constraints[0]->columns);
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
         self::assertSame(Nullability::NotNull, $table->columns[1]->nullability);

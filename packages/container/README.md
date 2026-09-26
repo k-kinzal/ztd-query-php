@@ -1,7 +1,6 @@
-# Database Containers
+# Containers
 
-Shared database container definitions for PHP 8.1+ and Docker. Every consumer uses
-one definition per database version from the `Container` namespace.
+Container definitions for [testcontainers-php](https://github.com/k-kinzal/testcontainers-php) used across [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-php). Each definition pins one image version, and every package that runs a container uses the same definition from the `Container` namespace.
 
 ## Versions
 
@@ -16,57 +15,18 @@ one definition per database version from the `Container` namespace.
 | `MySql84Container` | `container-registry.oracle.com/mysql/community-server:8.4.7` |
 | `MySql90Container` | `container-registry.oracle.com/mysql/community-server:9.0.1` |
 | `MySql91Container` | `container-registry.oracle.com/mysql/community-server:9.1.0` |
-| `PostgreSql16Container` | `postgres:16` |
+| `PostgreSql16Container` | `postgres:16.6` |
 | `PostgreSql17Container` | `postgres:17.2` |
-
-All containers initialize the `test` database. MySQL uses `root` / `root` and
-PostgreSQL uses `test` / `test`. MySQL data is stored in tmpfs, and timezone table
-loading is disabled to keep startup fast. Running the same class reuses its
-container until it is stopped; containers are removed when stopped.
-
-Each version is a final class that extends the Testcontainers `GenericContainer`.
-`MySqlConfiguration` and `PostgreSqlConfiguration` apply shared settings through
-composition. Connection creation, database/schema isolation, and version selection
-belong to the caller. MySQL classes expose `getGrammarVersion()` for SQL grammar
-selection.
 
 ## Usage
 
-Add `k-kinzal/container: dev-main` to the consuming package's `require-dev` and
-`{"type": "path", "url": "../container", "options": {"versions": {"k-kinzal/container": "dev-main"}}}`
-to its Composer repositories. This internal development dependency is removed
-when packages are split for publication.
-
 ```php
+use Container\Endpoint;
 use Container\MySql80Container;
 use Testcontainers\Testcontainers;
 
-$instance = Testcontainers::run(MySql80Container::class);
-$host = str_replace('localhost', '127.0.0.1', $instance->getHost());
-$port = $instance->getMappedPort(3306);
-$pdo = new PDO("mysql:host=$host;port=$port;dbname=test;charset=utf8mb4", 'root', 'root');
-$mysqli = new mysqli($host, 'root', 'root', 'test', $port);
-$mysqli->set_charset('utf8mb4');
+$endpoint = Testcontainers::run(MySql80Container::class)->getData(Endpoint::class);
+$pdo = new PDO($endpoint->dsn(), $endpoint->username, $endpoint->password);
 ```
 
-MySQL readiness checks require `pdo_mysql`. PostgreSQL waits for the server's
-readiness log message. Install the appropriate PHP driver for the connections
-used by your code.
-
-## Development
-
-```bash
-composer install
-composer test
-composer lint
-composer doctest
-composer test:coverage
-```
-
-Unit tests and documentation examples do not require Docker.
-
-The package uses the same php-ai-toolkit quality checks as the other packages:
-strict PHPUnit with the AI reporter, executable documentation examples, PHPStan
-and toolkit rules, PHP-CS-Fixer, PHPCompatibility, loc-guard, tree-guard, Deptrac,
-and Infection. CI installs the committed Composer lockfile, runs tests
-on PHP 8.1 through 8.5, and publishes mutation reports.
+MySQL containers require `pdo_mysql` to wait for readiness.

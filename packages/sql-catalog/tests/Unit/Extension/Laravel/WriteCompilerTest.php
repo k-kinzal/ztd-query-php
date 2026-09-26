@@ -147,4 +147,43 @@ final class WriteCompilerTest extends TestCase
         self::assertSame('insert into "users" ("a", "z") values (?, ?), (?, ?)', $sql->soleLiteral()?->value);
         self::assertSame([2, 1, 2, 1], array_map(static fn (Domain $value): mixed => $value->soleLiteral()?->value, $bindings->soleArray()?->positional() ?? []));
     }
+
+
+    public function testStepWritesLaravelsRawArithmeticBeforeExtraColumns(): void
+    {
+        $compiler = new WriteCompiler(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('mysql')));
+        $state = new QueryState(['table' => Domain::literal('users'), 'where' => QueryState::list([Domain::literal('`id` = ?')]), 'whereBindings' => QueryState::list([Domain::literal(7)])]);
+        $extra = Domain::of(new ArrayTerm([new ArrayEntry(Domain::literal('seen'), Domain::literal('now'))]));
+        [$sql, $bindings] = $compiler->step($state, 'increment', [Domain::literal('logins'), Domain::literal(2), $extra]);
+        self::assertSame('update `users` set `logins` = `logins` + 2, `seen` = ? where `id` = ?', $sql->soleLiteral()?->value);
+        self::assertSame(['now', 7], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $bindings->soleArray()?->positional() ?? []));
+        self::assertSame('update `users` set `logins` = `logins` - 1 where `id` = ?', $compiler->step($state, 'decrement', [Domain::literal('logins')])[0]->soleLiteral()?->value);
+        self::assertSame('update `users` set `logins` = `logins` + {$} where `id` = ?', $compiler->step($state, 'increment', [Domain::literal('logins'), Domain::unknown()])[0]->patterns()[0]->display());
+        self::assertFalse($compiler->step($state, 'increment', [Domain::unknown()])[0]->isExact());
+        self::assertFalse($compiler->step($state, 'increment', [Domain::literal('logins'), QueryState::list([])])[0]->isExact());
+        self::assertFalse($compiler->compile($state, 'increment', [Domain::literal('logins'), Domain::literal(1), Domain::unknown()])[0]->isExact());
+    }
+
+    public function testInsertGetIdReturnsTheKeyOnlyWhereTheDialectAsksForIt(): void
+    {
+        $state = new QueryState(['table' => Domain::literal('users')]);
+        $row = new ArrayTerm([new ArrayEntry(Domain::literal('name'), Domain::literal('Ada'))]);
+        $pgsql = new WriteCompiler(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('pgsql')));
+        self::assertSame('insert into "users" ("name") values (?) returning "id"', $pgsql->insertGetId($state, $row, Domain::literal(null))[0]->soleLiteral()?->value);
+        self::assertSame('insert into "users" ("name") values (?) returning "uid"', $pgsql->insertGetId($state, $row, Domain::literal('uid'))[0]->soleLiteral()?->value);
+        $mysql = new WriteCompiler(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('mysql')));
+        self::assertSame('insert into `users` (`name`) values (?)', $mysql->compile($state, 'insertgetid', [Domain::of($row)])[0]->soleLiteral()?->value);
+        self::assertSame(['Ada'], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $mysql->insertGetId($state, $row, Domain::literal(null))[1]->soleArray()?->positional() ?? []));
+        self::assertFalse($mysql->insertGetId($state, new ArrayTerm([new ArrayEntry(null, Domain::of($row))]), Domain::literal(null))[0]->isExact());
+    }
+
+    public function testCompileDeletesOneRowByItsKey(): void
+    {
+        $compiler = new WriteCompiler(new Grammar(\SqlCatalog\Facade\Builtins::dialects()->find('sqlite')));
+        $state = new QueryState(['table' => Domain::literal('users'), 'key' => Domain::literal('id')]);
+        [$sql, $bindings] = $compiler->compile($state, 'delete', [Domain::literal(7)]);
+        self::assertSame('delete from "users" where "users"."id" = ?', $sql->soleLiteral()?->value);
+        self::assertSame([7], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $bindings->soleArray()?->positional() ?? []));
+        self::assertFalse($compiler->compile($state, 'delete', [QueryState::list([])])[0]->isExact());
+    }
 }

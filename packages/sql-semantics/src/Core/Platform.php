@@ -23,6 +23,11 @@ interface Platform
     public function parser(?string $version = null): SqlParser;
 
     /**
+     * Supplies statement construction data for the resolved grammar release.
+     */
+    public function values(string $version): Analysis\ValueReader;
+
+    /**
      * Supplies the unqualified declaration namespace.
      */
     public function defaultSchema(): string;

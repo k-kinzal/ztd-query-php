@@ -7,12 +7,13 @@ namespace Tests\Unit\Core;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Model\Expression;
 use SqlSemantics\Core\Model\ExpressionKind;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
@@ -72,8 +73,11 @@ use SqlSemantics\Facade\Dialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\ValueReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Statement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Writer::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Element::class)]
 final class PlatformTest extends TestCase
 {
     public function testParserAcceptsAnApplicationImplementation(): void
@@ -82,54 +86,61 @@ final class PlatformTest extends TestCase
         $parser->method('version')->willReturn('application-1');
         $platform = self::createStub(\SqlSemantics\Core\Platform::class);
         $platform->method('parser')->willReturn($parser);
-        $dialect = self::createStub(\SqlSemantics\Core\Dialect::class);
+        $dialect = self::createStub(Dialect::class);
         $dialect->method('platform')->willReturn($platform);
         self::assertSame('application-1', (new \SqlSemantics\Core\Ast\DialectParser($dialect))->version());
     }
     public function testDefaultSchemaUsesTheLanguageNamespace(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()::class, $accept(Dialect::PostgreSql->platform())::class);
-        self::assertSame('public', Dialect::PostgreSql->platform()->defaultSchema());
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
+        self::assertSame('public', PostgreSqlDialect::PostgreSql->platform()->defaultSchema());
     }
     public function testStatementNamesIdentifyTheParserRoot(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()::class, $accept(Dialect::PostgreSql->platform())::class);
-        self::assertSame(Dialect::PostgreSql->platform()->statementNames()[0], Dialect::PostgreSql->platform()->parser()->parse('SELECT 1')->name);
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()->statementNames()[0], PostgreSqlDialect::PostgreSql->platform()->parser()->parse('SELECT 1')->name);
     }
     public function testSyntaxRecognizesSelectBody(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()::class, $accept(Dialect::PostgreSql->platform())::class);
-        $tree = Dialect::PostgreSql->platform()->parser()->parse('SELECT 1');
-        self::assertNotEmpty(\SqlSemantics\Core\Ast\Tree::outer($tree, Dialect::PostgreSql->platform()->syntax()->nodes('selectBody')));
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
+        $tree = PostgreSqlDialect::PostgreSql->platform()->parser()->parse('SELECT 1');
+        self::assertNotEmpty(\SqlSemantics\Core\Ast\Tree::outer($tree, PostgreSqlDialect::PostgreSql->platform()->syntax()->nodes('selectBody')));
     }
     public function testNamesDecodeQuotedIdentifiers(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()::class, $accept(Dialect::PostgreSql->platform())::class);
-        self::assertSame('Mixed', Dialect::PostgreSql->platform()->names()->name(new Token(1, 'ID', '"Mixed"', 0)));
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
+        self::assertSame('Mixed', PostgreSqlDialect::PostgreSql->platform()->names()->name(new Token(1, 'ID', '"Mixed"', 0)));
     }
     public function testTypesRetainDialectIdentity(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()::class, $accept(Dialect::PostgreSql->platform())::class);
-        self::assertSame(Dialect::PostgreSql, Dialect::PostgreSql->platform()->types()->boolean()->dialect);
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
+        self::assertSame(PostgreSqlDialect::PostgreSql, PostgreSqlDialect::PostgreSql->platform()->types()->boolean()->dialect);
     }
     public function testSchemaKeepsDeclarations(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()::class, $accept(Dialect::PostgreSql->platform())::class);
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
         self::assertCount(2, $schema->tables[0]->columns);
     }
     public function testQueryKeepsProjectionOrder(): void
     {
         $accept = static fn (\SqlSemantics\Core\Platform $rules): \SqlSemantics\Core\Platform => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()::class, $accept(Dialect::PostgreSql->platform())::class);
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()::class, $accept(PostgreSqlDialect::PostgreSql->platform())::class);
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
         $bound = (new Binder($schema))->bind('SELECT label, id FROM items');
         self::assertSame(['label', 'id'], array_column($bound->outputs, 'name'));
+    }
+    public function testValuesReconstructsUsingTheParserRelease(): void
+    {
+        $platform = PostgreSqlDialect::PostgreSql->platform();
+        $parser = $platform->parser();
+        $value = $platform->values($parser->version())->read($parser->parse('SELECT 42'));
+        self::assertSame('SELECT 42', (new \SqlSemantics\Statement\Statement($value))->toString());
     }
 }

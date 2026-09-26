@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0b5156ac7c5c59d0982e338aa2983cfc",
+    "content-hash": "082b69c31e25762563ae8bd29cfe08db",
     "packages": [
         {
             "name": "k-kinzal/sql-parser",
@@ -1187,6 +1187,250 @@
             "time": "2025-03-19T14:43:43+00:00"
         },
         {
+            "name": "k-kinzal/bison-parser",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../bison-parser",
+                "reference": "5e42d42627354e869c5e2be156a97a03fdb4c842"
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "behat/behat": "^3.14",
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "BisonParser\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/bison-parser"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Parser for GNU Bison grammar files, producing a lossless syntax tree",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/bison-parser",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/bison-parser/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "k-kinzal/lemon-parser",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../lemon-parser",
+                "reference": "cbd9866b7fde50756437535ec3485f1d11110953"
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "behat/behat": "^3.14",
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "LemonParser\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/lemon-parser"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict --no-interaction --no-snippets"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Parser for Lemon grammar files, producing a lossless syntax tree",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/lemon-parser",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/lemon-parser/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "k-kinzal/php-ai-toolkit",
             "version": "dev-main",
             "source": {
@@ -1336,6 +1580,444 @@
                 "docs": "https://k-kinzal.github.io/php-ai-toolkit/"
             },
             "time": "2026-09-23T15:10:55+00:00"
+        },
+        {
+            "name": "k-kinzal/sql-semantics-mysql",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../sql-semantics-mysql",
+                "reference": "987031fc7bf99812e5c2833441a092a281ca2b3f"
+            },
+            "require": {
+                "k-kinzal/sql-parser": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "fakerphp/faker": "^1.23",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "k-kinzal/sql-faker": "dev-main",
+                "k-kinzal/sql-formatter": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SqlSemantics\\Platform\\MySql\\": "src/",
+                    "SqlSemantics\\Statement\\Model\\MySql\\": "resources/models/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/",
+                    "Fuzz\\": "fuzz/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "build:models": [
+                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=mysql --output=resources"
+                ],
+                "build:models:check": [
+                    "@build:models --check"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/sql-semantics-mysql"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:roundtrip": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:seeds --",
+                    "@php fuzz/run.php mysql"
+                ],
+                "fuzz:seeds": [
+                    "@php fuzz/seed.php mysql"
+                ],
+                "fuzz:smoke": [
+                    "@fuzz:roundtrip --max-runs=100"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "MySql statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-mysql",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "k-kinzal/sql-semantics-postgres",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../sql-semantics-postgres",
+                "reference": "d1aadb0c9197b0d3f536090d69540c4be861e53e"
+            },
+            "require": {
+                "k-kinzal/sql-parser": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "fakerphp/faker": "^1.23",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "k-kinzal/sql-faker": "dev-main",
+                "k-kinzal/sql-formatter": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SqlSemantics\\Platform\\PostgreSql\\": "src/",
+                    "SqlSemantics\\Statement\\Model\\PostgreSql\\": "resources/models/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/",
+                    "Fuzz\\": "fuzz/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "build:models": [
+                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=postgresql --output=resources"
+                ],
+                "build:models:check": [
+                    "@build:models --check"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/sql-semantics-postgres"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:roundtrip": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:seeds --",
+                    "@php fuzz/run.php pg"
+                ],
+                "fuzz:seeds": [
+                    "@php fuzz/seed.php pg"
+                ],
+                "fuzz:smoke": [
+                    "@fuzz:roundtrip --max-runs=100"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "PostgreSql statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-postgres",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-postgres/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "k-kinzal/sql-semantics-sqlite",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../sql-semantics-sqlite",
+                "reference": "3df32d72bd6591539561b22988674edea35d88b8"
+            },
+            "require": {
+                "k-kinzal/sql-parser": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "fakerphp/faker": "^1.23",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/lemon-parser": "dev-main",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "k-kinzal/sql-faker": "dev-main",
+                "k-kinzal/sql-formatter": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SqlSemantics\\Platform\\Sqlite\\": "src/",
+                    "SqlSemantics\\Statement\\Model\\Sqlite\\": "resources/models/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/",
+                    "Fuzz\\": "fuzz/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "build:models": [
+                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=sqlite --output=resources"
+                ],
+                "build:models:check": [
+                    "@build:models --check"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/sql-semantics-sqlite"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:roundtrip": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:seeds --",
+                    "@php fuzz/run.php sqlite"
+                ],
+                "fuzz:seeds": [
+                    "@php fuzz/seed.php sqlite"
+                ],
+                "fuzz:smoke": [
+                    "@fuzz:roundtrip --max-runs=100"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Sqlite statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-sqlite",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/"
+            },
+            "transport-options": {
+                "relative": true
+            }
         },
         {
             "name": "myclabs/deep-copy",
@@ -5917,14 +6599,20 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "k-kinzal/bison-parser": 20,
+        "k-kinzal/lemon-parser": 20,
         "k-kinzal/php-ai-toolkit": 20,
         "k-kinzal/sql-parser": 20,
+        "k-kinzal/sql-semantics-mysql": 20,
+        "k-kinzal/sql-semantics-postgres": 20,
+        "k-kinzal/sql-semantics-sqlite": 20,
         "phpcompatibility/php-compatibility": 15
     },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.1"
+        "php": "^8.1",
+        "composer-runtime-api": "^2.2"
     },
     "platform-dev": {},
     "platform-overrides": {

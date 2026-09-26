@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Binding\BoundRelation::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,8 +71,8 @@ final class BoundRelationTest extends TestCase
 {
     public function testKeepsScopeAndRelationAtTheSameStage(): void
     {
-        $builder = new SchemaBuilder(Dialect::PostgreSql);
-        $tables = new \SqlSemantics\Core\Binding\TableResolver($builder->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)'), new \SqlSemantics\Core\Ast\Identifiers(Dialect::PostgreSql), 'public');
+        $builder = new SchemaBuilder(PostgreSqlDialect::PostgreSql);
+        $tables = new \SqlSemantics\Core\Binding\TableResolver($builder->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)'), new \SqlSemantics\Core\Ast\Identifiers(PostgreSqlDialect::PostgreSql), 'public');
         $from = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('SELECT id FROM users')->find('from_clause')[0];
         $bound = (new \SqlSemantics\Core\Binding\FromBinder($tables, new \SqlSemantics\Core\Binding\IdentitySequence()))->bind($from);
         self::assertNotNull($bound);

@@ -176,6 +176,7 @@ use SqlFaker\MySql\MySqlProvider;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\WithinGroupRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Routine\ReturnRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Routine\BinlogRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ColumnNameRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\SystemVariableRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Column\AutoIncrementRule::class)]

@@ -9,10 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionRules::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,9 +74,9 @@ use SqlSemantics\Facade\Dialect;
 #[Medium]
 final class ExpressionRulesTest extends TestCase
 {
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testOperatorNullTestsAreNeverNullable(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -82,9 +85,9 @@ final class ExpressionRulesTest extends TestCase
         self::assertSame(Nullability::NotNull, $statement->outputs[1]->expression->nullability);
     }
 
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testCallNullIfCanIntroduceNullWithoutAnOuterJoin(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -95,7 +98,7 @@ final class ExpressionRulesTest extends TestCase
 
     public function testPredicateRejectsNonBooleanPostgresInputs(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);
         $this->expectExceptionMessage('boolean type');
         (new Binder($schema))->bind('SELECT id FROM users WHERE score');
@@ -103,7 +106,7 @@ final class ExpressionRulesTest extends TestCase
 
     public function testCoerceRecordsPostgresCommonTypeConversions(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT COALESCE(id, 2147483648) FROM users');
         $expression = $statement->outputs[0]->expression;
         self::assertSame(\SqlSemantics\Core\Model\ExpressionKind::Cast, $expression->operands[0]->kind);
@@ -114,7 +117,7 @@ final class ExpressionRulesTest extends TestCase
 
     public function testArithmeticHandlesNegativePostgresIntegerBoundaries(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT -2147483648, -9223372036854775808');
         self::assertSame('integer', $statement->outputs[0]->expression->type->name);
         self::assertSame('bigint', $statement->outputs[1]->expression->type->name);

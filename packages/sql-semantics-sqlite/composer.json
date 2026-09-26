@@ -1,0 +1,179 @@
+{
+    "name": "k-kinzal/sql-semantics-sqlite",
+    "description": "SQLite statement models, SQL reconstruction, and schema binding for SQL Semantics",
+    "type": "library",
+    "license": "MIT",
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-sqlite",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/"
+    },
+    "require": {
+        "php": "^8.1",
+        "k-kinzal/sql-parser": "dev-main",
+        "k-kinzal/sql-semantics": "dev-main"
+    },
+    "require-dev": {
+        "brianium/paratest": "^7.3",
+        "deptrac/deptrac": "^3.0",
+        "fakerphp/faker": "^1.23",
+        "friendsofphp/php-cs-fixer": "^3.95.25",
+        "k-kinzal/lemon-parser": "dev-main",
+        "k-kinzal/php-ai-toolkit": "dev-main",
+        "k-kinzal/sql-faker": "dev-main",
+        "k-kinzal/sql-formatter": "dev-main",
+        "nikic/php-fuzzer": "^0.0.11",
+        "phpbench/phpbench": "^1.4",
+        "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^10.5",
+        "squizlabs/php_codesniffer": "^4.0.4"
+    },
+    "repositories": [
+        {
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
+        {
+            "type": "path",
+            "url": "../sql-parser",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-parser": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-faker",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-faker": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-formatter",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-formatter": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../lemon-parser",
+            "options": {
+                "versions": {
+                    "k-kinzal/lemon-parser": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics": "dev-main"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SqlSemantics\\Platform\\Sqlite\\": "src/",
+            "SqlSemantics\\Statement\\Model\\Sqlite\\": "resources/models/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Bench\\": "bench/",
+            "Fuzz\\": "fuzz/"
+        }
+    },
+    "scripts": {
+        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
+        "bench": "phpbench run --report=aggregate",
+        "bench:full": "@bench",
+        "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
+        "build:models": "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=sqlite --output=resources",
+        "build:models:check": "@build:models --check",
+        "compat": "phpcs",
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
+        "docgen": "docgen --packages=. --title=k-kinzal/sql-semantics-sqlite",
+        "docgen:diff": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --diff=origin/main --serve"
+        ],
+        "docgen:fresh": "@docgen --no-cache",
+        "docgen:serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --serve"
+        ],
+        "doctest": "phpunit --testsuite doctest",
+        "format": "php-cs-fixer fix --allow-risky=yes",
+        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "fuzz": "@fuzz:smoke",
+        "fuzz:roundtrip": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:seeds --",
+            "@php fuzz/run.php sqlite"
+        ],
+        "fuzz:seeds": "@php fuzz/seed.php sqlite",
+        "fuzz:smoke": "@fuzz:roundtrip --max-runs=100",
+        "lint": [
+            "@autoload:check",
+            "@format:check",
+            "@phpstan",
+            "@compat",
+            "@loc-guard",
+            "@tree-guard",
+            "@deptrac"
+        ],
+        "loc-guard": "loc-guard --config=loc.yaml",
+        "phpstan": "phpstan analyse --memory-limit=1G",
+        "test": "paratest --processes=auto",
+        "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:unit": "phpunit --testsuite unit",
+        "tree-guard": "tree-guard --config=tree.yaml"
+    },
+    "scripts-descriptions": {
+        "autoload:check": "Check that the PSR-4 autoload mapping is strict and unambiguous.",
+        "bench": "Run the benchmarks.",
+        "bench:full": "Run the benchmarks.",
+        "bench:quick": "Run the benchmarks with fewer iterations.",
+        "build:models": "Regenerate the statement models in resources/.",
+        "build:models:check": "Check that the statement models in resources/ are up to date.",
+        "compat": "Check compatibility with PHP 8.1 and later with PHP_CodeSniffer.",
+        "deptrac": "Check the layer dependencies with Deptrac.",
+        "docgen": "Generate the API documentation into build/docs.",
+        "docgen:diff": "Generate the API documentation marked with the changes against origin/main, and serve it.",
+        "docgen:fresh": "Generate the API documentation without the cache.",
+        "docgen:serve": "Generate the API documentation and serve it locally.",
+        "doctest": "Run the @example blocks of the PHPDoc as tests.",
+        "format": "Fix the code style with PHP-CS-Fixer.",
+        "format:check": "Check the code style with PHP-CS-Fixer without changing files.",
+        "fuzz": "Run this database round-trip property with a bounded smoke budget.",
+        "fuzz:seeds": "Copy the sql-faker seed plans into the corpus.",
+        "fuzz:smoke": "Replay the corpus and run 100 mutations.",
+        "lint": "Run every static check: autoload, formatting, PHPStan, PHP compatibility, size and tree guards, and layer dependencies.",
+        "loc-guard": "Check file size limits.",
+        "phpstan": "Run PHPStan.",
+        "test": "Run all test suites in parallel.",
+        "test:coverage": "Run the unit tests in parallel and write the coverage and JUnit reports to build/.",
+        "test:unit": "Run the unit tests.",
+        "tree-guard": "Check the directory structure rules."
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "platform": {
+            "php": "8.1.0"
+        },
+        "sort-packages": true
+    }
+}

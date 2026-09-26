@@ -7,10 +7,12 @@ on:
   pull_request:
     paths:
       - 'packages/ztd-query-sqlite/**'
-      - 'packages/ztd-query-core/**'
       - 'packages/sql-faker/**'
+      - 'packages/ztd-query-core/**'
       - '.github/workflows/ztd-query-sqlite.yml'
       - '.github/workflows/ztd-query-sqlite-fuzz.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read

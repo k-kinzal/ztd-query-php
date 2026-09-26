@@ -12,7 +12,9 @@ use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Binding\LiteralBinder::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -73,7 +75,7 @@ final class LiteralBinderTest extends TestCase
 {
     public function testIntegerClassifiesPostgresWidthsWithoutPhpOverflow(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT 2147483647, 2147483648, 9223372036854775808');
         self::assertSame('integer', $statement->outputs[0]->expression->type->name);
         self::assertSame('bigint', $statement->outputs[1]->expression->type->name);
@@ -82,7 +84,7 @@ final class LiteralBinderTest extends TestCase
 
     public function testBindParametersRemainExplicitlyUnknownWithoutBindings(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT $1');
         self::assertSame(\SqlSemantics\Core\Model\ExpressionKind::Parameter, $statement->outputs[0]->expression->kind);
         self::assertSame(Nullability::Unknown, $statement->outputs[0]->expression->nullability);
@@ -92,7 +94,7 @@ final class LiteralBinderTest extends TestCase
     #[DataProvider('providerDecimalIntegers')]
     public function testIntegerResolvesDecimalBoundaries(string $literal, string $expected): void
     {
-        self::assertSame($expected, (new \SqlSemantics\Core\Binding\LiteralBinder(Dialect::PostgreSql))->integer($literal));
+        self::assertSame($expected, (new \SqlSemantics\Core\Binding\LiteralBinder(PostgreSqlDialect::PostgreSql))->integer($literal));
     }
 
     /**
@@ -117,7 +119,7 @@ final class LiteralBinderTest extends TestCase
 
     public function testBindDistinguishesMysqlUnsignedAndDecimalBoundaries(): void
     {
-        $schema = (new SchemaBuilder(Dialect::MySql))->build();
+        $schema = (new SchemaBuilder(MySqlDialect::MySql))->build();
         $statement = (new Binder($schema))->bind('SELECT 2147483648, 9223372036854775808, 18446744073709551616');
         self::assertSame('bigint', $statement->outputs[0]->expression->type->name);
         self::assertSame('bigint unsigned', $statement->outputs[1]->expression->type->name);
@@ -126,7 +128,7 @@ final class LiteralBinderTest extends TestCase
 
     public function testBindDistinguishesSqliteOverflowAsReal(): void
     {
-        $schema = (new SchemaBuilder(Dialect::Sqlite))->build();
+        $schema = (new SchemaBuilder(SqliteDialect::Sqlite))->build();
         $statement = (new Binder($schema))->bind('SELECT 9223372036854775807, 9223372036854775808');
         self::assertSame('integer', $statement->outputs[0]->expression->type->name);
         self::assertSame('real', $statement->outputs[1]->expression->type->name);
@@ -134,7 +136,7 @@ final class LiteralBinderTest extends TestCase
 
     public function testTypeNameRetainsLiteralCategoriesAndRejectsIdentifiers(): void
     {
-        $reader = new \SqlSemantics\Core\Binding\LiteralBinder(Dialect::PostgreSql);
+        $reader = new \SqlSemantics\Core\Binding\LiteralBinder(PostgreSqlDialect::PostgreSql);
         self::assertSame('numeric', $reader->typeName(new \SqlParser\Lexer\Token(1, 'FCONST', '1.25', 0)));
         self::assertSame('unknown', $reader->typeName(new \SqlParser\Lexer\Token(1, 'SCONST', "'value'", 0)));
         self::assertNull($reader->typeName(new \SqlParser\Lexer\Token(1, 'IDENT', 'value', 0)));

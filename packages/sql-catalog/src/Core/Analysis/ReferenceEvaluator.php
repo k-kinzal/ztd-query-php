@@ -69,14 +69,12 @@ final class ReferenceEvaluator
         if ($node instanceof Expr\ClassConstFetch) {
             return $this->constants->readClassConstant($node, $scope, $expressions);
         }
-        if ($node instanceof Expr\PropertyFetch || $node instanceof Expr\NullsafePropertyFetch) {
+        if ($node instanceof Expr\PropertyFetch || $node instanceof Expr\NullsafePropertyFetch
+            || $node instanceof Expr\StaticPropertyFetch) {
             return $this->readProperty($node, $environment, $scope, $expressions);
         }
         if ($node instanceof Expr\New_) {
             return $this->readInstance($node, $scope);
-        }
-        if ($node instanceof Expr\StaticPropertyFetch) {
-            return Domain::opaque(TypeShape::unknown(), Origin::Property, $this->text->render($node));
         }
         if ($node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction) {
             return Domain::of(new ObjectTerm('Closure'));
@@ -131,7 +129,12 @@ final class ReferenceEvaluator
     }
 
     /**
-     * The value of an array element, when both the array and the key resolved.
+     * The value of an array element.
+     *
+     * A key that resolved reads the element written under it. A key that did
+     * not — `self::TABLES[$kind]` with `$kind` coming from a request — reads
+     * every element the array holds: whatever the key turns out to be, the
+     * value is one of them, and an array written out in full lists them all.
      */
     public function readElement(
         Expr\ArrayDimFetch $node,
@@ -140,36 +143,11 @@ final class ReferenceEvaluator
         ExpressionEvaluator $expressions,
     ): Domain {
         $base = $expressions->evaluate($node->var, $environment, $scope);
-        $array = $base->soleArray();
-        $key = $node->dim === null ? null : $expressions->evaluate($node->dim, $environment, $scope)->soleLiteral();
-        if ($array !== null && $key !== null) {
-            $found = $this->lookup($array, $key->value);
-            if ($found !== null) {
-                return $found;
-            }
-        }
+        $found = $node->dim === null
+            ? null
+            : $base->select($expressions->evaluate($node->dim, $environment, $scope), $this->text->render($node));
 
-        return Domain::opaque(TypeShape::unknown(), $this->originOf($base), $this->text->render($node));
-    }
-
-    /**
-     * The element stored under a key, or null when the array does not hold one.
-     */
-    public function lookup(ArrayTerm $array, string|int|float|bool|null $key): ?Domain
-    {
-        $wanted = is_bool($key) || $key === null ? null : (string) $key;
-        if ($wanted === null) {
-            return null;
-        }
-        $position = 0;
-        foreach ($array->entries as $entry) {
-            $entryKey = $entry->key === null ? $position++ : $entry->scalarKey();
-            if ($entryKey !== null && (string) $entryKey === $wanted) {
-                return $entry->value;
-            }
-        }
-
-        return null;
+        return $found ?? Domain::opaque(TypeShape::unknown(), $this->originOf($base), $this->text->render($node));
     }
 
     /**
@@ -192,9 +170,13 @@ final class ReferenceEvaluator
 
     /**
      * The value of a property read, resolving a settled default when there is one.
+     *
+     * A static property is read the same way: `self::$tables` declared with a
+     * default and assigned nowhere else holds that default for the life of
+     * the process, which makes it a constant spelled as a property.
      */
     public function readProperty(
-        Expr\PropertyFetch|Expr\NullsafePropertyFetch $node,
+        Expr\PropertyFetch|Expr\NullsafePropertyFetch|Expr\StaticPropertyFetch $node,
         Environment $environment,
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
@@ -204,13 +186,18 @@ final class ReferenceEvaluator
             return $environment->read($tracked);
         }
         $name = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
-        $receiver = $expressions->evaluate($node->var, $environment, $scope);
-        $owner = $receiver->type()->soleClassName();
+        if ($node instanceof Expr\StaticPropertyFetch) {
+            $receiver = null;
+            $owner = $this->constants->resolveClassName($node->class, $scope);
+        } else {
+            $receiver = $expressions->evaluate($node->var, $environment, $scope);
+            $owner = $receiver->type()->soleClassName();
+        }
         if ($name === null || $owner === null) {
             return Domain::opaque(TypeShape::unknown(), Origin::Property, $this->text->render($node));
         }
 
-        $enum = $this->readEnumProperty($receiver, $owner, $name, $scope, $expressions);
+        $enum = $receiver === null ? null : $this->readEnumProperty($receiver, $owner, $name, $scope, $expressions);
         if ($enum !== null) {
             return $enum;
         }
@@ -351,7 +338,7 @@ final class ReferenceEvaluator
                 continue;
             }
             $key = $item->key === null ? $position++ : $expressions->evaluate($item->key, $environment, $scope)->soleLiteral()?->value;
-            $element = $array === null || $key === null ? null : $this->lookup($array, $key);
+            $element = $array === null || $key === null ? null : $array->element($key);
             $this->assign(
                 $item->value,
                 $element ?? Domain::opaque(TypeShape::unknown(), $this->originOf($value), $this->text->render($item->value)),

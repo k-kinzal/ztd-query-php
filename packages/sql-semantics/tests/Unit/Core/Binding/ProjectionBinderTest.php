@@ -9,9 +9,12 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Binding\ProjectionBinder::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -70,9 +73,9 @@ use SqlSemantics\Facade\Dialect;
 #[Medium]
 final class ProjectionBinderTest extends TestCase
 {
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testItemExpandsStarsAndPreservesDuplicateNames(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -81,9 +84,9 @@ final class ProjectionBinderTest extends TestCase
         self::assertSame([0, 1, 2, 3], array_column($statement->outputs, 'ordinal'));
     }
 
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testBindExpandsUnqualifiedStarInFromOrder(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -95,14 +98,14 @@ final class ProjectionBinderTest extends TestCase
 
     public function testStarRejectsAnUnknownQualifier(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);
         (new Binder($schema))->bind('SELECT absent.* FROM users');
     }
 
     public function testItemResolvesBarePostgresUnknownLiteralsAsText(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind("SELECT NULL, 'hello'");
         self::assertSame('text', $statement->outputs[0]->expression->type->name);
         self::assertSame('text', $statement->outputs[1]->expression->type->name);
@@ -111,7 +114,7 @@ final class ProjectionBinderTest extends TestCase
 
     public function testItemDecodesMysqlStringAliases(): void
     {
-        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(MySqlDialect::MySql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind("SELECT score AS 'points' FROM users ORDER BY points");
         self::assertSame('points', $statement->outputs[0]->name);
         self::assertSame($statement->outputs[0]->expression, $statement->orderBy[0]->expression);

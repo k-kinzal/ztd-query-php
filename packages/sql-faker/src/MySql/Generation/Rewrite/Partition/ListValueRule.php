@@ -18,6 +18,13 @@ use SqlFaker\Generation\Token\TerminalSequence;
 final class ListValueRule implements RewriteRule
 {
     /**
+     * MySQL 5.x calls the scalar part_value_expr_item; part_value_item is the containing tuple.
+     */
+    public function __construct(private readonly string $scalarRule = 'part_value_item')
+    {
+    }
+
+    /**
      * Uses an integer list value and preserves range partition bounds.
      */
     public function rewrite(TerminalSequence $sequence): TerminalSequence
@@ -29,7 +36,7 @@ final class ListValueRule implements RewriteRule
                 ], 'sql/parse_tree_partitions.cc:PT_part_value_item_max');
             }
         }
-        foreach ($sequence->occurrences('part_value_item') as $id) {
+        foreach ($sequence->occurrences($this->scalarRule) as $id) {
             $range = $sequence->range($id);
             if ($range === null || $sequence->nameAt($range[0]) !== '(' || !$sequence->terminals[$range[0]]->within('part_values_in')) {
                 continue;

@@ -9,9 +9,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Ast\Identifiers::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -72,7 +75,7 @@ final class IdentifiersTest extends TestCase
 {
     public function testNamePreservesQuotedPostgresCaseAndFoldsUnquotedNames(): void
     {
-        $builder = new SchemaBuilder(Dialect::PostgreSql);
+        $builder = new SchemaBuilder(PostgreSqlDialect::PostgreSql);
         $schema = $builder->build('CREATE TABLE "Users" ("Id" INTEGER NOT NULL, SCORE INTEGER)');
         $statement = (new Binder($schema))->bind('SELECT "Id", score FROM "Users"');
         self::assertSame(['Id', 'score'], array_column($statement->outputs, 'name'));
@@ -80,7 +83,7 @@ final class IdentifiersTest extends TestCase
 
     public function testEqualDistinguishesQuotedPostgresCase(): void
     {
-        $builder = new SchemaBuilder(Dialect::PostgreSql);
+        $builder = new SchemaBuilder(PostgreSqlDialect::PostgreSql);
         $schema = $builder->build('CREATE TABLE "Users" ("Id" INTEGER)');
         $this->expectException(SemanticException::class);
         (new Binder($schema))->bind('SELECT id FROM "Users"');
@@ -88,7 +91,7 @@ final class IdentifiersTest extends TestCase
 
     public function testPartsDoesNotSplitDotsInsideQuotedIdentifiers(): void
     {
-        $builder = new SchemaBuilder(Dialect::PostgreSql);
+        $builder = new SchemaBuilder(PostgreSqlDialect::PostgreSql);
         $schema = $builder->build('CREATE TABLE "a.b" ("c.d" INTEGER)');
         $statement = (new Binder($schema))->bind('SELECT "a.b"."c.d" FROM "a.b"');
         self::assertSame('a.b', $statement->relations[0]->declaration->name);
@@ -97,10 +100,10 @@ final class IdentifiersTest extends TestCase
 
     public function testRelationEqualModelsMysqlTableAliasesSeparatelyFromColumns(): void
     {
-        $names = new \SqlSemantics\Core\Ast\Identifiers(Dialect::MySql);
+        $names = new \SqlSemantics\Core\Ast\Identifiers(MySqlDialect::MySql);
         self::assertTrue($names->equal('Score', 'score'));
         self::assertFalse($names->relationEqual('Child', 'child'));
-        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(MySqlDialect::MySql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);
         (new Binder($schema))->bind('SELECT CHILD.id FROM users child');
     }
@@ -116,11 +119,11 @@ final class IdentifiersTest extends TestCase
      */
     public static function providerIdentifiers(): iterable
     {
-        yield 'postgres unquoted' => [Dialect::PostgreSql, 'USERS', 'users'];
-        yield 'postgres quoted' => [Dialect::PostgreSql, '"Users"', 'Users'];
-        yield 'escaped double quote' => [Dialect::PostgreSql, '"a""b"', 'a"b'];
-        yield 'mysql unquoted' => [Dialect::MySql, 'USERS', 'USERS'];
-        yield 'mysql backtick' => [Dialect::MySql, '`a``b`', 'a`b'];
-        yield 'sqlite bracket' => [Dialect::Sqlite, '[a b]', 'a b'];
+        yield 'postgres unquoted' => [PostgreSqlDialect::PostgreSql, 'USERS', 'users'];
+        yield 'postgres quoted' => [PostgreSqlDialect::PostgreSql, '"Users"', 'Users'];
+        yield 'escaped double quote' => [PostgreSqlDialect::PostgreSql, '"a""b"', 'a"b'];
+        yield 'mysql unquoted' => [MySqlDialect::MySql, 'USERS', 'USERS'];
+        yield 'mysql backtick' => [MySqlDialect::MySql, '`a``b`', 'a`b'];
+        yield 'sqlite bracket' => [SqliteDialect::Sqlite, '[a b]', 'a b'];
     }
 }
