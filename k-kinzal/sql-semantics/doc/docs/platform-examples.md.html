@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Platform examples — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/doc/docs/platform-examples.md.html">
+<meta name="description" content="Platform examples, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Platform examples — ZTD Query PHP">
+<meta property="og:description" content="Platform examples, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/doc/docs/platform-examples.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../../k-kinzal/sql-semantics/all-items.html">All items</a></li><li><a href="../../../../k-kinzal/sql-semantics/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/index.html" title="SqlSemantics\Core">SqlSemantics\Core</a></li><li><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Analysis/index.html" title="SqlSemantics\Core\Analysis">SqlSemantics\Core\Analysis</a></li><li><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Ast/index.html" title="SqlSemantics\Core\Ast">SqlSemantics\Core\Ast</a></li><li><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Binding/index.html" title="SqlSemantics\Core\Binding">SqlSemantics\Core\Binding</a></li><li><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Model/index.html" title="SqlSemantics\Core\Model">SqlSemantics\Core\Model</a></li><li><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Policy/index.html" title="SqlSemantics\Core\Policy">SqlSemantics\Core\Policy</a></li><li><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Schema/index.html" title="SqlSemantics\Core\Schema">SqlSemantics\Core\Schema</a></li><li><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Core/Type/index.html" title="SqlSemantics\Core\Type">SqlSemantics\Core\Type</a></li><li><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Facade/index.html" title="SqlSemantics\Facade">SqlSemantics\Facade</a></li><li><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/index.html" title="SqlSemantics\Statement">SqlSemantics\Statement</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/platform-examples.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Platform examples</h1><div class="symbol-meta"><span class="source-link">docs/platform-examples.md</span></div></div>
+<section class="readme prose"><h2>Platform examples</h2>
+<p>Concrete construction and semantic result examples:</p>
+<pre class="code"><code><span class="tok-var">$builder</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>);
+<span class="tok-var">$schema</span> = <span class="tok-var">$builder</span>-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY)&#039;</span>);
+<span class="tok-var">$schema</span>-&gt;<span class="tok-id">tables</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">name</span> <span class="tok-com">// =&gt; &#039;users&#039;</span>
+<span class="tok-var">$schema</span>-&gt;<span class="tok-id">defaultSchema</span> <span class="tok-com">// =&gt; &#039;public&#039;</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$schema</span>-&gt;<span class="tok-id">dialect</span>-&gt;<span class="tok-id">value</span> <span class="tok-com">// =&gt; &#039;postgresql&#039;</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY)&#039;</span>);
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\Binder</span>(<span class="tok-var">$schema</span>))-&gt;<span class="tok-id">bind</span>(<span class="tok-str">&#039;SELECT id FROM users&#039;</span>);
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">outputs</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">expression</span>-&gt;<span class="tok-id">type</span>-&gt;<span class="tok-id">name</span> <span class="tok-com">// =&gt; &#039;integer&#039;</span>
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">outputs</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">expression</span>-&gt;<span class="tok-id">nullability</span>-&gt;<span class="tok-id">value</span> <span class="tok-com">// =&gt; &#039;not-null&#039;</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$schema</span>-&gt;<span class="tok-id">tables</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">columns</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">nullability</span>-&gt;<span class="tok-id">value</span> <span class="tok-com">// =&gt; &#039;not-null&#039;</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$schema</span>-&gt;<span class="tok-id">tables</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">schema</span> <span class="tok-com">// =&gt; &#039;public&#039;</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$schema</span>-&gt;<span class="tok-id">tables</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">constraints</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">columns</span> <span class="tok-com">// =&gt; [&#039;id&#039;]</span></code></pre>
+<pre class="code"><code><span class="tok-var">$type</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\Type\TypeDescriptor</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>, <span class="tok-str">&#039;numeric&#039;</span>, [<span class="tok-str">&#039;10&#039;</span>, <span class="tok-str">&#039;2&#039;</span>]);
+<span class="tok-var">$type</span>-&gt;<span class="tok-id">modifiers</span> <span class="tok-com">// =&gt; [&#039;10&#039;, &#039;2&#039;]</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\Binder</span>(<span class="tok-var">$schema</span>))-&gt;<span class="tok-id">bind</span>(<span class="tok-str">&#039;SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC&#039;</span>);
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">outputs</span>[<span class="tok-num">1</span>]-&gt;<span class="tok-id">expression</span>-&gt;<span class="tok-id">nullExtendedBy</span> <span class="tok-com">// =&gt; [&#039;j0&#039;]</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\Binder</span>(<span class="tok-var">$schema</span>))-&gt;<span class="tok-id">bind</span>(<span class="tok-str">&#039;SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC&#039;</span>);
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">from</span>-&gt;<span class="tok-id">kind</span>-&gt;<span class="tok-id">value</span> <span class="tok-com">// =&gt; &#039;left&#039;</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\Binder</span>(<span class="tok-var">$schema</span>))-&gt;<span class="tok-id">bind</span>(<span class="tok-str">&#039;SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC&#039;</span>);
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">scopeId</span> <span class="tok-com">// =&gt; &#039;s0&#039;</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\Binder</span>(<span class="tok-var">$schema</span>))-&gt;<span class="tok-id">bind</span>(<span class="tok-str">&#039;SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC&#039;</span>);
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">relations</span>[<span class="tok-num">1</span>]-&gt;<span class="tok-id">alias</span> <span class="tok-com">// =&gt; &#039;b&#039;</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\Binder</span>(<span class="tok-var">$schema</span>))-&gt;<span class="tok-id">bind</span>(<span class="tok-str">&#039;SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC&#039;</span>);
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">outputs</span>[<span class="tok-num">1</span>]-&gt;<span class="tok-id">expression</span>-&gt;<span class="tok-id">binding</span>-&gt;<span class="tok-id">relationId</span> <span class="tok-com">// =&gt; &#039;r1&#039;</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\Binder</span>(<span class="tok-var">$schema</span>))-&gt;<span class="tok-id">bind</span>(<span class="tok-str">&#039;SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC&#039;</span>);
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">orderBy</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">descending</span> <span class="tok-com">// =&gt; true</span></code></pre>
+<pre class="code"><code><span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\SchemaBuilder</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)&#039;</span>);
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Core\Binder</span>(<span class="tok-var">$schema</span>))-&gt;<span class="tok-id">bind</span>(<span class="tok-str">&#039;SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC&#039;</span>);
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">outputs</span>[<span class="tok-num">1</span>]-&gt;<span class="tok-id">ordinal</span> <span class="tok-com">// =&gt; 1</span></code></pre>
+</section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>

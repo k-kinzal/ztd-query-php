@@ -22,7 +22,7 @@
 </head>
 <body data-root="../../../../../../">
 <a class="skip" href="#content">Skip to content</a><div class="doc">
-<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../../index.html">ZTD Query PHP</a></div><nav class="sidebar-section"><div class="sidebar-title">Packages</div><ul class="sidebar-list"><li><a href="../../../../../../k-kinzal/bison-parser/index.html">k-kinzal/bison-parser</a></li><li><a href="../../../../../../k-kinzal/container/index.html">k-kinzal/container</a></li><li><a href="../../../../../../k-kinzal/lemon-parser/index.html">k-kinzal/lemon-parser</a></li><li><a href="../../../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></li><li><a href="../../../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a></li><li><a href="../../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li><a href="../../../../../../k-kinzal/sql-fixture/index.html">k-kinzal/sql-fixture</a></li><li><a href="../../../../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a></li><li><a href="../../../../../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a></li><li><a href="../../../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></li><li><a href="../../../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></li><li><a href="../../../../../../k-kinzal/ztd-query-mysql/index.html">k-kinzal/ztd-query-mysql</a></li><li><a href="../../../../../../k-kinzal/ztd-query-mysqli-adapter/index.html">k-kinzal/ztd-query-mysqli-adapter</a></li><li><a href="../../../../../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a></li><li><a href="../../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></li><li><a href="../../../../../../k-kinzal/ztd-query-postgres/index.html">k-kinzal/ztd-query-postgres</a></li><li><a href="../../../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a></li></ul></nav></aside>
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../../index.html">ZTD Query PHP</a></div><nav class="sidebar-section"><div class="sidebar-title">Packages</div><ul class="sidebar-list"><li><a href="../../../../../../k-kinzal/bison-parser/index.html">k-kinzal/bison-parser</a></li><li><a href="../../../../../../k-kinzal/container/index.html">k-kinzal/container</a></li><li><a href="../../../../../../k-kinzal/lemon-parser/index.html">k-kinzal/lemon-parser</a></li><li><a href="../../../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></li><li><a href="../../../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a></li><li><a href="../../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li><a href="../../../../../../k-kinzal/sql-fixture/index.html">k-kinzal/sql-fixture</a></li><li><a href="../../../../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a></li><li><a href="../../../../../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a></li><li><a href="../../../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></li><li><a href="../../../../../../k-kinzal/sql-semantics-mysql/index.html">k-kinzal/sql-semantics-mysql</a></li><li><a href="../../../../../../k-kinzal/sql-semantics-postgres/index.html">k-kinzal/sql-semantics-postgres</a></li><li><a href="../../../../../../k-kinzal/sql-semantics-sqlite/index.html">k-kinzal/sql-semantics-sqlite</a></li><li><a href="../../../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></li><li><a href="../../../../../../k-kinzal/ztd-query-mysql/index.html">k-kinzal/ztd-query-mysql</a></li><li><a href="../../../../../../k-kinzal/ztd-query-mysqli-adapter/index.html">k-kinzal/ztd-query-mysqli-adapter</a></li><li><a href="../../../../../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a></li><li><a href="../../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></li><li><a href="../../../../../../k-kinzal/ztd-query-postgres/index.html">k-kinzal/ztd-query-postgres</a></li><li><a href="../../../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a></li></ul></nav></aside>
 <div class="main">
 <header class="topbar">
 <button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
@@ -47,11 +47,11 @@
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\Test</span>;</span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\UsesClass</span>;</span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\FixtureGenerator</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\FixtureProvider</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Platform\PlatformFactory</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Provider\FixtureGenerator</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Provider\FixtureProvider</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Provider\PlatformFactory</span>;</span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Schema\ColumnDefinition</span>;</span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Schema\TableSchema</span>;</span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a></span>
@@ -109,7 +109,7 @@
 <span class="src-line" id="L71"><a class="ln" href="#L71">71</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Hydrator\Reflection\PropertyHydration</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L72"><a class="ln" href="#L72">72</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Hydrator\Reflection\PropertyNames</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L73"><a class="ln" href="#L73">73</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Hydrator\Reflection\ValueConversion</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\InvalidOverrideException</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Fixture\Exception\InvalidOverrideException</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L75"><a class="ln" href="#L75">75</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Parsing\PlanStatements</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L76"><a class="ln" href="#L76">76</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Parsing\RelationCursor</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L77"><a class="ln" href="#L77">77</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Parsing\RelationReader</span>::<span class="tok-kw">class</span>)]</span>
@@ -197,235 +197,236 @@
 <span class="src-line" id="L159"><a class="ln" href="#L159">159</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Fixture\Generation\RowBindings</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L160"><a class="ln" href="#L160">160</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Fixture\Generation\RecursiveRelationException</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L161"><a class="ln" href="#L161">161</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Fixture\Generation\RelationValueException</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L162"><a class="ln" href="#L162">162</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">PostgreSqlEndToEndTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
-<span class="src-line" id="L163"><a class="ln" href="#L163">163</a>{</span>
-<span class="src-line" id="L164"><a class="ln" href="#L164">164</a>    #[<span class="tok-id">Test</span>]</span>
-<span class="src-line" id="L165"><a class="ln" href="#L165">165</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithCommonTypes</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L166"><a class="ln" href="#L166">166</a>    {</span>
-<span class="src-line" id="L167"><a class="ln" href="#L167">167</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L168"><a class="ln" href="#L168">168</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
-<span class="src-line" id="L169"><a class="ln" href="#L169">169</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
-<span class="src-line" id="L170"><a class="ln" href="#L170">170</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
-<span class="src-line" id="L171"><a class="ln" href="#L171">171</a><span class="tok-str">            CREATE TABLE users (</span></span>
-<span class="src-line" id="L172"><a class="ln" href="#L172">172</a><span class="tok-str">                id SERIAL PRIMARY KEY,</span></span>
-<span class="src-line" id="L173"><a class="ln" href="#L173">173</a><span class="tok-str">                name VARCHAR(100) NOT NULL,</span></span>
-<span class="src-line" id="L174"><a class="ln" href="#L174">174</a><span class="tok-str">                email TEXT NOT NULL,</span></span>
-<span class="src-line" id="L175"><a class="ln" href="#L175">175</a><span class="tok-str">                age INTEGER,</span></span>
-<span class="src-line" id="L176"><a class="ln" href="#L176">176</a><span class="tok-str">                balance NUMERIC(10, 2),</span></span>
-<span class="src-line" id="L177"><a class="ln" href="#L177">177</a><span class="tok-str">                active BOOLEAN DEFAULT TRUE,</span></span>
-<span class="src-line" id="L178"><a class="ln" href="#L178">178</a><span class="tok-str">                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP</span></span>
-<span class="src-line" id="L179"><a class="ln" href="#L179">179</a><span class="tok-str">            )</span></span>
-<span class="src-line" id="L180"><a class="ln" href="#L180">180</a>            SQL);</span>
-<span class="src-line" id="L181"><a class="ln" href="#L181">181</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayNotHasKey</span>(<span class="tok-str">&#039;id&#039;</span>, <span class="tok-var">$data</span>);</span>
-<span class="src-line" id="L182"><a class="ln" href="#L182">182</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayHasKey</span>(<span class="tok-str">&#039;name&#039;</span>, <span class="tok-var">$data</span>);</span>
-<span class="src-line" id="L183"><a class="ln" href="#L183">183</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;name&#039;</span>]);</span>
-<span class="src-line" id="L184"><a class="ln" href="#L184">184</a>        <span class="tok-id">self</span>::<span class="tok-id">assertLessThanOrEqual</span>(<span class="tok-num">100</span>, <span class="tok-id">strlen</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;name&#039;</span>]));</span>
-<span class="src-line" id="L185"><a class="ln" href="#L185">185</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayHasKey</span>(<span class="tok-str">&#039;email&#039;</span>, <span class="tok-var">$data</span>);</span>
-<span class="src-line" id="L186"><a class="ln" href="#L186">186</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;email&#039;</span>]);</span>
-<span class="src-line" id="L187"><a class="ln" href="#L187">187</a>    }</span>
-<span class="src-line" id="L188"><a class="ln" href="#L188">188</a></span>
-<span class="src-line" id="L189"><a class="ln" href="#L189">189</a>    #[<span class="tok-id">Test</span>]</span>
-<span class="src-line" id="L190"><a class="ln" href="#L190">190</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithPgSpecificTypes</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L191"><a class="ln" href="#L191">191</a>    {</span>
-<span class="src-line" id="L192"><a class="ln" href="#L192">192</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L193"><a class="ln" href="#L193">193</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
-<span class="src-line" id="L194"><a class="ln" href="#L194">194</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
-<span class="src-line" id="L195"><a class="ln" href="#L195">195</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
-<span class="src-line" id="L196"><a class="ln" href="#L196">196</a><span class="tok-str">            CREATE TABLE pg_types (</span></span>
-<span class="src-line" id="L197"><a class="ln" href="#L197">197</a><span class="tok-str">                col_uuid UUID NOT NULL,</span></span>
-<span class="src-line" id="L198"><a class="ln" href="#L198">198</a><span class="tok-str">                col_jsonb JSONB NOT NULL,</span></span>
-<span class="src-line" id="L199"><a class="ln" href="#L199">199</a><span class="tok-str">                col_json JSON NOT NULL,</span></span>
-<span class="src-line" id="L200"><a class="ln" href="#L200">200</a><span class="tok-str">                col_bytea BYTEA NOT NULL,</span></span>
-<span class="src-line" id="L201"><a class="ln" href="#L201">201</a><span class="tok-str">                col_inet INET NOT NULL,</span></span>
-<span class="src-line" id="L202"><a class="ln" href="#L202">202</a><span class="tok-str">                col_cidr CIDR NOT NULL,</span></span>
-<span class="src-line" id="L203"><a class="ln" href="#L203">203</a><span class="tok-str">                col_macaddr MACADDR NOT NULL,</span></span>
-<span class="src-line" id="L204"><a class="ln" href="#L204">204</a><span class="tok-str">                col_money MONEY NOT NULL,</span></span>
-<span class="src-line" id="L205"><a class="ln" href="#L205">205</a><span class="tok-str">                col_interval INTERVAL NOT NULL,</span></span>
-<span class="src-line" id="L206"><a class="ln" href="#L206">206</a><span class="tok-str">                col_xml XML NOT NULL</span></span>
-<span class="src-line" id="L207"><a class="ln" href="#L207">207</a><span class="tok-str">            )</span></span>
-<span class="src-line" id="L208"><a class="ln" href="#L208">208</a>            SQL);</span>
-<span class="src-line" id="L209"><a class="ln" href="#L209">209</a>        <span class="tok-var">$colUuid</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_uuid&#039;</span>];</span>
-<span class="src-line" id="L210"><a class="ln" href="#L210">210</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colUuid</span>);</span>
-<span class="src-line" id="L211"><a class="ln" href="#L211">211</a>        <span class="tok-id">self</span>::<span class="tok-id">assertMatchesRegularExpression</span>(</span>
-<span class="src-line" id="L212"><a class="ln" href="#L212">212</a>            <span class="tok-str">&#039;/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/&#039;</span>,</span>
-<span class="src-line" id="L213"><a class="ln" href="#L213">213</a>            <span class="tok-var">$colUuid</span></span>
-<span class="src-line" id="L214"><a class="ln" href="#L214">214</a>        );</span>
-<span class="src-line" id="L215"><a class="ln" href="#L215">215</a>        <span class="tok-var">$colJsonb</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_jsonb&#039;</span>];</span>
-<span class="src-line" id="L216"><a class="ln" href="#L216">216</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colJsonb</span>);</span>
-<span class="src-line" id="L217"><a class="ln" href="#L217">217</a>        <span class="tok-var">$decoded</span> = <span class="tok-id">json_decode</span>(<span class="tok-var">$colJsonb</span>, <span class="tok-id">true</span>);</span>
-<span class="src-line" id="L218"><a class="ln" href="#L218">218</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsArray</span>(<span class="tok-var">$decoded</span>);</span>
-<span class="src-line" id="L219"><a class="ln" href="#L219">219</a>        <span class="tok-var">$colJson</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_json&#039;</span>];</span>
-<span class="src-line" id="L220"><a class="ln" href="#L220">220</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colJson</span>);</span>
-<span class="src-line" id="L221"><a class="ln" href="#L221">221</a>        <span class="tok-var">$decoded</span> = <span class="tok-id">json_decode</span>(<span class="tok-var">$colJson</span>, <span class="tok-id">true</span>);</span>
-<span class="src-line" id="L222"><a class="ln" href="#L222">222</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsArray</span>(<span class="tok-var">$decoded</span>);</span>
-<span class="src-line" id="L223"><a class="ln" href="#L223">223</a>        <span class="tok-var">$colBytea</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_bytea&#039;</span>];</span>
-<span class="src-line" id="L224"><a class="ln" href="#L224">224</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colBytea</span>);</span>
-<span class="src-line" id="L225"><a class="ln" href="#L225">225</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringStartsWith</span>(<span class="tok-str">&#039;\\x&#039;</span>, <span class="tok-var">$colBytea</span>);</span>
-<span class="src-line" id="L226"><a class="ln" href="#L226">226</a>        <span class="tok-var">$colInet</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_inet&#039;</span>];</span>
-<span class="src-line" id="L227"><a class="ln" href="#L227">227</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colInet</span>);</span>
-<span class="src-line" id="L228"><a class="ln" href="#L228">228</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNotFalse</span>(<span class="tok-id">filter_var</span>(<span class="tok-var">$colInet</span>, <span class="tok-id">FILTER_VALIDATE_IP</span>));</span>
-<span class="src-line" id="L229"><a class="ln" href="#L229">229</a>        <span class="tok-var">$colCidr</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_cidr&#039;</span>];</span>
-<span class="src-line" id="L230"><a class="ln" href="#L230">230</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colCidr</span>);</span>
-<span class="src-line" id="L231"><a class="ln" href="#L231">231</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;/24&#039;</span>, <span class="tok-var">$colCidr</span>);</span>
-<span class="src-line" id="L232"><a class="ln" href="#L232">232</a>        <span class="tok-var">$colMacaddr</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_macaddr&#039;</span>];</span>
-<span class="src-line" id="L233"><a class="ln" href="#L233">233</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colMacaddr</span>);</span>
-<span class="src-line" id="L234"><a class="ln" href="#L234">234</a>        <span class="tok-id">self</span>::<span class="tok-id">assertMatchesRegularExpression</span>(<span class="tok-str">&#039;/^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$/&#039;</span>, <span class="tok-var">$colMacaddr</span>);</span>
-<span class="src-line" id="L235"><a class="ln" href="#L235">235</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsFloat</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;col_money&#039;</span>]);</span>
-<span class="src-line" id="L236"><a class="ln" href="#L236">236</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;col_interval&#039;</span>]);</span>
-<span class="src-line" id="L237"><a class="ln" href="#L237">237</a>        <span class="tok-var">$colXml</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_xml&#039;</span>];</span>
-<span class="src-line" id="L238"><a class="ln" href="#L238">238</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colXml</span>);</span>
-<span class="src-line" id="L239"><a class="ln" href="#L239">239</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringStartsWith</span>(<span class="tok-str">&#039;&lt;root&gt;&#039;</span>, <span class="tok-var">$colXml</span>);</span>
-<span class="src-line" id="L240"><a class="ln" href="#L240">240</a>    }</span>
-<span class="src-line" id="L241"><a class="ln" href="#L241">241</a></span>
-<span class="src-line" id="L242"><a class="ln" href="#L242">242</a>    #[<span class="tok-id">Test</span>]</span>
-<span class="src-line" id="L243"><a class="ln" href="#L243">243</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithSerialTypes</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L244"><a class="ln" href="#L244">244</a>    {</span>
-<span class="src-line" id="L245"><a class="ln" href="#L245">245</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L246"><a class="ln" href="#L246">246</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
-<span class="src-line" id="L247"><a class="ln" href="#L247">247</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
-<span class="src-line" id="L248"><a class="ln" href="#L248">248</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
-<span class="src-line" id="L249"><a class="ln" href="#L249">249</a><span class="tok-str">            CREATE TABLE serials (</span></span>
-<span class="src-line" id="L250"><a class="ln" href="#L250">250</a><span class="tok-str">                id SERIAL PRIMARY KEY,</span></span>
-<span class="src-line" id="L251"><a class="ln" href="#L251">251</a><span class="tok-str">                big_id BIGSERIAL NOT NULL,</span></span>
-<span class="src-line" id="L252"><a class="ln" href="#L252">252</a><span class="tok-str">                small_id SMALLSERIAL NOT NULL,</span></span>
-<span class="src-line" id="L253"><a class="ln" href="#L253">253</a><span class="tok-str">                name TEXT NOT NULL</span></span>
-<span class="src-line" id="L254"><a class="ln" href="#L254">254</a><span class="tok-str">            )</span></span>
-<span class="src-line" id="L255"><a class="ln" href="#L255">255</a>            SQL);</span>
-<span class="src-line" id="L256"><a class="ln" href="#L256">256</a></span>
-<span class="src-line" id="L257"><a class="ln" href="#L257">257</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayNotHasKey</span>(<span class="tok-str">&#039;id&#039;</span>, <span class="tok-var">$data</span>);</span>
-<span class="src-line" id="L258"><a class="ln" href="#L258">258</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayNotHasKey</span>(<span class="tok-str">&#039;big_id&#039;</span>, <span class="tok-var">$data</span>);</span>
-<span class="src-line" id="L259"><a class="ln" href="#L259">259</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayNotHasKey</span>(<span class="tok-str">&#039;small_id&#039;</span>, <span class="tok-var">$data</span>);</span>
-<span class="src-line" id="L260"><a class="ln" href="#L260">260</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayHasKey</span>(<span class="tok-str">&#039;name&#039;</span>, <span class="tok-var">$data</span>);</span>
-<span class="src-line" id="L261"><a class="ln" href="#L261">261</a>    }</span>
-<span class="src-line" id="L262"><a class="ln" href="#L262">262</a></span>
-<span class="src-line" id="L263"><a class="ln" href="#L263">263</a>    #[<span class="tok-id">Test</span>]</span>
-<span class="src-line" id="L264"><a class="ln" href="#L264">264</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithTimestampVariants</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L265"><a class="ln" href="#L265">265</a>    {</span>
-<span class="src-line" id="L266"><a class="ln" href="#L266">266</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L267"><a class="ln" href="#L267">267</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
-<span class="src-line" id="L268"><a class="ln" href="#L268">268</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
-<span class="src-line" id="L269"><a class="ln" href="#L269">269</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
-<span class="src-line" id="L270"><a class="ln" href="#L270">270</a><span class="tok-str">            CREATE TABLE times (</span></span>
-<span class="src-line" id="L271"><a class="ln" href="#L271">271</a><span class="tok-str">                col_ts TIMESTAMP NOT NULL,</span></span>
-<span class="src-line" id="L272"><a class="ln" href="#L272">272</a><span class="tok-str">                col_tstz TIMESTAMPTZ NOT NULL,</span></span>
-<span class="src-line" id="L273"><a class="ln" href="#L273">273</a><span class="tok-str">                col_date DATE NOT NULL,</span></span>
-<span class="src-line" id="L274"><a class="ln" href="#L274">274</a><span class="tok-str">                col_time TIME NOT NULL,</span></span>
-<span class="src-line" id="L275"><a class="ln" href="#L275">275</a><span class="tok-str">                col_timetz TIMETZ NOT NULL</span></span>
-<span class="src-line" id="L276"><a class="ln" href="#L276">276</a><span class="tok-str">            )</span></span>
-<span class="src-line" id="L277"><a class="ln" href="#L277">277</a>            SQL);</span>
-<span class="src-line" id="L278"><a class="ln" href="#L278">278</a></span>
-<span class="src-line" id="L279"><a class="ln" href="#L279">279</a>        <span class="tok-var">$colTs</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_ts&#039;</span>];</span>
-<span class="src-line" id="L280"><a class="ln" href="#L280">280</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colTs</span>);</span>
-<span class="src-line" id="L281"><a class="ln" href="#L281">281</a>        <span class="tok-id">self</span>::<span class="tok-id">assertMatchesRegularExpression</span>(<span class="tok-str">&#039;/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/&#039;</span>, <span class="tok-var">$colTs</span>);</span>
-<span class="src-line" id="L282"><a class="ln" href="#L282">282</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;col_tstz&#039;</span>]);</span>
-<span class="src-line" id="L283"><a class="ln" href="#L283">283</a>        <span class="tok-var">$colDate</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_date&#039;</span>];</span>
-<span class="src-line" id="L284"><a class="ln" href="#L284">284</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colDate</span>);</span>
-<span class="src-line" id="L285"><a class="ln" href="#L285">285</a>        <span class="tok-id">self</span>::<span class="tok-id">assertMatchesRegularExpression</span>(<span class="tok-str">&#039;/^\d{4}-\d{2}-\d{2}$/&#039;</span>, <span class="tok-var">$colDate</span>);</span>
-<span class="src-line" id="L286"><a class="ln" href="#L286">286</a>        <span class="tok-var">$colTime</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_time&#039;</span>];</span>
-<span class="src-line" id="L287"><a class="ln" href="#L287">287</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colTime</span>);</span>
-<span class="src-line" id="L288"><a class="ln" href="#L288">288</a>        <span class="tok-id">self</span>::<span class="tok-id">assertMatchesRegularExpression</span>(<span class="tok-str">&#039;/^\d{2}:\d{2}:\d{2}$/&#039;</span>, <span class="tok-var">$colTime</span>);</span>
-<span class="src-line" id="L289"><a class="ln" href="#L289">289</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;col_timetz&#039;</span>]);</span>
-<span class="src-line" id="L290"><a class="ln" href="#L290">290</a>    }</span>
-<span class="src-line" id="L291"><a class="ln" href="#L291">291</a></span>
-<span class="src-line" id="L292"><a class="ln" href="#L292">292</a>    #[<span class="tok-id">Test</span>]</span>
-<span class="src-line" id="L293"><a class="ln" href="#L293">293</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithArrayTypes</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L294"><a class="ln" href="#L294">294</a>    {</span>
-<span class="src-line" id="L295"><a class="ln" href="#L295">295</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L296"><a class="ln" href="#L296">296</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
-<span class="src-line" id="L297"><a class="ln" href="#L297">297</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
-<span class="src-line" id="L298"><a class="ln" href="#L298">298</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
-<span class="src-line" id="L299"><a class="ln" href="#L299">299</a><span class="tok-str">            CREATE TABLE arrays (</span></span>
-<span class="src-line" id="L300"><a class="ln" href="#L300">300</a><span class="tok-str">                tags TEXT[] NOT NULL,</span></span>
-<span class="src-line" id="L301"><a class="ln" href="#L301">301</a><span class="tok-str">                ids INTEGER[] NOT NULL</span></span>
-<span class="src-line" id="L302"><a class="ln" href="#L302">302</a><span class="tok-str">            )</span></span>
-<span class="src-line" id="L303"><a class="ln" href="#L303">303</a>            SQL);</span>
-<span class="src-line" id="L304"><a class="ln" href="#L304">304</a></span>
-<span class="src-line" id="L305"><a class="ln" href="#L305">305</a>        <span class="tok-var">$tags</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;tags&#039;</span>];</span>
-<span class="src-line" id="L306"><a class="ln" href="#L306">306</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$tags</span>);</span>
-<span class="src-line" id="L307"><a class="ln" href="#L307">307</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringStartsWith</span>(<span class="tok-str">&#039;{&#039;</span>, <span class="tok-var">$tags</span>);</span>
-<span class="src-line" id="L308"><a class="ln" href="#L308">308</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringEndsWith</span>(<span class="tok-str">&#039;}&#039;</span>, <span class="tok-var">$tags</span>);</span>
-<span class="src-line" id="L309"><a class="ln" href="#L309">309</a></span>
-<span class="src-line" id="L310"><a class="ln" href="#L310">310</a>        <span class="tok-var">$ids</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;ids&#039;</span>];</span>
-<span class="src-line" id="L311"><a class="ln" href="#L311">311</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$ids</span>);</span>
-<span class="src-line" id="L312"><a class="ln" href="#L312">312</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringStartsWith</span>(<span class="tok-str">&#039;{&#039;</span>, <span class="tok-var">$ids</span>);</span>
-<span class="src-line" id="L313"><a class="ln" href="#L313">313</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringEndsWith</span>(<span class="tok-str">&#039;}&#039;</span>, <span class="tok-var">$ids</span>);</span>
-<span class="src-line" id="L314"><a class="ln" href="#L314">314</a>    }</span>
-<span class="src-line" id="L315"><a class="ln" href="#L315">315</a></span>
-<span class="src-line" id="L316"><a class="ln" href="#L316">316</a>    #[<span class="tok-id">Test</span>]</span>
-<span class="src-line" id="L317"><a class="ln" href="#L317">317</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithOverrides</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L318"><a class="ln" href="#L318">318</a>    {</span>
-<span class="src-line" id="L319"><a class="ln" href="#L319">319</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L320"><a class="ln" href="#L320">320</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
-<span class="src-line" id="L321"><a class="ln" href="#L321">321</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
-<span class="src-line" id="L322"><a class="ln" href="#L322">322</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(</span>
-<span class="src-line" id="L323"><a class="ln" href="#L323">323</a>            <span class="tok-str">&#039;CREATE TABLE test (id SERIAL PRIMARY KEY, name TEXT NOT NULL)&#039;</span>,</span>
-<span class="src-line" id="L324"><a class="ln" href="#L324">324</a>            [<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">42</span>, <span class="tok-str">&#039;name&#039;</span> =&gt; <span class="tok-str">&#039;Custom&#039;</span>],</span>
-<span class="src-line" id="L325"><a class="ln" href="#L325">325</a>        );</span>
-<span class="src-line" id="L326"><a class="ln" href="#L326">326</a></span>
-<span class="src-line" id="L327"><a class="ln" href="#L327">327</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">42</span>, <span class="tok-var">$data</span>[<span class="tok-str">&#039;id&#039;</span>]);</span>
-<span class="src-line" id="L328"><a class="ln" href="#L328">328</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;Custom&#039;</span>, <span class="tok-var">$data</span>[<span class="tok-str">&#039;name&#039;</span>]);</span>
-<span class="src-line" id="L329"><a class="ln" href="#L329">329</a>    }</span>
-<span class="src-line" id="L330"><a class="ln" href="#L330">330</a></span>
-<span class="src-line" id="L331"><a class="ln" href="#L331">331</a>    #[<span class="tok-id">Test</span>]</span>
-<span class="src-line" id="L332"><a class="ln" href="#L332">332</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithGeneratedColumn</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L333"><a class="ln" href="#L333">333</a>    {</span>
-<span class="src-line" id="L334"><a class="ln" href="#L334">334</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L335"><a class="ln" href="#L335">335</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
-<span class="src-line" id="L336"><a class="ln" href="#L336">336</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
-<span class="src-line" id="L337"><a class="ln" href="#L337">337</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
-<span class="src-line" id="L338"><a class="ln" href="#L338">338</a><span class="tok-str">            CREATE TABLE test (</span></span>
-<span class="src-line" id="L339"><a class="ln" href="#L339">339</a><span class="tok-str">                a INTEGER NOT NULL,</span></span>
-<span class="src-line" id="L340"><a class="ln" href="#L340">340</a><span class="tok-str">                b INTEGER NOT NULL,</span></span>
-<span class="src-line" id="L341"><a class="ln" href="#L341">341</a><span class="tok-str">                c INTEGER GENERATED ALWAYS AS (a + b) STORED</span></span>
-<span class="src-line" id="L342"><a class="ln" href="#L342">342</a><span class="tok-str">            )</span></span>
-<span class="src-line" id="L343"><a class="ln" href="#L343">343</a>            SQL);</span>
-<span class="src-line" id="L344"><a class="ln" href="#L344">344</a></span>
-<span class="src-line" id="L345"><a class="ln" href="#L345">345</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayHasKey</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-var">$data</span>);</span>
-<span class="src-line" id="L346"><a class="ln" href="#L346">346</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayHasKey</span>(<span class="tok-str">&#039;b&#039;</span>, <span class="tok-var">$data</span>);</span>
-<span class="src-line" id="L347"><a class="ln" href="#L347">347</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayNotHasKey</span>(<span class="tok-str">&#039;c&#039;</span>, <span class="tok-var">$data</span>);</span>
-<span class="src-line" id="L348"><a class="ln" href="#L348">348</a>    }</span>
-<span class="src-line" id="L349"><a class="ln" href="#L349">349</a></span>
-<span class="src-line" id="L350"><a class="ln" href="#L350">350</a>    #[<span class="tok-id">Test</span>]</span>
-<span class="src-line" id="L351"><a class="ln" href="#L351">351</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithNumericPrecision</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L352"><a class="ln" href="#L352">352</a>    {</span>
-<span class="src-line" id="L353"><a class="ln" href="#L353">353</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L354"><a class="ln" href="#L354">354</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
-<span class="src-line" id="L355"><a class="ln" href="#L355">355</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
-<span class="src-line" id="L356"><a class="ln" href="#L356">356</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
-<span class="src-line" id="L357"><a class="ln" href="#L357">357</a><span class="tok-str">            CREATE TABLE test (</span></span>
-<span class="src-line" id="L358"><a class="ln" href="#L358">358</a><span class="tok-str">                price NUMERIC(5, 2) NOT NULL,</span></span>
-<span class="src-line" id="L359"><a class="ln" href="#L359">359</a><span class="tok-str">                qty INTEGER NOT NULL,</span></span>
-<span class="src-line" id="L360"><a class="ln" href="#L360">360</a><span class="tok-str">                rate DOUBLE PRECISION NOT NULL</span></span>
-<span class="src-line" id="L361"><a class="ln" href="#L361">361</a><span class="tok-str">            )</span></span>
-<span class="src-line" id="L362"><a class="ln" href="#L362">362</a>            SQL);</span>
-<span class="src-line" id="L363"><a class="ln" href="#L363">363</a></span>
-<span class="src-line" id="L364"><a class="ln" href="#L364">364</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsFloat</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;price&#039;</span>]);</span>
-<span class="src-line" id="L365"><a class="ln" href="#L365">365</a>        <span class="tok-id">self</span>::<span class="tok-id">assertGreaterThanOrEqual</span>(-<span class="tok-num">999.99</span>, <span class="tok-var">$data</span>[<span class="tok-str">&#039;price&#039;</span>]);</span>
-<span class="src-line" id="L366"><a class="ln" href="#L366">366</a>        <span class="tok-id">self</span>::<span class="tok-id">assertLessThanOrEqual</span>(<span class="tok-num">999.99</span>, <span class="tok-var">$data</span>[<span class="tok-str">&#039;price&#039;</span>]);</span>
-<span class="src-line" id="L367"><a class="ln" href="#L367">367</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsInt</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;qty&#039;</span>]);</span>
-<span class="src-line" id="L368"><a class="ln" href="#L368">368</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsFloat</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;rate&#039;</span>]);</span>
-<span class="src-line" id="L369"><a class="ln" href="#L369">369</a>    }</span>
-<span class="src-line" id="L370"><a class="ln" href="#L370">370</a></span>
-<span class="src-line" id="L371"><a class="ln" href="#L371">371</a>    #[<span class="tok-id">Test</span>]</span>
-<span class="src-line" id="L372"><a class="ln" href="#L372">372</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureReproducibleWithSeed</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L373"><a class="ln" href="#L373">373</a>    {</span>
-<span class="src-line" id="L374"><a class="ln" href="#L374">374</a>        <span class="tok-var">$sql</span> = <span class="tok-str">&#039;CREATE TABLE test (name TEXT NOT NULL, age INTEGER NOT NULL)&#039;</span>;</span>
-<span class="src-line" id="L375"><a class="ln" href="#L375">375</a></span>
-<span class="src-line" id="L376"><a class="ln" href="#L376">376</a>        <span class="tok-var">$faker1</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L377"><a class="ln" href="#L377">377</a>        <span class="tok-var">$faker1</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">99999</span>);</span>
-<span class="src-line" id="L378"><a class="ln" href="#L378">378</a>        <span class="tok-var">$provider1</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker1</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
-<span class="src-line" id="L379"><a class="ln" href="#L379">379</a>        <span class="tok-var">$data1</span> = <span class="tok-var">$provider1</span>-&gt;<span class="tok-id">fixture</span>(<span class="tok-var">$sql</span>);</span>
-<span class="src-line" id="L380"><a class="ln" href="#L380">380</a></span>
-<span class="src-line" id="L381"><a class="ln" href="#L381">381</a>        <span class="tok-var">$faker2</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L382"><a class="ln" href="#L382">382</a>        <span class="tok-var">$faker2</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">99999</span>);</span>
-<span class="src-line" id="L383"><a class="ln" href="#L383">383</a>        <span class="tok-var">$provider2</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker2</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
-<span class="src-line" id="L384"><a class="ln" href="#L384">384</a>        <span class="tok-var">$data2</span> = <span class="tok-var">$provider2</span>-&gt;<span class="tok-id">fixture</span>(<span class="tok-var">$sql</span>);</span>
-<span class="src-line" id="L385"><a class="ln" href="#L385">385</a></span>
-<span class="src-line" id="L386"><a class="ln" href="#L386">386</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$data1</span>[<span class="tok-str">&#039;name&#039;</span>], <span class="tok-var">$data2</span>[<span class="tok-str">&#039;name&#039;</span>]);</span>
-<span class="src-line" id="L387"><a class="ln" href="#L387">387</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$data1</span>[<span class="tok-str">&#039;age&#039;</span>], <span class="tok-var">$data2</span>[<span class="tok-str">&#039;age&#039;</span>]);</span>
-<span class="src-line" id="L388"><a class="ln" href="#L388">388</a>    }</span>
-<span class="src-line" id="L389"><a class="ln" href="#L389">389</a>}</span>
-<span class="src-line" id="L390"><a class="ln" href="#L390">390</a></span>
+<span class="src-line" id="L162"><a class="ln" href="#L162">162</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Fixture\RowGenerator</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L163"><a class="ln" href="#L163">163</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">PostgreSqlEndToEndTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" id="L164"><a class="ln" href="#L164">164</a>{</span>
+<span class="src-line" id="L165"><a class="ln" href="#L165">165</a>    #[<span class="tok-id">Test</span>]</span>
+<span class="src-line" id="L166"><a class="ln" href="#L166">166</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithCommonTypes</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L167"><a class="ln" href="#L167">167</a>    {</span>
+<span class="src-line" id="L168"><a class="ln" href="#L168">168</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
+<span class="src-line" id="L169"><a class="ln" href="#L169">169</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
+<span class="src-line" id="L170"><a class="ln" href="#L170">170</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
+<span class="src-line" id="L171"><a class="ln" href="#L171">171</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
+<span class="src-line" id="L172"><a class="ln" href="#L172">172</a><span class="tok-str">            CREATE TABLE users (</span></span>
+<span class="src-line" id="L173"><a class="ln" href="#L173">173</a><span class="tok-str">                id SERIAL PRIMARY KEY,</span></span>
+<span class="src-line" id="L174"><a class="ln" href="#L174">174</a><span class="tok-str">                name VARCHAR(100) NOT NULL,</span></span>
+<span class="src-line" id="L175"><a class="ln" href="#L175">175</a><span class="tok-str">                email TEXT NOT NULL,</span></span>
+<span class="src-line" id="L176"><a class="ln" href="#L176">176</a><span class="tok-str">                age INTEGER,</span></span>
+<span class="src-line" id="L177"><a class="ln" href="#L177">177</a><span class="tok-str">                balance NUMERIC(10, 2),</span></span>
+<span class="src-line" id="L178"><a class="ln" href="#L178">178</a><span class="tok-str">                active BOOLEAN DEFAULT TRUE,</span></span>
+<span class="src-line" id="L179"><a class="ln" href="#L179">179</a><span class="tok-str">                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP</span></span>
+<span class="src-line" id="L180"><a class="ln" href="#L180">180</a><span class="tok-str">            )</span></span>
+<span class="src-line" id="L181"><a class="ln" href="#L181">181</a>            SQL);</span>
+<span class="src-line" id="L182"><a class="ln" href="#L182">182</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayNotHasKey</span>(<span class="tok-str">&#039;id&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L183"><a class="ln" href="#L183">183</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayHasKey</span>(<span class="tok-str">&#039;name&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L184"><a class="ln" href="#L184">184</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;name&#039;</span>]);</span>
+<span class="src-line" id="L185"><a class="ln" href="#L185">185</a>        <span class="tok-id">self</span>::<span class="tok-id">assertLessThanOrEqual</span>(<span class="tok-num">100</span>, <span class="tok-id">strlen</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;name&#039;</span>]));</span>
+<span class="src-line" id="L186"><a class="ln" href="#L186">186</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayHasKey</span>(<span class="tok-str">&#039;email&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L187"><a class="ln" href="#L187">187</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;email&#039;</span>]);</span>
+<span class="src-line" id="L188"><a class="ln" href="#L188">188</a>    }</span>
+<span class="src-line" id="L189"><a class="ln" href="#L189">189</a></span>
+<span class="src-line" id="L190"><a class="ln" href="#L190">190</a>    #[<span class="tok-id">Test</span>]</span>
+<span class="src-line" id="L191"><a class="ln" href="#L191">191</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithPgSpecificTypes</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L192"><a class="ln" href="#L192">192</a>    {</span>
+<span class="src-line" id="L193"><a class="ln" href="#L193">193</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
+<span class="src-line" id="L194"><a class="ln" href="#L194">194</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
+<span class="src-line" id="L195"><a class="ln" href="#L195">195</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
+<span class="src-line" id="L196"><a class="ln" href="#L196">196</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
+<span class="src-line" id="L197"><a class="ln" href="#L197">197</a><span class="tok-str">            CREATE TABLE pg_types (</span></span>
+<span class="src-line" id="L198"><a class="ln" href="#L198">198</a><span class="tok-str">                col_uuid UUID NOT NULL,</span></span>
+<span class="src-line" id="L199"><a class="ln" href="#L199">199</a><span class="tok-str">                col_jsonb JSONB NOT NULL,</span></span>
+<span class="src-line" id="L200"><a class="ln" href="#L200">200</a><span class="tok-str">                col_json JSON NOT NULL,</span></span>
+<span class="src-line" id="L201"><a class="ln" href="#L201">201</a><span class="tok-str">                col_bytea BYTEA NOT NULL,</span></span>
+<span class="src-line" id="L202"><a class="ln" href="#L202">202</a><span class="tok-str">                col_inet INET NOT NULL,</span></span>
+<span class="src-line" id="L203"><a class="ln" href="#L203">203</a><span class="tok-str">                col_cidr CIDR NOT NULL,</span></span>
+<span class="src-line" id="L204"><a class="ln" href="#L204">204</a><span class="tok-str">                col_macaddr MACADDR NOT NULL,</span></span>
+<span class="src-line" id="L205"><a class="ln" href="#L205">205</a><span class="tok-str">                col_money MONEY NOT NULL,</span></span>
+<span class="src-line" id="L206"><a class="ln" href="#L206">206</a><span class="tok-str">                col_interval INTERVAL NOT NULL,</span></span>
+<span class="src-line" id="L207"><a class="ln" href="#L207">207</a><span class="tok-str">                col_xml XML NOT NULL</span></span>
+<span class="src-line" id="L208"><a class="ln" href="#L208">208</a><span class="tok-str">            )</span></span>
+<span class="src-line" id="L209"><a class="ln" href="#L209">209</a>            SQL);</span>
+<span class="src-line" id="L210"><a class="ln" href="#L210">210</a>        <span class="tok-var">$colUuid</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_uuid&#039;</span>];</span>
+<span class="src-line" id="L211"><a class="ln" href="#L211">211</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colUuid</span>);</span>
+<span class="src-line" id="L212"><a class="ln" href="#L212">212</a>        <span class="tok-id">self</span>::<span class="tok-id">assertMatchesRegularExpression</span>(</span>
+<span class="src-line" id="L213"><a class="ln" href="#L213">213</a>            <span class="tok-str">&#039;/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/&#039;</span>,</span>
+<span class="src-line" id="L214"><a class="ln" href="#L214">214</a>            <span class="tok-var">$colUuid</span></span>
+<span class="src-line" id="L215"><a class="ln" href="#L215">215</a>        );</span>
+<span class="src-line" id="L216"><a class="ln" href="#L216">216</a>        <span class="tok-var">$colJsonb</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_jsonb&#039;</span>];</span>
+<span class="src-line" id="L217"><a class="ln" href="#L217">217</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colJsonb</span>);</span>
+<span class="src-line" id="L218"><a class="ln" href="#L218">218</a>        <span class="tok-var">$decoded</span> = <span class="tok-id">json_decode</span>(<span class="tok-var">$colJsonb</span>, <span class="tok-id">true</span>);</span>
+<span class="src-line" id="L219"><a class="ln" href="#L219">219</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsArray</span>(<span class="tok-var">$decoded</span>);</span>
+<span class="src-line" id="L220"><a class="ln" href="#L220">220</a>        <span class="tok-var">$colJson</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_json&#039;</span>];</span>
+<span class="src-line" id="L221"><a class="ln" href="#L221">221</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colJson</span>);</span>
+<span class="src-line" id="L222"><a class="ln" href="#L222">222</a>        <span class="tok-var">$decoded</span> = <span class="tok-id">json_decode</span>(<span class="tok-var">$colJson</span>, <span class="tok-id">true</span>);</span>
+<span class="src-line" id="L223"><a class="ln" href="#L223">223</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsArray</span>(<span class="tok-var">$decoded</span>);</span>
+<span class="src-line" id="L224"><a class="ln" href="#L224">224</a>        <span class="tok-var">$colBytea</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_bytea&#039;</span>];</span>
+<span class="src-line" id="L225"><a class="ln" href="#L225">225</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colBytea</span>);</span>
+<span class="src-line" id="L226"><a class="ln" href="#L226">226</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringStartsWith</span>(<span class="tok-str">&#039;\\x&#039;</span>, <span class="tok-var">$colBytea</span>);</span>
+<span class="src-line" id="L227"><a class="ln" href="#L227">227</a>        <span class="tok-var">$colInet</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_inet&#039;</span>];</span>
+<span class="src-line" id="L228"><a class="ln" href="#L228">228</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colInet</span>);</span>
+<span class="src-line" id="L229"><a class="ln" href="#L229">229</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNotFalse</span>(<span class="tok-id">filter_var</span>(<span class="tok-var">$colInet</span>, <span class="tok-id">FILTER_VALIDATE_IP</span>));</span>
+<span class="src-line" id="L230"><a class="ln" href="#L230">230</a>        <span class="tok-var">$colCidr</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_cidr&#039;</span>];</span>
+<span class="src-line" id="L231"><a class="ln" href="#L231">231</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colCidr</span>);</span>
+<span class="src-line" id="L232"><a class="ln" href="#L232">232</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;/24&#039;</span>, <span class="tok-var">$colCidr</span>);</span>
+<span class="src-line" id="L233"><a class="ln" href="#L233">233</a>        <span class="tok-var">$colMacaddr</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_macaddr&#039;</span>];</span>
+<span class="src-line" id="L234"><a class="ln" href="#L234">234</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colMacaddr</span>);</span>
+<span class="src-line" id="L235"><a class="ln" href="#L235">235</a>        <span class="tok-id">self</span>::<span class="tok-id">assertMatchesRegularExpression</span>(<span class="tok-str">&#039;/^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$/&#039;</span>, <span class="tok-var">$colMacaddr</span>);</span>
+<span class="src-line" id="L236"><a class="ln" href="#L236">236</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsFloat</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;col_money&#039;</span>]);</span>
+<span class="src-line" id="L237"><a class="ln" href="#L237">237</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;col_interval&#039;</span>]);</span>
+<span class="src-line" id="L238"><a class="ln" href="#L238">238</a>        <span class="tok-var">$colXml</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_xml&#039;</span>];</span>
+<span class="src-line" id="L239"><a class="ln" href="#L239">239</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colXml</span>);</span>
+<span class="src-line" id="L240"><a class="ln" href="#L240">240</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringStartsWith</span>(<span class="tok-str">&#039;&lt;root&gt;&#039;</span>, <span class="tok-var">$colXml</span>);</span>
+<span class="src-line" id="L241"><a class="ln" href="#L241">241</a>    }</span>
+<span class="src-line" id="L242"><a class="ln" href="#L242">242</a></span>
+<span class="src-line" id="L243"><a class="ln" href="#L243">243</a>    #[<span class="tok-id">Test</span>]</span>
+<span class="src-line" id="L244"><a class="ln" href="#L244">244</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithSerialTypes</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L245"><a class="ln" href="#L245">245</a>    {</span>
+<span class="src-line" id="L246"><a class="ln" href="#L246">246</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
+<span class="src-line" id="L247"><a class="ln" href="#L247">247</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
+<span class="src-line" id="L248"><a class="ln" href="#L248">248</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
+<span class="src-line" id="L249"><a class="ln" href="#L249">249</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
+<span class="src-line" id="L250"><a class="ln" href="#L250">250</a><span class="tok-str">            CREATE TABLE serials (</span></span>
+<span class="src-line" id="L251"><a class="ln" href="#L251">251</a><span class="tok-str">                id SERIAL PRIMARY KEY,</span></span>
+<span class="src-line" id="L252"><a class="ln" href="#L252">252</a><span class="tok-str">                big_id BIGSERIAL NOT NULL,</span></span>
+<span class="src-line" id="L253"><a class="ln" href="#L253">253</a><span class="tok-str">                small_id SMALLSERIAL NOT NULL,</span></span>
+<span class="src-line" id="L254"><a class="ln" href="#L254">254</a><span class="tok-str">                name TEXT NOT NULL</span></span>
+<span class="src-line" id="L255"><a class="ln" href="#L255">255</a><span class="tok-str">            )</span></span>
+<span class="src-line" id="L256"><a class="ln" href="#L256">256</a>            SQL);</span>
+<span class="src-line" id="L257"><a class="ln" href="#L257">257</a></span>
+<span class="src-line" id="L258"><a class="ln" href="#L258">258</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayNotHasKey</span>(<span class="tok-str">&#039;id&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L259"><a class="ln" href="#L259">259</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayNotHasKey</span>(<span class="tok-str">&#039;big_id&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L260"><a class="ln" href="#L260">260</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayNotHasKey</span>(<span class="tok-str">&#039;small_id&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L261"><a class="ln" href="#L261">261</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayHasKey</span>(<span class="tok-str">&#039;name&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L262"><a class="ln" href="#L262">262</a>    }</span>
+<span class="src-line" id="L263"><a class="ln" href="#L263">263</a></span>
+<span class="src-line" id="L264"><a class="ln" href="#L264">264</a>    #[<span class="tok-id">Test</span>]</span>
+<span class="src-line" id="L265"><a class="ln" href="#L265">265</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithTimestampVariants</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L266"><a class="ln" href="#L266">266</a>    {</span>
+<span class="src-line" id="L267"><a class="ln" href="#L267">267</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
+<span class="src-line" id="L268"><a class="ln" href="#L268">268</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
+<span class="src-line" id="L269"><a class="ln" href="#L269">269</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
+<span class="src-line" id="L270"><a class="ln" href="#L270">270</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
+<span class="src-line" id="L271"><a class="ln" href="#L271">271</a><span class="tok-str">            CREATE TABLE times (</span></span>
+<span class="src-line" id="L272"><a class="ln" href="#L272">272</a><span class="tok-str">                col_ts TIMESTAMP NOT NULL,</span></span>
+<span class="src-line" id="L273"><a class="ln" href="#L273">273</a><span class="tok-str">                col_tstz TIMESTAMPTZ NOT NULL,</span></span>
+<span class="src-line" id="L274"><a class="ln" href="#L274">274</a><span class="tok-str">                col_date DATE NOT NULL,</span></span>
+<span class="src-line" id="L275"><a class="ln" href="#L275">275</a><span class="tok-str">                col_time TIME NOT NULL,</span></span>
+<span class="src-line" id="L276"><a class="ln" href="#L276">276</a><span class="tok-str">                col_timetz TIMETZ NOT NULL</span></span>
+<span class="src-line" id="L277"><a class="ln" href="#L277">277</a><span class="tok-str">            )</span></span>
+<span class="src-line" id="L278"><a class="ln" href="#L278">278</a>            SQL);</span>
+<span class="src-line" id="L279"><a class="ln" href="#L279">279</a></span>
+<span class="src-line" id="L280"><a class="ln" href="#L280">280</a>        <span class="tok-var">$colTs</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_ts&#039;</span>];</span>
+<span class="src-line" id="L281"><a class="ln" href="#L281">281</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colTs</span>);</span>
+<span class="src-line" id="L282"><a class="ln" href="#L282">282</a>        <span class="tok-id">self</span>::<span class="tok-id">assertMatchesRegularExpression</span>(<span class="tok-str">&#039;/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/&#039;</span>, <span class="tok-var">$colTs</span>);</span>
+<span class="src-line" id="L283"><a class="ln" href="#L283">283</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;col_tstz&#039;</span>]);</span>
+<span class="src-line" id="L284"><a class="ln" href="#L284">284</a>        <span class="tok-var">$colDate</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_date&#039;</span>];</span>
+<span class="src-line" id="L285"><a class="ln" href="#L285">285</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colDate</span>);</span>
+<span class="src-line" id="L286"><a class="ln" href="#L286">286</a>        <span class="tok-id">self</span>::<span class="tok-id">assertMatchesRegularExpression</span>(<span class="tok-str">&#039;/^\d{4}-\d{2}-\d{2}$/&#039;</span>, <span class="tok-var">$colDate</span>);</span>
+<span class="src-line" id="L287"><a class="ln" href="#L287">287</a>        <span class="tok-var">$colTime</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;col_time&#039;</span>];</span>
+<span class="src-line" id="L288"><a class="ln" href="#L288">288</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$colTime</span>);</span>
+<span class="src-line" id="L289"><a class="ln" href="#L289">289</a>        <span class="tok-id">self</span>::<span class="tok-id">assertMatchesRegularExpression</span>(<span class="tok-str">&#039;/^\d{2}:\d{2}:\d{2}$/&#039;</span>, <span class="tok-var">$colTime</span>);</span>
+<span class="src-line" id="L290"><a class="ln" href="#L290">290</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;col_timetz&#039;</span>]);</span>
+<span class="src-line" id="L291"><a class="ln" href="#L291">291</a>    }</span>
+<span class="src-line" id="L292"><a class="ln" href="#L292">292</a></span>
+<span class="src-line" id="L293"><a class="ln" href="#L293">293</a>    #[<span class="tok-id">Test</span>]</span>
+<span class="src-line" id="L294"><a class="ln" href="#L294">294</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithArrayTypes</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L295"><a class="ln" href="#L295">295</a>    {</span>
+<span class="src-line" id="L296"><a class="ln" href="#L296">296</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
+<span class="src-line" id="L297"><a class="ln" href="#L297">297</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
+<span class="src-line" id="L298"><a class="ln" href="#L298">298</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
+<span class="src-line" id="L299"><a class="ln" href="#L299">299</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
+<span class="src-line" id="L300"><a class="ln" href="#L300">300</a><span class="tok-str">            CREATE TABLE arrays (</span></span>
+<span class="src-line" id="L301"><a class="ln" href="#L301">301</a><span class="tok-str">                tags TEXT[] NOT NULL,</span></span>
+<span class="src-line" id="L302"><a class="ln" href="#L302">302</a><span class="tok-str">                ids INTEGER[] NOT NULL</span></span>
+<span class="src-line" id="L303"><a class="ln" href="#L303">303</a><span class="tok-str">            )</span></span>
+<span class="src-line" id="L304"><a class="ln" href="#L304">304</a>            SQL);</span>
+<span class="src-line" id="L305"><a class="ln" href="#L305">305</a></span>
+<span class="src-line" id="L306"><a class="ln" href="#L306">306</a>        <span class="tok-var">$tags</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;tags&#039;</span>];</span>
+<span class="src-line" id="L307"><a class="ln" href="#L307">307</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$tags</span>);</span>
+<span class="src-line" id="L308"><a class="ln" href="#L308">308</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringStartsWith</span>(<span class="tok-str">&#039;{&#039;</span>, <span class="tok-var">$tags</span>);</span>
+<span class="src-line" id="L309"><a class="ln" href="#L309">309</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringEndsWith</span>(<span class="tok-str">&#039;}&#039;</span>, <span class="tok-var">$tags</span>);</span>
+<span class="src-line" id="L310"><a class="ln" href="#L310">310</a></span>
+<span class="src-line" id="L311"><a class="ln" href="#L311">311</a>        <span class="tok-var">$ids</span> = <span class="tok-var">$data</span>[<span class="tok-str">&#039;ids&#039;</span>];</span>
+<span class="src-line" id="L312"><a class="ln" href="#L312">312</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsString</span>(<span class="tok-var">$ids</span>);</span>
+<span class="src-line" id="L313"><a class="ln" href="#L313">313</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringStartsWith</span>(<span class="tok-str">&#039;{&#039;</span>, <span class="tok-var">$ids</span>);</span>
+<span class="src-line" id="L314"><a class="ln" href="#L314">314</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringEndsWith</span>(<span class="tok-str">&#039;}&#039;</span>, <span class="tok-var">$ids</span>);</span>
+<span class="src-line" id="L315"><a class="ln" href="#L315">315</a>    }</span>
+<span class="src-line" id="L316"><a class="ln" href="#L316">316</a></span>
+<span class="src-line" id="L317"><a class="ln" href="#L317">317</a>    #[<span class="tok-id">Test</span>]</span>
+<span class="src-line" id="L318"><a class="ln" href="#L318">318</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithOverrides</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L319"><a class="ln" href="#L319">319</a>    {</span>
+<span class="src-line" id="L320"><a class="ln" href="#L320">320</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
+<span class="src-line" id="L321"><a class="ln" href="#L321">321</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
+<span class="src-line" id="L322"><a class="ln" href="#L322">322</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
+<span class="src-line" id="L323"><a class="ln" href="#L323">323</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(</span>
+<span class="src-line" id="L324"><a class="ln" href="#L324">324</a>            <span class="tok-str">&#039;CREATE TABLE test (id SERIAL PRIMARY KEY, name TEXT NOT NULL)&#039;</span>,</span>
+<span class="src-line" id="L325"><a class="ln" href="#L325">325</a>            [<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">42</span>, <span class="tok-str">&#039;name&#039;</span> =&gt; <span class="tok-str">&#039;Custom&#039;</span>],</span>
+<span class="src-line" id="L326"><a class="ln" href="#L326">326</a>        );</span>
+<span class="src-line" id="L327"><a class="ln" href="#L327">327</a></span>
+<span class="src-line" id="L328"><a class="ln" href="#L328">328</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">42</span>, <span class="tok-var">$data</span>[<span class="tok-str">&#039;id&#039;</span>]);</span>
+<span class="src-line" id="L329"><a class="ln" href="#L329">329</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;Custom&#039;</span>, <span class="tok-var">$data</span>[<span class="tok-str">&#039;name&#039;</span>]);</span>
+<span class="src-line" id="L330"><a class="ln" href="#L330">330</a>    }</span>
+<span class="src-line" id="L331"><a class="ln" href="#L331">331</a></span>
+<span class="src-line" id="L332"><a class="ln" href="#L332">332</a>    #[<span class="tok-id">Test</span>]</span>
+<span class="src-line" id="L333"><a class="ln" href="#L333">333</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithGeneratedColumn</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L334"><a class="ln" href="#L334">334</a>    {</span>
+<span class="src-line" id="L335"><a class="ln" href="#L335">335</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
+<span class="src-line" id="L336"><a class="ln" href="#L336">336</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
+<span class="src-line" id="L337"><a class="ln" href="#L337">337</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
+<span class="src-line" id="L338"><a class="ln" href="#L338">338</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
+<span class="src-line" id="L339"><a class="ln" href="#L339">339</a><span class="tok-str">            CREATE TABLE test (</span></span>
+<span class="src-line" id="L340"><a class="ln" href="#L340">340</a><span class="tok-str">                a INTEGER NOT NULL,</span></span>
+<span class="src-line" id="L341"><a class="ln" href="#L341">341</a><span class="tok-str">                b INTEGER NOT NULL,</span></span>
+<span class="src-line" id="L342"><a class="ln" href="#L342">342</a><span class="tok-str">                c INTEGER GENERATED ALWAYS AS (a + b) STORED</span></span>
+<span class="src-line" id="L343"><a class="ln" href="#L343">343</a><span class="tok-str">            )</span></span>
+<span class="src-line" id="L344"><a class="ln" href="#L344">344</a>            SQL);</span>
+<span class="src-line" id="L345"><a class="ln" href="#L345">345</a></span>
+<span class="src-line" id="L346"><a class="ln" href="#L346">346</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayHasKey</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L347"><a class="ln" href="#L347">347</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayHasKey</span>(<span class="tok-str">&#039;b&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L348"><a class="ln" href="#L348">348</a>        <span class="tok-id">self</span>::<span class="tok-id">assertArrayNotHasKey</span>(<span class="tok-str">&#039;c&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L349"><a class="ln" href="#L349">349</a>    }</span>
+<span class="src-line" id="L350"><a class="ln" href="#L350">350</a></span>
+<span class="src-line" id="L351"><a class="ln" href="#L351">351</a>    #[<span class="tok-id">Test</span>]</span>
+<span class="src-line" id="L352"><a class="ln" href="#L352">352</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureWithNumericPrecision</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L353"><a class="ln" href="#L353">353</a>    {</span>
+<span class="src-line" id="L354"><a class="ln" href="#L354">354</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
+<span class="src-line" id="L355"><a class="ln" href="#L355">355</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);</span>
+<span class="src-line" id="L356"><a class="ln" href="#L356">356</a>        <span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
+<span class="src-line" id="L357"><a class="ln" href="#L357">357</a>        <span class="tok-var">$data</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">fixture</span>(&lt;&lt;&lt;&#039;SQL&#039;</span>
+<span class="src-line" id="L358"><a class="ln" href="#L358">358</a><span class="tok-str">            CREATE TABLE test (</span></span>
+<span class="src-line" id="L359"><a class="ln" href="#L359">359</a><span class="tok-str">                price NUMERIC(5, 2) NOT NULL,</span></span>
+<span class="src-line" id="L360"><a class="ln" href="#L360">360</a><span class="tok-str">                qty INTEGER NOT NULL,</span></span>
+<span class="src-line" id="L361"><a class="ln" href="#L361">361</a><span class="tok-str">                rate DOUBLE PRECISION NOT NULL</span></span>
+<span class="src-line" id="L362"><a class="ln" href="#L362">362</a><span class="tok-str">            )</span></span>
+<span class="src-line" id="L363"><a class="ln" href="#L363">363</a>            SQL);</span>
+<span class="src-line" id="L364"><a class="ln" href="#L364">364</a></span>
+<span class="src-line" id="L365"><a class="ln" href="#L365">365</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsFloat</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;price&#039;</span>]);</span>
+<span class="src-line" id="L366"><a class="ln" href="#L366">366</a>        <span class="tok-id">self</span>::<span class="tok-id">assertGreaterThanOrEqual</span>(-<span class="tok-num">999.99</span>, <span class="tok-var">$data</span>[<span class="tok-str">&#039;price&#039;</span>]);</span>
+<span class="src-line" id="L367"><a class="ln" href="#L367">367</a>        <span class="tok-id">self</span>::<span class="tok-id">assertLessThanOrEqual</span>(<span class="tok-num">999.99</span>, <span class="tok-var">$data</span>[<span class="tok-str">&#039;price&#039;</span>]);</span>
+<span class="src-line" id="L368"><a class="ln" href="#L368">368</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsInt</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;qty&#039;</span>]);</span>
+<span class="src-line" id="L369"><a class="ln" href="#L369">369</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsFloat</span>(<span class="tok-var">$data</span>[<span class="tok-str">&#039;rate&#039;</span>]);</span>
+<span class="src-line" id="L370"><a class="ln" href="#L370">370</a>    }</span>
+<span class="src-line" id="L371"><a class="ln" href="#L371">371</a></span>
+<span class="src-line" id="L372"><a class="ln" href="#L372">372</a>    #[<span class="tok-id">Test</span>]</span>
+<span class="src-line" id="L373"><a class="ln" href="#L373">373</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixtureReproducibleWithSeed</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L374"><a class="ln" href="#L374">374</a>    {</span>
+<span class="src-line" id="L375"><a class="ln" href="#L375">375</a>        <span class="tok-var">$sql</span> = <span class="tok-str">&#039;CREATE TABLE test (name TEXT NOT NULL, age INTEGER NOT NULL)&#039;</span>;</span>
+<span class="src-line" id="L376"><a class="ln" href="#L376">376</a></span>
+<span class="src-line" id="L377"><a class="ln" href="#L377">377</a>        <span class="tok-var">$faker1</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
+<span class="src-line" id="L378"><a class="ln" href="#L378">378</a>        <span class="tok-var">$faker1</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">99999</span>);</span>
+<span class="src-line" id="L379"><a class="ln" href="#L379">379</a>        <span class="tok-var">$provider1</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker1</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
+<span class="src-line" id="L380"><a class="ln" href="#L380">380</a>        <span class="tok-var">$data1</span> = <span class="tok-var">$provider1</span>-&gt;<span class="tok-id">fixture</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" id="L381"><a class="ln" href="#L381">381</a></span>
+<span class="src-line" id="L382"><a class="ln" href="#L382">382</a>        <span class="tok-var">$faker2</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
+<span class="src-line" id="L383"><a class="ln" href="#L383">383</a>        <span class="tok-var">$faker2</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">99999</span>);</span>
+<span class="src-line" id="L384"><a class="ln" href="#L384">384</a>        <span class="tok-var">$provider2</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker2</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_PGSQL</span>);</span>
+<span class="src-line" id="L385"><a class="ln" href="#L385">385</a>        <span class="tok-var">$data2</span> = <span class="tok-var">$provider2</span>-&gt;<span class="tok-id">fixture</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" id="L386"><a class="ln" href="#L386">386</a></span>
+<span class="src-line" id="L387"><a class="ln" href="#L387">387</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$data1</span>[<span class="tok-str">&#039;name&#039;</span>], <span class="tok-var">$data2</span>[<span class="tok-str">&#039;name&#039;</span>]);</span>
+<span class="src-line" id="L388"><a class="ln" href="#L388">388</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$data1</span>[<span class="tok-str">&#039;age&#039;</span>], <span class="tok-var">$data2</span>[<span class="tok-str">&#039;age&#039;</span>]);</span>
+<span class="src-line" id="L389"><a class="ln" href="#L389">389</a>    }</span>
+<span class="src-line" id="L390"><a class="ln" href="#L390">390</a>}</span>
+<span class="src-line" id="L391"><a class="ln" href="#L391">391</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
