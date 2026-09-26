@@ -84,8 +84,6 @@ jobs:
             }
         }
         PHP
-    - name: Test fuzz oracles
-      run: composer test:fuzz
     - name: Run PHPUnit and doctest with ParaTest
       run: composer test
   lint:

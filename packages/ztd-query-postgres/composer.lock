@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7ebfa10817b62f59257d1897e7e3d9b6",
+    "content-hash": "a642577a3418a8b1b9232ce7a701482a",
     "packages": [
         {
             "name": "k-kinzal/ztd-query-core",
@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-core",
-                "reference": "e0e53e01ff168508fb63f4d6b5dd8b0597cdac6f"
+                "reference": "95f7a812f43fce3355576af05500b658eccfae36"
             },
             "require": {
                 "php": "^8.1"
@@ -47,6 +47,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -86,13 +89,19 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:token-stream"
+                    "@fuzz:smoke"
                 ],
-                "fuzz:token-stream": [
-                    "@php -r \"is_dir('fuzz/corpus/token-stream') || mkdir('fuzz/corpus/token-stream', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
+                "fuzz:session-state": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r '$dir=\"fuzz/corpus/session-state\"; is_dir($dir) || mkdir($dir,0777,true); foreach (glob(\"seeds/session-state/*\") as $seed) { copy($seed,$dir.\"/\".basename($seed)); }' --",
+                    "php-fuzzer fuzz fuzz/fuzz_session_state.php fuzz/corpus/session-state/ --timeout=15"
+                ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:session-state --max-runs=100"
                 ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -104,7 +113,7 @@
                     "loc-guard --config=loc.yaml"
                 ],
                 "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
+                    "phpstan analyse --memory-limit=1G"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -122,7 +131,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Zero Table Dependencies query layer for PHP",
+            "description": "Zero Table Dependency testing for PHP: the database-independent core of ZTD Query",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-core",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-core/"
@@ -1214,6 +1223,52 @@
             "time": "2025-03-19T14:43:43+00:00"
         },
         {
+            "name": "k-kinzal/container",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../container",
+                "reference": "f67644d906374f5c92510baee03e2a9bae05ae52"
+            },
+            "require": {
+                "ext-pdo": "*",
+                "k-kinzal/testcontainers-php": "^0.5.1",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.95.25"
+            },
+            "suggest": {
+                "ext-pdo_mysql": "Required for MySQL containers",
+                "ext-pdo_pgsql": "Required for PostgreSQL containers"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Container\\": "src/"
+                }
+            },
+            "scripts": {
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Container definitions for testcontainers-php used across k-kinzal/ztd-query-php",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/container",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "k-kinzal/php-ai-toolkit",
             "version": "dev-main",
             "source": {
@@ -1370,7 +1425,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "3abb12ca287d64843fff42dbb2a31c1e4483be77"
+                "reference": "d074fd59cb7e49dacd352d2c6fc56f6ccca84121"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1516,7 +1571,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Faker Provider for generating syntactically valid SQL statements",
+            "description": "Grammar-based SQL generator for MySQL, PostgreSQL, and SQLite, with a FakerPHP provider",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/"
@@ -1524,6 +1579,57 @@
             "transport-options": {
                 "relative": true
             }
+        },
+        {
+            "name": "k-kinzal/testcontainers-php",
+            "version": "v0.5.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/k-kinzal/testcontainers-php.git",
+                "reference": "baf7898b6490f9eb5b94734fa06917f862fd001f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/k-kinzal/testcontainers-php/zipball/baf7898b6490f9eb5b94734fa06917f862fd001f",
+                "reference": "baf7898b6490f9eb5b94734fa06917f862fd001f",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "php": "~5.6 || ~7.0 || ~7.1 || ~7.2 || ~7.3 || ~7.4 || ~8.0 || ~8.1 || ~8.2 || ~8.3 || ~8.4 || ~8.5",
+                "psr/log": "*",
+                "symfony/process": "*"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "*",
+                "phpunit/phpunit": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ],
+                "psr-4": {
+                    "Testcontainers\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "k-kinzal",
+                    "email": "keen.flag7803@logn.in"
+                }
+            ],
+            "description": "PHP library for Testcontainers",
+            "support": {
+                "issues": "https://github.com/k-kinzal/testcontainers-php/issues",
+                "source": "https://github.com/k-kinzal/testcontainers-php/tree/v0.5.1"
+            },
+            "time": "2026-01-10T04:16:06+00:00"
         },
         {
             "name": "myclabs/deep-copy",
@@ -6246,6 +6352,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "k-kinzal/container": 20,
         "k-kinzal/php-ai-toolkit": 20,
         "k-kinzal/sql-faker": 20,
         "k-kinzal/ztd-query-core": 20,

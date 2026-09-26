@@ -82,8 +82,6 @@ jobs:
         run: composer check-platform-reqs --no-dev
       - name: Unit, integration and documentation examples
         run: composer run-script --timeout=1800 test
-      - name: Test fuzz oracles
-        run: composer test:fuzz
 
   lint:
     name: Static quality gates

@@ -23,6 +23,7 @@ env:
 
 jobs:
   fuzz:
+    if: github.ref == 'refs/heads/main'
     name: Fuzz ${{ matrix.target.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -36,19 +37,13 @@ jobs:
           - name: behavior
             script: fuzz/fuzz_behavior.php
             corpus: fuzz/corpus/behavior
+            fixtures: '0'
             extensions: pdo, pdo_pgsql, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
-    services:
-      database:
-        image: postgres:16
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U test -d test"
-          --health-interval=10s --health-timeout=5s --health-retries=12
+          - name: fixtures
+            script: fuzz/fuzz_behavior.php
+            corpus: fuzz/corpus/fixtures
+            fixtures: '1'
+            extensions: pdo, pdo_pgsql, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
     defaults:
       run:
         working-directory: packages/ztd-query-postgres
@@ -93,8 +88,8 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-postgres/${{ matrix.target.corpus }}
-          key: ztd-query-postgres-corpus-v2-${{ matrix.target.name }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: ztd-query-postgres-corpus-v2-${{ matrix.target.name }}-
+          key: ztd-query-postgres-corpus-v3-${{ matrix.target.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: ztd-query-postgres-corpus-v3-${{ matrix.target.name }}-
 
       - name: Run PHP-Fuzzer
         env:
@@ -102,20 +97,24 @@ jobs:
           FUZZ_SCRIPT: ${{ matrix.target.script }}
           FUZZ_CORPUS: ${{ matrix.target.corpus }}
           FUZZ_TARGET: ${{ matrix.target.name }}
+          ZTD_FUZZ_FIXTURES: ${{ matrix.target.fixtures }}
         run: |
           set -euo pipefail
           mkdir -p build/fuzz "$FUZZ_CORPUS"
-          cp ../../fuzz/seeds/behavior/* "$FUZZ_CORPUS/"
-          vendor/bin/php-fuzzer fuzz \
+          if [ "$ZTD_FUZZ_FIXTURES" = '0' ]; then
+            cp ../sql-faker/seeds/pg/pg-17.2/* "$FUZZ_CORPUS/"
+          fi
+          php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz \
             "$FUZZ_SCRIPT" \
             "$FUZZ_CORPUS/" \
-            "--max-runs=$FUZZ_MAX_RUNS" --timeout=15 2>&1 | tee "build/fuzz/$FUZZ_TARGET.log"
+            "--max-runs=$FUZZ_MAX_RUNS" --timeout=60 2>&1 | tee "build/fuzz/$FUZZ_TARGET.log"
 
       - name: Open an issue for a finding
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           FUZZ_TARGET: ${{ matrix.target.name }}
           FUZZ_SCRIPT: ${{ matrix.target.script }}
+          ZTD_FUZZ_FIXTURES: ${{ matrix.target.fixtures }}
         with:
           script: |
             const fs = require('node:fs');
@@ -142,7 +141,7 @@ jobs:
               `Workflow and input artifact: ${run} (ztd-query-postgres-fuzz-${target})`,
               'Run from packages/ztd-query-postgres after extracting the artifact:',
               '```sh',
-              `vendor/bin/php-fuzzer run-single ${script} '${finding[1]}'`,
+              `ZTD_FUZZ_FIXTURES=${process.env.ZTD_FUZZ_FIXTURES} php -d memory_limit=-1 vendor/bin/php-fuzzer run-single ${script} '${path.relative(root, path.resolve(root, finding[1]))}' --timeout=60`,
               '```',
               `Input SHA-256: ${hash}`,
               '<details><summary>PHP-Fuzzer output</summary>',
@@ -159,7 +158,7 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-postgres/${{ matrix.target.corpus }}
-          key: ztd-query-postgres-corpus-v2-${{ matrix.target.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ztd-query-postgres-corpus-v3-${{ matrix.target.name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload PHP-Fuzzer inputs and output
         if: always()

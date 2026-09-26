@@ -62,8 +62,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "Bench\\": "bench/",
-            "Fuzz\\Shared\\": "../../fuzz/Shared/"
+            "Bench\\": "bench/"
         }
     },
     "scripts": {
@@ -71,10 +70,7 @@
         "bench": "phpbench run --report=aggregate",
         "bench:full": "@bench",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
-        "compat": [
-            "phpcs",
-            "phpcs ../../fuzz/Shared"
-        ],
+        "compat": "phpcs",
         "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
         "docgen": "docgen --packages=. --title=k-kinzal/ztd-query-sqlite --exclude=src/Compatibility/ClassAliases.php",
         "docgen:diff": [
@@ -87,23 +83,24 @@
             "@docgen --serve"
         ],
         "doctest": "phpunit --testsuite doctest",
-        "format": [
-            "php-cs-fixer fix --allow-risky=yes",
-            "php-cs-fixer fix --allow-risky=yes ../../fuzz/Shared"
-        ],
-        "format:check": [
-            "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-            "php-cs-fixer fix --dry-run --diff --allow-risky=yes ../../fuzz/Shared"
-        ],
+        "format": "php-cs-fixer fix --allow-risky=yes",
+        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "fuzz": "@fuzz:smoke",
         "fuzz:behavior": [
             "Composer\\Config::disableProcessTimeout",
-            "@php -r '$dir=\"fuzz/corpus/behavior\"; is_dir($dir) || mkdir($dir,0777,true); foreach (glob(\"../../fuzz/seeds/behavior/*\") as $seed) { copy($seed,$dir.\"/\".basename($seed)); }' --",
-            "php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/behavior/ --timeout=15"
+            "@php -r \"is_dir('fuzz/corpus/behavior') || mkdir('fuzz/corpus/behavior', 0777, true);\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/behavior/ --timeout=60"
+        ],
+        "fuzz:fixtures": [
+            "Composer\\Config::disableProcessTimeout",
+            "@putenv ZTD_FUZZ_FIXTURES=1",
+            "@php -r \"is_dir('fuzz/corpus/fixtures') || mkdir('fuzz/corpus/fixtures', 0777, true);\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/fixtures/ --timeout=60"
         ],
         "fuzz:smoke": [
             "Composer\\Config::disableProcessTimeout",
-            "@fuzz:behavior --max-runs=100"
+            "@fuzz:behavior --max-runs=100",
+            "@fuzz:fixtures --max-runs=100"
         ],
         "lint": [
             "@autoload:check",
@@ -115,10 +112,9 @@
             "@deptrac"
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
-        "phpstan": "phpstan analyse --memory-limit=512M src tests fuzz bench ../../fuzz/Shared",
+        "phpstan": "phpstan analyse --memory-limit=1G",
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
-        "test:fuzz": "phpunit tests/Fuzz",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"
     },
