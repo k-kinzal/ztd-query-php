@@ -44,34 +44,40 @@
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\RunnerConfig</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a></span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Project</span></span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a>{</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com">     * @param array&lt;string, Item&gt; $items</span></span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com">     * @param array&lt;string, Source&gt; $sources</span></span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com">     * @param array&lt;string, RunnerConfig&gt; $runners</span></span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com">     * @param array&lt;string, string&gt; $sourceExtensions</span></span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com">     * @param array&lt;string, string&gt; $runnerExtensions</span></span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com">     * @param array&lt;string, float&gt; $sourceThresholds</span></span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com">     * @param list&lt;string&gt; $files</span></span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">     * @param array&lt;string, mixed&gt; $markdown</span></span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$directory</span>,</span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$items</span>,</span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$sources</span>,</span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$runners</span>,</span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$sourceExtensions</span>,</span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$runnerExtensions</span>,</span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">float</span> <span class="tok-var">$minimum</span>,</span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">float</span> <span class="tok-var">$diffMinimum</span>,</span>
-<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$sourceThresholds</span>,</span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$files</span>,</span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$markdown</span> = [],</span>
-<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>    ) {</span>
-<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    }</span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>}</span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-com"> * A loaded project: its items and sources, runners, extensions and coverage gates.</span></span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Project</span></span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a>{</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com">     * @param string $directory The directory of the configuration file</span></span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com">     * @param array&lt;string, Item&gt; $items Every item by ID</span></span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com">     * @param array&lt;string, Source&gt; $sources Every declared source by ID</span></span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com">     * @param array&lt;string, RunnerConfig&gt; $runners Configured runners by name</span></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">     * @param array&lt;string, string&gt; $sourceExtensions Source extension classes by format</span></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com">     * @param array&lt;string, string&gt; $runnerExtensions Runner extension classes by name</span></span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com">     * @param float $minimum The overall coverage threshold in percent</span></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com">     * @param float $diffMinimum The threshold for units new or changed since a snapshot</span></span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com">     * @param array&lt;string, float&gt; $sourceThresholds Coverage thresholds by source ID</span></span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com">     * @param list&lt;string&gt; $files The configuration file followed by the definition files</span></span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com">     * @param array&lt;string, mixed&gt; $markdown The markdown options of the configuration</span></span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$directory</span>,</span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$items</span>,</span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$sources</span>,</span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$runners</span>,</span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$sourceExtensions</span>,</span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$runnerExtensions</span>,</span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">float</span> <span class="tok-var">$minimum</span>,</span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">float</span> <span class="tok-var">$diffMinimum</span>,</span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$sourceThresholds</span>,</span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$files</span>,</span>
+<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$markdown</span> = [],</span>
+<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>    ) {</span>
+<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>    }</span>
+<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>}</span>
+<span class="src-line" id="L42"><a class="ln" href="#L42">42</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

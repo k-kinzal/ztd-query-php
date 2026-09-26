@@ -44,23 +44,52 @@
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Requirements\Model\Source</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a></span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Unit</span></span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a>{</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$location</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$text</span>)</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a>    {</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a>    }</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a></span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">key</span>(<span class="tok-id">Source</span> <span class="tok-var">$source</span>): <span class="tok-id">string</span></span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a>    {</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>        <span class="tok-kw">return</span> <span class="tok-id">hash</span>(<span class="tok-str">&#039;sha256&#039;</span>, <span class="tok-var">$source</span>-&gt;<span class="tok-id">uri</span> . <span class="tok-str">&quot;\0&quot;</span> . <span class="tok-var">$source</span>-&gt;<span class="tok-id">format</span> . <span class="tok-str">&quot;\0&quot;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">location</span>);</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a>    }</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a></span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">normalize</span>(<span class="tok-id">string</span> <span class="tok-var">$text</span>): <span class="tok-id">string</span></span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>    {</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>        <span class="tok-kw">return</span> <span class="tok-id">trim</span>(<span class="tok-id">preg_replace</span>(<span class="tok-str">&#039;/[\s\x{00a0}]+/u&#039;</span>, <span class="tok-str">&#039; &#039;</span>, <span class="tok-var">$text</span>) ?? <span class="tok-var">$text</span>);</span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    }</span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>}</span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a></span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-com"> * A complete unit of source text at a stable location, such as a paragraph or a line.</span></span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> * @example Normalizing whitespace the way quotations are compared</span></span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> *     \Requirements\Source\Unit::normalize(&quot;  Names\n\tstart  with a letter. &quot;) // =&gt; &#039;Names start with a letter.&#039;</span></span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com"> * @example Identifying a unit within its source</span></span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $unit = new \Requirements\Source\Unit(&#039;line:1&#039;, &#039;Names start with a letter.&#039;);</span></span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> *     strlen($unit-&gt;key(new \Requirements\Model\Source(&#039;notes&#039;, &#039;notes.txt&#039;, &#039;text&#039;, &#039;lines:1&#039;))) // =&gt; 64</span></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Unit</span></span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>{</span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com">     * @param string $location The stable location of the unit within its source</span></span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com">     * @param string $text The complete normalized text of the unit</span></span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$location</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$text</span>)</span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>    {</span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    }</span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a></span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com">     * Identifies the unit by its source URI, format and location.</span></span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     * @param Source $source The source the unit belongs to</span></span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com">     * @return string The SHA-256 hex digest identifying the unit</span></span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">key</span>(<span class="tok-id">Source</span> <span class="tok-var">$source</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>    {</span>
+<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>        <span class="tok-kw">return</span> <span class="tok-id">hash</span>(<span class="tok-str">&#039;sha256&#039;</span>, <span class="tok-var">$source</span>-&gt;<span class="tok-id">uri</span> . <span class="tok-str">&quot;\0&quot;</span> . <span class="tok-var">$source</span>-&gt;<span class="tok-id">format</span> . <span class="tok-str">&quot;\0&quot;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">location</span>);</span>
+<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>    }</span>
+<span class="src-line" id="L41"><a class="ln" href="#L41">41</a></span>
+<span class="src-line" id="L42"><a class="ln" href="#L42">42</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L43"><a class="ln" href="#L43">43</a><span class="tok-com">     * Collapses whitespace, including no-break spaces, and trims the text.</span></span>
+<span class="src-line" id="L44"><a class="ln" href="#L44">44</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L45"><a class="ln" href="#L45">45</a><span class="tok-com">     * @param string $text The text</span></span>
+<span class="src-line" id="L46"><a class="ln" href="#L46">46</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L47"><a class="ln" href="#L47">47</a><span class="tok-com">     * @return string The normalized text</span></span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">normalize</span>(<span class="tok-id">string</span> <span class="tok-var">$text</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>    {</span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>        <span class="tok-kw">return</span> <span class="tok-id">trim</span>(<span class="tok-id">preg_replace</span>(<span class="tok-str">&#039;/[\s\x{00a0}]+/u&#039;</span>, <span class="tok-str">&#039; &#039;</span>, <span class="tok-var">$text</span>) ?? <span class="tok-var">$text</span>);</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>    }</span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>}</span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
