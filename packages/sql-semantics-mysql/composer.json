@@ -124,7 +124,7 @@
         ],
         "fuzz:schema": [
             "Composer\\Config::disableProcessTimeout",
-            "@php -r \"is_dir('fuzz/corpus/mysql-schema') || mkdir('fuzz/corpus/mysql-schema', 0777, true); array_map(static fn (\\$seed) => copy(\\$seed, 'fuzz/corpus/mysql-schema/' . basename(\\$seed)), glob('fuzz/seeds/mysql-schema/*'));\" --",
+            "@php -r \"is_dir('fuzz/corpus/mysql-schema') || mkdir('fuzz/corpus/mysql-schema', 0777, true);\" --",
             "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_schema.php fuzz/corpus/mysql-schema/ --timeout=60"
         ],
         "fuzz:smoke": [

@@ -67,4 +67,4 @@ MYSQL_VERSION=5.6.51 composer fuzz:schema -- --max-runs=100
 MYSQL_VERSION=9.1.0 composer fuzz:schema -- --max-runs=100
 ```
 
-The byte corpus is reproducible, grammar coverage is recorded separately, and CI runs both properties. `MYSQL_VERSION` selects a shipped MySQL release. The grammar's internal parser selectors are not SQL statements and are excluded by choosing the external statement entry point.
+Schema fuzzing starts from an empty or restored corpus; sql-semantics packages do not ship seeds. The evolving byte corpus is reproducible, grammar coverage is recorded separately, and CI runs both properties. `MYSQL_VERSION` selects a shipped MySQL release. The grammar's internal parser selectors are not SQL statements and are excluded by choosing the external statement entry point.

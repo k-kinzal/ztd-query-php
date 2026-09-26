@@ -124,7 +124,7 @@
         ],
         "fuzz:schema": [
             "Composer\\Config::disableProcessTimeout",
-            "@php -r \"is_dir('fuzz/corpus/pg-schema') || mkdir('fuzz/corpus/pg-schema', 0777, true); array_map(static fn (\\$seed) => copy(\\$seed, 'fuzz/corpus/pg-schema/' . basename(\\$seed)), glob('fuzz/seeds/pg-schema/*'));\" --",
+            "@php -r \"is_dir('fuzz/corpus/pg-schema') || mkdir('fuzz/corpus/pg-schema', 0777, true);\" --",
             "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_schema.php fuzz/corpus/pg-schema/ --timeout=60"
         ],
         "fuzz:smoke": [

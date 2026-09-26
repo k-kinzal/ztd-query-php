@@ -91,14 +91,10 @@ jobs:
           key: sql-semantics-coverage-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: sql-semantics-coverage-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-
       - name: Copy sql-faker seed plans into the corpus
+        if: ${{ !endsWith(matrix.target.database, '-schema') }}
         env:
           DATABASE: ${{ matrix.target.database }}
         run: |
-          mkdir -p "fuzz/corpus/$DATABASE"
-          if [[ "$DATABASE" == *-schema ]]; then
-            cp "fuzz/seeds/$DATABASE/"* "fuzz/corpus/$DATABASE/"
-            exit 0
-          fi
           case "$DATABASE" in
             mysql) version="mysql-$MYSQL_VERSION" ;;
             pg) version='pg-17.2' ;;
