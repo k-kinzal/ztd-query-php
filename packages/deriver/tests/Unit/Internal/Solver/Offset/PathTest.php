@@ -74,6 +74,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]
 #[UsesClass(\Deriver\Internal\Solver\Demand\Table::class)]
 #[UsesClass(Address::class)]
+#[UsesClass(Path::class)]
 #[UsesClass(ProtocolAccess::class)]
 #[UsesClass(\Deriver\Internal\Solver\Offset\Reader::class)]
 #[UsesClass(StringAccess::class)]

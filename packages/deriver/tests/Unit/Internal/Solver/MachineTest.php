@@ -102,6 +102,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Solver\Dependencies::class)]
 #[UsesClass(\Deriver\Internal\Solver\Havoc::class)]
 #[UsesClass(\Deriver\Internal\Solver\InstructionTransfer::class)]
+#[UsesClass(Machine::class)]
 #[UsesClass(\Deriver\Internal\Solver\Model\SlotReference::class)]
 #[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
