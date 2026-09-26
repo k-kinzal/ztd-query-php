@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Dialect;
 
 #[CoversClass(\SqlSemantics\Statement\Writer::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\Analyzer::class)]
@@ -18,7 +17,6 @@ use SqlSemantics\Facade\Dialect;
 #[UsesClass(\SqlSemantics\Statement\Element::class)]
 #[UsesClass(\SqlSemantics\Statement\Statement::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
-#[UsesClass(Dialect::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]

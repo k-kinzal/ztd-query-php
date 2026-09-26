@@ -9,10 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionRules::class)]
@@ -71,9 +74,9 @@ use SqlSemantics\Facade\Dialect;
 #[Medium]
 final class ExpressionBinderTest extends TestCase
 {
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testOperationPreservesOperatorPrecedence(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build();
@@ -82,9 +85,9 @@ final class ExpressionBinderTest extends TestCase
         self::assertSame('*', $statement->outputs[0]->expression->operands[1]->symbol);
     }
 
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testBindsParenthesesAndUnaryOperators(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -96,7 +99,7 @@ final class ExpressionBinderTest extends TestCase
 
     public function testTokenRejectsUnmodeledTerminals(): void
     {
-        $scope = new \SqlSemantics\Core\Binding\Scope(new \SqlSemantics\Core\Ast\Identifiers(Dialect::PostgreSql));
+        $scope = new \SqlSemantics\Core\Binding\Scope(new \SqlSemantics\Core\Ast\Identifiers(PostgreSqlDialect::PostgreSql));
         $this->expectException(SemanticException::class);
         (new \SqlSemantics\Core\Binding\ExpressionBinder())->token(new \SqlParser\Lexer\Token(0, 'BCONST', "B'101'", 0), $scope);
     }
@@ -105,14 +108,14 @@ final class ExpressionBinderTest extends TestCase
     {
         $tree = (new \SqlParser\Sqlite\SqliteParser())->parse('SELECT a.id');
         $reader = new \SqlSemantics\Core\Binding\ExpressionBinder();
-        self::assertTrue($reader->qualified(\SqlSemantics\Core\Ast\Tree::significant($tree->find('expr')[0]), Dialect::Sqlite->platform()->syntax()));
-        self::assertFalse($reader->qualified([], Dialect::Sqlite->platform()->syntax()));
-        self::assertFalse($reader->qualified([new \SqlParser\Lexer\Token(1, 'ID', 'a', 0)], Dialect::Sqlite->platform()->syntax()));
+        self::assertTrue($reader->qualified(\SqlSemantics\Core\Ast\Tree::significant($tree->find('expr')[0]), SqliteDialect::Sqlite->platform()->syntax()));
+        self::assertFalse($reader->qualified([], SqliteDialect::Sqlite->platform()->syntax()));
+        self::assertFalse($reader->qualified([new \SqlParser\Lexer\Token(1, 'ID', 'a', 0)], SqliteDialect::Sqlite->platform()->syntax()));
     }
 
     public function testCallRetainsNestedCoalesceInputs(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT COALESCE(parent_id, COALESCE(NULL, score)) FROM users');
         self::assertSame(Nullability::NotNull, $statement->outputs[0]->expression->nullability);
         self::assertSame(\SqlSemantics\Core\Model\ExpressionKind::Coalesce, $statement->outputs[0]->expression->operands[1]->kind);

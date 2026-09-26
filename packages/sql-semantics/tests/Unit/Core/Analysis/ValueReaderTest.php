@@ -8,7 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 use WeakReference;
 
 #[CoversClass(\SqlSemantics\Core\Analysis\ValueReader::class)]
@@ -19,7 +20,6 @@ use WeakReference;
 #[UsesClass(\SqlSemantics\Statement\Statement::class)]
 #[UsesClass(\SqlSemantics\Statement\Writer::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
-#[UsesClass(Dialect::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
@@ -28,21 +28,21 @@ final class ValueReaderTest extends TestCase
 {
     public function testReadReleasesParserObjectsAfterLowering(): void
     {
-        $parser = Dialect::Sqlite->platform()->parser();
+        $parser = SqliteDialect::Sqlite->platform()->parser();
         $tree = $parser->parse('SELECT 123');
         $treeReference = WeakReference::create($tree);
         $tokenReference = WeakReference::create($tree->tokens()[1]);
-        $value = \SqlSemantics\Core\Analysis\ValueReader::forVersion($parser->version())->read($tree);
+        $value = SqliteDialect::Sqlite->platform()->values($parser->version())->read($tree);
         unset($tree);
         self::assertNull($treeReference->get());
         self::assertNull($tokenReference->get());
         self::assertSame('SELECT 123', (new \SqlSemantics\Statement\Statement($value))->toString());
     }
 
-    public function testForVersionLoadsTheResolvedLanguage(): void
+    public function testFromFileLoadsTheDatabasePackageVocabulary(): void
     {
-        $parser = Dialect::PostgreSql->platform()->parser();
-        $value = \SqlSemantics\Core\Analysis\ValueReader::forVersion($parser->version())->read($parser->parse('VALUES (42)'));
+        $parser = PostgreSqlDialect::PostgreSql->platform()->parser();
+        $value = PostgreSqlDialect::PostgreSql->platform()->values($parser->version())->read($parser->parse('VALUES (42)'));
         self::assertSame('VALUES( 42 )', (new \SqlSemantics\Statement\Statement($value))->toString());
     }
 }

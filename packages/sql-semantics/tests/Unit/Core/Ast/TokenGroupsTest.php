@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
 #[UsesClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -80,7 +80,7 @@ final class TokenGroupsTest extends TestCase
     public function testNamesPreservesQuotedCommas(): void
     {
         $node = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('CREATE TABLE users ("a,b" INTEGER, c INTEGER, PRIMARY KEY ("a,b", c))')->find('columnList')[0];
-        $names = \SqlSemantics\Core\Ast\TokenGroups::names($node->tokens(), new \SqlSemantics\Core\Ast\Identifiers(Dialect::PostgreSql));
+        $names = \SqlSemantics\Core\Ast\TokenGroups::names($node->tokens(), new \SqlSemantics\Core\Ast\Identifiers(PostgreSqlDialect::PostgreSql));
         self::assertSame(['a,b', 'c'], $names);
     }
 }

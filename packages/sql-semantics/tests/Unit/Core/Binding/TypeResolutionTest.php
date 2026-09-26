@@ -10,7 +10,9 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Binding\TypeResolution::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,14 +73,14 @@ final class TypeResolutionTest extends TestCase
 {
     public function testCommonPromotesIntegerOperands(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT COALESCE(id, 2147483648) FROM users');
         self::assertSame('bigint', $statement->outputs[0]->expression->type->name);
     }
 
     public function testRejectsUnmodeledCoercion(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);
         $this->expectExceptionMessage('common type');
         (new Binder($schema))->bind('SELECT COALESCE(id, TRUE) FROM users');
@@ -86,8 +88,8 @@ final class TypeResolutionTest extends TestCase
 
     public function testBooleanUsesDialectSpecificResultTypes(): void
     {
-        self::assertSame('boolean', (new \SqlSemantics\Core\Binding\TypeResolution(Dialect::PostgreSql))->boolean()->name);
-        self::assertSame('integer', (new \SqlSemantics\Core\Binding\TypeResolution(Dialect::MySql))->boolean()->name);
-        self::assertSame('integer', (new \SqlSemantics\Core\Binding\TypeResolution(Dialect::Sqlite))->boolean()->name);
+        self::assertSame('boolean', (new \SqlSemantics\Core\Binding\TypeResolution(PostgreSqlDialect::PostgreSql))->boolean()->name);
+        self::assertSame('integer', (new \SqlSemantics\Core\Binding\TypeResolution(MySqlDialect::MySql))->boolean()->name);
+        self::assertSame('integer', (new \SqlSemantics\Core\Binding\TypeResolution(SqliteDialect::Sqlite))->boolean()->name);
     }
 }

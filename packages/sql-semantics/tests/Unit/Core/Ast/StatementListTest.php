@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Ast\StatementList::class)]
 #[UsesClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,7 +71,7 @@ final class StatementListTest extends TestCase
     public function testReadPreservesStatementBoundaries(): void
     {
         $tree = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('SELECT 1; SELECT 2;');
-        $statements = \SqlSemantics\Core\Ast\StatementList::read($tree, Dialect::PostgreSql);
+        $statements = \SqlSemantics\Core\Ast\StatementList::read($tree, PostgreSqlDialect::PostgreSql);
         self::assertCount(2, $statements);
         self::assertSame('SELECT 2', \SqlSemantics\Core\Ast\Tree::text($statements[1]));
     }
@@ -80,6 +80,6 @@ final class StatementListTest extends TestCase
     {
         $tree = (new \SqlParser\Sqlite\SqliteParser())->parse('SELECT 1');
         $this->expectException(SemanticException::class);
-        \SqlSemantics\Core\Ast\StatementList::read($tree, Dialect::PostgreSql);
+        \SqlSemantics\Core\Ast\StatementList::read($tree, PostgreSqlDialect::PostgreSql);
     }
 }

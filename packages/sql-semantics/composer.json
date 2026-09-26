@@ -5,19 +5,19 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
-        "k-kinzal/sql-parser": "dev-main"
+        "k-kinzal/sql-parser": "dev-main",
+        "composer-runtime-api": "^2.2"
     },
     "require-dev": {
         "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",
-        "fakerphp/faker": "^1.23",
         "friendsofphp/php-cs-fixer": "^3.95.25",
         "k-kinzal/bison-parser": "dev-main",
         "k-kinzal/lemon-parser": "dev-main",
         "k-kinzal/php-ai-toolkit": "dev-main",
-        "k-kinzal/sql-faker": "dev-main",
-        "k-kinzal/sql-formatter": "dev-main",
-        "nikic/php-fuzzer": "^0.0.11",
+        "k-kinzal/sql-semantics-mysql": "dev-main",
+        "k-kinzal/sql-semantics-postgres": "dev-main",
+        "k-kinzal/sql-semantics-sqlite": "dev-main",
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
@@ -42,24 +42,6 @@
         },
         {
             "type": "path",
-            "url": "../sql-faker",
-            "options": {
-                "versions": {
-                    "k-kinzal/sql-faker": "dev-main"
-                }
-            }
-        },
-        {
-            "type": "path",
-            "url": "../sql-formatter",
-            "options": {
-                "versions": {
-                    "k-kinzal/sql-formatter": "dev-main"
-                }
-            }
-        },
-        {
-            "type": "path",
             "url": "../bison-parser",
             "options": {
                 "versions": {
@@ -75,19 +57,44 @@
                     "k-kinzal/lemon-parser": "dev-main"
                 }
             }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-mysql",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-mysql": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-postgres",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-postgres": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-sqlite",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-sqlite": "dev-main"
+                }
+            }
         }
     ],
     "autoload": {
         "psr-4": {
-            "SqlSemantics\\": "src/",
-            "SqlSemantics\\Statement\\Model\\": "resources/models/"
+            "SqlSemantics\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
-            "Bench\\": "bench/",
-            "Fuzz\\": "fuzz/"
+            "Bench\\": "bench/"
         }
     },
     "config": {
@@ -104,8 +111,6 @@
         "bench": "phpbench run --report=aggregate",
         "bench:full": "@bench",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
-        "build:models": "@php -d memory_limit=1G bin/build-models.php",
-        "build:models:check": "@build:models --check",
         "compat": "phpcs",
         "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
         "docgen": "docgen --packages=. --title=k-kinzal/sql-semantics",
@@ -121,36 +126,6 @@
         "doctest": "phpunit --testsuite doctest",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "fuzz": "@fuzz:smoke",
-        "fuzz:mysql": [
-            "Composer\\Config::disableProcessTimeout",
-            "@fuzz:seeds:mysql --",
-            "@php fuzz/run.php mysql"
-        ],
-        "fuzz:pg": [
-            "Composer\\Config::disableProcessTimeout",
-            "@fuzz:seeds:pg --",
-            "@php fuzz/run.php pg"
-        ],
-        "fuzz:seeds": [
-            "@fuzz:seeds:mysql",
-            "@fuzz:seeds:pg",
-            "@fuzz:seeds:sqlite"
-        ],
-        "fuzz:seeds:mysql": "@php fuzz/seed.php mysql",
-        "fuzz:seeds:pg": "@php fuzz/seed.php pg",
-        "fuzz:seeds:sqlite": "@php fuzz/seed.php sqlite",
-        "fuzz:smoke": [
-            "Composer\\Config::disableProcessTimeout",
-            "@fuzz:mysql --max-runs=100",
-            "@fuzz:pg --max-runs=100",
-            "@fuzz:sqlite --max-runs=100"
-        ],
-        "fuzz:sqlite": [
-            "Composer\\Config::disableProcessTimeout",
-            "@fuzz:seeds:sqlite --",
-            "@php fuzz/run.php sqlite"
-        ],
         "lint": [
             "@autoload:check",
             "@format:check",
@@ -171,9 +146,7 @@
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"
     },
-    "scripts-descriptions": {
-        "fuzz": "Run the round-trip property for all three databases with a bounded smoke budget.",
-        "fuzz:seeds": "Copy the sql-faker seed plans into each corpus.",
-        "fuzz:smoke": "Replay the corpus and run 100 mutations per database."
-    }
+    "bin": [
+        "bin/build-models.php"
+    ]
 }

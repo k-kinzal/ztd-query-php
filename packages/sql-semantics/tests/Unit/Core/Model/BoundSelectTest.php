@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Model\BoundSelect::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,7 +71,7 @@ final class BoundSelectTest extends TestCase
 {
     public function testRetainsRowDependenciesAbsentFromValueLineage(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT 1 FROM users WHERE score > 0');
         self::assertSame([], $statement->outputs[0]->expression->lineage());
         self::assertNotNull($statement->where);

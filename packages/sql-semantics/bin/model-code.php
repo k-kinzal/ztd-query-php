@@ -36,7 +36,7 @@ function fieldName(string $name): string
 function writeModel(string $directory, string $dialect, string $group, string $name, string $body): string
 {
     $namespace = 'SqlSemantics\\Statement\\Model\\' . $dialect . '\\' . $group;
-    $path = $directory . '/models/' . $dialect . '/' . $group;
+    $path = $directory . '/models/' . $group;
     if (!is_dir($path)) {
         mkdir($path, 0777, true);
     }

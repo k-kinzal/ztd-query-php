@@ -7,12 +7,13 @@ namespace Tests\Unit\Core\Policy;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Model\Expression;
 use SqlSemantics\Core\Model\ExpressionKind;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
@@ -72,7 +73,6 @@ use SqlSemantics\Facade\Dialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 final class QueryRulesTest extends TestCase
 {
@@ -82,7 +82,7 @@ final class QueryRulesTest extends TestCase
         $rules->method('orderingNodes')->willReturn([]);
         $platform = self::createStub(\SqlSemantics\Core\Platform::class);
         $platform->method('query')->willReturn($rules);
-        $dialect = self::createStub(\SqlSemantics\Core\Dialect::class);
+        $dialect = self::createStub(Dialect::class);
         $dialect->method('platform')->willReturn($platform);
         $scope = new \SqlSemantics\Core\Binding\Scope(new \SqlSemantics\Core\Ast\Identifiers($dialect));
         self::assertSame([], (new \SqlSemantics\Core\Binding\SelectModifiersBinder())->ordering(new Node('application-query', 0, []), $scope, []));
@@ -90,24 +90,24 @@ final class QueryRulesTest extends TestCase
     public function testProjectionItemsPreserveOutputOrder(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\QueryRules $rules): \SqlSemantics\Core\Policy\QueryRules => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()->query()::class, $accept(Dialect::PostgreSql->platform()->query())::class);
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()->query()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->query())::class);
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
         $bound = (new Binder($schema))->bind('SELECT label, id FROM items');
         self::assertSame(['label', 'id'], array_column($bound->outputs, 'name'));
     }
     public function testProjectionTokensExpandQualifiedStar(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\QueryRules $rules): \SqlSemantics\Core\Policy\QueryRules => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()->query()::class, $accept(Dialect::PostgreSql->platform()->query())::class);
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()->query()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->query())::class);
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
         $bound = (new Binder($schema))->bind('SELECT i.* FROM items i');
         self::assertSame(['id', 'label'], array_column($bound->outputs, 'name'));
     }
     public function testRelationResolvesAnAlias(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\QueryRules $rules): \SqlSemantics\Core\Policy\QueryRules => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()->query()::class, $accept(Dialect::PostgreSql->platform()->query())::class);
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()->query()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->query())::class);
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
         $bound = (new Binder($schema))->bind('SELECT i.id FROM items i');
         self::assertSame('i', $bound->relations[0]->alias);
     }

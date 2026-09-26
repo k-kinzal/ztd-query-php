@@ -15,6 +15,8 @@ declaration constraints, type promotion, source identity, and explicit rejection
 of unsupported syntax. Each test declares its own inputs. Every source class has
 a paired unit test and every public API class has an executable PHPDoc example.
 
+Run the checks below from each of the four package directories.
+
 `composer lint` runs strict autoload checks, PHP-CS-Fixer, PHPStan at max level
 with all PHP-AI-Toolkit rules, PHPCompatibility for PHP 8.1+, LOC guard, directory
 guard, and Deptrac. Rules are not suppressed or baselined.
@@ -22,9 +24,10 @@ guard, and Deptrac. Rules are not suppressed or baselined.
 `composer test` runs unit tests and documentation examples with ParaTest and the
 AI reporter. `composer test:coverage` generates unit-test coverage for inspection.
 
-`composer bench:quick` measures `Binder::bind()` on a self-join SQL string against
+In the common runtime, `composer bench:quick` measures `Binder::bind()` on a self-join SQL string against
 an already built schema. This includes SQL parsing and semantic binding. Parser
-resource loading and schema construction happen before measurement.
+resource loading and schema construction happen before measurement. Each database
+package benchmarks complete statement analysis and SQL reconstruction.
 
 Infection uses the default mutator set, includes uncovered code, and requires
 80% MSI and 80% covered MSI. Run it with the Infection 0.35.4 CLI (installed
@@ -35,9 +38,11 @@ infection --configuration=infection.json5 --with-uncovered --threads=4 --only-co
 ```
 
 The CI workflow checks PHP 8.1 through 8.5 and runs lint, generated-resource
-verification, and the benchmark smoke test. The library and these checks require no live database.
+verification, and the benchmark smoke test for every package. Separate runtime
+installation jobs verify each database without development dependencies or other
+SQL Semantics database packages. These checks require no live database.
 
-The [round-trip fuzz targets](../fuzz/README.md) reuse all three sql-faker seed
+The [round-trip fuzz targets](packages.md#fuzzing) reuse all three sql-faker seed
 corpora and compare original and reconstructed SQL with the Compact formatter.
 Every generated statement must succeed; analysis, printing, formatting, and
 equality failures are findings. The default corpora contain 2,135 MySQL, 2,639
@@ -46,7 +51,7 @@ nightly and manual runs extend the mutation budget. Finite runs provide evidence
 for the property; exhaustive structural coverage comes from compiling a model
 for every alternative in each shipped grammar, without fallback values.
 
-`composer build:models` regenerates the checked-in model classes and construction
-maps from the official grammar releases. CI verifies that regeneration produces
+Run `composer build:models` from a database package to regenerate its checked-in
+model classes and construction maps from the official grammar releases. CI verifies that regeneration produces
 no changed or additional resources. PHPStan checks the generated models as well
 as handwritten source; generation is not an exemption from type checking.

@@ -25,19 +25,18 @@ final class ValueReader
     }
 
     /**
-     * Loads the construction vocabulary of the parser's resolved release.
+     * Loads the construction vocabulary supplied by a database package.
      *
      * @throws LogicException When generated resources are missing or invalid
      */
-    public static function forVersion(string $version): self
+    public static function fromFile(string $path): self
     {
-        $path = dirname(__DIR__, 3) . '/resources/mapping/' . basename($version) . '.php';
         if (!is_file($path)) {
-            throw new LogicException('Missing statement model for grammar release ' . $version);
+            throw new LogicException('Missing statement model resource: ' . $path);
         }
         $reader = require $path;
         if (!$reader instanceof self) {
-            throw new LogicException('Invalid statement model resource: ' . $version);
+            throw new LogicException('Invalid statement model resource: ' . $path);
         }
 
         return $reader;

@@ -11,7 +11,6 @@ use SqlSemantics\Core\Model\ExpressionKind;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Dialect;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
@@ -71,7 +70,6 @@ use SqlSemantics\Facade\Dialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 final class SyntaxRulesTest extends TestCase
 {

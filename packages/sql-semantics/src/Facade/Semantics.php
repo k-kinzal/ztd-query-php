@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Facade;
 
 use SqlSemantics\Core\Analysis\Analyzer;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -14,10 +15,9 @@ use SqlSemantics\Statement\Statement;
  * when schema-dependent name, type, and nullability facts are needed.
  *
  * @visibility public
- * @example Reconstructing SQL without a schema
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Facade\Dialect::Sqlite);
- *     $statement = $semantics->analyze('DROP TABLE example');
- *     $statement->toString() // => 'DROP TABLE example'
+ * @example Accepting an analyzer configured by a database package
+ *     $analyze = static fn (\SqlSemantics\Facade\Semantics $semantics): \SqlSemantics\Statement\Statement => $semantics->analyze('SELECT 1');
+ *     $analyze instanceof \Closure // => true
  */
 final class Semantics
 {

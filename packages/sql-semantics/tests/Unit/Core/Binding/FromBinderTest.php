@@ -9,10 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Binding\FromBinder::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,9 +74,9 @@ use SqlSemantics\Facade\Dialect;
 #[Medium]
 final class FromBinderTest extends TestCase
 {
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testJoinedBindsOnBeforeIntroducingThisJoinsNulls(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -88,7 +91,7 @@ final class FromBinderTest extends TestCase
 
     public function testJoinPropagatesNestedOuterJoinProvenance(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id, b.id, c.id FROM users a LEFT JOIN users b ON a.id=b.id RIGHT JOIN users c ON b.id=c.id');
         self::assertSame(['j0'], $statement->outputs[0]->expression->nullExtendedBy);
         self::assertSame(['j1', 'j0'], $statement->outputs[1]->expression->nullExtendedBy);
@@ -97,15 +100,15 @@ final class FromBinderTest extends TestCase
 
     public function testRelationFullJoinExtendsBothSides(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id, b.id FROM users a FULL JOIN users b ON a.id=b.id');
         self::assertSame(['j0'], $statement->outputs[0]->expression->nullExtendedBy);
         self::assertSame(['j0'], $statement->outputs[1]->expression->nullExtendedBy);
     }
 
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testBindCrossJoinHasNoMatchPredicate(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -117,7 +120,7 @@ final class FromBinderTest extends TestCase
 
     public function testSqliteRespectsExplicitDatabaseNames(): void
     {
-        $builder = new SchemaBuilder(Dialect::Sqlite);
+        $builder = new SchemaBuilder(SqliteDialect::Sqlite);
         $schema = $builder->build('CREATE TABLE main.users (id INTEGER)');
         $statement = (new Binder($schema))->bind('SELECT u.id FROM main.users AS u');
         self::assertSame('main', $statement->relations[0]->declaration->schema);
@@ -125,15 +128,15 @@ final class FromBinderTest extends TestCase
 
     public function testTableRejectsAliasColumnLists(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);
         (new Binder($schema))->bind('SELECT renamed FROM users AS u(renamed)');
     }
 
     public function testKindRecognizesRightAndRejectsNatural(): void
     {
-        $builder = new SchemaBuilder(Dialect::PostgreSql);
-        $tables = new \SqlSemantics\Core\Binding\TableResolver($builder->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)'), new \SqlSemantics\Core\Ast\Identifiers(Dialect::PostgreSql), 'public');
+        $builder = new SchemaBuilder(PostgreSqlDialect::PostgreSql);
+        $tables = new \SqlSemantics\Core\Binding\TableResolver($builder->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)'), new \SqlSemantics\Core\Ast\Identifiers(PostgreSqlDialect::PostgreSql), 'public');
         $reader = new \SqlSemantics\Core\Binding\FromBinder($tables, new \SqlSemantics\Core\Binding\IdentitySequence());
         $source = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('SELECT 1');
         self::assertSame(\SqlSemantics\Core\Model\JoinKind::Right, $reader->kind('RIGHT OUTER JOIN', $source));

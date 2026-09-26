@@ -6,12 +6,12 @@ namespace Tests\Unit\Core;
 
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Model\Expression;
 use SqlSemantics\Core\Model\ExpressionKind;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Dialect;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
@@ -71,14 +71,13 @@ use SqlSemantics\Facade\Dialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 final class DialectTest extends TestCase
 {
     public function testPlatformCanBeSuppliedByAnApplication(): void
     {
         $platform = self::createStub(\SqlSemantics\Core\Platform::class);
-        $dialect = new class ($platform) implements \SqlSemantics\Core\Dialect {
+        $dialect = new class ($platform) implements Dialect {
             public readonly string $value;
             public function __construct(private readonly \SqlSemantics\Core\Platform $implementation)
             {

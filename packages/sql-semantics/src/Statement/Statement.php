@@ -13,7 +13,7 @@ namespace SqlSemantics\Statement;
  *
  * @visibility public
  * @example Reconstructing a statement from its values
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Facade\Dialect::Sqlite))->analyze('SELECT 1');
+ *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1');
  *     str_contains($statement->toString(), 'SELECT') // => true
  */
 final class Statement

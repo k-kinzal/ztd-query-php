@@ -26,7 +26,7 @@ final class Analyzer
     public function __construct(Dialect $dialect, ?string $grammarVersion = null)
     {
         $this->parser = new DialectParser($dialect, $grammarVersion);
-        $this->values = ValueReader::forVersion($this->parser->version());
+        $this->values = $dialect->platform()->values($this->parser->version());
     }
 
     /**

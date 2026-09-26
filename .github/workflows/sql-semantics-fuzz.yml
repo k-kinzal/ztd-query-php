@@ -5,7 +5,7 @@ on:
     - cron: '17 4 * * *'
   pull_request:
     paths:
-      - 'packages/sql-semantics/**'
+      - 'packages/sql-semantics*/**'
       - 'packages/sql-parser/**'
       - 'packages/bison-parser/**'
       - 'packages/lemon-parser/**'
@@ -48,12 +48,12 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - { database: mysql, script: fuzz_mysql_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
-          - { database: pg, script: fuzz_pg_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
-          - { database: sqlite, script: fuzz_sqlite_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: mysql, package: sql-semantics-mysql, script: fuzz_mysql_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: pg, package: sql-semantics-postgres, script: fuzz_pg_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: sqlite, package: sql-semantics-sqlite, script: fuzz_sqlite_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
     defaults:
       run:
-        working-directory: packages/sql-semantics
+        working-directory: packages/${{ matrix.target.package }}
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -66,7 +66,7 @@ jobs:
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
-          working-directory: packages/sql-semantics
+          working-directory: packages/${{ matrix.target.package }}
           dependency-versions: locked
           composer-options: --prefer-dist
           require-lock-file: true
@@ -86,17 +86,17 @@ jobs:
       - name: Restore the evolving raw-input corpus
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: packages/sql-semantics/fuzz/corpus/${{ matrix.target.database }}
+          path: packages/${{ matrix.target.package }}/fuzz/corpus/${{ matrix.target.database }}
           key: sql-semantics-corpus-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: sql-semantics-corpus-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-
       - name: Restore grammar coverage snapshots independently of the corpus
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: packages/sql-semantics/fuzz/coverage/${{ matrix.target.database }}
+          path: packages/${{ matrix.target.package }}/fuzz/coverage/${{ matrix.target.database }}
           key: sql-semantics-coverage-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: sql-semantics-coverage-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-
       - name: Copy sql-faker seed plans into the corpus
-        run: composer fuzz:seeds:${{ matrix.target.database }}
+        run: composer fuzz:seeds
       - name: Run PHP-Fuzzer
         env:
           FUZZ_MAX_RUNS: ${{ inputs.max_runs || (github.event_name == 'pull_request' && '100') || '10000' }}
@@ -109,6 +109,7 @@ jobs:
         if: always() && github.event_name != 'pull_request'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
+          FUZZ_PACKAGE: ${{ matrix.target.package }}
           FUZZ_DATABASE: ${{ matrix.target.database }}
           FUZZ_SCRIPT: ${{ matrix.target.script }}
         with:
@@ -118,7 +119,7 @@ jobs:
             const crypto = require('node:crypto');
             const database = process.env.FUZZ_DATABASE;
             const script = process.env.FUZZ_SCRIPT;
-            const root = path.resolve('packages/sql-semantics');
+            const root = path.resolve('packages', process.env.FUZZ_PACKAGE);
             const logPath = path.join(root, `build/fuzz/${database}.log`);
             if (!fs.existsSync(logPath)) return;
             const log = fs.readFileSync(logPath, 'utf8');
@@ -137,7 +138,7 @@ jobs:
               `PHP-Fuzzer found a statement the ${database} semantic analysis cannot round-trip.`,
               `Commit: ${context.sha}`,
               `Workflow and input artifact: ${run} (sql-semantics-fuzz-${database})`,
-              'Run from packages/sql-semantics after extracting the artifact:',
+              `Run from packages/${process.env.FUZZ_PACKAGE} after extracting the artifact:`,
               '```sh',
               `vendor/bin/php-fuzzer run-single fuzz/${script} '${finding[1]}'`,
               '```',
@@ -163,13 +164,13 @@ jobs:
         if: always() && github.event_name != 'pull_request'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: packages/sql-semantics/fuzz/corpus/${{ matrix.target.database }}
+          path: packages/${{ matrix.target.package }}/fuzz/corpus/${{ matrix.target.database }}
           key: sql-semantics-corpus-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Save grammar coverage history
         if: always() && github.event_name != 'pull_request'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: packages/sql-semantics/fuzz/coverage/${{ matrix.target.database }}
+          path: packages/${{ matrix.target.package }}/fuzz/coverage/${{ matrix.target.database }}
           key: sql-semantics-coverage-v1-${{ matrix.target.database }}-${{ env.MYSQL_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Upload PHP-Fuzzer inputs, output and grammar coverage
         if: always()
@@ -177,10 +178,10 @@ jobs:
         with:
           name: sql-semantics-fuzz-${{ matrix.target.database }}
           path: |
-            packages/sql-semantics/crash-*
-            packages/sql-semantics/timeout-*
-            packages/sql-semantics/build/fuzz/${{ matrix.target.database }}.log
-            packages/sql-semantics/fuzz/corpus/${{ matrix.target.database }}/
-            packages/sql-semantics/fuzz/coverage/${{ matrix.target.database }}/
+            packages/${{ matrix.target.package }}/crash-*
+            packages/${{ matrix.target.package }}/timeout-*
+            packages/${{ matrix.target.package }}/build/fuzz/${{ matrix.target.database }}.log
+            packages/${{ matrix.target.package }}/fuzz/corpus/${{ matrix.target.database }}/
+            packages/${{ matrix.target.package }}/fuzz/coverage/${{ matrix.target.database }}/
           if-no-files-found: ignore
           retention-days: 14

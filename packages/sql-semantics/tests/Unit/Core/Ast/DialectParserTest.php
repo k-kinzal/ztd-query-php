@@ -10,7 +10,10 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlSemantics\Core\Ast\DialectParser;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Core\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(DialectParser::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
@@ -32,9 +35,9 @@ use SqlSemantics\Facade\Dialect;
 #[Medium]
 final class DialectParserTest extends TestCase
 {
-    #[TestWith([Dialect::PostgreSql, 'parse_toplevel', 'pg-17.2'])]
-    #[TestWith([Dialect::MySql, 'start_entry', 'mysql-8.4.7'])]
-    #[TestWith([Dialect::Sqlite, 'input', 'sqlite-3.47.2'])]
+    #[TestWith([PostgreSqlDialect::PostgreSql, 'parse_toplevel', 'pg-17.2'])]
+    #[TestWith([MySqlDialect::MySql, 'start_entry', 'mysql-8.4.7'])]
+    #[TestWith([SqliteDialect::Sqlite, 'input', 'sqlite-3.47.2'])]
     public function testParseUsesTheRequestedGrammarAndRetainsSql(Dialect $dialect, string $root, string $version): void
     {
         $parser = new DialectParser($dialect, $version);
@@ -44,17 +47,17 @@ final class DialectParserTest extends TestCase
         self::assertSame($sql, $tree->toString());
     }
 
-    #[TestWith([Dialect::PostgreSql, 'pg-17.2'])]
-    #[TestWith([Dialect::MySql, 'mysql-8.4.7'])]
-    #[TestWith([Dialect::Sqlite, 'sqlite-3.47.2'])]
+    #[TestWith([PostgreSqlDialect::PostgreSql, 'pg-17.2'])]
+    #[TestWith([MySqlDialect::MySql, 'mysql-8.4.7'])]
+    #[TestWith([SqliteDialect::Sqlite, 'sqlite-3.47.2'])]
     public function testVersionReturnsTheResolvedRelease(Dialect $dialect, string $version): void
     {
         self::assertSame($version, (new DialectParser($dialect))->version());
     }
 
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testRejectsAnUnavailableGrammarRelease(Dialect $dialect): void
     {
         $this->expectException(RuntimeException::class);

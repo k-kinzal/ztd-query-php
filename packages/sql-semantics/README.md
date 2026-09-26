@@ -21,16 +21,28 @@ after sql-formatter's Compact formatting.
 ## Installation
 
 ```bash
-composer require k-kinzal/sql-semantics
+composer require k-kinzal/sql-semantics-postgres
 ```
 
-Requires PHP 8.1+ and `k-kinzal/sql-parser`. Public entry points accept SQL strings;
-parsing is handled inside the package.
+Install the package for each database you use. Each depends on this shared runtime
+and `k-kinzal/sql-parser`; installing one does not install the other SQL Semantics
+database packages. PHP 8.1+ is required.
+
+| Package | Dialect passed to the shared APIs |
+| --- | --- |
+| `k-kinzal/sql-semantics-mysql` | `SqlSemantics\Platform\MySql\Dialect::MySql` |
+| `k-kinzal/sql-semantics-postgres` | `SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql` |
+| `k-kinzal/sql-semantics-sqlite` | `SqlSemantics\Platform\Sqlite\Dialect::Sqlite` |
+
+The common `k-kinzal/sql-semantics` package contains the analysis/binding contracts,
+statement writer, and model generator. Database packages own their platform
+policies, generated models, release maps, tests, and fuzz targets. The sql-parser
+dependency still bundles all three parsers.
 
 ## Analyze and reconstruct SQL
 
 ```php
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect;
 use SqlSemantics\Facade\Semantics;
 
 $semantics = new Semantics(Dialect::PostgreSql);
@@ -45,9 +57,9 @@ $sql = $statement->toString();
 $command = $statement->command;
 ```
 
-Select `Dialect::MySql` or `Dialect::Sqlite` for the other languages. The optional
+Import the dialect enum from the corresponding database package for other languages. The optional
 second constructor argument selects a shipped grammar release, for example
-`new Semantics(Dialect::MySql, 'mysql-5.7.44')`. The default releases are MySQL
+`new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44')`. The default releases are MySQL
 8.4.7, PostgreSQL 17.2, and SQLite 3.47.2; all nine MySQL releases shipped by
 sql-faker are covered.
 
@@ -71,7 +83,7 @@ An outer join can make one use nullable without changing the declaration.
 
 ```php
 use SqlSemantics\Core\Binder;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 
 $schema = (new SchemaBuilder(Dialect::PostgreSql))->build(<<<'SQL'
@@ -106,7 +118,7 @@ CREATE TABLE strings. `Binder::bind(string $sql): BoundSelect` performs semantic
 binding of one SELECT against that schema. `Schema` contains declarations and
 their language context; `BoundSelect` contains schema-dependent binding facts.
 
-Use `Dialect::MySql` or `Dialect::Sqlite` for the other supported dialects.
+Use the MySQL or SQLite package's dialect enum for those databases.
 `SchemaBuilder` accepts optional `defaultSchema` and `grammarVersion` arguments,
 for example `new SchemaBuilder(Dialect::PostgreSql, 'app', 'pg-17.2')`. The schema
 retains the resolved grammar release and default namespace, so the binder uses
@@ -181,7 +193,6 @@ change `sql-fixture` behavior.
 composer install
 composer lint
 composer test
-composer fuzz:smoke
 composer bench:quick
 ```
 
@@ -192,7 +203,7 @@ conventions.
 
 - [Semantic design and evaluation requirements](docs/design.md)
 - [Verification](docs/verification.md)
-- [Full-language round-trip fuzz contract](fuzz/README.md)
+- [Database package development and generation](docs/packages.md)
 
 ## License
 

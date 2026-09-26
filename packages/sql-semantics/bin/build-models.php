@@ -3,7 +3,7 @@
 
 declare(strict_types=1);
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+require $_composer_autoload_path ?? dirname(__DIR__) . '/vendor/autoload.php';
 require __DIR__ . '/model-code.php';
 
 use SqlParser\Compiler\BisonGrammarReader;
@@ -27,7 +27,8 @@ use SqlParser\Resource\VersionRegistry;
  */
 function fixedSpellings(string $version): array
 {
-    $data = require dirname(__DIR__) . '/vendor/k-kinzal/sql-parser/resources/keywords/' . $version . '.php';
+    $dialect = str_starts_with($version, 'mysql-') ? 'mysql' : (str_starts_with($version, 'pg-') ? 'postgresql' : 'sqlite');
+    $data = require (new VersionRegistry())->resolve($dialect, $version)->keywordPath;
     $spellings = [];
     foreach ($data as $group) {
         foreach ($group as $word => $symbol) {
@@ -141,10 +142,21 @@ function source(string $version): array
     return ['Sqlite', 'https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-' . substr($version, 7) . '/src/parse.y', new LemonGrammarReader()];
 }
 
+$options = getopt('', ['dialect:', 'output:', 'check', 'help']);
+$dialect = $options['dialect'] ?? null;
+$destination = $options['output'] ?? null;
+if (isset($options['help']) || !is_string($dialect) || !in_array($dialect, ['mysql', 'postgresql', 'sqlite'], true) || !is_string($destination) || $destination === '') {
+    fwrite(isset($options['help']) ? STDOUT : STDERR, "Usage: build-models.php --dialect=mysql|postgresql|sqlite --output=resources [--check]\nPaths are relative to the calling package; temporary files use build/.\n");
+    exit(isset($options['help']) ? 0 : 2);
+}
+$workingDirectory = getcwd();
+if ($workingDirectory === false) {
+    throw new RuntimeException('Cannot resolve the calling package directory');
+}
 $registry = new VersionRegistry();
-$fetcher = new SourceFetcher(dirname(__DIR__) . '/build/sources');
-$versions = [...$registry->names('mysql'), ...$registry->names('postgresql'), ...$registry->names('sqlite')];
-$directory = dirname(__DIR__) . '/build/model-resources';
+$fetcher = new SourceFetcher($workingDirectory . '/build/sources');
+$versions = $registry->names($dialect);
+$directory = $workingDirectory . '/build/model-resources/' . $dialect;
 foreach (resourceFiles($directory) as $path) {
     unlink($path);
 }
@@ -200,4 +212,4 @@ foreach ($releases as $version => [$dialect, $formSet]) {
     file_put_contents($directory . '/mapping/' . $version . '.php', "<?php\n\ndeclare(strict_types=1);\n\n/** Generated construction recipes; never retained by a Statement. */\nreturn new \\SqlSemantics\\Core\\Analysis\\ValueReader(" . $code . ");\n");
     fwrite(STDOUT, "Wrote {$version}\n");
 }
-exit(publishModels($directory, dirname(__DIR__) . '/resources', in_array('--check', $argv, true)));
+exit(publishModels($directory, $destination, isset($options['check'])));

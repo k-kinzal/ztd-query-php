@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use SqlSemantics\Facade\Dialect;
 
 #[CoversClass(\SqlSemantics\Core\AnalysisException::class)]
 #[UsesClass(\SqlSemantics\Core\Analysis\Analyzer::class)]
@@ -19,7 +18,6 @@ use SqlSemantics\Facade\Dialect;
 #[UsesClass(\SqlSemantics\Statement\Statement::class)]
 #[UsesClass(\SqlSemantics\Statement\Writer::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
-#[UsesClass(Dialect::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\Sqlite\Platform::class)]

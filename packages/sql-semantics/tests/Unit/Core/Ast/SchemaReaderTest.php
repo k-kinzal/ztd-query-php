@@ -9,10 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Ast\SchemaReader::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,9 +74,9 @@ use SqlSemantics\Facade\Dialect;
 #[Medium]
 final class SchemaReaderTest extends TestCase
 {
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testReadDeclaredKeysDefaultsAndChecks(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL DEFAULT 1, UNIQUE(score), FOREIGN KEY (parent_id) REFERENCES users(id), CHECK (score > 0))');
@@ -90,7 +93,7 @@ final class SchemaReaderTest extends TestCase
 
     public function testTableRejectsDuplicateDeclarations(): void
     {
-        $builder = new SchemaBuilder(Dialect::PostgreSql);
+        $builder = new SchemaBuilder(PostgreSqlDialect::PostgreSql);
         $sql = 'CREATE TABLE users (id INTEGER)';
         $this->expectException(SemanticException::class);
         $this->expectExceptionMessage('Duplicate table');
@@ -101,30 +104,30 @@ final class SchemaReaderTest extends TestCase
     {
         $this->expectException(SemanticException::class);
         $this->expectExceptionMessage('unknown column');
-        (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER, PRIMARY KEY (missing))');
+        (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER, PRIMARY KEY (missing))');
     }
 
     public function testColumnNodesPreservesSqliteDeclarationOrder(): void
     {
-        $table = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users (z INTEGER, a TEXT, m REAL)')->tables[0];
+        $table = (new SchemaBuilder(SqliteDialect::Sqlite))->build('CREATE TABLE users (z INTEGER, a TEXT, m REAL)')->tables[0];
         self::assertSame(['z', 'a', 'm'], array_column($table->columns, 'name'));
     }
 
     public function testPrimaryNotNullRespectsSqliteDescException(): void
     {
-        $table = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users (id INTEGER PRIMARY KEY DESC)')->tables[0];
+        $table = (new SchemaBuilder(SqliteDialect::Sqlite))->build('CREATE TABLE users (id INTEGER PRIMARY KEY DESC)')->tables[0];
         self::assertSame(Nullability::MaybeNull, $table->columns[0]->nullability);
     }
 
     public function testValidateRejectsCreateAsSelect(): void
     {
         $this->expectException(SemanticException::class);
-        (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users AS SELECT 1 AS id');
+        (new SchemaBuilder(SqliteDialect::Sqlite))->build('CREATE TABLE users AS SELECT 1 AS id');
     }
 
     public function testPrimaryKeysResolvesCaseInsensitiveSqliteConstraintColumns(): void
     {
-        $table = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users (id INTEGER, PRIMARY KEY (ID))')->tables[0];
+        $table = (new SchemaBuilder(SqliteDialect::Sqlite))->build('CREATE TABLE users (id INTEGER, PRIMARY KEY (ID))')->tables[0];
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
     }
 }

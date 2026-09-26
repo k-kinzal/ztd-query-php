@@ -1,5 +1,5 @@
 deptrac:
-  paths: [./src, ./resources/models]
+  paths: [./src]
   analyser:
     types: [class, use]
   layers:
@@ -11,18 +11,6 @@ deptrac:
       collectors:
         - type: classLike
           value: '^SqlSemantics\\Core\\.*'
-    - name: MySql
-      collectors:
-        - type: classLike
-          value: '^SqlSemantics\\Platform\\MySql\\.*'
-    - name: PostgreSql
-      collectors:
-        - type: classLike
-          value: '^SqlSemantics\\Platform\\PostgreSql\\.*'
-    - name: Sqlite
-      collectors:
-        - type: classLike
-          value: '^SqlSemantics\\Platform\\Sqlite\\.*'
     - name: Facade
       collectors:
         - type: classLike
@@ -31,26 +19,8 @@ deptrac:
       collectors:
         - type: classLike
           value: '^SqlParser\\(Parser|Lexer)\\.*'
-    - name: ParserMySql
-      collectors:
-        - type: classLike
-          value: '^SqlParser\\MySql\\.*'
-    - name: ParserPostgreSql
-      collectors:
-        - type: classLike
-          value: '^SqlParser\\PostgreSql\\.*'
-    - name: ParserSqlite
-      collectors:
-        - type: classLike
-          value: '^SqlParser\\Sqlite\\.*'
   ruleset:
     Statements: []
     Core: [ParserCore, Statements]
-    MySql: [Core, ParserCore, ParserMySql]
-    PostgreSql: [Core, ParserCore, ParserPostgreSql]
-    Sqlite: [Core, ParserCore, ParserSqlite]
-    Facade: [Core, Statements, MySql, PostgreSql, Sqlite]
+    Facade: [Core, Statements]
     ParserCore: []
-    ParserMySql: []
-    ParserPostgreSql: []
-    ParserSqlite: []

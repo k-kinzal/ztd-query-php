@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Model\Join::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,7 +71,7 @@ final class JoinTest extends TestCase
 {
     public function testRetainsTheMatchTree(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id FROM users a LEFT JOIN users b ON a.id=b.id');
         self::assertInstanceOf(\SqlSemantics\Core\Model\Join::class, $statement->from);
         self::assertSame($statement->relations[0], $statement->from->left);
