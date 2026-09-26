@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Driver;
 
+use Container\Endpoint;
 use Container\MySql80Container;
 use Container\MySql84Container;
 use mysqli;
@@ -24,8 +25,9 @@ final class MysqliConnectionTest extends TestCase
     public function testQueryReturnsTheNativeRows(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $mysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $mysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $mysqli->set_charset('utf8mb4');
             $result = (new MysqliConnection($mysqli))->query('SELECT 7 AS id');
             self::assertInstanceOf(MysqliResultStatement::class, $result);
@@ -39,8 +41,9 @@ final class MysqliConnectionTest extends TestCase
     public function testQueryWrapsAnExecutedWrite(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $mysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $mysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $mysqli->set_charset('utf8mb4');
             $mysqli->query('CREATE TABLE users (id INT)');
             $result = (new MysqliConnection($mysqli))->query('INSERT INTO users VALUES (1), (2)');
@@ -55,8 +58,9 @@ final class MysqliConnectionTest extends TestCase
     public function testQueryTranslatesNativeFailureWhenReportingIsDisabled(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $mysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $mysqli = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $mysqli->set_charset('utf8mb4');
             mysqli_report(MYSQLI_REPORT_OFF);
             try {

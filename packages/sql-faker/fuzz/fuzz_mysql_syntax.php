@@ -26,6 +26,7 @@ register_shutdown_function(static function (): void {
     }
 });
 
+use Container\Endpoint;
 use Container\MySql56Container;
 use Container\MySql57Container;
 use Container\MySql80Container;
@@ -71,15 +72,14 @@ if (!isset($containerMap[$mysqlVersion])) {
 
 fwrite(STDERR, "Starting MySQL $mysqlVersion container...\n");
 
-$instance = Testcontainers::run($containerClass);
-
-$port = $instance->getMappedPort(3306);
-$host = str_replace('localhost', '127.0.0.1', $instance->getHost());
+$endpoint = Testcontainers::run($containerClass)->getData(Endpoint::class);
+$host = $endpoint->host;
+$port = $endpoint->port;
 
 $pdo = new PDO(
     "mysql:host=$host;port=$port;charset=utf8mb4",
-    'root',
-    'root',
+    $endpoint->username,
+    $endpoint->password,
     [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_EMULATE_PREPARES => false,

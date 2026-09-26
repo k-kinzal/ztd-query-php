@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Driver;
 
+use Container\Endpoint;
 use Container\MySql80Container;
 use Container\MySql84Container;
 use mysqli;
@@ -29,8 +30,9 @@ final class MysqliStatementTest extends TestCase
     public function testExecutesExplicitParameters(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $native = $connection->prepare('SELECT ? AS value');
             self::assertInstanceOf(mysqli_stmt::class, $native);
@@ -46,8 +48,9 @@ final class MysqliStatementTest extends TestCase
     public function testPreservesBindingsWithAnEmptyParameterArray(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $native = $connection->prepare('SELECT ? AS value');
             self::assertInstanceOf(mysqli_stmt::class, $native);
@@ -66,8 +69,9 @@ final class MysqliStatementTest extends TestCase
     public function testResultColumnsKeepsTheResultAvailableAfterReadingMetadata(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $native = $connection->prepare('SELECT 7 AS id UNION ALL SELECT 9 AS id');
             self::assertInstanceOf(mysqli_stmt::class, $native);
@@ -91,8 +95,9 @@ final class MysqliStatementTest extends TestCase
     public function testFetchAllReturnsNoRowsOrMetadataForAWrite(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $connection->query('CREATE TEMPORARY TABLE counts (id INT)');
             $native = $connection->prepare('INSERT INTO counts VALUES (1), (2)');
@@ -114,8 +119,9 @@ final class MysqliStatementTest extends TestCase
     public function testReportsNativeExecutionErrorsWithoutParameters(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $connection->query('CREATE TEMPORARY TABLE duplicate_keys (id INT PRIMARY KEY)');
             $connection->query('INSERT INTO duplicate_keys VALUES (1)');
@@ -138,8 +144,9 @@ final class MysqliStatementTest extends TestCase
     public function testReportsNativeExecutionErrorsWithParameters(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $connection->query('CREATE TEMPORARY TABLE duplicate_keys (id INT PRIMARY KEY)');
             $connection->query('INSERT INTO duplicate_keys VALUES (1)');
@@ -162,8 +169,9 @@ final class MysqliStatementTest extends TestCase
     public function testRowCountReportsNativeAffectedRows(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $connection->query('CREATE TEMPORARY TABLE row_counts (id INT)');
             $native = $connection->prepare('INSERT INTO row_counts VALUES (1), (2)');

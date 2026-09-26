@@ -17,28 +17,26 @@ register_shutdown_function(static function (): void {
     }
 });
 
+use Container\Endpoint;
 use Container\MySql84Container;
 use Fuzz\Target\InsertSelectTarget;
 use Testcontainers\Testcontainers;
 
 fwrite(STDERR, "Starting MySQL 8.4 container...\n");
 
-$instance = Testcontainers::run(MySql84Container::class);
-
-$port = $instance->getMappedPort(3306);
-$host = str_replace('localhost', '127.0.0.1', $instance->getHost());
+$endpoint = Testcontainers::run(MySql84Container::class)->getData(Endpoint::class);
 
 $pdo = new PDO(
-    "mysql:host=$host;port=$port;dbname=test;charset=utf8mb4",
-    'root',
-    'root',
+    $endpoint->dsn(),
+    $endpoint->username,
+    $endpoint->password,
     [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_EMULATE_PREPARES => false,
     ]
 );
 
-fwrite(STDERR, "MySQL ready on $host:$port\n");
+fwrite(STDERR, "MySQL ready on $endpoint->host:$endpoint->port\n");
 fwrite(STDERR, "Starting fuzzer...\n\n");
 
 $target = new InsertSelectTarget($pdo);

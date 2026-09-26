@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Container;
 
+use Container\Endpoint;
 use Container\MySql80Container;
 use Container\MySql84Container;
 use Container\PostgreSql16Container;
@@ -17,7 +18,7 @@ final class DatabaseEndpoint
 {
     /**
      * @return array{string, int}
-     * @throws RuntimeException When the service port is invalid or unmapped.
+     * @throws RuntimeException When the service port is invalid.
      */
     public static function mysql(): array
     {
@@ -25,14 +26,14 @@ final class DatabaseEndpoint
         if ($host !== false) {
             return [$host, self::port('MYSQL_PORT', 3306)];
         }
-        $instance = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class)->getData(Endpoint::class);
 
-        return [str_replace('localhost', '127.0.0.1', $instance->getHost()), $instance->getMappedPort(3306) ?? throw new RuntimeException('MySQL port was not mapped.')];
+        return [$endpoint->host, $endpoint->port];
     }
 
     /**
      * @return array{string, int}
-     * @throws RuntimeException When the service port is invalid or unmapped.
+     * @throws RuntimeException When the service port is invalid.
      */
     public static function postgres(): array
     {
@@ -40,9 +41,9 @@ final class DatabaseEndpoint
         if ($host !== false) {
             return [$host, self::port('PG_PORT', 5432)];
         }
-        $instance = Testcontainers::run(PostgreSql16Container::class);
+        $endpoint = Testcontainers::run(PostgreSql16Container::class)->getData(Endpoint::class);
 
-        return [str_replace('localhost', '127.0.0.1', $instance->getHost()), $instance->getMappedPort(5432) ?? throw new RuntimeException('PostgreSQL port was not mapped.')];
+        return [$endpoint->host, $endpoint->port];
     }
 
     /**
