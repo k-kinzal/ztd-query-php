@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lint — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/328/k-kinzal/requirements/doc/docs/lint.md.html">
+<meta name="description" content="Lint, a document of the k-kinzal/requirements package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Lint — ZTD Query PHP">
+<meta property="og:description" content="Lint, a document of the k-kinzal/requirements package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/328/k-kinzal/requirements/doc/docs/lint.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/328/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/requirements/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/index.html" title="Requirements\Config">Requirements\Config</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/Markdown/index.html" title="Requirements\Config\Markdown">Requirements\Config\Markdown</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/Markdown/Profile/index.html" title="Requirements\Config\Markdown\Profile">Requirements\Config\Markdown\Profile</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/Markdown/Render/index.html" title="Requirements\Config\Markdown\Render">Requirements\Config\Markdown\Render</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Console/index.html" title="Requirements\Console">Requirements\Console</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Ears/index.html" title="Requirements\Ears">Requirements\Ears</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Input/index.html" title="Requirements\Input">Requirements\Input</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Model/index.html" title="Requirements\Model">Requirements\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Report/index.html" title="Requirements\Report">Requirements\Report</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Source/index.html" title="Requirements\Source">Requirements\Source</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Test/index.html" title="Requirements\Test">Requirements\Test</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Verification/index.html" title="Requirements\Verification">Requirements\Verification</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/lint.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 9e76528ee5 to working tree">9e76528ee5 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 9e76528ee5 and working tree." data-off="This page documents what 9e76528ee5 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Lint</h1><div class="symbol-meta"><span class="source-link">docs/lint.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Lint</h2>
+</div><div class="doc-block" data-diff="same"><p><code>requirements lint</code> checks the configuration and every definition file without downloading sources or running tests. Every other command runs the same checks first. Lint exits with <code>2</code> and names the file, and for schema errors the JSON pointer, of each problem.</p>
+</div><div class="doc-block" data-diff="same"><h3>What lint checks</h3>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Check</th><th>Fails when</th></tr></thead><tbody><tr><td>Schema</td><td>A required key is missing, a value has the wrong type, or a key is unknown. The <span class="md-target" title="../schemas/config.schema.json">configuration schema</span> and <span class="md-target" title="../schemas/definition.schema.json">definition schema</span> are JSON Schema 2020-12.</td></tr><tr><td>IDs</td><td>Two sources or two items share an ID.</td></tr><tr><td>Links</td><td>A <code>requirements</code>, <code>related</code> or Markdown link points to an unknown item or to the item itself, or a <code>requirements</code> link points to a specification.</td></tr><tr><td>Item rules</td><td>An unsupported item has no <code>reason</code>, an item without a source has no <code>origin</code> and <code>reason</code>, or such an item claims evidence.</td></tr><tr><td>Runners and extensions</td><td>A test names an unknown runner, or a registered class does not implement its extension interface.</td></tr><tr><td>Thresholds</td><td>A threshold is outside 0–100 or names an unknown source.</td></tr><tr><td>EARS</td><td>A specification statement does not follow an <a href="#ears">EARS</a> pattern.</td></tr><tr><td>Markdown</td><td>A Markdown definition does not follow the <a href="../../../../k-kinzal/requirements/doc/docs/definitions.md.html#markdown-definitions">Markdown layout</a>, or a badge contradicts its alt text.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>Lint does not check that quotations match their source; that is <code>check</code>. It does not run tests; that is <code>spec</code>.</p>
+</div><div class="doc-block" data-diff="same"><h3>EARS</h3>
+</div><div class="doc-block" data-diff="same"><p>Specifications must follow the patterns of the <a href="https://alistairmavin.com/ears/">Easy Approach to Requirements Syntax</a>. Requirements may be any prose.</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Pattern</th><th>Form</th></tr></thead><tbody><tr><td>Ubiquitous</td><td><code>The &lt;system&gt; shall &lt;response&gt;</code></td></tr><tr><td>State driven</td><td><code>While &lt;precondition&gt;, the &lt;system&gt; shall &lt;response&gt;</code></td></tr><tr><td>Event driven</td><td><code>When &lt;trigger&gt;, the &lt;system&gt; shall &lt;response&gt;</code></td></tr><tr><td>Optional feature</td><td><code>Where &lt;feature&gt;, the &lt;system&gt; shall &lt;response&gt;</code></td></tr><tr><td>Unwanted behaviour</td><td><code>If &lt;trigger&gt;, then the &lt;system&gt; shall &lt;response&gt;</code></td></tr><tr><td>Complex</td><td><code>While &lt;precondition&gt;, when &lt;trigger&gt;, the &lt;system&gt; shall &lt;response&gt;</code></td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>Clauses come in this order: an optional <code>Where</code>, any number of <code>While</code>, at most one <code>When</code> or <code>If</code>, then the system and its responses. Keywords are case insensitive and the final period is optional. Several responses share one <code>shall</code> and are joined with <code>and</code>; write a separate specification for each system.</p>
+</div><div class="doc-block" data-diff="same"><p>A comma followed by a keyword starts the next clause; other commas belong to the text. To use a keyword such as <code>shall</code> or <code>then</code> as a word inside a clause, quote it with quotes or backticks.</p>
+</div><div class="doc-block" data-diff="same"><p>The check covers the form only. Whether a specification says what its source means, and whether its tests prove it, still needs review.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
