@@ -1,3 +1,5 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
 # Layers follow the path from definition files to a verdict: input values are
 # narrowed, statements are checked against EARS, definitions become the model,
 # sources are selected into units, documents are read and written, coverage
