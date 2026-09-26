@@ -66,9 +66,6 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/sql-formatter/README.md](packages/sql-formatter/README.md) - Formatting SQL with layout presets: installation and usage
 - [packages/sql-parser/README.md](packages/sql-parser/README.md) - Lossless LALR(1) SQL parsers built from the official grammars
 - [packages/sql-semantics/README.md](packages/sql-semantics/README.md) - Binding SQL to a schema: installation and usage
-- [packages/sql-semantics/docs/design.md](packages/sql-semantics/docs/design.md) - Design of the semantic phase and the information it derives
-- [packages/sql-semantics/docs/support.md](packages/sql-semantics/docs/support.md) - Supported language and the confidence contract
-- [packages/sql-semantics/docs/verification.md](packages/sql-semantics/docs/verification.md) - How the public API is tested
 - [packages/ztd-query-core/README.md](packages/ztd-query-core/README.md) - ZTD Query overview, installation, and usage
 - [packages/ztd-query-core/docs/mechanism.md](packages/ztd-query-core/docs/mechanism.md) - Overview and design of the ZTD mechanism
 - [packages/ztd-query-mysql/README.md](packages/ztd-query-mysql/README.md) - MySQL platform support: installation and usage
