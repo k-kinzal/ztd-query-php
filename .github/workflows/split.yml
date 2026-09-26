@@ -60,7 +60,7 @@ jobs:
             split_repository: ztd-query-mysqli-adapter
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Determine version constraint
         id: version
@@ -139,7 +139,7 @@ jobs:
       - name: Remove the monorepo development lock file
         run: rm "packages/${{ matrix.package.local_path }}/composer.lock"
 
-      - uses: danharrin/monorepo-split-github-action@v2.3.0
+      - uses: danharrin/monorepo-split-github-action@14e42e2437f674b8987c1f50ca3689116aea1893 # v2.4.5
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         with:
