@@ -127,4 +127,134 @@ final class IterationStepTest extends TestCase
         self::assertCount(1, $state->memory->liveArrays);
         self::assertSame('iterator', $iterator->kind);
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerCursorReads')]
+    public function testEvaluateReadsCursorValuesAndKeysWithContainerConfidentiality(string $operation, bool $secret, mixed $expected): void
+    {
+        $state = new \Deriver\Internal\Solver\State();
+        $state->registers['it'] = new \Deriver\Value\Term('iterator', 'cursor');
+        $array = new \Deriver\Value\Term('array', operands:['first' => \Deriver\Value\Term::constant(10),'second' => \Deriver\Value\Term::constant(20)], attributes:['open' => false], secret:$secret);
+        $state->iterators['cursor'] = new \Deriver\Internal\Solver\Control\IteratorCursor($array, position:1);
+        $instruction = new \Deriver\Internal\IR\Instruction('i', $operation, new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1), 'result', ['it']);
+        $result = (new \Deriver\Internal\Solver\Control\IterationStep(\Tests\Fake\SolverFixture::context()))->evaluate($instruction, $state);
+        self::assertSame($expected, $result->native());
+        self::assertSame($secret, $result->isSecret());
+        self::assertSame(1, $state->iterators['cursor']->position);
+    }
+    /**
+     * @return iterable<string,array{string,bool,int|string}>
+     */
+    public static function providerCursorReads(): iterable
+    {
+        yield 'public value' => ['iterator-value',false,20];
+        yield 'secret value' => ['iterator-value',true,20];
+        yield 'public key' => ['iterator-key',false,'second'];
+        yield 'secret key' => ['iterator-key',true,'second'];
+    }
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerIterationAdvancement')]
+    public function testEvaluateAdvancesExactlyOnePositionAndReportsAvailability(int $position, bool $secret, bool $expected): void
+    {
+        $state = new \Deriver\Internal\Solver\State();
+        $state->registers['it'] = new \Deriver\Value\Term('iterator', 'cursor');
+        $array = new \Deriver\Value\Term('array', operands:['first' => \Deriver\Value\Term::constant(10)], attributes:['open' => false], secret:$secret);
+        $state->iterators['cursor'] = new \Deriver\Internal\Solver\Control\IteratorCursor($array, position:$position);
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'iterate', new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1), 'result', ['it']);
+        $result = (new \Deriver\Internal\Solver\Control\IterationStep(\Tests\Fake\SolverFixture::context()))->evaluate($instruction, $state);
+        self::assertSame($expected, $result->native());
+        self::assertSame($secret, $result->isSecret());
+        self::assertSame($position + 1, $state->iterators['cursor']->position);
+        self::assertSame($array, $state->iterators['cursor']->array);
+    }
+    /**
+     * @return iterable<string,array{int,bool,bool}>
+     */
+    public static function providerIterationAdvancement(): iterable
+    {
+        yield 'entry' => [-1,false,true];
+        yield 'exhausted' => [0,false,false];
+        yield 'secret entry' => [-1,true,true];
+        yield 'secret exhausted' => [0,true,false];
+    }
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerUnknownIteration')]
+    public function testEvaluateKeepsUnknownIterableAvailabilitySymbolic(\Deriver\Value\Term $array): void
+    {
+        $state = new \Deriver\Internal\Solver\State();
+        $state->registers['it'] = new \Deriver\Value\Term('iterator', 'cursor');
+        $state->iterators['cursor'] = new \Deriver\Internal\Solver\Control\IteratorCursor($array);
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'iterate', new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1), 'result', ['it']);
+        $result = (new \Deriver\Internal\Solver\Control\IterationStep(\Tests\Fake\SolverFixture::context()))->evaluate($instruction, $state);
+        self::assertSame('external', $result->kind);
+        self::assertSame('cursor:has-next:0', $result->literal);
+        self::assertSame(['type' => 'bool'], $result->attributes);
+        self::assertSame($array->secret, $result->secret);
+        self::assertSame(0, $state->iterators['cursor']->position);
+    }
+    /**
+     * @return iterable<string,array{\Deriver\Value\Term}>
+     */
+    public static function providerUnknownIteration(): iterable
+    {
+        yield 'unknown' => [\Deriver\Value\Term::parameter('items', 'iterable')];
+        yield 'open' => [\Deriver\Value\Term::array([], true)];
+        yield 'secret open' => [new \Deriver\Value\Term('array', attributes:['open' => true], secret:true)];
+    }
+    public function testEvaluateReleasesOnlyTheSelectedIterator(): void
+    {
+        $state = new \Deriver\Internal\Solver\State();
+        $state->registers['it'] = new \Deriver\Value\Term('iterator', 'cursor');
+        $location = $state->memory->allocate(\Deriver\Value\Term::fromNative([10]));
+        $state->iterators['cursor'] = new \Deriver\Internal\Solver\Control\IteratorCursor($state->memory->read($location), $location);
+        $other = new \Deriver\Internal\Solver\Control\IteratorCursor(\Deriver\Value\Term::array([]));
+        $state->iterators['other'] = $other;
+        $state->memory->liveArrays['cursor'] = new \Deriver\Internal\Memory\LiveArray($location, [0]);
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'iterator-release', new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1), 'result', ['it']);
+        $result = (new \Deriver\Internal\Solver\Control\IterationStep(\Tests\Fake\SolverFixture::context()))->evaluate($instruction, $state);
+        self::assertSame(null, $result->native());
+        self::assertSame(['other' => $other], $state->iterators);
+        self::assertSame([], $state->memory->liveArrays);
+        self::assertSame([10], $state->memory->read($location)->native());
+    }
+    public function testEvaluateReturnsAnExplicitBoundaryWhenNoCurrentEntryExists(): void
+    {
+        $state = new \Deriver\Internal\Solver\State();
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'iterator-value', new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1), 'result', ['missing']);
+        $result = (new \Deriver\Internal\Solver\Control\IterationStep(\Tests\Fake\SolverFixture::context()))->evaluate($instruction, $state);
+        self::assertSame('opaque', $result->kind);
+        self::assertSame('UNKNOWN_ITERABLE', $result->literal);
+        self::assertSame([], $state->iterators);
+    }
+    public function testEvaluateResolvesLiveAddressesFromThePinnedStorage(): void
+    {
+        $state = new \Deriver\Internal\Solver\State();
+        $location = $state->memory->allocate(\Deriver\Value\Term::fromNative(['key' => 10]));
+        $state->registers['it'] = new \Deriver\Value\Term('iterator', 'cursor');
+        $state->iterators['cursor'] = new \Deriver\Internal\Solver\Control\IteratorCursor(\Deriver\Value\Term::array([]), $location);
+        $state->memory->liveArrays['cursor'] = new \Deriver\Internal\Memory\LiveArray($location, ['key']);
+        $step = new \Deriver\Internal\Solver\Control\IterationStep(\Tests\Fake\SolverFixture::context());
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1);
+        $hasNext = $step->evaluate(new \Deriver\Internal\IR\Instruction('i', 'iterate', $source, 'next', ['it']), $state);
+        $result = $step->evaluate(new \Deriver\Internal\IR\Instruction('a', 'iterator-address', $source, 'address', ['it']), $state);
+        self::assertTrue($hasNext->native());
+        self::assertSame('location', $result->kind);
+        self::assertSame($location->root, $result->literal);
+        self::assertSame(['key'], $state->addresses['address']->path);
+        self::assertSame(10, $state->memory->read($state->addresses['address'])->native());
+        $state->memory->write($state->addresses['address'], \Deriver\Value\Term::constant(20));
+        self::assertSame(['key' => 20], $state->memory->read($location)->native());
+    }
+    public function testInitializeSnapshotsByValueWithoutAllocatingLiveStorage(): void
+    {
+        $state = new \Deriver\Internal\Solver\State();
+        $array = \Deriver\Value\Term::fromNative([10]);
+        $state->registers['array'] = $array;
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'iterator', new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1), 'it', ['array']);
+        $iterator = (new \Deriver\Internal\Solver\Control\IterationStep(\Tests\Fake\SolverFixture::context()))->evaluate($instruction, $state);
+        self::assertIsString($iterator->literal);
+        self::assertSame($array, $state->iterators[$iterator->literal]->array);
+        self::assertNull($state->iterators[$iterator->literal]->location);
+        self::assertSame(-1, $state->iterators[$iterator->literal]->position);
+        self::assertSame([], $state->memory->liveArrays);
+        self::assertSame([], $state->memory->cells);
+    }
+
 }

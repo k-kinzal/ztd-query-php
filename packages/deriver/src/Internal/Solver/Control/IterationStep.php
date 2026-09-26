@@ -46,27 +46,27 @@ final class IterationStep
             $cursor = new IteratorCursor($array, $cursor->location, $cursor->position + 1);
             $state->iterators[$id] = $cursor;
             if ($array->kind !== 'array' || ($array->attributes['open'] ?? false) === true) {
-                return new Term('external', $id . ':has-next:' . $cursor->position, attributes: ['type' => 'bool']);
+                return new Term('external', $id . ':has-next:' . $cursor->position, attributes: ['type' => 'bool'], secret: $array->secret);
             }
             if (isset($state->memory->liveArrays[$id])) {
                 $state->memory->liveArrays[$id] = $state->memory->liveArrays[$id]->advance();
-                return Term::constant($state->memory->liveArrays[$id]->current !== null);
+                return Term::constant($state->memory->liveArrays[$id]->current !== null, $array->secret);
             }
-            return Term::constant($cursor->position < count($array->operands));
+            return Term::constant($cursor->position < count($array->operands), $array->secret);
         }
         $key = isset($state->memory->liveArrays[$id]) ? $state->memory->liveArrays[$id]->current : (array_keys($array->operands)[$cursor->position] ?? null);
         if ($key === null) {
             return Term::opaque('UNKNOWN_ITERABLE');
         }
         if ($instruction->operation === 'iterator-key') {
-            return Term::constant($key);
+            return Term::constant($key, $array->secret);
         }
         if ($instruction->operation === 'iterator-address' && $cursor->location !== null) {
             $location = new Location($cursor->location->root, [...$cursor->location->path, $key]);
             $state->addresses[$instruction->result] = $location;
             return new Term('location', $location->root);
         }
-        return $state->memory->dereference($array->operands[$key]);
+        return $state->memory->element($array, $key);
     }
 
     /**

@@ -91,4 +91,85 @@ final class SerializationContractTest extends TestCase
         self::assertNotEmpty($outcome->evidence);
         self::assertTrue(\Tests\Fake\ReportSchema::accepts($result->toJson()));
     }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testCustomIntrinsicResultsRetainSecretInputRedaction(): void
+    {
+        $intrinsic = self::createStub(\Deriver\Model\Intrinsic\PureIntrinsic::class);
+        $intrinsic->method('descriptor')->willReturn(new \Deriver\Model\Intrinsic\IntrinsicDescriptor('example.private', '1', 'example.private', 1, [0]));
+        $intrinsic->method('evaluate')->willReturn(Term::constant('derived-confidential-value'));
+        $signature = new \Deriver\Model\Signature\Signature([new \Deriver\Model\Signature\Parameter('value', 'string')]);
+        $plan = new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(new \Deriver\Model\Plan\Expression('intrinsic', 'example.private', [\Deriver\Model\Plan\Expression::parameter('value')]))]);
+        $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.private', '1', 'derive_private', $signature), $plan);
+        $session = Analysis::session('<?php function target(string $input){return derive_private($input);}', new \Deriver\Api\Project\Configuration(models:[$model], intrinsics:[$intrinsic]));
+        $result = $session->derive(new ReturnQuery('target', QueryScope::fromEntrypoints([new EntryPoint('target', [Term::constant('private-input', true)])])));
+        self::assertSame([], $result->frontiers);
+        self::assertTrue($result->normalOutcomes[0]->values['return']->isSecret());
+        self::assertStringNotContainsString(base64_encode('derived-confidential-value'), $result->toJson());
+        self::assertStringContainsString(base64_encode('derived-confidential-value'), $result->toJson(true));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDerivedSecretSelection')]
+    public function testDerivedSecretSelectionRemainsRedacted(string $body, string $expected): void
+    {
+        $session = Analysis::session('<?php function target(string $input){'.$body.'}');
+        $result = $session->derive(new ReturnQuery('target', QueryScope::fromEntrypoints([new EntryPoint('target', [Term::constant('xx', true)])])));
+        self::assertSame([], $result->frontiers);
+        self::assertSame($expected, $result->normalOutcomes[0]->values['return']->native());
+        self::assertTrue($result->normalOutcomes[0]->values['return']->isSecret());
+        self::assertStringContainsString('"redacted": true', $result->toJson());
+        self::assertStringNotContainsString(base64_encode($expected), $result->toJson());
+        self::assertStringContainsString(base64_encode($expected), $result->toJson(true));
+    }
+    /**
+     * @return iterable<string,array{string,string}>
+     */
+    public static function providerDerivedSecretSelection(): iterable
+    {
+        yield 'replacement result' => ['return str_replace("x","y",$input);','yy'];
+        yield 'array keys' => ['return array_keys([$input=>1])[0];','xx'];
+        yield 'stored array keys' => ['$a=array_keys([$input=>1]);return $a[0];','xx'];
+        yield 'secret lookup key' => ['return ["xx"=>"selected"][$input];','selected'];
+        yield 'foreach key' => ['foreach([$input=>1] as $key=>$value){return $key;}return "missing";','xx'];
+        yield 'foreach value' => ['foreach(array_keys([$input=>1]) as $value){return $value;}return "missing";','xx'];
+        yield 'foreach reference' => ['$a=array_keys([$input=>1]);foreach($a as &$value){return $value;}return "missing";','xx'];
+        yield 'destructuring' => ['[$value]=array_keys([$input=>1]);return $value;','xx'];
+        yield 'reference' => ['$a=array_keys([$input=>1]);$value=&$a[0];return $value;','xx'];
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerCustomAggregateSelection')]
+    public function testCustomAggregateSelectionsRetainSecretInputRedaction(string $body): void
+    {
+        $intrinsic = self::createStub(\Deriver\Model\Intrinsic\PureIntrinsic::class);
+        $intrinsic->method('descriptor')->willReturn(new \Deriver\Model\Intrinsic\IntrinsicDescriptor('example.private', '1', 'example.private', 1, [0]));
+        $intrinsic->method('evaluate')->willReturn(Term::fromNative(['keep' => 'derived-confidential-value','drop' => 'discarded']));
+        $signature = new \Deriver\Model\Signature\Signature([new \Deriver\Model\Signature\Parameter('value', 'string')]);
+        $plan = new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(new \Deriver\Model\Plan\Expression('intrinsic', 'example.private', [\Deriver\Model\Plan\Expression::parameter('value')]))]);
+        $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.private', '1', 'derive_private', $signature), $plan);
+        $session = Analysis::session('<?php function target(string $input){$a=derive_private($input);'.$body.'}', new \Deriver\Api\Project\Configuration(models:[$model], intrinsics:[$intrinsic]));
+        $result = $session->derive(new ReturnQuery('target', QueryScope::fromEntrypoints([new EntryPoint('target', [Term::constant('private-input', true)])])));
+        self::assertSame([], $result->frontiers);
+        self::assertTrue($result->normalOutcomes[0]->values['return']->isSecret());
+        self::assertStringNotContainsString(base64_encode('derived-confidential-value'), $result->toJson());
+        self::assertStringContainsString(base64_encode('derived-confidential-value'), $result->toJson(true));
+    }
+    /**
+     * @return iterable<string,array{string}>
+     */
+    public static function providerCustomAggregateSelection(): iterable
+    {
+        yield 'offset' => ['return $a["keep"];'];
+        yield 'unset' => ['unset($a["drop"]);return $a;'];
+        yield 'reference' => ['$value=&$a["keep"];return $value;'];
+        yield 'foreach value' => ['foreach($a as $value){return $value;}return null;'];
+        yield 'foreach reference' => ['foreach($a as &$value){return $value;}return null;'];
+    }
+
 }

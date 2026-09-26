@@ -219,4 +219,91 @@ final class MemoryTest extends TestCase
         $memory->write(new \Deriver\Internal\Memory\Location('a'), \Deriver\Value\Term::fromNative([40,50]));
         self::assertSame([0,1], $memory->liveArrays['i']->remaining);
     }
+
+    public function testRemovePreservesAnExplicitSecretLabelOnTheAggregate(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $value = new \Deriver\Value\Term('array', operands:['private' => \Deriver\Value\Term::constant('derived'),'drop' => \Deriver\Value\Term::constant(1)], attributes:['open' => false], secret:true);
+        $location = $memory->allocate($value);
+        $memory->remove(new \Deriver\Internal\Memory\Location($location->root, ['drop']));
+        $remaining = $memory->read($location);
+        self::assertSame(['private' => 'derived'], $remaining->native());
+        self::assertTrue($remaining->isSecret());
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerElementConfidentiality')]
+    public function testElementPreservesContainerKeyAndSelectedValueConfidentiality(bool $containerSecret, bool $keySecret, bool $childSecret, bool $expected): void
+    {
+        $child = \Deriver\Value\Term::constant('private-value', $childSecret);
+        $array = new \Deriver\Value\Term('array', operands: ['chosen' => $child], attributes: ['open' => false], secret: $containerSecret);
+        $result = (new \Deriver\Internal\Memory\Memory())->element($array, 'chosen', $keySecret);
+        self::assertSame('private-value', $result->native());
+        self::assertSame($expected, $result->isSecret());
+        self::assertSame($childSecret, $child->secret);
+    }
+    /**
+     * @return iterable<string, array{bool,bool,bool,bool}>
+     */
+    public static function providerElementConfidentiality(): iterable
+    {
+        yield 'public' => [false,false,false,false];
+        yield 'container' => [true,false,false,true];
+        yield 'key' => [false,true,false,true];
+        yield 'child' => [false,false,true,true];
+        yield 'container and key' => [true,true,false,true];
+        yield 'all' => [true,true,true,true];
+    }
+    public function testElementPreservesOpenAndClosedAbsenceAndReferenceIdentity(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $object = new \Deriver\Value\Term('object', 'one', attributes: ['class' => 'Box']);
+        $location = $memory->allocate($object);
+        $array = new \Deriver\Value\Term('array', operands: ['object' => new \Deriver\Value\Term('cell', $location->root)], attributes:['open' => false], secret:true);
+        $entry = $memory->element($array, 'object');
+        self::assertSame('one', $entry->literal);
+        self::assertSame(['class' => 'Box'], $entry->attributes);
+        self::assertTrue($entry->secret);
+        self::assertSame('uninitialized', $memory->element($array, 'missing')->kind);
+        self::assertTrue($memory->element($array, 'missing')->secret);
+        self::assertSame('UNKNOWN_ARRAY_KEY', $memory->element(\Deriver\Value\Term::array([], true), 'missing')->literal);
+        self::assertSame($object, $memory->read($location));
+    }
+    public function testReadCarriesAnOuterSecretLabelThroughNestedArrays(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $array = new \Deriver\Value\Term('array', operands:['outer' => \Deriver\Value\Term::fromNative(['inner' => 'private-value'])], attributes:['open' => false], secret:true);
+        $location = $memory->allocate($array);
+        $result = $memory->read(new \Deriver\Internal\Memory\Location($location->root, ['outer','inner']));
+        self::assertSame('private-value', $result->native());
+        self::assertTrue($result->isSecret());
+        self::assertSame($array, $memory->read($location));
+    }
+    public function testDereferenceRetainsSecretLabelsAcrossCellChainsAndCycles(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $memory->cells['first'] = new \Deriver\Value\Term('cell', 'second', secret:true);
+        $memory->cells['second'] = \Deriver\Value\Term::constant('private-value');
+        $value = $memory->dereference(new \Deriver\Value\Term('cell', 'first'));
+        $memory->cells['second'] = new \Deriver\Value\Term('cell', 'first');
+        $cycle = $memory->dereference(new \Deriver\Value\Term('cell', 'first'));
+        self::assertTrue($value->secret);
+        self::assertSame('private-value', $value->native());
+        self::assertSame('CYCLIC_REFERENCE', $cycle->literal);
+        self::assertTrue($cycle->secret);
+    }
+    public function testReferenceRetainsConfidentialityWhenAnExistingArrayCellEscapes(): void
+    {
+        $memory = new \Deriver\Internal\Memory\Memory();
+        $value = $memory->allocate(\Deriver\Value\Term::constant('private-value'));
+        $link = $memory->allocate(new \Deriver\Value\Term('cell', $value->root));
+        $array = $memory->allocate(new \Deriver\Value\Term('array', operands:['value' => new \Deriver\Value\Term('cell', $link->root)], attributes:['open' => false], secret:true));
+        $reference = $memory->reference(new \Deriver\Internal\Memory\Location($array->root, ['value']));
+        self::assertSame($link->root, $reference);
+        self::assertSame('private-value', $memory->read(new \Deriver\Internal\Memory\Location($reference))->native());
+        self::assertTrue($memory->read(new \Deriver\Internal\Memory\Location($reference))->secret);
+        $memory->write($value, \Deriver\Value\Term::constant('updated'));
+        self::assertSame('updated', $memory->read(new \Deriver\Internal\Memory\Location($reference))->native());
+        self::assertTrue($memory->read(new \Deriver\Internal\Memory\Location($reference))->secret);
+    }
+
 }

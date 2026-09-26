@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Standard;
 
+use Deriver\Standard\Library;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(\Deriver\Standard\Library::class)]
+#[CoversClass(Library::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
@@ -148,7 +150,7 @@ final class LibraryTest extends TestCase
     }
     public function testParametersKeepsRequiredRandomBoundsDistinctFromOmittedRandBounds(): void
     {
-        $library = new \Deriver\Standard\Library();
+        $library = new Library();
         $random = $library->parameters('random_int');
         $rand = $library->parameters('rand');
         self::assertNotNull($random);
@@ -158,11 +160,118 @@ final class LibraryTest extends TestCase
     }
     public function testArraysDeclaresSortWritesAndNamedCollectionArguments(): void
     {
-        $library = new \Deriver\Standard\Library();
+        $library = new Library();
         $sort = $library->arrays('sort');
         self::assertNotNull($sort);
         self::assertTrue($sort[0]->byReference);
         self::assertSame(['array', 'callback', 'initial'], array_column($library->arrays('array_reduce') ?? [], 'name'));
         self::assertNull($library->arrays('unknown'));
+    }
+
+    /**
+     * @param list<string> $types Accepted target type alternatives
+     * @param scalar|null $default Captured target default
+     */
+    #[DataProvider('providerNativeParameters')]
+    public function testParametersMatchCapturedPhp83Signatures(string $function, int $index, int $count, string $name, array $types, bool $reference, bool $variadic, string $defaultKind, int|float|string|bool|null $default): void
+    {
+        $parameters = (new Library())->parameters($function);
+        self::assertNotNull($parameters);
+        self::assertCount($count, $parameters);
+        $parameter = $parameters[$index];
+        self::assertSame($name, $parameter->name);
+        self::assertEqualsCanonicalizing($types, explode('|', $parameter->type));
+        self::assertSame($reference, $parameter->byReference);
+        self::assertSame($variadic, $parameter->variadic);
+        self::assertSame($defaultKind, $parameter->default->kind ?? 'required');
+        self::assertSame($default, $parameter->default?->literal);
+    }
+
+    /**
+     * @return array<string,array{string,int,int,string,list<string>,bool,bool,string,scalar|null}>
+     */
+    public static function providerNativeParameters(): array
+    {
+        return [
+            'strlen:string' => ['strlen', 0, 1, 'string', ['string'], false, false, 'required', null],
+            'strtolower:string' => ['strtolower', 0, 1, 'string', ['string'], false, false, 'required', null],
+            'strtoupper:string' => ['strtoupper', 0, 1, 'string', ['string'], false, false, 'required', null],
+            'trim:string' => ['trim', 0, 2, 'string', ['string'], false, false, 'required', null],
+            'trim:characters' => ['trim', 1, 2, 'characters', ['string'], false, false, 'constant', " \x0a\x0d\x09\x0b\x00"],
+            'implode:separator' => ['implode', 0, 2, 'separator', ['array', 'string'], false, false, 'required', null],
+            'implode:array' => ['implode', 1, 2, 'array', ['array', 'null'], false, false, 'constant', null],
+            'join:separator' => ['join', 0, 2, 'separator', ['array', 'string'], false, false, 'required', null],
+            'join:array' => ['join', 1, 2, 'array', ['array', 'null'], false, false, 'constant', null],
+            'explode:separator' => ['explode', 0, 3, 'separator', ['string'], false, false, 'required', null],
+            'explode:string' => ['explode', 1, 3, 'string', ['string'], false, false, 'required', null],
+            'explode:limit' => ['explode', 2, 3, 'limit', ['int'], false, false, 'constant', 9223372036854775807],
+            'substr:string' => ['substr', 0, 3, 'string', ['string'], false, false, 'required', null],
+            'substr:offset' => ['substr', 1, 3, 'offset', ['int'], false, false, 'required', null],
+            'substr:length' => ['substr', 2, 3, 'length', ['int', 'null'], false, false, 'constant', null],
+            'sprintf:format' => ['sprintf', 0, 2, 'format', ['string'], false, false, 'required', null],
+            'sprintf:values' => ['sprintf', 1, 2, 'values', ['mixed'], false, true, 'required', null],
+            'str_replace:search' => ['str_replace', 0, 4, 'search', ['array', 'string'], false, false, 'required', null],
+            'str_replace:replace' => ['str_replace', 1, 4, 'replace', ['array', 'string'], false, false, 'required', null],
+            'str_replace:subject' => ['str_replace', 2, 4, 'subject', ['array', 'string'], false, false, 'required', null],
+            'str_replace:count' => ['str_replace', 3, 4, 'count', ['mixed'], true, false, 'constant', null],
+            'getenv:name' => ['getenv', 0, 2, 'name', ['string', 'null'], false, false, 'constant', null],
+            'getenv:local_only' => ['getenv', 1, 2, 'local_only', ['bool'], false, false, 'constant', false],
+            'random_int:min' => ['random_int', 0, 2, 'min', ['int'], false, false, 'required', null],
+            'random_int:max' => ['random_int', 1, 2, 'max', ['int'], false, false, 'required', null],
+            'mt_rand:min' => ['mt_rand', 0, 2, 'min', ['int'], false, false, 'omitted', null],
+            'mt_rand:max' => ['mt_rand', 1, 2, 'max', ['int'], false, false, 'omitted', null],
+            'rand:min' => ['rand', 0, 2, 'min', ['int'], false, false, 'omitted', null],
+            'rand:max' => ['rand', 1, 2, 'max', ['int'], false, false, 'omitted', null],
+            'get_class:object' => ['get_class', 0, 1, 'object', ['object'], false, false, 'omitted', null],
+            'microtime:as_float' => ['microtime', 0, 1, 'as_float', ['bool'], false, false, 'constant', false],
+            'is_array:value' => ['is_array', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_string:value' => ['is_string', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_int:value' => ['is_int', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_integer:value' => ['is_integer', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_float:value' => ['is_float', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_double:value' => ['is_double', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_bool:value' => ['is_bool', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_null:value' => ['is_null', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_object:value' => ['is_object', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_numeric:value' => ['is_numeric', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_scalar:value' => ['is_scalar', 0, 1, 'value', ['mixed'], false, false, 'required', null],
+            'is_callable:value' => ['is_callable', 0, 3, 'value', ['mixed'], false, false, 'required', null],
+            'is_callable:syntax_only' => ['is_callable', 1, 3, 'syntax_only', ['bool'], false, false, 'constant', false],
+            'is_callable:callable_name' => ['is_callable', 2, 3, 'callable_name', ['mixed'], true, false, 'omitted', null],
+            'count:value' => ['count', 0, 2, 'value', ['Countable', 'array'], false, false, 'required', null],
+            'count:mode' => ['count', 1, 2, 'mode', ['int'], false, false, 'constant', 0],
+            'array_values:array' => ['array_values', 0, 1, 'array', ['array'], false, false, 'required', null],
+            'array_keys:array' => ['array_keys', 0, 3, 'array', ['array'], false, false, 'required', null],
+            'array_keys:filter_value' => ['array_keys', 1, 3, 'filter_value', ['mixed'], false, false, 'omitted', null],
+            'array_keys:strict' => ['array_keys', 2, 3, 'strict', ['bool'], false, false, 'constant', false],
+            'array_merge:arrays' => ['array_merge', 0, 1, 'arrays', ['array'], false, true, 'required', null],
+            'in_array:needle' => ['in_array', 0, 3, 'needle', ['mixed'], false, false, 'required', null],
+            'in_array:haystack' => ['in_array', 1, 3, 'haystack', ['array'], false, false, 'required', null],
+            'in_array:strict' => ['in_array', 2, 3, 'strict', ['bool'], false, false, 'constant', false],
+            'array_key_exists:key' => ['array_key_exists', 0, 2, 'key', ['mixed'], false, false, 'required', null],
+            'array_key_exists:array' => ['array_key_exists', 1, 2, 'array', ['array'], false, false, 'required', null],
+            'array_map:callback' => ['array_map', 0, 3, 'callback', ['callable', 'null'], false, false, 'required', null],
+            'array_map:array' => ['array_map', 1, 3, 'array', ['array'], false, false, 'required', null],
+            'array_map:arrays' => ['array_map', 2, 3, 'arrays', ['array'], false, true, 'required', null],
+            'array_filter:array' => ['array_filter', 0, 3, 'array', ['array'], false, false, 'required', null],
+            'array_filter:callback' => ['array_filter', 1, 3, 'callback', ['callable', 'null'], false, false, 'constant', null],
+            'array_filter:mode' => ['array_filter', 2, 3, 'mode', ['int'], false, false, 'constant', 0],
+            'array_reduce:array' => ['array_reduce', 0, 3, 'array', ['array'], false, false, 'required', null],
+            'array_reduce:callback' => ['array_reduce', 1, 3, 'callback', ['callable'], false, false, 'required', null],
+            'array_reduce:initial' => ['array_reduce', 2, 3, 'initial', ['mixed'], false, false, 'constant', null],
+            'sort:array' => ['sort', 0, 2, 'array', ['array'], true, false, 'required', null],
+            'sort:flags' => ['sort', 1, 2, 'flags', ['int'], false, false, 'constant', 0],
+        ];
+    }
+
+    public function testModelNormalizesQualifiedCaseInsensitiveBuiltinsAndRejectsUnknownNames(): void
+    {
+        $library = new Library();
+        $model = $library->model('\\STRLEN');
+        self::assertNotNull($model);
+        self::assertSame('php.strlen', $model->descriptor()->id);
+        self::assertNull($library->model('unregistered_function'));
+        self::assertNull($library->parameters('unregistered_function'));
+        self::assertSame([], $library->parameters('time'));
     }
 }

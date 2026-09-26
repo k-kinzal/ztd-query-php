@@ -100,7 +100,13 @@ final class ModelBoundary
             if (count($arguments) !== $intrinsic->descriptor()->arity) {
                 return Term::opaque('MODEL_CONTRACT_VIOLATION', dependencies: $arguments);
             }
-            return $intrinsic->evaluate($arguments, $target);
+            $result = $intrinsic->evaluate($arguments, $target);
+            foreach ($arguments as $argument) {
+                if ($argument->isSecret()) {
+                    return new Term($result->kind, $result->literal, $result->operands, $result->attributes, true);
+                }
+            }
+            return $result;
         } catch (Throwable $error) {
             return new Term('opaque', 'MODEL_CONTRACT_VIOLATION', $arguments, ['type' => 'mixed', 'failureClass' => $error::class]);
         }
@@ -237,6 +243,7 @@ final class ModelBoundary
      */
     public function domain(AbstractDomain $domain, string $operation, Term $left, ?Term $right = null, \Deriver\Value\Projection $projection = new \Deriver\Value\Projection()): Term
     {
+        $inputs = $right === null ? [$left] : [$left, $right];
         try {
             $a = new \Deriver\Model\Domain\DomainFact($domain->id(), $left->operands['representation'] ?? Term::opaque('INVALID_DOMAIN_FACT'));
             $b = new \Deriver\Model\Domain\DomainFact($domain->id(), $right?->operands['representation'] ?? $a->representation);
@@ -247,11 +254,12 @@ final class ModelBoundary
                 default => throw new InvalidInputException('Unknown domain operation.'),
             };
             if ($result->domain !== $domain->id() || ($operation !== 'project' && (!$domain->lessOrEqual($a, $result) || !$domain->lessOrEqual($b, $result)))) {
-                return Term::opaque('MODEL_CONTRACT_VIOLATION', dependencies: [$left]);
+                return Term::opaque('MODEL_CONTRACT_VIOLATION', dependencies: $inputs);
             }
-            return $result->term();
+            $encoded = $result->term();
+            return $left->isSecret() || ($right?->isSecret() ?? false) ? new Term($encoded->kind, $encoded->literal, $encoded->operands, $encoded->attributes, true) : $encoded;
         } catch (Throwable $error) {
-            return Term::opaque('MODEL_CONTRACT_VIOLATION', dependencies: [$left]);
+            return Term::opaque('MODEL_CONTRACT_VIOLATION', dependencies: $inputs);
         }
     }
 

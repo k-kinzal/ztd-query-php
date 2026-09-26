@@ -92,9 +92,22 @@ final class Memory
             if ($value->kind !== 'array') {
                 return $value->kind === 'uninitialized' ? $value : new Term('array-read', operands: [$value, Term::constant($key)]);
             }
-            $value = $this->dereference($value->operands[$key] ?? (($value->attributes['open'] ?? false) === true ? Term::opaque('UNKNOWN_ARRAY_KEY') : new Term('uninitialized')));
+            $value = $this->element($value, $key);
         }
         return $value;
+    }
+
+    /**
+     * Selects an array slot while retaining confidentiality of the container and key.
+     * @param Term $array Array shape
+     * @param int|string $key Normalized key
+     * @param bool $secret Whether the evaluated key is confidential
+     * @return Term Dereferenced entry or explicit absence
+     */
+    public function element(Term $array, int|string $key, bool $secret = false): Term
+    {
+        $value = $this->dereference($array->operands[$key] ?? (($array->attributes['open'] ?? false) === true ? Term::opaque('UNKNOWN_ARRAY_KEY') : new Term('uninitialized')));
+        return ($array->secret || $secret) && !$value->secret ? new Term($value->kind, $value->literal, $value->operands, $value->attributes, true) : $value;
     }
 
     /**
@@ -105,14 +118,16 @@ final class Memory
     public function dereference(Term $value): Term
     {
         $seen = [];
+        $secret = $value->secret;
         while ($value->kind === 'cell' && is_string($value->literal)) {
             if (isset($seen[$value->literal])) {
-                return Term::opaque('CYCLIC_REFERENCE');
+                return new Term('opaque', 'CYCLIC_REFERENCE', attributes: ['type' => 'mixed', 'dependencyCoverage' => 'partial'], secret: $secret);
             }
             $seen[$value->literal] = true;
             $value = $this->cells[$value->literal] ?? new Term('uninitialized');
+            $secret = $secret || $value->secret;
         }
-        return $value;
+        return $secret && !$value->secret ? new Term($value->kind, $value->literal, $value->operands, $value->attributes, true) : $value;
     }
 
     /**
@@ -199,6 +214,10 @@ final class Memory
         }
         $raw = $this->raw($location);
         if ($raw->kind === 'cell' && is_string($raw->literal)) {
+            $value = $this->cells[$raw->literal] ?? new Term('uninitialized');
+            if ($this->read($location)->secret && !$value->secret) {
+                $this->cells[$raw->literal] = new Term($value->kind, $value->literal, $value->operands, $value->attributes, true);
+            }
             return $raw->literal;
         }
         $cell = $this->allocate($this->read($location));
@@ -236,7 +255,7 @@ final class Memory
         $before = $this->read($parent);
         $entries = $before->operands;
         unset($entries[$key]);
-        $this->write($parent, new Term('array', operands: $entries, attributes: [...$before->attributes, 'next' => (new Arrays())->next($before)]), replacement: false);
+        $this->write($parent, new Term('array', operands: $entries, attributes: [...$before->attributes, 'next' => (new Arrays())->next($before)], secret: $before->secret), replacement: false);
     }
 
     /**

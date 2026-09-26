@@ -125,7 +125,7 @@ final class PureStep
             return $key;
         }
         if ($array->kind === 'array' && $key->kind === 'constant' && (is_int($key->literal) || is_string($key->literal))) {
-            return $state->memory->dereference($array->operands[$key->literal] ?? (($array->attributes['open'] ?? false) === true ? Term::opaque('UNKNOWN_ARRAY_KEY') : new Term('uninitialized')));
+            return $state->memory->element($array, $key->literal, $key->isSecret());
         }
         return new Term('array-read', operands: [$array, $key]);
     }

@@ -74,10 +74,10 @@ final class Reader
         if ($normalized->kind !== 'constant' || !is_int($normalized->literal) && !is_string($normalized->literal)) {
             return Term::opaque('OFFSET_OPERATION', dependencies: [$container, $key]);
         }
-        $value = $state->memory->dereference($container->operands[$normalized->literal] ?? (($container->attributes['open'] ?? false) === true ? Term::opaque('UNKNOWN_ARRAY_KEY') : new Term('uninitialized')));
+        $value = $state->memory->element($container, $normalized->literal, $key->isSecret());
         if ($value->kind === 'uninitialized' && !$silent) {
             (new Strings($this->context))->warning($instruction);
-            return Term::constant(null);
+            return Term::constant(null, $value->isSecret());
         }
         return $value;
     }

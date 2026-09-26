@@ -342,4 +342,18 @@ final class PureStepTest extends TestCase
         self::assertSame('UNSUPPORTED_LANGUAGE_FEATURE', $step->evaluate($body, new Instruction('unknown', 'unknown', $source), $state)->literal);
         self::assertSame(['unknown'], array_column(array_values($context->frontiers), 'operation'));
     }
+
+    public function testArrayReadRetainsTheConfidentialityOfAContainerOrKey(): void
+    {
+        $state = new State();
+        $step = new PureStep(SolverFixture::context());
+        $array = new Term('array', operands:['chosen' => Term::constant('value')], attributes:['open' => false], secret:true);
+        $selected = $step->arrayRead($array, Term::constant('chosen'), $state);
+        $keySelected = $step->arrayRead(Term::fromNative(['chosen' => 'public']), Term::constant('chosen', true), $state);
+        self::assertSame('value', $selected->native());
+        self::assertTrue($selected->secret);
+        self::assertSame('public', $keySelected->native());
+        self::assertTrue($keySelected->secret);
+    }
+
 }
