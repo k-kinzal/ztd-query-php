@@ -10,6 +10,7 @@ SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinza
 ## Requirements
 
 - PHP 8.1+ with the zlib extension
+- MySQL 5.6–9.1
 
 ## Support Syntax
 

@@ -10,6 +10,7 @@ SQL Catalog reads PHP source and reports every statement the code can send to a 
 ## Requirements
 
 - PHP 8.1+
+- MySQL 5.6–9.1, PostgreSQL 16–17, or SQLite 3.x
 
 ## Getting Started
 

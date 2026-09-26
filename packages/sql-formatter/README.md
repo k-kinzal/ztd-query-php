@@ -10,6 +10,7 @@ SQL Formatter formats MySQL, PostgreSQL, and SQLite statements with the **Compac
 ## Requirements
 
 - PHP 8.1+ with the zlib extension
+- MySQL 5.6–9.1, PostgreSQL 16–17, or SQLite 3.x
 
 ## Support Syntax
 
