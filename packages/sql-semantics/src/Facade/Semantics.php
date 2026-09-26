@@ -15,9 +15,9 @@ use SqlSemantics\Statement\Statement;
  * when schema-dependent name, type, and nullability facts are needed.
  *
  * @visibility public
- * @example Accepting an analyzer configured by a database package
- *     $analyze = static fn (\SqlSemantics\Facade\Semantics $semantics): \SqlSemantics\Statement\Statement => $semantics->analyze('SELECT 1');
- *     $analyze instanceof \Closure // => true
+ * @example Reconstructing SQL with the SQLite database package
+ *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $semantics->analyze('DROP TABLE example')->toString() // => 'DROP TABLE example'
  */
 final class Semantics
 {

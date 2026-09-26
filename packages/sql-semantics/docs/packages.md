@@ -13,6 +13,12 @@ Its test suite installs all three as development dependencies to exercise the
 shared binding contracts against real dialects. A database package's test suite
 installs only its own SQL Semantics implementation.
 
+When developing the common runtime from a detached or shallow checkout, use
+`COMPOSER_ROOT_VERSION=dev-main composer install`. Its database development
+dependencies require the common package at `dev-main`; CI sets this version
+explicitly because a pull request checkout may otherwise be identified by its
+commit hash. See [Composer's root-package dependency guidance](https://getcomposer.org/doc/articles/troubleshooting.md#dependencies-on-the-root-package).
+
 ## Regenerating models
 
 Run from a database package after `composer install`:
