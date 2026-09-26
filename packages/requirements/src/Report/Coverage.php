@@ -4,11 +4,30 @@ declare(strict_types=1);
 
 namespace Requirements\Report;
 
+use JsonException;
+use Requirements\Input\InvalidInputException;
 use Requirements\Model\Project;
 
+/**
+ * Builds the coverage report and applies the overall, per-source and differential gates.
+ */
 final class Coverage
 {
-    /** @return array<string, mixed> */
+    /**
+     * Builds the coverage report of an analysis.
+     *
+     * @param Project $project The loaded project
+     * @param Analysis $analysis The analysis of its sources
+     * @param string|null $snapshotFile The coverage snapshot of a trusted base revision to compare with
+     * @param bool $allowRemoved Whether units the snapshot lists may be missing from the scope
+     * @param float|null $minimum The overall threshold, overriding the configured one
+     * @param float|null $diffMinimum The differential threshold, overriding the configured one
+     *
+     * @return array<string, mixed> The report; "passed" is false when a gate fails
+     *
+     * @throws InvalidInputException When the snapshot cannot be read or is not a coverage snapshot
+     * @throws JsonException When the snapshot is not JSON or a record cannot be encoded
+     */
     public function report(Project $project, Analysis $analysis, ?string $snapshotFile = null, bool $allowRemoved = false, ?float $minimum = null, ?float $diffMinimum = null): array
     {
         $errors = $analysis->errors;
