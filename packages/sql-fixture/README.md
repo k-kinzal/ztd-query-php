@@ -14,9 +14,7 @@ SQL Fixture is a [FakerPHP](https://fakerphp.org/) provider that generates fixtu
 
 ## Support Syntax
 
-The following database versions are supported. Pass the dialect and, optionally, the version tag to `FixtureProvider` or `FileFixtureProvider` to select the release the CREATE TABLE statements are read for; omitting the version tag uses the default for that database. `DatabaseFixtureProvider` reads the dialect and the release from the PDO connection, matching the version the server reports to the closest supported release. The version tags are the ones the other sql-* packages accept.
-
-Every release is verified against the server itself: the schema each server reports is read back, and the rows generated from it are inserted into that server.
+The following database versions are supported. Pass the dialect and, optionally, the version tag to `FixtureProvider` or `FileFixtureProvider`; omitting the version tag uses the default for that database. `DatabaseFixtureProvider` reads both from the connection.
 
 ### MySQL
 
@@ -43,8 +41,6 @@ Every release is verified against the server itself: the schema each server repo
 | Version | Version tag | Default |
 |---------|-------------|---------|
 | 3.47.2 | `sqlite-3.47.2` | Yes |
-
-SQLite runs inside PHP, so `DatabaseFixtureProvider` reads the release `pdo_sqlite` links and matches it to the tag above.
 
 ## Installation
 
