@@ -29,6 +29,7 @@ env:
 
 jobs:
   parse:
+    if: github.ref == 'refs/heads/main'
     name: Parse / ${{ matrix.target.database }}
     runs-on: ubuntu-latest
     timeout-minutes: 60

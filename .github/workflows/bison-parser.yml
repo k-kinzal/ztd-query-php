@@ -107,7 +107,7 @@ jobs:
             echo 'Initial adoption: review the scope and enforce the configured total coverage gate.'
           fi
       - name: Verify the traced specifications
-        run: php ../requirements/bin/requirements spec --json > requirements-results.json
+        run: php ../requirements/bin/requirements spec --strict --json > requirements-results.json
       - name: Upload requirements results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()

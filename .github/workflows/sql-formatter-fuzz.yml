@@ -30,6 +30,7 @@ env:
 
 jobs:
   format:
+    if: github.ref == 'refs/heads/main'
     name: Format / ${{ matrix.database }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -142,6 +143,7 @@ jobs:
           retention-days: 14
 
   equivalence:
+    if: github.ref == 'refs/heads/main'
     name: Equivalence / ${{ matrix.database }} / ${{ matrix.style }}
     runs-on: ubuntu-latest
     timeout-minutes: 60

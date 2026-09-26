@@ -4,15 +4,28 @@ declare(strict_types=1);
 
 namespace Requirements\Console;
 
+use JsonException;
 use Requirements\Config\DocumentReader;
+use Requirements\Input\InvalidInputException;
 use RuntimeException;
 
+/**
+ * Rewrites configuration and definition documents in their canonical form.
+ */
 final class Formatter
 {
     /**
-     * @param list<string> $files
-     * @param array<string, mixed> $markdown
-     * @return list<string>
+     * Formats documents, or only reports which would change.
+     *
+     * @param list<string> $files The configuration file followed by the definition files
+     * @param bool $check Whether to leave the files unchanged
+     * @param array<string, mixed> $markdown The markdown options
+     *
+     * @return list<string> The files whose text differs from the canonical form
+     *
+     * @throws InvalidInputException When a document is invalid
+     * @throws JsonException When a document cannot be converted
+     * @throws RuntimeException When a file cannot be written
      */
     public function format(array $files, bool $check, array $markdown = []): array
     {

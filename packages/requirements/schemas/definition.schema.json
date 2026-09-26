@@ -116,6 +116,12 @@
           "type": "string",
           "minLength": 1,
           "pattern": "\\S"
+        },
+        "run": {
+          "enum": [
+            "auto",
+            "manual"
+          ]
         }
       },
       "required": [

@@ -8,9 +8,23 @@ use DOMDocument;
 use DOMElement;
 use DOMXPath;
 
+/**
+ * Reads the verdict of a test run from its JUnit XML reports.
+ *
+ * Unsafe, unreadable or malformed reports, reports without executed cases, and any failure,
+ * error or skip turn the run into a non-passing result.
+ */
 final class JUnit
 {
-    /** @param list<string> $files */
+    /**
+     * Reads the reports of one run.
+     *
+     * @param list<string> $files The report files the run wrote
+     * @param int $exitCode The exit code of the run
+     * @param string $output The run's output, reported when it did not pass
+     *
+     * @return TestResult The verdict and the number of executed cases
+     */
     public function read(array $files, int $exitCode, string $output): TestResult
     {
         $count = 0;
@@ -19,6 +33,9 @@ final class JUnit
             $xml = file_get_contents($file);
             if ($xml === false || stripos($xml, '<!DOCTYPE') !== false || stripos($xml, '<!ENTITY') !== false) {
                 return new TestResult('error', 0, 'Unsafe or unreadable JUnit report.');
+            }
+            if (trim($xml) === '') {
+                return new TestResult('error', 0, 'Malformed JUnit report.');
             }
             $document = new DOMDocument();
             $previous = libxml_use_internal_errors(true);

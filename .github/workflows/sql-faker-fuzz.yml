@@ -24,6 +24,7 @@ env:
 
 jobs:
   syntax:
+    if: github.ref == 'refs/heads/main'
     name: Syntax / ${{ matrix.target.database }}
     runs-on: ubuntu-latest
     timeout-minutes: 60

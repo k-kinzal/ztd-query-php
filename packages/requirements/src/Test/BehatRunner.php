@@ -4,8 +4,28 @@ declare(strict_types=1);
 
 namespace Requirements\Test;
 
+use Override;
+use RuntimeException;
+
+/**
+ * The built-in runner for Behat scenarios selected as file.feature:line.
+ *
+ * The line must hold an English Scenario or Scenario Outline header; an outline runs all of
+ * its examples. Undefined and pending steps fail the run.
+ */
 final class BehatRunner implements RunnerExtension
 {
+    /**
+     * Runs one Behat scenario.
+     *
+     * @param RunnerConfig $config The Behat command, working directory and timeout
+     * @param string $target The feature file and the line of the scenario header
+     *
+     * @return TestResult The verdict, or an error for a malformed or missing target
+     *
+     * @throws RuntimeException When the temporary report directory cannot be created
+     */
+    #[Override]
     public function run(RunnerConfig $config, string $target): TestResult
     {
         if (preg_match('/^(.+\.feature):([1-9][0-9]*)$/D', $target, $match) !== 1 || str_starts_with($target, '-')) {
