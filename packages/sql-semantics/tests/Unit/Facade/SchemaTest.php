@@ -141,4 +141,15 @@ final class SchemaTest extends TestCase
         self::assertSame('empty_table', $table->name);
         self::assertSame([], $table->columns);
     }
+    #[TestWith(['', 'numeric'])]
+    #[TestWith([' STRICT', 'blob'])]
+    #[TestWith([' STRICT', 'blob', '"ANY"'])]
+    public function testAnalyzeResolvesAnyAffinityFromTableOptions(string $options, string $affinity, string $declaredType = 'ANY'): void
+    {
+        $state = (new Schema(SqliteDialect::Sqlite))->analyze('CREATE TABLE t (value ' . $declaredType . ')' . $options);
+        self::assertSame('any', $state->tables[0]->columns[0]->type->name);
+        self::assertSame($affinity, $state->tables[0]->columns[0]->type->affinity);
+        self::assertSame($affinity, (new Binder($state))->bind('SELECT value FROM t')->outputs[0]->expression->type->affinity);
+    }
+
 }

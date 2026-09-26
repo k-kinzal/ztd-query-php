@@ -80,7 +80,7 @@ final class SchemaReader
         $columns = [];
         $constraints = [];
         foreach ($this->columnNodes($create) as [$column, $attributes]) {
-            [$definition, $localConstraints] = (new ColumnReader($this->identifiers, $this->values))->read($column, $attributes);
+            [$definition, $localConstraints] = (new ColumnReader($this->identifiers, $this->values))->read($column, $attributes, $create);
             $columns[] = $definition;
             array_push($constraints, ...$localConstraints);
         }

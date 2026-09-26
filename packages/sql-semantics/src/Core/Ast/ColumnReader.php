@@ -30,7 +30,7 @@ final class ColumnReader
      * @param list<Node> $attributes
      * @return array{ColumnDefinition, list<TableConstraint>}
      */
-    public function read(Node $node, array $attributes): array
+    public function read(Node $node, array $attributes, ?Node $table = null): array
     {
         $nameNode = Tree::outer($node, $this->identifiers->dialect->platform()->syntax()->nodes('columnName'))[0] ?? null;
         $typeNode = Tree::outer($node, $this->identifiers->dialect->platform()->syntax()->nodes('declaredType'))[0] ?? null;
@@ -38,7 +38,7 @@ final class ColumnReader
             Tree::unsupported($node, 'column declaration');
         }
         $name = $this->identifiers->parts($nameNode)[0];
-        $type = (new TypeReader($this->identifiers->dialect))->read($typeNode);
+        $type = (new TypeReader($this->identifiers->dialect))->read($typeNode, $table);
         $nullability = Nullability::MaybeNull;
         $default = null;
         $constraints = [];

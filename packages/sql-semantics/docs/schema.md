@@ -19,7 +19,7 @@ SQL);
 
 $column = $schema->tables[0]->columns[2];
 $column->generation->kind->value;                  // 'stored'
-Writer::render($column->generation->expression); // 'LENGTH(label)'
+Writer::render($column->generation->expression); // 'LENGTH ( label )'
 (new Binder($schema))->bind('SELECT label FROM items');
 ```
 
@@ -33,7 +33,7 @@ DROP TABLE applies in declaration order, including multiple targets and IF EXIST
 
 Schema handles declarations with known columns. CREATE AS SELECT, LIKE/inheritance, ALTER, views and other operations remain typed statement models in `Semantics`; Schema does not evaluate them to invent a resulting catalog. SQLite temporary-schema resolution also remains outside this state reader. The SELECT binder's supported expression and query surface is documented in [binding](binding.md).
 
-SQLite STRICT and WITHOUT ROWID options affect primary-key nullability. Ordinary SQLite primary keys may remain nullable; the INTEGER PRIMARY KEY rules are applied separately. See [SQLite CREATE TABLE](https://www.sqlite.org/lang_createtable.html), [PostgreSQL CREATE TABLE](https://www.postgresql.org/docs/17/sql-createtable.html), and [MySQL CREATE TABLE](https://dev.mysql.com/doc/refman/8.4/en/create-table.html) for database definitions.
+SQLite STRICT and WITHOUT ROWID options affect primary-key nullability. In a STRICT table, `ANY` has no coercing affinity (`blob`), whereas an ordinary table gives it numeric affinity; see [STRICT tables](https://www.sqlite.org/stricttables.html). Ordinary SQLite primary keys may remain nullable; the INTEGER PRIMARY KEY rules are applied separately. See [SQLite CREATE TABLE](https://www.sqlite.org/lang_createtable.html), [PostgreSQL CREATE TABLE](https://www.postgresql.org/docs/17/sql-createtable.html), and [MySQL CREATE TABLE](https://dev.mysql.com/doc/refman/8.4/en/create-table.html) for database definitions.
 
 ## Structured values and invariants
 

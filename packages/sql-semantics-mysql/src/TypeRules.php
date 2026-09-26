@@ -29,9 +29,9 @@ final class TypeRules implements Contract
     }
 
     /**
-     * Reads the declared built-in type and preserves its modifiers.
+     * Reads a declared type, including table-dependent storage rules and modifiers.
      */
-    public function read(Node $node): TypeDescriptor
+    public function read(Node $node, ?Node $table = null): TypeDescriptor
     {
         $tokens = $node->tokens();
         $words = [];
