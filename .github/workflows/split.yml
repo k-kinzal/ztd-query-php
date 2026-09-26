@@ -64,6 +64,30 @@ jobs:
           echo "constraint=^${MAJOR}.${MINOR}" >> "$GITHUB_OUTPUT"
           echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
+      # k-kinzal/container is not published. Copy its definitions into every package
+      # that uses them, so the tests, fuzz targets and benchmarks of the split
+      # repository still find the Container namespace and its dependencies.
+      - name: Bundle the container definitions
+        run: |
+          DIR="packages/${{ matrix.package.local_path }}"
+
+          if ! jq -e '."require-dev" | has("k-kinzal/container")' "$DIR/composer.json" > /dev/null; then
+            exit 0
+          fi
+
+          cp -R packages/container/src "$DIR/container"
+          printf '%-25sexport-ignore\n' '/container/' >> "$DIR/.gitattributes"
+
+          jq --slurpfile container packages/container/composer.json '
+            (.require // {}) as $require |
+            del(."require-dev"."k-kinzal/container") |
+            ."require-dev" as $requireDev |
+            ."require-dev" += ($container[0].require | del(.php) | with_entries(
+              select(.key as $name | ($require | has($name)) or ($requireDev | has($name)) | not)
+            )) |
+            ."autoload-dev"."psr-4"."Container\\" = "container/"
+          ' "$DIR/composer.json" > "$DIR/composer.json.tmp" && mv "$DIR/composer.json.tmp" "$DIR/composer.json"
+
       - name: Transform composer.json
         run: |
           FILE="packages/${{ matrix.package.local_path }}/composer.json"
@@ -73,7 +97,6 @@ jobs:
             jq --arg v "$CONSTRAINT" '
               (if .repositories then .repositories |= [.[] | select(.type == "path" | not)] else . end) |
               (if .repositories == [] then del(.repositories) else . end) |
-              (if ."require-dev"."k-kinzal/container" then del(."require-dev"."k-kinzal/container") else . end) |
               (if ."autoload-dev"."psr-4" then
                 ."autoload-dev"."psr-4" |= with_entries(
                   if (.value | type) == "array" then
@@ -93,7 +116,6 @@ jobs:
             jq '
               (if .repositories then .repositories |= [.[] | select(.type == "path" | not)] else . end) |
               (if .repositories == [] then del(.repositories) else . end) |
-              (if ."require-dev"."k-kinzal/container" then del(."require-dev"."k-kinzal/container") else . end) |
               (if ."autoload-dev"."psr-4" then
                 ."autoload-dev"."psr-4" |= with_entries(
                   if (.value | type) == "array" then
