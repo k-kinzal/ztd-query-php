@@ -163,4 +163,72 @@ final class ComparisonTest extends TestCase
         self::assertNotNull($result);
         self::assertTrue($result->isSecret());
     }
+
+    /**
+     * @param string $operator
+     * @param scalar|null $left
+     * @param scalar|null $right
+     * @param bool|int $expected
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerScalarComparisons')]
+    public function testScalarKeepsEqualityOrderingAndNumericStringRules(string $operator, int|float|string|bool|null $left, int|float|string|bool|null $right, bool|int $expected): void
+    {
+        self::assertSame($expected, (new \Deriver\Internal\Value\Comparison())->scalar($operator, $left, $right));
+    }
+
+    /**
+     * @return list<array{string, scalar|null, scalar|null, bool|int}>
+     */
+    public static function providerScalarComparisons(): array
+    {
+        return [
+            ['===', 1, 1, true], ['===', 1, '1', false], ['!==', 1, '1', true], ['!==', 1, 1, false],
+            ['==', 1, '1', true], ['==', 1, 'x', false], ['!=', 1, '1', false], ['!=', 1, 'x', true],
+            ['<', 1, 2, true], ['<', 1, 1, false], ['<=', 1, 1, true], ['<=', 2, 1, false],
+            ['>', 2, 1, true], ['>', 1, 1, false], ['>=', 1, 1, true], ['>=', 1, 2, false],
+            ['<=>', 1, 2, -1], ['<=>', 2, 1, 1], ['<=>', 1, 1, 0], ['unknown', 1, 1, false],
+            ['==', null, false, true], ['==', '10', '2', false], ['>', '10', '2', true],
+        ];
+    }
+
+    public function testApplyPreservesSymbolicOperandsAndResultCategories(): void
+    {
+        $comparison = new \Deriver\Internal\Value\Comparison();
+        $left = \Deriver\Value\Term::parameter('left', 'int');
+        $right = \Deriver\Value\Term::constant(3);
+        $ordered = $comparison->apply('<=>', $left, $right);
+        self::assertSame(['binary', '<=>', [$left, $right], ['type' => 'int']], [$ordered->kind, $ordered->literal, $ordered->operands, $ordered->attributes]);
+        self::assertSame('bool', $comparison->apply('===', $left, $right)->attributes['type']);
+        self::assertTrue($comparison->apply('===', \Deriver\Value\Term::constant(3, true), $right)->isSecret());
+        self::assertTrue($comparison->apply('===', $right, \Deriver\Value\Term::constant(3, true))->isSecret());
+    }
+
+    public function testIdenticalRequiresOrderedKeysAndRecursivelyIdenticalTypes(): void
+    {
+        $comparison = new \Deriver\Internal\Value\Comparison();
+        self::assertFalse($comparison->identical(\Deriver\Value\Term::parameter('a'), \Deriver\Value\Term::constant(1)));
+        self::assertFalse($comparison->identical(\Deriver\Value\Term::constant(1), \Deriver\Value\Term::parameter('b')));
+        self::assertFalse($comparison->identical(\Deriver\Value\Term::array([]), \Deriver\Value\Term::constant(null)));
+        self::assertFalse($comparison->identical(\Deriver\Value\Term::fromNative(['a' => 1, 'b' => 2]), \Deriver\Value\Term::fromNative(['b' => 2, 'a' => 1])));
+        self::assertFalse($comparison->identical(\Deriver\Value\Term::fromNative([[1]]), \Deriver\Value\Term::fromNative([['1']])));
+        self::assertTrue($comparison->identical(\Deriver\Value\Term::fromNative([[1]]), \Deriver\Value\Term::fromNative([[1]])));
+        self::assertTrue($comparison->apply('!==', \Deriver\Value\Term::fromNative([1]), \Deriver\Value\Term::fromNative([2]))->native());
+        self::assertFalse($comparison->apply('!==', \Deriver\Value\Term::fromNative([1]), \Deriver\Value\Term::fromNative([1]))->native());
+    }
+
+    public function testObjectUsesAllocationIdentityForObjectsEnumsAndClosures(): void
+    {
+        $comparison = new \Deriver\Internal\Value\Comparison();
+        $object = new \Deriver\Value\Term('object', 'same', secret: true);
+        self::assertTrue($comparison->object('===', $object, new \Deriver\Value\Term('object', 'same'))?->native());
+        self::assertFalse($comparison->object('!==', $object, new \Deriver\Value\Term('object', 'same'))?->native());
+        self::assertTrue($comparison->object('!==', $object, new \Deriver\Value\Term('object', 'different'))?->native());
+        self::assertTrue($comparison->object('===', $object, $object)?->isSecret());
+        self::assertTrue($comparison->object('===', new \Deriver\Value\Term('enum', 'E::A'), new \Deriver\Value\Term('enum', 'E::A'))?->native());
+        self::assertFalse($comparison->object('===', new \Deriver\Value\Term('closure', 'body', attributes: ['identity' => 'a']), new \Deriver\Value\Term('closure', 'body', attributes: ['identity' => 'b']))?->native());
+        self::assertNull($comparison->object('===', new \Deriver\Value\Term('closure', 'body'), new \Deriver\Value\Term('closure', 'body')));
+        self::assertNull($comparison->object('===', $object, new \Deriver\Value\Term('enum', 'same')));
+        self::assertNull($comparison->object('==', $object, $object));
+        self::assertNull($comparison->object('===', \Deriver\Value\Term::constant(1), \Deriver\Value\Term::constant(1)));
+    }
 }

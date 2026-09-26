@@ -27,8 +27,11 @@ final class ArrayFunctions
         if ($name === 'array_key_exists' || $name === 'in_array') {
             return $this->membership($name, $values);
         }
+        if ($name === 'count') {
+            return $this->countArguments($values);
+        }
         if ($array->kind !== 'array') {
-            return new Term('intrinsic', $name, $values, ['type' => $name === 'count' ? 'int' : 'array']);
+            return new Term('intrinsic', $name, $values, ['type' => 'array']);
         }
         if ($name === 'array_merge') {
             $result = Term::array([]);
@@ -38,16 +41,36 @@ final class ArrayFunctions
             return $result;
         }
         if (($array->attributes['open'] ?? false) === true) {
-            return new Term('intrinsic', $name, $values, ['type' => $name === 'count' ? 'int' : 'array']);
-        }
-        if ($name === 'count') {
-            $mode = $values[1] ?? Term::constant(0);
-            return $mode->kind === 'constant' && in_array($mode->literal, [0, 1], true) ? $this->count($array, $mode->literal === 1) : Term::opaque('UNSUPPORTED_MODEL_CASE', 'int', $values);
+            return new Term('intrinsic', $name, $values, ['type' => 'array']);
         }
         if ($name === 'array_keys') {
             return $this->keys($array, $values);
         }
         return Term::array(array_values($array->operands));
+    }
+
+    /**
+     * Validates count modes before deciding whether an array shape is available.
+     * @param list<Term> $values Bound value and mode
+     * @return Term Count, ValueError, or an explicit protocol boundary
+     */
+    public function countArguments(array $values): Term
+    {
+        $array = $values[0] ?? Term::constant(null);
+        $mode = $values[1] ?? Term::constant(0);
+        if ($mode->kind !== 'constant') {
+            return Term::opaque('UNSUPPORTED_MODEL_CASE', 'int', $values);
+        }
+        if (!in_array($mode->literal, [0, 1], true)) {
+            return new Term('throwable', 'ValueError');
+        }
+        if ($array->kind === 'array' && ($array->attributes['open'] ?? false) === false) {
+            return $this->count($array, $mode->literal === 1);
+        }
+        if ($mode->literal === 0 && (new TypePredicates())->apply('is_array', $array)->literal === true) {
+            return new Term('intrinsic', 'count', $values, ['type' => 'int']);
+        }
+        return Term::opaque('UNSUPPORTED_MODEL_CASE', 'int', $values);
     }
 
     /**

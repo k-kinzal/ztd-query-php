@@ -98,4 +98,69 @@ final class NativeOverloadContractTest extends TestCase
         self::assertContains('UNSUPPORTED_MODEL_CASE', array_column($result->frontiers, 'code'));
         self::assertNotEmpty($result->exceptionalOutcomes);
     }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testUnknownSeparatorRetainsTheEmptySeparatorException(): void
+    {
+        $result = Analysis::returns('<?php function target(string $separator){return explode($separator,"a,b");}');
+        self::assertContains('UNSUPPORTED_MODEL_CASE', array_column($result->frontiers, 'code'));
+        self::assertNotEmpty($result->normalOutcomes);
+        self::assertNotEmpty($result->exceptionalOutcomes);
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testUnknownJoinElementsCannotSuppressStringConversionEffects(): void
+    {
+        $result = Analysis::returns('<?php function target(array $values){return implode(",",$values);}');
+        self::assertContains('UNSUPPORTED_MODEL_CASE', array_column($result->frontiers, 'code'));
+        self::assertSame('opaque', $result->normalOutcomes[0]->values['return']->kind);
+        self::assertNotEmpty($result->exceptionalOutcomes);
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testMalformedTrimRangesDoNotEmitWarningsFromTheAnalyzer(): void
+    {
+        $result = Analysis::returns('<?php function target(){return trim("abc","z..a");}');
+        self::assertContains('UNSUPPORTED_MODEL_CASE', array_column($result->frontiers, 'code'));
+        self::assertNotEmpty($result->normalOutcomes);
+        self::assertNotEmpty($result->exceptionalOutcomes);
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testUnknownMergeCannotKeepAnOverwrittenFieldConstant(): void
+    {
+        $result = Analysis::returns('<?php function target(array $input){return array_merge(["a"=>1],$input)["a"];}');
+        self::assertNotSame('constant', $result->normalOutcomes[0]->values['return']->kind);
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testUnknownUnpackRetainsItsPrefixAndSubsequentWritesSymbolically(): void
+    {
+        $result = Analysis::returns('<?php function target(array $input){return ["a"=>1,...$input,"b"=>2];}');
+        self::assertSame('array-set', $result->normalOutcomes[0]->values['return']->kind);
+        self::assertSame('array-merge', $result->normalOutcomes[0]->values['return']->operands[0]->kind);
+        self::assertSame('Error', $result->exceptionalOutcomes[0]->exception->literal);
+        self::assertContains('WIDENED', array_column($result->frontiers, 'code'));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testSymbolicCountableKeepsUserCodeEffectsAndThrowables(): void
+    {
+        $result = Analysis::returns('<?php function target(Countable $input){return count($input);}');
+        self::assertContains('UNSUPPORTED_MODEL_CASE', array_column($result->frontiers, 'code'));
+        self::assertNotEmpty($result->exceptionalOutcomes);
+    }
+
 }

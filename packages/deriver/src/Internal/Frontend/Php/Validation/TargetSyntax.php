@@ -53,6 +53,9 @@ final class TargetSyntax extends NodeVisitorAbstract
         if ($this->initializer($node)) {
             $this->initializers++;
         }
+        if ($node instanceof Node\ArrayItem && $node->unpack && ($node->value instanceof Node\Scalar\Int_ || $node->value instanceof Node\Scalar\Float_ || $node->value instanceof Node\Scalar\String_ || $node->value instanceof Expr\ConstFetch && in_array(strtolower($node->value->name->toString()), ['true', 'false', 'null'], true))) {
+            $this->errors->handleError(new Error('Only arrays and Traversables can be unpacked.', $node->getAttributes()));
+        }
         if (($node instanceof Expr\New_ || $node instanceof Expr\NullsafeMethodCall) && $node->isFirstClassCallable()) {
             $this->errors->handleError(new Error('First-class callable syntax is invalid for this expression.', $node->getAttributes()));
             return null;

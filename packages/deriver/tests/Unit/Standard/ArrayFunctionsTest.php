@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Standard;
 
+use Deriver\Standard\ArrayFunctions;
+use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(\Deriver\Standard\ArrayFunctions::class)]
+#[CoversClass(ArrayFunctions::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
@@ -129,10 +132,12 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
+#[UsesClass(ArrayFunctions::class)]
 #[UsesClass(\Deriver\Standard\FunctionModel::class)]
 #[UsesClass(\Deriver\Standard\Library::class)]
 #[UsesClass(\Deriver\Standard\ScalarFunctions::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[UsesClass(\Deriver\Standard\TypePredicates::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class ArrayFunctionsTest extends TestCase
 {
@@ -148,30 +153,140 @@ final class ArrayFunctionsTest extends TestCase
     }
     public function testCountIncludesNestedElementsOnlyInRecursiveMode(): void
     {
-        $array = \Deriver\Value\Term::fromNative(['a' => [1, [2]], 'b' => 3]);
-        $functions = new \Deriver\Standard\ArrayFunctions();
+        $array = Term::fromNative(['a' => [1, [2]], 'b' => 3]);
+        $functions = new ArrayFunctions();
         self::assertSame(2, $functions->count($array, false)->native());
         self::assertSame(5, $functions->count($array, true)->native());
     }
     public function testMembershipDistinguishesStrictAndLooseComparison(): void
     {
-        $values = [\Deriver\Value\Term::constant('2'), \Deriver\Value\Term::fromNative([2])];
-        $functions = new \Deriver\Standard\ArrayFunctions();
+        $values = [Term::constant('2'), Term::fromNative([2])];
+        $functions = new ArrayFunctions();
         self::assertSame(true, $functions->membership('in_array', $values)->native());
-        self::assertSame(false, $functions->membership('in_array', [...$values, \Deriver\Value\Term::constant(true)])->native());
+        self::assertSame(false, $functions->membership('in_array', [...$values, Term::constant(true)])->native());
     }
     public function testKeysFiltersWithoutRenumberingSourceKeys(): void
     {
-        $array = \Deriver\Value\Term::fromNative(['first' => 2, 7 => '2', 'last' => 3]);
-        $functions = new \Deriver\Standard\ArrayFunctions();
-        self::assertSame(['first', 7], $functions->keys($array, [$array, \Deriver\Value\Term::constant(2)])->native());
-        self::assertSame(['first'], $functions->keys($array, [$array, \Deriver\Value\Term::constant(2), \Deriver\Value\Term::constant(true)])->native());
+        $array = Term::fromNative(['first' => 2, 7 => '2', 'last' => 3]);
+        $functions = new ArrayFunctions();
+        self::assertSame(['first', 7], $functions->keys($array, [$array, Term::constant(2)])->native());
+        self::assertSame(['first'], $functions->keys($array, [$array, Term::constant(2), Term::constant(true)])->native());
     }
     public function testKeyExistsIncludesNullValuesAndPreservesOpenRemainders(): void
     {
-        $functions = new \Deriver\Standard\ArrayFunctions();
-        self::assertSame(true, $functions->keyExists(\Deriver\Value\Term::constant('a'), \Deriver\Value\Term::fromNative(['a' => null]))->native());
-        self::assertSame(false, $functions->keyExists(\Deriver\Value\Term::constant('a'), \Deriver\Value\Term::array([]))->native());
-        self::assertSame('intrinsic', $functions->keyExists(\Deriver\Value\Term::constant('a'), \Deriver\Value\Term::array([], true))->kind);
+        $functions = new ArrayFunctions();
+        self::assertSame(true, $functions->keyExists(Term::constant('a'), Term::fromNative(['a' => null]))->native());
+        self::assertSame(false, $functions->keyExists(Term::constant('a'), Term::array([]))->native());
+        self::assertSame('intrinsic', $functions->keyExists(Term::constant('a'), Term::array([], true))->kind);
     }
+
+    /**
+     * @param list<Term> $values Arguments after native binding
+     */
+    #[DataProvider('providerCountBoundaries')]
+    public function testCountArgumentsPreservesInvalidModesAndUnknownProtocols(array $values, string $kind, mixed $literal): void
+    {
+        $result = (new ArrayFunctions())->countArguments($values);
+        self::assertSame($kind, $result->kind);
+        self::assertSame($literal, $result->literal);
+    }
+
+    /**
+     * @return array<string,array{list<Term>,string,mixed}>
+     */
+    public static function providerCountBoundaries(): array
+    {
+        return [
+            'unknown array normal' => [[Term::parameter('a', 'array')],'intrinsic','count'],
+            'open array normal' => [[Term::array([], true)],'intrinsic','count'],
+            'known recursive' => [[Term::fromNative([[1]]) ,Term::constant(1)],'constant',2],
+            'invalid known mode' => [[Term::array([]),Term::constant(2)],'throwable','ValueError'],
+            'invalid unknown array mode' => [[Term::parameter('a', 'array'),Term::constant(-1)],'throwable','ValueError'],
+            'unknown mode' => [[Term::array([]),Term::parameter('mode', 'int')],'opaque','UNSUPPORTED_MODEL_CASE'],
+            'unknown recursive array' => [[Term::parameter('a', 'array'),Term::constant(1)],'opaque','UNSUPPORTED_MODEL_CASE'],
+            'countable protocol' => [[Term::parameter('a', 'Countable')],'opaque','UNSUPPORTED_MODEL_CASE'],
+            'union protocol' => [[Term::parameter('a', 'array|Countable')],'opaque','UNSUPPORTED_MODEL_CASE'],
+        ];
+    }
+
+    /**
+     * @param list<Term> $values Arguments after native binding
+     * @param mixed $expected Concrete result
+     */
+    #[DataProvider('providerArrayOperations')]
+    public function testApplyPreservesKeyOrderAndComparisonModes(string $name, array $values, mixed $expected): void
+    {
+        self::assertSame($expected, (new ArrayFunctions())->apply($name, $values)->native());
+    }
+
+    /**
+     * @return array<string,array{string,list<Term>,mixed}>
+     */
+    public static function providerArrayOperations(): array
+    {
+        return [
+            'keys unfiltered' => ['array_keys',[Term::fromNative(['a' => null,8 => false])],['a',8]],
+            'keys explicit null' => ['array_keys',[Term::fromNative(['a' => null,8 => false]),Term::constant(null),Term::constant(true)],['a']],
+            'keys loose false' => ['array_keys',[Term::fromNative(['a' => null,8 => false]),Term::constant(false)],['a',8]],
+            'values renumber' => ['array_values',[Term::fromNative(['a' => null,8 => false])],[null,false]],
+            'merge variadic' => ['array_merge',[Term::fromNative([[7 => 'a','x' => 1],[9 => 'b','x' => 2]])],[0 => 'a','x' => 2,1 => 'b']],
+            'merge empty' => ['array_merge',[Term::array([])],[]],
+            'count normal' => ['count',[Term::fromNative([[1,2],3])],2],
+            'count recursive' => ['count',[Term::fromNative([[1,2],3]),Term::constant(1)],4],
+            'contains loose' => ['in_array',[Term::constant('2'),Term::fromNative([1,2,3])],true],
+            'contains strict' => ['in_array',[Term::constant('2'),Term::fromNative([1,2,3]),Term::constant(true)],false],
+            'contains later exact' => ['in_array',[Term::constant(2),Term::array([Term::parameter('x'),Term::constant(2)])],true],
+            'contains absent' => ['in_array',[Term::constant(4),Term::fromNative([1,2,3])],false],
+            'key integer normalization' => ['array_key_exists',[Term::constant('2'),Term::fromNative([2 => null])],true],
+            'key leading zero' => ['array_key_exists',[Term::constant('02'),Term::fromNative([2 => null])],false],
+            'key null normalization' => ['array_key_exists',[Term::constant(null),Term::fromNative(['' => null])],true],
+        ];
+    }
+
+    /**
+     * @param list<Term> $values Arguments after native binding
+     */
+    #[DataProvider('providerUnresolvedArrays')]
+    public function testApplyRetainsUnresolvedArrayDependencies(string $name, array $values, string $kind, string $type): void
+    {
+        $result = (new ArrayFunctions())->apply($name, $values);
+        self::assertSame($kind, $result->kind);
+        self::assertSame($type, $result->attributes['type']);
+        self::assertSame($values, $result->operands);
+    }
+
+    /**
+     * @return array<string,array{string,list<Term>,string,string}>
+     */
+    public static function providerUnresolvedArrays(): array
+    {
+        return [
+            'unknown values' => ['array_values',[Term::parameter('a', 'array')],'intrinsic','array'],
+            'open keys' => ['array_keys',[Term::array([], true)],'intrinsic','array'],
+            'unknown membership' => ['in_array',[Term::constant(1),Term::parameter('a', 'array')],'intrinsic','bool'],
+            'open membership' => ['in_array',[Term::constant(1),Term::array([], true)],'intrinsic','bool'],
+            'symbolic element' => ['in_array',[Term::constant(1),Term::array([Term::parameter('x')])],'intrinsic','bool'],
+            'unknown strictness' => ['in_array',[Term::constant(1),Term::array([]),Term::parameter('strict', 'bool')],'intrinsic','bool'],
+            'unknown key' => ['array_key_exists',[Term::parameter('key'),Term::array([])],'intrinsic','bool'],
+            'unknown key filter' => ['array_keys',[Term::fromNative([1]),Term::parameter('filter')],'opaque','array'],
+            'unknown keys strictness' => ['array_keys',[Term::array([]),Term::constant(1),Term::parameter('strict', 'bool')],'opaque','array'],
+        ];
+    }
+
+    public function testCountRetainsUnknownNestedShapesAndConfidentialCounts(): void
+    {
+        $functions = new ArrayFunctions();
+        self::assertSame('opaque', $functions->count(Term::array([Term::array([], true)]), true)->kind);
+        self::assertSame('opaque', $functions->count(Term::array([Term::array([Term::parameter('nested')])]), true)->kind);
+        self::assertSame(1, $functions->count(Term::array([new Term('object', 'identity')]), true)->native());
+        self::assertTrue($functions->count(Term::fromNative([], true), false)->isSecret());
+    }
+
+    public function testKeyExistsRejectsIllegalAggregateKeys(): void
+    {
+        $result = (new ArrayFunctions())->keyExists(Term::array([]), Term::array([]));
+        self::assertSame('throwable', $result->kind);
+        self::assertSame('TypeError', $result->literal);
+    }
+
 }

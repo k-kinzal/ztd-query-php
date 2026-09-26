@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Api\Result\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
+#[UsesClass(\Deriver\Internal\Memory\Memory::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
 final class StorageCaptureTest extends TestCase

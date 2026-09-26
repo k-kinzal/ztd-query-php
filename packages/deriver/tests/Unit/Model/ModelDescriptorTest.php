@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\Deriver\Model\ModelDescriptor::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
+#[UsesClass(\Deriver\Api\AnalysisSession::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
 #[UsesClass(\Deriver\Api\Project\Configuration::class)]
@@ -117,6 +118,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
 #[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
 #[UsesClass(\Deriver\Model\CallDescription::class)]
+#[UsesClass(\Deriver\Model\CallModel::class)]
 #[UsesClass(\Deriver\Model\ModelDecision::class)]
 #[UsesClass(\Deriver\Model\Plan\Action::class)]
 #[UsesClass(\Deriver\Model\Plan\Expression::class)]

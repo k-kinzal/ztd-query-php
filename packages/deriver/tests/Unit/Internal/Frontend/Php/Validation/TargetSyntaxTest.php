@@ -80,4 +80,12 @@ final class TargetSyntaxTest extends TestCase
         self::assertNotEmpty($cache->read(new \Deriver\Api\Project\SourceFile('x.php', '<?php function target($f=strlen(...)){}'), $profile)->errors);
         self::assertSame([], $cache->read(new \Deriver\Api\Project\SourceFile('x.php', '<?php function target(){return strlen(...);}'), $profile)->errors);
     }
+
+    public function testEnterNodeRejectsScalarLiteralUnpackBeforeRuntimeAnalysis(): void
+    {
+        $cache = new \Deriver\Internal\Frontend\Php\Cache\SyntaxCache();
+        $profile = new \Deriver\Api\Project\TargetProfile();
+        self::assertNotEmpty($cache->read(new \Deriver\Api\Project\SourceFile('x.php', '<?php function target(){try{return [...7];}catch(Error $e){return 1;}}'), $profile)->errors);
+        self::assertSame([], $cache->read(new \Deriver\Api\Project\SourceFile('x.php', '<?php function target(){$x=7;try{return [...$x];}catch(Error $e){return 1;}}'), $profile)->errors);
+    }
 }

@@ -115,6 +115,9 @@ final class Lattice
      */
     public function compatible(Term $upper, Term $lower): bool
     {
+        if ($lower->isSecret() && !$upper->isSecret()) {
+            return false;
+        }
         if ($upper->kind === 'domain' && $lower->kind === 'domain' && $upper->literal === $lower->literal && is_string($upper->literal) && isset($this->domains[$upper->literal])) {
             return (new \Deriver\Internal\Model\ModelBoundary())->contains($this->domains[$upper->literal], $upper, $lower);
         }
@@ -123,18 +126,26 @@ final class Lattice
             return $type === 'mixed' || array_diff(explode('|', $this->type($lower)), explode('|', $type)) === [];
         }
         if ($upper->kind === 'array' && $lower->kind === 'array') {
-            if (array_keys($upper->operands) !== array_keys(array_intersect_key($lower->operands, $upper->operands))) {
-                return false;
-            }
-            if (($lower->attributes['open'] ?? false) === true && ($upper->attributes['open'] ?? false) !== true) {
-                return false;
-            }
-            if (($upper->attributes['open'] ?? false) !== true && array_keys($upper->operands) !== array_keys($lower->operands)) {
-                return false;
-            }
-            return true;
+            return $this->shape($upper, $lower);
         }
         return (new Identity())->key($upper) === (new Identity())->key($lower);
+    }
+
+    /**
+     * Checks required key order and unknown remainders before comparing element values.
+     * @param Term $upper Candidate containing array shape
+     * @param Term $lower Candidate contained array shape
+     * @return bool Whether their local shape obligations allow inclusion
+     */
+    public function shape(Term $upper, Term $lower): bool
+    {
+        if (array_keys($upper->operands) !== array_keys(array_intersect_key($lower->operands, $upper->operands))) {
+            return false;
+        }
+        if (($lower->attributes['open'] ?? false) === true && ($upper->attributes['open'] ?? false) !== true) {
+            return false;
+        }
+        return ($upper->attributes['open'] ?? false) === true || array_keys($upper->operands) === array_keys($lower->operands);
     }
 
     /**

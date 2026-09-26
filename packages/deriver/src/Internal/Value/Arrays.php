@@ -57,6 +57,9 @@ final class Arrays
      */
     public function set(Term $array, ?Term $key, Term $value): Term
     {
+        if ($array->kind !== 'array') {
+            return new Term('array-set', operands: [$array, $key ?? new Term('append'), $value], attributes: ['type' => 'array']);
+        }
         if ($key === null) {
             $key = $this->appendKey($array);
         }
@@ -67,11 +70,11 @@ final class Arrays
         if ($key->kind !== 'constant' || (!is_string($key->literal) && !is_int($key->literal))) {
             $entries = [];
             foreach ($array->operands as $known => $previous) {
-                $entries[$known] = Term::opaque('UNKNOWN_ARRAY_KEY', dependencies: [$previous, $value]);
+                $entries[$known] = Term::opaque('UNKNOWN_ARRAY_KEY', dependencies: [$previous, $value, $key]);
             }
-            return Term::array($entries, true);
+            return new Term('array', operands: $entries, attributes: ['open' => true], secret: $array->isSecret() || $key->isSecret() || $value->isSecret());
         }
-        $entries = $array->kind === 'array' ? $array->operands : [];
+        $entries = $array->operands;
         $entries[$key->literal] = $value;
         $result = Term::array($entries, ($array->attributes['open'] ?? false) === true);
         $next = $this->next($result);
@@ -79,7 +82,7 @@ final class Arrays
         if ($oldNext !== null && $next !== null && ($array->operands !== [] || array_key_exists('next', $array->attributes))) {
             $next = max($oldNext, $next);
         }
-        return new Term('array', operands: $entries, attributes: ['open' => ($array->attributes['open'] ?? false) === true, 'next' => $next]);
+        return new Term('array', operands: $entries, attributes: ['open' => ($array->attributes['open'] ?? false) === true, 'next' => $next], secret: $array->isSecret() || $key->isSecret());
     }
 
     /**
@@ -90,12 +93,15 @@ final class Arrays
      */
     public function merge(Term $left, Term $right): Term
     {
-        if ($right->kind !== 'array') {
-            return Term::array($left->operands, true);
+        if ($left->kind !== 'array' || $right->kind !== 'array' || ($left->attributes['open'] ?? false) === true || ($right->attributes['open'] ?? false) === true) {
+            return new Term('array-merge', operands: [$left, $right], attributes: ['type' => 'array']);
         }
         foreach ($right->operands as $key => $value) {
             $left = $this->set($left, is_int($key) ? null : Term::constant($key), $value);
+            if ($left->kind === 'throwable') {
+                return $left;
+            }
         }
-        return ($right->attributes['open'] ?? false) === true ? new Term('array', operands: $left->operands, attributes: ['open' => true]) : $left;
+        return $right->isSecret() ? new Term($left->kind, $left->literal, $left->operands, $left->attributes, true) : $left;
     }
 }

@@ -70,11 +70,13 @@ final class InstructionTransfer
             $value = (new MemoryStep($context))->evaluate($callable, $instruction, $state);
         } elseif (in_array($op, ['iterator', 'iterate', 'iterator-key', 'iterator-value', 'iterator-address', 'iterator-release'], true)) {
             $value = (new IterationStep($context))->evaluate($instruction, $state);
-        } elseif ($op === 'array-set' || $op === 'array-unpack') {
+        } elseif ($op === 'array-unpack') {
+            return $this->unpack($instruction, $state);
+        } elseif ($op === 'array-set') {
             $array = $state->value($instruction->operands[0]);
             $key = $instruction->operands[1] === '' ? null : $state->value($instruction->operands[1]);
             $item = $state->registers[$instruction->operands[2]] ?? Term::opaque('UNCOMPUTED_REGISTER');
-            $value = $op === 'array-set' ? (new Arrays())->set($array, $key, $item) : (new Arrays())->merge($array, $item);
+            $value = (new Arrays())->set($array, $key, $item);
         } elseif (in_array($op, ['closure', 'callable', 'callable-method', 'class-constant', 'instanceof'], true)) {
             $value = (new CallableTransfer($context))->evaluate($callable, $instruction, $state);
         } else {
@@ -82,6 +84,33 @@ final class InstructionTransfer
         }
         $state->registers[$instruction->result] = $value;
         return (new Operation\ScalarErrors($context))->paths($instruction, $state);
+    }
+
+    /**
+     * Unpacks arrays while preserving invalid-type errors and unknown iterator effects.
+     * @param Instruction $instruction Array construction step
+     * @param State $state Current path
+     * @return list<State> Normal and possible exceptional paths
+     */
+    public function unpack(Instruction $instruction, State $state): array
+    {
+        $array = $state->value($instruction->operands[0]);
+        $item = $state->value($instruction->operands[2]);
+        if ((new \Deriver\Standard\TypePredicates())->apply('is_array', $item)->literal === true) {
+            $state->registers[$instruction->result] = (new Arrays())->merge($array, $item);
+            if ($state->registers[$instruction->result]->kind === 'array-merge') {
+                $this->machine->context->frontier('WIDENED', $instruction->source, 'symbolic-unpack-append', [$array, $item]);
+                $exception = $state->fork();
+                $exception->completion = new Completion('throw', new Term('throwable', 'Error'));
+                return [$state, $exception];
+            }
+            return [$state];
+        }
+        if ($item->kind === 'constant' || $item->kind === 'closure') {
+            $state->completion = new Completion('throw', new Term('throwable', $item->kind === 'closure' ? 'TypeError' : 'Error'));
+            return [$state];
+        }
+        return (new Call\UnknownCall($this->machine->context))->apply($state, $instruction, [new Call\PassedArgument($item)], null, 'UNSUPPORTED_LANGUAGE_FEATURE');
     }
 
     /**

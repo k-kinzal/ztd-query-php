@@ -180,4 +180,69 @@ final class ResultAssessmentTest extends TestCase
         self::assertSame('opaque', $assessment->precision);
         self::assertSame('not-enumerated', $assessment->enumeration);
     }
+
+    /**
+     * @param string $code
+     * @param array{string, string, string, string, string} $expected
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerFrontierAssessments')]
+    public function testAssessKeepsTheQualityAxesIndependentForEachBoundary(string $code, array $expected): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $context->normal[] = new \Deriver\Api\Result\Alternative(['value' => \Deriver\Value\Term::constant(1)]);
+        $context->frontiers['boundary'] = new \Deriver\Api\Result\Frontier($code, new \Deriver\Api\Reference\SourceRef('snapshot', 'a.php', 0, 1), 'operation');
+        $assessment = (new \Deriver\Internal\Api\ResultAssessment())->assess($context);
+        self::assertSame($expected, [$assessment->closure, $assessment->precision, $assessment->correlation, $assessment->coverage, $assessment->enumeration]);
+    }
+
+    /**
+     * @return list<array{string, array{string, string, string, string, string}}>
+     */
+    public static function providerFrontierAssessments(): array
+    {
+        return [
+            ['EXTERNAL_INPUT', ['closed', 'exact-symbolic', 'preserved', 'over-approximation', 'finite-exhaustive']],
+            ['PHP_WARNING', ['closed', 'exact-symbolic', 'preserved', 'over-approximation', 'finite-exhaustive']],
+            ['WIDENED', ['closed', 'abstract', 'preserved', 'over-approximation', 'finite-exhaustive']],
+            ['MISSING_CALL_MODEL', ['open', 'exact-symbolic', 'preserved', 'over-approximation', 'not-enumerated']],
+            ['CORRELATION_RELAXED', ['open', 'exact-symbolic', 'relaxed', 'over-approximation', 'not-enumerated']],
+            ['UNSUPPORTED_LANGUAGE_FEATURE', ['open', 'exact-symbolic', 'preserved', 'unavailable', 'not-enumerated']],
+            ['UNSPECIFIED_EVALUATION_ORDER', ['open', 'exact-symbolic', 'preserved', 'unavailable', 'not-enumerated']],
+        ];
+    }
+
+    public function testAssessClassifiesNormalAbstractAndOpaqueAlternativesWithoutOrderDependence(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $context->normal = [new \Deriver\Api\Result\Alternative(['first' => new \Deriver\Value\Term('abstract', 'WIDENED')]), new \Deriver\Api\Result\Alternative(['second' => \Deriver\Value\Term::parameter('input')])];
+        $assessment = new \Deriver\Internal\Api\ResultAssessment();
+        $abstract = $assessment->assess($context);
+        $context->normal[] = new \Deriver\Api\Result\Alternative(['third' => \Deriver\Value\Term::opaque('UNRESOLVED')]);
+        $opaque = $assessment->assess($context);
+        $context->normal = array_reverse($context->normal);
+        $reversed = $assessment->assess($context);
+        self::assertSame(['abstract', 'opaque', 'opaque'], [$abstract->precision, $opaque->precision, $reversed->precision]);
+        self::assertSame('not-enumerated', $abstract->enumeration);
+    }
+
+    public function testAssessIncludesAbstractExceptionsInTheSharedPrecision(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $context->normal[] = new \Deriver\Api\Result\Alternative(['value' => \Deriver\Value\Term::constant(1)]);
+        $context->exceptional[] = new \Deriver\Api\Result\Exceptional(new \Deriver\Value\Term('abstract', 'throwable-range'));
+        $assessment = (new \Deriver\Internal\Api\ResultAssessment())->assess($context);
+        self::assertSame('abstract', $assessment->precision);
+        self::assertSame('not-enumerated', $assessment->enumeration);
+    }
+
+    public function testPrecisionFollowsReferenceCellsAndAbstractModelSlots(): void
+    {
+        $assessment = new \Deriver\Internal\Api\ResultAssessment();
+        $storage = new \Deriver\Api\Result\StorageSnapshot(cells: ['shared' => new \Deriver\Value\Term('abstract', 'WIDENED'), 'model:object' => \Deriver\Value\Term::array(['slot' => \Deriver\Value\Term::opaque('MISSING')])]);
+        self::assertSame('abstract', $assessment->precision(new \Deriver\Value\Term('cell', 'shared'), $storage));
+        self::assertSame('opaque', $assessment->precision(new \Deriver\Value\Term('object', 'object'), $storage));
+        self::assertSame('exact-symbolic', $assessment->precision(new \Deriver\Value\Term('object', 'untracked'), $storage));
+        self::assertSame('exact-symbolic', $assessment->precision(\Deriver\Value\Term::constant('shared'), $storage));
+        self::assertSame('opaque', $assessment->precision(new \Deriver\Value\Term('uninitialized')));
+    }
 }

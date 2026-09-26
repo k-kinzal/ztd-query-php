@@ -40,7 +40,7 @@ The evaluator separates expression registers from storage:
 - Closure value captures record values when the closure is created. Reference captures retain cells. Creating or storing a closure does not execute its body.
 - Global and static storage persist across calls within an analyzed entry context.
 
-Array keys follow the target PHP profile. Absence, an uninitialized value, `null`, an unknown value, and absence of reachable states are different conditions. Ordered union, unpack, and `array_merge` have separate transfer rules.
+Array keys follow the target PHP profile. Absence, an uninitialized value, `null`, an unknown value, and absence of reachable states are different conditions. Ordered union, unpack, and `array_merge` have separate transfer rules. Merging a symbolic or open array retains an `array-merge` expression; later insertions retain `array-set` expressions instead of discarding possible keys. Symbolic unpack also retains a possible append-overflow `Error` and a `WIDENED` diagnostic.
 
 ## Control flow and calls
 

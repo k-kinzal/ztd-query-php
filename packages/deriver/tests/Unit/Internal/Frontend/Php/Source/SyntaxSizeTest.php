@@ -14,6 +14,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
+#[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[Small]
 final class SyntaxSizeTest extends TestCase
 {

@@ -18,6 +18,14 @@ final class ConversionPrograms
     public static function cases(): array
     {
         return [
+            'unpack stops on append overflow' => ['<?php function target(){try{return [PHP_INT_MAX=>1,...[2,3]];}catch(Error $e){return "error";}}', Term::constant('error')],
+            'unpack scalar rejects input' => ['<?php function target(){$value=7;try{return [...$value];}catch(Error $e){return get_class($e);}}', Term::constant('Error')],
+            'unpack closure rejects input' => ['<?php function target(){try{return [...(fn()=>1)];}catch(TypeError $e){return "error";}}', Term::constant('error')],
+            'count array rejects invalid mode' => ['<?php function target(){try{return count([],2);}catch(ValueError $e){return "error";}}', Term::constant('error')],
+            'implode rejects two arrays' => ['<?php function target(){try{return implode(["a"],["b"]);}catch(TypeError $e){return "error";}}', Term::constant('error')],
+            'implode rejects single string' => ['<?php function target(){try{return implode(",");}catch(TypeError $e){return "error";}}', Term::constant('error')],
+            'implode explicit null overload' => ['<?php function target(){return implode(["a",2],null);}', Term::constant('a2')],
+            'explode empty separator' => ['<?php function target(){try{return explode("","abc");}catch(ValueError $e){return "error";}}', Term::constant('error')],
             'array callback method' => ['<?php class B{public int $n=0;function twice(int $v):int{$this->n++;return 2*$v;}}function target(){$b=new B;return [array_map([$b,"twice"],[2,3]),$b->n];}', Term::fromNative([[4, 6], 2])],
             'public method callable predicate' => ['<?php class B{function run(){}}function target(){$b=new B;return [is_callable([$b,"run"]),is_callable("B::run")];}', Term::fromNative([true, false])],
             'countable method effects' => ['<?php class B implements Countable{public int $n=0;function count():int{$this->n++;return 4;}}function target(){$b=new B;return [count($b),$b->n];}', Term::fromNative([4, 1])],

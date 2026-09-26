@@ -4,17 +4,26 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Internal\Solver\Transfer;
 
+use Deriver\Api\Project\Configuration;
+use Deriver\Api\Reference\SourceRef;
+use Deriver\Internal\IR\CallableIR;
+use Deriver\Internal\IR\Instruction;
+use Deriver\Internal\Solver\State;
+use Deriver\Internal\Solver\Transfer\PureStep;
+use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fake\SolverFixture;
 
-#[CoversClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
+#[CoversClass(PureStep::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
-#[UsesClass(\Deriver\Api\Project\Configuration::class)]
+#[UsesClass(Configuration::class)]
 #[UsesClass(\Deriver\Api\Project\EntryPoint::class)]
 #[UsesClass(\Deriver\Api\Project\ProjectInput::class)]
 #[UsesClass(\Deriver\Api\Project\ProjectSnapshot::class)]
@@ -24,7 +33,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Api\Query\QueryScope::class)]
 #[UsesClass(\Deriver\Api\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Api\Reference\ResultRef::class)]
-#[UsesClass(\Deriver\Api\Reference\SourceRef::class)]
+#[UsesClass(SourceRef::class)]
 #[UsesClass(\Deriver\Api\Result\Alternative::class)]
 #[UsesClass(\Deriver\Api\Result\Assessment::class)]
 #[UsesClass(\Deriver\Api\Result\Derivation::class)]
@@ -59,8 +68,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
-#[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
-#[UsesClass(\Deriver\Internal\IR\Instruction::class)]
+#[UsesClass(CallableIR::class)]
+#[UsesClass(Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
 #[UsesClass(\Deriver\Internal\Memory\Materialization::class)]
@@ -94,12 +103,13 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\ScalarErrors::class)]
-#[UsesClass(\Deriver\Internal\Solver\State::class)]
+#[UsesClass(State::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\CompletionRecord::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Invocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
+#[UsesClass(PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
 #[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
@@ -109,7 +119,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class PureStepTest extends TestCase
 {
@@ -125,52 +135,211 @@ final class PureStepTest extends TestCase
     }
     public function testNotNullDistinguishesAnUninitializedCellFromAFalseValue(): void
     {
-        $transfer = new \Deriver\Internal\Solver\Transfer\PureStep(\Tests\Fake\SolverFixture::context());
-        self::assertSame(false, $transfer->notNull(new \Deriver\Value\Term('uninitialized'))->native());
-        self::assertSame(true, $transfer->notNull(\Deriver\Value\Term::constant(false))->native());
+        $transfer = new PureStep(SolverFixture::context());
+        self::assertSame(false, $transfer->notNull(new Term('uninitialized'))->native());
+        self::assertSame(true, $transfer->notNull(Term::constant(false))->native());
     }
     public function testConstantUsesTheTargetVersion(): void
     {
-        $transfer = new \Deriver\Internal\Solver\Transfer\PureStep(\Tests\Fake\SolverFixture::context());
-        $instruction = new \Deriver\Internal\IR\Instruction('version', 'constant-fetch', new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1), 'result');
+        $transfer = new PureStep(SolverFixture::context());
+        $instruction = new Instruction('version', 'constant-fetch', new SourceRef('test', 'fixture.php', 0, 1), 'result');
         self::assertSame(80300, $transfer->constant('PHP_VERSION_ID', $instruction)->native());
     }
     public function testMagicUsesTheCapturedSourceLine(): void
     {
-        $transfer = new \Deriver\Internal\Solver\Transfer\PureStep(\Tests\Fake\SolverFixture::context());
-        $body = \Tests\Fake\SolverFixture::context()->program->callable('target');
+        $transfer = new PureStep(SolverFixture::context());
+        $body = SolverFixture::context()->program->callable('target');
         self::assertNotNull($body);
-        $instruction = new \Deriver\Internal\IR\Instruction('line', 'magic-constant', new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1, 37), 'result', name:'__LINE__');
+        $instruction = new Instruction('line', 'magic-constant', new SourceRef('test', 'fixture.php', 0, 1, 37), 'result', name:'__LINE__');
         self::assertSame(37, $transfer->magic($body, $instruction)->native());
     }
     public function testArrayReadDereferencesSharedCells(): void
     {
-        $transfer = new \Deriver\Internal\Solver\Transfer\PureStep(\Tests\Fake\SolverFixture::context());
-        $state = new \Deriver\Internal\Solver\State();
-        $cell = $state->memory->allocate(\Deriver\Value\Term::constant(7));
-        $value = $transfer->arrayRead(\Deriver\Value\Term::array([new \Deriver\Value\Term('cell', $cell->root)]), \Deriver\Value\Term::constant(0), $state);
+        $transfer = new PureStep(SolverFixture::context());
+        $state = new State();
+        $cell = $state->memory->allocate(Term::constant(7));
+        $value = $transfer->arrayRead(Term::array([new Term('cell', $cell->root)]), Term::constant(0), $state);
         self::assertSame(7, $value->native());
     }
     public function testExternalCreatesDistinctEvaluationEvents(): void
     {
-        $transfer = new \Deriver\Internal\Solver\Transfer\PureStep(\Tests\Fake\SolverFixture::context());
-        $state = new \Deriver\Internal\Solver\State();
-        $instruction = new \Deriver\Internal\IR\Instruction('external', 'external', new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1), 'result', name:'clock');
+        $transfer = new PureStep(SolverFixture::context());
+        $state = new State();
+        $instruction = new Instruction('external', 'external', new SourceRef('test', 'fixture.php', 0, 1), 'result', name:'clock');
         self::assertNotSame($transfer->external($instruction, $state)->literal, $transfer->external($instruction, $state)->literal);
     }
     public function testBinaryRecordsTargetWarningsWithoutHostRangeConversions(): void
     {
-        $context = \Tests\Fake\SolverFixture::context();
-        $at = new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1);
-        $instruction = new \Deriver\Internal\IR\Instruction('op', 'binary', $at, 'result', name:'%');
-        $value = (new \Deriver\Internal\Solver\Transfer\PureStep($context))->binary($instruction, \Deriver\Value\Term::constant(3), \Deriver\Value\Term::constant(0.1));
+        $context = SolverFixture::context();
+        $at = new SourceRef('test', 'fixture.php', 0, 1);
+        $instruction = new Instruction('op', 'binary', $at, 'result', name:'%');
+        $value = (new PureStep($context))->binary($instruction, Term::constant(3), Term::constant(0.1));
         self::assertSame('DivisionByZeroError', $value->literal);
         self::assertSame(['PHP_WARNING'], array_column(array_values($context->frontiers), 'code'));
     }
     public function testNotNullRetainsTheConfidentialInputLabel(): void
     {
-        $step = new \Deriver\Internal\Solver\Transfer\PureStep(\Tests\Fake\SolverFixture::context());
-        self::assertTrue($step->notNull(\Deriver\Value\Term::constant(null, true))->isSecret());
-        self::assertTrue($step->notNull(new \Deriver\Value\Term('object', 'a', secret: true))->isSecret());
+        $step = new PureStep(SolverFixture::context());
+        self::assertTrue($step->notNull(Term::constant(null, true))->isSecret());
+        self::assertTrue($step->notNull(new Term('object', 'a', secret: true))->isSecret());
+    }
+
+    /**
+     * @param scalar|null $expected Known target constant
+     */
+    #[DataProvider('providerConstants')]
+    public function testConstantReadsTargetConstantsIndependentlyOfTheHost(string $name, int|float|string|bool|null $expected): void
+    {
+        $step = new PureStep(SolverFixture::context());
+        $instruction = new Instruction('constant', 'constant-fetch', new SourceRef('test', 'fixture.php', 0, 1));
+        self::assertSame($expected, $step->constant($name, $instruction)->native());
+    }
+
+    /**
+     * @return array<string,array{string,scalar|null}>
+     */
+    public static function providerConstants(): array
+    {
+        return [
+            'null' => ['NULL',null], 'true' => ['TRUE',true], 'false' => ['FALSE',false],
+            'integer size' => ['PHP_INT_SIZE',8], 'integer max' => ['PHP_INT_MAX',9223372036854775807], 'integer min' => ['PHP_INT_MIN',-9223372036854775807 - 1],
+            'normal sort' => ['SORT_REGULAR',0], 'numeric sort' => ['SORT_NUMERIC',1], 'string sort' => ['SORT_STRING',2], 'case sort' => ['SORT_FLAG_CASE',8],
+            'normal count' => ['COUNT_NORMAL',0], 'recursive count' => ['COUNT_RECURSIVE',1], 'both filter' => ['ARRAY_FILTER_USE_BOTH',1], 'key filter' => ['ARRAY_FILTER_USE_KEY',2],
+        ];
+    }
+
+    public function testConstantUsesConfiguredIdentityAndRecordsMissingNames(): void
+    {
+        $configured = Term::constant('supplied', true);
+        $context = SolverFixture::context(configuration:new Configuration(environment:['constant:EXAMPLE' => $configured]));
+        $step = new PureStep($context);
+        $instruction = new Instruction('constant', 'constant-fetch', new SourceRef('test', 'fixture.php', 0, 1));
+        self::assertSame($configured, $step->constant('EXAMPLE', $instruction));
+        $missing = $step->constant('MISSING', $instruction);
+        self::assertSame('INCOMPLETE_SOURCE', $missing->literal);
+        self::assertSame(['constant:MISSING'], array_column(array_values($context->frontiers), 'operation'));
+    }
+
+    #[DataProvider('providerMagic')]
+    public function testMagicPreservesCapturedPathsAndCallableIdentity(string $name, int|string $expected): void
+    {
+        $source = new SourceRef('test', '/project/src/file.php', 10, 20, 37);
+        $callable = new CallableIR('run', [], [], $source, className:'Box');
+        $instruction = new Instruction('magic', 'magic-constant', $source, 'result', name:$name);
+        self::assertSame($expected, (new PureStep(SolverFixture::context()))->magic($callable, $instruction)->native());
+    }
+
+    /**
+     * @return array<string,array{string,int|string}>
+     */
+    public static function providerMagic(): array
+    {
+        return ['line' => ['__LINE__',37],'file' => ['__FILE__','/project/src/file.php'],'dir' => ['__DIR__','/project/src'],'class' => ['__CLASS__','Box'],'method' => ['__METHOD__','run'],'function' => ['__FUNCTION__','run'],'absent' => ['other','']];
+    }
+
+    #[DataProvider('providerPresence')]
+    public function testNotNullDistinguishesPresenceFromTruthiness(Term $value, bool $expected): void
+    {
+        $result = (new PureStep(SolverFixture::context()))->notNull($value);
+        self::assertSame($expected, $result->native());
+        self::assertSame($value->isSecret(), $result->isSecret());
+    }
+
+    /**
+     * @return array<string,array{Term,bool}>
+     */
+    public static function providerPresence(): array
+    {
+        return [
+            'null' => [Term::constant(null),false], 'false' => [Term::constant(false),true], 'zero' => [Term::constant(0),true], 'empty string' => [Term::constant(''),true],
+            'array' => [Term::array([]),true], 'object' => [new Term('object', 'a'),true], 'closure' => [new Term('closure', 'a'),true], 'enum' => [new Term('enum', 'a'),true],
+            'uninitialized secret' => [new Term('uninitialized', secret:true),false],
+        ];
+    }
+
+    public function testNotNullKeepsTheSymbolicNullComparison(): void
+    {
+        $input = Term::parameter('x', 'int|null');
+        $result = (new PureStep(SolverFixture::context()))->notNull($input);
+        self::assertSame('binary', $result->kind);
+        self::assertSame('!==', $result->literal);
+        self::assertSame($input, $result->operands[0]);
+        self::assertSame('constant', $result->operands[1]->kind);
+        self::assertNull($result->operands[1]->literal);
+        self::assertSame('bool', $result->attributes['type']);
+    }
+
+    public function testArrayReadKeepsOpenAbsenceAndRejectsIllegalKeys(): void
+    {
+        $step = new PureStep(SolverFixture::context());
+        $state = new State();
+        self::assertSame('uninitialized', $step->arrayRead(Term::array([]), Term::constant('missing'), $state)->kind);
+        self::assertSame('UNKNOWN_ARRAY_KEY', $step->arrayRead(Term::array([], true), Term::constant('missing'), $state)->literal);
+        self::assertSame('TypeError', $step->arrayRead(Term::array([]), Term::array([]), $state)->literal);
+        self::assertSame(7, $step->arrayRead(Term::fromNative([1 => 7]), Term::constant(true), $state)->native());
+    }
+
+    public function testArrayReadRetainsUnknownContainerAndKeyExpressions(): void
+    {
+        $array = Term::parameter('a', 'array');
+        $key = Term::parameter('key', 'string');
+        $result = (new PureStep(SolverFixture::context()))->arrayRead($array, $key, new State());
+        self::assertSame('array-read', $result->kind);
+        self::assertSame($array, $result->operands[0]);
+        self::assertSame('array-key', $result->operands[1]->kind);
+        self::assertSame($key, $result->operands[1]->operands[0]);
+    }
+
+    public function testExternalPreservesCapturedInputsAndEventMetadata(): void
+    {
+        $input = Term::constant(null, true);
+        $step = new PureStep(SolverFixture::context(configuration:new Configuration(environment:['configured' => $input])));
+        $source = new SourceRef('test', 'fixture.php', 0, 1);
+        $state = new State();
+        self::assertSame($input, $step->external(new Instruction('configured', 'external', $source, name:'configured'), $state));
+        $event = $step->external(new Instruction('event', 'external', $source, name:'clock', attributes:['type' => 'int']), $state);
+        self::assertSame('external', $event->kind);
+        self::assertIsString($event->literal);
+        self::assertStringStartsWith('clock:', $event->literal);
+        self::assertSame(['type' => 'int','source' => 'clock','stability' => 'evaluation'], $event->attributes);
+    }
+
+    /**
+     * @param scalar|null $expected Evaluated result
+     */
+    #[DataProvider('providerPureInstructions')]
+    public function testEvaluateDispatchesPureOperations(string $op, string $name, int $previous, int|float|string|bool|null $expected): void
+    {
+        $source = new SourceRef('test', 'fixture.php', 0, 1);
+        $state = new State();
+        $state->registers = ['a' => Term::constant(5),'b' => Term::constant(2)];
+        $state->previous = $previous;
+        $instruction = new Instruction('step', $op, $source, 'result', ['a','b'], $name, attributes:['left' => 7]);
+        $result = (new PureStep(SolverFixture::context()))->evaluate(new CallableIR('target', [], [], $source), $instruction, $state);
+        self::assertSame($expected, $result->native());
+    }
+
+    /**
+     * @return array<string,array{string,string,int,scalar|null}>
+     */
+    public static function providerPureInstructions(): array
+    {
+        return ['copy' => ['copy','',0,5],'add' => ['binary','+',0,7],'negate' => ['unary','Expr_UnaryMinus',0,-5],'cast' => ['cast','string',0,'5'],'left phi' => ['phi','',7,5],'right phi' => ['phi','',2,2],'null test' => ['not-null','',0,true],'constant fallback' => ['constant','',0,null],'target constant' => ['constant-fetch','PHP_INT_SIZE',0,8],'magic' => ['magic-constant','__FUNCTION__',0,'target']];
+    }
+
+    public function testEvaluatePreservesLiteralIdentityAndExplicitErrors(): void
+    {
+        $context = SolverFixture::context();
+        $source = new SourceRef('test', 'fixture.php', 0, 1);
+        $body = new CallableIR('target', [], [], $source);
+        $value = Term::constant(42, true);
+        $state = new State();
+        $step = new PureStep($context);
+        self::assertSame($value, $step->evaluate($body, new Instruction('literal', 'constant', $source, constant:$value), $state));
+        $raised = $step->evaluate($body, new Instruction('error', 'raise', $source, name:'Error'), $state);
+        self::assertSame('throwable', $raised->kind);
+        self::assertSame('Error', $raised->literal);
+        self::assertSame('UNSUPPORTED_LANGUAGE_FEATURE', $step->evaluate($body, new Instruction('unknown', 'unknown', $source), $state)->literal);
+        self::assertSame(['unknown'], array_column(array_values($context->frontiers), 'operation'));
     }
 }

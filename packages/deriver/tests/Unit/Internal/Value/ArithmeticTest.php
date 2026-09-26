@@ -145,4 +145,85 @@ final class ArithmeticTest extends TestCase
         self::assertFalse($operation->warning('+', \Deriver\Value\Term::constant(7), \Deriver\Value\Term::constant(1e30)));
         self::assertFalse($operation->warning('&', \Deriver\Value\Term::constant('1.5'), \Deriver\Value\Term::constant('1')));
     }
+
+    /**
+     * @param string $operator
+     * @param scalar|null $left
+     * @param scalar|null $right
+     * @param scalar|null $expected
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerApplyOperators')]
+    public function testApplyEvaluatesScalarOperatorsWithoutLosingSecrecy(string $operator, int|float|string|bool|null $left, int|float|string|bool|null $right, int|float|string|bool|null $expected): void
+    {
+        $result = (new \Deriver\Internal\Value\Arithmetic())->apply($operator, \Deriver\Value\Term::constant($left), \Deriver\Value\Term::constant($right, true));
+        self::assertSame($expected, $result->native());
+        self::assertTrue($result->isSecret());
+    }
+
+    /**
+     * @return list<array{string, scalar|null, scalar|null, scalar|null}>
+     */
+    public static function providerApplyOperators(): array
+    {
+        return [
+            ['+', 2, 3, 5], ['-', 2, 3, -1], ['*', 2, 3, 6], ['/', 7, 2, 3.5], ['%', -7, 3, -1], ['**', 2, 3, 8],
+            ['&', 6, 3, 2], ['|', 6, 3, 7], ['^', 6, 3, 5], ['<<', 3, 2, 12], ['>>', 8, 2, 2],
+            ['<<', 1, 63, -9223372036854775807 - 1], ['<<', 1, 64, 0], ['>>', 1, 64, 0], ['>>', -2, 64, -1],
+            ['&', 'ab', 'XY', '@@'], ['|', 'ab', 'XY', 'y{'], ['^', 'ab', 'XY', '9;'],
+            ['xor', 1, 0, true], ['xor', 1, 2, false], ['+', true, null, 1], ['+', 1.5, 2.0, 3.5], ['+', '12', '0.5', 12.5],
+        ];
+    }
+
+    /**
+     * @param string $operator
+     * @param scalar|null $left
+     * @param scalar|null $right
+     * @param string $exception
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerApplyErrors')]
+    public function testApplyReturnsTargetExceptionsForInvalidOperands(string $operator, int|float|string|bool|null $left, int|float|string|bool|null $right, string $exception): void
+    {
+        $result = (new \Deriver\Internal\Value\Arithmetic())->apply($operator, \Deriver\Value\Term::constant($left), \Deriver\Value\Term::constant($right));
+        self::assertSame(['throwable', $exception], [$result->kind, $result->literal]);
+    }
+
+    /**
+     * @return list<array{string, scalar|null, scalar|null, string}>
+     */
+    public static function providerApplyErrors(): array
+    {
+        return [['+', 'bad', 1, 'TypeError'], ['+', 1, 'bad', 'TypeError'], ['/', 1, 0, 'DivisionByZeroError'], ['%', 1, 0.5, 'DivisionByZeroError'], ['<<', 1, -1, 'ArithmeticError'], ['>>', 1, -1, 'ArithmeticError']];
+    }
+
+    public function testApplyKeepsAnUnknownOperatorAsAnExplicitBoundary(): void
+    {
+        $left = \Deriver\Value\Term::constant(2);
+        $right = \Deriver\Value\Term::constant(3);
+        $result = (new \Deriver\Internal\Value\Arithmetic())->apply('unsupported', $left, $right);
+        self::assertSame(['opaque', 'UNSUPPORTED_LANGUAGE_FEATURE', [$left, $right]], [$result->kind, $result->literal, $result->operands]);
+    }
+
+    public function testNumberDistinguishesValidZeroFromInvalidNumericInput(): void
+    {
+        $arithmetic = new \Deriver\Internal\Value\Arithmetic();
+        self::assertSame(0, $arithmetic->number(null));
+        self::assertSame(0, $arithmetic->number(false));
+        self::assertSame(1, $arithmetic->number(true));
+        self::assertSame(2, $arithmetic->number(2));
+        self::assertSame(2.5, $arithmetic->number(2.5));
+        self::assertSame(0, $arithmetic->number('0'));
+        self::assertNull($arithmetic->number(''));
+    }
+
+    public function testWarningDetectsEitherOperandAndSkipsSymbolicOrInvalidConversions(): void
+    {
+        $arithmetic = new \Deriver\Internal\Value\Arithmetic();
+        self::assertTrue($arithmetic->warning('%', \Deriver\Value\Term::constant(1.5), \Deriver\Value\Term::constant(2)));
+        self::assertTrue($arithmetic->warning('<<', \Deriver\Value\Term::constant(2), \Deriver\Value\Term::constant(1.5)));
+        self::assertFalse($arithmetic->warning('^', \Deriver\Value\Term::constant(1), \Deriver\Value\Term::constant(2)));
+        self::assertFalse($arithmetic->warning('%', \Deriver\Value\Term::parameter('n'), \Deriver\Value\Term::constant(2)));
+        self::assertFalse($arithmetic->warning('%', \Deriver\Value\Term::constant(2), \Deriver\Value\Term::parameter('n')));
+        self::assertFalse($arithmetic->warning('%', \Deriver\Value\Term::constant('bad'), \Deriver\Value\Term::constant(2)));
+        self::assertFalse($arithmetic->warning('%', \Deriver\Value\Term::constant(2), \Deriver\Value\Term::constant('bad')));
+    }
 }

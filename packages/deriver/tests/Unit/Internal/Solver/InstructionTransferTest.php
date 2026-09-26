@@ -4,13 +4,21 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Internal\Solver;
 
+use Deriver\Api\Reference\SourceRef;
+use Deriver\Internal\IR\Instruction;
+use Deriver\Internal\Solver\InstructionTransfer;
+use Deriver\Internal\Solver\Machine;
+use Deriver\Internal\Solver\State;
+use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fake\SolverFixture;
 
-#[CoversClass(\Deriver\Internal\Solver\InstructionTransfer::class)]
+#[CoversClass(InstructionTransfer::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
@@ -24,7 +32,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Api\Query\QueryScope::class)]
 #[UsesClass(\Deriver\Api\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Api\Reference\ResultRef::class)]
-#[UsesClass(\Deriver\Api\Reference\SourceRef::class)]
+#[UsesClass(SourceRef::class)]
 #[UsesClass(\Deriver\Api\Result\Alternative::class)]
 #[UsesClass(\Deriver\Api\Result\Assessment::class)]
 #[UsesClass(\Deriver\Api\Result\Derivation::class)]
@@ -63,7 +71,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\IR\CatchTarget::class)]
 #[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\ExceptionRegion::class)]
-#[UsesClass(\Deriver\Internal\IR\Instruction::class)]
+#[UsesClass(Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Parameter::class)]
 #[UsesClass(\Deriver\Internal\IR\PropertyDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
@@ -80,8 +88,10 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ParameterBinding::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\PassedArgument::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\UnknownCall::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Handler::class)]
@@ -96,7 +106,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Demand\Table::class)]
 #[UsesClass(\Deriver\Internal\Solver\Dependencies::class)]
 #[UsesClass(\Deriver\Internal\Solver\Havoc::class)]
-#[UsesClass(\Deriver\Internal\Solver\Machine::class)]
+#[UsesClass(InstructionTransfer::class)]
+#[UsesClass(Machine::class)]
 #[UsesClass(\Deriver\Internal\Solver\Model\SlotReference::class)]
 #[UsesClass(\Deriver\Internal\Solver\ObservationCollector::class)]
 #[UsesClass(\Deriver\Internal\Solver\Offset\Address::class)]
@@ -108,7 +119,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Offset\Transfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\Conversions::class)]
 #[UsesClass(\Deriver\Internal\Solver\Operation\ScalarErrors::class)]
-#[UsesClass(\Deriver\Internal\Solver\State::class)]
+#[UsesClass(State::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\CompletionRecord::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Invocation::class)]
@@ -117,12 +128,14 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
 #[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
+#[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
-#[UsesClass(\Deriver\Value\Term::class)]
+#[UsesClass(\Deriver\Standard\TypePredicates::class)]
+#[UsesClass(Term::class)]
 #[Small]
 final class InstructionTransferTest extends TestCase
 {
@@ -138,14 +151,14 @@ final class InstructionTransferTest extends TestCase
     }
     public function testOtherConvertsEvalIntoAnExplicitStateBoundary(): void
     {
-        $context = \Tests\Fake\SolverFixture::context();
-        $machine = new \Deriver\Internal\Solver\Machine($context);
+        $context = SolverFixture::context();
+        $machine = new Machine($context);
         $body = $context->program->callable('target');
         self::assertNotNull($body);
 
-        $state = new \Deriver\Internal\Solver\State();
-        $state->memory->write($state->local('x'), \Deriver\Value\Term::constant(1));
-        $value = (new \Deriver\Internal\Solver\InstructionTransfer($machine))->other($body, new \Deriver\Internal\IR\Instruction('eval', 'symbol-table-boundary', $body->source, 'result', name:'UNSUPPORTED_LANGUAGE_FEATURE'), $state);
+        $state = new State();
+        $state->memory->write($state->local('x'), Term::constant(1));
+        $value = (new InstructionTransfer($machine))->other($body, new Instruction('eval', 'symbol-table-boundary', $body->source, 'result', name:'UNSUPPORTED_LANGUAGE_FEATURE'), $state);
         self::assertSame('opaque', $value->kind);
         self::assertSame('opaque', $state->snapshot()['x']->kind);
     }
@@ -163,49 +176,49 @@ final class InstructionTransferTest extends TestCase
     }
     public function testStorageRoutesOffsetReadsThroughContainerSemantics(): void
     {
-        $context = \Tests\Fake\SolverFixture::context();
+        $context = SolverFixture::context();
         $body = $context->program->callable('target');
         self::assertNotNull($body);
-        $instruction = new \Deriver\Internal\IR\Instruction('offset', 'write', $body->source, 'result', ['slot', 'rhs']);
-        $state = new \Deriver\Internal\Solver\State();
-        $state->addresses['base'] = $state->memory->allocate(\Deriver\Value\Term::constant('abc'));
-        $state->offsets['slot'] = new \Deriver\Internal\Solver\Offset\Address('base', \Deriver\Value\Term::constant(-1));
-        $read = new \Deriver\Internal\IR\Instruction('read', 'read', $body->source, 'result', ['slot']);
-        $paths = (new \Deriver\Internal\Solver\InstructionTransfer(new \Deriver\Internal\Solver\Machine($context)))->storage($body, $read, $state);
+        $instruction = new Instruction('offset', 'write', $body->source, 'result', ['slot', 'rhs']);
+        $state = new State();
+        $state->addresses['base'] = $state->memory->allocate(Term::constant('abc'));
+        $state->offsets['slot'] = new \Deriver\Internal\Solver\Offset\Address('base', Term::constant(-1));
+        $read = new Instruction('read', 'read', $body->source, 'result', ['slot']);
+        $paths = (new InstructionTransfer(new Machine($context)))->storage($body, $read, $state);
         self::assertNotNull($paths);
         self::assertSame('c', $paths[0]->value('result')->native());
     }
     public function testOffsetReadPreservesSilentAbsenceOnComputedArrays(): void
     {
-        $context = \Tests\Fake\SolverFixture::context('<?php class Box implements ArrayAccess {public mixed $value=0;function offsetGet($key){return $key;}function offsetExists($key){return $key === "yes";}function offsetSet($key,$value){$this->value=$value;}function offsetUnset($key){$this->value=null;}}function target(){}');
+        $context = SolverFixture::context('<?php class Box implements ArrayAccess {public mixed $value=0;function offsetGet($key){return $key;}function offsetExists($key){return $key === "yes";}function offsetSet($key,$value){$this->value=$value;}function offsetUnset($key){$this->value=null;}}function target(){}');
         $body = $context->program->callable('target');
         self::assertNotNull($body);
-        $state = new \Deriver\Internal\Solver\State();
-        $state->memory->cells['box'] = \Deriver\Value\Term::array(['value' => \Deriver\Value\Term::constant(0)]);
+        $state = new State();
+        $state->memory->cells['box'] = Term::array(['value' => Term::constant(0)]);
         $state->memory->classes['box'] = 'Box';
-        $receiver = new \Deriver\Value\Term('object', 'box', attributes: ['class' => 'Box']);
-        $access = new \Deriver\Internal\Solver\Offset\ProtocolAccess($receiver, \Deriver\Value\Term::constant('yes'));
-        $protocol = new \Deriver\Internal\Solver\Offset\Protocol(new \Deriver\Internal\Solver\Machine($context));
-        $state->registers['array'] = \Deriver\Value\Term::array([]);
-        $state->registers['key'] = \Deriver\Value\Term::constant('absent');
-        $instruction = new \Deriver\Internal\IR\Instruction('read', 'array-read', $body->source, 'result', ['array','key'], attributes: ['silent' => true]);
-        $paths = (new \Deriver\Internal\Solver\InstructionTransfer(new \Deriver\Internal\Solver\Machine($context)))->offsetRead($body, $instruction, $state);
+        $receiver = new Term('object', 'box', attributes: ['class' => 'Box']);
+        $access = new \Deriver\Internal\Solver\Offset\ProtocolAccess($receiver, Term::constant('yes'));
+        $protocol = new \Deriver\Internal\Solver\Offset\Protocol(new Machine($context));
+        $state->registers['array'] = Term::array([]);
+        $state->registers['key'] = Term::constant('absent');
+        $instruction = new Instruction('read', 'array-read', $body->source, 'result', ['array','key'], attributes: ['silent' => true]);
+        $paths = (new InstructionTransfer(new Machine($context)))->offsetRead($body, $instruction, $state);
         self::assertSame('uninitialized', $paths[0]->value('result')->kind);
         self::assertSame([], $context->frontiers);
     }
     public function testStorageRetainsUnknownReferenceEffectsAndExceptions(): void
     {
-        $context = \Tests\Fake\SolverFixture::context();
+        $context = SolverFixture::context();
         $body = $context->program->callable('target');
         self::assertNotNull($body);
-        $machine = new \Deriver\Internal\Solver\Machine($context);
-        $state = new \Deriver\Internal\Solver\State();
-        $instruction = new \Deriver\Internal\IR\Instruction('arg', 'argument', $body->source, 'result', ['prepared', 'input']);
+        $machine = new Machine($context);
+        $state = new State();
+        $instruction = new Instruction('arg', 'argument', $body->source, 'result', ['prepared', 'input']);
 
         $state->addresses['unknown'] = new \Deriver\Internal\Memory\Location('unresolved', unknown: true);
-        $state->memory->write($state->local('value'), \Deriver\Value\Term::constant(1));
-        $reference = new \Deriver\Internal\IR\Instruction('ref', 'reference', $body->source, 'result', ['unknown']);
-        $paths = (new \Deriver\Internal\Solver\InstructionTransfer($machine))->storage($body, $reference, $state);
+        $state->memory->write($state->local('value'), Term::constant(1));
+        $reference = new Instruction('ref', 'reference', $body->source, 'result', ['unknown']);
+        $paths = (new InstructionTransfer($machine))->storage($body, $reference, $state);
         self::assertNotNull($paths);
         self::assertCount(2, $paths);
         self::assertSame('opaque', $paths[0]->registers['result']->kind);
@@ -213,10 +226,61 @@ final class InstructionTransferTest extends TestCase
     }
     public function testPreparationLeavesOrdinaryOperationsToValueTransfer(): void
     {
-        $context = \Tests\Fake\SolverFixture::context();
+        $context = SolverFixture::context();
         $body = $context->program->callable('target');
         self::assertNotNull($body);
-        $instruction = new \Deriver\Internal\IR\Instruction('value', 'constant', $body->source, constant: \Deriver\Value\Term::constant(1));
-        self::assertNull((new \Deriver\Internal\Solver\InstructionTransfer(new \Deriver\Internal\Solver\Machine($context)))->preparation($body, $instruction, new \Deriver\Internal\Solver\State()));
+        $instruction = new Instruction('value', 'constant', $body->source, constant: Term::constant(1));
+        self::assertNull((new InstructionTransfer(new Machine($context)))->preparation($body, $instruction, new State()));
     }
+
+    /**
+     * @param Term $item Unpack operand
+     */
+    #[DataProvider('providerInvalidUnpacks')]
+    public function testUnpackRejectsNonIterableValues(Term $item, string $exception): void
+    {
+        $state = new State();
+        $state->registers = ['array' => Term::array([]),'item' => $item];
+        $instruction = new Instruction('unpack', 'array-unpack', new SourceRef('test', 'fixture.php', 0, 1), 'result', ['array','','item']);
+        $paths = (new InstructionTransfer(new Machine(SolverFixture::context())))->unpack($instruction, $state);
+        self::assertCount(1, $paths);
+        self::assertSame('throw', $paths[0]->completion->kind);
+        self::assertNotNull($paths[0]->completion->value);
+        self::assertSame($exception, $paths[0]->completion->value->literal);
+    }
+
+    /**
+     * @return array<string,array{Term,string}>
+     */
+    public static function providerInvalidUnpacks(): array
+    {
+        return ['null' => [Term::constant(null),'Error'],'int' => [Term::constant(3),'Error'],'string' => [Term::constant('abc'),'Error'],'bool' => [Term::constant(false),'Error'],'closure' => [new Term('closure', 'body'),'TypeError']];
+    }
+
+    public function testUnpackRetainsUnknownIterableEffectsAndBothExits(): void
+    {
+        $context = SolverFixture::context();
+        $state = new State();
+        $state->memory->cells['global:x'] = Term::constant(4);
+        $state->registers = ['array' => Term::array([]),'item' => Term::parameter('input', 'iterable')];
+        $instruction = new Instruction('unpack', 'array-unpack', new SourceRef('test', 'fixture.php', 0, 1), 'result', ['array','','item']);
+        $paths = (new InstructionTransfer(new Machine($context)))->unpack($instruction, $state);
+        self::assertCount(2, $paths);
+        self::assertSame('opaque', $paths[0]->registers['result']->kind);
+        self::assertSame('opaque', $paths[0]->memory->cells['global:x']->kind);
+        self::assertSame('throw', $paths[1]->completion->kind);
+        self::assertSame(['UNSUPPORTED_LANGUAGE_FEATURE'], array_column(array_values($context->frontiers), 'code'));
+    }
+
+    public function testUnpackMergesClosedArraysInInsertionOrder(): void
+    {
+        $state = new State();
+        $state->registers = ['array' => Term::fromNative(['a' => 1,0 => 'first']),'item' => Term::fromNative(['a' => 2,7 => 'last'])];
+        $instruction = new Instruction('unpack', 'array-unpack', new SourceRef('test', 'fixture.php', 0, 1), 'result', ['array','','item']);
+        $paths = (new InstructionTransfer(new Machine(SolverFixture::context())))->unpack($instruction, $state);
+        self::assertCount(1, $paths);
+        self::assertSame(['a' => 2,0 => 'first',1 => 'last'], $paths[0]->registers['result']->native());
+        self::assertSame('normal', $paths[0]->completion->kind);
+    }
+
 }

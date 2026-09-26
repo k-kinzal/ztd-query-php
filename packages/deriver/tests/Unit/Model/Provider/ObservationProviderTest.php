@@ -49,6 +49,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Model\Provider\DispatchProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\EntryPointProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\EnvironmentProvider::class)]
+#[UsesClass(\Deriver\Model\Provider\Provider::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
