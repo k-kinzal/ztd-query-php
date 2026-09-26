@@ -123,6 +123,6 @@ A statement with the same `id` and a different `site.line` is unchanged; only th
 | `statements/` | A page per statement: the formatted SQL, the SQL as written, the call site and path, tables, bound values, findings, related statements, and the PHP source around the call. |
 | `assets/` | The stylesheet, scripts and search index. |
 
-Every page has a search box that finds statements by SQL, table, function or file. SQL is formatted with [sql-formatter](../../sql-formatter/) when a MySQL, PostgreSQL or SQLite grammar accepts it, and shown as written otherwise. In the HTML, a gap shows the PHP variable it comes from, such as `{$sql}`, when that is known.
+Every page has a search box that finds statements by SQL, table, function or file. SQL is formatted with [sql-formatter](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-formatter) when a MySQL, PostgreSQL or SQLite grammar accepts it, and shown as written otherwise. In the HTML, a gap shows the PHP variable it comes from, such as `{$sql}`, when that is known.
 
 The report embeds the source code around each database call and the full text of each analyzed file. Share it only where you would share the source.

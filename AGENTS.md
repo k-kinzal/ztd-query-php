@@ -41,7 +41,7 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/bison-parser/README.md](packages/bison-parser/README.md) - Reading GNU Bison grammar files into a lossless syntax tree, and printing it back
 - [packages/container/README.md](packages/container/README.md) - Container definitions for testcontainers-php used across the repository, their image versions, and how to use them
 - [packages/lemon-parser/README.md](packages/lemon-parser/README.md) - Reading Lemon grammar files into a lossless syntax tree, and printing it back
-- [packages/requirements/README.md](packages/requirements/README.md) - Linking source text, EARS specifications, and tests; installation and usage
+- [packages/requirements/README.md](packages/requirements/README.md) - Linking source text, EARS specifications, and tests; requirements and getting started
 - [packages/requirements/docs/cli.md](packages/requirements/docs/cli.md) - Commands, options, exit codes, coverage and test results, and CI gates
 - [packages/requirements/docs/configuration.md](packages/requirements/docs/configuration.md) - The configuration file (version 1): definition files, bootstrap, extensions, runners and coverage gates
 - [packages/requirements/docs/definitions.md](packages/requirements/docs/definitions.md) - Definition documents (version 1): sources, items, selectors and the experimental Markdown profile
@@ -60,19 +60,19 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/sql-catalog/docs/extensions/mysqli.md](packages/sql-catalog/docs/extensions/mysqli.md) - mysqli support: recognised calls and limits
 - [packages/sql-catalog/docs/extensions/pdo.md](packages/sql-catalog/docs/extensions/pdo.md) - PDO support: recognised calls, bindings and limits
 - [packages/sql-catalog/docs/extensions/wordpress.md](packages/sql-catalog/docs/extensions/wordpress.md) - WordPress support: wpdb calls, wpdb::prepare(), the $wpdb global and limits
-- [packages/sql-faker/README.md](packages/sql-faker/README.md) - Grammar-based SQL generation: installation, providers, and supported versions
+- [packages/sql-faker/README.md](packages/sql-faker/README.md) - Grammar-based SQL generation for MySQL, PostgreSQL, and SQLite: requirements, supported versions, installation, and usage
 - [packages/sql-faker/docs/algorithm.md](packages/sql-faker/docs/algorithm.md) - How SQL is derived from the official grammars, and its limitations
-- [packages/sql-fixture/README.md](packages/sql-fixture/README.md) - Generating fixture data from CREATE TABLE statements, databases, or DDL files
-- [packages/sql-formatter/README.md](packages/sql-formatter/README.md) - Formatting SQL with layout presets: installation and usage
+- [packages/sql-fixture/README.md](packages/sql-fixture/README.md) - Generating fixture data from CREATE TABLE statements, databases, or DDL files: requirements, supported databases, installation, and usage
+- [packages/sql-formatter/README.md](packages/sql-formatter/README.md) - Formatting SQL with layout presets: requirements, supported versions, installation, and usage
 - [packages/sql-parser/README.md](packages/sql-parser/README.md) - Lossless LALR(1) SQL parsers built from the official grammars
-- [packages/sql-semantics/README.md](packages/sql-semantics/README.md) - Binding SQL to a schema: installation and usage
-- [packages/ztd-query-core/README.md](packages/ztd-query-core/README.md) - ZTD Query overview, installation, and usage
+- [packages/sql-semantics/README.md](packages/sql-semantics/README.md) - Binding SQL to a schema: requirements, supported versions, installation, and usage
+- [packages/ztd-query-core/README.md](packages/ztd-query-core/README.md) - ZTD Query core: requirements, installation, usage, configuration, and SQL support
 - [packages/ztd-query-core/docs/mechanism.md](packages/ztd-query-core/docs/mechanism.md) - The Zero Table Dependency model: what it is, how it works, and its scope
-- [packages/ztd-query-mysql/README.md](packages/ztd-query-mysql/README.md) - MySQL platform support: installation and usage
+- [packages/ztd-query-mysql/README.md](packages/ztd-query-mysql/README.md) - MySQL platform: requirements, installation, usage, configuration, and SQL support
 - [packages/ztd-query-mysql/docs/spec.md](packages/ztd-query-mysql/docs/spec.md) - How ZTD handles MySQL SQL statements
-- [packages/ztd-query-mysqli-adapter/README.md](packages/ztd-query-mysqli-adapter/README.md) - MySQLi adapter: installation and usage
-- [packages/ztd-query-pdo-adapter/README.md](packages/ztd-query-pdo-adapter/README.md) - PDO adapter: installation and usage
-- [packages/ztd-query-postgres/README.md](packages/ztd-query-postgres/README.md) - PostgreSQL platform support: installation and usage
+- [packages/ztd-query-mysqli-adapter/README.md](packages/ztd-query-mysqli-adapter/README.md) - MySQLi adapter: requirements, installation, usage, configuration, and SQL support
+- [packages/ztd-query-pdo-adapter/README.md](packages/ztd-query-pdo-adapter/README.md) - PDO adapter: requirements, installation, usage, configuration, and SQL support
+- [packages/ztd-query-postgres/README.md](packages/ztd-query-postgres/README.md) - PostgreSQL platform: requirements, installation, usage, configuration, and SQL support
 - [packages/ztd-query-postgres/docs/spec.md](packages/ztd-query-postgres/docs/spec.md) - How ZTD handles PostgreSQL SQL statements
-- [packages/ztd-query-sqlite/README.md](packages/ztd-query-sqlite/README.md) - SQLite platform support: installation and usage
+- [packages/ztd-query-sqlite/README.md](packages/ztd-query-sqlite/README.md) - SQLite platform: requirements, installation, usage, configuration, and SQL support
 - [packages/ztd-query-sqlite/docs/spec.md](packages/ztd-query-sqlite/docs/spec.md) - How ZTD handles SQLite SQL statements
