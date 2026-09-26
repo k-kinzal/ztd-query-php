@@ -2,21 +2,21 @@ name: Fuzz (sql-fixture)
 
 on:
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '53 3 * * *'
   workflow_dispatch:
     inputs:
       max_runs:
-        description: 'Max fuzzing iterations'
+        description: Maximum mutation iterations after the initial corpus is replayed
+        required: true
         default: '10000'
         type: string
 
 permissions:
-  actions: read
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   COMPOSER_NO_INTERACTION: '1'
@@ -24,114 +24,122 @@ env:
 jobs:
   fuzz:
     if: github.ref == 'refs/heads/main'
-    name: ${{ matrix.target.name }}
-    timeout-minutes: 30
+    name: Fuzz ${{ matrix.target.name }}
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
         target:
-          - { name: create-table, script: fuzz_create_table.php, corpus: create-table, extensions: "mbstring, pcntl" }
-          - { name: insert-select, script: fuzz_insert_select.php, corpus: insert-select, extensions: "mbstring, pcntl, pdo, pdo_mysql" }
+          - { name: create-table, script: fuzz_create_table.php, extensions: 'mbstring, pcntl' }
+          - { name: insert-select, script: fuzz_insert_select.php, extensions: 'mbstring, pcntl, pdo, pdo_mysql' }
     defaults:
       run:
         working-directory: packages/sql-fixture
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.3'
+          php-version: '8.5'
           extensions: ${{ matrix.target.extensions }}
           coverage: none
-
-      - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/sql-fixture
           dependency-versions: locked
           composer-options: --prefer-dist
           require-lock-file: true
-
-      - name: Check installed platform requirements
-        run: composer check-platform-reqs
-
-      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: packages/sql-fixture/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-sql-fixture-v2-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            fuzz-sql-fixture-v2-${{ matrix.target.corpus }}-
-
-      - name: Run the bounded fuzz campaign
+      - name: Check runtime platform requirements
+        run: composer check-platform-reqs --no-dev
+      - name: Validate the manual run budget
         env:
-          MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+          FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
         run: |
-          set -euo pipefail
-          case "$MAX_RUNS" in
+          case "$FUZZ_MAX_RUNS" in
             ''|*[!0-9]*) echo 'max_runs must be a positive integer.' >&2; exit 2 ;;
           esac
-          if [ "${#MAX_RUNS}" -gt 8 ] || [ "$MAX_RUNS" -lt 1 ]; then
+          if [ "${#FUZZ_MAX_RUNS}" -gt 8 ] || [ "$FUZZ_MAX_RUNS" -lt 1 ]; then
             echo 'max_runs must be between 1 and 99999999.' >&2
             exit 2
           fi
-          mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
-          vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
-            fuzz/corpus/${{ matrix.target.corpus }}/ \
-            --max-runs="$MAX_RUNS" 2>&1 | tee "build/fuzz/${{ matrix.target.name }}.log"
-
-      - if: always()
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - name: Restore the evolving corpus
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: packages/sql-fixture/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-sql-fixture-v2-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
-
-      - if: ${{ always() && hashFiles('packages/sql-fixture/crash-*', 'packages/sql-fixture/timeout-*', 'packages/sql-fixture/oom-*') != '' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: fuzz-crashes-sql-fixture-${{ matrix.target.name }}
-          path: |
-            packages/sql-fixture/crash-*
-            packages/sql-fixture/timeout-*
-            packages/sql-fixture/oom-*
-            packages/sql-fixture/build/fuzz/
-
-  notify:
-    if: always() && github.ref == 'refs/heads/main'
-    name: Notify on crash
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      actions: read
-      issues: write
-    runs-on: ubuntu-latest
-    needs: [fuzz]
-    steps:
-      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+          path: packages/sql-fixture/fuzz/corpus/${{ matrix.target.name }}
+          key: sql-fixture-corpus-v1-${{ matrix.target.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: sql-fixture-corpus-v1-${{ matrix.target.name }}-
+      - name: Run PHP-Fuzzer
+        env:
+          FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/fuzz "fuzz/corpus/${{ matrix.target.name }}"
+          vendor/bin/php-fuzzer fuzz \
+            "fuzz/${{ matrix.target.script }}" \
+            "fuzz/corpus/${{ matrix.target.name }}/" \
+            "--max-runs=$FUZZ_MAX_RUNS" 2>&1 | tee "build/fuzz/${{ matrix.target.name }}.log"
+      - name: Open an issue for a finding
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        env:
+          FUZZ_TARGET: ${{ matrix.target.name }}
+          FUZZ_SCRIPT: ${{ matrix.target.script }}
         with:
           script: |
-            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const crypto = require('node:crypto');
+            const target = process.env.FUZZ_TARGET;
+            const script = process.env.FUZZ_SCRIPT;
+            const root = path.resolve('packages/sql-fixture');
+            const log = fs.readFileSync(path.join(root, `build/fuzz/${target}.log`), 'utf8');
+            const finding = log.match(/^(?:CORPUS )?CRASH in (.+)!$/m);
+            if (!finding) return;
+            const input = fs.readFileSync(path.resolve(root, finding[1]));
+            const hash = crypto.createHash('sha256').update(input).digest('hex');
+            const marker = `<!-- sql-fixture-fuzz:${target}:${hash} -->`;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo, state: 'open', per_page: 100
             });
-            if (!data.artifacts.some(({ name }) => name.startsWith('fuzz-crashes-'))) {
-              console.log('No fuzz crash artifacts found');
-              return;
-            }
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: 'fuzz',
-              state: 'open'
-            });
-            if (issues.length > 0) {
-              console.log('Open fuzz issue already exists, skipping creation');
-              return;
-            }
+            if (issues.some(issue => !issue.pull_request && issue.body?.includes(marker))) return;
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              marker,
+              `PHP-Fuzzer found a contract violation in the ${target} target.`,
+              `Commit: ${context.sha}`,
+              `Workflow and input artifact: ${run} (sql-fixture-fuzz-${target})`,
+              'Run from packages/sql-fixture after extracting the artifact:',
+              '```sh',
+              `vendor/bin/php-fuzzer run-single fuzz/${script} '${finding[1]}'`,
+              '```',
+              `Input SHA-256: ${hash}`,
+              '<details><summary>PHP-Fuzzer output</summary>',
+              '', '```text', log.slice(-45000), '```', '</details>'
+            ].join('\n\n');
             await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Fuzz: Crash detected (sql-fixture)`,
-              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCheck the uploaded artifacts for crash details.`,
-              labels: ['bug', 'fuzz']
+              ...context.repo,
+              title: `[sql-fixture fuzz] ${target}: ${hash.slice(0, 12)}`,
+              body
             });
+      - name: Save the evolving corpus
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/sql-fixture/fuzz/corpus/${{ matrix.target.name }}
+          key: sql-fixture-corpus-v1-${{ matrix.target.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Upload PHP-Fuzzer inputs and output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sql-fixture-fuzz-${{ matrix.target.name }}
+          path: |
+            packages/sql-fixture/crash-*
+            packages/sql-fixture/build/fuzz/${{ matrix.target.name }}.log
+            packages/sql-fixture/fuzz/corpus/${{ matrix.target.name }}/
+          if-no-files-found: ignore
+          retention-days: 14
