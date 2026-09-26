@@ -44,6 +44,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ExpressionRef::class)]
 #[UsesClass(PointRef::class)]
 #[UsesClass(SourceRef::class)]
+#[UsesClass(QueryValidation::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphTemplate::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SnapshotRebase::class)]

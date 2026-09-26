@@ -150,7 +150,7 @@ final class ConditionalLoweringTest extends TestCase
         $l = \Tests\Fake\FrontendFixture::lowering();
         (new \Deriver\Internal\Frontend\Php\Control\ConditionalLowering($l))->choice(new \PhpParser\Node\Expr\Variable('flag'), 'condition', static fn (): string => 'true-value', static fn (): string => 'false-value');
         self::assertSame([1, 2], $l->graph->terminators[0]->targets);
-        self::assertSame(['true-value', 'false-value'], $l->graph->instructions[3][0]->operands);
+        self::assertSame(['true-value', 'false-value', 'condition'], $l->graph->instructions[3][0]->operands);
         self::assertSame(['left' => 1, 'right' => 2], $l->graph->instructions[3][0]->attributes);
     }
     public function testIssetExpressionDelaysLaterOperandsUntilTheFirstIsPresent(): void

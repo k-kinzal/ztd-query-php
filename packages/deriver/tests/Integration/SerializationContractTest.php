@@ -172,4 +172,29 @@ final class SerializationContractTest extends TestCase
         yield 'foreach reference' => ['foreach($a as &$value){return $value;}return null;'];
     }
 
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerConfidentialExistence')]
+    public function testExistenceResultsRetainConfidentialInputLabels(string $body): void
+    {
+        $session = Analysis::session('<?php function target(string $input){'.$body.'}');
+        $result = $session->derive(new ReturnQuery('target', QueryScope::fromEntrypoints([new EntryPoint('target', [Term::constant('xx', true)])])));
+        self::assertSame([], $result->frontiers);
+        self::assertFalse($result->normalOutcomes[0]->values['return']->native());
+        self::assertTrue($result->normalOutcomes[0]->values['return']->isSecret());
+        self::assertStringContainsString('"redacted": true', $result->toJson());
+    }
+    /**
+     * @return iterable<string,array{string}>
+     */
+    public static function providerConfidentialExistence(): iterable
+    {
+        yield 'secret string length' => ['return isset($input[3]);'];
+        yield 'secret invalid string key' => ['$s="abc";return isset($s[$input]);'];
+        yield 'secret ternary' => ['return $input === "xx" ? false : true;'];
+        yield 'secret short circuit' => ['return $input === "yy" && true;'];
+        yield 'secret absent array key' => ['$a=["public"=>1];return isset($a[$input]);'];
+    }
 }

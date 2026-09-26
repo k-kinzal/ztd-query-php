@@ -36,7 +36,7 @@ final class Strings
         }
         if ($key->kind !== 'constant') {
             return in_array($key->kind, ['array', 'object', 'closure', 'enum'], true)
-                ? new Term($silent ? 'uninitialized' : 'throwable', $silent ? null : 'TypeError')
+                ? new Term($silent ? 'uninitialized' : 'throwable', $silent ? null : 'TypeError', secret: $key->isSecret())
                 : Term::opaque('OFFSET_OPERATION', 'int', [$key]);
         }
         $value = $key->literal;
@@ -62,13 +62,13 @@ final class Strings
         $integer = preg_match('/\A\s*[+-]?[0-9]+\s*\z/D', $value) === 1;
         $floatPrefix = preg_match('/\A\s*[+-]?(?:[0-9]+\.[0-9]*|\.[0-9]+|[0-9]+[eE][+-]?[0-9]+)/', $value) === 1;
         if (!$integer && ($floatPrefix || preg_match('/\A\s*[+-]?[0-9]+/', $value) !== 1 || $silent)) {
-            return $silent ? new Term('uninitialized') : new Term('throwable', 'TypeError');
+            return $silent ? new Term('uninitialized', secret: $key->isSecret()) : new Term('throwable', 'TypeError', secret: $key->isSecret());
         }
         preg_match('/\A\s*([+-]?)([0-9]+)/', $value, $parts);
         $digits = ltrim($parts[2] ?? '', '0');
         $limit = ($parts[1] ?? '') === '-' ? '9223372036854775808' : '9223372036854775807';
         if (strlen($digits) > 19 || strlen($digits) === 19 && strcmp($digits, $limit) > 0) {
-            return $silent ? new Term('uninitialized') : new Term('throwable', 'TypeError');
+            return $silent ? new Term('uninitialized', secret: $key->isSecret()) : new Term('throwable', 'TypeError', secret: $key->isSecret());
         }
         if (!$integer) {
             $this->warning($instruction);
@@ -96,7 +96,7 @@ final class Strings
             if (!$silent) {
                 $this->warning($instruction);
             }
-            return $silent ? new Term('uninitialized') : Term::constant('', $string->isSecret() || $index->isSecret());
+            return $silent ? new Term('uninitialized', secret: $string->isSecret() || $index->isSecret()) : Term::constant('', $string->isSecret() || $index->isSecret());
         }
         return Term::constant($bytes[$position], $string->isSecret() || $index->isSecret());
     }

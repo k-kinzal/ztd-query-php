@@ -92,6 +92,9 @@ final class PropertyReference
             return [$state];
         }
         $before = $state->memory->read($address);
+        if ($before->kind === 'uninitialized' && ($slot->declaration->type ?? 'mixed') !== 'mixed') {
+            return [(new PropertyTransfer($this->machine))->error($state, 'Error')];
+        }
         $after = (new MemoryStep($this->machine->context))->incremented($before, $instruction);
         if ($after->kind === 'throwable') {
             $state->completion = new Completion('throw', $after);

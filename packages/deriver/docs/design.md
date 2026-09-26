@@ -90,7 +90,7 @@ Frontiers identify root causes, source positions, affected projections, known de
 
 JSON has a versioned schema and shared value references. PHP array entries preserve key types and order. Binary strings, 64-bit integers, and nonfinite floating-point values use tagged lossless encodings. The library does not use PHP object serialization for result data.
 
-Explicitly supplied secrets retain a secrecy attribute through operations, including custom intrinsic results, array selection, references, and iteration. A confidential aggregate labels every selected value; a confidential lookup key labels the selected result. Reports redact confidential values unless the caller explicitly requests their inclusion. Host environment variables are not silently substituted for symbolic application inputs.
+Explicitly supplied secrets retain a secrecy attribute through operations, including custom intrinsic results, array selection, references, and iteration. A confidential aggregate labels every selected value; a confidential lookup key labels the selected result. Existence tests preserve confidential absence, and conditional expressions retain the label of their selecting condition. Reports redact confidential values unless the caller explicitly requests their inclusion. Host environment variables are not silently substituted for symbolic application inputs.
 
 ## Evidence and validation
 

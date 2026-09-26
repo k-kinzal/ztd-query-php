@@ -81,6 +81,7 @@ use RuntimeException;
 #[UsesClass(\Deriver\Internal\Memory\Memory::class)]
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
+#[UsesClass(ModelBoundary::class)]
 #[UsesClass(\Deriver\Internal\Model\ModelPrecedence::class)]
 #[UsesClass(\Deriver\Internal\Model\PlanActions::class)]
 #[UsesClass(\Deriver\Internal\Model\PlanCompiler::class)]

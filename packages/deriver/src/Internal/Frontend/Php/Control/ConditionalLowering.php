@@ -121,7 +121,7 @@ final class ConditionalLowering
         $g->jump($join);
         $falseExit = $g->current;
         $g->current = $join;
-        return $g->emit($node, 'phi', [$a, $b], attributes: ['left' => $trueExit, 'right' => $falseExit]);
+        return $g->emit($node, 'phi', [$a, $b, $condition], attributes: ['left' => $trueExit, 'right' => $falseExit]);
     }
 
     /**

@@ -195,4 +195,38 @@ final class PropertyReferenceTest extends TestCase
         self::assertSame('uninitialized', $result->normalOutcomes[0]->values['return']->native());
         self::assertSame([], $result->frontiers);
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerUninitializedIncrement')]
+    public function testIncrementRejectsUninitializedTypedPropertiesBeforeAnyWrite(string $type, int $delta, bool $post): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'a.php', 0, 1);
+        $caller = new \Deriver\Internal\IR\CallableIR('target', [], [], $source);
+        $state = new \Deriver\Internal\Solver\State();
+        $address = new \Deriver\Internal\Memory\Location('object:one', ['x']);
+        $before = new \Deriver\Value\Term('uninitialized', attributes:['type' => $type]);
+        $state->memory->write($address, $before);
+        $slot = new \Deriver\Internal\Solver\Transfer\PropertySlot(new \Deriver\Value\Term('object', 'one', attributes:['class' => 'B']), 'x', 'B', new \Deriver\Internal\IR\PropertyDeclaration('x', 'B', $type));
+        $instruction = new \Deriver\Internal\IR\Instruction('i', 'increment', $source, 'result', ['address'], attributes:['delta' => $delta,'post' => $post]);
+        $paths = (new \Deriver\Internal\Solver\Transfer\PropertyReference(new \Deriver\Internal\Solver\Machine($context)))->increment($caller, $instruction, $state, $slot, $address);
+        self::assertCount(1, $paths);
+        self::assertSame('throw', $paths[0]->completion->kind);
+        self::assertSame('Error', $paths[0]->completion->value?->literal);
+        self::assertSame($before, $paths[0]->memory->read($address));
+        self::assertSame([], $state->registers);
+        self::assertSame([], $context->frontiers);
+    }
+    /**
+     * @return iterable<string,array{string,int,bool}>
+     */
+    public static function providerUninitializedIncrement(): iterable
+    {
+        yield 'integer post increment' => ['int',1,true];
+        yield 'integer pre increment' => ['int',1,false];
+        yield 'nullable post decrement' => ['int|null',-1,true];
+        yield 'nullable pre decrement' => ['int|null',-1,false];
+        yield 'string post increment' => ['string',1,true];
+        yield 'float pre decrement' => ['float',-1,false];
+    }
+
 }

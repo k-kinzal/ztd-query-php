@@ -42,7 +42,7 @@ final class PureStep
             'binary' => $this->binary($instruction, $a, $b),
             'unary' => $semantics->unary($instruction->name, $a),
             'cast' => $semantics->cast($instruction->name, $a),
-            'phi' => $state->previous === ($instruction->attributes['left'] ?? -1) ? $a : $b,
+            'phi' => $this->phi($instruction, $state),
             'not-null' => $this->notNull($a),
             'constant-fetch' => $this->constant($instruction->name, $instruction),
             'magic-constant' => $this->magic($callable, $instruction),
@@ -51,6 +51,20 @@ final class PureStep
             'raise' => new Term('throwable', $instruction->name),
             default => $this->context->frontier('UNSUPPORTED_LANGUAGE_FEATURE', $instruction->source, $instruction->operation, [$a, $b]),
         };
+    }
+
+    /**
+     * Selects a branch value while retaining confidentiality of its selecting condition.
+     * @param Instruction $instruction Phi inputs and predecessor blocks
+     * @param State $state Current registers and predecessor
+     * @return Term Selected value
+     */
+    public function phi(Instruction $instruction, State $state): Term
+    {
+        $index = $state->previous === ($instruction->attributes['left'] ?? -1) ? 0 : 1;
+        $value = $state->value($instruction->operands[$index] ?? '');
+        $condition = $state->value($instruction->operands[2] ?? '');
+        return $condition->isSecret() && !$value->secret ? new Term($value->kind, $value->literal, $value->operands, $value->attributes, true) : $value;
     }
 
     /**

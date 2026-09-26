@@ -133,6 +133,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
 #[UsesClass(\Deriver\Standard\ArrayFunctions::class)]
 #[UsesClass(\Deriver\Standard\FunctionModel::class)]
+#[UsesClass(Library::class)]
 #[UsesClass(\Deriver\Standard\ScalarFunctions::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]

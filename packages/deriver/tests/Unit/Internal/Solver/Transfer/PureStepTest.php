@@ -356,4 +356,31 @@ final class PureStepTest extends TestCase
         self::assertTrue($keySelected->secret);
     }
 
+
+    #[DataProvider('providerConfidentialPhi')]
+    public function testPhiRetainsTheSelectedValueAndConditionConfidentiality(int $previous, bool $conditionSecret, bool $selectedSecret, string $expected): void
+    {
+        $state = new State();
+        $state->previous = $previous;
+        $state->registers['left'] = Term::constant('left', $selectedSecret);
+        $state->registers['right'] = Term::constant('right', $selectedSecret);
+        $state->registers['condition'] = Term::constant($previous === 7, $conditionSecret);
+        $instruction = new Instruction('i', 'phi', new SourceRef('test', 'a.php', 0, 1), 'result', ['left','right','condition'], attributes:['left' => 7,'right' => 8]);
+        $result = (new PureStep(SolverFixture::context()))->phi($instruction, $state);
+        self::assertSame($expected, $result->native());
+        self::assertSame($conditionSecret || $selectedSecret, $result->isSecret());
+        self::assertSame($selectedSecret, $state->registers[$expected]->secret);
+    }
+    /**
+     * @return iterable<string,array{int,bool,bool,string}>
+     */
+    public static function providerConfidentialPhi(): iterable
+    {
+        yield 'public true' => [7,false,false,'left'];
+        yield 'public false' => [8,false,false,'right'];
+        yield 'secret true' => [7,true,false,'left'];
+        yield 'secret false' => [8,true,false,'right'];
+        yield 'secret selected' => [7,false,true,'left'];
+        yield 'both secret' => [8,true,true,'right'];
+    }
 }
