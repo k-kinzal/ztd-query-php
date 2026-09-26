@@ -49,7 +49,7 @@ final class Extensions
                 throw new InvalidInputException('MODEL_CONFLICT: repeated intrinsic operation or ID.');
             }
             $this->intrinsics[$descriptor->operation] = $intrinsic;
-            $this->manifest['intrinsic:' . $descriptor->id] = $descriptor->version . ':' . $descriptor->operation . ':' . $descriptor->arity . ':' . implode(',', $descriptor->dependencies);
+            $this->manifest['intrinsic:' . $descriptor->id] = hash('sha256', serialize([$descriptor->version, $descriptor->operation, $descriptor->arity, $descriptor->dependencies]));
         }
         foreach ($configuration->domains as $domain) {
             [$id, $version] = $boundary->domainRegistration($domain);

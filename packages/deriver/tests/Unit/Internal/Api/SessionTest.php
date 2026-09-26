@@ -76,8 +76,10 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
 #[UsesClass(\Deriver\Internal\Model\ModelBoundary::class)]
+#[UsesClass(\Deriver\Internal\Model\ModelPrecedence::class)]
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Internal\Model\Registry::class)]
+#[UsesClass(\Deriver\Internal\Model\SignatureIdentity::class)]
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
@@ -120,11 +122,20 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\SecretFingerprint::class)]
+#[UsesClass(\Deriver\Model\Contract\DomainLaws::class)]
+#[UsesClass(\Deriver\Model\Domain\AbstractDomain::class)]
+#[UsesClass(\Deriver\Model\Domain\DomainFact::class)]
+#[UsesClass(\Deriver\Model\ModelDescriptor::class)]
+#[UsesClass(\Deriver\Model\Plan\Action::class)]
+#[UsesClass(\Deriver\Model\Plan\Expression::class)]
+#[UsesClass(\Deriver\Model\Plan\SemanticPlan::class)]
 #[UsesClass(\Deriver\Model\Provider\DeclarationProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\EntryPointProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\EnvironmentProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\ObservationProvider::class)]
+#[UsesClass(\Deriver\Model\Provider\Provider::class)]
+#[UsesClass(\Deriver\Model\Signature\Signature::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
@@ -377,6 +388,72 @@ final class SessionTest extends TestCase
         $this->expectException(\Deriver\Api\InvalidInputException::class);
         $this->expectExceptionMessage('MODEL_CONFLICT: repeated observation name same');
         $session->observations();
+    }
+
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerModelIdentityPairs')]
+    public function testSnapshotSeparatesModelContractsWithoutDelimiterCollisions(\Deriver\Model\ModelDescriptor $firstDescriptor, \Deriver\Model\ModelDescriptor $secondDescriptor): void
+    {
+        $plan = new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::literal(\Deriver\Value\Term::constant(1)))]);
+        $first = new \Tests\Fake\PlanModel($firstDescriptor, $plan);
+        $second = new \Tests\Fake\PlanModel($secondDescriptor, $plan);
+        $source = '<?php function target(){return 1;}';
+        $a = \Tests\Fake\Analysis::session($source, new \Deriver\Api\Project\Configuration(models:[$first]));
+        $b = \Tests\Fake\Analysis::session($source, new \Deriver\Api\Project\Configuration(models:[$second]));
+        self::assertNotSame($a->snapshot()->id, $b->snapshot()->id);
+        self::assertNotSame($a->snapshot()->models, $b->snapshot()->models);
+    }
+    /**
+     * @return iterable<string,array{\Deriver\Model\ModelDescriptor,\Deriver\Model\ModelDescriptor}>
+     */
+    public static function providerModelIdentityPairs(): iterable
+    {
+        $base = new \Deriver\Model\ModelDescriptor('example.model', '1', 'run');
+        yield 'version separator' => [new \Deriver\Model\ModelDescriptor('example.model', '1:Box:', 'run'),new \Deriver\Model\ModelDescriptor('example.model', '1', 'Box::run')];
+        yield 'replacement list separator' => [new \Deriver\Model\ModelDescriptor('example.model', '1', 'run', replaces:['one,two']),new \Deriver\Model\ModelDescriptor('example.model', '1', 'run', replaces:['one','two'])];
+        yield 'model id' => [$base,new \Deriver\Model\ModelDescriptor('example.other', '1', 'run')];
+        yield 'version' => [$base,new \Deriver\Model\ModelDescriptor('example.model', '2', 'run')];
+        yield 'symbol' => [$base,new \Deriver\Model\ModelDescriptor('example.model', '1', 'other')];
+        yield 'priority' => [$base,new \Deriver\Model\ModelDescriptor('example.model', '1', 'run', priority:10)];
+        yield 'replacement declaration' => [$base,new \Deriver\Model\ModelDescriptor('example.model', '1', 'run', replaces:['legacy'])];
+        yield 'source replacement' => [$base,new \Deriver\Model\ModelDescriptor('example.model', '1', 'run', replaceSource:true)];
+        yield 'signature' => [$base,new \Deriver\Model\ModelDescriptor('example.model', '1', 'run', new \Deriver\Model\Signature\Signature([new \Deriver\Model\Signature\Parameter('value', 'int')]))];
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testSnapshotNormalizesModelRegistrationOrder(): void
+    {
+        $plan = new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::literal(\Deriver\Value\Term::constant(1)))]);
+        $a = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.a', '1', 'a'), $plan);
+        $z = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.z', '2', 'z'), $plan);
+        $source = '<?php function target(){return 1;}';
+        $first = \Tests\Fake\Analysis::session($source, new \Deriver\Api\Project\Configuration(models:[$z,$a]));
+        $second = \Tests\Fake\Analysis::session($source, new \Deriver\Api\Project\Configuration(models:[$a,$z]));
+        self::assertSame($first->snapshot()->id, $second->snapshot()->id);
+        self::assertSame($first->snapshot()->models, $second->snapshot()->models);
+        self::assertSame(['model:example.a','model:example.z'], array_keys($first->snapshot()->models));
+    }
+
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testSnapshotKeepsModelAndDomainIdentitiesInSeparateNamespaces(): void
+    {
+        $plan = new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::literal(\Deriver\Value\Term::constant(1)))]);
+        $first = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('domain:example.policy', '1', 'run'), $plan);
+        $second = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('domain:example.policy', '2', 'run'), $plan);
+        $source = '<?php function target(){return 1;}';
+        $a = \Tests\Fake\Analysis::session($source, new \Deriver\Api\Project\Configuration(models:[$first], domains:[new \Tests\Fake\PolicyDomain()]));
+        $b = \Tests\Fake\Analysis::session($source, new \Deriver\Api\Project\Configuration(models:[$second], domains:[new \Tests\Fake\PolicyDomain()]));
+        self::assertNotSame($a->snapshot()->id, $b->snapshot()->id);
+        self::assertCount(2, $a->snapshot()->models);
+        self::assertSame('1', $a->snapshot()->models['domain:example.policy']);
+        self::assertArrayHasKey('model:domain:example.policy', $a->snapshot()->models);
     }
 
 }

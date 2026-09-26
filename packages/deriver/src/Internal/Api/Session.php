@@ -85,7 +85,7 @@ final class Session implements AnalysisSession
         ksort($sourceModes);
         $models = [];
         foreach ($this->models->manifest as $descriptor) {
-            $models[$descriptor->id] = $descriptor->version . ':' . $descriptor->symbol . ':' . $descriptor->priority . ':' . implode(',', $descriptor->replaces) . ':' . (int) $descriptor->replaceSource . ':' . (new \Deriver\Internal\Model\SignatureIdentity())->key($descriptor->signature);
+            $models['model:' . $descriptor->id] = hash('sha256', serialize([$descriptor->version, $descriptor->symbol, $descriptor->priority, $descriptor->replaces, $descriptor->replaceSource, (new \Deriver\Internal\Model\SignatureIdentity())->key($descriptor->signature)]));
         }
         $models = [...$models, ...$this->models->extensions->manifest, ...$this->models->state->manifest, ...$this->providerInputs->manifest];
         ksort($models);

@@ -6,6 +6,8 @@
 
 Open a new session after changing source, models, environment inputs, or world assumptions. A snapshot records source hashes, target semantics, and registered extension versions. References belong to the snapshot that produced them; another session with a different snapshot cannot use them.
 
+`ProjectSnapshot::models` prefixes contract IDs with `model:`, `intrinsic:`, `domain:`, `slot:`, or `provider:`. Its values are opaque contract fingerprints or registered versions. Compare each complete value when checking whether a contract changed.
+
 `Configuration` selects the target, standard models, additional call models, intrinsics, domains, providers, environment, dependency versions, and abstract state slot contracts. The target is PHP 8.3 with 64-bit integers. An unsupported target is rejected.
 
 ## Query types
