@@ -1,0 +1,29 @@
+name: Renovate Auto Approve
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions: {}
+
+jobs:
+  approve:
+    name: Approve Renovate pull request
+    # Renovate pushes its branches to this repository, so GITHUB_TOKEN can review the pull request.
+    # The branch ruleset dismisses stale reviews on push, so approve again on every synchronize event.
+    if: github.event.pull_request.user.login == 'renovate[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Approve the pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr review "$PR_NUMBER" --approve --body "Approved automatically as a Renovate dependency update."
