@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL Parser — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/467/k-kinzal/sql-parser/doc/README.md.html">
+<meta name="description" content="SQL Parser, a document of the k-kinzal/sql-parser package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="SQL Parser — ZTD Query PHP">
+<meta property="og:description" content="SQL Parser, a document of the k-kinzal/sql-parser package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/467/k-kinzal/sql-parser/doc/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/467/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../k-kinzal/sql-parser/all-items.html">All items</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/Automaton/index.html" title="SqlParser\Automaton">SqlParser\Automaton</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/Compiler/index.html" title="SqlParser\Compiler">SqlParser\Compiler</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/Grammar/index.html" title="SqlParser\Grammar">SqlParser\Grammar</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/Lexer/index.html" title="SqlParser\Lexer">SqlParser\Lexer</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/MySql/index.html" title="SqlParser\MySql">SqlParser\MySql</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/MySql/Lexer/index.html" title="SqlParser\MySql\Lexer">SqlParser\MySql\Lexer</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/MySql/Source/index.html" title="SqlParser\MySql\Source">SqlParser\MySql\Source</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/Parser/index.html" title="SqlParser\Parser">SqlParser\Parser</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/PostgreSql/index.html" title="SqlParser\PostgreSql">SqlParser\PostgreSql</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/PostgreSql/Lexer/index.html" title="SqlParser\PostgreSql\Lexer">SqlParser\PostgreSql\Lexer</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/PostgreSql/Source/index.html" title="SqlParser\PostgreSql\Source">SqlParser\PostgreSql\Source</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/Resource/index.html" title="SqlParser\Resource">SqlParser\Resource</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/Sqlite/index.html" title="SqlParser\Sqlite">SqlParser\Sqlite</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/Sqlite/Lexer/index.html" title="SqlParser\Sqlite\Lexer">SqlParser\Sqlite\Lexer</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/Sqlite/Source/index.html" title="SqlParser\Sqlite\Source">SqlParser\Sqlite\Source</a></li><li data-diff="same"><a href="../../../k-kinzal/sql-parser/SqlParser/Table/index.html" title="SqlParser\Table">SqlParser\Table</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">README.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 3a6c7e361a to working tree">3a6c7e361a <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 3a6c7e361a and working tree." data-off="This page documents what 3a6c7e361a had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQL Parser</h1><div class="symbol-meta"><span class="source-link">README.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>SQL Parser</h2>
+</div><div class="doc-block" data-diff="same"><p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-parser/"><span class="md-target" title="https://img.shields.io/badge/docs-sql--parser-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+</div><div class="doc-block" data-diff="same"><p>SQL Parser is a set of LALR(1) parsers for MySQL, PostgreSQL, and SQLite written in PHP. Each parser is generated from the official grammar of a server version (<code>sql_yacc.yy</code> for MySQL, <code>gram.y</code> for PostgreSQL, and <code>parse.y</code> for SQLite), and its lexer is a port of the server&#039;s own scanner, so text is tokenized and parsed the way the server does it. The syntax tree names the nonterminals of the upstream grammar, and parsing is lossless: a tree writes back the text it was parsed from, byte for byte, including comments and whitespace.</p>
+</div><div class="doc-block" data-diff="same"><h3>Requirements</h3>
+</div><div class="doc-block" data-diff="same"><ul><li>PHP 8.1+ with the zlib extension</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>Support Syntax</h3>
+</div><div class="doc-block" data-diff="same"><p>The following grammar versions are bundled. Pass the version tag to the parser; omitting it uses the default for that database.</p>
+</div><div class="doc-block" data-diff="same"><h4>MySQL</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>5.6.51</td><td><code>mysql-5.6.51</code></td><td></td></tr><tr><td>5.7.44</td><td><code>mysql-5.7.44</code></td><td></td></tr><tr><td>8.0.44</td><td><code>mysql-8.0.44</code></td><td></td></tr><tr><td>8.1.0</td><td><code>mysql-8.1.0</code></td><td></td></tr><tr><td>8.2.0</td><td><code>mysql-8.2.0</code></td><td></td></tr><tr><td>8.3.0</td><td><code>mysql-8.3.0</code></td><td></td></tr><tr><td>8.4.7</td><td><code>mysql-8.4.7</code></td><td>Yes</td></tr><tr><td>9.0.1</td><td><code>mysql-9.0.1</code></td><td></td></tr><tr><td>9.1.0</td><td><code>mysql-9.1.0</code></td><td></td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>PostgreSQL</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>17.2</td><td><code>pg-17.2</code></td><td>Yes</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>SQLite</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>3.47.2</td><td><code>sqlite-3.47.2</code></td><td>Yes</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h3>Installation</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>composer require k-kinzal/sql-parser</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>Usage</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlParser\MySql\MySqlParser</span>;
+
+<span class="tok-var">$parser</span> = <span class="tok-kw">new</span> <span class="tok-id">MySqlParser</span>(<span class="tok-str">&#039;mysql-8.4.7&#039;</span>);
+<span class="tok-var">$sql</span> = <span class="tok-str">&#039;SELECT id, name FROM users u WHERE u.id = ? ORDER BY id LIMIT 10&#039;</span>;
+<span class="tok-var">$tree</span> = <span class="tok-var">$parser</span>-&gt;<span class="tok-id">parse</span>(<span class="tok-var">$sql</span>);
+
+<span class="tok-var">$tree</span>-&gt;<span class="tok-id">name</span>;                                     <span class="tok-com">// &#039;start_entry&#039;, the grammar&#039;s start symbol</span>
+<span class="tok-var">$tree</span>-&gt;<span class="tok-id">find</span>(<span class="tok-str">&#039;where_clause&#039;</span>)[<span class="tok-num">0</span>]-&gt;<span class="tok-id">text</span>(<span class="tok-var">$sql</span>);      <span class="tok-com">// &#039;WHERE u.id = ?&#039;</span>
+<span class="tok-var">$tree</span>-&gt;<span class="tok-id">find</span>(<span class="tok-str">&#039;table_reference&#039;</span>)[<span class="tok-num">0</span>]-&gt;<span class="tok-id">text</span>(<span class="tok-var">$sql</span>);   <span class="tok-com">// &#039;users u&#039;</span>
+<span class="tok-var">$tree</span>-&gt;<span class="tok-id">toString</span>();                               <span class="tok-com">// the statement again, byte for byte</span></code></pre>
+</div><div class="doc-block" data-diff="same"><h3>License</h3>
+</div><div class="doc-block" data-diff="same"><p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../assets/search-index.js" defer></script>
+<script src="../../../assets/app.js" defer></script>
+</body>
+</html>

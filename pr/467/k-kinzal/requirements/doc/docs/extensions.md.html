@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extensions — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/467/k-kinzal/requirements/doc/docs/extensions.md.html">
+<meta name="description" content="Extensions, a document of the k-kinzal/requirements package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Extensions — ZTD Query PHP">
+<meta property="og:description" content="Extensions, a document of the k-kinzal/requirements package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/467/k-kinzal/requirements/doc/docs/extensions.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/467/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/requirements/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/index.html" title="Requirements\Config">Requirements\Config</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/Markdown/index.html" title="Requirements\Config\Markdown">Requirements\Config\Markdown</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/Markdown/Profile/index.html" title="Requirements\Config\Markdown\Profile">Requirements\Config\Markdown\Profile</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/Markdown/Render/index.html" title="Requirements\Config\Markdown\Render">Requirements\Config\Markdown\Render</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Console/index.html" title="Requirements\Console">Requirements\Console</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Ears/index.html" title="Requirements\Ears">Requirements\Ears</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Input/index.html" title="Requirements\Input">Requirements\Input</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Model/index.html" title="Requirements\Model">Requirements\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Report/index.html" title="Requirements\Report">Requirements\Report</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Source/index.html" title="Requirements\Source">Requirements\Source</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Test/index.html" title="Requirements\Test">Requirements\Test</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Verification/index.html" title="Requirements\Verification">Requirements\Verification</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/extensions.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 3a6c7e361a to working tree">3a6c7e361a <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 3a6c7e361a and working tree." data-off="This page documents what 3a6c7e361a had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Extensions</h1><div class="symbol-meta"><span class="source-link">docs/extensions.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Extensions</h2>
+</div><div class="doc-block" data-diff="same"><p>Extensions add source formats and test runners. A <strong>source extension</strong> reads a kind of document, for example an issue tracker, and returns its units. A <strong>runner extension</strong> runs a kind of test and returns its result. The built-in formats and the PHPUnit and Behat runners are implemented the same way.</p>
+</div><div class="doc-block" data-diff="same"><h3>Source extensions</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">namespace</span> <span class="tok-id">Requirements\Source</span>;
+
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Model\Source</span>;
+
+<span class="tok-kw">interface</span> <span class="tok-id">SourceExtension</span>
+{
+    <span class="tok-com">/** @return list&lt;Unit&gt; */</span>
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">select</span>(<span class="tok-id">Source</span> <span class="tok-var">$source</span>, <span class="tok-id">string</span> <span class="tok-var">$selector</span>, <span class="tok-id">string</span> <span class="tok-var">$directory</span>, <span class="tok-id">bool</span> <span class="tok-var">$live</span>): <span class="tok-kw">array</span>;
+}</code></pre>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Argument</th><th>Description</th></tr></thead><tbody><tr><td><code>$source</code></td><td>The definition&#039;s source: <code>id</code>, <code>uri</code>, <code>format</code>, <code>selector</code>, <code>snapshot</code>, <code>sha256</code> and <code>options</code>.</td></tr><tr><td><code>$selector</code></td><td>The scope selector first, then each evidence selector.</td></tr><tr><td><code>$directory</code></td><td>Directory of the configuration file.</td></tr><tr><td><code>$live</code></td><td><code>true</code> when <code>--live</code> asks for current content instead of a cache.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>Return <code>new Unit($location, $text)</code> for every unit the selector matches, or an empty list when it matches nothing. Throw when the document cannot be read or the selector is invalid.</p>
+</div><div class="doc-block" data-diff="same"><ul><li><strong>Enumerate the whole scope</strong>, independently of what the definitions quote. Otherwise untraced units disappear from coverage. Follow every page of a paged API.</li><li><strong>Use stable locations</strong>, such as an issue or section ID, not the text. The same location must always have the same text.</li><li><strong>Keep secrets out of definitions.</strong> Read credentials from the environment and use <code>options</code> for other settings.</li></ul>
+</div><div class="doc-block" data-diff="same"><p>This extension reads a JSON object of IDs to texts. <code>*</code> selects every entry:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">Requirements\Model\Source</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Source\ResourceLoader</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Source\SourceExtension</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Source\Unit</span>;
+
+<span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">CatalogSource</span> <span class="tok-kw">implements</span> <span class="tok-id">SourceExtension</span>
+{
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">ResourceLoader</span> <span class="tok-var">$loader</span> = <span class="tok-kw">new</span> <span class="tok-id">ResourceLoader</span>())
+    {
+    }
+
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">select</span>(<span class="tok-id">Source</span> <span class="tok-var">$source</span>, <span class="tok-id">string</span> <span class="tok-var">$selector</span>, <span class="tok-id">string</span> <span class="tok-var">$directory</span>, <span class="tok-id">bool</span> <span class="tok-var">$live</span>): <span class="tok-kw">array</span>
+    {
+        <span class="tok-var">$catalog</span> = <span class="tok-id">json_decode</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">loader</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$source</span>, <span class="tok-var">$directory</span>, <span class="tok-var">$live</span>), <span class="tok-id">false</span>, <span class="tok-num">512</span>, <span class="tok-id">JSON_THROW_ON_ERROR</span>);
+        <span class="tok-kw">if</span> (!<span class="tok-var">$catalog</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\stdClass</span>) {
+            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\RuntimeException</span>(<span class="tok-str">&#039;Expected a catalog mapping.&#039;</span>);
+        }
+        <span class="tok-var">$units</span> = [];
+        <span class="tok-kw">foreach</span> (<span class="tok-id">get_object_vars</span>(<span class="tok-var">$catalog</span>) <span class="tok-kw">as</span> <span class="tok-var">$id</span> =&gt; <span class="tok-var">$text</span>) {
+            <span class="tok-kw">if</span> (!<span class="tok-id">is_string</span>(<span class="tok-var">$id</span>) || <span class="tok-var">$id</span> === <span class="tok-str">&#039;&#039;</span> || !<span class="tok-id">is_string</span>(<span class="tok-var">$text</span>) || <span class="tok-id">trim</span>(<span class="tok-var">$text</span>) === <span class="tok-str">&#039;&#039;</span>) {
+                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\RuntimeException</span>(<span class="tok-str">&#039;Invalid catalog entry.&#039;</span>);
+            }
+            <span class="tok-kw">if</span> (<span class="tok-var">$selector</span> === <span class="tok-str">&#039;*&#039;</span> || <span class="tok-var">$selector</span> === <span class="tok-var">$id</span>) {
+                <span class="tok-var">$units</span>[] = <span class="tok-kw">new</span> <span class="tok-id">Unit</span>(<span class="tok-str">&#039;entry:&#039;</span> . <span class="tok-var">$id</span>, <span class="tok-var">$text</span>);
+            }
+        }
+        <span class="tok-kw">return</span> <span class="tok-var">$units</span>;
+    }
+}</code></pre>
+</div><div class="doc-block" data-diff="same"><p><code>ResourceLoader</code> reads local files and HTTP(S) URIs with the same size and time limits, snapshots and SHA-256 checks as the built-in formats. It is optional.</p>
+</div><div class="doc-block" data-diff="same"><h3>Runner extensions</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">namespace</span> <span class="tok-id">Requirements\Test</span>;
+
+<span class="tok-kw">interface</span> <span class="tok-id">RunnerExtension</span>
+{
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">run</span>(<span class="tok-id">RunnerConfig</span> <span class="tok-var">$config</span>, <span class="tok-id">string</span> <span class="tok-var">$target</span>): <span class="tok-id">TestResult</span>;
+}</code></pre>
+</div><div class="doc-block" data-diff="same"><p><code>$config</code> holds the runner&#039;s <code>command</code>, working <code>directory</code>, <code>timeout</code> and <code>extension</code> from the <a href="../../../../k-kinzal/requirements/doc/docs/configuration.md.html">configuration</a>. <code>$target</code> is the <code>target</code> of a test in a definition file. <code>run()</code> is called once per distinct target and is not called with <code>--no-test</code>.</p>
+</div><div class="doc-block" data-diff="same"><p>Return <code>new TestResult($status, $executedTests, $message)</code>. Only <code>passed</code> with at least one executed test verifies a specification; <code>failed</code>, <code>error</code> and <code>unverified</code> fail it. Do not report success only because a process exited with <code>0</code>.</p>
+</div><div class="doc-block" data-diff="same"><p>For a command that writes JUnit XML, <code>ProcessRunner</code> does the work:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\ProcessRunner</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\RunnerConfig</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\RunnerExtension</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\TestResult</span>;
+
+<span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ScenarioRunner</span> <span class="tok-kw">implements</span> <span class="tok-id">RunnerExtension</span>
+{
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">run</span>(<span class="tok-id">RunnerConfig</span> <span class="tok-var">$config</span>, <span class="tok-id">string</span> <span class="tok-var">$target</span>): <span class="tok-id">TestResult</span>
+    {
+        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">ProcessRunner</span>())-&gt;<span class="tok-id">run</span>(
+            <span class="tok-var">$config</span>,
+            <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">string</span> <span class="tok-var">$directory</span>): <span class="tok-kw">array</span> =&gt; [
+                <span class="tok-str">&#039;--case&#039;</span>, <span class="tok-var">$target</span>, <span class="tok-str">&#039;--junit&#039;</span>, <span class="tok-var">$directory</span> . <span class="tok-str">&#039;/results.xml&#039;</span>,
+            ],
+        );
+    }
+}</code></pre>
+</div><div class="doc-block" data-diff="same"><p>It appends the returned arguments to <code>command</code>, runs it without a shell in the working directory with the timeout, and reads the reports from a fresh temporary directory. The run fails when the report is missing or malformed, reports no test, or reports a failure, error, skip or pending test, or when the process exits nonzero.</p>
+</div><div class="doc-block" data-diff="same"><h3>Registering extensions</h3>
+</div><div class="doc-block" data-diff="same"><p>Autoload the classes from your project and load the autoloader with <code>bootstrap</code>:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>version: 1
+bootstrap: vendor/autoload.php
+definitions: [requirements/*.yaml]
+extensions:
+  sources:
+    catalog: App\Traceability\CatalogSource
+  runners:
+    scenario: App\Traceability\ScenarioRunner
+runners:
+  acceptance:
+    extension: scenario
+    command: [php, tests/scenario.php]</code></pre>
+</div><div class="doc-block" data-diff="same"><p>A definition then uses the source extension as its <code>format</code> and the runner by its configured name:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>version: 1
+source:
+  id: converter-catalog
+  uri: catalog.json
+  format: catalog
+  selector: &#039;*&#039;
+items:
+  - id: CONVERTER-001
+    statement: When text contains lowercase ASCII letters, the converter shall uppercase those letters.
+    evidence:
+      - selector: ascii-uppercase
+        quote: The converter uppercases lowercase ASCII letters.
+    tests:
+      - runner: acceptance
+        target: ascii-uppercase</code></pre>
+</div><div class="doc-block" data-diff="same"><p>Classes are created without constructor arguments, and lint checks that each implements its interface. Several runners can use the same extension with different commands. A registered name that equals a built-in one replaces it.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>

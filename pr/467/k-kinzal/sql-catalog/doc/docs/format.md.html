@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reports — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/467/k-kinzal/sql-catalog/doc/docs/format.md.html">
+<meta name="description" content="Reports, a document of the k-kinzal/sql-catalog package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Reports — ZTD Query PHP">
+<meta property="og:description" content="Reports, a document of the k-kinzal/sql-catalog package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/467/k-kinzal/sql-catalog/doc/docs/format.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/467/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Cli/index.html" title="SqlCatalog\Cli">SqlCatalog\Cli</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/index.html" title="SqlCatalog\Core\Analysis">SqlCatalog\Core\Analysis</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/Derivation/index.html" title="SqlCatalog\Core\Analysis\Derivation">SqlCatalog\Core\Analysis\Derivation</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/Derivation/Objects/index.html" title="SqlCatalog\Core\Analysis\Derivation\Objects">SqlCatalog\Core\Analysis\Derivation\Objects</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/Derivation/Slice/index.html" title="SqlCatalog\Core\Analysis\Derivation\Slice">SqlCatalog\Core\Analysis\Derivation\Slice</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/Effect/index.html" title="SqlCatalog\Core\Analysis\Effect">SqlCatalog\Core\Analysis\Effect</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/FunctionModel/index.html" title="SqlCatalog\Core\Analysis\FunctionModel">SqlCatalog\Core\Analysis\FunctionModel</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Analysis/Model/index.html" title="SqlCatalog\Core\Analysis\Model">SqlCatalog\Core\Analysis\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Catalog/index.html" title="SqlCatalog\Core\Catalog">SqlCatalog\Core\Catalog</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Evaluation/index.html" title="SqlCatalog\Core\Evaluation">SqlCatalog\Core\Evaluation</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Extension/index.html" title="SqlCatalog\Core\Extension">SqlCatalog\Core\Extension</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Extension/Model/index.html" title="SqlCatalog\Core\Extension\Model">SqlCatalog\Core\Extension\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Filter/index.html" title="SqlCatalog\Core\Filter">SqlCatalog\Core\Filter</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Php/index.html" title="SqlCatalog\Core\Php">SqlCatalog\Core\Php</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Reporter/index.html" title="SqlCatalog\Core\Reporter">SqlCatalog\Core\Reporter</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Source/index.html" title="SqlCatalog\Core\Source">SqlCatalog\Core\Source</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Sql/index.html" title="SqlCatalog\Core\Sql">SqlCatalog\Core\Sql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Text/index.html" title="SqlCatalog\Core\Text">SqlCatalog\Core\Text</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Core/Type/index.html" title="SqlCatalog\Core\Type">SqlCatalog\Core\Type</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/Doctrine/index.html" title="SqlCatalog\Extension\Doctrine">SqlCatalog\Extension\Doctrine</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/Laravel/index.html" title="SqlCatalog\Extension\Laravel">SqlCatalog\Extension\Laravel</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/Mysqli/index.html" title="SqlCatalog\Extension\Mysqli">SqlCatalog\Extension\Mysqli</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/Pdo/index.html" title="SqlCatalog\Extension\Pdo">SqlCatalog\Extension\Pdo</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/WordPress/index.html" title="SqlCatalog\Extension\WordPress">SqlCatalog\Extension\WordPress</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Facade/index.html" title="SqlCatalog\Facade">SqlCatalog\Facade</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Platform/MySql/index.html" title="SqlCatalog\Platform\MySql">SqlCatalog\Platform\MySql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Platform/PostgreSql/index.html" title="SqlCatalog\Platform\PostgreSql">SqlCatalog\Platform\PostgreSql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Platform/Sqlite/index.html" title="SqlCatalog\Platform\Sqlite">SqlCatalog\Platform\Sqlite</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/Html/index.html" title="SqlCatalog\Reporter\Html">SqlCatalog\Reporter\Html</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/Html/Page/index.html" title="SqlCatalog\Reporter\Html\Page">SqlCatalog\Reporter\Html\Page</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/Html/Source/index.html" title="SqlCatalog\Reporter\Html\Source">SqlCatalog\Reporter\Html\Source</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/Json/index.html" title="SqlCatalog\Reporter\Json">SqlCatalog\Reporter\Json</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/Text/index.html" title="SqlCatalog\Reporter\Text">SqlCatalog\Reporter\Text</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/format.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 3a6c7e361a to working tree">3a6c7e361a <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 3a6c7e361a and working tree." data-off="This page documents what 3a6c7e361a had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Reports</h1><div class="symbol-meta"><span class="source-link">docs/format.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Reports</h2>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Reporter</th><th>Writes</th><th>Use</th></tr></thead><tbody><tr><td><code>text</code></td><td><code>catalog.txt</code></td><td>Reading in a terminal. The default on standard output.</td></tr><tr><td><code>json</code></td><td><code>catalog.json</code>, <code>catalog-schema.json</code></td><td>Committing and diffing. The default with <code>--output</code>.</td></tr><tr><td><code>html</code></td><td><code>index.html</code> and the pages it links to</td><td>Browsing and sharing.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>Select one with <code>--reporter</code>. <code>json</code> and <code>html</code> write several files, so give them <code>--output</code>; on standard output they print only their main file.</p>
+</div><div class="doc-block" data-diff="same"><h3>Text</h3>
+</div><div class="doc-block" data-diff="same"><p>One block per statement, followed by a summary:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>src/Search.php:17  SELECT  742968908c6b
+  in App\Search::run via pdo.query
+  SELECT id FROM users WHERE name = &#039;{$}&#039;
+  external-input
+  [MEDIUM] dynamic-sql 1 value(s) are spliced into the statement text rather than bound.
+  [HIGH] external-input A value from external input reaches the statement text.</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The lines are the call site with the statement kind and ID, the enclosing function and the sink, the SQL, the <a href="../../../../k-kinzal/sql-catalog/doc/docs/analysis.md.html#resolution">resolution</a>, the bound values, and the <a href="../../../../k-kinzal/sql-catalog/doc/docs/analysis.md.html#findings">findings</a>.</p>
+</div><div class="doc-block" data-diff="same"><h3>JSON</h3>
+</div><div class="doc-block" data-diff="same"><p><code>catalog.json</code> is validated by <code>catalog-schema.json</code>, which is written next to it and also ships in the package as <code>resources/catalog-schema.json</code>. The document contains no timestamps, absolute paths or line-based identifiers, so the same source always produces the same bytes.</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>{
+    &quot;$schema&quot;: &quot;catalog-schema.json&quot;,
+    &quot;version&quot;: 2,
+    &quot;analysis&quot;: {
+        &quot;conditions&quot;: &quot;not-evaluated&quot;,
+        &quot;reachability&quot;: &quot;not-assessed&quot;
+    },
+    &quot;summary&quot;: {
+        &quot;statements&quot;: 1,
+        &quot;resolved&quot;: 1,
+        &quot;undetermined&quot;: 0,
+        &quot;findings&quot;: 0
+    },
+    &quot;statements&quot;: [
+        {
+            &quot;id&quot;: &quot;eea410b914be&quot;,
+            &quot;kind&quot;: &quot;select&quot;,
+            &quot;sql&quot;: &quot;SELECT id FROM users WHERE status = :status&quot;,
+            &quot;exact&quot;: true,
+            &quot;resolution&quot;: &quot;resolved&quot;,
+            &quot;searchClosed&quot;: true,
+            &quot;correlated&quot;: true,
+            &quot;tables&quot;: [&quot;users&quot;],
+            &quot;site&quot;: {
+                &quot;file&quot;: &quot;src/UserRepository.php&quot;,
+                &quot;line&quot;: 23,
+                &quot;function&quot;: &quot;App\\UserRepository::findByStatus&quot;,
+                &quot;sink&quot;: &quot;pdo.prepare&quot;
+            },
+            &quot;through&quot;: [&quot;App\\UserRepository::findByStatus&quot;],
+            &quot;placeholders&quot;: [
+                {
+                    &quot;token&quot;: &quot;:status&quot;,
+                    &quot;position&quot;: 0,
+                    &quot;name&quot;: &quot;status&quot;,
+                    &quot;value&quot;: {
+                        &quot;type&quot;: &quot;string&quot;,
+                        &quot;values&quot;: [&quot;active&quot;, &quot;banned&quot;],
+                        &quot;exhaustive&quot;: true,
+                        &quot;origins&quot;: []
+                    }
+                }
+            ],
+            &quot;findings&quot;: []
+        }
+    ],
+    &quot;problems&quot;: []
+}</code></pre>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Field</th><th>Description</th></tr></thead><tbody><tr><td><code>version</code></td><td>The format version, <code>2</code>. Do not read a version you do not know.</td></tr><tr><td><code>analysis</code></td><td>Always <code>conditions: not-evaluated</code> and <code>reachability: not-assessed</code>. See <a href="../../../../k-kinzal/sql-catalog/doc/docs/analysis.md.html#statements">analysis</a>.</td></tr><tr><td><code>summary</code></td><td>Counts of statements, of statements without gaps (<code>resolved</code>) and with gaps (<code>undetermined</code>), and of findings.</td></tr><tr><td><code>statements[].id</code></td><td>A stable identifier: a hash of the file, the enclosing function, the sink and the statement shape. It does not change when unrelated lines move.</td></tr><tr><td><code>statements[].kind</code></td><td><code>select</code>, <code>insert</code>, <code>update</code>, <code>delete</code>, <code>replace</code>, <code>merge</code>, <code>truncate</code>, <code>create</code>, <code>alter</code>, <code>drop</code>, <code>call</code>, <code>show</code>, <code>explain</code>, <code>transaction</code>, <code>other</code> or <code>unknown</code>.</td></tr><tr><td><code>statements[].sql</code></td><td>The SQL text, with <code>{$}</code> for each unknown value.</td></tr><tr><td><code>statements[].exact</code>, <code>resolution</code>, <code>searchClosed</code>, <code>correlated</code></td><td>How complete the statement is. See <a href="../../../../k-kinzal/sql-catalog/doc/docs/analysis.md.html#resolution">resolution</a>.</td></tr><tr><td><code>statements[].tables</code></td><td>The tables named, in order and without repeats. A partly known name contains <code>{$}</code>; an unknown name is left out.</td></tr><tr><td><code>statements[].site</code></td><td>The <code>file</code> relative to the root, the <code>line</code>, the enclosing <code>function</code> (<code>Class::method</code>, a function name, or <code>{main}</code>), and the <code>sink</code> ID.</td></tr><tr><td><code>statements[].through</code></td><td>The functions followed to reach this reading, from the body the search started in to the one holding the call.</td></tr><tr><td><code>statements[].placeholders[]</code></td><td>Each placeholder in order: its <code>token</code>, zero-based <code>position</code>, <code>name</code> for named placeholders, and bound <code>value</code>, or <code>null</code> when no binding was found.</td></tr><tr><td><code>…value.type</code></td><td>The PHP type of the bound value.</td></tr><tr><td><code>…value.values</code>, <code>exhaustive</code></td><td>The possible values. When <code>exhaustive</code> is false, only <code>type</code> is known.</td></tr><tr><td><code>…value.origins</code></td><td>Where the unknown parts come from. See <a href="../../../../k-kinzal/sql-catalog/doc/docs/analysis.md.html#where-unknown-values-come-from">origins</a>.</td></tr><tr><td><code>statements[].findings[]</code></td><td>Each finding&#039;s <code>rule</code>, <code>severity</code> and <code>message</code>.</td></tr><tr><td><code>problems[]</code></td><td>Files that could not be analyzed, with <code>file</code> and <code>message</code>.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>Reading a diff</h4>
+</div><div class="doc-block" data-diff="same"><p>In a pull request, look for:</p>
+</div><div class="doc-block" data-diff="same"><ul><li>statements added or removed;</li><li><code>resolution</code> changing from <code>resolved</code>: the statement now depends on something the analyzer cannot follow;</li><li>new findings, especially <code>external-input</code>;</li><li><code>searchClosed</code> becoming <code>false</code>: the call site may now send statements the catalog does not list.</li></ul>
+</div><div class="doc-block" data-diff="same"><p>A statement with the same <code>id</code> and a different <code>site.line</code> is unchanged; only the code above it moved.</p>
+</div><div class="doc-block" data-diff="same"><h3>HTML</h3>
+</div><div class="doc-block" data-diff="same"><p><code>--reporter html --output DIR</code> writes a static site. Open <code>DIR/index.html</code> in a browser; it works from the file system, without a server or network access.</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Page</th><th>Contents</th></tr></thead><tbody><tr><td><code>index.html</code></td><td>Overview: the most used tables, classes and files, findings by rule, and how far the analysis got. Every count links to its statements.</td></tr><tr><td><code>statements.html</code></td><td>Every statement, filterable by kind, resolution, severity and text.</td></tr><tr><td><code>tables.html</code>, <code>tables/</code></td><td>Every table, and a page per table with the functions that use it, related tables, and its reads, writes and schema changes.</td></tr><tr><td><code>namespaces.html</code>, <code>classes/</code></td><td>Every namespace, and a page per class with its statements by method.</td></tr><tr><td><code>files.html</code>, <code>files/</code></td><td>Every file by directory, and a page per file with its statements by function.</td></tr><tr><td><code>findings.html</code></td><td>The functions with the most findings, and every finding by rule.</td></tr><tr><td><code>statements/</code></td><td>A page per statement: the formatted SQL, the SQL as written, the call site and path, tables, bound values, findings, related statements, and the PHP source around the call.</td></tr><tr><td><code>assets/</code></td><td>The stylesheet, scripts and search index.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>Every page has a search box that finds statements by SQL, table, function or file. SQL is formatted with <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-formatter">sql-formatter</a> when a MySQL, PostgreSQL or SQLite grammar accepts it, and shown as written otherwise. In the HTML, a gap shows the PHP variable it comes from, such as <code>{$sql}</code>, when that is known.</p>
+</div><div class="doc-block" data-diff="same"><p>The report embeds the source code around each database call and the full text of each analyzed file. Share it only where you would share the source.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
