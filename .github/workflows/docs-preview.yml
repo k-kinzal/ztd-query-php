@@ -33,11 +33,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Set up PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: '8.3'
           extensions: gd, mbstring, pcntl, mysqli, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
@@ -56,7 +56,7 @@ jobs:
           # The generated statement models of the sql-semantics database packages are documented on the published site but left out of the comparison: diffing them class by class exceeds the memory limit and says nothing a reviewer needs.
           composer docgen -- --diff="$BASE_SHA" --exclude='packages/sql-semantics-*/resources/*' --base-url="https://${repository%%/*}.github.io/${repository#*/}/pr/${PR_NUMBER}"
       - name: Upload the documentation site
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: package-docs
           path: build/docs/
@@ -75,13 +75,13 @@ jobs:
       pull-requests: write
     steps:
       - name: Download the complete documentation site
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: package-docs
           path: build/docs
 
       - name: Check out the documentation branch
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.DOCS_BRANCH }}
           path: .docs-branch
@@ -172,7 +172,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Check out the documentation branch
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.DOCS_BRANCH }}
 

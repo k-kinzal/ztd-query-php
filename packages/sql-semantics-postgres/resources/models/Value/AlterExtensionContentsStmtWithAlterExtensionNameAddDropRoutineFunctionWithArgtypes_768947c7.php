@@ -17,12 +17,13 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropRoutineFuncti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($addDrop), 'The addDrop must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropRoutineFuncti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('EXTENSION');
+        $writer->comments($this->comments, 2);
         $this->name->write($writer);
+        $writer->comments($this->comments, 3);
         $this->addDrop->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('ROUTINE');
+        $writer->comments($this->comments, 5);
         $this->functionWithArgtypes->write($writer);
     }
 
@@ -47,7 +54,7 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropRoutineFuncti
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->addDrop, $this->functionWithArgtypes);
+        return new self($name, $this->addDrop, $this->functionWithArgtypes, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropRoutineFuncti
      */
     public function withAddDrop(\SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop): self
     {
-        return new self($this->name, $addDrop, $this->functionWithArgtypes);
+        return new self($this->name, $addDrop, $this->functionWithArgtypes, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropRoutineFuncti
      */
     public function withFunctionWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes): self
     {
-        return new self($this->name, $this->addDrop, $functionWithArgtypes);
+        return new self($this->name, $this->addDrop, $functionWithArgtypes, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->addDrop, $this->functionWithArgtypes, $comments);
     }
 }

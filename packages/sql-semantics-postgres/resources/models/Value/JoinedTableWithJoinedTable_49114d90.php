@@ -17,10 +17,11 @@ final class JoinedTableWithJoinedTable_49114d90 implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JoinedTableForm $joinedTable,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($joinedTable), 'The joinedTable must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class JoinedTableWithJoinedTable_49114d90 implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->joinedTable->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
     }
 
@@ -40,6 +44,14 @@ final class JoinedTableWithJoinedTable_49114d90 implements \SqlSemantics\Stateme
      */
     public function withJoinedTable(\SqlSemantics\Statement\Model\PostgreSql\Role\JoinedTableForm $joinedTable): self
     {
-        return new self($joinedTable);
+        return new self($joinedTable, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->joinedTable, $comments);
     }
 }

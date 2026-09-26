@@ -17,13 +17,14 @@ final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAu
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveUserNameOptForm $slaveUserNameOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveUserPassOptForm $slaveUserPassOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlavePluginAuthOptForm $slavePluginAuthOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlavePluginDirOptForm $slavePluginDirOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveUserNameOpt), 'The slaveUserNameOpt must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveUserPassOpt), 'The slaveUserPassOpt must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAu
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->slaveUserNameOpt->write($writer);
+        $writer->comments($this->comments, 1);
         $this->slaveUserPassOpt->write($writer);
+        $writer->comments($this->comments, 2);
         $this->slavePluginAuthOpt->write($writer);
+        $writer->comments($this->comments, 3);
         $this->slavePluginDirOpt->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAu
      */
     public function withSlaveUserNameOpt(\SqlSemantics\Statement\Model\MySql\Role\SlaveUserNameOptForm $slaveUserNameOpt): self
     {
-        return new self($slaveUserNameOpt, $this->slaveUserPassOpt, $this->slavePluginAuthOpt, $this->slavePluginDirOpt);
+        return new self($slaveUserNameOpt, $this->slaveUserPassOpt, $this->slavePluginAuthOpt, $this->slavePluginDirOpt, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAu
      */
     public function withSlaveUserPassOpt(\SqlSemantics\Statement\Model\MySql\Role\SlaveUserPassOptForm $slaveUserPassOpt): self
     {
-        return new self($this->slaveUserNameOpt, $slaveUserPassOpt, $this->slavePluginAuthOpt, $this->slavePluginDirOpt);
+        return new self($this->slaveUserNameOpt, $slaveUserPassOpt, $this->slavePluginAuthOpt, $this->slavePluginDirOpt, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAu
      */
     public function withSlavePluginAuthOpt(\SqlSemantics\Statement\Model\MySql\Role\SlavePluginAuthOptForm $slavePluginAuthOpt): self
     {
-        return new self($this->slaveUserNameOpt, $this->slaveUserPassOpt, $slavePluginAuthOpt, $this->slavePluginDirOpt);
+        return new self($this->slaveUserNameOpt, $this->slaveUserPassOpt, $slavePluginAuthOpt, $this->slavePluginDirOpt, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAu
      */
     public function withSlavePluginDirOpt(\SqlSemantics\Statement\Model\MySql\Role\SlavePluginDirOptForm $slavePluginDirOpt): self
     {
-        return new self($this->slaveUserNameOpt, $this->slaveUserPassOpt, $this->slavePluginAuthOpt, $slavePluginDirOpt);
+        return new self($this->slaveUserNameOpt, $this->slaveUserPassOpt, $this->slavePluginAuthOpt, $slavePluginDirOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->slaveUserNameOpt, $this->slaveUserPassOpt, $this->slavePluginAuthOpt, $this->slavePluginDirOpt, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class PartValueItemListWithPartValueItemListPartValueItem_e8b99965 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm $partValueItemList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm $partValueItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partValueItemList), 'The partValueItemList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partValueItem), 'The partValueItem must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class PartValueItemListWithPartValueItemListPartValueItem_e8b99965 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->partValueItemList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->partValueItem->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class PartValueItemListWithPartValueItemListPartValueItem_e8b99965 impleme
      */
     public function withPartValueItemList(\SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm $partValueItemList): self
     {
-        return new self($partValueItemList, $this->partValueItem);
+        return new self($partValueItemList, $this->partValueItem, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class PartValueItemListWithPartValueItemListPartValueItem_e8b99965 impleme
      */
     public function withPartValueItem(\SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm $partValueItem): self
     {
-        return new self($this->partValueItemList, $partValueItem);
+        return new self($this->partValueItemList, $partValueItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->partValueItemList, $this->partValueItem, $comments);
     }
 }

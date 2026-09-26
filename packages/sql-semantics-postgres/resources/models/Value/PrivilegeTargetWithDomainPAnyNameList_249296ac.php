@@ -17,10 +17,11 @@ final class PrivilegeTargetWithDomainPAnyNameList_249296ac implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameListForm $anyNameList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyNameList), 'The anyNameList must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class PrivilegeTargetWithDomainPAnyNameList_249296ac implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DOMAIN');
+        $writer->comments($this->comments, 1);
         $this->anyNameList->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class PrivilegeTargetWithDomainPAnyNameList_249296ac implements \SqlSemant
      */
     public function withAnyNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameListForm $anyNameList): self
     {
-        return new self($anyNameList);
+        return new self($anyNameList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyNameList, $comments);
     }
 }

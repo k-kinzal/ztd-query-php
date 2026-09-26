@@ -17,11 +17,12 @@ final class OptAttributeListWithOptAttributeListAttribute_1ec347af implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm $optAttributeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AttributeForm $attribute,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAttributeList), 'The optAttributeList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($attribute), 'The attribute must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptAttributeListWithOptAttributeListAttribute_1ec347af implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optAttributeList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->attribute->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptAttributeListWithOptAttributeListAttribute_1ec347af implements \S
      */
     public function withOptAttributeList(\SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm $optAttributeList): self
     {
-        return new self($optAttributeList, $this->attribute);
+        return new self($optAttributeList, $this->attribute, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptAttributeListWithOptAttributeListAttribute_1ec347af implements \S
      */
     public function withAttribute(\SqlSemantics\Statement\Model\MySql\Role\AttributeForm $attribute): self
     {
-        return new self($this->optAttributeList, $attribute);
+        return new self($this->optAttributeList, $attribute, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optAttributeList, $this->attribute, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class AlterCommandsWithAlterCommandListPartitioning_c6485e9e implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm $alterCommandList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartitioningForm $partitioning,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterCommandList), 'The alterCommandList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partitioning), 'The partitioning must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class AlterCommandsWithAlterCommandListPartitioning_c6485e9e implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterCommandList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->partitioning->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class AlterCommandsWithAlterCommandListPartitioning_c6485e9e implements \S
      */
     public function withAlterCommandList(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm $alterCommandList): self
     {
-        return new self($alterCommandList, $this->partitioning);
+        return new self($alterCommandList, $this->partitioning, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class AlterCommandsWithAlterCommandListPartitioning_c6485e9e implements \S
      */
     public function withPartitioning(\SqlSemantics\Statement\Model\MySql\Role\PartitioningForm $partitioning): self
     {
-        return new self($this->alterCommandList, $partitioning);
+        return new self($this->alterCommandList, $partitioning, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterCommandList, $this->partitioning, $comments);
     }
 }

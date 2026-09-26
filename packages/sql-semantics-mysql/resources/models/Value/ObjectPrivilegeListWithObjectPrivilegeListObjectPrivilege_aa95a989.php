@@ -17,11 +17,12 @@ final class ObjectPrivilegeListWithObjectPrivilegeListObjectPrivilege_aa95a989 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeListForm $objectPrivilegeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeForm $objectPrivilege,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($objectPrivilegeList), 'The objectPrivilegeList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($objectPrivilege), 'The objectPrivilege must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class ObjectPrivilegeListWithObjectPrivilegeListObjectPrivilege_aa95a989 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->objectPrivilegeList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->objectPrivilege->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class ObjectPrivilegeListWithObjectPrivilegeListObjectPrivilege_aa95a989 i
      */
     public function withObjectPrivilegeList(\SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeListForm $objectPrivilegeList): self
     {
-        return new self($objectPrivilegeList, $this->objectPrivilege);
+        return new self($objectPrivilegeList, $this->objectPrivilege, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class ObjectPrivilegeListWithObjectPrivilegeListObjectPrivilege_aa95a989 i
      */
     public function withObjectPrivilege(\SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeForm $objectPrivilege): self
     {
-        return new self($this->objectPrivilegeList, $objectPrivilege);
+        return new self($this->objectPrivilegeList, $objectPrivilege, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->objectPrivilegeList, $this->objectPrivilege, $comments);
     }
 }

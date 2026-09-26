@@ -17,12 +17,13 @@ final class CreatePublicationStmtWithCreatePublicationNameForPubObjListOptDefini
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm $pubObjList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($pubObjList), 'The pubObjList must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class CreatePublicationStmtWithCreatePublicationNameForPubObjListOptDefini
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('PUBLICATION');
+        $writer->comments($this->comments, 2);
         $this->name->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('FOR');
+        $writer->comments($this->comments, 4);
         $this->pubObjList->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optDefinition->write($writer);
     }
 
@@ -47,7 +54,7 @@ final class CreatePublicationStmtWithCreatePublicationNameForPubObjListOptDefini
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->pubObjList, $this->optDefinition);
+        return new self($name, $this->pubObjList, $this->optDefinition, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class CreatePublicationStmtWithCreatePublicationNameForPubObjListOptDefini
      */
     public function withPubObjList(\SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm $pubObjList): self
     {
-        return new self($this->name, $pubObjList, $this->optDefinition);
+        return new self($this->name, $pubObjList, $this->optDefinition, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class CreatePublicationStmtWithCreatePublicationNameForPubObjListOptDefini
      */
     public function withOptDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition): self
     {
-        return new self($this->name, $this->pubObjList, $optDefinition);
+        return new self($this->name, $this->pubObjList, $optDefinition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->pubObjList, $this->optDefinition, $comments);
     }
 }

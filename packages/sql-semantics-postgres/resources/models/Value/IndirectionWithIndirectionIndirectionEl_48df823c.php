@@ -17,11 +17,12 @@ final class IndirectionWithIndirectionIndirectionEl_48df823c implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionForm $indirection,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionElForm $indirectionEl,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indirection), 'The indirection must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indirectionEl), 'The indirectionEl must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class IndirectionWithIndirectionIndirectionEl_48df823c implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->indirection->write($writer);
+        $writer->comments($this->comments, 1);
         $this->indirectionEl->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class IndirectionWithIndirectionIndirectionEl_48df823c implements \SqlSema
      */
     public function withIndirection(\SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionForm $indirection): self
     {
-        return new self($indirection, $this->indirectionEl);
+        return new self($indirection, $this->indirectionEl, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class IndirectionWithIndirectionIndirectionEl_48df823c implements \SqlSema
      */
     public function withIndirectionEl(\SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionElForm $indirectionEl): self
     {
-        return new self($this->indirection, $indirectionEl);
+        return new self($this->indirection, $indirectionEl, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->indirection, $this->indirectionEl, $comments);
     }
 }

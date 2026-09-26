@@ -17,11 +17,12 @@ final class ShowCreateUserStmtWithShowCreateUserUser_0212cc2f implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user2), 'The user2 must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class ShowCreateUserStmtWithShowCreateUserUser_0212cc2f implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 2);
         $writer->append($this->user);
+        $writer->comments($this->comments, 3);
         $this->user2->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class ShowCreateUserStmtWithShowCreateUserUser_0212cc2f implements \SqlSem
      */
     public function withUser(string $user): self
     {
-        return new self($user, $this->user2);
+        return new self($user, $this->user2, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class ShowCreateUserStmtWithShowCreateUserUser_0212cc2f implements \SqlSem
      */
     public function withUser2(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user2): self
     {
-        return new self($this->user, $user2);
+        return new self($this->user, $user2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->user2, $comments);
     }
 }

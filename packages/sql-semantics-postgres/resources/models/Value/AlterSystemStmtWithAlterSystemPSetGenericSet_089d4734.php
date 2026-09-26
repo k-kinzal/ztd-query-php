@@ -17,10 +17,11 @@ final class AlterSystemStmtWithAlterSystemPSetGenericSet_089d4734 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GenericSetForm $genericSet,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($genericSet), 'The genericSet must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class AlterSystemStmtWithAlterSystemPSetGenericSet_089d4734 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('SYSTEM');
+        $writer->comments($this->comments, 2);
         $writer->append('SET');
+        $writer->comments($this->comments, 3);
         $this->genericSet->write($writer);
     }
 
@@ -41,6 +46,14 @@ final class AlterSystemStmtWithAlterSystemPSetGenericSet_089d4734 implements \Sq
      */
     public function withGenericSet(\SqlSemantics\Statement\Model\PostgreSql\Role\GenericSetForm $genericSet): self
     {
-        return new self($genericSet);
+        return new self($genericSet, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->genericSet, $comments);
     }
 }

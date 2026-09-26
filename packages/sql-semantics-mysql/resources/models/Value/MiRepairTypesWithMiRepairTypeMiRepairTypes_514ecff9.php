@@ -17,11 +17,12 @@ final class MiRepairTypesWithMiRepairTypeMiRepairTypes_514ecff9 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MiRepairTypeForm $miRepairType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MiRepairTypesForm $miRepairTypes,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($miRepairType), 'The miRepairType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($miRepairTypes), 'The miRepairTypes must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class MiRepairTypesWithMiRepairTypeMiRepairTypes_514ecff9 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->miRepairType->write($writer);
+        $writer->comments($this->comments, 1);
         $this->miRepairTypes->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class MiRepairTypesWithMiRepairTypeMiRepairTypes_514ecff9 implements \SqlS
      */
     public function withMiRepairType(\SqlSemantics\Statement\Model\MySql\Role\MiRepairTypeForm $miRepairType): self
     {
-        return new self($miRepairType, $this->miRepairTypes);
+        return new self($miRepairType, $this->miRepairTypes, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class MiRepairTypesWithMiRepairTypeMiRepairTypes_514ecff9 implements \SqlS
      */
     public function withMiRepairTypes(\SqlSemantics\Statement\Model\MySql\Role\MiRepairTypesForm $miRepairTypes): self
     {
-        return new self($this->miRepairType, $miRepairTypes);
+        return new self($this->miRepairType, $miRepairTypes, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->miRepairType, $this->miRepairTypes, $comments);
     }
 }

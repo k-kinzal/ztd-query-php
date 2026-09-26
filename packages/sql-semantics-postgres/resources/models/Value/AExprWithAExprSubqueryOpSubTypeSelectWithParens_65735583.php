@@ -17,13 +17,14 @@ final class AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm $subqueryOp,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SubTypeForm $subType,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectWithParensForm $selectWithParens,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($aExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 12,));
@@ -37,9 +38,13 @@ final class AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->subqueryOp->write($writer);
+        $writer->comments($this->comments, 2);
         $this->subType->write($writer);
+        $writer->comments($this->comments, 3);
         $this->selectWithParens->write($writer);
     }
 
@@ -48,7 +53,7 @@ final class AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583 implements 
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->subqueryOp, $this->subType, $this->selectWithParens);
+        return new self($aExpr, $this->subqueryOp, $this->subType, $this->selectWithParens, $this->comments);
     }
 
     /**
@@ -56,7 +61,7 @@ final class AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583 implements 
      */
     public function withSubqueryOp(\SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm $subqueryOp): self
     {
-        return new self($this->aExpr, $subqueryOp, $this->subType, $this->selectWithParens);
+        return new self($this->aExpr, $subqueryOp, $this->subType, $this->selectWithParens, $this->comments);
     }
 
     /**
@@ -64,7 +69,7 @@ final class AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583 implements 
      */
     public function withSubType(\SqlSemantics\Statement\Model\PostgreSql\Role\SubTypeForm $subType): self
     {
-        return new self($this->aExpr, $this->subqueryOp, $subType, $this->selectWithParens);
+        return new self($this->aExpr, $this->subqueryOp, $subType, $this->selectWithParens, $this->comments);
     }
 
     /**
@@ -72,6 +77,14 @@ final class AExprWithAExprSubqueryOpSubTypeSelectWithParens_65735583 implements 
      */
     public function withSelectWithParens(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectWithParensForm $selectWithParens): self
     {
-        return new self($this->aExpr, $this->subqueryOp, $this->subType, $selectWithParens);
+        return new self($this->aExpr, $this->subqueryOp, $this->subType, $selectWithParens, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->subqueryOp, $this->subType, $this->selectWithParens, $comments);
     }
 }

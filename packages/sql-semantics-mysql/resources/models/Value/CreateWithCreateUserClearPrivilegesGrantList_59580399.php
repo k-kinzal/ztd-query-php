@@ -17,12 +17,13 @@ final class CreateWithCreateUserClearPrivilegesGrantList_59580399 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($clearPrivileges), 'The clearPrivileges must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class CreateWithCreateUserClearPrivilegesGrantList_59580399 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append($this->user);
+        $writer->comments($this->comments, 2);
         $this->clearPrivileges->write($writer);
+        $writer->comments($this->comments, 3);
         $this->grantList->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class CreateWithCreateUserClearPrivilegesGrantList_59580399 implements \Sq
      */
     public function withUser(string $user): self
     {
-        return new self($user, $this->clearPrivileges, $this->grantList);
+        return new self($user, $this->clearPrivileges, $this->grantList, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class CreateWithCreateUserClearPrivilegesGrantList_59580399 implements \Sq
      */
     public function withClearPrivileges(\SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges): self
     {
-        return new self($this->user, $clearPrivileges, $this->grantList);
+        return new self($this->user, $clearPrivileges, $this->grantList, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class CreateWithCreateUserClearPrivilegesGrantList_59580399 implements \Sq
      */
     public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self
     {
-        return new self($this->user, $this->clearPrivileges, $grantList);
+        return new self($this->user, $this->clearPrivileges, $grantList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->clearPrivileges, $this->grantList, $comments);
     }
 }

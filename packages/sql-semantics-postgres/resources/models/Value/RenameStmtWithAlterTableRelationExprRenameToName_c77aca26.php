@@ -17,11 +17,12 @@ final class RenameStmtWithAlterTableRelationExprRenameToName_c77aca26 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class RenameStmtWithAlterTableRelationExprRenameToName_c77aca26 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 2);
         $this->relationExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('RENAME');
+        $writer->comments($this->comments, 4);
         $writer->append('TO');
+        $writer->comments($this->comments, 5);
         $this->name->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class RenameStmtWithAlterTableRelationExprRenameToName_c77aca26 implements
      */
     public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
     {
-        return new self($relationExpr, $this->name);
+        return new self($relationExpr, $this->name, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class RenameStmtWithAlterTableRelationExprRenameToName_c77aca26 implements
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->relationExpr, $name);
+        return new self($this->relationExpr, $name, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->relationExpr, $this->name, $comments);
     }
 }

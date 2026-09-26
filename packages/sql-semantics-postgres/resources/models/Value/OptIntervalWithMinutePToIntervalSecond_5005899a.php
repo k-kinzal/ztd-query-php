@@ -17,10 +17,11 @@ final class OptIntervalWithMinutePToIntervalSecond_5005899a implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IntervalSecondForm $intervalSecond,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($intervalSecond), 'The intervalSecond must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class OptIntervalWithMinutePToIntervalSecond_5005899a implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('MINUTE');
+        $writer->comments($this->comments, 1);
         $writer->append('TO');
+        $writer->comments($this->comments, 2);
         $this->intervalSecond->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class OptIntervalWithMinutePToIntervalSecond_5005899a implements \SqlSeman
      */
     public function withIntervalSecond(\SqlSemantics\Statement\Model\PostgreSql\Role\IntervalSecondForm $intervalSecond): self
     {
-        return new self($intervalSecond);
+        return new self($intervalSecond, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->intervalSecond, $comments);
     }
 }

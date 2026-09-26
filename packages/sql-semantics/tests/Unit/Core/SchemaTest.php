@@ -76,4 +76,13 @@ final class SchemaTest extends TestCase
         self::assertSame(PostgreSqlDialect::PostgreSql, $schema->dialect);
         self::assertSame(['a', 'b'], array_column($schema->tables, 'name'));
     }
+    public function testWithTablesLeavesThePreviousStateIntact(): void
+    {
+        $state = (new \SqlSemantics\Facade\Schema(PostgreSqlDialect::PostgreSql))->analyze('CREATE TABLE t (id INT)');
+        $empty = $state->withTables();
+        self::assertCount(1, $state->tables);
+        self::assertSame([], $empty->tables);
+        self::assertSame($state->grammarVersion, $empty->grammarVersion);
+        self::assertSame($state->tables, $empty->withTables(...$state->tables)->tables);
+    }
 }

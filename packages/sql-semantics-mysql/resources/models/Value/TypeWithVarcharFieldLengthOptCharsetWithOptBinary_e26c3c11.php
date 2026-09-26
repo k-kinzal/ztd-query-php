@@ -17,12 +17,13 @@ final class TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($varchar), 'The varchar must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldLength), 'The fieldLength must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->varchar->write($writer);
+        $writer->comments($this->comments, 1);
         $this->fieldLength->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optCharsetWithOptBinary->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 implement
      */
     public function withVarchar(\SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar): self
     {
-        return new self($varchar, $this->fieldLength, $this->optCharsetWithOptBinary);
+        return new self($varchar, $this->fieldLength, $this->optCharsetWithOptBinary, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 implement
      */
     public function withFieldLength(\SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength): self
     {
-        return new self($this->varchar, $fieldLength, $this->optCharsetWithOptBinary);
+        return new self($this->varchar, $fieldLength, $this->optCharsetWithOptBinary, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 implement
      */
     public function withOptCharsetWithOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary): self
     {
-        return new self($this->varchar, $this->fieldLength, $optCharsetWithOptBinary);
+        return new self($this->varchar, $this->fieldLength, $optCharsetWithOptBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->varchar, $this->fieldLength, $this->optCharsetWithOptBinary, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class ColumnOptionsWithColIdWithOptionsColQualList_b06c9148 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colQualList), 'The colQualList must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class ColumnOptionsWithColIdWithOptionsColQualList_b06c9148 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('WITH');
+        $writer->comments($this->comments, 2);
         $writer->append('OPTIONS');
+        $writer->comments($this->comments, 3);
         $this->colQualList->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class ColumnOptionsWithColIdWithOptionsColQualList_b06c9148 implements \Sq
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($colId, $this->colQualList);
+        return new self($colId, $this->colQualList, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class ColumnOptionsWithColIdWithOptionsColQualList_b06c9148 implements \Sq
      */
     public function withColQualList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList): self
     {
-        return new self($this->colId, $colQualList);
+        return new self($this->colId, $colQualList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colId, $this->colQualList, $comments);
     }
 }

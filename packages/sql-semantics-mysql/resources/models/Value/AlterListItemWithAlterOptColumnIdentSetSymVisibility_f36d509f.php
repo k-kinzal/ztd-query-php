@@ -17,12 +17,13 @@ final class AlterListItemWithAlterOptColumnIdentSetSymVisibility_f36d509f implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VisibilityForm $visibility,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class AlterListItemWithAlterOptColumnIdentSetSymVisibility_f36d509f implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $this->optColumn->write($writer);
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('SET');
+        $writer->comments($this->comments, 4);
         $this->visibility->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class AlterListItemWithAlterOptColumnIdentSetSymVisibility_f36d509f implem
      */
     public function withOptColumn(\SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn): self
     {
-        return new self($optColumn, $this->ident, $this->visibility);
+        return new self($optColumn, $this->ident, $this->visibility, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class AlterListItemWithAlterOptColumnIdentSetSymVisibility_f36d509f implem
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->optColumn, $ident, $this->visibility);
+        return new self($this->optColumn, $ident, $this->visibility, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class AlterListItemWithAlterOptColumnIdentSetSymVisibility_f36d509f implem
      */
     public function withVisibility(\SqlSemantics\Statement\Model\MySql\Role\VisibilityForm $visibility): self
     {
-        return new self($this->optColumn, $this->ident, $visibility);
+        return new self($this->optColumn, $this->ident, $visibility, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optColumn, $this->ident, $this->visibility, $comments);
     }
 }

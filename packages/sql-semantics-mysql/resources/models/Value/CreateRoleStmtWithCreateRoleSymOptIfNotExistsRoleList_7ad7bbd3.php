@@ -17,11 +17,12 @@ final class CreateRoleStmtWithCreateRoleSymOptIfNotExistsRoleList_7ad7bbd3 imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleListForm $roleList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleList), 'The roleList must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class CreateRoleStmtWithCreateRoleSymOptIfNotExistsRoleList_7ad7bbd3 imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('ROLE');
+        $writer->comments($this->comments, 2);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 3);
         $this->roleList->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class CreateRoleStmtWithCreateRoleSymOptIfNotExistsRoleList_7ad7bbd3 imple
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($optIfNotExists, $this->roleList);
+        return new self($optIfNotExists, $this->roleList, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class CreateRoleStmtWithCreateRoleSymOptIfNotExistsRoleList_7ad7bbd3 imple
      */
     public function withRoleList(\SqlSemantics\Statement\Model\MySql\Role\RoleListForm $roleList): self
     {
-        return new self($this->optIfNotExists, $roleList);
+        return new self($this->optIfNotExists, $roleList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optIfNotExists, $this->roleList, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class UsePartitionWithPartitionSymUsingListHavePartitioning_d44c3152 imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($usingList), 'The usingList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($havePartitioning), 'The havePartitioning must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class UsePartitionWithPartitionSymUsingListHavePartitioning_d44c3152 imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->usingList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->havePartitioning->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class UsePartitionWithPartitionSymUsingListHavePartitioning_d44c3152 imple
      */
     public function withUsingList(\SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList): self
     {
-        return new self($usingList, $this->havePartitioning);
+        return new self($usingList, $this->havePartitioning, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class UsePartitionWithPartitionSymUsingListHavePartitioning_d44c3152 imple
      */
     public function withHavePartitioning(\SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning): self
     {
-        return new self($this->usingList, $havePartitioning);
+        return new self($this->usingList, $havePartitioning, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->usingList, $this->havePartitioning, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class StandaloneAlterCommandsWithReorganizeSymPartitionSymOptNoWriteToBinl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentStringListForm $identStringList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identStringList), 'The identStringList must be a generated immutable SQL value.');
@@ -34,13 +35,21 @@ final class StandaloneAlterCommandsWithReorganizeSymPartitionSymOptNoWriteToBinl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REORGANIZE');
+        $writer->comments($this->comments, 1);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 2);
         $this->optNoWriteToBinlog->write($writer);
+        $writer->comments($this->comments, 3);
         $this->identStringList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('INTO');
+        $writer->comments($this->comments, 5);
         $writer->append('(');
+        $writer->comments($this->comments, 6);
         $this->partDefList->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append(')');
     }
 
@@ -49,7 +58,7 @@ final class StandaloneAlterCommandsWithReorganizeSymPartitionSymOptNoWriteToBinl
      */
     public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
     {
-        return new self($optNoWriteToBinlog, $this->identStringList, $this->partDefList);
+        return new self($optNoWriteToBinlog, $this->identStringList, $this->partDefList, $this->comments);
     }
 
     /**
@@ -57,7 +66,7 @@ final class StandaloneAlterCommandsWithReorganizeSymPartitionSymOptNoWriteToBinl
      */
     public function withIdentStringList(\SqlSemantics\Statement\Model\MySql\Role\IdentStringListForm $identStringList): self
     {
-        return new self($this->optNoWriteToBinlog, $identStringList, $this->partDefList);
+        return new self($this->optNoWriteToBinlog, $identStringList, $this->partDefList, $this->comments);
     }
 
     /**
@@ -65,6 +74,14 @@ final class StandaloneAlterCommandsWithReorganizeSymPartitionSymOptNoWriteToBinl
      */
     public function withPartDefList(\SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList): self
     {
-        return new self($this->optNoWriteToBinlog, $this->identStringList, $partDefList);
+        return new self($this->optNoWriteToBinlog, $this->identStringList, $partDefList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optNoWriteToBinlog, $this->identStringList, $this->partDefList, $comments);
     }
 }

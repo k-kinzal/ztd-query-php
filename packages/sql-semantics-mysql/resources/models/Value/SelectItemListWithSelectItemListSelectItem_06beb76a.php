@@ -17,11 +17,12 @@ final class SelectItemListWithSelectItemListSelectItem_06beb76a implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemForm $selectItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectItem), 'The selectItem must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SelectItemListWithSelectItemListSelectItem_06beb76a implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->projections->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->selectItem->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SelectItemListWithSelectItemListSelectItem_06beb76a implements \SqlS
      */
     public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
     {
-        return new self($projections, $this->selectItem);
+        return new self($projections, $this->selectItem, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SelectItemListWithSelectItemListSelectItem_06beb76a implements \SqlS
      */
     public function withSelectItem(\SqlSemantics\Statement\Model\MySql\Role\SelectItemForm $selectItem): self
     {
-        return new self($this->projections, $selectItem);
+        return new self($this->projections, $selectItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->projections, $this->selectItem, $comments);
     }
 }

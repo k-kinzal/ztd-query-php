@@ -10,6 +10,8 @@ use UnitEnum;
 /**
  * Describes whether a value graph consists entirely of final readonly objects.
  *
+ * Enums and comments are immutable by construction and are not inspected.
+ *
  * @visibility SqlSemantics
  */
 final class ImmutableGraph
@@ -38,7 +40,7 @@ final class ImmutableGraph
                 $child = $property->getValue($value);
                 if ($child instanceof Element) {
                     $pending[] = $child;
-                } elseif (!is_scalar($child) && $child !== null) {
+                } elseif (!is_scalar($child) && $child !== null && !$child instanceof Comments) {
                     return false;
                 }
             }

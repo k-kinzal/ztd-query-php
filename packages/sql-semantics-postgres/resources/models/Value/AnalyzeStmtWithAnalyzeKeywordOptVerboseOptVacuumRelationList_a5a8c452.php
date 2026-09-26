@@ -17,12 +17,13 @@ final class AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c45
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeKeywordForm $analyzeKeyword,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($analyzeKeyword), 'The analyzeKeyword must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVerbose), 'The optVerbose must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c45
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->analyzeKeyword->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optVerbose->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optVacuumRelationList->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c45
      */
     public function withAnalyzeKeyword(\SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeKeywordForm $analyzeKeyword): self
     {
-        return new self($analyzeKeyword, $this->optVerbose, $this->optVacuumRelationList);
+        return new self($analyzeKeyword, $this->optVerbose, $this->optVacuumRelationList, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c45
      */
     public function withOptVerbose(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose): self
     {
-        return new self($this->analyzeKeyword, $optVerbose, $this->optVacuumRelationList);
+        return new self($this->analyzeKeyword, $optVerbose, $this->optVacuumRelationList, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c45
      */
     public function withOptVacuumRelationList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList): self
     {
-        return new self($this->analyzeKeyword, $this->optVerbose, $optVacuumRelationList);
+        return new self($this->analyzeKeyword, $this->optVerbose, $optVacuumRelationList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->analyzeKeyword, $this->optVerbose, $this->optVacuumRelationList, $comments);
     }
 }

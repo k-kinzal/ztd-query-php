@@ -17,13 +17,14 @@ final class CreateWithCreateTablespaceSymIdentOptTsDatafileNameOptLogfileGroupNa
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTsDatafileNameForm $optTsDatafileName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupNameForm $optLogfileGroupName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTablespaceOptionsForm $optTablespaceOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTsDatafileName), 'The optTsDatafileName must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class CreateWithCreateTablespaceSymIdentOptTsDatafileNameOptLogfileGroupNa
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLESPACE');
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optTsDatafileName->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optLogfileGroupName->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optTablespaceOptions->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class CreateWithCreateTablespaceSymIdentOptTsDatafileNameOptLogfileGroupNa
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->optTsDatafileName, $this->optLogfileGroupName, $this->optTablespaceOptions);
+        return new self($ident, $this->optTsDatafileName, $this->optLogfileGroupName, $this->optTablespaceOptions, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class CreateWithCreateTablespaceSymIdentOptTsDatafileNameOptLogfileGroupNa
      */
     public function withOptTsDatafileName(\SqlSemantics\Statement\Model\MySql\Role\OptTsDatafileNameForm $optTsDatafileName): self
     {
-        return new self($this->ident, $optTsDatafileName, $this->optLogfileGroupName, $this->optTablespaceOptions);
+        return new self($this->ident, $optTsDatafileName, $this->optLogfileGroupName, $this->optTablespaceOptions, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class CreateWithCreateTablespaceSymIdentOptTsDatafileNameOptLogfileGroupNa
      */
     public function withOptLogfileGroupName(\SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupNameForm $optLogfileGroupName): self
     {
-        return new self($this->ident, $this->optTsDatafileName, $optLogfileGroupName, $this->optTablespaceOptions);
+        return new self($this->ident, $this->optTsDatafileName, $optLogfileGroupName, $this->optTablespaceOptions, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class CreateWithCreateTablespaceSymIdentOptTsDatafileNameOptLogfileGroupNa
      */
     public function withOptTablespaceOptions(\SqlSemantics\Statement\Model\MySql\Role\OptTablespaceOptionsForm $optTablespaceOptions): self
     {
-        return new self($this->ident, $this->optTsDatafileName, $this->optLogfileGroupName, $optTablespaceOptions);
+        return new self($this->ident, $this->optTsDatafileName, $this->optLogfileGroupName, $optTablespaceOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->optTsDatafileName, $this->optLogfileGroupName, $this->optTablespaceOptions, $comments);
     }
 }

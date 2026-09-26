@@ -17,12 +17,13 @@ final class CreateWithCreateLogfileSymGroupSymIdentAddLgUndofileOptLogfileGroupO
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LgUndofileForm $lgUndofile,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupOptionsForm $optLogfileGroupOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lgUndofile), 'The lgUndofile must be a generated immutable SQL value.');
@@ -34,12 +35,19 @@ final class CreateWithCreateLogfileSymGroupSymIdentAddLgUndofileOptLogfileGroupO
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('LOGFILE');
+        $writer->comments($this->comments, 2);
         $writer->append('GROUP');
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('ADD');
+        $writer->comments($this->comments, 5);
         $this->lgUndofile->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optLogfileGroupOptions->write($writer);
     }
 
@@ -48,7 +56,7 @@ final class CreateWithCreateLogfileSymGroupSymIdentAddLgUndofileOptLogfileGroupO
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->lgUndofile, $this->optLogfileGroupOptions);
+        return new self($ident, $this->lgUndofile, $this->optLogfileGroupOptions, $this->comments);
     }
 
     /**
@@ -56,7 +64,7 @@ final class CreateWithCreateLogfileSymGroupSymIdentAddLgUndofileOptLogfileGroupO
      */
     public function withLgUndofile(\SqlSemantics\Statement\Model\MySql\Role\LgUndofileForm $lgUndofile): self
     {
-        return new self($this->ident, $lgUndofile, $this->optLogfileGroupOptions);
+        return new self($this->ident, $lgUndofile, $this->optLogfileGroupOptions, $this->comments);
     }
 
     /**
@@ -64,6 +72,14 @@ final class CreateWithCreateLogfileSymGroupSymIdentAddLgUndofileOptLogfileGroupO
      */
     public function withOptLogfileGroupOptions(\SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupOptionsForm $optLogfileGroupOptions): self
     {
-        return new self($this->ident, $this->lgUndofile, $optLogfileGroupOptions);
+        return new self($this->ident, $this->lgUndofile, $optLogfileGroupOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->lgUndofile, $this->optLogfileGroupOptions, $comments);
     }
 }

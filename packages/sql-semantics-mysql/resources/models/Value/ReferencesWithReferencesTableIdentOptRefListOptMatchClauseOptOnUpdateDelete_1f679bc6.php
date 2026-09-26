@@ -17,13 +17,14 @@ final class ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRefListForm $optRefList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptMatchClauseForm $optMatchClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOnUpdateDeleteForm $optOnUpdateDelete,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRefList), 'The optRefList must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REFERENCES');
+        $writer->comments($this->comments, 1);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optRefList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optMatchClause->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optOnUpdateDelete->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdat
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($tableIdent, $this->optRefList, $this->optMatchClause, $this->optOnUpdateDelete);
+        return new self($tableIdent, $this->optRefList, $this->optMatchClause, $this->optOnUpdateDelete, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdat
      */
     public function withOptRefList(\SqlSemantics\Statement\Model\MySql\Role\OptRefListForm $optRefList): self
     {
-        return new self($this->tableIdent, $optRefList, $this->optMatchClause, $this->optOnUpdateDelete);
+        return new self($this->tableIdent, $optRefList, $this->optMatchClause, $this->optOnUpdateDelete, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdat
      */
     public function withOptMatchClause(\SqlSemantics\Statement\Model\MySql\Role\OptMatchClauseForm $optMatchClause): self
     {
-        return new self($this->tableIdent, $this->optRefList, $optMatchClause, $this->optOnUpdateDelete);
+        return new self($this->tableIdent, $this->optRefList, $optMatchClause, $this->optOnUpdateDelete, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class ReferencesWithReferencesTableIdentOptRefListOptMatchClauseOptOnUpdat
      */
     public function withOptOnUpdateDelete(\SqlSemantics\Statement\Model\MySql\Role\OptOnUpdateDeleteForm $optOnUpdateDelete): self
     {
-        return new self($this->tableIdent, $this->optRefList, $this->optMatchClause, $optOnUpdateDelete);
+        return new self($this->tableIdent, $this->optRefList, $this->optMatchClause, $optOnUpdateDelete, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableIdent, $this->optRefList, $this->optMatchClause, $this->optOnUpdateDelete, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class ExplicitTableWithTableSymTableIdent_2371bf4a implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class ExplicitTableWithTableSymTableIdent_2371bf4a implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 1);
         $this->tableIdent->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class ExplicitTableWithTableSymTableIdent_2371bf4a implements \SqlSemantic
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($tableIdent);
+        return new self($tableIdent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableIdent, $comments);
     }
 }

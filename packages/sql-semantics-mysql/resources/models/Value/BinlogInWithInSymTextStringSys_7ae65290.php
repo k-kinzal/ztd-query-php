@@ -17,10 +17,11 @@ final class BinlogInWithInSymTextStringSys_7ae65290 implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class BinlogInWithInSymTextStringSys_7ae65290 implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('IN');
+        $writer->comments($this->comments, 1);
         $this->textStringSys->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class BinlogInWithInSymTextStringSys_7ae65290 implements \SqlSemantics\Sta
      */
     public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
     {
-        return new self($textStringSys);
+        return new self($textStringSys, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textStringSys, $comments);
     }
 }

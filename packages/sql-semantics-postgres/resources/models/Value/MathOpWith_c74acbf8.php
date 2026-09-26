@@ -15,10 +15,27 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
 final class MathOpWith_c74acbf8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\MathOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AllOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\QualAllOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('^');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

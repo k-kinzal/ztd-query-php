@@ -107,6 +107,10 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
 #[UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
+#[UsesClass(\SqlFixture\Version\ServerVersion::class)]
+#[UsesClass(\SqlFixture\Version\Releases::class)]
+#[UsesClass(\SqlFixture\Version\ReleaseNumber::class)]
+#[UsesClass(\SqlFixture\Version\UnsupportedVersionException::class)]
 final class FileFixtureProviderTest extends TestCase
 {
     #[Test]
@@ -474,6 +478,38 @@ final class FileFixtureProviderTest extends TestCase
 
             self::assertArrayHasKey('id', $data);
             self::assertArrayHasKey('value', $data);
+        } finally {
+            rmdir($tempDir);
+        }
+    }
+
+    public function testGetDialectAndGetVersionNameTheSelectedRelease(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/sql_fixture_versions_' . bin2hex(random_bytes(4));
+        mkdir($tempDir);
+        file_put_contents($tempDir . '/users.sql', 'CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT NOT NULL)');
+
+        try {
+            $provider = new FileFixtureProvider(Factory::create(), $tempDir, dialect: PlatformFactory::DRIVER_PGSQL, version: 'pg-17.2');
+
+            self::assertSame('pgsql', $provider->getDialect());
+            self::assertSame('pg-17.2', $provider->getVersion());
+            self::assertSame('mysql-8.4.7', (new FileFixtureProvider(Factory::create(), $tempDir))->getVersion());
+            self::assertArrayHasKey('name', $provider->fixture('users'));
+        } finally {
+            unlink($tempDir . '/users.sql');
+            rmdir($tempDir);
+        }
+    }
+
+    public function testGetVersionRejectsAnUnsupportedTag(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/sql_fixture_versions_' . bin2hex(random_bytes(4));
+        mkdir($tempDir);
+
+        try {
+            $this->expectException(\SqlFixture\Version\UnsupportedVersionException::class);
+            new FileFixtureProvider(Factory::create(), $tempDir, version: 'mysql-5.5.62');
         } finally {
             rmdir($tempDir);
         }

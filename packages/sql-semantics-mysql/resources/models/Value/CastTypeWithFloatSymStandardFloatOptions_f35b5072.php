@@ -17,11 +17,12 @@ final class CastTypeWithFloatSymStandardFloatOptions_f35b5072 implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $floatSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StandardFloatOptionsForm $standardFloatOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($floatSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['FLOAT_SYM'], 'The floatSym must be a complete FLOAT_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($standardFloatOptions), 'The standardFloatOptions must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class CastTypeWithFloatSymStandardFloatOptions_f35b5072 implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->floatSym);
+        $writer->comments($this->comments, 1);
         $this->standardFloatOptions->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class CastTypeWithFloatSymStandardFloatOptions_f35b5072 implements \SqlSem
      */
     public function withFloatSym(string $floatSym): self
     {
-        return new self($floatSym, $this->standardFloatOptions);
+        return new self($floatSym, $this->standardFloatOptions, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class CastTypeWithFloatSymStandardFloatOptions_f35b5072 implements \SqlSem
      */
     public function withStandardFloatOptions(\SqlSemantics\Statement\Model\MySql\Role\StandardFloatOptionsForm $standardFloatOptions): self
     {
-        return new self($this->floatSym, $standardFloatOptions);
+        return new self($this->floatSym, $standardFloatOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->floatSym, $this->standardFloatOptions, $comments);
     }
 }

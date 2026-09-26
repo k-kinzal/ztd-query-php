@@ -17,12 +17,13 @@ final class FuncApplicationWithFuncNameFuncArgListOptSortClause_bc96ecb7 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm $funcArgList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcName), 'The funcName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgList), 'The funcArgList must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class FuncApplicationWithFuncNameFuncArgListOptSortClause_bc96ecb7 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->funcName->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->funcArgList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optSortClause->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -46,7 +52,7 @@ final class FuncApplicationWithFuncNameFuncArgListOptSortClause_bc96ecb7 impleme
      */
     public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
     {
-        return new self($funcName, $this->funcArgList, $this->optSortClause);
+        return new self($funcName, $this->funcArgList, $this->optSortClause, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class FuncApplicationWithFuncNameFuncArgListOptSortClause_bc96ecb7 impleme
      */
     public function withFuncArgList(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm $funcArgList): self
     {
-        return new self($this->funcName, $funcArgList, $this->optSortClause);
+        return new self($this->funcName, $funcArgList, $this->optSortClause, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class FuncApplicationWithFuncNameFuncArgListOptSortClause_bc96ecb7 impleme
      */
     public function withOptSortClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause): self
     {
-        return new self($this->funcName, $this->funcArgList, $optSortClause);
+        return new self($this->funcName, $this->funcArgList, $optSortClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcName, $this->funcArgList, $this->optSortClause, $comments);
     }
 }

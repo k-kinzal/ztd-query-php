@@ -17,12 +17,13 @@ final class DropdbStmtWithDropDatabaseIfPExistsNameOptWithDropOptionList_7b879ef
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionListForm $dropOptionList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
@@ -34,14 +35,23 @@ final class DropdbStmtWithDropDatabaseIfPExistsNameOptWithDropOptionList_7b879ef
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append('DATABASE');
+        $writer->comments($this->comments, 2);
         $writer->append('IF');
+        $writer->comments($this->comments, 3);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 4);
         $this->name->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optWith->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('(');
+        $writer->comments($this->comments, 7);
         $this->dropOptionList->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append(')');
     }
 
@@ -50,7 +60,7 @@ final class DropdbStmtWithDropDatabaseIfPExistsNameOptWithDropOptionList_7b879ef
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->optWith, $this->dropOptionList);
+        return new self($name, $this->optWith, $this->dropOptionList, $this->comments);
     }
 
     /**
@@ -58,7 +68,7 @@ final class DropdbStmtWithDropDatabaseIfPExistsNameOptWithDropOptionList_7b879ef
      */
     public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
     {
-        return new self($this->name, $optWith, $this->dropOptionList);
+        return new self($this->name, $optWith, $this->dropOptionList, $this->comments);
     }
 
     /**
@@ -66,6 +76,14 @@ final class DropdbStmtWithDropDatabaseIfPExistsNameOptWithDropOptionList_7b879ef
      */
     public function withDropOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionListForm $dropOptionList): self
     {
-        return new self($this->name, $this->optWith, $dropOptionList);
+        return new self($this->name, $this->optWith, $dropOptionList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->optWith, $this->dropOptionList, $comments);
     }
 }

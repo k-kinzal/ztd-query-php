@@ -17,10 +17,11 @@ final class PrepareSrcWithIdentOrText_9e3b898e implements \SqlSemantics\Statemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class PrepareSrcWithIdentOrText_9e3b898e implements \SqlSemantics\Statemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
-        $writer->append('@');
+        $writer->comments($this->comments, 0);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 1);
         $this->identOrText->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class PrepareSrcWithIdentOrText_9e3b898e implements \SqlSemantics\Statemen
      */
     public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
     {
-        return new self($identOrText);
+        return new self($identOrText, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identOrText, $comments);
     }
 }

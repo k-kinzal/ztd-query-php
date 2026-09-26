@@ -17,11 +17,12 @@ final class FlushWithFlushSymOptNoWriteToBinlogFlushOptions_991be9df implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsForm $flushOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($flushOptions), 'The flushOptions must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class FlushWithFlushSymOptNoWriteToBinlogFlushOptions_991be9df implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FLUSH');
+        $writer->comments($this->comments, 1);
         $this->optNoWriteToBinlog->write($writer);
+        $writer->comments($this->comments, 2);
         $this->flushOptions->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class FlushWithFlushSymOptNoWriteToBinlogFlushOptions_991be9df implements 
      */
     public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
     {
-        return new self($optNoWriteToBinlog, $this->flushOptions);
+        return new self($optNoWriteToBinlog, $this->flushOptions, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class FlushWithFlushSymOptNoWriteToBinlogFlushOptions_991be9df implements 
      */
     public function withFlushOptions(\SqlSemantics\Statement\Model\MySql\Role\FlushOptionsForm $flushOptions): self
     {
-        return new self($this->optNoWriteToBinlog, $flushOptions);
+        return new self($this->optNoWriteToBinlog, $flushOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optNoWriteToBinlog, $this->flushOptions, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableWildListForm $tableWildList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableWildList), 'The tableWildList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($joinTableList), 'The joinTableList must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableWildList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('FROM');
+        $writer->comments($this->comments, 2);
         $this->joinTableList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->where->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f im
      */
     public function withTableWildList(\SqlSemantics\Statement\Model\MySql\Role\TableWildListForm $tableWildList): self
     {
-        return new self($tableWildList, $this->joinTableList, $this->where);
+        return new self($tableWildList, $this->joinTableList, $this->where, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f im
      */
     public function withJoinTableList(\SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList): self
     {
-        return new self($this->tableWildList, $joinTableList, $this->where);
+        return new self($this->tableWildList, $joinTableList, $this->where, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class SingleMultiWithTableWildListFromJoinTableListWhereClause_ea33068f im
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where): self
     {
-        return new self($this->tableWildList, $this->joinTableList, $where);
+        return new self($this->tableWildList, $this->joinTableList, $where, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableWildList, $this->joinTableList, $this->where, $comments);
     }
 }

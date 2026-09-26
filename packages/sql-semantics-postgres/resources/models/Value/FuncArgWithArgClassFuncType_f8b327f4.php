@@ -17,11 +17,12 @@ final class FuncArgWithArgClassFuncType_f8b327f4 implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ArgClassForm $argClass,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm $funcType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($argClass), 'The argClass must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcType), 'The funcType must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class FuncArgWithArgClassFuncType_f8b327f4 implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->argClass->write($writer);
+        $writer->comments($this->comments, 1);
         $this->funcType->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class FuncArgWithArgClassFuncType_f8b327f4 implements \SqlSemantics\Statem
      */
     public function withArgClass(\SqlSemantics\Statement\Model\PostgreSql\Role\ArgClassForm $argClass): self
     {
-        return new self($argClass, $this->funcType);
+        return new self($argClass, $this->funcType, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class FuncArgWithArgClassFuncType_f8b327f4 implements \SqlSemantics\Statem
      */
     public function withFuncType(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm $funcType): self
     {
-        return new self($this->argClass, $funcType);
+        return new self($this->argClass, $funcType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->argClass, $this->funcType, $comments);
     }
 }

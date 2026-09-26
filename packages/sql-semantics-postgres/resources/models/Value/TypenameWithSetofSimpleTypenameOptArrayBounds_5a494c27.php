@@ -17,11 +17,12 @@ final class TypenameWithSetofSimpleTypenameOptArrayBounds_5a494c27 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm $simpleTypename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptArrayBoundsForm $optArrayBounds,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($simpleTypename), 'The simpleTypename must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optArrayBounds), 'The optArrayBounds must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TypenameWithSetofSimpleTypenameOptArrayBounds_5a494c27 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SETOF');
+        $writer->comments($this->comments, 1);
         $this->simpleTypename->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optArrayBounds->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TypenameWithSetofSimpleTypenameOptArrayBounds_5a494c27 implements \S
      */
     public function withSimpleTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm $simpleTypename): self
     {
-        return new self($simpleTypename, $this->optArrayBounds);
+        return new self($simpleTypename, $this->optArrayBounds, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TypenameWithSetofSimpleTypenameOptArrayBounds_5a494c27 implements \S
      */
     public function withOptArrayBounds(\SqlSemantics\Statement\Model\PostgreSql\Role\OptArrayBoundsForm $optArrayBounds): self
     {
-        return new self($this->simpleTypename, $optArrayBounds);
+        return new self($this->simpleTypename, $optArrayBounds, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleTypename, $this->optArrayBounds, $comments);
     }
 }

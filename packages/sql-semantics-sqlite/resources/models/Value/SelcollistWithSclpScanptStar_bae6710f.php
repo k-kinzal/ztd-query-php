@@ -17,11 +17,12 @@ final class SelcollistWithSclpScanptStar_bae6710f implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SclpForm $sclp,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sclp), 'The sclp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scanpt), 'The scanpt must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SelcollistWithSclpScanptStar_bae6710f implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->sclp->write($writer);
+        $writer->comments($this->comments, 1);
         $this->scanpt->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('*');
     }
 
@@ -42,7 +46,7 @@ final class SelcollistWithSclpScanptStar_bae6710f implements \SqlSemantics\State
      */
     public function withSclp(\SqlSemantics\Statement\Model\Sqlite\Role\SclpForm $sclp): self
     {
-        return new self($sclp, $this->scanpt);
+        return new self($sclp, $this->scanpt, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SelcollistWithSclpScanptStar_bae6710f implements \SqlSemantics\State
      */
     public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self
     {
-        return new self($this->sclp, $scanpt);
+        return new self($this->sclp, $scanpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sclp, $this->scanpt, $comments);
     }
 }

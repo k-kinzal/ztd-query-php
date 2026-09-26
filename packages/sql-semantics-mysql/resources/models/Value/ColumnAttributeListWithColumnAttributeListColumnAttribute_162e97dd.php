@@ -17,11 +17,12 @@ final class ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm $columnAttributeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm $columnAttribute,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnAttributeList), 'The columnAttributeList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnAttribute), 'The columnAttribute must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->columnAttributeList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->columnAttribute->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd i
      */
     public function withColumnAttributeList(\SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm $columnAttributeList): self
     {
-        return new self($columnAttributeList, $this->columnAttribute);
+        return new self($columnAttributeList, $this->columnAttribute, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd i
      */
     public function withColumnAttribute(\SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm $columnAttribute): self
     {
-        return new self($this->columnAttributeList, $columnAttribute);
+        return new self($this->columnAttributeList, $columnAttribute, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->columnAttributeList, $this->columnAttribute, $comments);
     }
 }

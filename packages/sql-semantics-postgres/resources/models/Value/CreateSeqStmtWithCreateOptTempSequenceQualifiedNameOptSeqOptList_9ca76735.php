@@ -17,12 +17,13 @@ final class CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSeqOptListForm $optSeqOptList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optTemp->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('SEQUENCE');
+        $writer->comments($this->comments, 3);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optSeqOptList->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca
      */
     public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
     {
-        return new self($optTemp, $this->qualifiedName, $this->optSeqOptList);
+        return new self($optTemp, $this->qualifiedName, $this->optSeqOptList, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->optTemp, $qualifiedName, $this->optSeqOptList);
+        return new self($this->optTemp, $qualifiedName, $this->optSeqOptList, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class CreateSeqStmtWithCreateOptTempSequenceQualifiedNameOptSeqOptList_9ca
      */
     public function withOptSeqOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSeqOptListForm $optSeqOptList): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $optSeqOptList);
+        return new self($this->optTemp, $this->qualifiedName, $optSeqOptList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->optSeqOptList, $comments);
     }
 }

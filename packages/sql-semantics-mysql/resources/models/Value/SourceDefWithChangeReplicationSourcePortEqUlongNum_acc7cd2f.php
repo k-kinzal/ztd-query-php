@@ -17,11 +17,12 @@ final class SourceDefWithChangeReplicationSourcePortEqUlongNum_acc7cd2f implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourcePortForm $changeReplicationSourcePort,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourcePort), 'The changeReplicationSourcePort must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SourceDefWithChangeReplicationSourcePortEqUlongNum_acc7cd2f implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->changeReplicationSourcePort->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->ulongNum->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SourceDefWithChangeReplicationSourcePortEqUlongNum_acc7cd2f implemen
      */
     public function withChangeReplicationSourcePort(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourcePortForm $changeReplicationSourcePort): self
     {
-        return new self($changeReplicationSourcePort, $this->ulongNum);
+        return new self($changeReplicationSourcePort, $this->ulongNum, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SourceDefWithChangeReplicationSourcePortEqUlongNum_acc7cd2f implemen
      */
     public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
     {
-        return new self($this->changeReplicationSourcePort, $ulongNum);
+        return new self($this->changeReplicationSourcePort, $ulongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->changeReplicationSourcePort, $this->ulongNum, $comments);
     }
 }

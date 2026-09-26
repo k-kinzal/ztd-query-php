@@ -17,13 +17,14 @@ final class Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitionin
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm $createFieldList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm $optCreateTableOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm $optCreatePartitioning,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\Create3Form $create3,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createFieldList), 'The createFieldList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCreateTableOptions), 'The optCreateTableOptions must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitionin
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createFieldList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(')');
+        $writer->comments($this->comments, 2);
         $this->optCreateTableOptions->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optCreatePartitioning->write($writer);
+        $writer->comments($this->comments, 4);
         $this->create3->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitionin
      */
     public function withCreateFieldList(\SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm $createFieldList): self
     {
-        return new self($createFieldList, $this->optCreateTableOptions, $this->optCreatePartitioning, $this->create3);
+        return new self($createFieldList, $this->optCreateTableOptions, $this->optCreatePartitioning, $this->create3, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitionin
      */
     public function withOptCreateTableOptions(\SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm $optCreateTableOptions): self
     {
-        return new self($this->createFieldList, $optCreateTableOptions, $this->optCreatePartitioning, $this->create3);
+        return new self($this->createFieldList, $optCreateTableOptions, $this->optCreatePartitioning, $this->create3, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitionin
      */
     public function withOptCreatePartitioning(\SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm $optCreatePartitioning): self
     {
-        return new self($this->createFieldList, $this->optCreateTableOptions, $optCreatePartitioning, $this->create3);
+        return new self($this->createFieldList, $this->optCreateTableOptions, $optCreatePartitioning, $this->create3, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitionin
      */
     public function withCreate3(\SqlSemantics\Statement\Model\MySql\Role\Create3Form $create3): self
     {
-        return new self($this->createFieldList, $this->optCreateTableOptions, $this->optCreatePartitioning, $create3);
+        return new self($this->createFieldList, $this->optCreateTableOptions, $this->optCreatePartitioning, $create3, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createFieldList, $this->optCreateTableOptions, $this->optCreatePartitioning, $this->create3, $comments);
     }
 }

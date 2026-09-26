@@ -17,11 +17,12 @@ final class SumExprWithStdSymInSumExpr_2499d833 implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $stdSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($stdSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['STD_SYM'], 'The stdSym must be a complete STD_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($inSumExpr), 'The inSumExpr must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class SumExprWithStdSymInSumExpr_2499d833 implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->stdSym);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->inSumExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class SumExprWithStdSymInSumExpr_2499d833 implements \SqlSemantics\Stateme
      */
     public function withStdSym(string $stdSym): self
     {
-        return new self($stdSym, $this->inSumExpr);
+        return new self($stdSym, $this->inSumExpr, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class SumExprWithStdSymInSumExpr_2499d833 implements \SqlSemantics\Stateme
      */
     public function withInSumExpr(\SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr): self
     {
-        return new self($this->stdSym, $inSumExpr);
+        return new self($this->stdSym, $inSumExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->stdSym, $this->inSumExpr, $comments);
     }
 }

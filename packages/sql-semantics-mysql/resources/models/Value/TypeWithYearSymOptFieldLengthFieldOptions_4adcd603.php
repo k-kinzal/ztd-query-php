@@ -17,12 +17,13 @@ final class TypeWithYearSymOptFieldLengthFieldOptions_4adcd603 implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $yearSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($yearSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['YEAR_SYM'], 'The yearSym must be a complete YEAR_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFieldLength), 'The optFieldLength must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class TypeWithYearSymOptFieldLengthFieldOptions_4adcd603 implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->yearSym);
+        $writer->comments($this->comments, 1);
         $this->optFieldLength->write($writer);
+        $writer->comments($this->comments, 2);
         $this->fieldOptions->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class TypeWithYearSymOptFieldLengthFieldOptions_4adcd603 implements \SqlSe
      */
     public function withYearSym(string $yearSym): self
     {
-        return new self($yearSym, $this->optFieldLength, $this->fieldOptions);
+        return new self($yearSym, $this->optFieldLength, $this->fieldOptions, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class TypeWithYearSymOptFieldLengthFieldOptions_4adcd603 implements \SqlSe
      */
     public function withOptFieldLength(\SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength): self
     {
-        return new self($this->yearSym, $optFieldLength, $this->fieldOptions);
+        return new self($this->yearSym, $optFieldLength, $this->fieldOptions, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class TypeWithYearSymOptFieldLengthFieldOptions_4adcd603 implements \SqlSe
      */
     public function withFieldOptions(\SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions): self
     {
-        return new self($this->yearSym, $this->optFieldLength, $fieldOptions);
+        return new self($this->yearSym, $this->optFieldLength, $fieldOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->yearSym, $this->optFieldLength, $this->fieldOptions, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class KeyPartWithIdentNum_0b2966cb implements \SqlSemantics\Statement\Mode
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly string $value,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
@@ -32,9 +33,13 @@ final class KeyPartWithIdentNum_0b2966cb implements \SqlSemantics\Statement\Mode
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $writer->append($this->value);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class KeyPartWithIdentNum_0b2966cb implements \SqlSemantics\Statement\Mode
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->value);
+        return new self($ident, $this->value, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class KeyPartWithIdentNum_0b2966cb implements \SqlSemantics\Statement\Mode
      */
     public function withValue(string $value): self
     {
-        return new self($this->ident, $value);
+        return new self($this->ident, $value, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->value, $comments);
     }
 }

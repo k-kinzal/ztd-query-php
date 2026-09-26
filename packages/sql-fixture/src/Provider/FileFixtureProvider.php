@@ -12,13 +12,19 @@ use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Provider;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
+use SqlFixture\Version\ServerVersion;
 
 /**
  * Faker provider that generates fixtures from local DDL files.
+ *
+ * The dialect and, optionally, the version tag select the release the DDL
+ * files are read for; omitting the version tag uses the default of the dialect.
  */
 class FileFixtureProvider extends Base
 {
     private FixtureGenerator $fixtureGenerator;
+    private string $dialect;
+    private ServerVersion $version;
 
     /**
      * @var array<string, TableSchema> Table name → parsed schema cache
@@ -26,7 +32,11 @@ class FileFixtureProvider extends Base
     private array $schemas = [];
 
     /**
-     * @param string $dialect SQL dialect ('mysql' or 'sqlite')
+     * @param string $dialect SQL dialect: 'mysql', 'pgsql' or 'sqlite'
+     * @param string|null $version Version tag such as 'mysql-8.4.7', or null for the default of the dialect
+     *
+     * @throws Exception\UnsupportedDriverException If the dialect is not supported
+     * @throws \SqlFixture\Version\UnsupportedVersionException If the version tag is not a supported release of the dialect
      */
     public function __construct(
         Generator $faker,
@@ -34,11 +44,14 @@ class FileFixtureProvider extends Base
         ?TypeMapperInterface $typeMapper = null,
         ?HydratorInterface $hydrator = null,
         string $dialect = PlatformFactory::DRIVER_MYSQL,
+        ?string $version = null,
     ) {
         parent::__construct($faker);
+        $this->dialect = $dialect;
+        $this->version = PlatformFactory::resolveVersion($dialect, $version);
 
         $typeMapper ??= PlatformFactory::createTypeMapper($dialect);
-        $schemaParser = PlatformFactory::createSchemaParser($dialect);
+        $schemaParser = PlatformFactory::createSchemaParser($dialect, $this->version->tag);
 
         $this->fixtureGenerator = new FixtureGenerator($faker, $typeMapper, $hydrator, $schemaParser);
         $this->schemas = (new DdlDirectory())->loadSchemas($ddlPath, $schemaParser);
@@ -101,5 +114,21 @@ class FileFixtureProvider extends Base
     public function getFixtureGenerator(): FixtureGenerator
     {
         return $this->fixtureGenerator;
+    }
+
+    /**
+     * Get the dialect the DDL files are read for.
+     */
+    public function getDialect(): string
+    {
+        return $this->dialect;
+    }
+
+    /**
+     * Get the version tag of the release the DDL files are read for.
+     */
+    public function getVersion(): string
+    {
+        return $this->version->tag;
     }
 }

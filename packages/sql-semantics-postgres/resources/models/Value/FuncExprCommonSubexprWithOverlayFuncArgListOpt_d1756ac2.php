@@ -17,10 +17,11 @@ final class FuncExprCommonSubexprWithOverlayFuncArgListOpt_d1756ac2 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm $funcArgListOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgListOpt), 'The funcArgListOpt must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class FuncExprCommonSubexprWithOverlayFuncArgListOpt_d1756ac2 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('OVERLAY');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->funcArgListOpt->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -41,6 +46,14 @@ final class FuncExprCommonSubexprWithOverlayFuncArgListOpt_d1756ac2 implements \
      */
     public function withFuncArgListOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm $funcArgListOpt): self
     {
-        return new self($funcArgListOpt);
+        return new self($funcArgListOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcArgListOpt, $comments);
     }
 }

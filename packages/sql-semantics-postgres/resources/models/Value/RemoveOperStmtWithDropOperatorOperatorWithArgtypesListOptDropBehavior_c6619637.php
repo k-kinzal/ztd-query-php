@@ -17,11 +17,12 @@ final class RemoveOperStmtWithDropOperatorOperatorWithArgtypesListOptDropBehavio
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesListForm $operatorWithArgtypesList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorWithArgtypesList), 'The operatorWithArgtypesList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class RemoveOperStmtWithDropOperatorOperatorWithArgtypesListOptDropBehavio
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append('OPERATOR');
+        $writer->comments($this->comments, 2);
         $this->operatorWithArgtypesList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optDropBehavior->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class RemoveOperStmtWithDropOperatorOperatorWithArgtypesListOptDropBehavio
      */
     public function withOperatorWithArgtypesList(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesListForm $operatorWithArgtypesList): self
     {
-        return new self($operatorWithArgtypesList, $this->optDropBehavior);
+        return new self($operatorWithArgtypesList, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class RemoveOperStmtWithDropOperatorOperatorWithArgtypesListOptDropBehavio
      */
     public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
     {
-        return new self($this->operatorWithArgtypesList, $optDropBehavior);
+        return new self($this->operatorWithArgtypesList, $optDropBehavior, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->operatorWithArgtypesList, $this->optDropBehavior, $comments);
     }
 }

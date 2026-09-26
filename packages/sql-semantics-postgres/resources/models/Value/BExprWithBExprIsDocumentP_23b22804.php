@@ -17,10 +17,11 @@ final class BExprWithBExprIsDocumentP_23b22804 implements \SqlSemantics\Statemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 7,));
@@ -31,8 +32,11 @@ final class BExprWithBExprIsDocumentP_23b22804 implements \SqlSemantics\Statemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('IS');
+        $writer->comments($this->comments, 2);
         $writer->append('DOCUMENT');
     }
 
@@ -41,6 +45,14 @@ final class BExprWithBExprIsDocumentP_23b22804 implements \SqlSemantics\Statemen
      */
     public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
     {
-        return new self($bExpr);
+        return new self($bExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bExpr, $comments);
     }
 }

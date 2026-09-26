@@ -17,13 +17,14 @@ final class FuncExprWithFuncApplicationWithinGroupClauseFilterClauseOverClause_1
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncApplicationForm $funcApplication,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WithinGroupClauseForm $withinGroupClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FilterClauseForm $filterClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OverClauseForm $overClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcApplication), 'The funcApplication must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($withinGroupClause), 'The withinGroupClause must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class FuncExprWithFuncApplicationWithinGroupClauseFilterClauseOverClause_1
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->funcApplication->write($writer);
+        $writer->comments($this->comments, 1);
         $this->withinGroupClause->write($writer);
+        $writer->comments($this->comments, 2);
         $this->filterClause->write($writer);
+        $writer->comments($this->comments, 3);
         $this->overClause->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class FuncExprWithFuncApplicationWithinGroupClauseFilterClauseOverClause_1
      */
     public function withFuncApplication(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncApplicationForm $funcApplication): self
     {
-        return new self($funcApplication, $this->withinGroupClause, $this->filterClause, $this->overClause);
+        return new self($funcApplication, $this->withinGroupClause, $this->filterClause, $this->overClause, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class FuncExprWithFuncApplicationWithinGroupClauseFilterClauseOverClause_1
      */
     public function withWithinGroupClause(\SqlSemantics\Statement\Model\PostgreSql\Role\WithinGroupClauseForm $withinGroupClause): self
     {
-        return new self($this->funcApplication, $withinGroupClause, $this->filterClause, $this->overClause);
+        return new self($this->funcApplication, $withinGroupClause, $this->filterClause, $this->overClause, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class FuncExprWithFuncApplicationWithinGroupClauseFilterClauseOverClause_1
      */
     public function withFilterClause(\SqlSemantics\Statement\Model\PostgreSql\Role\FilterClauseForm $filterClause): self
     {
-        return new self($this->funcApplication, $this->withinGroupClause, $filterClause, $this->overClause);
+        return new self($this->funcApplication, $this->withinGroupClause, $filterClause, $this->overClause, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class FuncExprWithFuncApplicationWithinGroupClauseFilterClauseOverClause_1
      */
     public function withOverClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OverClauseForm $overClause): self
     {
-        return new self($this->funcApplication, $this->withinGroupClause, $this->filterClause, $overClause);
+        return new self($this->funcApplication, $this->withinGroupClause, $this->filterClause, $overClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcApplication, $this->withinGroupClause, $this->filterClause, $this->overClause, $comments);
     }
 }

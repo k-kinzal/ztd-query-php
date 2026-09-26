@@ -17,11 +17,12 @@ final class XmlNamespaceElWithBExprAsColLabel_114b201e implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class XmlNamespaceElWithBExprAsColLabel_114b201e implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('AS');
+        $writer->comments($this->comments, 2);
         $this->colLabel->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class XmlNamespaceElWithBExprAsColLabel_114b201e implements \SqlSemantics\
      */
     public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
     {
-        return new self($bExpr, $this->colLabel);
+        return new self($bExpr, $this->colLabel, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class XmlNamespaceElWithBExprAsColLabel_114b201e implements \SqlSemantics\
      */
     public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
     {
-        return new self($this->bExpr, $colLabel);
+        return new self($this->bExpr, $colLabel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bExpr, $this->colLabel, $comments);
     }
 }

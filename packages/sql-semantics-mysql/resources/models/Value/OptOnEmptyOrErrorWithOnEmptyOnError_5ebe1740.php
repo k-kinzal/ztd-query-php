@@ -17,11 +17,12 @@ final class OptOnEmptyOrErrorWithOnEmptyOnError_5ebe1740 implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OnEmptyForm $onEmpty,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OnErrorForm $onError,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($onEmpty), 'The onEmpty must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($onError), 'The onError must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptOnEmptyOrErrorWithOnEmptyOnError_5ebe1740 implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->onEmpty->write($writer);
+        $writer->comments($this->comments, 1);
         $this->onError->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptOnEmptyOrErrorWithOnEmptyOnError_5ebe1740 implements \SqlSemantic
      */
     public function withOnEmpty(\SqlSemantics\Statement\Model\MySql\Role\OnEmptyForm $onEmpty): self
     {
-        return new self($onEmpty, $this->onError);
+        return new self($onEmpty, $this->onError, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptOnEmptyOrErrorWithOnEmptyOnError_5ebe1740 implements \SqlSemantic
      */
     public function withOnError(\SqlSemantics\Statement\Model\MySql\Role\OnErrorForm $onError): self
     {
-        return new self($this->onEmpty, $onError);
+        return new self($this->onEmpty, $onError, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->onEmpty, $this->onError, $comments);
     }
 }

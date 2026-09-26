@@ -17,7 +17,7 @@ final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNam
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
@@ -25,6 +25,7 @@ final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNam
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptInheritForm $optInherit,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTableElementList), 'The optTableElementList must be a generated immutable SQL value.');
@@ -38,19 +39,33 @@ final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNam
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $writer->append('IF');
+        $writer->comments($this->comments, 4);
         $writer->append('NOT');
+        $writer->comments($this->comments, 5);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 6);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('(');
+        $writer->comments($this->comments, 8);
         $this->optTableElementList->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append(')');
+        $writer->comments($this->comments, 10);
         $this->optInherit->write($writer);
+        $writer->comments($this->comments, 11);
         $writer->append('SERVER');
+        $writer->comments($this->comments, 12);
         $this->name->write($writer);
+        $writer->comments($this->comments, 13);
         $this->createGenericOptions->write($writer);
     }
 
@@ -59,7 +74,7 @@ final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNam
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($qualifiedName, $this->optTableElementList, $this->optInherit, $this->name, $this->createGenericOptions);
+        return new self($qualifiedName, $this->optTableElementList, $this->optInherit, $this->name, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -67,7 +82,7 @@ final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNam
      */
     public function withOptTableElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableElementListForm $optTableElementList): self
     {
-        return new self($this->qualifiedName, $optTableElementList, $this->optInherit, $this->name, $this->createGenericOptions);
+        return new self($this->qualifiedName, $optTableElementList, $this->optInherit, $this->name, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -75,7 +90,7 @@ final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNam
      */
     public function withOptInherit(\SqlSemantics\Statement\Model\PostgreSql\Role\OptInheritForm $optInherit): self
     {
-        return new self($this->qualifiedName, $this->optTableElementList, $optInherit, $this->name, $this->createGenericOptions);
+        return new self($this->qualifiedName, $this->optTableElementList, $optInherit, $this->name, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -83,7 +98,7 @@ final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNam
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->qualifiedName, $this->optTableElementList, $this->optInherit, $name, $this->createGenericOptions);
+        return new self($this->qualifiedName, $this->optTableElementList, $this->optInherit, $name, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -91,6 +106,14 @@ final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNam
      */
     public function withCreateGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions): self
     {
-        return new self($this->qualifiedName, $this->optTableElementList, $this->optInherit, $this->name, $createGenericOptions);
+        return new self($this->qualifiedName, $this->optTableElementList, $this->optInherit, $this->name, $createGenericOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->qualifiedName, $this->optTableElementList, $this->optInherit, $this->name, $this->createGenericOptions, $comments);
     }
 }

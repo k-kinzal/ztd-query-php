@@ -17,11 +17,12 @@ final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm $selectDerived,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectDerived), 'The selectDerived must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionOrderOrLimit), 'The optUnionOrderOrLimit must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectDerived->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optUnionOrderOrLimit->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad imp
      */
     public function withSelectDerived(\SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm $selectDerived): self
     {
-        return new self($selectDerived, $this->optUnionOrderOrLimit);
+        return new self($selectDerived, $this->optUnionOrderOrLimit, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad imp
      */
     public function withOptUnionOrderOrLimit(\SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit): self
     {
-        return new self($this->selectDerived, $optUnionOrderOrLimit);
+        return new self($this->selectDerived, $optUnionOrderOrLimit, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectDerived, $this->optUnionOrderOrLimit, $comments);
     }
 }

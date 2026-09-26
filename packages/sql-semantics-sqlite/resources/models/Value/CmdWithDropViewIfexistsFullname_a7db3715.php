@@ -17,11 +17,12 @@ final class CmdWithDropViewIfexistsFullname_a7db3715 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IfexistsForm $ifexists,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm $fullname,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ifexists), 'The ifexists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($fullname), 'The fullname must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class CmdWithDropViewIfexistsFullname_a7db3715 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append('VIEW');
+        $writer->comments($this->comments, 2);
         $this->ifexists->write($writer);
+        $writer->comments($this->comments, 3);
         $this->fullname->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class CmdWithDropViewIfexistsFullname_a7db3715 implements \SqlSemantics\St
      */
     public function withIfexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfexistsForm $ifexists): self
     {
-        return new self($ifexists, $this->fullname);
+        return new self($ifexists, $this->fullname, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class CmdWithDropViewIfexistsFullname_a7db3715 implements \SqlSemantics\St
      */
     public function withFullname(\SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm $fullname): self
     {
-        return new self($this->ifexists, $fullname);
+        return new self($this->ifexists, $fullname, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ifexists, $this->fullname, $comments);
     }
 }

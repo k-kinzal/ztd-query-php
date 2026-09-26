@@ -17,10 +17,11 @@ final class OptGrantedByWithGrantedByRoleSpec_f83f82f1 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class OptGrantedByWithGrantedByRoleSpec_f83f82f1 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GRANTED');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->roleSpec->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class OptGrantedByWithGrantedByRoleSpec_f83f82f1 implements \SqlSemantics\
      */
     public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
     {
-        return new self($roleSpec);
+        return new self($roleSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleSpec, $comments);
     }
 }

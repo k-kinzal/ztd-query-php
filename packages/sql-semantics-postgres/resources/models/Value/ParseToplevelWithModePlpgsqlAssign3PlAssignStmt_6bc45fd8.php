@@ -17,11 +17,12 @@ final class ParseToplevelWithModePlpgsqlAssign3PlAssignStmt_6bc45fd8 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $modePlpgsqlAssign3,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PlAssignStmtForm $plAssignStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($modePlpgsqlAssign3, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['MODE_PLPGSQL_ASSIGN3'], 'The modePlpgsqlAssign3 must be a complete MODE_PLPGSQL_ASSIGN3 lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($plAssignStmt), 'The plAssignStmt must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ParseToplevelWithModePlpgsqlAssign3PlAssignStmt_6bc45fd8 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->modePlpgsqlAssign3);
+        $writer->comments($this->comments, 1);
         $this->plAssignStmt->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ParseToplevelWithModePlpgsqlAssign3PlAssignStmt_6bc45fd8 implements 
      */
     public function withModePlpgsqlAssign3(string $modePlpgsqlAssign3): self
     {
-        return new self($modePlpgsqlAssign3, $this->plAssignStmt);
+        return new self($modePlpgsqlAssign3, $this->plAssignStmt, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ParseToplevelWithModePlpgsqlAssign3PlAssignStmt_6bc45fd8 implements 
      */
     public function withPlAssignStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\PlAssignStmtForm $plAssignStmt): self
     {
-        return new self($this->modePlpgsqlAssign3, $plAssignStmt);
+        return new self($this->modePlpgsqlAssign3, $plAssignStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->modePlpgsqlAssign3, $this->plAssignStmt, $comments);
     }
 }

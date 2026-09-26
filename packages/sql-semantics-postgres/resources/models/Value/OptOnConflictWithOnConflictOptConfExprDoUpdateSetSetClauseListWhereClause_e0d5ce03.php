@@ -17,12 +17,13 @@ final class OptOnConflictWithOnConflictOptConfExprDoUpdateSetSetClauseListWhereC
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConfExprForm $optConfExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConfExpr), 'The optConfExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setClauseList), 'The setClauseList must be a generated immutable SQL value.');
@@ -34,13 +35,21 @@ final class OptOnConflictWithOnConflictOptConfExprDoUpdateSetSetClauseListWhereC
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ON');
+        $writer->comments($this->comments, 1);
         $writer->append('CONFLICT');
+        $writer->comments($this->comments, 2);
         $this->optConfExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('DO');
+        $writer->comments($this->comments, 4);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 5);
         $writer->append('SET');
+        $writer->comments($this->comments, 6);
         $this->setClauseList->write($writer);
+        $writer->comments($this->comments, 7);
         $this->where->write($writer);
     }
 
@@ -49,7 +58,7 @@ final class OptOnConflictWithOnConflictOptConfExprDoUpdateSetSetClauseListWhereC
      */
     public function withOptConfExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConfExprForm $optConfExpr): self
     {
-        return new self($optConfExpr, $this->setClauseList, $this->where);
+        return new self($optConfExpr, $this->setClauseList, $this->where, $this->comments);
     }
 
     /**
@@ -57,7 +66,7 @@ final class OptOnConflictWithOnConflictOptConfExprDoUpdateSetSetClauseListWhereC
      */
     public function withSetClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList): self
     {
-        return new self($this->optConfExpr, $setClauseList, $this->where);
+        return new self($this->optConfExpr, $setClauseList, $this->where, $this->comments);
     }
 
     /**
@@ -65,6 +74,14 @@ final class OptOnConflictWithOnConflictOptConfExprDoUpdateSetSetClauseListWhereC
      */
     public function withWhere(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where): self
     {
-        return new self($this->optConfExpr, $this->setClauseList, $where);
+        return new self($this->optConfExpr, $this->setClauseList, $where, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optConfExpr, $this->setClauseList, $this->where, $comments);
     }
 }

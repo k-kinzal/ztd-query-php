@@ -17,10 +17,11 @@ final class MathOpWithNotEquals_21991451 implements \SqlSemantics\Statement\Mode
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $notEquals,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($notEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['NOT_EQUALS'], 'The notEquals must be a complete NOT_EQUALS lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class MathOpWithNotEquals_21991451 implements \SqlSemantics\Statement\Mode
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->notEquals);
     }
 
@@ -38,6 +40,14 @@ final class MathOpWithNotEquals_21991451 implements \SqlSemantics\Statement\Mode
      */
     public function withNotEquals(string $notEquals): self
     {
-        return new self($notEquals);
+        return new self($notEquals, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->notEquals, $comments);
     }
 }

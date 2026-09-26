@@ -17,11 +17,12 @@ final class CconsWithDefaultMinusScantokTerm_aee20286 implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScantokForm $scantok,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TermForm $term,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scantok), 'The scantok must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($term), 'The term must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class CconsWithDefaultMinusScantokTerm_aee20286 implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DEFAULT');
+        $writer->comments($this->comments, 1);
         $writer->append('-');
+        $writer->comments($this->comments, 2);
         $this->scantok->write($writer);
+        $writer->comments($this->comments, 3);
         $this->term->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class CconsWithDefaultMinusScantokTerm_aee20286 implements \SqlSemantics\S
      */
     public function withScantok(\SqlSemantics\Statement\Model\Sqlite\Role\ScantokForm $scantok): self
     {
-        return new self($scantok, $this->term);
+        return new self($scantok, $this->term, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class CconsWithDefaultMinusScantokTerm_aee20286 implements \SqlSemantics\S
      */
     public function withTerm(\SqlSemantics\Statement\Model\Sqlite\Role\TermForm $term): self
     {
-        return new self($this->scantok, $term);
+        return new self($this->scantok, $term, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->scantok, $this->term, $comments);
     }
 }

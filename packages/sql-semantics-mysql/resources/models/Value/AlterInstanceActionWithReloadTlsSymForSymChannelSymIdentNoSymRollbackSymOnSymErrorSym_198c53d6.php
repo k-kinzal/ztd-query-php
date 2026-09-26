@@ -17,10 +17,11 @@ final class AlterInstanceActionWithReloadTlsSymForSymChannelSymIdentNoSymRollbac
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
     }
@@ -30,14 +31,23 @@ final class AlterInstanceActionWithReloadTlsSymForSymChannelSymIdentNoSymRollbac
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('RELOAD');
+        $writer->comments($this->comments, 1);
         $writer->append('TLS');
+        $writer->comments($this->comments, 2);
         $writer->append('FOR');
+        $writer->comments($this->comments, 3);
         $writer->append('CHANNEL');
+        $writer->comments($this->comments, 4);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('NO');
+        $writer->comments($this->comments, 6);
         $writer->append('ROLLBACK');
+        $writer->comments($this->comments, 7);
         $writer->append('ON');
+        $writer->comments($this->comments, 8);
         $writer->append('ERROR');
     }
 
@@ -46,6 +56,14 @@ final class AlterInstanceActionWithReloadTlsSymForSymChannelSymIdentNoSymRollbac
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident);
+        return new self($ident, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $comments);
     }
 }

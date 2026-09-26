@@ -17,13 +17,14 @@ final class DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptIfExistsForm $optIfExists,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optIfExists), 'The optIfExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
@@ -36,14 +37,23 @@ final class DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append('CAST');
+        $writer->comments($this->comments, 2);
         $this->optIfExists->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->typename->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('AS');
+        $writer->comments($this->comments, 6);
         $this->typename2->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append(')');
+        $writer->comments($this->comments, 8);
         $this->optDropBehavior->write($writer);
     }
 
@@ -52,7 +62,7 @@ final class DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior
      */
     public function withOptIfExists(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIfExistsForm $optIfExists): self
     {
-        return new self($optIfExists, $this->typename, $this->typename2, $this->optDropBehavior);
+        return new self($optIfExists, $this->typename, $this->typename2, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -60,7 +70,7 @@ final class DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($this->optIfExists, $typename, $this->typename2, $this->optDropBehavior);
+        return new self($this->optIfExists, $typename, $this->typename2, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -68,7 +78,7 @@ final class DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior
      */
     public function withTypename2(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename2): self
     {
-        return new self($this->optIfExists, $this->typename, $typename2, $this->optDropBehavior);
+        return new self($this->optIfExists, $this->typename, $typename2, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -76,6 +86,14 @@ final class DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior
      */
     public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
     {
-        return new self($this->optIfExists, $this->typename, $this->typename2, $optDropBehavior);
+        return new self($this->optIfExists, $this->typename, $this->typename2, $optDropBehavior, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optIfExists, $this->typename, $this->typename2, $this->optDropBehavior, $comments);
     }
 }

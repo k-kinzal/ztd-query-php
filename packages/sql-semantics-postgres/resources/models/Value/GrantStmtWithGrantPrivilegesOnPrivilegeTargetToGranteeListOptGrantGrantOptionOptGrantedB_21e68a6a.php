@@ -17,7 +17,7 @@ final class GrantStmtWithGrantPrivilegesOnPrivilegeTargetToGranteeListOptGrantGr
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm $privileges,
@@ -25,6 +25,7 @@ final class GrantStmtWithGrantPrivilegesOnPrivilegeTargetToGranteeListOptGrantGr
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm $granteeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantGrantOptionForm $optGrantGrantOption,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm $optGrantedBy,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privileges), 'The privileges must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privilegeTarget), 'The privilegeTarget must be a generated immutable SQL value.');
@@ -38,13 +39,21 @@ final class GrantStmtWithGrantPrivilegesOnPrivilegeTargetToGranteeListOptGrantGr
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 1);
         $this->privileges->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('ON');
+        $writer->comments($this->comments, 3);
         $this->privilegeTarget->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('TO');
+        $writer->comments($this->comments, 5);
         $this->granteeList->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optGrantGrantOption->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optGrantedBy->write($writer);
     }
 
@@ -53,7 +62,7 @@ final class GrantStmtWithGrantPrivilegesOnPrivilegeTargetToGranteeListOptGrantGr
      */
     public function withPrivileges(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm $privileges): self
     {
-        return new self($privileges, $this->privilegeTarget, $this->granteeList, $this->optGrantGrantOption, $this->optGrantedBy);
+        return new self($privileges, $this->privilegeTarget, $this->granteeList, $this->optGrantGrantOption, $this->optGrantedBy, $this->comments);
     }
 
     /**
@@ -61,7 +70,7 @@ final class GrantStmtWithGrantPrivilegesOnPrivilegeTargetToGranteeListOptGrantGr
      */
     public function withPrivilegeTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeTargetForm $privilegeTarget): self
     {
-        return new self($this->privileges, $privilegeTarget, $this->granteeList, $this->optGrantGrantOption, $this->optGrantedBy);
+        return new self($this->privileges, $privilegeTarget, $this->granteeList, $this->optGrantGrantOption, $this->optGrantedBy, $this->comments);
     }
 
     /**
@@ -69,7 +78,7 @@ final class GrantStmtWithGrantPrivilegesOnPrivilegeTargetToGranteeListOptGrantGr
      */
     public function withGranteeList(\SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm $granteeList): self
     {
-        return new self($this->privileges, $this->privilegeTarget, $granteeList, $this->optGrantGrantOption, $this->optGrantedBy);
+        return new self($this->privileges, $this->privilegeTarget, $granteeList, $this->optGrantGrantOption, $this->optGrantedBy, $this->comments);
     }
 
     /**
@@ -77,7 +86,7 @@ final class GrantStmtWithGrantPrivilegesOnPrivilegeTargetToGranteeListOptGrantGr
      */
     public function withOptGrantGrantOption(\SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantGrantOptionForm $optGrantGrantOption): self
     {
-        return new self($this->privileges, $this->privilegeTarget, $this->granteeList, $optGrantGrantOption, $this->optGrantedBy);
+        return new self($this->privileges, $this->privilegeTarget, $this->granteeList, $optGrantGrantOption, $this->optGrantedBy, $this->comments);
     }
 
     /**
@@ -85,6 +94,14 @@ final class GrantStmtWithGrantPrivilegesOnPrivilegeTargetToGranteeListOptGrantGr
      */
     public function withOptGrantedBy(\SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm $optGrantedBy): self
     {
-        return new self($this->privileges, $this->privilegeTarget, $this->granteeList, $this->optGrantGrantOption, $optGrantedBy);
+        return new self($this->privileges, $this->privilegeTarget, $this->granteeList, $this->optGrantGrantOption, $optGrantedBy, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->privileges, $this->privilegeTarget, $this->granteeList, $this->optGrantGrantOption, $this->optGrantedBy, $comments);
     }
 }

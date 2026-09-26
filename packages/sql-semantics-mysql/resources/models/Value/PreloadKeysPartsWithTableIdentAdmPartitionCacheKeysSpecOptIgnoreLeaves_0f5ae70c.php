@@ -17,13 +17,14 @@ final class PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeav
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm $admPartition,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm $optIgnoreLeaves,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($admPartition), 'The admPartition must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeav
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 1);
         $this->admPartition->write($writer);
+        $writer->comments($this->comments, 2);
         $this->cacheKeysSpec->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optIgnoreLeaves->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeav
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($tableIdent, $this->admPartition, $this->cacheKeysSpec, $this->optIgnoreLeaves);
+        return new self($tableIdent, $this->admPartition, $this->cacheKeysSpec, $this->optIgnoreLeaves, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeav
      */
     public function withAdmPartition(\SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm $admPartition): self
     {
-        return new self($this->tableIdent, $admPartition, $this->cacheKeysSpec, $this->optIgnoreLeaves);
+        return new self($this->tableIdent, $admPartition, $this->cacheKeysSpec, $this->optIgnoreLeaves, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeav
      */
     public function withCacheKeysSpec(\SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec): self
     {
-        return new self($this->tableIdent, $this->admPartition, $cacheKeysSpec, $this->optIgnoreLeaves);
+        return new self($this->tableIdent, $this->admPartition, $cacheKeysSpec, $this->optIgnoreLeaves, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class PreloadKeysPartsWithTableIdentAdmPartitionCacheKeysSpecOptIgnoreLeav
      */
     public function withOptIgnoreLeaves(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm $optIgnoreLeaves): self
     {
-        return new self($this->tableIdent, $this->admPartition, $this->cacheKeysSpec, $optIgnoreLeaves);
+        return new self($this->tableIdent, $this->admPartition, $this->cacheKeysSpec, $optIgnoreLeaves, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableIdent, $this->admPartition, $this->cacheKeysSpec, $this->optIgnoreLeaves, $comments);
     }
 }

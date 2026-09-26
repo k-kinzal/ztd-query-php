@@ -17,11 +17,12 @@ final class AlterSubscriptionStmtWithAlterSubscriptionNameSkipDefinition_621fa41
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($definition), 'The definition must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class AlterSubscriptionStmtWithAlterSubscriptionNameSkipDefinition_621fa41
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('SUBSCRIPTION');
+        $writer->comments($this->comments, 2);
         $this->name->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('SKIP');
+        $writer->comments($this->comments, 4);
         $this->definition->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class AlterSubscriptionStmtWithAlterSubscriptionNameSkipDefinition_621fa41
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->definition);
+        return new self($name, $this->definition, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class AlterSubscriptionStmtWithAlterSubscriptionNameSkipDefinition_621fa41
      */
     public function withDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition): self
     {
-        return new self($this->name, $definition);
+        return new self($this->name, $definition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->definition, $comments);
     }
 }

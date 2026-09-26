@@ -17,10 +17,11 @@ final class NvarcharWithNcharSymVarcharSym_88b407cf implements \SqlSemantics\Sta
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $varcharSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($varcharSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['VARCHAR_SYM'], 'The varcharSym must be a complete VARCHAR_SYM lexical spelling.');
     }
@@ -30,7 +31,9 @@ final class NvarcharWithNcharSymVarcharSym_88b407cf implements \SqlSemantics\Sta
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NCHAR');
+        $writer->comments($this->comments, 1);
         $writer->append($this->varcharSym);
     }
 
@@ -39,6 +42,14 @@ final class NvarcharWithNcharSymVarcharSym_88b407cf implements \SqlSemantics\Sta
      */
     public function withVarcharSym(string $varcharSym): self
     {
-        return new self($varcharSym);
+        return new self($varcharSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->varcharSym, $comments);
     }
 }

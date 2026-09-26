@@ -17,10 +17,11 @@ final class MergeInsertWithInsertMergeValuesClause_42a59c6a implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\MergeValuesClauseForm $mergeValuesClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($mergeValuesClause), 'The mergeValuesClause must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class MergeInsertWithInsertMergeValuesClause_42a59c6a implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('INSERT');
+        $writer->comments($this->comments, 1);
         $this->mergeValuesClause->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class MergeInsertWithInsertMergeValuesClause_42a59c6a implements \SqlSeman
      */
     public function withMergeValuesClause(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeValuesClauseForm $mergeValuesClause): self
     {
-        return new self($mergeValuesClause);
+        return new self($mergeValuesClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->mergeValuesClause, $comments);
     }
 }

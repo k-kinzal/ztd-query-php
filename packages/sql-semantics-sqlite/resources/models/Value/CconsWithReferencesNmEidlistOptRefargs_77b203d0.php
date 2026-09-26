@@ -17,12 +17,13 @@ final class CconsWithReferencesNmEidlistOptRefargs_77b203d0 implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($eidlistOpt), 'The eidlistOpt must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class CconsWithReferencesNmEidlistOptRefargs_77b203d0 implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REFERENCES');
+        $writer->comments($this->comments, 1);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 2);
         $this->eidlistOpt->write($writer);
+        $writer->comments($this->comments, 3);
         $this->refargs->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class CconsWithReferencesNmEidlistOptRefargs_77b203d0 implements \SqlSeman
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($nm, $this->eidlistOpt, $this->refargs);
+        return new self($nm, $this->eidlistOpt, $this->refargs, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class CconsWithReferencesNmEidlistOptRefargs_77b203d0 implements \SqlSeman
      */
     public function withEidlistOpt(\SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt): self
     {
-        return new self($this->nm, $eidlistOpt, $this->refargs);
+        return new self($this->nm, $eidlistOpt, $this->refargs, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class CconsWithReferencesNmEidlistOptRefargs_77b203d0 implements \SqlSeman
      */
     public function withRefargs(\SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs): self
     {
-        return new self($this->nm, $this->eidlistOpt, $refargs);
+        return new self($this->nm, $this->eidlistOpt, $refargs, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nm, $this->eidlistOpt, $this->refargs, $comments);
     }
 }

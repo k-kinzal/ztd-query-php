@@ -17,11 +17,12 @@ final class SimpleExprWithConvertSymExprUsingCharsetName_d20847bf implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetName), 'The charsetName must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class SimpleExprWithConvertSymExprUsingCharsetName_d20847bf implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CONVERT');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('USING');
+        $writer->comments($this->comments, 4);
         $this->charsetName->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -45,7 +52,7 @@ final class SimpleExprWithConvertSymExprUsingCharsetName_d20847bf implements \Sq
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->charsetName);
+        return new self($expr, $this->charsetName, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class SimpleExprWithConvertSymExprUsingCharsetName_d20847bf implements \Sq
      */
     public function withCharsetName(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName): self
     {
-        return new self($this->expr, $charsetName);
+        return new self($this->expr, $charsetName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->charsetName, $comments);
     }
 }

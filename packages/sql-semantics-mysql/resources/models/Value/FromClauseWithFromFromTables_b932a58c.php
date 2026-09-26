@@ -17,10 +17,11 @@ final class FromClauseWithFromFromTables_b932a58c implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm $fromTables,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fromTables), 'The fromTables must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class FromClauseWithFromFromTables_b932a58c implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FROM');
+        $writer->comments($this->comments, 1);
         $this->fromTables->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class FromClauseWithFromFromTables_b932a58c implements \SqlSemantics\State
      */
     public function withFromTables(\SqlSemantics\Statement\Model\MySql\Role\FromTablesForm $fromTables): self
     {
-        return new self($fromTables);
+        return new self($fromTables, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fromTables, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class RealTypeWithDoubleSymOptPrecision_871736d1 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $doubleSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPrecisionForm $optPrecision,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($doubleSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DOUBLE_SYM'], 'The doubleSym must be a complete DOUBLE_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPrecision), 'The optPrecision must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class RealTypeWithDoubleSymOptPrecision_871736d1 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->doubleSym);
+        $writer->comments($this->comments, 1);
         $this->optPrecision->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class RealTypeWithDoubleSymOptPrecision_871736d1 implements \SqlSemantics\
      */
     public function withDoubleSym(string $doubleSym): self
     {
-        return new self($doubleSym, $this->optPrecision);
+        return new self($doubleSym, $this->optPrecision, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class RealTypeWithDoubleSymOptPrecision_871736d1 implements \SqlSemantics\
      */
     public function withOptPrecision(\SqlSemantics\Statement\Model\MySql\Role\OptPrecisionForm $optPrecision): self
     {
-        return new self($this->doubleSym, $optPrecision);
+        return new self($this->doubleSym, $optPrecision, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->doubleSym, $this->optPrecision, $comments);
     }
 }

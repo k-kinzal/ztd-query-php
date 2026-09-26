@@ -17,10 +17,11 @@ final class SetRoleStmtWithSetSymRoleSymAllOptExceptRoleList_ed0ec9aa implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExceptRoleListForm $optExceptRoleList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExceptRoleList), 'The optExceptRoleList must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class SetRoleStmtWithSetSymRoleSymAllOptExceptRoleList_ed0ec9aa implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SET');
+        $writer->comments($this->comments, 1);
         $writer->append('ROLE');
+        $writer->comments($this->comments, 2);
         $writer->append('ALL');
+        $writer->comments($this->comments, 3);
         $this->optExceptRoleList->write($writer);
     }
 
@@ -41,6 +46,14 @@ final class SetRoleStmtWithSetSymRoleSymAllOptExceptRoleList_ed0ec9aa implements
      */
     public function withOptExceptRoleList(\SqlSemantics\Statement\Model\MySql\Role\OptExceptRoleListForm $optExceptRoleList): self
     {
-        return new self($optExceptRoleList);
+        return new self($optExceptRoleList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optExceptRoleList, $comments);
     }
 }

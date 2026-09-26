@@ -17,11 +17,12 @@ final class GenericTypeWithTypeFunctionNameOptTypeModifiers_87728bd3 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm $typeFunctionName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTypeModifiersForm $optTypeModifiers,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeFunctionName), 'The typeFunctionName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTypeModifiers), 'The optTypeModifiers must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class GenericTypeWithTypeFunctionNameOptTypeModifiers_87728bd3 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->typeFunctionName->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optTypeModifiers->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class GenericTypeWithTypeFunctionNameOptTypeModifiers_87728bd3 implements 
      */
     public function withTypeFunctionName(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm $typeFunctionName): self
     {
-        return new self($typeFunctionName, $this->optTypeModifiers);
+        return new self($typeFunctionName, $this->optTypeModifiers, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class GenericTypeWithTypeFunctionNameOptTypeModifiers_87728bd3 implements 
      */
     public function withOptTypeModifiers(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTypeModifiersForm $optTypeModifiers): self
     {
-        return new self($this->typeFunctionName, $optTypeModifiers);
+        return new self($this->typeFunctionName, $optTypeModifiers, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->typeFunctionName, $this->optTypeModifiers, $comments);
     }
 }

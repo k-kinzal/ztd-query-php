@@ -17,10 +17,11 @@ final class OptPartDefsWithPartDefList_1876d384 implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partDefList), 'The partDefList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class OptPartDefsWithPartDefList_1876d384 implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->partDefList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
     }
 
@@ -40,6 +44,14 @@ final class OptPartDefsWithPartDefList_1876d384 implements \SqlSemantics\Stateme
      */
     public function withPartDefList(\SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList): self
     {
-        return new self($partDefList);
+        return new self($partDefList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->partDefList, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_249
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWithAdminOptionForm $optWithAdminOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleOrPrivilegeList), 'The roleOrPrivilegeList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userList), 'The userList must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_249
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 1);
         $this->roleOrPrivilegeList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TO');
+        $writer->comments($this->comments, 3);
         $this->userList->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optWithAdminOption->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_249
      */
     public function withRoleOrPrivilegeList(\SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList): self
     {
-        return new self($roleOrPrivilegeList, $this->userList, $this->optWithAdminOption);
+        return new self($roleOrPrivilegeList, $this->userList, $this->optWithAdminOption, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_249
      */
     public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
     {
-        return new self($this->roleOrPrivilegeList, $userList, $this->optWithAdminOption);
+        return new self($this->roleOrPrivilegeList, $userList, $this->optWithAdminOption, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class GrantWithGrantRoleOrPrivilegeListToSymUserListOptWithAdminOption_249
      */
     public function withOptWithAdminOption(\SqlSemantics\Statement\Model\MySql\Role\OptWithAdminOptionForm $optWithAdminOption): self
     {
-        return new self($this->roleOrPrivilegeList, $this->userList, $optWithAdminOption);
+        return new self($this->roleOrPrivilegeList, $this->userList, $optWithAdminOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleOrPrivilegeList, $this->userList, $this->optWithAdminOption, $comments);
     }
 }

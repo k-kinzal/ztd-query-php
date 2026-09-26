@@ -83,4 +83,17 @@ final class TokenGroupsTest extends TestCase
         $names = \SqlSemantics\Core\Ast\TokenGroups::names($node->tokens(), new \SqlSemantics\Core\Ast\Identifiers(PostgreSqlDialect::PostgreSql));
         self::assertSame(['a,b', 'c'], $names);
     }
+    public function testKeyNamesSeparatesPrefixLengthsAndSortDirections(): void
+    {
+        $state = (new \SqlSemantics\Facade\Schema(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (id INT, label VARCHAR(30), UNIQUE KEY idx (label(10) DESC, id ASC))');
+        self::assertSame(['label', 'id'], $state->tables[0]->constraints[0]->columns);
+    }
+    public function testConstraintHeaderSeparatesQuotedNames(): void
+    {
+        $node = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('CREATE TABLE t (id INTEGER, CONSTRAINT "primary" PRIMARY KEY (id))')->find('TableConstraint')[0];
+        [$name, $tokens] = \SqlSemantics\Core\Ast\TokenGroups::constraintHeader($node->tokens(), new \SqlSemantics\Core\Ast\Identifiers(PostgreSqlDialect::PostgreSql));
+        self::assertSame('primary', $name);
+        self::assertSame(['PRIMARY', 'KEY', '(', 'id', ')'], array_column($tokens, 'text'));
+    }
+
 }

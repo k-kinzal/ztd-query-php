@@ -17,12 +17,13 @@ final class DescribeWithDescribeCommandTableIdentOptDescribeColumn_15b316b1 impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm $describeCommand,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDescribeColumnForm $optDescribeColumn,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($describeCommand), 'The describeCommand must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class DescribeWithDescribeCommandTableIdentOptDescribeColumn_15b316b1 impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->describeCommand->write($writer);
+        $writer->comments($this->comments, 1);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optDescribeColumn->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class DescribeWithDescribeCommandTableIdentOptDescribeColumn_15b316b1 impl
      */
     public function withDescribeCommand(\SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm $describeCommand): self
     {
-        return new self($describeCommand, $this->tableIdent, $this->optDescribeColumn);
+        return new self($describeCommand, $this->tableIdent, $this->optDescribeColumn, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class DescribeWithDescribeCommandTableIdentOptDescribeColumn_15b316b1 impl
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->describeCommand, $tableIdent, $this->optDescribeColumn);
+        return new self($this->describeCommand, $tableIdent, $this->optDescribeColumn, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class DescribeWithDescribeCommandTableIdentOptDescribeColumn_15b316b1 impl
      */
     public function withOptDescribeColumn(\SqlSemantics\Statement\Model\MySql\Role\OptDescribeColumnForm $optDescribeColumn): self
     {
-        return new self($this->describeCommand, $this->tableIdent, $optDescribeColumn);
+        return new self($this->describeCommand, $this->tableIdent, $optDescribeColumn, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->describeCommand, $this->tableIdent, $this->optDescribeColumn, $comments);
     }
 }

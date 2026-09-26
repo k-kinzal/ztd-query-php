@@ -17,11 +17,12 @@ final class StlPrefixWithSeltablistJoinop_d0edaade implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm $seltablist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\JoinopForm $joinop,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($seltablist), 'The seltablist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($joinop), 'The joinop must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class StlPrefixWithSeltablistJoinop_d0edaade implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->seltablist->write($writer);
+        $writer->comments($this->comments, 1);
         $this->joinop->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class StlPrefixWithSeltablistJoinop_d0edaade implements \SqlSemantics\Stat
      */
     public function withSeltablist(\SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm $seltablist): self
     {
-        return new self($seltablist, $this->joinop);
+        return new self($seltablist, $this->joinop, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class StlPrefixWithSeltablistJoinop_d0edaade implements \SqlSemantics\Stat
      */
     public function withJoinop(\SqlSemantics\Statement\Model\Sqlite\Role\JoinopForm $joinop): self
     {
-        return new self($this->seltablist, $joinop);
+        return new self($this->seltablist, $joinop, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->seltablist, $this->joinop, $comments);
     }
 }

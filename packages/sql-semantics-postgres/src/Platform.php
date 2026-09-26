@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql;
 
 use SqlParser\Parser\SqlParser;
 use SqlParser\PostgreSql\PostgreSqlParser;
+use SqlSemantics\Core\Analysis\TriviaReader;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
@@ -37,7 +38,7 @@ final class Platform implements Contract
      */
     public function values(string $version): \SqlSemantics\Core\Analysis\ValueReader
     {
-        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php');
+        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php', new TriviaReader(nestedBlocks: true));
     }
 
     /**
@@ -62,9 +63,14 @@ final class Platform implements Contract
     public function syntax(): Policy\SyntaxRules
     {
         return new Policy\SyntaxRules([
+            'autoIncrement' => [],
+            'dropTableName' => ['any_name'],
+            'generationStorage' => ['ColConstraintElem'],
+            'generationClause' => [],
             'columnName' => ['ColId'],
             'declaredType' => ['Typename'],
             'expression' => ['a_expr'],
+            'tableElements' => ['OptTableElementList'],
             'createTable' => ['CreateStmt'],
             'createHeader' => [],
             'tableName' => ['qualified_name'],

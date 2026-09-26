@@ -17,11 +17,12 @@ final class ExprWithRaiseLpRaisetypeCommaExprRp_5b2f59dd implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RaisetypeForm $raisetype,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($raisetype), 'The raisetype must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class ExprWithRaiseLpRaisetypeCommaExprRp_5b2f59dd implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('RAISE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->raisetype->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -45,7 +52,7 @@ final class ExprWithRaiseLpRaisetypeCommaExprRp_5b2f59dd implements \SqlSemantic
      */
     public function withRaisetype(\SqlSemantics\Statement\Model\Sqlite\Role\RaisetypeForm $raisetype): self
     {
-        return new self($raisetype, $this->expr);
+        return new self($raisetype, $this->expr, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class ExprWithRaiseLpRaisetypeCommaExprRp_5b2f59dd implements \SqlSemantic
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($this->raisetype, $expr);
+        return new self($this->raisetype, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->raisetype, $this->expr, $comments);
     }
 }

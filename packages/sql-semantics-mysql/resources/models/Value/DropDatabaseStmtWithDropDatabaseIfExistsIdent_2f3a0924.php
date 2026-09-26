@@ -17,12 +17,13 @@ final class DropDatabaseStmtWithDropDatabaseIfExistsIdent_2f3a0924 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $database,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($database, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASE'], 'The database must be a complete DATABASE lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class DropDatabaseStmtWithDropDatabaseIfExistsIdent_2f3a0924 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append($this->database);
+        $writer->comments($this->comments, 2);
         $this->ifExists->write($writer);
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class DropDatabaseStmtWithDropDatabaseIfExistsIdent_2f3a0924 implements \S
      */
     public function withDatabase(string $database): self
     {
-        return new self($database, $this->ifExists, $this->ident);
+        return new self($database, $this->ifExists, $this->ident, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class DropDatabaseStmtWithDropDatabaseIfExistsIdent_2f3a0924 implements \S
      */
     public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
     {
-        return new self($this->database, $ifExists, $this->ident);
+        return new self($this->database, $ifExists, $this->ident, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class DropDatabaseStmtWithDropDatabaseIfExistsIdent_2f3a0924 implements \S
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->database, $this->ifExists, $ident);
+        return new self($this->database, $this->ifExists, $ident, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->database, $this->ifExists, $this->ident, $comments);
     }
 }

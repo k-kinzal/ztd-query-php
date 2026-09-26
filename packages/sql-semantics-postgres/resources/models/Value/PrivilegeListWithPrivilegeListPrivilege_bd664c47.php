@@ -17,11 +17,12 @@ final class PrivilegeListWithPrivilegeListPrivilege_bd664c47 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm $privilegeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeForm $privilege,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privilegeList), 'The privilegeList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privilege), 'The privilege must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class PrivilegeListWithPrivilegeListPrivilege_bd664c47 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->privilegeList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->privilege->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class PrivilegeListWithPrivilegeListPrivilege_bd664c47 implements \SqlSema
      */
     public function withPrivilegeList(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm $privilegeList): self
     {
-        return new self($privilegeList, $this->privilege);
+        return new self($privilegeList, $this->privilege, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class PrivilegeListWithPrivilegeListPrivilege_bd664c47 implements \SqlSema
      */
     public function withPrivilege(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeForm $privilege): self
     {
-        return new self($this->privilegeList, $privilege);
+        return new self($this->privilegeList, $privilege, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->privilegeList, $this->privilege, $comments);
     }
 }

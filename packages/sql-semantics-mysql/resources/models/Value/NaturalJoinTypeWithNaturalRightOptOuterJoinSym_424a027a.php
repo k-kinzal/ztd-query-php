@@ -17,10 +17,11 @@ final class NaturalJoinTypeWithNaturalRightOptOuterJoinSym_424a027a implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOuter), 'The optOuter must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class NaturalJoinTypeWithNaturalRightOptOuterJoinSym_424a027a implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NATURAL');
+        $writer->comments($this->comments, 1);
         $writer->append('RIGHT');
+        $writer->comments($this->comments, 2);
         $this->optOuter->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('JOIN');
     }
 
@@ -41,6 +46,14 @@ final class NaturalJoinTypeWithNaturalRightOptOuterJoinSym_424a027a implements \
      */
     public function withOptOuter(\SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter): self
     {
-        return new self($optOuter);
+        return new self($optOuter, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optOuter, $comments);
     }
 }

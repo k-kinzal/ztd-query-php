@@ -17,7 +17,7 @@ final class ExecuteStmtWithCreateOptTempTableIfPNotExistsCreateAsTargetAsExecute
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp,
@@ -25,6 +25,7 @@ final class ExecuteStmtWithCreateOptTempTableIfPNotExistsCreateAsTargetAsExecute
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteParamClauseForm $executeParamClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createAsTarget), 'The createAsTarget must be a generated immutable SQL value.');
@@ -38,17 +39,29 @@ final class ExecuteStmtWithCreateOptTempTableIfPNotExistsCreateAsTargetAsExecute
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optTemp->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $writer->append('IF');
+        $writer->comments($this->comments, 4);
         $writer->append('NOT');
+        $writer->comments($this->comments, 5);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 6);
         $this->createAsTarget->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('AS');
+        $writer->comments($this->comments, 8);
         $writer->append('EXECUTE');
+        $writer->comments($this->comments, 9);
         $this->name->write($writer);
+        $writer->comments($this->comments, 10);
         $this->executeParamClause->write($writer);
+        $writer->comments($this->comments, 11);
         $this->optWithData->write($writer);
     }
 
@@ -57,7 +70,7 @@ final class ExecuteStmtWithCreateOptTempTableIfPNotExistsCreateAsTargetAsExecute
      */
     public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
     {
-        return new self($optTemp, $this->createAsTarget, $this->name, $this->executeParamClause, $this->optWithData);
+        return new self($optTemp, $this->createAsTarget, $this->name, $this->executeParamClause, $this->optWithData, $this->comments);
     }
 
     /**
@@ -65,7 +78,7 @@ final class ExecuteStmtWithCreateOptTempTableIfPNotExistsCreateAsTargetAsExecute
      */
     public function withCreateAsTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateAsTargetForm $createAsTarget): self
     {
-        return new self($this->optTemp, $createAsTarget, $this->name, $this->executeParamClause, $this->optWithData);
+        return new self($this->optTemp, $createAsTarget, $this->name, $this->executeParamClause, $this->optWithData, $this->comments);
     }
 
     /**
@@ -73,7 +86,7 @@ final class ExecuteStmtWithCreateOptTempTableIfPNotExistsCreateAsTargetAsExecute
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->optTemp, $this->createAsTarget, $name, $this->executeParamClause, $this->optWithData);
+        return new self($this->optTemp, $this->createAsTarget, $name, $this->executeParamClause, $this->optWithData, $this->comments);
     }
 
     /**
@@ -81,7 +94,7 @@ final class ExecuteStmtWithCreateOptTempTableIfPNotExistsCreateAsTargetAsExecute
      */
     public function withExecuteParamClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteParamClauseForm $executeParamClause): self
     {
-        return new self($this->optTemp, $this->createAsTarget, $this->name, $executeParamClause, $this->optWithData);
+        return new self($this->optTemp, $this->createAsTarget, $this->name, $executeParamClause, $this->optWithData, $this->comments);
     }
 
     /**
@@ -89,6 +102,14 @@ final class ExecuteStmtWithCreateOptTempTableIfPNotExistsCreateAsTargetAsExecute
      */
     public function withOptWithData(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData): self
     {
-        return new self($this->optTemp, $this->createAsTarget, $this->name, $this->executeParamClause, $optWithData);
+        return new self($this->optTemp, $this->createAsTarget, $this->name, $this->executeParamClause, $optWithData, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTemp, $this->createAsTarget, $this->name, $this->executeParamClause, $this->optWithData, $comments);
     }
 }

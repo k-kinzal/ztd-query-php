@@ -17,11 +17,12 @@ final class TriggerFollowsPrecedesClauseWithTriggerActionOrderIdentOrText_03d98e
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TriggerActionOrderForm $triggerActionOrder,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($triggerActionOrder), 'The triggerActionOrder must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class TriggerFollowsPrecedesClauseWithTriggerActionOrderIdentOrText_03d98e
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->triggerActionOrder->write($writer);
+        $writer->comments($this->comments, 1);
         $this->identOrText->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class TriggerFollowsPrecedesClauseWithTriggerActionOrderIdentOrText_03d98e
      */
     public function withTriggerActionOrder(\SqlSemantics\Statement\Model\MySql\Role\TriggerActionOrderForm $triggerActionOrder): self
     {
-        return new self($triggerActionOrder, $this->identOrText);
+        return new self($triggerActionOrder, $this->identOrText, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class TriggerFollowsPrecedesClauseWithTriggerActionOrderIdentOrText_03d98e
      */
     public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
     {
-        return new self($this->triggerActionOrder, $identOrText);
+        return new self($this->triggerActionOrder, $identOrText, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->triggerActionOrder, $this->identOrText, $comments);
     }
 }

@@ -17,13 +17,14 @@ final class JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrde
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayAggregateOrderByClauseOptForm $jsonArrayAggregateOrderByClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayConstructorNullClauseOptForm $jsonArrayConstructorNullClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonArrayAggregateOrderByClauseOpt), 'The jsonArrayAggregateOrderByClauseOpt must be a generated immutable SQL value.');
@@ -36,12 +37,19 @@ final class JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrde
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('JSON_ARRAYAGG');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->jsonValueExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $this->jsonArrayAggregateOrderByClauseOpt->write($writer);
+        $writer->comments($this->comments, 4);
         $this->jsonArrayConstructorNullClauseOpt->write($writer);
+        $writer->comments($this->comments, 5);
         $this->jsonReturningClauseOpt->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
     }
 
@@ -50,7 +58,7 @@ final class JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrde
      */
     public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
     {
-        return new self($jsonValueExpr, $this->jsonArrayAggregateOrderByClauseOpt, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt);
+        return new self($jsonValueExpr, $this->jsonArrayAggregateOrderByClauseOpt, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt, $this->comments);
     }
 
     /**
@@ -58,7 +66,7 @@ final class JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrde
      */
     public function withJsonArrayAggregateOrderByClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayAggregateOrderByClauseOptForm $jsonArrayAggregateOrderByClauseOpt): self
     {
-        return new self($this->jsonValueExpr, $jsonArrayAggregateOrderByClauseOpt, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt);
+        return new self($this->jsonValueExpr, $jsonArrayAggregateOrderByClauseOpt, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt, $this->comments);
     }
 
     /**
@@ -66,7 +74,7 @@ final class JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrde
      */
     public function withJsonArrayConstructorNullClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayConstructorNullClauseOptForm $jsonArrayConstructorNullClauseOpt): self
     {
-        return new self($this->jsonValueExpr, $this->jsonArrayAggregateOrderByClauseOpt, $jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt);
+        return new self($this->jsonValueExpr, $this->jsonArrayAggregateOrderByClauseOpt, $jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt, $this->comments);
     }
 
     /**
@@ -74,6 +82,14 @@ final class JsonAggregateFuncWithJsonArrayaggJsonValueExprJsonArrayAggregateOrde
      */
     public function withJsonReturningClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt): self
     {
-        return new self($this->jsonValueExpr, $this->jsonArrayAggregateOrderByClauseOpt, $this->jsonArrayConstructorNullClauseOpt, $jsonReturningClauseOpt);
+        return new self($this->jsonValueExpr, $this->jsonArrayAggregateOrderByClauseOpt, $this->jsonArrayConstructorNullClauseOpt, $jsonReturningClauseOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonValueExpr, $this->jsonArrayAggregateOrderByClauseOpt, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt, $comments);
     }
 }

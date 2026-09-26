@@ -17,11 +17,12 @@ final class TableRefWithJsonTableOptAliasClause_d503ab39 implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableForm $jsonTable,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTable), 'The jsonTable must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAliasClause), 'The optAliasClause must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class TableRefWithJsonTableOptAliasClause_d503ab39 implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->jsonTable->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optAliasClause->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class TableRefWithJsonTableOptAliasClause_d503ab39 implements \SqlSemantic
      */
     public function withJsonTable(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableForm $jsonTable): self
     {
-        return new self($jsonTable, $this->optAliasClause);
+        return new self($jsonTable, $this->optAliasClause, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class TableRefWithJsonTableOptAliasClause_d503ab39 implements \SqlSemantic
      */
     public function withOptAliasClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause): self
     {
-        return new self($this->jsonTable, $optAliasClause);
+        return new self($this->jsonTable, $optAliasClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonTable, $this->optAliasClause, $comments);
     }
 }

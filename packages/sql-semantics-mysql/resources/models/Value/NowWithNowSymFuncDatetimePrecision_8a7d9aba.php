@@ -17,11 +17,12 @@ final class NowWithNowSymFuncDatetimePrecision_8a7d9aba implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $nowSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FuncDatetimePrecisionForm $funcDatetimePrecision,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($nowSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NOW_SYM'], 'The nowSym must be a complete NOW_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($funcDatetimePrecision), 'The funcDatetimePrecision must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class NowWithNowSymFuncDatetimePrecision_8a7d9aba implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->nowSym);
+        $writer->comments($this->comments, 1);
         $this->funcDatetimePrecision->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class NowWithNowSymFuncDatetimePrecision_8a7d9aba implements \SqlSemantics
      */
     public function withNowSym(string $nowSym): self
     {
-        return new self($nowSym, $this->funcDatetimePrecision);
+        return new self($nowSym, $this->funcDatetimePrecision, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class NowWithNowSymFuncDatetimePrecision_8a7d9aba implements \SqlSemantics
      */
     public function withFuncDatetimePrecision(\SqlSemantics\Statement\Model\MySql\Role\FuncDatetimePrecisionForm $funcDatetimePrecision): self
     {
-        return new self($this->nowSym, $funcDatetimePrecision);
+        return new self($this->nowSym, $funcDatetimePrecision, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nowSym, $this->funcDatetimePrecision, $comments);
     }
 }

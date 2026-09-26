@@ -17,10 +17,11 @@ final class OptCollateWithCollateSymCollationName_7f12cdcb implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CollationNameForm $collationName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($collationName), 'The collationName must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class OptCollateWithCollateSymCollationName_7f12cdcb implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COLLATE');
+        $writer->comments($this->comments, 1);
         $this->collationName->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class OptCollateWithCollateSymCollationName_7f12cdcb implements \SqlSemant
      */
     public function withCollationName(\SqlSemantics\Statement\Model\MySql\Role\CollationNameForm $collationName): self
     {
-        return new self($collationName);
+        return new self($collationName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->collationName, $comments);
     }
 }

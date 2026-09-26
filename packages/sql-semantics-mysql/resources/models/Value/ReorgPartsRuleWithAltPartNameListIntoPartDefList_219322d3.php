@@ -17,11 +17,12 @@ final class ReorgPartsRuleWithAltPartNameListIntoPartDefList_219322d3 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AltPartNameListForm $altPartNameList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($altPartNameList), 'The altPartNameList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partDefList), 'The partDefList must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class ReorgPartsRuleWithAltPartNameListIntoPartDefList_219322d3 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->altPartNameList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('INTO');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->partDefList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class ReorgPartsRuleWithAltPartNameListIntoPartDefList_219322d3 implements
      */
     public function withAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AltPartNameListForm $altPartNameList): self
     {
-        return new self($altPartNameList, $this->partDefList);
+        return new self($altPartNameList, $this->partDefList, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class ReorgPartsRuleWithAltPartNameListIntoPartDefList_219322d3 implements
      */
     public function withPartDefList(\SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList): self
     {
-        return new self($this->altPartNameList, $partDefList);
+        return new self($this->altPartNameList, $partDefList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->altPartNameList, $this->partDefList, $comments);
     }
 }

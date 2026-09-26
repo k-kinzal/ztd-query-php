@@ -17,11 +17,12 @@ final class CacheKeyListOrEmptyWithKeyOrIndexOptKeyUsageList_1dbb2cae implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptKeyUsageListForm $optKeyUsageList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyOrIndex), 'The keyOrIndex must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyUsageList), 'The optKeyUsageList must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class CacheKeyListOrEmptyWithKeyOrIndexOptKeyUsageList_1dbb2cae implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->keyOrIndex->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->optKeyUsageList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class CacheKeyListOrEmptyWithKeyOrIndexOptKeyUsageList_1dbb2cae implements
      */
     public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self
     {
-        return new self($keyOrIndex, $this->optKeyUsageList);
+        return new self($keyOrIndex, $this->optKeyUsageList, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class CacheKeyListOrEmptyWithKeyOrIndexOptKeyUsageList_1dbb2cae implements
      */
     public function withOptKeyUsageList(\SqlSemantics\Statement\Model\MySql\Role\OptKeyUsageListForm $optKeyUsageList): self
     {
-        return new self($this->keyOrIndex, $optKeyUsageList);
+        return new self($this->keyOrIndex, $optKeyUsageList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->keyOrIndex, $this->optKeyUsageList, $comments);
     }
 }

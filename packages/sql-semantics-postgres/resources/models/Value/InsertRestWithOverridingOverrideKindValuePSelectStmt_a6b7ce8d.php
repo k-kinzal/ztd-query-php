@@ -17,11 +17,12 @@ final class InsertRestWithOverridingOverrideKindValuePSelectStmt_a6b7ce8d implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm $overrideKind,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($overrideKind), 'The overrideKind must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectStmt), 'The selectStmt must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class InsertRestWithOverridingOverrideKindValuePSelectStmt_a6b7ce8d implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('OVERRIDING');
+        $writer->comments($this->comments, 1);
         $this->overrideKind->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('VALUE');
+        $writer->comments($this->comments, 3);
         $this->selectStmt->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class InsertRestWithOverridingOverrideKindValuePSelectStmt_a6b7ce8d implem
      */
     public function withOverrideKind(\SqlSemantics\Statement\Model\PostgreSql\Role\OverrideKindForm $overrideKind): self
     {
-        return new self($overrideKind, $this->selectStmt);
+        return new self($overrideKind, $this->selectStmt, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class InsertRestWithOverridingOverrideKindValuePSelectStmt_a6b7ce8d implem
      */
     public function withSelectStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt): self
     {
-        return new self($this->overrideKind, $selectStmt);
+        return new self($this->overrideKind, $selectStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->overrideKind, $this->selectStmt, $comments);
     }
 }

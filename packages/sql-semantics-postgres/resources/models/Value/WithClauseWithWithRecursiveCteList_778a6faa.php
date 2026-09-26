@@ -17,10 +17,11 @@ final class WithClauseWithWithRecursiveCteList_778a6faa implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cteList), 'The cteList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class WithClauseWithWithRecursiveCteList_778a6faa implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('WITH');
+        $writer->comments($this->comments, 1);
         $writer->append('RECURSIVE');
+        $writer->comments($this->comments, 2);
         $this->cteList->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class WithClauseWithWithRecursiveCteList_778a6faa implements \SqlSemantics
      */
     public function withCteList(\SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm $cteList): self
     {
-        return new self($cteList);
+        return new self($cteList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->cteList, $comments);
     }
 }

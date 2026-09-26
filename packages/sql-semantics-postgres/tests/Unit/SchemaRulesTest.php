@@ -86,7 +86,7 @@ final class SchemaRulesTest extends TestCase
     public function testSchemaNodeRetainsOriginalDeclaration(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
-        self::assertStringContainsString('CREATE TABLE', $schema->tables[0]->source->toString());
+        self::assertStringContainsString('CREATE TABLE', \SqlSemantics\Statement\Writer::render($schema->tables[0]->source));
     }
 
     public function testTableKeyDistinguishesNames(): void
@@ -100,4 +100,18 @@ final class SchemaRulesTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE app.items (id INT)');
         self::assertSame('app', $schema->tables[0]->schema);
     }
+
+    public function testOptionsRetainsStructuredTableChoices(): void
+    {
+        $state = (new \SqlSemantics\Facade\Schema(Dialect::PostgreSql))->analyze('CREATE TABLE t (id INT) WITH (fillfactor=70)');
+        self::assertNotEmpty($state->tables[0]->options);
+    }
+
+    public function testPrimaryOptionsNotNullAccountsForTablePolicy(): void
+    {
+        $dialect = Dialect::PostgreSql;
+        $source = $dialect->platform()->parser()->parse('CREATE TABLE t (id INT) WITH (fillfactor=70)');
+        self::assertSame(false, $dialect->platform()->schema()->primaryOptionsNotNull($source));
+    }
+
 }

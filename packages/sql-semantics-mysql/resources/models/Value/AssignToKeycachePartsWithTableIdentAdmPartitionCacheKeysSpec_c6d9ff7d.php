@@ -17,12 +17,13 @@ final class AssignToKeycachePartsWithTableIdentAdmPartitionCacheKeysSpec_c6d9ff7
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm $admPartition,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($admPartition), 'The admPartition must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class AssignToKeycachePartsWithTableIdentAdmPartitionCacheKeysSpec_c6d9ff7
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 1);
         $this->admPartition->write($writer);
+        $writer->comments($this->comments, 2);
         $this->cacheKeysSpec->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class AssignToKeycachePartsWithTableIdentAdmPartitionCacheKeysSpec_c6d9ff7
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($tableIdent, $this->admPartition, $this->cacheKeysSpec);
+        return new self($tableIdent, $this->admPartition, $this->cacheKeysSpec, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class AssignToKeycachePartsWithTableIdentAdmPartitionCacheKeysSpec_c6d9ff7
      */
     public function withAdmPartition(\SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm $admPartition): self
     {
-        return new self($this->tableIdent, $admPartition, $this->cacheKeysSpec);
+        return new self($this->tableIdent, $admPartition, $this->cacheKeysSpec, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class AssignToKeycachePartsWithTableIdentAdmPartitionCacheKeysSpec_c6d9ff7
      */
     public function withCacheKeysSpec(\SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec): self
     {
-        return new self($this->tableIdent, $this->admPartition, $cacheKeysSpec);
+        return new self($this->tableIdent, $this->admPartition, $cacheKeysSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableIdent, $this->admPartition, $this->cacheKeysSpec, $comments);
     }
 }

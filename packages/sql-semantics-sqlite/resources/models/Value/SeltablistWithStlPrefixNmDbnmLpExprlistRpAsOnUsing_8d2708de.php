@@ -17,7 +17,7 @@ final class SeltablistWithStlPrefixNmDbnmLpExprlistRpAsOnUsing_8d2708de implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm $stlPrefix,
@@ -26,6 +26,7 @@ final class SeltablistWithStlPrefixNmDbnmLpExprlistRpAsOnUsing_8d2708de implemen
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm $onUsing,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($stlPrefix), 'The stlPrefix must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
@@ -40,13 +41,21 @@ final class SeltablistWithStlPrefixNmDbnmLpExprlistRpAsOnUsing_8d2708de implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->stlPrefix->write($writer);
+        $writer->comments($this->comments, 1);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 2);
         $this->dbnm->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->exprlist->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+        $writer->comments($this->comments, 6);
         $this->as->write($writer);
+        $writer->comments($this->comments, 7);
         $this->onUsing->write($writer);
     }
 
@@ -55,7 +64,7 @@ final class SeltablistWithStlPrefixNmDbnmLpExprlistRpAsOnUsing_8d2708de implemen
      */
     public function withStlPrefix(\SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm $stlPrefix): self
     {
-        return new self($stlPrefix, $this->nm, $this->dbnm, $this->exprlist, $this->as, $this->onUsing);
+        return new self($stlPrefix, $this->nm, $this->dbnm, $this->exprlist, $this->as, $this->onUsing, $this->comments);
     }
 
     /**
@@ -63,7 +72,7 @@ final class SeltablistWithStlPrefixNmDbnmLpExprlistRpAsOnUsing_8d2708de implemen
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->stlPrefix, $nm, $this->dbnm, $this->exprlist, $this->as, $this->onUsing);
+        return new self($this->stlPrefix, $nm, $this->dbnm, $this->exprlist, $this->as, $this->onUsing, $this->comments);
     }
 
     /**
@@ -71,7 +80,7 @@ final class SeltablistWithStlPrefixNmDbnmLpExprlistRpAsOnUsing_8d2708de implemen
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->stlPrefix, $this->nm, $dbnm, $this->exprlist, $this->as, $this->onUsing);
+        return new self($this->stlPrefix, $this->nm, $dbnm, $this->exprlist, $this->as, $this->onUsing, $this->comments);
     }
 
     /**
@@ -79,7 +88,7 @@ final class SeltablistWithStlPrefixNmDbnmLpExprlistRpAsOnUsing_8d2708de implemen
      */
     public function withExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist): self
     {
-        return new self($this->stlPrefix, $this->nm, $this->dbnm, $exprlist, $this->as, $this->onUsing);
+        return new self($this->stlPrefix, $this->nm, $this->dbnm, $exprlist, $this->as, $this->onUsing, $this->comments);
     }
 
     /**
@@ -87,7 +96,7 @@ final class SeltablistWithStlPrefixNmDbnmLpExprlistRpAsOnUsing_8d2708de implemen
      */
     public function withAs(\SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as): self
     {
-        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->exprlist, $as, $this->onUsing);
+        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->exprlist, $as, $this->onUsing, $this->comments);
     }
 
     /**
@@ -95,6 +104,14 @@ final class SeltablistWithStlPrefixNmDbnmLpExprlistRpAsOnUsing_8d2708de implemen
      */
     public function withOnUsing(\SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm $onUsing): self
     {
-        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->exprlist, $this->as, $onUsing);
+        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->exprlist, $this->as, $onUsing, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->exprlist, $this->as, $this->onUsing, $comments);
     }
 }

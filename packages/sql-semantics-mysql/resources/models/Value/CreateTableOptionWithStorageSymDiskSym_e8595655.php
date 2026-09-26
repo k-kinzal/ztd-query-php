@@ -15,11 +15,29 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
 final class CreateTableOptionWithStorageSymDiskSym_e8595655 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('STORAGE');
+        $writer->comments($this->comments, 1);
         $writer->append('DISK');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

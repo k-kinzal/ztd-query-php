@@ -17,11 +17,12 @@ final class IndexElemWithFuncExprWindowlessIndexElemOptions_d397f329 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm $indexElemOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcExprWindowless), 'The funcExprWindowless must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexElemOptions), 'The indexElemOptions must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class IndexElemWithFuncExprWindowlessIndexElemOptions_d397f329 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->funcExprWindowless->write($writer);
+        $writer->comments($this->comments, 1);
         $this->indexElemOptions->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class IndexElemWithFuncExprWindowlessIndexElemOptions_d397f329 implements 
      */
     public function withFuncExprWindowless(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless): self
     {
-        return new self($funcExprWindowless, $this->indexElemOptions);
+        return new self($funcExprWindowless, $this->indexElemOptions, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class IndexElemWithFuncExprWindowlessIndexElemOptions_d397f329 implements 
      */
     public function withIndexElemOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm $indexElemOptions): self
     {
-        return new self($this->funcExprWindowless, $indexElemOptions);
+        return new self($this->funcExprWindowless, $indexElemOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcExprWindowless, $this->indexElemOptions, $comments);
     }
 }

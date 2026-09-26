@@ -17,11 +17,12 @@ final class TypeWithLongSymVarcharOptCharsetWithOptBinary_3761b0b9 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($varchar), 'The varchar must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCharsetWithOptBinary), 'The optCharsetWithOptBinary must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TypeWithLongSymVarcharOptCharsetWithOptBinary_3761b0b9 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('LONG');
+        $writer->comments($this->comments, 1);
         $this->varchar->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optCharsetWithOptBinary->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TypeWithLongSymVarcharOptCharsetWithOptBinary_3761b0b9 implements \S
      */
     public function withVarchar(\SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar): self
     {
-        return new self($varchar, $this->optCharsetWithOptBinary);
+        return new self($varchar, $this->optCharsetWithOptBinary, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TypeWithLongSymVarcharOptCharsetWithOptBinary_3761b0b9 implements \S
      */
     public function withOptCharsetWithOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary): self
     {
-        return new self($this->varchar, $optCharsetWithOptBinary);
+        return new self($this->varchar, $optCharsetWithOptBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->varchar, $this->optCharsetWithOptBinary, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class SelectInitWithSelectSymSelectPart2OptUnionClause_19253f1c implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectPart2), 'The selectPart2 must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionClause), 'The optUnionClause must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SelectInitWithSelectSymSelectPart2OptUnionClause_19253f1c implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SELECT');
+        $writer->comments($this->comments, 1);
         $this->selectPart2->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optUnionClause->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SelectInitWithSelectSymSelectPart2OptUnionClause_19253f1c implements
      */
     public function withSelectPart2(\SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2): self
     {
-        return new self($selectPart2, $this->optUnionClause);
+        return new self($selectPart2, $this->optUnionClause, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SelectInitWithSelectSymSelectPart2OptUnionClause_19253f1c implements
      */
     public function withOptUnionClause(\SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause): self
     {
-        return new self($this->selectPart2, $optUnionClause);
+        return new self($this->selectPart2, $optUnionClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectPart2, $this->optUnionClause, $comments);
     }
 }

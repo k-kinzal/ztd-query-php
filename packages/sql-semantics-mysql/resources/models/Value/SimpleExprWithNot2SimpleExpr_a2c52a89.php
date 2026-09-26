@@ -17,11 +17,12 @@ final class SimpleExprWithNot2SimpleExpr_a2c52a89 implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\Not2Form $not2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($not2), 'The not2 must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
@@ -33,7 +34,9 @@ final class SimpleExprWithNot2SimpleExpr_a2c52a89 implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->not2->write($writer);
+        $writer->comments($this->comments, 1);
         $this->simpleExpr->write($writer);
     }
 
@@ -42,7 +45,7 @@ final class SimpleExprWithNot2SimpleExpr_a2c52a89 implements \SqlSemantics\State
      */
     public function withNot2(\SqlSemantics\Statement\Model\MySql\Role\Not2Form $not2): self
     {
-        return new self($not2, $this->simpleExpr);
+        return new self($not2, $this->simpleExpr, $this->comments);
     }
 
     /**
@@ -50,6 +53,14 @@ final class SimpleExprWithNot2SimpleExpr_a2c52a89 implements \SqlSemantics\State
      */
     public function withSimpleExpr(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr): self
     {
-        return new self($this->not2, $simpleExpr);
+        return new self($this->not2, $simpleExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->not2, $this->simpleExpr, $comments);
     }
 }

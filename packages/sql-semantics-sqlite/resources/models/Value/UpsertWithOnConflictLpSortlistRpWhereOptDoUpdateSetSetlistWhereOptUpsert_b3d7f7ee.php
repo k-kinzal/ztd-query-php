@@ -17,7 +17,7 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist,
@@ -25,6 +25,7 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where2,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm $upsert,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortlist), 'The sortlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
@@ -38,17 +39,29 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ON');
+        $writer->comments($this->comments, 1);
         $writer->append('CONFLICT');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->sortlist->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $this->where->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('DO');
+        $writer->comments($this->comments, 7);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 8);
         $writer->append('SET');
+        $writer->comments($this->comments, 9);
         $this->setlist->write($writer);
+        $writer->comments($this->comments, 10);
         $this->where2->write($writer);
+        $writer->comments($this->comments, 11);
         $this->upsert->write($writer);
     }
 
@@ -57,7 +70,7 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
      */
     public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
     {
-        return new self($sortlist, $this->where, $this->setlist, $this->where2, $this->upsert);
+        return new self($sortlist, $this->where, $this->setlist, $this->where2, $this->upsert, $this->comments);
     }
 
     /**
@@ -65,7 +78,7 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
      */
     public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
     {
-        return new self($this->sortlist, $where, $this->setlist, $this->where2, $this->upsert);
+        return new self($this->sortlist, $where, $this->setlist, $this->where2, $this->upsert, $this->comments);
     }
 
     /**
@@ -73,7 +86,7 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
      */
     public function withSetlist(\SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist): self
     {
-        return new self($this->sortlist, $this->where, $setlist, $this->where2, $this->upsert);
+        return new self($this->sortlist, $this->where, $setlist, $this->where2, $this->upsert, $this->comments);
     }
 
     /**
@@ -81,7 +94,7 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
      */
     public function withWhere2(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where2): self
     {
-        return new self($this->sortlist, $this->where, $this->setlist, $where2, $this->upsert);
+        return new self($this->sortlist, $this->where, $this->setlist, $where2, $this->upsert, $this->comments);
     }
 
     /**
@@ -89,6 +102,14 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
      */
     public function withUpsert(\SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm $upsert): self
     {
-        return new self($this->sortlist, $this->where, $this->setlist, $this->where2, $upsert);
+        return new self($this->sortlist, $this->where, $this->setlist, $this->where2, $upsert, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sortlist, $this->where, $this->setlist, $this->where2, $this->upsert, $comments);
     }
 }

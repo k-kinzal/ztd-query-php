@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite;
 
 use SqlParser\Parser\SqlParser;
 use SqlParser\Sqlite\SqliteParser;
+use SqlSemantics\Core\Analysis\TriviaReader;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
@@ -37,7 +38,7 @@ final class Platform implements Contract
      */
     public function values(string $version): \SqlSemantics\Core\Analysis\ValueReader
     {
-        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php');
+        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php', new TriviaReader());
     }
 
     /**
@@ -62,9 +63,14 @@ final class Platform implements Contract
     public function syntax(): Policy\SyntaxRules
     {
         return new Policy\SyntaxRules([
+            'autoIncrement' => ['autoinc'],
+            'dropTableName' => ['fullname'],
+            'generationStorage' => ['generated'],
+            'generationClause' => [],
             'columnName' => ['nm'],
             'declaredType' => ['typetoken'],
             'expression' => ['expr'],
+            'tableElements' => ['columnlist'],
             'createTable' => ['create_table'],
             'createHeader' => ['create_table'],
             'tableName' => ['nm'],

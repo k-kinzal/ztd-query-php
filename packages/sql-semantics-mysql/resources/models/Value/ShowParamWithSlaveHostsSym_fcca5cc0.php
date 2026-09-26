@@ -15,11 +15,29 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
 final class ShowParamWithSlaveHostsSym_fcca5cc0 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SLAVE');
+        $writer->comments($this->comments, 1);
         $writer->append('HOSTS');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

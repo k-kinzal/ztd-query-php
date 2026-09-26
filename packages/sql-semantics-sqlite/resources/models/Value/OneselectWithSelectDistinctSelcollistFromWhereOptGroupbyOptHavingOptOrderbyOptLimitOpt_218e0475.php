@@ -17,7 +17,7 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct,
@@ -28,6 +28,7 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\HavingOptForm $having,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\LimitOptForm $pagination,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($distinct), 'The distinct must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -44,14 +45,23 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SELECT');
+        $writer->comments($this->comments, 1);
         $this->distinct->write($writer);
+        $writer->comments($this->comments, 2);
         $this->projections->write($writer);
+        $writer->comments($this->comments, 3);
         $this->from->write($writer);
+        $writer->comments($this->comments, 4);
         $this->where->write($writer);
+        $writer->comments($this->comments, 5);
         $this->groupBy->write($writer);
+        $writer->comments($this->comments, 6);
         $this->having->write($writer);
+        $writer->comments($this->comments, 7);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 8);
         $this->pagination->write($writer);
     }
 
@@ -60,7 +70,7 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
      */
     public function withDistinct(\SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct): self
     {
-        return new self($distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->pagination);
+        return new self($distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->pagination, $this->comments);
     }
 
     /**
@@ -68,7 +78,7 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
      */
     public function withProjections(\SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm $projections): self
     {
-        return new self($this->distinct, $projections, $this->from, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->pagination);
+        return new self($this->distinct, $projections, $this->from, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->pagination, $this->comments);
     }
 
     /**
@@ -76,7 +86,7 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
      */
     public function withFrom(\SqlSemantics\Statement\Model\Sqlite\Role\FromForm $from): self
     {
-        return new self($this->distinct, $this->projections, $from, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->pagination);
+        return new self($this->distinct, $this->projections, $from, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->pagination, $this->comments);
     }
 
     /**
@@ -84,7 +94,7 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
      */
     public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
     {
-        return new self($this->distinct, $this->projections, $this->from, $where, $this->groupBy, $this->having, $this->orderBy, $this->pagination);
+        return new self($this->distinct, $this->projections, $this->from, $where, $this->groupBy, $this->having, $this->orderBy, $this->pagination, $this->comments);
     }
 
     /**
@@ -92,7 +102,7 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
      */
     public function withGroupBy(\SqlSemantics\Statement\Model\Sqlite\Role\GroupbyOptForm $groupBy): self
     {
-        return new self($this->distinct, $this->projections, $this->from, $this->where, $groupBy, $this->having, $this->orderBy, $this->pagination);
+        return new self($this->distinct, $this->projections, $this->from, $this->where, $groupBy, $this->having, $this->orderBy, $this->pagination, $this->comments);
     }
 
     /**
@@ -100,7 +110,7 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
      */
     public function withHaving(\SqlSemantics\Statement\Model\Sqlite\Role\HavingOptForm $having): self
     {
-        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $having, $this->orderBy, $this->pagination);
+        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $having, $this->orderBy, $this->pagination, $this->comments);
     }
 
     /**
@@ -108,7 +118,7 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\Sqlite\Role\OrderbyOptForm $orderBy): self
     {
-        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $orderBy, $this->pagination);
+        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $orderBy, $this->pagination, $this->comments);
     }
 
     /**
@@ -116,6 +126,14 @@ final class OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOpt
      */
     public function withPagination(\SqlSemantics\Statement\Model\Sqlite\Role\LimitOptForm $pagination): self
     {
-        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->orderBy, $pagination);
+        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->orderBy, $pagination, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->distinct, $this->projections, $this->from, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->pagination, $comments);
     }
 }

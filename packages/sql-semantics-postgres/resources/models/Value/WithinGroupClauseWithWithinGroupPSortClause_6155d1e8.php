@@ -17,10 +17,11 @@ final class WithinGroupClauseWithWithinGroupPSortClause_6155d1e8 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SortClauseForm $orderBy,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
     }
@@ -30,10 +31,15 @@ final class WithinGroupClauseWithWithinGroupPSortClause_6155d1e8 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('WITHIN');
+        $writer->comments($this->comments, 1);
         $writer->append('GROUP');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -42,6 +48,14 @@ final class WithinGroupClauseWithWithinGroupPSortClause_6155d1e8 implements \Sql
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\PostgreSql\Role\SortClauseForm $orderBy): self
     {
-        return new self($orderBy);
+        return new self($orderBy, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->orderBy, $comments);
     }
 }

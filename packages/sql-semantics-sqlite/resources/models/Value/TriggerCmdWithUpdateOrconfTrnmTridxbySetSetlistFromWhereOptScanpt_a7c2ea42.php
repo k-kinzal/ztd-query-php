@@ -17,7 +17,7 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm $orconf,
@@ -27,6 +27,7 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FromForm $from,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($orconf), 'The orconf must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($trnm), 'The trnm must be a generated immutable SQL value.');
@@ -42,14 +43,23 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 1);
         $this->orconf->write($writer);
+        $writer->comments($this->comments, 2);
         $this->trnm->write($writer);
+        $writer->comments($this->comments, 3);
         $this->tridxby->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('SET');
+        $writer->comments($this->comments, 5);
         $this->setlist->write($writer);
+        $writer->comments($this->comments, 6);
         $this->from->write($writer);
+        $writer->comments($this->comments, 7);
         $this->where->write($writer);
+        $writer->comments($this->comments, 8);
         $this->scanpt->write($writer);
     }
 
@@ -58,7 +68,7 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
      */
     public function withOrconf(\SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm $orconf): self
     {
-        return new self($orconf, $this->trnm, $this->tridxby, $this->setlist, $this->from, $this->where, $this->scanpt);
+        return new self($orconf, $this->trnm, $this->tridxby, $this->setlist, $this->from, $this->where, $this->scanpt, $this->comments);
     }
 
     /**
@@ -66,7 +76,7 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
      */
     public function withTrnm(\SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm $trnm): self
     {
-        return new self($this->orconf, $trnm, $this->tridxby, $this->setlist, $this->from, $this->where, $this->scanpt);
+        return new self($this->orconf, $trnm, $this->tridxby, $this->setlist, $this->from, $this->where, $this->scanpt, $this->comments);
     }
 
     /**
@@ -74,7 +84,7 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
      */
     public function withTridxby(\SqlSemantics\Statement\Model\Sqlite\Role\TridxbyForm $tridxby): self
     {
-        return new self($this->orconf, $this->trnm, $tridxby, $this->setlist, $this->from, $this->where, $this->scanpt);
+        return new self($this->orconf, $this->trnm, $tridxby, $this->setlist, $this->from, $this->where, $this->scanpt, $this->comments);
     }
 
     /**
@@ -82,7 +92,7 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
      */
     public function withSetlist(\SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist): self
     {
-        return new self($this->orconf, $this->trnm, $this->tridxby, $setlist, $this->from, $this->where, $this->scanpt);
+        return new self($this->orconf, $this->trnm, $this->tridxby, $setlist, $this->from, $this->where, $this->scanpt, $this->comments);
     }
 
     /**
@@ -90,7 +100,7 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
      */
     public function withFrom(\SqlSemantics\Statement\Model\Sqlite\Role\FromForm $from): self
     {
-        return new self($this->orconf, $this->trnm, $this->tridxby, $this->setlist, $from, $this->where, $this->scanpt);
+        return new self($this->orconf, $this->trnm, $this->tridxby, $this->setlist, $from, $this->where, $this->scanpt, $this->comments);
     }
 
     /**
@@ -98,7 +108,7 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
      */
     public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
     {
-        return new self($this->orconf, $this->trnm, $this->tridxby, $this->setlist, $this->from, $where, $this->scanpt);
+        return new self($this->orconf, $this->trnm, $this->tridxby, $this->setlist, $this->from, $where, $this->scanpt, $this->comments);
     }
 
     /**
@@ -106,6 +116,14 @@ final class TriggerCmdWithUpdateOrconfTrnmTridxbySetSetlistFromWhereOptScanpt_a7
      */
     public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self
     {
-        return new self($this->orconf, $this->trnm, $this->tridxby, $this->setlist, $this->from, $this->where, $scanpt);
+        return new self($this->orconf, $this->trnm, $this->tridxby, $this->setlist, $this->from, $this->where, $scanpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->orconf, $this->trnm, $this->tridxby, $this->setlist, $this->from, $this->where, $this->scanpt, $comments);
     }
 }

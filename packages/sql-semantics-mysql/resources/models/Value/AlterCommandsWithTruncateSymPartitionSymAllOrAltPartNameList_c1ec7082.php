@@ -17,10 +17,11 @@ final class AlterCommandsWithTruncateSymPartitionSymAllOrAltPartNameList_c1ec708
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($allOrAltPartNameList), 'The allOrAltPartNameList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class AlterCommandsWithTruncateSymPartitionSymAllOrAltPartNameList_c1ec708
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TRUNCATE');
+        $writer->comments($this->comments, 1);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 2);
         $this->allOrAltPartNameList->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class AlterCommandsWithTruncateSymPartitionSymAllOrAltPartNameList_c1ec708
      */
     public function withAllOrAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList): self
     {
-        return new self($allOrAltPartNameList);
+        return new self($allOrAltPartNameList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->allOrAltPartNameList, $comments);
     }
 }

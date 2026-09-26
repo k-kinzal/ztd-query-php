@@ -17,12 +17,13 @@ final class JoinTableWithTableRefStraightJoinTableFactorOnExpr_59f498cc implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableFactor), 'The tableFactor must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class JoinTableWithTableRefStraightJoinTableFactorOnExpr_59f498cc implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableRef->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('STRAIGHT_JOIN');
+        $writer->comments($this->comments, 2);
         $this->tableFactor->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('ON');
+        $writer->comments($this->comments, 4);
         $this->expr->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class JoinTableWithTableRefStraightJoinTableFactorOnExpr_59f498cc implemen
      */
     public function withTableRef(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef): self
     {
-        return new self($tableRef, $this->tableFactor, $this->expr);
+        return new self($tableRef, $this->tableFactor, $this->expr, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class JoinTableWithTableRefStraightJoinTableFactorOnExpr_59f498cc implemen
      */
     public function withTableFactor(\SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor): self
     {
-        return new self($this->tableRef, $tableFactor, $this->expr);
+        return new self($this->tableRef, $tableFactor, $this->expr, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class JoinTableWithTableRefStraightJoinTableFactorOnExpr_59f498cc implemen
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->tableRef, $this->tableFactor, $expr);
+        return new self($this->tableRef, $this->tableFactor, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableRef, $this->tableFactor, $this->expr, $comments);
     }
 }

@@ -15,10 +15,27 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
 final class OptBooleanOrStringWithFalseP_8e8f338e implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptBooleanOrStringForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FALSE');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

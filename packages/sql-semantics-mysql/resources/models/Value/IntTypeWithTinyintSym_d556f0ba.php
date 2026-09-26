@@ -17,10 +17,11 @@ final class IntTypeWithTinyintSym_d556f0ba implements \SqlSemantics\Statement\Mo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $tinyintSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($tinyintSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['TINYINT_SYM'], 'The tinyintSym must be a complete TINYINT_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class IntTypeWithTinyintSym_d556f0ba implements \SqlSemantics\Statement\Mo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->tinyintSym);
     }
 
@@ -38,6 +40,14 @@ final class IntTypeWithTinyintSym_d556f0ba implements \SqlSemantics\Statement\Mo
      */
     public function withTinyintSym(string $tinyintSym): self
     {
-        return new self($tinyintSym);
+        return new self($tinyintSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tinyintSym, $comments);
     }
 }

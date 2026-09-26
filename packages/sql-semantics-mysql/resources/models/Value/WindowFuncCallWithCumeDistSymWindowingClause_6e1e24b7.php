@@ -17,10 +17,11 @@ final class WindowFuncCallWithCumeDistSymWindowingClause_6e1e24b7 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowingClause), 'The windowingClause must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class WindowFuncCallWithCumeDistSymWindowingClause_6e1e24b7 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CUME_DIST');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $this->windowingClause->write($writer);
     }
 
@@ -41,6 +46,14 @@ final class WindowFuncCallWithCumeDistSymWindowingClause_6e1e24b7 implements \Sq
      */
     public function withWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause): self
     {
-        return new self($windowingClause);
+        return new self($windowingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->windowingClause, $comments);
     }
 }

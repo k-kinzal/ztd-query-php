@@ -105,6 +105,10 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
 #[UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
+#[UsesClass(\SqlFixture\Version\ServerVersion::class)]
+#[UsesClass(\SqlFixture\Version\Releases::class)]
+#[UsesClass(\SqlFixture\Version\ReleaseNumber::class)]
+#[UsesClass(\SqlFixture\Version\UnsupportedVersionException::class)]
 final class DatabaseFixtureProviderTest extends TestCase
 {
     #[Test]
@@ -225,4 +229,22 @@ final class DatabaseFixtureProviderTest extends TestCase
         self::assertSame('Override', $data['name']);
     }
 
+    #[Test]
+    public function testGetVersionMatchesTheLinkedSqlite(): void
+    {
+        $provider = new DatabaseFixtureProvider(Factory::create(), new PDO('sqlite::memory:'));
+
+        self::assertSame('sqlite-3.47.2', $provider->getVersion());
+    }
+
+    #[Test]
+    public function testGetVersionKeepsAnExplicitTag(): void
+    {
+        $provider = new DatabaseFixtureProvider(Factory::create(), new PDO('sqlite::memory:'), version: 'sqlite-3.47.2');
+
+        self::assertSame('sqlite-3.47.2', $provider->getVersion());
+
+        $this->expectException(\SqlFixture\Version\UnsupportedVersionException::class);
+        new DatabaseFixtureProvider(Factory::create(), new PDO('sqlite::memory:'), version: 'mysql-8.4.7');
+    }
 }

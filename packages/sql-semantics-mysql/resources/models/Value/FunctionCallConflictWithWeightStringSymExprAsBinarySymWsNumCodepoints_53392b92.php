@@ -17,11 +17,12 @@ final class FunctionCallConflictWithWeightStringSymExprAsBinarySymWsNumCodepoint
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsNumCodepointsForm $wsNumCodepoints,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsNumCodepoints), 'The wsNumCodepoints must be a generated immutable SQL value.');
@@ -32,12 +33,19 @@ final class FunctionCallConflictWithWeightStringSymExprAsBinarySymWsNumCodepoint
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('WEIGHT_STRING');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('AS');
+        $writer->comments($this->comments, 4);
         $writer->append('BINARY');
+        $writer->comments($this->comments, 5);
         $this->wsNumCodepoints->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
     }
 
@@ -46,7 +54,7 @@ final class FunctionCallConflictWithWeightStringSymExprAsBinarySymWsNumCodepoint
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->wsNumCodepoints);
+        return new self($expr, $this->wsNumCodepoints, $this->comments);
     }
 
     /**
@@ -54,6 +62,14 @@ final class FunctionCallConflictWithWeightStringSymExprAsBinarySymWsNumCodepoint
      */
     public function withWsNumCodepoints(\SqlSemantics\Statement\Model\MySql\Role\WsNumCodepointsForm $wsNumCodepoints): self
     {
-        return new self($this->expr, $wsNumCodepoints);
+        return new self($this->expr, $wsNumCodepoints, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->wsNumCodepoints, $comments);
     }
 }

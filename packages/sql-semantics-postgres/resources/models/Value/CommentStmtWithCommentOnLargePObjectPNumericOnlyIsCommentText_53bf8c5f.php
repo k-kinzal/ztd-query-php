@@ -17,11 +17,12 @@ final class CommentStmtWithCommentOnLargePObjectPNumericOnlyIsCommentText_53bf8c
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($numericOnly), 'The numericOnly must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($commentText), 'The commentText must be a generated immutable SQL value.');
@@ -32,12 +33,19 @@ final class CommentStmtWithCommentOnLargePObjectPNumericOnlyIsCommentText_53bf8c
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COMMENT');
+        $writer->comments($this->comments, 1);
         $writer->append('ON');
+        $writer->comments($this->comments, 2);
         $writer->append('LARGE');
+        $writer->comments($this->comments, 3);
         $writer->append('OBJECT');
+        $writer->comments($this->comments, 4);
         $this->numericOnly->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('IS');
+        $writer->comments($this->comments, 6);
         $this->commentText->write($writer);
     }
 
@@ -46,7 +54,7 @@ final class CommentStmtWithCommentOnLargePObjectPNumericOnlyIsCommentText_53bf8c
      */
     public function withNumericOnly(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly): self
     {
-        return new self($numericOnly, $this->commentText);
+        return new self($numericOnly, $this->commentText, $this->comments);
     }
 
     /**
@@ -54,6 +62,14 @@ final class CommentStmtWithCommentOnLargePObjectPNumericOnlyIsCommentText_53bf8c
      */
     public function withCommentText(\SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText): self
     {
-        return new self($this->numericOnly, $commentText);
+        return new self($this->numericOnly, $commentText, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->numericOnly, $this->commentText, $comments);
     }
 }

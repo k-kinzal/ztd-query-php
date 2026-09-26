@@ -17,13 +17,14 @@ final class DeleteStmtWithDeleteSymOptDeleteOptionsTableAliasRefListFromJoinTabl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDeleteOptionsForm $optDeleteOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDeleteOptions), 'The optDeleteOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableAliasRefList), 'The tableAliasRefList must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class DeleteStmtWithDeleteSymOptDeleteOptionsTableAliasRefListFromJoinTabl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DELETE');
+        $writer->comments($this->comments, 1);
         $this->optDeleteOptions->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableAliasRefList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('FROM');
+        $writer->comments($this->comments, 4);
         $this->joinTableList->write($writer);
+        $writer->comments($this->comments, 5);
         $this->where->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class DeleteStmtWithDeleteSymOptDeleteOptionsTableAliasRefListFromJoinTabl
      */
     public function withOptDeleteOptions(\SqlSemantics\Statement\Model\MySql\Role\OptDeleteOptionsForm $optDeleteOptions): self
     {
-        return new self($optDeleteOptions, $this->tableAliasRefList, $this->joinTableList, $this->where);
+        return new self($optDeleteOptions, $this->tableAliasRefList, $this->joinTableList, $this->where, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class DeleteStmtWithDeleteSymOptDeleteOptionsTableAliasRefListFromJoinTabl
      */
     public function withTableAliasRefList(\SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList): self
     {
-        return new self($this->optDeleteOptions, $tableAliasRefList, $this->joinTableList, $this->where);
+        return new self($this->optDeleteOptions, $tableAliasRefList, $this->joinTableList, $this->where, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class DeleteStmtWithDeleteSymOptDeleteOptionsTableAliasRefListFromJoinTabl
      */
     public function withJoinTableList(\SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList): self
     {
-        return new self($this->optDeleteOptions, $this->tableAliasRefList, $joinTableList, $this->where);
+        return new self($this->optDeleteOptions, $this->tableAliasRefList, $joinTableList, $this->where, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class DeleteStmtWithDeleteSymOptDeleteOptionsTableAliasRefListFromJoinTabl
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
     {
-        return new self($this->optDeleteOptions, $this->tableAliasRefList, $this->joinTableList, $where);
+        return new self($this->optDeleteOptions, $this->tableAliasRefList, $this->joinTableList, $where, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optDeleteOptions, $this->tableAliasRefList, $this->joinTableList, $this->where, $comments);
     }
 }

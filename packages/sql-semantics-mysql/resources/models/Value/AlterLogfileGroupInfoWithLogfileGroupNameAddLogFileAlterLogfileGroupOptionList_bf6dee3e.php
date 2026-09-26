@@ -17,12 +17,13 @@ final class AlterLogfileGroupInfoWithLogfileGroupNameAddLogFileAlterLogfileGroup
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupNameForm $logfileGroupName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AddLogFileForm $addLogFile,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionListForm $alterLogfileGroupOptionList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($logfileGroupName), 'The logfileGroupName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($addLogFile), 'The addLogFile must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class AlterLogfileGroupInfoWithLogfileGroupNameAddLogFileAlterLogfileGroup
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->logfileGroupName->write($writer);
+        $writer->comments($this->comments, 1);
         $this->addLogFile->write($writer);
+        $writer->comments($this->comments, 2);
         $this->alterLogfileGroupOptionList->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class AlterLogfileGroupInfoWithLogfileGroupNameAddLogFileAlterLogfileGroup
      */
     public function withLogfileGroupName(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupNameForm $logfileGroupName): self
     {
-        return new self($logfileGroupName, $this->addLogFile, $this->alterLogfileGroupOptionList);
+        return new self($logfileGroupName, $this->addLogFile, $this->alterLogfileGroupOptionList, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class AlterLogfileGroupInfoWithLogfileGroupNameAddLogFileAlterLogfileGroup
      */
     public function withAddLogFile(\SqlSemantics\Statement\Model\MySql\Role\AddLogFileForm $addLogFile): self
     {
-        return new self($this->logfileGroupName, $addLogFile, $this->alterLogfileGroupOptionList);
+        return new self($this->logfileGroupName, $addLogFile, $this->alterLogfileGroupOptionList, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class AlterLogfileGroupInfoWithLogfileGroupNameAddLogFileAlterLogfileGroup
      */
     public function withAlterLogfileGroupOptionList(\SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionListForm $alterLogfileGroupOptionList): self
     {
-        return new self($this->logfileGroupName, $this->addLogFile, $alterLogfileGroupOptionList);
+        return new self($this->logfileGroupName, $this->addLogFile, $alterLogfileGroupOptionList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->logfileGroupName, $this->addLogFile, $this->alterLogfileGroupOptionList, $comments);
     }
 }

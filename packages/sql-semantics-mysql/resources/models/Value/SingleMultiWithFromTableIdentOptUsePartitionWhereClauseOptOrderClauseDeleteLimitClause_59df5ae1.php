@@ -17,7 +17,7 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
@@ -25,6 +25,7 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeleteLimitClauseForm $deleteLimitClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUsePartition), 'The optUsePartition must be a generated immutable SQL value.');
@@ -38,11 +39,17 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FROM');
+        $writer->comments($this->comments, 1);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optUsePartition->write($writer);
+        $writer->comments($this->comments, 3);
         $this->where->write($writer);
+        $writer->comments($this->comments, 4);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 5);
         $this->deleteLimitClause->write($writer);
     }
 
@@ -51,7 +58,7 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $this->deleteLimitClause);
+        return new self($tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $this->deleteLimitClause, $this->comments);
     }
 
     /**
@@ -59,7 +66,7 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
      */
     public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
     {
-        return new self($this->tableIdent, $optUsePartition, $this->where, $this->orderBy, $this->deleteLimitClause);
+        return new self($this->tableIdent, $optUsePartition, $this->where, $this->orderBy, $this->deleteLimitClause, $this->comments);
     }
 
     /**
@@ -67,7 +74,7 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where): self
     {
-        return new self($this->tableIdent, $this->optUsePartition, $where, $this->orderBy, $this->deleteLimitClause);
+        return new self($this->tableIdent, $this->optUsePartition, $where, $this->orderBy, $this->deleteLimitClause, $this->comments);
     }
 
     /**
@@ -75,7 +82,7 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
     {
-        return new self($this->tableIdent, $this->optUsePartition, $this->where, $orderBy, $this->deleteLimitClause);
+        return new self($this->tableIdent, $this->optUsePartition, $this->where, $orderBy, $this->deleteLimitClause, $this->comments);
     }
 
     /**
@@ -83,6 +90,14 @@ final class SingleMultiWithFromTableIdentOptUsePartitionWhereClauseOptOrderClaus
      */
     public function withDeleteLimitClause(\SqlSemantics\Statement\Model\MySql\Role\DeleteLimitClauseForm $deleteLimitClause): self
     {
-        return new self($this->tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $deleteLimitClause);
+        return new self($this->tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $deleteLimitClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $this->deleteLimitClause, $comments);
     }
 }
