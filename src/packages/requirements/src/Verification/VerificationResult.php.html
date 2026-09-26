@@ -45,7 +45,7 @@
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-com"> * The verdict for one item: its status and how many linked targets and tests passed.</span></span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-com"> * The status is &quot;passed&quot;, &quot;failed&quot;, &quot;unverified&quot;, &quot;unsupported&quot;, &quot;not-applicable&quot; or &quot;not-run&quot;.</span></span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-com"> * The status is &quot;passed&quot;, &quot;failed&quot;, &quot;unverified&quot;, &quot;deferred&quot;, &quot;unsupported&quot;, &quot;not-applicable&quot; or &quot;not-run&quot;.</span></span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">VerificationResult</span></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a>{</span>
@@ -54,28 +54,30 @@
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com">     * @param int $tests The number of executed test cases</span></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com">     * @param int|null $passedTargets The number of passing linked targets, null when tests were not run</span></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com">     * @param int $totalTargets The number of distinct linked targets</span></span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">     * @param string $message The failure messages of the targets, one per line</span></span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$status</span>,</span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$tests</span>,</span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">int</span> <span class="tok-var">$passedTargets</span>,</span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$totalTargets</span>,</span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$message</span> = <span class="tok-str">&#039;&#039;</span>,</span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>    ) {</span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    }</span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a></span>
-<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com">     * Returns the verdict as a JSON-ready record.</span></span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     * @return array{status: string, tests: int, passed_targets: ?int, total_targets: int, message: string} The verdict fields</span></span>
-<span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">toArray</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>    {</span>
-<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>        <span class="tok-kw">return</span> [<span class="tok-str">&#039;status&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">status</span>, <span class="tok-str">&#039;tests&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">tests</span>, <span class="tok-str">&#039;passed_targets&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">passedTargets</span>, <span class="tok-str">&#039;total_targets&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">totalTargets</span>, <span class="tok-str">&#039;message&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">message</span>];</span>
-<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>    }</span>
-<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>}</span>
-<span class="src-line" id="L40"><a class="ln" href="#L40">40</a></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">     * @param string $message Failure or deferral messages, one per line</span></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com">     * @param int $deferredTargets The number of manual targets not executed</span></span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$status</span>,</span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$tests</span>,</span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">int</span> <span class="tok-var">$passedTargets</span>,</span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$totalTargets</span>,</span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$message</span> = <span class="tok-str">&#039;&#039;</span>,</span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$deferredTargets</span> = <span class="tok-num">0</span>,</span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    ) {</span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>    }</span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a></span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     * Returns the verdict as a JSON-ready record.</span></span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com">     * @return array{status: string, tests: int, passed_targets: ?int, total_targets: int, message: string, deferred_targets: int} The verdict fields</span></span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">toArray</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>    {</span>
+<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>        <span class="tok-kw">return</span> [<span class="tok-str">&#039;status&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">status</span>, <span class="tok-str">&#039;tests&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">tests</span>, <span class="tok-str">&#039;passed_targets&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">passedTargets</span>, <span class="tok-str">&#039;total_targets&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">totalTargets</span>, <span class="tok-str">&#039;message&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">message</span>, <span class="tok-str">&#039;deferred_targets&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">deferredTargets</span>];</span>
+<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>    }</span>
+<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>}</span>
+<span class="src-line" id="L42"><a class="ln" href="#L42">42</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

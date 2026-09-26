@@ -85,56 +85,58 @@
 <span class="src-line" id="L47"><a class="ln" href="#L47">47</a>            <span class="tok-str">&#039;read requirement link&#039;</span> =&gt; [<span class="tok-str">&#039;requirements&#039;</span>, [<span class="tok-str">&#039;REQ-001&#039;</span>], [<span class="tok-str">&#039;REQ-001&#039;</span> =&gt; <span class="tok-str">&#039;reference.yaml#req-001&#039;</span>], <span class="tok-str">&#039;- [REQ-001](reference.yaml#req-001)&#039;</span>],</span>
 <span class="src-line" id="L48"><a class="ln" href="#L48">48</a>            <span class="tok-str">&#039;new requirement link&#039;</span> =&gt; [<span class="tok-str">&#039;requirements&#039;</span>, [<span class="tok-str">&#039;REQ.A-1&#039;</span>, <span class="tok-str">&#039;REQ-002&#039;</span>], [], <span class="tok-str">&quot;- [REQ.A-1](#reqa-1)\n- [REQ-002](#req-002)&quot;</span>],</span>
 <span class="src-line" id="L49"><a class="ln" href="#L49">49</a>            <span class="tok-str">&#039;related link with a space&#039;</span> =&gt; [<span class="tok-str">&#039;related&#039;</span>, [<span class="tok-str">&#039;SPEC-001&#039;</span>], [<span class="tok-str">&#039;SPEC-001&#039;</span> =&gt; <span class="tok-str">&#039;other file.md#spec-001&#039;</span>], <span class="tok-str">&#039;- [SPEC-001](&lt;other%20file.md#spec-001&gt;)&#039;</span>],</span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>            <span class="tok-str">&#039;tests&#039;</span> =&gt; [<span class="tok-str">&#039;tests&#039;</span>, [(object) [<span class="tok-str">&#039;runner&#039;</span> =&gt; <span class="tok-str">&#039;unit&#039;</span>, <span class="tok-str">&#039;target&#039;</span> =&gt; <span class="tok-str">&#039;Sample\\PassingTest::test_pass&#039;</span>]], [], <span class="tok-str">&#039;- **unit:** Sample\\\\PassingTest::test\\_pass&#039;</span>],</span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>            <span class="tok-str">&#039;design link with text&#039;</span> =&gt; [<span class="tok-str">&#039;design&#039;</span>, [(object) [<span class="tok-str">&#039;url&#039;</span> =&gt; <span class="tok-str">&#039;https://example.org/design&#039;</span>, <span class="tok-str">&#039;text&#039;</span> =&gt; <span class="tok-str">&#039;Parser design&#039;</span>]], [], <span class="tok-str">&#039;- [Parser design](https://example.org/design)&#039;</span>],</span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>            <span class="tok-str">&#039;design link without text&#039;</span> =&gt; [<span class="tok-str">&#039;design&#039;</span>, [(object) [<span class="tok-str">&#039;url&#039;</span> =&gt; <span class="tok-str">&#039;https://example.org/design&#039;</span>]], [], <span class="tok-str">&#039;- [https://example.org/design](https://example.org/design)&#039;</span>],</span>
-<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>            <span class="tok-str">&#039;design text&#039;</span> =&gt; [<span class="tok-str">&#039;design&#039;</span>, [(object) [<span class="tok-str">&#039;text&#039;</span> =&gt; <span class="tok-str">&#039;Preserve the original source spelling.&#039;</span>]], [], <span class="tok-str">&#039;- Preserve the original source spelling.&#039;</span>],</span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>            <span class="tok-str">&#039;empty list&#039;</span> =&gt; [<span class="tok-str">&#039;labels&#039;</span>, [], [], <span class="tok-str">&#039;None.&#039;</span>],</span>
-<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>            <span class="tok-str">&#039;empty evidence&#039;</span> =&gt; [<span class="tok-str">&#039;evidence&#039;</span>, [], [], <span class="tok-str">&#039;None.&#039;</span>],</span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>        ];</span>
-<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>    }</span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a></span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a><span class="tok-com">     * @throws JsonException</span></span>
-<span class="src-line" id="L61"><a class="ln" href="#L61">61</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWriteRejectsAValueThatIsNotAList</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>    {</span>
-<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidInputException</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;tests must be a list.&#039;</span>);</span>
-<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>        (<span class="tok-kw">new</span> <span class="tok-id">FieldWriter</span>())-&gt;<span class="tok-id">write</span>(<span class="tok-str">&#039;tests&#039;</span>, <span class="tok-num">5</span>, []);</span>
-<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>    }</span>
-<span class="src-line" id="L68"><a class="ln" href="#L68">68</a></span>
-<span class="src-line" id="L69"><a class="ln" href="#L69">69</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L70"><a class="ln" href="#L70">70</a><span class="tok-com">     * @throws JsonException</span></span>
-<span class="src-line" id="L71"><a class="ln" href="#L71">71</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L72"><a class="ln" href="#L72">72</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWriteRejectsARecordOfAnotherField</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>    {</span>
-<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidInputException</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&quot;Cannot render Markdown field &#039;evidence&#039;.&quot;</span>);</span>
-<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>        (<span class="tok-kw">new</span> <span class="tok-id">FieldWriter</span>())-&gt;<span class="tok-id">write</span>(<span class="tok-str">&#039;evidence&#039;</span>, [(object) [<span class="tok-str">&#039;selector&#039;</span> =&gt; <span class="tok-str">&#039;#a&#039;</span>, <span class="tok-str">&#039;quote&#039;</span> =&gt; <span class="tok-str">&#039;Names shall start with a letter.&#039;</span>]], []);</span>
-<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>    }</span>
-<span class="src-line" id="L78"><a class="ln" href="#L78">78</a></span>
-<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L80"><a class="ln" href="#L80">80</a><span class="tok-com">     * @throws JsonException</span></span>
-<span class="src-line" id="L81"><a class="ln" href="#L81">81</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWriteRejectsAStringEntryOutsideTheReferenceFields</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>    {</span>
-<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidInputException</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;Expected a Markdown record.&#039;</span>);</span>
-<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>        (<span class="tok-kw">new</span> <span class="tok-id">FieldWriter</span>())-&gt;<span class="tok-id">write</span>(<span class="tok-str">&#039;labels&#039;</span>, [<span class="tok-str">&#039;grammar&#039;</span>], []);</span>
-<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>    }</span>
-<span class="src-line" id="L88"><a class="ln" href="#L88">88</a></span>
-<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L90"><a class="ln" href="#L90">90</a><span class="tok-com">     * @throws JsonException</span></span>
-<span class="src-line" id="L91"><a class="ln" href="#L91">91</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWriteRejectsATestWithoutATarget</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L93"><a class="ln" href="#L93">93</a>    {</span>
-<span class="src-line" id="L94"><a class="ln" href="#L94">94</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidInputException</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;target must be a nonempty string.&#039;</span>);</span>
-<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>        (<span class="tok-kw">new</span> <span class="tok-id">FieldWriter</span>())-&gt;<span class="tok-id">write</span>(<span class="tok-str">&#039;tests&#039;</span>, [(object) [<span class="tok-str">&#039;runner&#039;</span> =&gt; <span class="tok-str">&#039;unit&#039;</span>]], []);</span>
-<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>    }</span>
-<span class="src-line" id="L98"><a class="ln" href="#L98">98</a>}</span>
-<span class="src-line" id="L99"><a class="ln" href="#L99">99</a></span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>            <span class="tok-str">&#039;manual tests&#039;</span> =&gt; [<span class="tok-str">&#039;tests&#039;</span>, [(object) [<span class="tok-str">&#039;runner&#039;</span> =&gt; <span class="tok-str">&#039;fuzz&#039;</span>, <span class="tok-str">&#039;target&#039;</span> =&gt; <span class="tok-str">&#039;slow&#039;</span>, <span class="tok-str">&#039;run&#039;</span> =&gt; <span class="tok-str">&#039;manual&#039;</span>]], [], <span class="tok-str">&quot;- **fuzz:** slow\n  - **run:** manual&quot;</span>],</span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>            <span class="tok-str">&#039;automatic tests&#039;</span> =&gt; [<span class="tok-str">&#039;tests&#039;</span>, [(object) [<span class="tok-str">&#039;runner&#039;</span> =&gt; <span class="tok-str">&#039;unit&#039;</span>, <span class="tok-str">&#039;target&#039;</span> =&gt; <span class="tok-str">&#039;fast&#039;</span>, <span class="tok-str">&#039;run&#039;</span> =&gt; <span class="tok-str">&#039;auto&#039;</span>]], [], <span class="tok-str">&quot;- **unit:** fast\n  - **run:** auto&quot;</span>],</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>            <span class="tok-str">&#039;tests&#039;</span> =&gt; [<span class="tok-str">&#039;tests&#039;</span>, [(object) [<span class="tok-str">&#039;runner&#039;</span> =&gt; <span class="tok-str">&#039;unit&#039;</span>, <span class="tok-str">&#039;target&#039;</span> =&gt; <span class="tok-str">&#039;Sample\\PassingTest::test_pass&#039;</span>]], [], <span class="tok-str">&#039;- **unit:** Sample\\\\PassingTest::test\\_pass&#039;</span>],</span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>            <span class="tok-str">&#039;design link with text&#039;</span> =&gt; [<span class="tok-str">&#039;design&#039;</span>, [(object) [<span class="tok-str">&#039;url&#039;</span> =&gt; <span class="tok-str">&#039;https://example.org/design&#039;</span>, <span class="tok-str">&#039;text&#039;</span> =&gt; <span class="tok-str">&#039;Parser design&#039;</span>]], [], <span class="tok-str">&#039;- [Parser design](https://example.org/design)&#039;</span>],</span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>            <span class="tok-str">&#039;design link without text&#039;</span> =&gt; [<span class="tok-str">&#039;design&#039;</span>, [(object) [<span class="tok-str">&#039;url&#039;</span> =&gt; <span class="tok-str">&#039;https://example.org/design&#039;</span>]], [], <span class="tok-str">&#039;- [https://example.org/design](https://example.org/design)&#039;</span>],</span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>            <span class="tok-str">&#039;design text&#039;</span> =&gt; [<span class="tok-str">&#039;design&#039;</span>, [(object) [<span class="tok-str">&#039;text&#039;</span> =&gt; <span class="tok-str">&#039;Preserve the original source spelling.&#039;</span>]], [], <span class="tok-str">&#039;- Preserve the original source spelling.&#039;</span>],</span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>            <span class="tok-str">&#039;empty list&#039;</span> =&gt; [<span class="tok-str">&#039;labels&#039;</span>, [], [], <span class="tok-str">&#039;None.&#039;</span>],</span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>            <span class="tok-str">&#039;empty evidence&#039;</span> =&gt; [<span class="tok-str">&#039;evidence&#039;</span>, [], [], <span class="tok-str">&#039;None.&#039;</span>],</span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>        ];</span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>    }</span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a></span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a><span class="tok-com">     * @throws JsonException</span></span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWriteRejectsAValueThatIsNotAList</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>    {</span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidInputException</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;tests must be a list.&#039;</span>);</span>
+<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>        (<span class="tok-kw">new</span> <span class="tok-id">FieldWriter</span>())-&gt;<span class="tok-id">write</span>(<span class="tok-str">&#039;tests&#039;</span>, <span class="tok-num">5</span>, []);</span>
+<span class="src-line" id="L69"><a class="ln" href="#L69">69</a>    }</span>
+<span class="src-line" id="L70"><a class="ln" href="#L70">70</a></span>
+<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L72"><a class="ln" href="#L72">72</a><span class="tok-com">     * @throws JsonException</span></span>
+<span class="src-line" id="L73"><a class="ln" href="#L73">73</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWriteRejectsARecordOfAnotherField</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>    {</span>
+<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidInputException</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&quot;Cannot render Markdown field &#039;evidence&#039;.&quot;</span>);</span>
+<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>        (<span class="tok-kw">new</span> <span class="tok-id">FieldWriter</span>())-&gt;<span class="tok-id">write</span>(<span class="tok-str">&#039;evidence&#039;</span>, [(object) [<span class="tok-str">&#039;selector&#039;</span> =&gt; <span class="tok-str">&#039;#a&#039;</span>, <span class="tok-str">&#039;quote&#039;</span> =&gt; <span class="tok-str">&#039;Names shall start with a letter.&#039;</span>]], []);</span>
+<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>    }</span>
+<span class="src-line" id="L80"><a class="ln" href="#L80">80</a></span>
+<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L82"><a class="ln" href="#L82">82</a><span class="tok-com">     * @throws JsonException</span></span>
+<span class="src-line" id="L83"><a class="ln" href="#L83">83</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWriteRejectsAStringEntryOutsideTheReferenceFields</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>    {</span>
+<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidInputException</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;Expected a Markdown record.&#039;</span>);</span>
+<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>        (<span class="tok-kw">new</span> <span class="tok-id">FieldWriter</span>())-&gt;<span class="tok-id">write</span>(<span class="tok-str">&#039;labels&#039;</span>, [<span class="tok-str">&#039;grammar&#039;</span>], []);</span>
+<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>    }</span>
+<span class="src-line" id="L90"><a class="ln" href="#L90">90</a></span>
+<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L92"><a class="ln" href="#L92">92</a><span class="tok-com">     * @throws JsonException</span></span>
+<span class="src-line" id="L93"><a class="ln" href="#L93">93</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L94"><a class="ln" href="#L94">94</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWriteRejectsATestWithoutATarget</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>    {</span>
+<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidInputException</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;target must be a nonempty string.&#039;</span>);</span>
+<span class="src-line" id="L98"><a class="ln" href="#L98">98</a>        (<span class="tok-kw">new</span> <span class="tok-id">FieldWriter</span>())-&gt;<span class="tok-id">write</span>(<span class="tok-str">&#039;tests&#039;</span>, [(object) [<span class="tok-str">&#039;runner&#039;</span> =&gt; <span class="tok-str">&#039;unit&#039;</span>]], []);</span>
+<span class="src-line" id="L99"><a class="ln" href="#L99">99</a>    }</span>
+<span class="src-line" id="L100"><a class="ln" href="#L100">100</a>}</span>
+<span class="src-line" id="L101"><a class="ln" href="#L101">101</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

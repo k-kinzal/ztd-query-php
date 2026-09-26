@@ -277,8 +277,30 @@
 <span class="src-line" id="L239"><a class="ln" href="#L239">239</a>    {</span>
 <span class="src-line" id="L240"><a class="ln" href="#L240">240</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/&#039;</span>, <span class="tok-id">SchemaValidator</span>::<span class="tok-id">BASE</span>);</span>
 <span class="src-line" id="L241"><a class="ln" href="#L241">241</a>    }</span>
-<span class="src-line" id="L242"><a class="ln" href="#L242">242</a>}</span>
-<span class="src-line" id="L243"><a class="ln" href="#L243">243</a></span>
+<span class="src-line" id="L242"><a class="ln" href="#L242">242</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L243"><a class="ln" href="#L243">243</a><span class="tok-com">     * @throws JsonException</span></span>
+<span class="src-line" id="L244"><a class="ln" href="#L244">244</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L245"><a class="ln" href="#L245">245</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerInvalidRunPolicies&#039;</span>)]</span>
+<span class="src-line" id="L246"><a class="ln" href="#L246">246</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRejectsInvalidTestRunPolicies</span>(<span class="tok-id">mixed</span> <span class="tok-var">$run</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L247"><a class="ln" href="#L247">247</a>    {</span>
+<span class="src-line" id="L248"><a class="ln" href="#L248">248</a>        <span class="tok-var">$workspace</span> = <span class="tok-kw">new</span> <span class="tok-id">ProjectDirectory</span>();</span>
+<span class="src-line" id="L249"><a class="ln" href="#L249">249</a>        <span class="tok-var">$data</span> = (<span class="tok-kw">new</span> <span class="tok-id">Loader</span>())-&gt;<span class="tok-id">document</span>(<span class="tok-var">$workspace</span>-&gt;<span class="tok-id">directory</span> . <span class="tok-str">&#039;/definition.yaml&#039;</span>);</span>
+<span class="src-line" id="L250"><a class="ln" href="#L250">250</a>        <span class="tok-var">$data</span>[<span class="tok-str">&#039;items&#039;</span>] = [[...<span class="tok-id">ProjectDirectory</span>::<span class="tok-id">item</span>(), <span class="tok-str">&#039;tests&#039;</span> =&gt; [[<span class="tok-str">&#039;runner&#039;</span> =&gt; <span class="tok-str">&#039;unit&#039;</span>, <span class="tok-str">&#039;target&#039;</span> =&gt; <span class="tok-str">&#039;Example::testOne&#039;</span>, <span class="tok-str">&#039;run&#039;</span> =&gt; <span class="tok-var">$run</span>]]]];</span>
+<span class="src-line" id="L251"><a class="ln" href="#L251">251</a>        <span class="tok-var">$workspace</span>-&gt;<span class="tok-id">write</span>(<span class="tok-str">&#039;definition.yaml&#039;</span>, <span class="tok-var">$data</span>);</span>
+<span class="src-line" id="L252"><a class="ln" href="#L252">252</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidInputException</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L253"><a class="ln" href="#L253">253</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;/items/0/tests/0/run&#039;</span>);</span>
+<span class="src-line" id="L254"><a class="ln" href="#L254">254</a>        (<span class="tok-kw">new</span> <span class="tok-id">Loader</span>())-&gt;<span class="tok-id">load</span>(<span class="tok-var">$workspace</span>-&gt;<span class="tok-id">directory</span> . <span class="tok-str">&#039;/requirements.yaml&#039;</span>);</span>
+<span class="src-line" id="L255"><a class="ln" href="#L255">255</a>    }</span>
+<span class="src-line" id="L256"><a class="ln" href="#L256">256</a></span>
+<span class="src-line" id="L257"><a class="ln" href="#L257">257</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L258"><a class="ln" href="#L258">258</a><span class="tok-com">     * @return list&lt;array{mixed}&gt;</span></span>
+<span class="src-line" id="L259"><a class="ln" href="#L259">259</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L260"><a class="ln" href="#L260">260</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerInvalidRunPolicies</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L261"><a class="ln" href="#L261">261</a>    {</span>
+<span class="src-line" id="L262"><a class="ln" href="#L262">262</a>        <span class="tok-kw">return</span> [[<span class="tok-str">&#039;never&#039;</span>], [<span class="tok-str">&#039;&#039;</span>], [<span class="tok-id">false</span>], [<span class="tok-id">null</span>], [<span class="tok-num">1</span>]];</span>
+<span class="src-line" id="L263"><a class="ln" href="#L263">263</a>    }</span>
+<span class="src-line" id="L264"><a class="ln" href="#L264">264</a>}</span>
+<span class="src-line" id="L265"><a class="ln" href="#L265">265</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
