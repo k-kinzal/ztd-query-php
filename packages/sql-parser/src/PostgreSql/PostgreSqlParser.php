@@ -10,6 +10,7 @@ use SqlParser\Lexer\TerminalIndex;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\LrParser;
 use SqlParser\Parser\Node;
+use SqlParser\Parser\SqlParser;
 use SqlParser\Parser\SyntaxException;
 use SqlParser\PostgreSql\Lexer\KeywordTable;
 use SqlParser\PostgreSql\Lexer\PostgreSqlLexer;
@@ -38,7 +39,7 @@ use SqlParser\Table\TableFile;
  * @example Rejecting an unsupported release
  *     new \SqlParser\PostgreSql\PostgreSqlParser('pg-9.6.0') // throws \RuntimeException: Unsupported
  */
-final class PostgreSqlParser
+final class PostgreSqlParser implements SqlParser
 {
     private readonly PostgreSqlVersion $version;
 

@@ -40,6 +40,19 @@ Feature: Grammar Rules
       """
 
   @manual:4.2
+  Scenario: The first letter of each symbol tells the one nonterminal of the example, expr, from its five terminals
+    Given the grammar file:
+      """
+      expr ::= expr PLUS expr.
+      expr ::= expr TIMES expr.
+      expr ::= LPAREN expr RPAREN.
+      expr ::= VALUE.
+      """
+    When the file is parsed
+    Then the nonterminals are: expr
+    And the terminals are: PLUS TIMES LPAREN RPAREN VALUE
+
+  @manual:4.2
   Scenario: The right-hand side of a rule may be empty
     Given the grammar file:
       """
@@ -125,6 +138,31 @@ Feature: Grammar Rules
       Rule expr
         Item VALUE
         Code {\n  if (x) {\n    y();\n  }\n}
+      """
+
+  @manual:4.2
+  Scenario: The yacc form of a rule, with -> and the positions $$, $1 and $3, is not a Lemon rule
+    Given the grammar file:
+      """
+      expr -> expr PLUS expr  { $$ = $1 + $3; };
+      """
+    When the file is parsed
+    Then parsing fails at line 1 column 6
+
+  @manual:4.2
+  Scenario: A $-numbered position in an action is C text to the reader and stands for no symbol
+    Given the grammar file:
+      """
+      expr ::= expr PLUS expr.  { $$ = $1 + $3; }
+      """
+    When the file is parsed
+    Then the tree is:
+      """
+      Rule expr
+        Item expr
+        Item PLUS
+        Item expr
+        Code { $$ = $1 + $3; }
       """
 
   @manual:4.2

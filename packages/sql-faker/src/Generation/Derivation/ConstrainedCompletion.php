@@ -23,7 +23,7 @@ final class ConstrainedCompletion
     /**
      * Reuses the grammar's unconstrained fixed point for pruning completed constraint prefixes.
      */
-    public function __construct(Grammar $grammar, private readonly CompletionCosts $costs)
+    public function __construct(private readonly Grammar $grammar, private readonly CompletionCosts $costs)
     {
         $this->memo = new CompletionMemo();
         $this->productions = new Completion\PatternProductions($grammar);
@@ -106,9 +106,10 @@ final class ConstrainedCompletion
                 continue;
             }
             $name = $state->symbols[0]->value();
-            $occurrence = $state->occurrences[$name] ?? 0;
-            $pattern = $plan->patternAt($name, $occurrence);
-            $nextOccurrences = $plan->patternState([...$state->occurrences, $name => $occurrence + 1]);
+            $source = $this->grammar->sourceRule($name);
+            $occurrence = $state->occurrences[$source] ?? 0;
+            $pattern = $plan->patternAt($source, $occurrence);
+            $nextOccurrences = $plan->patternState([...$state->occurrences, $source => $occurrence + 1]);
             foreach ($this->productions->matching($name, $pattern) as $production) {
                 $frontier->offer([...$production->symbols, ...array_slice($state->symbols, 1)], $nextOccurrences, $state->nonEmpty, $state->spent + 1, $state);
             }

@@ -11,9 +11,9 @@ use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Choice\PlanBuilder;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\Plan\ProductionPattern;
-use SqlFaker\MySqlProvider;
-use SqlFixture\FixtureGenerator;
+use SqlFaker\MySql\MySqlProvider;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
+use SqlFixture\Provider\FixtureGenerator;
 
 /**
  * Mutates SQL structure and lexical choices, then checks schema acceptance and the generated row contract.

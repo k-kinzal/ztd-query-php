@@ -1,0 +1,127 @@
+# Layers follow the source namespaces; implementations depend on Core contracts.
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Core
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Core\\.*'
+    - name: Facade
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Facade\\.*'
+    - name: Cli
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Cli\\.*'
+    - name: PhpParser
+      collectors:
+        - type: classLike
+          value: '^PhpParser\\.*'
+    - name: Yaml
+      collectors:
+        - type: classLike
+          value: '^Symfony\\Component\\Yaml\\.*'
+    - name: FormatterCore
+      collectors:
+        - type: classLike
+          value: '^SqlFormatter\\Core\\.*'
+    - name: ParserCore
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\(Parser|Lexer)\\.*'
+    - name: ExtensionPdo
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\Pdo\\.*'
+    - name: ExtensionMysqli
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\Mysqli\\.*'
+    - name: ExtensionDoctrine
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\Doctrine\\.*'
+    - name: ExtensionLaravel
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\Laravel\\.*'
+    - name: ExtensionWordPress
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\WordPress\\.*'
+    - name: ReporterJson
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Reporter\\Json\\.*'
+    - name: ReporterText
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Reporter\\Text\\.*'
+    - name: ReporterHtml
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Reporter\\Html\\.*'
+    - name: PlatformMySql
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Platform\\MySql\\.*'
+    - name: PlatformPostgreSql
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Platform\\PostgreSql\\.*'
+    - name: PlatformSqlite
+      collectors:
+        - type: classLike
+          value: '^SqlCatalog\\Platform\\Sqlite\\.*'
+    - name: ParserMySql
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\MySql\\.*'
+    - name: FormatterMySql
+      collectors:
+        - type: classLike
+          value: '^SqlFormatter\\Platform\\MySql\\.*'
+    - name: ParserPostgreSql
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\PostgreSql\\.*'
+    - name: FormatterPostgreSql
+      collectors:
+        - type: classLike
+          value: '^SqlFormatter\\Platform\\PostgreSql\\.*'
+    - name: ParserSqlite
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\Sqlite\\.*'
+    - name: FormatterSqlite
+      collectors:
+        - type: classLike
+          value: '^SqlFormatter\\Platform\\Sqlite\\.*'
+  ruleset:
+    Core: [PhpParser]
+    Facade: [Core, Yaml, ExtensionPdo, ExtensionMysqli, ExtensionDoctrine, ExtensionLaravel, ExtensionWordPress, ReporterJson, ReporterText, ReporterHtml, PlatformMySql, PlatformPostgreSql, PlatformSqlite]
+    Cli: [Core, Facade]
+    PhpParser: []
+    Yaml: []
+    FormatterCore: []
+    ParserCore: []
+    ExtensionPdo: [Core, PhpParser]
+    ExtensionMysqli: [Core, PhpParser]
+    ExtensionDoctrine: [Core, PhpParser]
+    ExtensionLaravel: [Core, PhpParser]
+    ExtensionWordPress: [Core, PhpParser]
+    ReporterJson: [Core]
+    ReporterText: [Core]
+    ReporterHtml: [Core, FormatterCore]
+    PlatformMySql: [Core, ParserCore, FormatterCore, ParserMySql, FormatterMySql]
+    PlatformPostgreSql: [Core, ParserCore, FormatterCore, ParserPostgreSql, FormatterPostgreSql]
+    PlatformSqlite: [Core, ParserCore, FormatterCore, ParserSqlite, FormatterSqlite]
+    ParserMySql: []
+    FormatterMySql: []
+    ParserPostgreSql: []
+    FormatterPostgreSql: []
+    ParserSqlite: []
+    FormatterSqlite: []

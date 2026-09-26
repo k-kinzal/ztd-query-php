@@ -1,0 +1,1553 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\MySql;
+
+use Faker\Factory;
+use Override;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use SqlFaker\Generation\Derivation\TerminationAnalyzer;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\LexemeConstraint;
+use SqlFaker\Generation\Plan\ProductionPattern;
+use SqlFaker\Generation\Plan\RulePlan;
+use SqlFaker\Generation\SqlGenerator;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Terminal;
+use SqlFaker\Grammar\Model\TerminalInventory;
+use SqlFaker\Grammar\Resource\SqlVersion;
+use SqlFaker\MySql\Generation\GenerationPlans;
+use SqlFaker\MySql\Generation\LexicalGrammar;
+use SqlFaker\MySql\Generation\StatementRule;
+use SqlFaker\MySql\Generation\Value\LiteralGenerator;
+use SqlFaker\MySql\MySqlProvider;
+
+#[CoversClass(MySqlProvider::class)]
+#[CoversClass(LiteralGenerator::class)]
+#[CoversClass(SqlGenerator::class)]
+#[CoversClass(Grammar::class)]
+#[CoversClass(NonTerminal::class)]
+#[CoversClass(Production::class)]
+#[CoversClass(ProductionRule::class)]
+#[CoversClass(Terminal::class)]
+#[CoversClass(TerminationAnalyzer::class)]
+#[CoversClass(StatementRule::class)]
+#[CoversClass(LexicalGrammar::class)]
+#[UsesClass(GenerationPlan::class)]
+#[UsesClass(GenerationPlans::class)]
+#[UsesClass(ProductionPattern::class)]
+#[UsesClass(SqlVersion::class)]
+#[UsesClass(TerminalInventory::class)]
+#[Medium]
+#[UsesClass(\SqlFaker\MySql\Generation\SqlGeneratorFactory::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Derivation::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\DerivationTrace::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\TerminationCost::class)]
+#[UsesClass(\SqlFaker\Generation\Exception\GenerationException::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\RegisteredLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\SequenceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\OutputPart::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalMappingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\TokenGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TokenRewriter::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Option\UniqueOptionRule::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionCase::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Exception\LexicalException::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Tokenization\KeywordIndex::class)]
+#[UsesClass(\SqlFaker\Generation\Value\RandomCharacters::class)]
+#[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\GenerationContext::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterDatabaseRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\ConstraintEnforcementRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\FlushExportRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\InstanceActionRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\IntegerContextRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\LoadSourceCountRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RequiredAliasRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RoleGrantRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SetNamesRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\CloneAddressSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\FunctionSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Grammar\MySqlGrammar::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Tokenization\MySqlTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\StartRuleResolver::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\GenerationContext::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\HashBoundLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\CopySourceRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\FetchWithTiesRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\FunctionNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\HashPartitionBoundRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\LimitOffsetRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\LookaheadRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\OperatorArgumentsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\OverlapsArgumentsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\PublicationObjectRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\TimeZoneIntervalRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\WindowFrameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Grammar\PgGrammar::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\LexicalGrammar::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lookahead\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Tokenization\PgTokenizer::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\GenerationContext::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\IdentifierListRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\JoinRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\StrictTableRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\TableOptionRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WindowFrameRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WithoutRowidRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\GrammarAdaptation::class)]
+#[UsesClass(\SqlFaker\Sqlite\Grammar\SqliteGrammar::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\LexicalGrammar::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Tokenization\SqliteTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\ExpressionGroupingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterEventRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SubqueryContextRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\ConstraintAttributesRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\AnyRelationNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\IndirectionStarRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\IntoClauseRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\GeneratedColumnRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\TransactionCompletionRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\GeneratedColumnRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\WindowNameLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ReplicationTablePatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SizeNumberLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\CompoundSelectRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\UpsertSourceRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\FunctionArgumentRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\GeneratedColumnRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Replication\StartRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\SelectOptionsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\TableFunctionRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\TypeModifierRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\IdentityOptionRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\IntoClauseRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Replication\TablePatternRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\TableValueConstructorRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Query\QueryContextRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Query\JoinGroupingRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\WithinGroupRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Routine\ReturnRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Routine\BinlogRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ColumnNameRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\SystemVariableRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Column\AutoIncrementRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\DefinitionRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ListValueRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Routine\LanguageRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\PrecisionLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\AliasRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ValueArityRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ValueShape::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\SubstringRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\RangeFunctionOrdinalityRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Query\WindowFrameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonOptionsRule::class)]
+#[UsesClass(\SqlFaker\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\ConstraintCapabilitiesRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\ForeignKeyActionRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\SchemaElementsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\ParserOptionsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonTablePathRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\AggregateArgumentRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\ConcatenationRule::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\HostNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ParserNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\NumericContextRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\Utf8::class)]
+#[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Completion\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Completion\CompletionWitness::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Value\OperatorDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\RepeatDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(RulePlan::class)]
+#[UsesClass(LexemeConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\GrammarCompiler::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\Scope::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\PreparedGrammar::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\ScopedGeneration::class)]
+final class MySqlProviderTest extends TestCase
+{
+    #[Override]
+    protected function setUp(): void
+    {
+        parent::setUp();
+        gc_collect_cycles();
+    }
+
+    public function testRegistersItselfWithTheFakerGenerator(): void
+    {
+        $faker = Factory::create();
+        $provider = new MySqlProvider($faker);
+
+        /**
+         * @var list<object> $providers
+         */
+        $providers = $faker->getProviders();
+        self::assertContains($provider, $providers);
+
+        $identifier = $provider->identifier(3);
+        self::assertNotSame('', $identifier);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testInsertFunctionUpsertStatementDerivesConditionalExpressionFromGrammar(int $seed): void
+    {
+        $faker = Factory::create();
+        $provider = new MySqlProvider($faker);
+        $faker->seed($seed);
+        $sql = $provider->insertFunctionUpsertStatement();
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))
+            ->tokenize($sql);
+        $valueTokens = array_intersect($tokens, ['VALUE_SYM', 'VALUES']);
+        $values = array_key_first($valueTokens);
+        $update = array_search('UPDATE_SYM', $tokens, true);
+        $conditional = array_search('IF', $tokens, true);
+
+        $faker->seed($seed);
+        self::assertSame($sql, $provider->insertFunctionUpsertStatement(40));
+        self::assertIsInt($values);
+        self::assertIsInt($update);
+        self::assertIsInt($conditional);
+        self::assertLessThan($update, $values);
+        self::assertGreaterThan($update, $conditional);
+        self::assertContains('DUPLICATE_SYM', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testFullTextSearchStatementDerivesMatchExpressionFromGrammar(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->fullTextSearchStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))
+            ->tokenize($sql);
+        $select = array_search('SELECT_SYM', $tokens, true);
+        $from = array_search('FROM', $tokens, true);
+        $where = array_search('WHERE', $tokens, true);
+        $match = array_search('MATCH', $tokens, true);
+
+        self::assertSame($sql, $provider->fullTextSearchStatement(40));
+        self::assertIsInt($select);
+        self::assertIsInt($from);
+        self::assertNotContains('DUAL_SYM', $tokens);
+        self::assertIsInt($where);
+        self::assertIsInt($match);
+        self::assertGreaterThan($select, $from);
+        self::assertGreaterThan($from, $match);
+        self::assertContains('AGAINST', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testTemporaryTableStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->temporaryTableStatement();
+        $faker->seed($seed);
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->temporaryTableStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('TEMPORARY', $tokens);
+        self::assertContains('TABLE_SYM', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testViewStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->viewStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->viewStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('VIEW_SYM', $tokens);
+        self::assertContains('SELECT_SYM', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testGeneratedColumnStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->generatedColumnStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->generatedColumnStatement(40));
+        self::assertContains('GENERATED', $tokens);
+        self::assertContains('ALWAYS_SYM', $tokens);
+        self::assertContains('STORED_SYM', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testForeignKeyCascadeStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->foreignKeyCascadeStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->foreignKeyCascadeStatement(40));
+        self::assertContains('FOREIGN', $tokens);
+        self::assertContains('REFERENCES', $tokens);
+        self::assertStringContainsString('ON_SYM UPDATE_SYM CASCADE', implode(' ', $tokens));
+        self::assertStringContainsString('ON_SYM DELETE_SYM CASCADE', implode(' ', $tokens));
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testPartitionSelectStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->partitionSelectStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))
+            ->tokenize($sql);
+        $select = array_search('SELECT_SYM', $tokens, true);
+        $from = array_search('FROM', $tokens, true);
+        $partition = array_search('PARTITION_SYM', $tokens, true);
+
+        self::assertSame($sql, $provider->partitionSelectStatement(40));
+        self::assertIsInt($select);
+        self::assertIsInt($from);
+        self::assertIsInt($partition);
+        self::assertGreaterThan($select, $from);
+        self::assertGreaterThan($from, $partition);
+    }
+
+    public function testSql(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->sql(maxDepth: 10);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testSqlWithStatementRule(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->sql(StatementRule::Select, maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bSELECT\b/i', $result);
+    }
+
+    public function testSqlWithNullStatementRuleUsesDefault(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->sql(null, maxDepth: 3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testSqlWithMaxDepth(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->sql(maxDepth: 5);
+
+        self::assertNotSame('', $result);
+    }
+
+    #[DataProvider('providerSupportedMySqlVersion')]
+    public function testSqlWithoutEmptyRowsUsesTheRestrictedGenerationPlan(string $version): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker, $version);
+
+        $result = $provider->sqlWithoutEmptyRows(StatementRule::Insert, maxDepth: 10);
+
+        self::assertMatchesRegularExpression('/\bINSERT\b/i', $result);
+        self::assertDoesNotMatchRegularExpression('/\bVALUES?\s*(?:ROW\s*)?\(\s*\)/i', $result);
+    }
+
+    public function testSqlWithoutEmptyRowsCanGenerateFromTheWholeGrammar(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->sqlWithoutEmptyRows(maxDepth: 3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testLoadDataStatementUsesOfficialGrammarRule(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(164);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->loadDataStatement(maxDepth: 8);
+
+        self::assertMatchesRegularExpression('/\bLOAD\b.*\bDATA\b/is', $result);
+        self::assertMatchesRegularExpression('/\bINFILE\b/i', $result);
+        self::assertMatchesRegularExpression('/\bINTO\b/i', $result);
+    }
+
+    public function testSelectStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->selectStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bSELECT\b/i', $result);
+    }
+
+    public function testInsertStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->insertStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bINSERT\b/i', $result);
+    }
+
+    public function testUpdateStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->updateStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bUPDATE\b/i', $result);
+    }
+
+    public function testDeleteStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->deleteStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bDELETE\b/i', $result);
+    }
+
+    #[DataProvider('providerMultiTableGenerationSeed')]
+    public function testMultiTableUpdateStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))
+            ->tokenize($provider->multiTableUpdateStatement(maxDepth: 20));
+
+        self::assertSame('UPDATE_SYM', $tokens[0]);
+        $set = array_search('SET_SYM', $tokens, true);
+        self::assertIsInt($set);
+        self::assertSame(1, count(array_filter(
+            array_slice($tokens, 0, $set),
+            static fn (string $token): bool => $token === ',',
+        )));
+        self::assertContains('SET_SYM', $tokens);
+    }
+
+    #[DataProvider('providerMultiTableGenerationSeed')]
+    public function testMultiTableDeleteStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))
+            ->tokenize($provider->multiTableDeleteStatement(maxDepth: 20));
+
+        self::assertSame('DELETE_SYM', $tokens[0]);
+        self::assertContains('FROM', $tokens);
+        self::assertGreaterThanOrEqual(2, count(array_filter(
+            $tokens,
+            static fn (string $token): bool => in_array($token, ['IDENT', 'IDENT_QUOTED'], true),
+        )));
+    }
+
+    public function testCreateTableStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->createTableStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bCREATE\b/i', $result);
+        self::assertMatchesRegularExpression('/\bTABLE\b/i', $result);
+    }
+
+    public function testAlterTableStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->alterTableStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bALTER\b/i', $result);
+        self::assertMatchesRegularExpression('/\bTABLE\b/i', $result);
+    }
+
+    public function testDropTableStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->dropTableStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bDROP\b/i', $result);
+        self::assertMatchesRegularExpression('/\bTABLE\b/i', $result);
+    }
+
+    public function testSimpleStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->simpleStatement(maxDepth: 3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testReplaceStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->replaceStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bREPLACE\b/i', $result);
+    }
+
+    public function testTruncateStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->truncateStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bTRUNCATE\b/i', $result);
+    }
+
+    public function testCreateIndexStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->createIndexStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bCREATE\b/i', $result);
+        self::assertMatchesRegularExpression('/\bINDEX\b/i', $result);
+    }
+
+    public function testDropIndexStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->dropIndexStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bDROP\b/i', $result);
+        self::assertMatchesRegularExpression('/\bINDEX\b/i', $result);
+    }
+
+    public function testBeginStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->beginStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bBEGIN\b/i', $result);
+    }
+
+    public function testCommitStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->commitStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bCOMMIT\b/i', $result);
+    }
+
+    public function testRollbackStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->rollbackStatement(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bROLLBACK\b/i', $result);
+    }
+
+    public function testIdentifier(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->identifier(3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testQuotedIdentifier(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->quotedIdentifier();
+
+        self::assertMatchesRegularExpression('/^`[a-z_][a-z0-9_]*`$/', $result);
+    }
+
+    public function testStringLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->stringLiteral();
+
+        self::assertMatchesRegularExpression("/^'[a-zA-Z0-9_]{1,255}'$/", $result);
+    }
+
+    public function testStringLiteralLengthRange(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $literal = $provider->stringLiteral();
+        $content = substr($literal, 1, -1);
+
+        self::assertGreaterThanOrEqual(1, strlen($content));
+        self::assertLessThanOrEqual(255, strlen($content));
+    }
+
+    public function testNationalStringLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->nationalStringLiteral();
+
+        self::assertMatchesRegularExpression("/^N'[a-zA-Z0-9_]{1,255}'$/", $result);
+    }
+
+    public function testDollarQuotedString(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->dollarQuotedString();
+
+        self::assertMatchesRegularExpression('/^\$\$[a-zA-Z0-9_]{1,255}\$\$$/', $result);
+    }
+
+    public function testIntegerLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->integerLiteral();
+
+        self::assertMatchesRegularExpression('/^[1-9]\d*$/', $result);
+    }
+
+    public function testLongIntegerLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->longIntegerLiteral();
+
+        self::assertMatchesRegularExpression('/^\d+$/', $result);
+        self::assertGreaterThanOrEqual(0, (int) $result);
+        self::assertLessThanOrEqual(2147483647, (int) $result);
+    }
+
+    public function testUnsignedBigIntLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->unsignedBigIntLiteral();
+
+        self::assertMatchesRegularExpression('/^\d+$/', $result);
+    }
+
+    public function testDecimalLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->decimalLiteral();
+
+        self::assertMatchesRegularExpression('/^\d+\.\d{2,}$/', $result);
+    }
+
+    public function testFloatLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->floatLiteral();
+
+        self::assertMatchesRegularExpression('/^\d+\.\d+e-?\d+$/', $result);
+    }
+
+    public function testHexLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->hexLiteral();
+
+        self::assertMatchesRegularExpression('/^0x[0-9a-f]{1,16}$/', $result);
+    }
+
+    public function testQuotedHexLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->quotedHexLiteral(4, 4);
+
+        self::assertMatchesRegularExpression("/^X'[0-9a-f]{8}'$/", $result);
+    }
+
+    public function testQuotedHexLiteralDefaultsToOneThroughEightBytes(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(5);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->quotedHexLiteral();
+        $faker->seed(5);
+
+        self::assertSame($provider->quotedHexLiteral(1, 8), $result);
+        self::assertMatchesRegularExpression("/^X'[0-9a-f]{2,16}'$/", $result);
+        self::assertSame(0, (strlen($result) - 3) % 2);
+    }
+
+    #[DataProvider('providerMySqlVersion')]
+    public function testForeignKeyConstraint(string $version): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker, $version);
+
+        $result = $provider->foreignKeyConstraint(1);
+
+        self::assertSame(
+            ['CONSTRAINT', 'IDENT', 'FOREIGN', 'KEY_SYM', '(', 'IDENT', ')', 'REFERENCES', 'IDENT', '(', 'IDENT', ')'],
+            (new LexicalGrammar($faker, $version))->tokenize($result),
+        );
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testUpdateJoinDerivedStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->updateJoinDerivedStatement();
+        $faker->seed($seed);
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))->tokenize($sql);
+        $joinTokens = array_intersect($tokens, ['JOIN_SYM', 'STRAIGHT_JOIN']);
+        $join = array_key_first($joinTokens);
+        $select = array_search('SELECT_SYM', $tokens, true);
+
+        self::assertSame($sql, $provider->updateJoinDerivedStatement(40));
+        self::assertSame('UPDATE_SYM', $tokens[0]);
+        self::assertIsInt($join);
+        self::assertIsInt($select);
+        self::assertGreaterThan($join, $select);
+        self::assertContains('FROM', $tokens);
+        self::assertContains('GROUP_SYM', $tokens);
+        self::assertContains('ON_SYM', $tokens);
+        self::assertContains('SET_SYM', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testInsertSelectCompoundStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->insertSelectCompoundStatement();
+        $faker->seed($seed);
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))->tokenize($sql);
+
+        self::assertSame($sql, $provider->insertSelectCompoundStatement(40));
+        self::assertSame('INSERT_SYM', $tokens[0]);
+        self::assertContains('UNION_SYM', $tokens);
+        self::assertContains('ALL', $tokens);
+        self::assertGreaterThanOrEqual(
+            2,
+            count(array_filter($tokens, static fn (string $token): bool => $token === 'SELECT_SYM')),
+        );
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testInsertRowAliasUpsertStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->insertRowAliasUpsertStatement();
+        $faker->seed($seed);
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7'))->tokenize($sql);
+
+        self::assertSame($sql, $provider->insertRowAliasUpsertStatement(40));
+        self::assertSame('INSERT_SYM', $tokens[0]);
+        self::assertContains('VALUES', $tokens);
+        self::assertContains('AS', $tokens);
+        self::assertContains('DUPLICATE_SYM', $tokens);
+        self::assertContains('UPDATE_SYM', $tokens);
+    }
+
+    public function testBinaryLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->binaryLiteral();
+
+        self::assertMatchesRegularExpression('/^0b[01]{1,64}$/', $result);
+    }
+
+    public function testHostname(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->hostname();
+
+        self::assertMatchesRegularExpression('/^[a-z0-9]+(\.[a-z0-9]+)*$/', $result);
+    }
+
+    public function testExpr(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->expr(maxDepth: 3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testSimpleExpr(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->simpleExpr(maxDepth: 3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->literal(maxDepth: 3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testPredicate(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->predicate(maxDepth: 3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testWhereClause(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->whereClause(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bWHERE\b/i', $result);
+    }
+
+    public function testOrderClause(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->orderClause(maxDepth: 3);
+
+        self::assertSame(
+            ['ORDER_SYM', 'BY'],
+            array_slice((new LexicalGrammar($faker, 'mysql-8.4.7'))->tokenize($result), 0, 2),
+        );
+    }
+
+    public function testLimitClause(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->limitClause(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bLIMIT\b/i', $result);
+    }
+
+    public function testTableReference(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->tableReference(maxDepth: 3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testJoinedTable(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->joinedTable(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bJOIN\b/i', $result);
+    }
+
+    public function testTableIdent(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->tableIdent(maxDepth: 3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testSubquery(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->subquery(maxDepth: 3);
+
+        self::assertStringContainsString('(', $result);
+        self::assertStringContainsString(')', $result);
+    }
+
+    public function testWithClause(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->withClause(maxDepth: 3);
+
+        self::assertMatchesRegularExpression('/\bWITH\b/i', $result);
+    }
+
+    public function testSeededGenerationIsReproducible(): void
+    {
+        $faker1 = Factory::create();
+        $provider1 = new MySqlProvider($faker1);
+        $faker1->seed(99999);
+        $sql1 = $provider1->sql(maxDepth: 6);
+
+        $faker2 = Factory::create();
+        $provider2 = new MySqlProvider($faker2);
+        $faker2->seed(99999);
+        $sql2 = $provider2->sql(maxDepth: 6);
+
+        self::assertSame($sql1, $sql2, 'Same seed should produce same output');
+    }
+
+    public function testCanBeUsedViaFakerMagicMethod(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        new MySqlProvider($faker);
+
+        $sql = $faker->format('sql', [null, 10]);
+        self::assertIsString($sql);
+        self::assertNotSame('', $sql);
+    }
+
+    #[DataProvider('providerStatementRuleValue')]
+    public function testSqlWithAllStatementRules(StatementRule $type): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->sql($type, maxDepth: 3);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testDefaultMaxDepthIsPhpIntMax(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->sql(maxDepth: 10);
+
+        self::assertNotSame('', $result);
+    }
+
+    public function testSelectStatementMinimalDepthProducesOutput(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->selectStatement(maxDepth: 1);
+
+        self::assertMatchesRegularExpression('/\bSELECT\b/i', $result);
+    }
+
+    #[DataProvider('providerMultipleGenerationSeeds')]
+    public function testMultipleGenerationsReturnDifferentResults(int $seed1, int $seed2): void
+    {
+        $faker1 = Factory::create();
+        $faker1->seed($seed1);
+        $provider1 = new MySqlProvider($faker1);
+
+        $faker2 = Factory::create();
+        $faker2->seed($seed2);
+        $provider2 = new MySqlProvider($faker2);
+
+        self::assertNotSame($provider1->selectStatement(maxDepth: 3), $provider2->selectStatement(maxDepth: 3));
+    }
+
+    public function testQuotedIdentifierDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->quotedIdentifier();
+        $faker->seed(42);
+        self::assertSame($a, $p->quotedIdentifier(1, 64));
+    }
+
+    public function testStringLiteralDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->stringLiteral();
+        $faker->seed(42);
+        self::assertSame($a, $p->stringLiteral(1, 255));
+    }
+
+    public function testNationalStringLiteralDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->nationalStringLiteral();
+        $faker->seed(42);
+        self::assertSame($a, $p->nationalStringLiteral(1, 255));
+    }
+
+    public function testDollarQuotedStringDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->dollarQuotedString();
+        $faker->seed(42);
+        self::assertSame($a, $p->dollarQuotedString(1, 255));
+    }
+
+    public function testIntegerLiteralDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->integerLiteral();
+        $faker->seed(42);
+        self::assertSame($a, $p->integerLiteral(1, 2147483647));
+    }
+
+    public function testLongIntegerLiteralDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->longIntegerLiteral();
+        $faker->seed(42);
+        self::assertSame($a, $p->longIntegerLiteral(0, 2147483647));
+    }
+
+    public function testUnsignedBigIntLiteralDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->unsignedBigIntLiteral();
+        $faker->seed(42);
+        self::assertSame($a, $p->unsignedBigIntLiteral(1, 20));
+    }
+
+    public function testDecimalLiteralDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->decimalLiteral();
+        $faker->seed(42);
+        self::assertSame($a, $p->decimalLiteral(10, 2));
+    }
+
+    public function testFloatLiteralDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->floatLiteral();
+        $faker->seed(42);
+        self::assertSame($a, $p->floatLiteral(10, 2, -38, 38));
+    }
+
+    public function testHexLiteralDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->hexLiteral();
+        $faker->seed(42);
+        self::assertSame($a, $p->hexLiteral(1, 16));
+    }
+
+    public function testBinaryLiteralDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->binaryLiteral();
+        $faker->seed(42);
+        self::assertSame($a, $p->binaryLiteral(1, 64));
+    }
+
+    public function testHostnameDefaultMatchesExplicit(): void
+    {
+        $faker = Factory::create();
+        $p = new MySqlProvider($faker);
+        $faker->seed(42);
+        $a = $p->hostname();
+        $faker->seed(42);
+        self::assertSame($a, $p->hostname(1, 4, 63));
+    }
+
+    public function testQuotedIdentifierCustomLength(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->quotedIdentifier(5, 10);
+
+        self::assertMatchesRegularExpression('/^`[a-z_][a-z0-9_]{4,9}`$/', $result);
+    }
+
+    public function testStringLiteralCustomLength(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->stringLiteral(3, 8);
+        $content = substr($result, 1, -1);
+
+        self::assertGreaterThanOrEqual(3, strlen($content));
+        self::assertLessThanOrEqual(8, strlen($content));
+    }
+
+    public function testNationalStringLiteralCustomLength(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->nationalStringLiteral(2, 5);
+        $content = substr($result, 2, -1);
+
+        self::assertGreaterThanOrEqual(2, strlen($content));
+        self::assertLessThanOrEqual(5, strlen($content));
+    }
+
+    public function testDollarQuotedStringCustomLength(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->dollarQuotedString(2, 6);
+        $content = substr($result, 2, -2);
+
+        self::assertGreaterThanOrEqual(2, strlen($content));
+        self::assertLessThanOrEqual(6, strlen($content));
+    }
+
+    public function testIntegerLiteralCustomRange(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->integerLiteral(100, 500);
+
+        self::assertGreaterThanOrEqual(100, (int) $result);
+        self::assertLessThanOrEqual(500, (int) $result);
+    }
+
+    public function testLongIntegerLiteralCustomRange(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->longIntegerLiteral(10, 100);
+
+        self::assertGreaterThanOrEqual(10, (int) $result);
+        self::assertLessThanOrEqual(100, (int) $result);
+    }
+
+    public function testDecimalLiteralCustomPrecision(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->decimalLiteral(5, 2);
+
+        self::assertMatchesRegularExpression('/^\d+\.\d{2,}$/', $result);
+    }
+
+    public function testFloatLiteralCustomParams(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->floatLiteral(5, 2, -10, 10);
+
+        self::assertMatchesRegularExpression('/^\d+\.\d+e-?\d+$/', $result);
+    }
+
+    public function testHexLiteralCustomLength(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->hexLiteral(4, 8);
+
+        self::assertMatchesRegularExpression('/^0x[0-9a-f]{4,8}$/', $result);
+    }
+
+    public function testBinaryLiteralCustomLength(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->binaryLiteral(8, 16);
+
+        self::assertMatchesRegularExpression('/^0b[01]{8,16}$/', $result);
+    }
+
+    public function testHostnameCustomParams(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->hostname(2, 3, 5);
+
+        self::assertMatchesRegularExpression('/^[a-z0-9]+(\.[a-z0-9]+)+$/', $result);
+    }
+
+    /**
+     * @return iterable<string, array{StatementRule}>
+     */
+    public static function providerStatementRuleValue(): iterable
+    {
+        yield 'Select' => [StatementRule::Select];
+        yield 'Insert' => [StatementRule::Insert];
+        yield 'Update' => [StatementRule::Update];
+        yield 'Delete' => [StatementRule::Delete];
+        yield 'CreateTable' => [StatementRule::CreateTable];
+        yield 'AlterTable' => [StatementRule::AlterTable];
+        yield 'DropTable' => [StatementRule::DropTable];
+        yield 'SimpleStatement' => [StatementRule::SimpleStatement];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerMySqlVersion(): iterable
+    {
+        foreach (SqlVersion::names('mysql') as $version) {
+            yield $version => [$version];
+        }
+    }
+
+    /**
+     * @return iterable<string, array{int, int}>
+     */
+    public static function providerMultipleGenerationSeeds(): iterable
+    {
+        yield 'seeds 0 and 1' => [0, 1];
+        yield 'seeds 5 and 10' => [5, 10];
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerMultiTableGenerationSeed(): iterable
+    {
+        foreach (range(0, 31) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerSupportedMySqlVersion(): iterable
+    {
+        yield 'MySQL 5.6' => ['mysql-5.6.51'];
+        yield 'MySQL 5.7' => ['mysql-5.7.44'];
+        yield 'MySQL 8.0' => ['mysql-8.0.44'];
+        yield 'MySQL 8.1' => ['mysql-8.1.0'];
+        yield 'MySQL 8.2' => ['mysql-8.2.0'];
+        yield 'MySQL 8.3' => ['mysql-8.3.0'];
+        yield 'MySQL 8.4' => ['mysql-8.4.7'];
+        yield 'MySQL 9.0' => ['mysql-9.0.1'];
+        yield 'MySQL 9.1' => ['mysql-9.1.0'];
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerTargetedGenerationSeed(): iterable
+    {
+        foreach (range(0, 15) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
+    }
+
+    public function testPlannerCompilesReusableInstructionsWithoutChangingTheDefaultStart(): void
+    {
+        $provider = new MySqlProvider(Factory::create(), 'mysql-8.4.7');
+        $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile('', $provider->planner());
+        self::assertNull($plan->startRule());
+        self::assertSame($provider->generate($plan), $provider->generate($plan));
+    }
+    public function testPlannerFreezesConstructiveValuesFromFuzzBytes(): void
+    {
+        $faker = Factory::create();
+        $provider = new MySqlProvider($faker, 'mysql-8.4.7');
+        $planner = $provider->planner();
+        $constraints = GenerationPlan::constrained('ulong_num', [
+            'ulong_num' => [ProductionPattern::containing('NUM')],
+        ])->withExpansionBudget(1);
+        $outputs = array_map(static fn (int $byte): string => $provider->generate((new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile(
+            "\0\0\0\0" . str_repeat(chr($byte) . chr($byte), 64),
+            $planner,
+            $constraints
+        )), range(1, 31));
+        self::assertGreaterThan(8, count(array_unique($outputs)));
+        $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile("\0\0\0\0" . str_repeat("\0\xff", 64), $planner, $constraints);
+        $first = $provider->generate($plan);
+        self::assertGreaterThan(2, (int) $first);
+        self::assertSame($first, $plan->lexemeAt('NUM', 0));
+        self::assertNotNull($plan->candidateKeyAt('NUM', 0));
+        $faker->seed(913);
+        $faker->numberBetween(0, 1000);
+        self::assertSame($first, $provider->generate($plan));
+    }
+
+    /**
+     * @param GenerationPlan<true> $constraints
+     */
+    #[DataProvider('providerScopedInsertPlan')]
+    public function testGenerateSchemaBoundInsertAndFreezeChoices(GenerationPlan $constraints, int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker, 'mysql-8.4.7');
+        self::assertMatchesRegularExpression("/^INSERT(?: INTO)? users VALUES? \( (?:1[0-9]|20) , '(?:Alice|Bob)' \)$/", $provider->generate($constraints));
+        $frozen = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile(str_repeat(chr($seed), 64), $provider->planner(), $constraints);
+        $sql = $provider->generate($frozen);
+        $faker->seed(999);
+        self::assertSame($sql, $provider->generate($frozen));
+        self::assertMatchesRegularExpression("/^INSERT(?: INTO)? users VALUES? \( (?:1[0-9]|20) , '(?:Alice|Bob)' \)$/", $sql);
+    }
+
+    /**
+     * @return iterable<string, array{GenerationPlan<true>, int}>
+     */
+    public static function providerScopedInsertPlan(): iterable
+    {
+        $number = RulePlan::any()->allowing(ProductionPattern::exactly('NUM_literal'))->withRule('NUM_literal', RulePlan::any()->allowing(ProductionPattern::exactly('int64_literal')))->withRule('int64_literal', RulePlan::any()->allowing(ProductionPattern::exactly('NUM')))->withLexeme('NUM', LexemeConstraint::integers(10, 20));
+        $string = RulePlan::any()->allowing(ProductionPattern::exactly('text_literal'))->withRule('text_literal', RulePlan::any()->allowing(ProductionPattern::exactly('TEXT_STRING')))->withLexeme('TEXT_STRING', LexemeConstraint::oneOf("'Alice'", "'Bob'"));
+        $plan = GenerationPlan::fromRule('insert_stmt')->withRule('insert_stmt', RulePlan::any()->allowing(ProductionPattern::containing('insert_from_constructor')))
+         ->withRule('table_ident', RulePlan::any()->allowing(ProductionPattern::exactly('ident'))->withLexeme('IDENT', LexemeConstraint::oneOf('users')))
+         ->withRule('values', RulePlan::any()->withItems(RulePlan::any()->withRule('literal', $number), RulePlan::any()->withRule('literal', $string)))
+         ->requiringNonEmpty()->withExpansionBudget(100);
+        foreach (['insert_lock_option' => [], 'opt_ignore' => [], 'opt_use_partition' => [], 'opt_values_reference' => [], 'opt_insert_update_list' => [], 'ident' => ['IDENT_sys'],'IDENT_sys' => ['IDENT'],'insert_from_constructor' => ['insert_values'],'values_list' => ['row_value'],'opt_values' => ['values'],'expr_or_default' => ['expr'],'expr' => ['bool_pri'],'bool_pri' => ['predicate'],'predicate' => ['bit_expr'],'bit_expr' => ['simple_expr'],'simple_expr' => ['literal_or_null'],'literal_or_null' => ['literal']] as $name => $symbols) {
+            $plan = $plan->withRule($name, RulePlan::any()->allowing(ProductionPattern::exactly(...$symbols)));
+        }
+
+        foreach ([0, 1, 7, 31] as $seed) {
+            yield 'seed ' . $seed => [$plan, $seed];
+        }
+    }
+
+}

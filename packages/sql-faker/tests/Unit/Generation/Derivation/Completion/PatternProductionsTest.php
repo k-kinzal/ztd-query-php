@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\Derivation\Completion\PatternProductions;
 use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
 use SqlFaker\Grammar\Model\Production;
 use SqlFaker\Grammar\Model\ProductionRule;
 use SqlFaker\Grammar\Model\Terminal;
@@ -20,6 +21,7 @@ use SqlFaker\Grammar\Model\Terminal;
 #[UsesClass(Production::class)]
 #[UsesClass(ProductionRule::class)]
 #[UsesClass(Terminal::class)]
+#[UsesClass(NonTerminal::class)]
 final class PatternProductionsTest extends TestCase
 {
     public function testMatchingSeparatesPatternsAndRuleScopesWhenReusingItsCache(): void
@@ -35,4 +37,28 @@ final class PatternProductionsTest extends TestCase
         self::assertSame([], $choices->matching('other', ProductionPattern::at(1)));
         self::assertSame([], $choices->matching('missing', null));
     }
+
+    public function testSourceRuleAndMatchingUseOriginalNamesAndOrdinals(): void
+    {
+        $production = new Production([new Terminal('T')], 4);
+        $grammar = new Grammar('@plan0', ['@plan0' => new ProductionRule('@plan0', [$production])], ['@plan0' => 'root']);
+        $choices = new PatternProductions($grammar);
+        self::assertSame('root', $choices->sourceRule('@plan0'));
+        self::assertSame([$production], $choices->matching('@plan0', ProductionPattern::at(4)));
+        self::assertSame([], $choices->matching('@plan0', ProductionPattern::at(0)));
+    }
+
+
+    public function testMatchingUsesSourceSymbolNamesInSpecializedProductions(): void
+    {
+        $production = new Production([new Terminal('SELECT'), new NonTerminal('special')], 3);
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [$production]),
+            'special' => new ProductionRule('special', [new Production([new Terminal('ID')])]),
+        ], ['special' => 'name']);
+        $choices = new PatternProductions($grammar);
+        self::assertSame([$production], $choices->matching('root', ProductionPattern::exactly('SELECT', 'name')));
+        self::assertSame([], $choices->matching('root', ProductionPattern::exactly('SELECT', 'special')));
+    }
+
 }

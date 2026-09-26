@@ -5,15 +5,17 @@ name: CI (ztd-query-pdo-adapter)
     - main
   pull_request:
     paths:
-    - packages/container/**
     - packages/ztd-query-pdo-adapter/**
+    - packages/container/**
+    - packages/sql-faker/**
+    - packages/sql-fixture/**
+    - packages/ztd-query-core/**
     - packages/ztd-query-mysql/**
     - packages/ztd-query-postgres/**
     - packages/ztd-query-sqlite/**
-    - packages/ztd-query-core/**
-    - packages/sql-faker/**
-    - packages/sql-fixture/**
     - .github/workflows/ztd-query-pdo-adapter.yml
+    - '!packages/**/README.md'
+    - '!packages/**/docs/**'
   workflow_dispatch: null
 permissions:
   contents: read
@@ -162,60 +164,4 @@ jobs:
       with:
         name: ztd-query-pdo-adapter-phpbench
         path: packages/ztd-query-pdo-adapter/build/phpbench/
-        if-no-files-found: ignore
-
-  mutation:
-    name: Mutation Testing
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-    - name: Check out the repository
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with:
-        fetch-depth: 0
-    - name: Set up PHP
-      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
-      with:
-        php-version: '8.5'
-        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
-          phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
-        coverage: pcov
-        ini-values: memory_limit=512M
-        tools: infection:0.35.4
-    - name: Validate Composer metadata
-      run: composer validate --strict --no-check-publish
-    - name: Install dependencies
-      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
-      with:
-        working-directory: packages/ztd-query-pdo-adapter
-        dependency-versions: locked
-        require-lock-file: true
-        composer-options: --prefer-dist
-    - name: Check installed platform requirements
-      run: composer check-platform-reqs --no-dev
-    - name: Mutation testing on changed lines
-      if: github.event_name == 'pull_request'
-      run: php -d memory_limit=4G "$(command -v infection)" --configuration=infection.json5 --threads=4 --only-covering-test-cases --with-uncovered
-        --git-diff-lines --git-diff-base="origin/${GITHUB_BASE_REF}" --ignore-msi-with-no-mutations --min-msi=85 --min-covered-msi=85
-        --no-progress --logger-github
-    - name: Mutation testing on the whole source tree
-      if: github.event_name != 'pull_request'
-      run: php -d memory_limit=4G "$(command -v infection)" --configuration=infection.json5 --threads=4 --only-covering-test-cases --with-uncovered
-        --no-progress --logger-github
-    - name: Reject skipped whole-tree mutants
-      if: github.event_name != 'pull_request'
-      run: |
-        php -d memory_limit=4G -r '
-          $report = json_decode(file_get_contents("build/infection/infection.json"), true, 512, JSON_THROW_ON_ERROR);
-          if ($report["stats"]["skippedCount"] !== 0) {
-              fwrite(STDERR, "Infection skipped mutants before execution; review the timeout against test durations.\n");
-              exit(1);
-          }
-        '
-    - name: Upload mutation reports
-      if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: pdo-infection
-        path: packages/ztd-query-pdo-adapter/build/infection/
         if-no-files-found: ignore

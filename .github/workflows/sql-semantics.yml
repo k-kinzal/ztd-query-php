@@ -1,0 +1,213 @@
+name: CI (sql-semantics)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'packages/sql-semantics*/**'
+      - 'packages/bison-parser/**'
+      - 'packages/lemon-parser/**'
+      - 'packages/sql-faker/**'
+      - 'packages/sql-formatter/**'
+      - 'packages/sql-parser/**'
+      - '.github/workflows/sql-semantics.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
+  COMPOSER_ROOT_VERSION: dev-main
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    name: Test (${{ matrix.package }}, PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+        package: [sql-semantics, sql-semantics-mysql, sql-semantics-postgres, sql-semantics-sqlite]
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter, zlib
+          coverage: none
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/${{ matrix.package }}
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
+        run: composer check-platform-reqs
+      - name: Check library requirements outside the locked ParaTest PHP range
+        if: matrix.php == '8.4' || matrix.php == '8.5'
+        run: composer check-platform-reqs --no-dev
+      - name: Run the tests in parallel
+        run: composer test
+
+  runtime:
+    name: Runtime install (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { package: sql-semantics-mysql, dialect: MySql }
+          - { package: sql-semantics-postgres, dialect: PostgreSql }
+          - { package: sql-semantics-sqlite, dialect: Sqlite }
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.1'
+          coverage: none
+      - name: Install only runtime dependencies
+        run: composer install --no-dev --prefer-dist
+      - name: Verify independent database package installation
+        env:
+          SQL_SEMANTICS_DIALECT: ${{ matrix.dialect }}
+        run: |
+          php <<'PHP'
+          <?php
+          require 'vendor/autoload.php';
+          $dialect = getenv('SQL_SEMANTICS_DIALECT');
+          $class = 'SqlSemantics\\Platform\\' . $dialect . '\\Dialect';
+          $semantics = new SqlSemantics\Facade\Semantics(constant($class . '::' . $dialect));
+          if ($semantics->analyze('SELECT 42')->toString() !== 'SELECT 42') {
+              throw new RuntimeException('The installed statement models must reconstruct SQL.');
+          }
+          foreach (array_diff(['MySql', 'PostgreSql', 'Sqlite'], [$dialect]) as $other) {
+              if (enum_exists('SqlSemantics\\Platform\\' . $other . '\\Dialect')) {
+                  throw new RuntimeException('Installing one database must not install another implementation.');
+              }
+          }
+          if (Composer\InstalledVersions::isInstalled('k-kinzal/sql-faker')) {
+              throw new RuntimeException('Runtime installation must not require build or fuzz dependencies.');
+          }
+          PHP
+      - name: Verify the exported generator command
+        run: php vendor/bin/build-models.php --help
+
+  lint:
+    name: Lint (${{ matrix.package }})
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [sql-semantics, sql-semantics-mysql, sql-semantics-postgres, sql-semantics-sqlite]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter, zlib
+          coverage: none
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/${{ matrix.package }}
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
+      - name: Verify generated statement models
+        if: matrix.package != 'sql-semantics'
+        run: composer build:models:check
+      - name: Check PSR-4 paths and ambiguous classes
+        run: composer autoload:check
+      - name: Check the formatting
+        run: composer format:check
+      - name: Analyse with PHPStan
+        run: composer phpstan
+      - name: Check PHP compatibility
+        run: composer compat
+      - name: Check the source metrics
+        run: composer loc-guard
+      - name: Check the directory structure
+        run: composer tree-guard
+      - name: Check the architecture layers
+        run: composer deptrac
+
+  bench:
+    name: Benchmark (${{ matrix.package }})
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [sql-semantics, sql-semantics-mysql, sql-semantics-postgres, sql-semantics-sqlite]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter, zlib
+          coverage: none
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/${{ matrix.package }}
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
+      - name: Run the benchmarks
+        run: |
+          mkdir -p build/phpbench
+          composer run-script --timeout=1200 bench:quick -- --dump-file=build/phpbench/results.xml | tee build/phpbench/report.txt
+      - name: Upload benchmark measurements
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ matrix.package }}-phpbench
+          path: packages/${{ matrix.package }}/build/phpbench/
+          if-no-files-found: ignore

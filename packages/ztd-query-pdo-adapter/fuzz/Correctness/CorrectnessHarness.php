@@ -8,7 +8,7 @@ use Faker\Factory;
 use Faker\Generator;
 use PDO;
 use RuntimeException;
-use SqlFixture\FixtureProvider;
+use SqlFixture\Provider\FixtureProvider;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;

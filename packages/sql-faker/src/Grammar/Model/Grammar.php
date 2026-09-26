@@ -24,11 +24,13 @@ final class Grammar
      * @param string $startSymbol The grammar's start symbol
      * @param array<string, ProductionRule> $ruleMap Non-terminal name => ProductionRule
      *
+     * @param array<string, string> $aliases Specialized rule => original grammar rule
      * @throws InvalidArgumentException When a rule is filed under a name other than its own left-hand side
      */
     public function __construct(
         public readonly string $startSymbol,
         public readonly array $ruleMap,
+        public readonly array $aliases = [],
     ) {
         foreach ($ruleMap as $key => $rule) {
             if ($key !== $rule->lhs) {
@@ -37,6 +39,33 @@ final class Grammar
                 );
             }
         }
+    }
+
+    /**
+     * Reads both historical grammar resources and newly specialized grammars.
+     * @param array{startSymbol: string, ruleMap: array<string, ProductionRule>, aliases?: array<string, string>} $data
+     */
+    public function __unserialize(array $data): void
+    {
+        $this->startSymbol = $data['startSymbol'];
+        $this->ruleMap = $data['ruleMap'];
+        $this->aliases = $data['aliases'] ?? [];
+    }
+
+    /**
+     * Names the source rule behind a specialized subtree.
+     */
+    public function sourceRule(string $rule): string
+    {
+        return $this->aliases[$rule] ?? $rule;
+    }
+
+    /**
+     * Recovers the alternative index used before plan specialization.
+     */
+    public function sourceOrdinal(string $rule, int $ordinal): int
+    {
+        return isset($this->aliases[$rule]) ? ($this->ruleMap[$rule]->alternatives[$ordinal]->ordinal ?? $ordinal) : $ordinal;
     }
 
     /**
@@ -81,6 +110,6 @@ final class Grammar
             }
             $rules[$name] = new ProductionRule($name, $alternatives);
         }
-        return new self($this->startSymbol, $rules);
+        return new self($this->startSymbol, $rules, $this->aliases);
     }
 }

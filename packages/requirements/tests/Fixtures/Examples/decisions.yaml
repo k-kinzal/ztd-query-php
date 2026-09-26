@@ -1,0 +1,16 @@
+version: 1
+source: null
+items:
+  -
+    id: READER-001
+    statement: 'If input ends inside a rule, then the reader shall report an error.'
+    origin: original
+    reason: 'A partial tree would silently lose input.'
+    labels:
+      - strictness
+    related:
+      - SPEC-001
+    design:
+      -
+        text: 'Retain source positions for error diagnostics.'
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'

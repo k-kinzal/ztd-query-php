@@ -1,0 +1,190 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-catalog/catalog-schema.json",
+    "title": "SQL catalog",
+    "description": "The SQL statements a PHP application can issue, as reported by sql-catalog.",
+    "type": "object",
+    "required": ["version", "analysis", "summary", "statements", "problems"],
+    "additionalProperties": false,
+    "properties": {
+        "$schema": {
+            "type": "string",
+            "description": "Where the schema for this document is written."
+        },
+        "analysis": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["conditions", "reachability"],
+            "properties": {
+                "conditions": {"const": "not-evaluated"},
+                "reachability": {"const": "not-assessed"}
+            }
+        },
+        "version": {
+            "type": "integer",
+            "const": 2,
+            "description": "The format version. Version 2 explicitly disclaims condition evaluation and runtime reachability. A reader that does not know this number should not guess."
+        },
+        "summary": {
+            "type": "object",
+            "required": ["statements", "resolved", "undetermined", "findings"],
+            "additionalProperties": false,
+            "properties": {
+                "statements": {"type": "integer", "minimum": 0, "description": "How many statements the catalog holds."},
+                "resolved": {"type": "integer", "minimum": 0, "description": "How many of them have no gaps left in their text."},
+                "undetermined": {"type": "integer", "minimum": 0, "description": "How many of them still have gaps."},
+                "findings": {"type": "integer", "minimum": 0, "description": "How many findings were reported across them."}
+            }
+        },
+        "statements": {
+            "type": "array",
+            "description": "The statements, ordered by where they are issued.",
+            "items": {"$ref": "#/$defs/statement"}
+        },
+        "problems": {
+            "type": "array",
+            "description": "Files that could not be analyzed at all.",
+            "items": {
+                "type": "object",
+                "required": ["file", "message"],
+                "additionalProperties": false,
+                "properties": {
+                    "file": {"type": "string", "description": "The file, relative to the analysis root."},
+                    "message": {"type": "string", "description": "Why it could not be analyzed."}
+                }
+            }
+        }
+    },
+    "$defs": {
+        "statement": {
+            "type": "object",
+            "required": [
+                "id", "kind", "sql", "exact", "resolution", "searchClosed",
+                "correlated", "tables", "site", "through", "placeholders", "findings"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{12}$",
+                    "description": "The identifier the statement keeps across runs. Built from the file, the enclosing function, the database call and the statement shape, and deliberately not from the line number."
+                },
+                "kind": {
+                    "type": "string",
+                    "enum": [
+                        "select", "insert", "update", "delete", "replace", "merge", "truncate",
+                        "create", "alter", "drop", "call", "show", "explain", "transaction",
+                        "other", "unknown"
+                    ],
+                    "description": "What the statement does to the database."
+                },
+                "sql": {
+                    "type": "string",
+                    "description": "The statement text. Every value the analyzer could not pin down is written as {$}."
+                },
+                "exact": {
+                    "type": "boolean",
+                    "description": "Whether the text holds no gaps."
+                },
+                "resolution": {
+                    "type": "string",
+                    "enum": ["resolved", "external-input", "incomplete-model", "incomplete", "not-analyzed"],
+                    "description": "How far the analyzer got, and why it got no further. `external-input` means the values were followed to runtime input, so the text cannot be fixed; `incomplete-model` means a dependency the analyzer does not model was reached; `incomplete` means a cycle or a budget stopped the search; `not-analyzed` means the call was found but never examined, so no statement was read from it."
+                },
+                "searchClosed": {
+                    "type": "boolean",
+                    "description": "Whether the analyzer closed every dependency it set out to follow. When false, the statements listed for this call site may not be all of them."
+                },
+                "correlated": {
+                    "type": "boolean",
+                    "description": "Whether alternatives retained their structural pairing. Conditions are never used to select branches; runtime reachability is not assessed, even when this is true."
+                },
+                "tables": {
+                    "type": "array",
+                    "description": "The tables the statement names, in order and without repeats.",
+                    "items": {"type": "string"}
+                },
+                "site": {
+                    "type": "object",
+                    "required": ["file", "line", "function", "sink"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "file": {"type": "string", "description": "The file, relative to the analysis root."},
+                        "line": {"type": "integer", "minimum": 0, "description": "The line the call is written on."},
+                        "function": {"type": "string", "description": "The enclosing function, as Class::method, a function name, or {main}."},
+                        "sink": {"type": "string", "description": "The database call that was matched, such as pdo.prepare. The value `unmatched` means the call is written the way a database call is written but what it is called on could not be worked out."}
+                    }
+                },
+                "through": {
+                    "type": "array",
+                    "description": "The path the analyzer took to this reading, from the body the walk started in to the one holding the call, outermost first.",
+                    "items": {"type": "string"}
+                },
+                "placeholders": {
+                    "type": "array",
+                    "description": "The bind parameters, in the order they are written.",
+                    "items": {"$ref": "#/$defs/placeholder"}
+                },
+                "findings": {
+                    "type": "array",
+                    "description": "What is worth reporting about the statement.",
+                    "items": {"$ref": "#/$defs/finding"}
+                }
+            }
+        },
+        "placeholder": {
+            "type": "object",
+            "required": ["token", "position", "name", "value"],
+            "additionalProperties": false,
+            "properties": {
+                "token": {"type": "string", "description": "The parameter as written, such as ?, :id or $1."},
+                "position": {"type": "integer", "minimum": 0, "description": "The zero-based order of the parameter in the statement."},
+                "name": {"type": ["string", "null"], "description": "The parameter name, for parameters bound by name."},
+                "value": {
+                    "description": "What the parameter is bound to, or null when no binding was found.",
+                    "oneOf": [
+                        {"type": "null"},
+                        {
+                            "type": "object",
+                            "required": ["type", "values", "exhaustive", "origins"],
+                            "additionalProperties": false,
+                            "properties": {
+                                "type": {"type": "string", "description": "The static type, written the way PHP writes it."},
+                                "values": {
+                                    "type": "array",
+                                    "description": "The values the parameter can take, when they are all known.",
+                                    "items": {"type": ["string", "number", "boolean", "null"]}
+                                },
+                                "exhaustive": {"type": "boolean", "description": "Whether `values` is all of them. When false, only `type` is a statement about the value."},
+                                "origins": {
+                                    "type": "array",
+                                    "description": "Where the unresolved parts of the value come from.",
+                                    "items": {"$ref": "#/$defs/origin"}
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "finding": {
+            "type": "object",
+            "required": ["rule", "severity", "message"],
+            "additionalProperties": false,
+            "properties": {
+                "rule": {
+                    "type": "string",
+                    "enum": ["unresolved-sql", "dynamic-sql", "external-input", "placeholder-count-mismatch", "analysis-incomplete", "call-not-analyzed"],
+                    "description": "What the finding is about."
+                },
+                "severity": {"type": "string", "enum": ["info", "low", "medium", "high"]},
+                "message": {"type": "string"}
+            }
+        },
+        "origin": {
+            "type": "string",
+            "enum": ["external", "parameter", "property", "call", "budget", "unreached", "loop", "branch", "unresolved"],
+            "description": "Where a value the analyzer could not pin down comes from."
+        }
+    }
+}

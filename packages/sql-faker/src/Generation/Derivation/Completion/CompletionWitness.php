@@ -54,12 +54,13 @@ final class CompletionWitness
                 return null;
             }
             $name = $symbols[0]->value();
-            $occurrence = $occurrences[$name] ?? 0;
+            $source = $this->productions->sourceRule($name);
+            $occurrence = $occurrences[$source] ?? 0;
             $tail = array_slice($symbols, 1);
             $tailCosts = $this->costs->sequence($tail);
             $best = null;
             $bestCost = PHP_INT_MAX;
-            foreach ($this->choices($name, $plan->patternAt($name, $occurrence)) as [$production, $costs]) {
+            foreach ($this->choices($name, $plan->patternAt($source, $occurrence)) as [$production, $costs]) {
                 $combined = CompletionCosts::combine($costs, $tailCosts);
                 $cost = $nonEmpty ? $combined[1] : min($combined);
                 if ($cost < $bestCost) {
@@ -71,7 +72,7 @@ final class CompletionWitness
                 return null;
             }
             $symbols = [...$best->symbols, ...$tail];
-            $occurrences[$name] = $occurrence + 1;
+            $occurrences[$source] = $occurrence + 1;
         }
         return null;
     }

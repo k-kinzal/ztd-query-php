@@ -6,7 +6,7 @@ use Faker\Factory;
 use Fuzz\Container\MysqliConnector;
 use Fuzz\Robustness\Target\ExecutionTarget;
 use PhpFuzzer\Config;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\MySqlProvider;
 
 register_shutdown_function(static function (): void {
     pcntl_alarm(0);

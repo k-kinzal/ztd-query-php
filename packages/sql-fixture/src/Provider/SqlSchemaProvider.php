@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture\Provider;
 
 use Faker\Provider\Base;
-use SqlFixture\FixtureGenerator;
-use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
 

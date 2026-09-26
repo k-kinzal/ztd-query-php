@@ -1,0 +1,15 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/config.schema.json'
+version: 1
+definitions:
+  - 'requirements/*.yaml'
+runners:
+  behavior:
+    extension: behat
+    command:
+      - php
+      - vendor/bin/behat
+    timeout: 60
+coverage:
+  minimum: 100
+  sources:
+    lemon-input-and-rules: 100

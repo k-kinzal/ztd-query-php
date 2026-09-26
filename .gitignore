@@ -281,3 +281,6 @@ scripts/
 .entire/
 .gemini/
 .github/hooks/
+
+# Downloaded requirement source caches (never redistribute upstream documents)
+.requirements-cache/

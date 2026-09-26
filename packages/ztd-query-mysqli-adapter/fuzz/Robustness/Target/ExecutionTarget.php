@@ -11,7 +11,7 @@ use mysqli_sql_exception;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Choice\PlanBuilder;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\MySqlProvider;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 

@@ -1,0 +1,10 @@
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+parameters:
+    level: max
+    phpVersion: 80100
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - tests/Fixtures/Examples/Extensions/scenario.php

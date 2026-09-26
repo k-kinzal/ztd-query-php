@@ -13,6 +13,7 @@ use Behat\Step\Then;
 use Behat\Step\When;
 
 use function explode;
+use function in_array;
 
 use LemonParser\Ast\GrammarFile;
 use LemonParser\Parser;
@@ -129,6 +130,32 @@ final class GrammarContext implements Context
     }
 
     /**
+     * States the distinct nonterminals the rules name, in order of first appearance.
+     *
+     * @param string $names The names, separated by spaces
+     *
+     * @throws AssertionFailedError When parsing failed or the nonterminals differ
+     */
+    #[Then('/^the nonterminals are: (.*)$/')]
+    public function theNonterminalsAre(string $names): void
+    {
+        Assert::assertSame(explode(' ', $names), $this->symbolNames(false));
+    }
+
+    /**
+     * States the distinct terminals the rules name, in order of first appearance.
+     *
+     * @param string $names The names, separated by spaces
+     *
+     * @throws AssertionFailedError When parsing failed or the terminals differ
+     */
+    #[Then('/^the terminals are: (.*)$/')]
+    public function theTerminalsAre(string $names): void
+    {
+        Assert::assertSame(explode(' ', $names), $this->symbolNames(true));
+    }
+
+    /**
      * States that parsing failed, and where.
      *
      * @param string $line The line of the error, counted from 1
@@ -159,6 +186,31 @@ final class GrammarContext implements Context
             throw new AssertionFailedError("Parsing succeeded:\n" . $this->dumper->dump($this->tree()));
         }
         Assert::assertSame($message->getRaw() . ' at ' . $this->failure->location, $this->failure->getMessage());
+    }
+
+    /**
+     * The distinct names of the terminals or of the nonterminals the rules name,
+     * on either side, in order of first appearance.
+     *
+     * @param bool $terminals Whether to list the terminals, else the nonterminals
+     *
+     * @return list<string> The names
+     *
+     * @throws AssertionFailedError When there was no parse, or it failed
+     */
+    public function symbolNames(bool $terminals): array
+    {
+        $names = [];
+        foreach ($this->tree()->rules() as $rule) {
+            foreach ([$rule->lhs, ...$rule->symbols()] as $symbol) {
+                $listed = $terminals ? $symbol->isTerminal() : $symbol->isNonterminal();
+                if ($listed && !in_array($symbol->name, $names, true)) {
+                    $names[] = $symbol->name;
+                }
+            }
+        }
+
+        return $names;
     }
 
     /**

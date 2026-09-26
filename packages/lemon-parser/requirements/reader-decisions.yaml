@@ -1,0 +1,64 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source: null
+items:
+  -
+    id: LEMON-READER-001
+    statement: 'If input ends before a rule terminator, then the reader shall report an incomplete-rule error.'
+    origin: original
+    reason: 'A partial tree would silently omit the unfinished final rule.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/reader-decisions.feature:12'
+    labels:
+      - reader-decision
+      - strictness
+    category: reader-decisions
+    related:
+      - LEMON-RULE-001
+    design:
+      -
+        text: 'These deliberate stricter checks are documented in spec/features/reader-decisions.feature; they are not requirements quoted from the Lemon manual.'
+      -
+        url: 'https://sqlite.org/src/raw/tool/lemon.c?ci=version-3.47.2'
+  -
+    id: LEMON-READER-002
+    statement: 'If input ends before a symbol-list terminator, then the reader shall report an incomplete-declaration error.'
+    origin: original
+    reason: 'A partial declaration would hide missing input from callers.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/reader-decisions.feature:25'
+    labels:
+      - reader-decision
+      - strictness
+    category: reader-decisions
+    related:
+      - LEMON-INPUT-001
+    design:
+      -
+        text: 'These deliberate stricter checks are documented in spec/features/reader-decisions.feature; they are not requirements quoted from the Lemon manual.'
+      -
+        url: 'https://sqlite.org/src/raw/tool/lemon.c?ci=version-3.47.2'
+  -
+    id: LEMON-READER-003
+    statement: 'If a conditional expression has an unclosed parenthesis, then the reader shall report a syntax error.'
+    origin: original
+    reason: 'Explicitly reject malformed conditions instead of inheriting the permissive behavior of lemon.c.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/reader-decisions.feature:38'
+    labels:
+      - reader-decision
+      - strictness
+    category: reader-decisions
+    related:
+      - LEMON-INPUT-001
+    design:
+      -
+        text: 'These deliberate stricter checks are documented in spec/features/reader-decisions.feature; they are not requirements quoted from the Lemon manual.'
+      -
+        url: 'https://sqlite.org/src/raw/tool/lemon.c?ci=version-3.47.2'

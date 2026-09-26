@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Generation\Derivation;
 
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -62,6 +63,21 @@ final class DerivationTest extends TestCase
             [new Terminal('SELECT'), new Terminal('IDENT')],
             $derivation->of('stmt', GenerationPlan::all()),
         );
+    }
+
+    public function testOfOffersTheCandidatesToTheChoicePolicy(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [new Production([new Terminal('SELECT')]), new Production([new Terminal('DELETE')])]),
+        ]);
+        $offered = [];
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar), null, static function (int $count, array $candidates) use (&$offered): int {
+            $offered = $candidates;
+            return $count - 1;
+        });
+
+        self::assertEquals([new Terminal('DELETE')], $derivation->of('stmt', GenerationPlan::all()));
+        self::assertSame($grammar->ruleMap['stmt']->alternatives, $offered);
     }
 
     public function testOfReportsASymbolTheGrammarDeclaresNoRuleFor(): void
@@ -132,6 +148,38 @@ final class DerivationTest extends TestCase
             [new Terminal('A')],
             $derivation->of('stmt', GenerationPlan::all()->withMaxDepth(1)),
         );
+    }
+
+    public function testSelectProductionDrawsUniformlyAmongTheEligibleAlternativesBeforeTheThreshold(): void
+    {
+        $alternatives = [
+            new Production([new Terminal('A')]),
+            new Production([new Terminal('B'), new Terminal('C')]),
+            new Production([new Terminal('D'), new Terminal('E'), new Terminal('F')]),
+        ];
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', $alternatives)]);
+        $faker = new class () extends \Faker\Generator {
+            /** @var list<array{int, int}> */
+            public array $draws = [];
+
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                $minimum = is_int($int1) ? $int1 : -1;
+                $maximum = is_int($int2) ? $int2 : -1;
+                $this->draws[] = [$minimum, $maximum];
+
+                return $maximum;
+            }
+        };
+        $derivation = new Derivation($grammar, $faker, new TerminationAnalyzer($grammar));
+
+        self::assertSame($alternatives[2], $derivation->selectProduction($alternatives, GenerationPlan::all()->withMaxDepth(2)));
+        self::assertSame([[0, 2]], $faker->draws);
     }
 
     public function testSelectProductionChoosesFreelyWhileThePlanStillAllowsDepth(): void
@@ -278,4 +326,18 @@ final class DerivationTest extends TestCase
         $this->expectException(GenerationException::class);
         $derivation->of('root', GenerationPlan::constrained('root', ['child' => [ProductionPattern::at(0)]])->requiringNonEmpty());
     }
+
+    public function testOfCountsOccurrencesAcrossSpecializedCopiesOfTheSameRule(): void
+    {
+        $choices = [new Production([new Terminal('A')], 0), new Production([new Terminal('B')], 1)];
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new NonTerminal('left'), new NonTerminal('right'), new NonTerminal('left')])]),
+            'left' => new ProductionRule('left', $choices),
+            'right' => new ProductionRule('right', $choices),
+        ], ['left' => 'name', 'right' => 'name']);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
+        $plan = GenerationPlan::constrained('root', ['name' => [ProductionPattern::at(1), ProductionPattern::at(0), ProductionPattern::at(1)]]);
+        self::assertEquals([new Terminal('B'), new Terminal('A'), new Terminal('B')], $derivation->of('root', $plan));
+    }
+
 }
