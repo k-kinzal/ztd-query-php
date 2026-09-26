@@ -55,9 +55,9 @@
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * when schema-dependent name, type, and nullability facts are needed.</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Accepting an analyzer configured by a database package</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $analyze = static fn (\SqlSemantics\Facade\Semantics $semantics): \SqlSemantics\Statement\Statement =&gt; $semantics-&gt;analyze(&#039;SELECT 1&#039;);</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $analyze instanceof \Closure // =&gt; true</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Reconstructing SQL with the SQLite database package</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $semantics-&gt;analyze(&#039;DROP TABLE example&#039;)-&gt;toString() // =&gt; &#039;DROP TABLE example&#039;</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Semantics</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>{</span>
