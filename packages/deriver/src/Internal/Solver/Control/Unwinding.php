@@ -23,7 +23,7 @@ final class Unwinding
     }
 
     /**
-     * Finds the next handler or final completion destination.
+     * Resumes nonthrowing completions through finally blocks and jump destinations.
      * @param State $state Completing execution path
      * @return bool Whether the path resumes within this callable
      */
@@ -31,19 +31,6 @@ final class Unwinding
     {
         while ($state->handlers !== [] && count($state->handlers) > $state->completion->depth) {
             $handler = array_pop($state->handlers);
-            if ($handler->phase === 'try' && $state->completion->kind === 'throw') {
-                foreach ($handler->region->catches as $catch) {
-                    if ($this->matches($state->completion->value ?? Term::opaque('EXCEPTION', 'Throwable'), $catch->types)) {
-                        $state->handlers[] = new Handler($handler->region, 'catch');
-                        if ($catch->variable !== '') {
-                            $state->memory->write($state->local($catch->variable), $this->capture($state, $state->completion->value ?? Term::opaque('EXCEPTION')));
-                        }
-                        $state->block = $catch->block;
-                        $state->completion = new Completion();
-                        return true;
-                    }
-                }
-            }
             if ($handler->phase !== 'finally' && $handler->region->finally !== null) {
                 $state->handlers[] = new Handler($handler->region, 'finally', $state->completion);
                 $state->block = $handler->region->finally;
@@ -67,72 +54,77 @@ final class Unwinding
      */
     public function routes(State $state): array
     {
-        if ($state->completion->kind !== 'throw' || ($state->completion->value?->attributes['uncertain'] ?? false) !== true) {
+        if ($state->completion->kind !== 'throw') {
             $this->resume($state);
             return [$state];
         }
+        $value = $state->completion->value ?? Term::opaque('EXCEPTION', 'Throwable');
+        [$valid, $invalid] = (new ExceptionMatch($this->program))->partition($value, ['Throwable']);
         $result = [];
-        while ($state->handlers !== []) {
+        if ($valid !== null) {
+            $normal = $state->fork();
+            $normal->completion = new Completion('throw', $valid);
+            if ($invalid !== null) {
+                $normal->guard['throwable:' . (new \Deriver\Internal\Value\Identity())->key($value)] = true;
+            }
+            array_push($result, ...$this->throwRoutes($normal));
+        }
+        if ($invalid !== null) {
+            $state->completion = new Completion('throw', new Term('throwable', 'Error', secret: $value->isSecret()));
+            if ($valid !== null) {
+                $state->guard['throwable:' . (new \Deriver\Internal\Value\Identity())->key($value)] = false;
+            }
+            array_push($result, ...$this->throwRoutes($state));
+        }
+        return $result;
+    }
+
+    /**
+     * Applies catches in order and carries only the uncaught subset into finally.
+     * @param State $state Valid pending throwable
+     * @return list<State> Caught, finally, and escaping paths
+     */
+    public function throwRoutes(State $state): array
+    {
+        $result = [];
+        while ($state->handlers !== [] && count($state->handlers) > $state->completion->depth) {
             $handler = array_pop($state->handlers);
+            (new ExceptionChain($this->program))->unwind($state, $handler);
             if ($handler->phase === 'try') {
                 foreach ($handler->region->catches as $catch) {
-                    $caught = $state->fork();
-                    $caught->handlers[] = new Handler($handler->region, 'catch');
-                    $caught->guard['catch:' . $handler->region->continuation . ':' . $catch->block] = true;
-                    if ($catch->variable !== '') {
-                        $caught->memory->write($caught->local($catch->variable), $this->capture($caught, $state->completion->value ?? Term::opaque('EXCEPTION')));
+                    [$matched, $remaining] = (new ExceptionMatch($this->program))->partition($state->completion->value ?? Term::opaque('EXCEPTION', 'Throwable'), $catch->types);
+                    $guard = 'catch:' . $handler->region->continuation . ':' . $catch->block;
+                    if ($matched !== null) {
+                        $caught = $state->fork();
+                        $caught->handlers[] = new Handler($handler->region, 'catch');
+                        if ($remaining !== null) {
+                            $caught->guard[$guard] = true;
+                        }
+                        if ($catch->variable !== '') {
+                            $caught->memory->write($caught->local($catch->variable), $this->capture($caught, $matched));
+                        }
+                        $caught->block = $catch->block;
+                        $caught->completion = new Completion();
+                        $result[] = $caught;
                     }
-                    $caught->block = $catch->block;
-                    $caught->completion = new Completion();
-                    $result[] = $caught;
-                    if (in_array('throwable', array_map(strtolower(...), $catch->types), true)) {
+                    if ($remaining === null) {
                         return $result;
                     }
+                    if ($matched !== null) {
+                        $state->guard[$guard] = false;
+                    }
+                    $state->completion = new Completion('throw', $remaining);
                 }
             }
             if ($handler->phase !== 'finally' && $handler->region->finally !== null) {
                 $state->handlers[] = new Handler($handler->region, 'finally', $state->completion);
                 $state->block = $handler->region->finally;
                 $state->completion = new Completion();
-                $result[] = $state;
-                return $result;
+                break;
             }
         }
         $result[] = $state;
         return $result;
-    }
-
-    /**
-     * Checks source inheritance and the stable built-in throwable hierarchy.
-     * @param Term $exception Exception identity
-     * @param list<string> $types Catch types
-     * @return bool Whether the known throwable matches a catch
-     */
-    public function matches(Term $exception, array $types): bool
-    {
-        $type = $exception->kind === 'object' ? ($exception->attributes['class'] ?? 'Throwable') : $exception->literal;
-        if (!is_string($type)) {
-            return in_array('throwable', array_map(strtolower(...), $types), true);
-        }
-        $seen = [];
-        while ($type !== '' && !isset($seen[$type])) {
-            if (in_array(strtolower($type), array_map(strtolower(...), $types), true) || in_array('throwable', array_map(strtolower(...), $types), true)) {
-                return true;
-            }
-            $seen[$type] = true;
-            $type = $this->program->classes()[strtolower($type)]->parent ?? $this->builtinParent($type);
-        }
-        return false;
-    }
-
-    /**
-     * Describes target built-in exception inheritance without reflection.
-     * @param string $type Throwable class
-     * @return string Parent throwable class
-     */
-    public function builtinParent(string $type): string
-    {
-        return (new \Deriver\Internal\Solver\Call\Creation\Builtins())->parent($type);
     }
 
     /**
@@ -149,7 +141,7 @@ final class Unwinding
         $id = $state->memory->fresh('caught-error');
         $class = is_string($exception->literal) ? $exception->literal : 'Throwable';
         $uncertain = ($exception->attributes['uncertain'] ?? false) === true;
-        $object = new Term('object', $id, attributes: $uncertain ? ['type' => 'Throwable', 'uncertain' => true] : ['class' => $class]);
+        $object = new Term('object', $id, attributes: $uncertain ? ['type' => 'Throwable', 'uncertain' => true] : ['class' => $class], secret: $exception->isSecret());
         $state->memory->cells['object:' . $id] = Term::array([], $uncertain);
         if (!$uncertain) {
             $state->memory->classes[$id] = $class;

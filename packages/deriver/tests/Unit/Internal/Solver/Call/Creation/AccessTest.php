@@ -114,6 +114,8 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Solver\Call\UnknownCall::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Handler::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Resources::class)]

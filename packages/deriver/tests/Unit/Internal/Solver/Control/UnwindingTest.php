@@ -6,6 +6,7 @@ namespace Tests\Unit\Internal\Solver\Control;
 
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Api\Result\Assessment::class)]
 #[UsesClass(\Deriver\Api\Result\Derivation::class)]
 #[UsesClass(\Deriver\Api\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Api\Result\Exceptional::class)]
 #[UsesClass(\Deriver\Api\Result\Statistics::class)]
 #[UsesClass(\Deriver\Api\Result\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Internal\Api\QueryExecution::class)]
@@ -36,6 +38,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Api\ResultAssessment::class)]
 #[UsesClass(\Deriver\Internal\Api\Session::class)]
 #[UsesClass(\Deriver\Internal\Constraint\Constraints::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\AggregateLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\AssignmentLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphTemplate::class)]
@@ -48,6 +51,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Control\ExceptionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Control\LoopLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\EffectInspection::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\GraphBuilder::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Lowering::class)]
@@ -63,6 +67,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
 #[UsesClass(\Deriver\Internal\IR\CatchTarget::class)]
+#[UsesClass(\Deriver\Internal\IR\ClassConstant::class)]
 #[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\ExceptionRegion::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
@@ -87,7 +92,10 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\Creation\Access::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Creation\Builtins::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Member\Access::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Member\Constants::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Member\Invocation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\MethodInvocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Invocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Properties::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Native\Signatures::class)]
@@ -95,14 +103,18 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Call\PassedArgument::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Arguments::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Creation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Methods::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Modes::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Resolution::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Target::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Transfer::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\ProviderDispatch::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionChain::class)]
+#[UsesClass(\Deriver\Internal\Solver\Control\ExceptionMatch::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\Handler::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\LoopConvergence::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
@@ -126,13 +138,18 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Summary\Evaluation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Invocation::class)]
 #[UsesClass(\Deriver\Internal\Solver\Summary\Isolation::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\CallableTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ConstantTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
+#[UsesClass(\Deriver\Internal\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
+#[UsesClass(\Deriver\Internal\Value\Comparison::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
+#[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
+#[UsesClass(\Deriver\Model\Provider\DispatchRequest::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
@@ -161,20 +178,6 @@ final class UnwindingTest extends TestCase
         self::assertCount(1, $result->normalOutcomes);
         self::assertSame(2, $result->normalOutcomes[0]->values['return']->native());
     }
-    public function testMatchesIncludesSourceAndBuiltinInheritance(): void
-    {
-        $unwinding = new \Deriver\Internal\Solver\Control\Unwinding(\Tests\Fake\FrontendFixture::index('<?php class Problem extends RuntimeException{}'));
-        self::assertTrue($unwinding->matches(new \Deriver\Value\Term('object', 'problem', attributes:['class' => 'Problem']), ['Exception']));
-        self::assertTrue($unwinding->matches(new \Deriver\Value\Term('throwable', 'ArgumentCountError'), ['Error']));
-        self::assertFalse($unwinding->matches(new \Deriver\Value\Term('throwable', 'TypeError'), ['Exception']));
-    }
-    public function testBuiltinParentDistinguishesTheErrorAndExceptionHierarchies(): void
-    {
-        $unwinding = new \Deriver\Internal\Solver\Control\Unwinding(\Tests\Fake\SolverFixture::context()->program);
-        self::assertSame('TypeError', $unwinding->builtinParent('ArgumentCountError'));
-        self::assertSame('Exception', $unwinding->builtinParent('RuntimeException'));
-        self::assertSame('', $unwinding->builtinParent('Unknown'));
-    }
     public function testCaptureTurnsRuntimeErrorsIntoInspectableObjects(): void
     {
         $context = \Tests\Fake\SolverFixture::context();
@@ -192,5 +195,75 @@ final class UnwindingTest extends TestCase
         self::assertSame('object', $object->kind);
         self::assertArrayNotHasKey('class', $object->attributes);
         self::assertTrue($object->attributes['uncertain']);
+    }
+
+    /**
+     * @param string $source Captured PHP declaration with a symbolic typed input
+     * @param list<int> $expected Reachable return values
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    #[DataProvider('providerSymbolicThrows')]
+    public function testThrowRoutesUsesThrowableTypeBoundsAndCatchOrder(string $source, array $expected): void
+    {
+        $result = \Tests\Fake\Analysis::returns($source);
+        $values = array_column(array_column(array_column($result->normalOutcomes, 'values'), 'return'), 'literal');
+        sort($values);
+        self::assertSame($expected, $values);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame([], $result->frontiers);
+    }
+
+    /**
+     * @return iterable<string,array{string,list<int>}>
+     */
+    public static function providerSymbolicThrows(): iterable
+    {
+        yield 'exception parent' => ['<?php function target(RuntimeException $e){try{throw $e;}catch(Exception $caught){return 1;}return 2;}',[1]];
+        yield 'error parent' => ['<?php function target(TypeError $e){try{throw $e;}catch(Error $caught){return 1;}return 2;}',[1]];
+        yield 'unrelated catch excluded' => ['<?php function target(RuntimeException $e){try{throw $e;}catch(Error $caught){return 1;}catch(Exception $caught){return 2;}}',[2]];
+        yield 'possible subclass' => ['<?php function target(Exception $e){try{throw $e;}catch(RuntimeException $caught){return 1;}catch(Exception $caught){return 2;}}',[1,2]];
+        yield 'first parent shadows subclass' => ['<?php function target(Exception $e){try{throw $e;}catch(Exception $caught){return 1;}catch(RuntimeException $caught){return 2;}}',[1]];
+        yield 'union arms caught' => ['<?php function target(RuntimeException|TypeError $e){try{throw $e;}catch(Exception $caught){return 1;}catch(Error $caught){return 2;}}',[1,2]];
+        yield 'multi catch covers union' => ['<?php function target(RuntimeException|TypeError $e){try{throw $e;}catch(RuntimeException|TypeError $caught){return 1;}}',[1]];
+        yield 'custom subclass' => ['<?php class Problem extends RuntimeException{}function target(Problem $e){try{throw $e;}catch(LogicException $caught){return 1;}catch(RuntimeException $caught){return 2;}}',[2]];
+        yield 'primitive typed throw' => ['<?php function target(int $e){try{throw $e;}catch(Error $caught){return 1;}return 2;}',[1]];
+        yield 'known nonthrowable typed object' => ['<?php class Box{}function target(Box $e){try{throw $e;}catch(Error $caught){return 1;}return 2;}',[1]];
+        yield 'rethrow keeps type' => ['<?php function target(RuntimeException $e){try{try{throw $e;}catch(Exception $caught){throw $caught;}}catch(RuntimeException $outer){return 1;}return 2;}',[1]];
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testRoutesKeepsPossibleCatchesAndAnUncaughtThrowableRemainder(): void
+    {
+        $result = \Tests\Fake\Analysis::returns('<?php function target(Throwable $e){try{throw $e;}catch(RuntimeException $caught){return 1;}catch(Error $caught){return 2;}}');
+        $values = array_column(array_column(array_column($result->normalOutcomes, 'values'), 'return'), 'literal');
+        sort($values);
+        self::assertSame([1,2], $values);
+        self::assertNotEmpty($result->exceptionalOutcomes);
+        self::assertSame([], $result->frontiers);
+    }
+
+    /**
+     * @param string $source Trusted concrete exception fixture
+     * @param string $expectedJson Expected return including previous-exception observations
+     * @throws JsonException If expected values cannot be decoded
+     */
+    #[DataProvider('providerExceptionPrograms')]
+    public function testResumeMatchesConcreteThrowValidationAndFinallyChaining(string $source, string $expectedJson): void
+    {
+        $result = \Tests\Fake\Analysis::returns($source);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(json_decode($expectedJson, true, 512, JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    /**
+     * @return array<string,array{string,string}>
+     */
+    public static function providerExceptionPrograms(): array
+    {
+        return \Tests\Fake\Programs\ExceptionPrograms::cases();
     }
 }

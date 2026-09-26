@@ -128,6 +128,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Comparison::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
+#[UsesClass(\Deriver\Internal\Value\IntegerConversion::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
 #[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]

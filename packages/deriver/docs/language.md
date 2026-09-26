@@ -42,6 +42,11 @@ Static storage follows the PHP 8.3 rules, including separate storage when both a
 
 ## Native throwable objects
 
+An explicit throw accepts only a `Throwable`. Invalid scalar, array, closure, enum, or ordinary object operands produce `Error`. For symbolic inputs, catch clauses partition the declared type bound in source order; a later catch cannot recover a subtype already consumed by an earlier catch. Uncaught subsets remain exceptional outcomes.
+
+When a finally block throws while another exception is pending, the displaced exception is appended to the replacement's `previous` chain. Existing links and object identity are retained, and duplicate or cyclic links are avoided. A pending return or jump does not add a previous exception. The [exception corpus](../tests/Differential/ExceptionSemanticsTest.php) checks these rules against PHP 8.3, whose [exception implementation](https://github.com/php/php-src/blob/PHP-8.3/Zend/zend_exceptions.c) defines the chaining behavior.
+
+
 Deriver has explicit target definitions for the standard `Exception` and `Error` hierarchies, including SPL exception subclasses and `ErrorException`. It applies constructor signatures through the same argument and type checks used for source calls. Source subclasses inherit these native constructors unless they declare their own.
 
 The supported native getters are `getMessage()`, `getCode()`, `getPrevious()`, `getFile()`, `getLine()`, and `ErrorException::getSeverity()`. Native properties share the ordinary analysis heap, so a source subclass's property updates and calls to `parent::__construct()` remain visible. Throwable objects cannot be cloned.

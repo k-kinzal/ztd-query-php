@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(\Deriver\Internal\Model\ProviderInputs::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
+#[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[UsesClass(\Deriver\Api\Project\Configuration::class)]
 #[UsesClass(\Deriver\Api\Project\EntryPoint::class)]
 #[UsesClass(\Deriver\Api\Project\ProjectInput::class)]
