@@ -74,6 +74,6 @@ final class TableDefinitionTest extends TestCase
         $table = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)')->tables[0];
         self::assertSame('public', $table->schema);
         self::assertSame('users', $table->name);
-        self::assertSame('CreateStmt', $table->source->name);
+        self::assertStringStartsWith('CREATE TABLE users', \SqlSemantics\Statement\Writer::render($table->source));
     }
 }

@@ -62,10 +62,17 @@ final class Platform implements Contract
     public function syntax(): Policy\SyntaxRules
     {
         return new Policy\SyntaxRules([
-            'columnName' => ['ident'],
+            'autoIncrement' => [],
+            'dropTableName' => ['table_ident'],
+            'generationStorage' => ['opt_stored_attribute'],
+            'generationClause' => ['field_def'],
+            'statementRoot' => ['query'],
+            'statement' => ['statement'],
+            'columnName' => ['field_ident', 'ident'],
             'declaredType' => ['type'],
             'expression' => ['expr'],
-            'createTable' => ['create_table_stmt'],
+            'tableElements' => ['table_element_list', 'create_field_list'],
+            'createTable' => ['create_table_stmt', 'create'],
             'createHeader' => [],
             'tableName' => ['table_ident'],
             'tableConstraint' => ['table_constraint_def'],

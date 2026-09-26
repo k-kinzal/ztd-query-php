@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Core\Ast;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Schema\ColumnDefinition;
 use SqlSemantics\Core\Schema\ConstraintKind;
 use SqlSemantics\Core\Schema\TableConstraint;
@@ -19,11 +20,13 @@ use SqlSemantics\Core\Type\Nullability;
  */
 final class SchemaReader
 {
+    private readonly ValueReader $values;
     /**
      * Binds the dependencies used for semantic binding.
      */
-    public function __construct(public readonly Identifiers $identifiers, public readonly string $defaultSchema)
+    public function __construct(public readonly Identifiers $identifiers, public readonly string $defaultSchema, ?ValueReader $values = null)
     {
+        $this->values = $values ?? $identifiers->dialect->platform()->values((new DialectParser($identifiers->dialect))->version());
     }
 
     /**
@@ -36,12 +39,18 @@ final class SchemaReader
         $tables = [];
         foreach ($trees as $tree) {
             foreach (StatementList::read($tree, $this->identifiers->dialect) as $statement) {
-                $create = Tree::outer($statement, $this->identifiers->dialect->platform()->syntax()->nodes('createTable'))[0] ?? null;
+                $create = Tree::child($statement, $this->identifiers->dialect->platform()->syntax()->nodes('createTable'));
+                if ($create === null && (new SchemaChanges($this->identifiers, $this->defaultSchema))->drop($statement, $tables)) {
+                    continue;
+                }
                 if ($create === null) {
                     Tree::unsupported($statement, 'schema statement');
                 }
                 $table = $this->table($this->identifiers->dialect->platform()->schema()->schemaNode($statement, $create));
                 $key = $this->identifiers->dialect->platform()->schema()->tableKey($table);
+                if (isset($tables[$key]) && preg_match('/^CREATE (?:TEMPORARY |TEMP |UNLOGGED )?TABLE IF NOT EXISTS /i', Tree::text($create)) === 1) {
+                    continue;
+                }
                 if (isset($tables[$key])) {
                     throw new SemanticException('duplicate-table', 'Duplicate table declaration: ' . $table->name, $create);
                 }
@@ -71,27 +80,26 @@ final class SchemaReader
         $columns = [];
         $constraints = [];
         foreach ($this->columnNodes($create) as [$column, $attributes]) {
-            [$definition, $localConstraints] = (new ColumnReader($this->identifiers))->read($column, $attributes);
+            [$definition, $localConstraints] = (new ColumnReader($this->identifiers, $this->values))->read($column, $attributes);
             $columns[] = $definition;
             array_push($constraints, ...$localConstraints);
         }
         foreach (Tree::outer($create, $this->identifiers->dialect->platform()->syntax()->nodes('tableConstraint')) as $node) {
-            $constraint = (new ConstraintReader($this->identifiers))->read($node);
-            if ($constraint === null) {
-                Tree::unsupported($node, 'table constraint');
+            $constraint = (new ConstraintReader($this->identifiers, $this->values))->read($node);
+            if ($constraint !== null) {
+                $constraints[] = $constraint;
             }
-            $constraints[] = $constraint;
         }
-        if ($columns === []) {
+        if ($columns === [] && Tree::outer($create, $this->identifiers->dialect->platform()->syntax()->nodes('tableElements')) === []) {
             Tree::unsupported($create, 'CREATE TABLE without column declarations');
         }
         $columns = $this->primaryKeys($columns, $constraints, $create);
 
-        return new TableDefinition(count($parts) === 2 ? $parts[0] : $this->defaultSchema, $parts[count($parts) - 1], $columns, $constraints, $create);
+        return new TableDefinition(count($parts) === 2 ? $parts[0] : $this->defaultSchema, $parts[count($parts) - 1], $columns, $constraints, $this->values->read($create), array_map($this->values->read(...), $this->identifiers->dialect->platform()->schema()->options($create)));
     }
 
     /**
-     * Rejects table options that change the declared schema semantics.
+     * Rejects declarations whose column state requires evaluating another relation.
      */
     public function validate(Node $source, Node $header): void
     {
@@ -134,8 +142,8 @@ final class SchemaReader
         }
         $result = [];
         foreach ($columns as $column) {
-            $notNull = in_array($this->identifiers->dialect->platform()->names()->key($column->name), $primary, true) && $this->primaryNotNull($column, $primary, $constraints);
-            $result[] = new ColumnDefinition($column->name, $column->type, $notNull ? Nullability::NotNull : $column->nullability, $column->source, $column->defaultExpression);
+            $notNull = in_array($this->identifiers->dialect->platform()->names()->key($column->name), $primary, true) && ($this->identifiers->dialect->platform()->schema()->primaryOptionsNotNull($source) || $this->primaryNotNull($column, $primary, $constraints));
+            $result[] = $column->withNullability($notNull ? Nullability::NotNull : $column->nullability);
         }
 
         return $result;

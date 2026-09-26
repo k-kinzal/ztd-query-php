@@ -86,7 +86,7 @@ final class SchemaRulesTest extends TestCase
     public function testSchemaNodeRetainsOriginalDeclaration(): void
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
-        self::assertStringContainsString('CREATE TABLE', $schema->tables[0]->source->toString());
+        self::assertStringContainsString('CREATE TABLE', \SqlSemantics\Statement\Writer::render($schema->tables[0]->source));
     }
 
     public function testTableKeyDistinguishesNames(): void
@@ -100,4 +100,30 @@ final class SchemaRulesTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE app.items (id INT)');
         self::assertSame('app', $schema->tables[0]->schema);
     }
+
+    public function testOptionsRetainsStructuredTableChoices(): void
+    {
+        $state = (new \SqlSemantics\Facade\Schema(Dialect::Sqlite))->analyze('CREATE TABLE t (id TEXT PRIMARY KEY) STRICT');
+        self::assertNotEmpty($state->tables[0]->options);
+    }
+
+    public function testPrimaryOptionsNotNullAccountsForTablePolicy(): void
+    {
+        $dialect = Dialect::Sqlite;
+        $source = $dialect->platform()->parser()->parse('CREATE TABLE t (id TEXT PRIMARY KEY) STRICT');
+        self::assertSame(true, $dialect->platform()->schema()->primaryOptionsNotNull($source));
+    }
+
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE t (id TEXT PRIMARY KEY)', 'maybe-null'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE t (id TEXT PRIMARY KEY) STRICT', 'not-null'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE t (id TEXT PRIMARY KEY) WITHOUT ROWID', 'not-null'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE t (id INTEGER PRIMARY KEY DESC)', 'maybe-null'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE t (id INTEGER, PRIMARY KEY (id DESC))', 'not-null'])]
+    public function testPrimaryNotNullRespectsTableOptionsAndInlineDescendingKeys(string $sql, string $expected): void
+    {
+        $state = (new \SqlSemantics\Facade\Schema(Dialect::Sqlite))->analyze($sql);
+        self::assertSame($expected, $state->tables[0]->columns[0]->nullability->value);
+    }
+
 }

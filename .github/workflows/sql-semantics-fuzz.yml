@@ -43,6 +43,9 @@ jobs:
           - { database: mysql, package: sql-semantics-mysql, script: fuzz_mysql_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
           - { database: pg, package: sql-semantics-postgres, script: fuzz_pg_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
           - { database: sqlite, package: sql-semantics-sqlite, script: fuzz_sqlite_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: mysql-schema, package: sql-semantics-mysql, script: fuzz_mysql_schema.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: pg-schema, package: sql-semantics-postgres, script: fuzz_pg_schema.php, extensions: 'mbstring, pcntl, zlib' }
+          - { database: sqlite-schema, package: sql-semantics-sqlite, script: fuzz_sqlite_schema.php, extensions: 'mbstring, pcntl, zlib' }
     defaults:
       run:
         working-directory: packages/${{ matrix.target.package }}
@@ -91,6 +94,11 @@ jobs:
         env:
           DATABASE: ${{ matrix.target.database }}
         run: |
+          mkdir -p "fuzz/corpus/$DATABASE"
+          if [[ "$DATABASE" == *-schema ]]; then
+            cp "fuzz/seeds/$DATABASE/"* "fuzz/corpus/$DATABASE/"
+            exit 0
+          fi
           case "$DATABASE" in
             mysql) version="mysql-$MYSQL_VERSION" ;;
             pg) version='pg-17.2' ;;
@@ -106,6 +114,9 @@ jobs:
           mkdir -p build/fuzz "fuzz/corpus/${{ matrix.target.database }}"
           php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz "fuzz/${{ matrix.target.script }}" "fuzz/corpus/${{ matrix.target.database }}/" --timeout=60 \
             "--max-runs=$FUZZ_MAX_RUNS" 2>&1 | tee "build/fuzz/${{ matrix.target.database }}.log"
+          if grep -Eq '(^|CORPUS )(CRASH|TIMEOUT) in ' "build/fuzz/${{ matrix.target.database }}.log"; then
+            exit 1
+          fi
       - name: Open an issue for a finding
         if: always()
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd

@@ -122,7 +122,15 @@
             "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
             "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_roundtrip.php fuzz/corpus/sqlite/ --timeout=60"
         ],
-        "fuzz:smoke": "@fuzz:roundtrip --max-runs=100",
+        "fuzz:schema": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/sqlite-schema') || mkdir('fuzz/corpus/sqlite-schema', 0777, true); array_map(static fn (\\$seed) => copy(\\$seed, 'fuzz/corpus/sqlite-schema/' . basename(\\$seed)), glob('fuzz/seeds/sqlite-schema/*'));\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_schema.php fuzz/corpus/sqlite-schema/ --timeout=60"
+        ],
+        "fuzz:smoke": [
+            "@fuzz:roundtrip --max-runs=100",
+            "@fuzz:schema --max-runs=100"
+        ],
         "lint": [
             "@autoload:check",
             "@format:check",
@@ -156,7 +164,8 @@
         "format": "Fix the code style with PHP-CS-Fixer.",
         "format:check": "Check the code style with PHP-CS-Fixer without changing files.",
         "fuzz": "Run this database round-trip property with a bounded smoke budget.",
-        "fuzz:smoke": "Replay the corpus and run 100 mutations.",
+        "fuzz:schema": "Fuzz immutable pre-state declarations using sql-faker generation plans.",
+        "fuzz:smoke": "Replay both corpora and run 100 mutations of state and statement analysis.",
         "lint": "Run every static check: autoload, formatting, PHPStan, PHP compatibility, size and tree guards, and layer dependencies.",
         "loc-guard": "Check file size limits.",
         "phpstan": "Run PHPStan.",

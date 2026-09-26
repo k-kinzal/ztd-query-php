@@ -46,15 +46,12 @@ final class TypeRules implements Contract
                 if ($inModifiers) {
                     $modifiers[] = $token->text;
                 } else {
-                    $words[] = strtoupper($token->text);
+                    $words[] = $token->text;
                 }
             }
         }
         $name = implode(' ', $words);
-        $canonical = $this->canonical($name);
-        if ($canonical === null) {
-            Tree::unsupported($node, 'type declaration');
-        }
+        $canonical = $this->canonical(strtoupper($name)) ?? $name;
         return new TypeDescriptor($this->dialect, $canonical, $modifiers);
     }
 

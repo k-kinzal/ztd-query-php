@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Core\Type;
 
+use InvalidArgumentException;
 use SqlSemantics\Core\Dialect;
 
 /**
@@ -22,6 +23,7 @@ final class TypeDescriptor
      * @param string $name Canonical database type, or unknown for unresolved input
      * @param list<string> $modifiers Precision, scale, length, or other declared modifiers
      * @param string|null $affinity Storage affinity; not a runtime storage-class guarantee
+     * @throws InvalidArgumentException When type modifiers are not an ordered list of strings
      */
     public function __construct(
         public readonly Dialect $dialect,
@@ -29,5 +31,6 @@ final class TypeDescriptor
         public readonly array $modifiers = [],
         public readonly ?string $affinity = null,
     ) {
+        \SqlSemantics\Core\Schema\Invariant::names($modifiers);
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Core\Ast;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Core\Analysis\ValueReader;
 use SqlSemantics\Core\Schema\ConstraintKind;
 use SqlSemantics\Core\Schema\TableConstraint;
 
@@ -15,11 +16,13 @@ use SqlSemantics\Core\Schema\TableConstraint;
  */
 final class ConstraintReader
 {
+    private readonly ValueReader $values;
     /**
      * Binds the dependencies used for semantic binding.
      */
-    public function __construct(public readonly Identifiers $identifiers)
+    public function __construct(public readonly Identifiers $identifiers, ?ValueReader $values = null)
     {
+        $this->values = $values ?? $identifiers->dialect->platform()->values((new DialectParser($identifiers->dialect))->version());
     }
 
     /**
@@ -27,12 +30,7 @@ final class ConstraintReader
      */
     public function read(Node $node, ?string $column = null): ?TableConstraint
     {
-        $tokens = $node->tokens();
-        $name = null;
-        if (strtoupper($tokens[0]->text ?? '') === 'CONSTRAINT') {
-            $name = isset($tokens[1]) ? $this->identifiers->name($tokens[1]) : null;
-            $tokens = array_slice($tokens, 2);
-        }
+        [$name, $tokens] = TokenGroups::constraintHeader($node->tokens(), $this->identifiers);
         $kind = match (strtoupper($tokens[0]->text ?? '')) {
             'PRIMARY' => ConstraintKind::PrimaryKey,
             'UNIQUE' => ConstraintKind::Unique,
@@ -44,7 +42,7 @@ final class ConstraintReader
             return null;
         }
         $groups = TokenGroups::parentheses($tokens);
-        $columns = $column === null ? TokenGroups::names($groups[0] ?? [], $this->identifiers) : [$column];
+        $columns = $column === null ? TokenGroups::keyNames($groups[0] ?? [], $this->identifiers) : [$column];
         $table = [];
         $references = [];
         if ($kind === ConstraintKind::ForeignKey) {
@@ -52,7 +50,7 @@ final class ConstraintReader
         }
         $expression = $kind === ConstraintKind::Check ? (Tree::outer($node, $this->identifiers->dialect->platform()->syntax()->nodes('expression'))[0] ?? null) : null;
 
-        return new TableConstraint($kind, $kind === ConstraintKind::Check ? [] : $columns, $node, $name, $table, $references, $expression);
+        return new TableConstraint($kind, $kind === ConstraintKind::Check ? [] : $columns, $this->values->read($node), $name, $table, $references, $expression === null ? null : $this->values->read($expression), $column !== null, $column !== null && in_array('DESC', array_map(static fn ($token): string => strtoupper($token->text), $tokens), true));
     }
 
     /**
@@ -80,6 +78,6 @@ final class ConstraintReader
         }
         $groups = TokenGroups::parentheses($remaining);
 
-        return [$name, TokenGroups::names($groups[0] ?? [], $this->identifiers)];
+        return [$name, TokenGroups::keyNames($groups[0] ?? [], $this->identifiers)];
     }
 }
