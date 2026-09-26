@@ -106,6 +106,7 @@ use SqlFaker\MySql\Generation\GenerationContext;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Query\JoinGroupingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Routine\ReturnRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Routine\BinlogRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\SystemVariableRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Column\AutoIncrementRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\DefinitionRule::class)]

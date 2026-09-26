@@ -7,12 +7,13 @@ namespace Tests\Unit\Core\Policy;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Model\Expression;
 use SqlSemantics\Core\Model\ExpressionKind;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
@@ -72,7 +73,6 @@ use SqlSemantics\Facade\Dialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 final class NameRulesTest extends TestCase
 {
@@ -82,26 +82,26 @@ final class NameRulesTest extends TestCase
         $names->method('name')->willReturn('application-name');
         $platform = self::createStub(\SqlSemantics\Core\Platform::class);
         $platform->method('names')->willReturn($names);
-        $dialect = self::createStub(\SqlSemantics\Core\Dialect::class);
+        $dialect = self::createStub(Dialect::class);
         $dialect->method('platform')->willReturn($platform);
         self::assertSame('application-name', (new \SqlSemantics\Core\Ast\Identifiers($dialect))->name(new Token(1, 'name', 'input', 0)));
     }
     public function testEqualUsesColumnCaseRules(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\NameRules $rules): \SqlSemantics\Core\Policy\NameRules => $rules;
-        $rules = $accept(Dialect::PostgreSql->platform()->names());
+        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->names());
         self::assertSame(false, $rules->equal('Item', 'item'));
     }
     public function testRelationEqualUsesTableCaseRules(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\NameRules $rules): \SqlSemantics\Core\Policy\NameRules => $rules;
-        $rules = $accept(Dialect::PostgreSql->platform()->names());
+        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->names());
         self::assertSame(false, $rules->relationEqual('Item', 'item'));
     }
     public function testKeyUsesTheSameColumnIdentity(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\NameRules $rules): \SqlSemantics\Core\Policy\NameRules => $rules;
-        $rules = $accept(Dialect::PostgreSql->platform()->names());
+        $rules = $accept(PostgreSqlDialect::PostgreSql->platform()->names());
         self::assertSame(false, $rules->key('Item') === $rules->key('item'));
     }
 }

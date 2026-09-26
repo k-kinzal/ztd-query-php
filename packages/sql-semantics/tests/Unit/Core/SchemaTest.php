@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Schema::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,9 +71,9 @@ final class SchemaTest extends TestCase
 {
     public function testRetainsTheDialectAndAllDeclarations(): void
     {
-        $builder = new SchemaBuilder(Dialect::PostgreSql);
+        $builder = new SchemaBuilder(PostgreSqlDialect::PostgreSql);
         $schema = $builder->build('CREATE TABLE a (id INTEGER); CREATE TABLE b (id INTEGER)');
-        self::assertSame(Dialect::PostgreSql, $schema->dialect);
+        self::assertSame(PostgreSqlDialect::PostgreSql, $schema->dialect);
         self::assertSame(['a', 'b'], array_column($schema->tables, 'name'));
     }
 }

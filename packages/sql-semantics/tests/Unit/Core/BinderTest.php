@@ -9,10 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(Binder::class)]
 #[CoversClass(SchemaBuilder::class)]
@@ -71,9 +74,9 @@ use SqlSemantics\Facade\Dialect;
 #[Medium]
 final class BinderTest extends TestCase
 {
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testBindSelfJoinPreservesOccurrenceIdentityAndNullProvenance(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -95,7 +98,7 @@ final class BinderTest extends TestCase
 
     public function testBindPreservesSourceTextAndExpressionNodeIdentity(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (score INTEGER)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (score INTEGER)');
         $sql = '/* source */ SELECT score FROM users';
         $statement = (new Binder($schema))->bind($sql);
         self::assertSame($sql, $statement->source->toString());
@@ -103,9 +106,9 @@ final class BinderTest extends TestCase
         self::assertSame($schema->tables[0], $statement->relations[0]->declaration);
     }
 
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testBindResetsStatementIdentitiesWhenReusingTheBinder(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER)');
@@ -117,9 +120,9 @@ final class BinderTest extends TestCase
         self::assertSame($schema->tables[0], $second->relations[0]->declaration);
     }
 
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testBindUsesTheSchemasDefaultNamespace(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect, 'app'))->build('CREATE TABLE users (id INTEGER)');
@@ -128,9 +131,9 @@ final class BinderTest extends TestCase
         self::assertSame($dialect, $statement->outputs[0]->expression->type->dialect);
     }
 
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testBindPropagatesSyntaxErrors(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build();
@@ -140,7 +143,7 @@ final class BinderTest extends TestCase
 
     public function testBindRejectsMissingDeclarations(): void
     {
-        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $binder = new Binder((new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build());
         self::assertSame('1', $binder->bind('SELECT 1')->outputs[0]->expression->symbol);
         $this->expectException(SemanticException::class);
         $this->expectExceptionMessage('Cannot resolve table');

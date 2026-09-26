@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,7 +71,7 @@ final class ConstraintReaderTest extends TestCase
 {
     public function testReadNamedForeignKey(): void
     {
-        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER, CONSTRAINT self_ref FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE DEFERRABLE)')->tables[0];
+        $table = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER, CONSTRAINT self_ref FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE DEFERRABLE)')->tables[0];
         self::assertSame('self_ref', $table->constraints[0]->name);
         self::assertSame(['id'], $table->constraints[0]->columns);
         self::assertStringContainsString('DEFERRABLE', $table->constraints[0]->source->toString());
@@ -79,7 +79,7 @@ final class ConstraintReaderTest extends TestCase
 
     public function testReferencesPreservesCompositeForeignKeyOrder(): void
     {
-        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER, parent_id INTEGER, FOREIGN KEY (id, parent_id) REFERENCES other.users (parent_id, id))')->tables[0];
+        $table = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER, parent_id INTEGER, FOREIGN KEY (id, parent_id) REFERENCES other.users (parent_id, id))')->tables[0];
         self::assertSame(['other', 'users'], $table->constraints[0]->referencedTable);
         self::assertSame(['parent_id', 'id'], $table->constraints[0]->referencedColumns);
     }

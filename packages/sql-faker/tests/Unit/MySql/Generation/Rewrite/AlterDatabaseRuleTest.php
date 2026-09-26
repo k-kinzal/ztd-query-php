@@ -50,6 +50,22 @@ final class AlterDatabaseRuleTest extends TestCase
         $trace->expand(2, new Production([]), 0);
         self::assertSame(['ALTER', 'DATABASE', 'DEFAULT', 'CHARSET'], (new AlterDatabaseRule('DEFAULT'))->rewrite($trace->terminals())->names());
     }
+
+    public function testRewriteRepairsTheLegacyAlterProduction(): void
+    {
+        $trace = new DerivationTrace('alter');
+        $trace->expand(0, new Production([new Terminal('ALTER'), new Terminal('DATABASE'), new NonTerminal('ident_or_empty'), new Terminal('CHARSET')]), 0);
+        $trace->expand(2, new Production([]), 0);
+        self::assertSame(['ALTER', 'DATABASE', 'DEFAULT', 'CHARSET'], (new AlterDatabaseRule('DEFAULT'))->rewrite($trace->terminals())->names());
+    }
+
+    public function testRewriteKeepsOtherLegacyAlterCommands(): void
+    {
+        $trace = new DerivationTrace('alter');
+        $trace->expand(0, new Production([new Terminal('ALTER'), new Terminal('TABLE_SYM'), new Terminal('CHARSET')]), 0);
+        $input = $trace->terminals();
+        self::assertSame($input, (new AlterDatabaseRule('DEFAULT'))->rewrite($input));
+    }
     /**
      * @return list<array{string}>
      */

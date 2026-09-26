@@ -7,12 +7,13 @@ namespace Tests\Unit\Core\Policy;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Model\Expression;
 use SqlSemantics\Core\Model\ExpressionKind;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\Type\Nullability;
 use SqlSemantics\Core\Type\TypeDescriptor;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
@@ -72,7 +73,6 @@ use SqlSemantics\Facade\Dialect;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\TypeRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\NameRules::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\MySql\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 final class SchemaRulesTest extends TestCase
 {
@@ -83,7 +83,7 @@ final class SchemaRulesTest extends TestCase
         $rules->method('columnNodes')->willReturn([[$node, []]]);
         $platform = self::createStub(\SqlSemantics\Core\Platform::class);
         $platform->method('schema')->willReturn($rules);
-        $dialect = self::createStub(\SqlSemantics\Core\Dialect::class);
+        $dialect = self::createStub(Dialect::class);
         $dialect->method('platform')->willReturn($platform);
         $reader = new \SqlSemantics\Core\Ast\SchemaReader(new \SqlSemantics\Core\Ast\Identifiers($dialect), 'application');
         self::assertSame([[$node, []]], $reader->columnNodes(new Node('application-table', 0, [])));
@@ -91,36 +91,36 @@ final class SchemaRulesTest extends TestCase
     public function testValidateAcceptsOrdinaryDeclarations(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\SchemaRules $rules): \SqlSemantics\Core\Policy\SchemaRules => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()->schema()::class, $accept(Dialect::PostgreSql->platform()->schema())::class);
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()->schema()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->schema())::class);
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
         self::assertCount(1, $schema->tables);
     }
     public function testPrimaryNotNullPromotesAnIntegerKey(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\SchemaRules $rules): \SqlSemantics\Core\Policy\SchemaRules => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()->schema()::class, $accept(Dialect::PostgreSql->platform()->schema())::class);
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()->schema()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->schema())::class);
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
         self::assertSame(Nullability::NotNull, $schema->tables[0]->columns[0]->nullability);
     }
     public function testSchemaNodeRetainsOriginalDeclaration(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\SchemaRules $rules): \SqlSemantics\Core\Policy\SchemaRules => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()->schema()::class, $accept(Dialect::PostgreSql->platform()->schema())::class);
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()->schema()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->schema())::class);
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)');
         self::assertStringContainsString('CREATE TABLE', $schema->tables[0]->source->toString());
     }
     public function testTableKeyDistinguishesNames(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\SchemaRules $rules): \SqlSemantics\Core\Policy\SchemaRules => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()->schema()::class, $accept(Dialect::PostgreSql->platform()->schema())::class);
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE first (id INT)', 'CREATE TABLE second (id INT)');
-        self::assertNotSame(Dialect::PostgreSql->platform()->schema()->tableKey($schema->tables[0]), Dialect::PostgreSql->platform()->schema()->tableKey($schema->tables[1]));
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()->schema()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->schema())::class);
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE first (id INT)', 'CREATE TABLE second (id INT)');
+        self::assertNotSame(PostgreSqlDialect::PostgreSql->platform()->schema()->tableKey($schema->tables[0]), PostgreSqlDialect::PostgreSql->platform()->schema()->tableKey($schema->tables[1]));
     }
     public function testQualifyPreservesExplicitNamespaces(): void
     {
         $accept = static fn (\SqlSemantics\Core\Policy\SchemaRules $rules): \SqlSemantics\Core\Policy\SchemaRules => $rules;
-        self::assertSame(Dialect::PostgreSql->platform()->schema()::class, $accept(Dialect::PostgreSql->platform()->schema())::class);
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE app.items (id INT)');
+        self::assertSame(PostgreSqlDialect::PostgreSql->platform()->schema()::class, $accept(PostgreSqlDialect::PostgreSql->platform()->schema())::class);
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE app.items (id INT)');
         self::assertSame('app', $schema->tables[0]->schema);
     }
 }

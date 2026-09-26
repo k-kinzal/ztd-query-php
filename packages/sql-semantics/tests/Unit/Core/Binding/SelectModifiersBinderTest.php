@@ -9,9 +9,12 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Binding\SelectModifiersBinder::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -70,9 +73,9 @@ use SqlSemantics\Facade\Dialect;
 #[Medium]
 final class SelectModifiersBinderTest extends TestCase
 {
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testOrderingResolvesAliasesAndDirection(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -85,7 +88,7 @@ final class SelectModifiersBinderTest extends TestCase
 
     public function testSortExpressionResolvesPositionsAndNullPlacement(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT parent_id FROM users ORDER BY 1 NULLS LAST');
         self::assertSame($statement->outputs[0]->expression, $statement->orderBy[0]->expression);
         self::assertFalse($statement->orderBy[0]->nullsFirst);
@@ -93,14 +96,14 @@ final class SelectModifiersBinderTest extends TestCase
 
     public function testRejectsOutOfRangeOrderPosition(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);
         (new Binder($schema))->bind('SELECT id FROM users ORDER BY 2');
     }
 
     public function testPaginationReadsMysqlCommaOrder(): void
     {
-        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(MySqlDialect::MySql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT id FROM users LIMIT 2, 5');
         self::assertSame('5', $statement->limit?->symbol);
         self::assertSame('2', $statement->offset?->symbol);
@@ -108,14 +111,14 @@ final class SelectModifiersBinderTest extends TestCase
 
     public function testPaginationRejectsFetchWithTiesRatherThanDroppingItsMeaning(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);
         (new Binder($schema))->bind('SELECT id FROM users ORDER BY id FETCH FIRST (1+1) ROWS WITH TIES');
     }
 
     public function testSortExpressionDoesNotResolveAStringLiteralAsAnAlias(): void
     {
-        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(MySqlDialect::MySql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind("SELECT score AS points FROM users ORDER BY 'points'");
         self::assertSame(\SqlSemantics\Core\Model\ExpressionKind::Literal, $statement->orderBy[0]->expression->kind);
         self::assertSame("'points'", $statement->orderBy[0]->expression->symbol);

@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
 
 #[CoversClass(\SqlSemantics\Core\Model\ExpressionKind::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -72,7 +72,7 @@ final class ExpressionKindTest extends TestCase
 {
     public function testDistinguishesNullHandlingOperations(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT COALESCE(id, 0), NULLIF(id, 0) FROM users');
         self::assertSame(\SqlSemantics\Core\Model\ExpressionKind::Coalesce, $statement->outputs[0]->expression->kind);
         self::assertSame(\SqlSemantics\Core\Model\ExpressionKind::NullIf, $statement->outputs[1]->expression->kind);

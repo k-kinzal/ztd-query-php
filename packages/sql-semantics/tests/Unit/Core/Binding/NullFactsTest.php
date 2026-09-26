@@ -10,10 +10,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
+use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
 use SqlSemantics\Core\Type\Nullability;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSqlDialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Binding\NullFacts::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -72,9 +75,9 @@ use SqlSemantics\Facade\Dialect;
 #[Medium]
 final class NullFactsTest extends TestCase
 {
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
+    #[TestWith([PostgreSqlDialect::PostgreSql])]
+    #[TestWith([MySqlDialect::MySql])]
+    #[TestWith([SqliteDialect::Sqlite])]
     public function testCoalesceRequiresANonNullOperandToGuaranteeAValue(Dialect $dialect): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -86,7 +89,7 @@ final class NullFactsTest extends TestCase
 
     public function testStrictComparisonPropagatesNullButBooleanOrDoesNot(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT NULL = 1 AS a, NULL OR TRUE AS b');
         self::assertSame(Nullability::AlwaysNull, $statement->outputs[0]->expression->nullability);
         self::assertSame(Nullability::MaybeNull, $statement->outputs[1]->expression->nullability);
@@ -94,7 +97,7 @@ final class NullFactsTest extends TestCase
 
     public function testExtensionsRetainsAllNullableOperandCauses(): void
     {
-        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $schema = (new SchemaBuilder(PostgreSqlDialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id+b.id FROM users a FULL JOIN users b ON a.id=b.id');
         self::assertSame(['j0'], $statement->outputs[0]->expression->nullExtendedBy);
         self::assertSame(Nullability::MaybeNull, $statement->outputs[0]->expression->nullability);
@@ -103,7 +106,7 @@ final class NullFactsTest extends TestCase
     #[DataProvider('providerFacts')]
     public function testStrictAndCoalesceFacts(Nullability $left, Nullability $right, Nullability $strict, Nullability $coalesce): void
     {
-        $type = new \SqlSemantics\Core\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $type = new \SqlSemantics\Core\Type\TypeDescriptor(PostgreSqlDialect::PostgreSql, 'integer');
         $source = new \SqlParser\Parser\Node('expr', 0, []);
         $operands = [
             new \SqlSemantics\Core\Model\Expression(\SqlSemantics\Core\Model\ExpressionKind::Literal, $type, $left, $source),

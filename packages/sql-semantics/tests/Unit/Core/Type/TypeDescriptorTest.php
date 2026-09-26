@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Core\Binder;
 use SqlSemantics\Core\SchemaBuilder;
 use SqlSemantics\Core\SemanticException;
-use SqlSemantics\Facade\Dialect;
+use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 
 #[CoversClass(\SqlSemantics\Core\Type\TypeDescriptor::class)]
 #[CoversClass(\SqlSemantics\Core\Binding\ExpressionBinder::class)]
@@ -71,7 +71,7 @@ final class TypeDescriptorTest extends TestCase
 {
     public function testDistinguishesStorageAffinityFromDeclaredType(): void
     {
-        $table = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users (code VARCHAR(20))')->tables[0];
+        $table = (new SchemaBuilder(SqliteDialect::Sqlite))->build('CREATE TABLE users (code VARCHAR(20))')->tables[0];
         self::assertSame('varchar', $table->columns[0]->type->name);
         self::assertSame(['20'], $table->columns[0]->type->modifiers);
         self::assertSame('text', $table->columns[0]->type->affinity);

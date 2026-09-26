@@ -1,17 +1,23 @@
 {
     "name": "k-kinzal/sql-semantics",
-    "description": "SQL semantic binding: schema declarations, bound statements, types, nullability, and value provenance",
+    "description": "Typed SQL statement analysis and reconstruction, with schema-dependent binding and value provenance",
     "type": "library",
     "license": "MIT",
     "require": {
         "php": "^8.1",
-        "k-kinzal/sql-parser": "dev-main"
+        "k-kinzal/sql-parser": "dev-main",
+        "composer-runtime-api": "^2.2"
     },
     "require-dev": {
         "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.95.25",
+        "k-kinzal/bison-parser": "dev-main",
+        "k-kinzal/lemon-parser": "dev-main",
         "k-kinzal/php-ai-toolkit": "dev-main",
+        "k-kinzal/sql-semantics-mysql": "dev-main",
+        "k-kinzal/sql-semantics-postgres": "dev-main",
+        "k-kinzal/sql-semantics-sqlite": "dev-main",
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
@@ -31,6 +37,51 @@
             "options": {
                 "versions": {
                     "k-kinzal/sql-parser": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../bison-parser",
+            "options": {
+                "versions": {
+                    "k-kinzal/bison-parser": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../lemon-parser",
+            "options": {
+                "versions": {
+                    "k-kinzal/lemon-parser": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-mysql",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-mysql": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-postgres",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-postgres": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-sqlite",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-sqlite": "dev-main"
                 }
             }
         }
@@ -94,5 +145,8 @@
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"
-    }
+    },
+    "bin": [
+        "bin/build-models.php"
+    ]
 }
