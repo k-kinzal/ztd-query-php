@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packages/ztd-query-core/src/Session.php — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/469/src/packages/ztd-query-core/src/Session.php.html">
+<meta name="description" content="The source of packages/ztd-query-core/src/Session.php.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="packages/ztd-query-core/src/Session.php — ZTD Query PHP">
+<meta property="og:description" content="The source of packages/ztd-query-core/src/Session.php.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/469/src/packages/ztd-query-core/src/Session.php.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/469/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><nav class="sidebar-section"><div class="sidebar-title">Packages</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/bison-parser/index.html">k-kinzal/bison-parser</a></li><li data-diff="same"><a href="../../../../k-kinzal/container/index.html">k-kinzal/container</a></li><li data-diff="same"><a href="../../../../k-kinzal/lemon-parser/index.html">k-kinzal/lemon-parser</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-fixture/index.html">k-kinzal/sql-fixture</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics-mysql/index.html">k-kinzal/sql-semantics-mysql</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics-postgres/index.html">k-kinzal/sql-semantics-postgres</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics-sqlite/index.html">k-kinzal/sql-semantics-sqlite</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-mysql/index.html">k-kinzal/ztd-query-mysql</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-mysqli-adapter/index.html">k-kinzal/ztd-query-mysqli-adapter</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a></li><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-postgres/index.html">k-kinzal/ztd-query-postgres</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../index.html">src</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">packages/ztd-query-core/src/Session.php</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 3a6c7e361a to working tree">3a6c7e361a <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 3a6c7e361a and working tree." data-off="This page documents what 3a6c7e361a had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1 class="source-title">packages/ztd-query-core/src/Session.php</h1></div>
+<pre class="code code-scroll source" data-diff="modified"><code><span class="src-line" id="L1" data-diff="same"><a class="ln" href="#L1">1</a>&lt;?php</span>
+<span class="src-line" id="L2" data-diff="same"><a class="ln" href="#L2">2</a></span>
+<span class="src-line" id="L3" data-diff="same"><a class="ln" href="#L3">3</a><span class="tok-kw">declare</span>(<span class="tok-id">strict_types</span>=<span class="tok-num">1</span>);</span>
+<span class="src-line" id="L4" data-diff="same"><a class="ln" href="#L4">4</a></span>
+<span class="src-line" id="L5" data-diff="same"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">ZtdQuery</span>;</span>
+<span class="src-line" id="L6" data-diff="same"><a class="ln" href="#L6">6</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">7</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\ZtdConfig</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">8</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Connection\ConnectionInterface</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">9</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Connection\Exception\DatabaseException</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Connection\ResultSet</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">11</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Connection\StatementInterface</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Exception\UnknownSchemaException</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">13</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Exception\UnsupportedSqlException</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\CopySupport</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\CopyTarget</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\MissingResultColumnTypeResolver</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\ParameterBindingCompiler</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">18</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\ResultColumnTypeResolver</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">19</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Rewrite\QueryKind</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Rewrite\RewritePlan</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Rewrite\SqlRewriter</span>;</span>
+<span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Schema\TableDefinition</span>;</span>
+<span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Schema\TableDefinitionRegistry</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">24</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Shadow\Mutation\MutationImpact</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">25</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Shadow\Mutation\ShadowMutation</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">26</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Shadow\ReferentialIntegrityEnforcer</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">27</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Shadow\ShadowApplication</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Schema\ViewDefinitionSet</span>;</span>
+<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Shadow\ShadowStore</span>;</span>
+<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Shadow\ShadowTransactions</span>;</span>
+<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Sql\TransactionStatement</span>;</span>
+<span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Sql\TransactionTarget</span>;</span>
+<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a></span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">34</span><span class="tok-com"> * Aggregates ZTD session state and core collaborators.</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * Owns virtual rows, schema, transactions, and connection-local ZTD state.</span></span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">36</span><span class="tok-com"> * @phpstan-import-type Row from StatementInterface</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * A session does not reflect a database, rewrite SQL, or execute statements.</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * @example Keep fixtures isolated from another session</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $first = new \ZtdQuery\Session();</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $second = new \ZtdQuery\Session();</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> *     $first-&gt;store()-&gt;set(&#039;items&#039;, [[&#039;id&#039; =&gt; 1]]);</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $second-&gt;store()-&gt;get(&#039;items&#039;) // =&gt; []</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *     $first-&gt;isEnabled() // =&gt; true</span></span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Session</span></span>
+<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>{</span>
+<span class="src-line" data-diff="removed"><span class="ln">40</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">41</span><span class="tok-com">     * SQL rewrite pipeline implementation.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">42</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">43</span>    <span class="tok-kw">private</span> <span class="tok-id">SqlRewriter</span> <span class="tok-var">$rewriter</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">44</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">45</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">46</span><span class="tok-com">     * Executes result-select SQL on the database.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">47</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">48</span>    <span class="tok-kw">private</span> <span class="tok-id">ResultSelectRunner</span> <span class="tok-var">$resultSelectRunner</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">49</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">50</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">51</span><span class="tok-com">     * Database connection for query execution.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">52</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">53</span>    <span class="tok-kw">private</span> <span class="tok-id">ConnectionInterface</span> <span class="tok-var">$connection</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">54</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">55</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">56</span><span class="tok-com">     * Whether ZTD mode is enabled for this session.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">57</span><span class="tok-com">     */</span></span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>    <span class="tok-kw">private</span> <span class="tok-id">bool</span> <span class="tok-var">$enabled</span> = <span class="tok-id">true</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">59</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">60</span>    <span class="tok-kw">private</span> <span class="tok-id">ShadowTransactions</span> <span class="tok-var">$transactions</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">61</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">62</span>    <span class="tok-kw">private</span> <span class="tok-id">TableDefinitionRegistry</span> <span class="tok-var">$registry</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">63</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">64</span>    <span class="tok-kw">private</span> ?<span class="tok-id">CopySupport</span> <span class="tok-var">$copySupport</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">65</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">66</span>    <span class="tok-kw">private</span> ?<span class="tok-id">ParameterBindingCompiler</span> <span class="tok-var">$parameterBindingCompiler</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">67</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">68</span>    <span class="tok-kw">private</span> <span class="tok-id">ResultColumnTypeResolver</span> <span class="tok-var">$resultColumnTypeResolver</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">69</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">70</span>    <span class="tok-kw">private</span> <span class="tok-id">ShadowApplication</span> <span class="tok-var">$shadowApplication</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">71</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">72</span>    <span class="tok-kw">private</span> <span class="tok-id">RewriteRefusal</span> <span class="tok-var">$refusals</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">73</span></span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>    <span class="tok-kw">private</span> ?<span class="tok-id">string</span> <span class="tok-var">$lastInsertId</span> = <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">ShadowTransactions</span> <span class="tok-var">$transactions</span>;</span>
+<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a></span>
+<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">77</span><span class="tok-com">     * @param SqlRewriter $rewriter Rewrite pipeline for SQL.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">78</span><span class="tok-com">     * @param ShadowStore $shadowStore Target shadow store for mutation application.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">79</span><span class="tok-com">     * @param ResultSelectRunner $resultSelectRunner Executes result-select queries.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">80</span><span class="tok-com">     * @param ZtdConfig $config ZTD configuration for error handling.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">81</span><span class="tok-com">     * @param ConnectionInterface $connection Database connection for query execution.</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * Start an isolated session, optionally with caller-provided fixtures and schema.</span></span>
+<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">84</span>        <span class="tok-id">SqlRewriter</span> <span class="tok-var">$rewriter</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">85</span>        <span class="tok-id">ShadowStore</span> <span class="tok-var">$shadowStore</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">86</span>        <span class="tok-id">ResultSelectRunner</span> <span class="tok-var">$resultSelectRunner</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">87</span>        <span class="tok-id">ZtdConfig</span> <span class="tok-var">$config</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">88</span>        <span class="tok-id">ConnectionInterface</span> <span class="tok-var">$connection</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">89</span>        ?<span class="tok-id">ShadowTransactions</span> <span class="tok-var">$transactions</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">90</span>        ?<span class="tok-id">TableDefinitionRegistry</span> <span class="tok-var">$registry</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">91</span>        ?<span class="tok-id">CopySupport</span> <span class="tok-var">$copySupport</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">92</span>        ?<span class="tok-id">ParameterBindingCompiler</span> <span class="tok-var">$parameterBindingCompiler</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">93</span>        <span class="tok-id">ResultColumnTypeResolver</span> <span class="tok-var">$resultColumnTypeResolver</span> = <span class="tok-kw">new</span> <span class="tok-id">MissingResultColumnTypeResolver</span>(),</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">ShadowStore</span> <span class="tok-var">$store</span> = <span class="tok-kw">new</span> <span class="tok-id">ShadowStore</span>(),</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">TableDefinitionRegistry</span> <span class="tok-var">$registry</span> = <span class="tok-kw">new</span> <span class="tok-id">TableDefinitionRegistry</span>(),</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">ViewDefinitionSet</span> <span class="tok-var">$views</span> = <span class="tok-kw">new</span> <span class="tok-id">ViewDefinitionSet</span>(),</span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>    ) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">95</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">rewriter</span> = <span class="tok-var">$rewriter</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">96</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultSelectRunner</span> = <span class="tok-var">$resultSelectRunner</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">97</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">refusals</span> = <span class="tok-kw">new</span> <span class="tok-id">RewriteRefusal</span>(<span class="tok-var">$config</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">98</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">connection</span> = <span class="tok-var">$connection</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">99</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">transactions</span> = <span class="tok-var">$transactions</span> ?? <span class="tok-kw">new</span> <span class="tok-id">ShadowTransactions</span>(<span class="tok-var">$shadowStore</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">100</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">registry</span> = <span class="tok-var">$registry</span> ?? <span class="tok-kw">new</span> <span class="tok-id">TableDefinitionRegistry</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">101</span>        <span class="tok-var">$referentialIntegrity</span> = <span class="tok-kw">new</span> <span class="tok-id">ReferentialIntegrityEnforcer</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">registry</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">102</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">shadowApplication</span> = <span class="tok-kw">new</span> <span class="tok-id">ShadowApplication</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">103</span>            <span class="tok-var">$shadowStore</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">104</span>            <span class="tok-var">$referentialIntegrity</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">105</span>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">registry</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">106</span>            <span class="tok-var">$rewriter</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">107</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">108</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">copySupport</span> = <span class="tok-var">$copySupport</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">109</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">parameterBindingCompiler</span> = <span class="tok-var">$parameterBindingCompiler</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">110</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultColumnTypeResolver</span> = <span class="tok-var">$resultColumnTypeResolver</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">transactions</span> = <span class="tok-kw">new</span> <span class="tok-id">ShadowTransactions</span>(<span class="tok-var">$store</span>, <span class="tok-var">$registry</span>);</span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    }</span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">114</span><span class="tok-com">     * Writes a mutation into the shadow, and remembers the identity it produced.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">115</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">116</span><span class="tok-com">     * @param ShadowMutation $mutation Mutation to write</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">117</span><span class="tok-com">     * @param ResultSet $resultSet What the rewritten statement read back</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">118</span><span class="tok-com">     * @param string $sql Statement being simulated, for the refusal</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">119</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">120</span><span class="tok-com">     * @return MutationImpact What the statement came to</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">121</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">122</span><span class="tok-com">     * @throws DatabaseException When the shadow refuses the statement</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     * Return the virtual row store.</span></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">124</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">applyShadow</span>(<span class="tok-id">ShadowMutation</span> <span class="tok-var">$mutation</span>, <span class="tok-id">ResultSet</span> <span class="tok-var">$resultSet</span>, <span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-id">MutationImpact</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">store</span>(): <span class="tok-id">ShadowStore</span></span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">126</span>        <span class="tok-var">$impact</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">shadowApplication</span>-&gt;<span class="tok-id">apply</span>(<span class="tok-var">$mutation</span>, <span class="tok-var">$resultSet</span>, <span class="tok-var">$sql</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">127</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lastInsertId</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">shadowApplication</span>-&gt;<span class="tok-id">lastInsertIdOf</span>(<span class="tok-var">$mutation</span>, <span class="tok-var">$impact</span>) ?? <span class="tok-var">$this</span>-&gt;<span class="tok-id">lastInsertId</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">128</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">129</span>        <span class="tok-kw">return</span> <span class="tok-var">$impact</span>;</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">store</span>;</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>    }</span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a></span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">133</span><span class="tok-com">     * Whether the plan&#039;s SQL should be executed against the database.</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     * Return the virtual table catalog.</span></span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">135</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">shouldExecute</span>(<span class="tok-id">RewritePlan</span> <span class="tok-var">$plan</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">registry</span>(): <span class="tok-id">TableDefinitionRegistry</span></span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">137</span>        <span class="tok-kw">return</span> <span class="tok-var">$plan</span>-&gt;<span class="tok-id">kind</span>() !== <span class="tok-id">QueryKind</span>::<span class="tok-id">SKIPPED</span>;</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">registry</span>;</span>
+<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>    }</span>
+<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a></span>
+<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">141</span><span class="tok-com">     * Whether the plan requires post-execution processing via processExecutedStatement().</span></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-com">     * Return the reflected view definitions.</span></span>
+<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">143</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">needsPostProcessing</span>(<span class="tok-id">RewritePlan</span> <span class="tok-var">$plan</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">views</span>(): <span class="tok-id">ViewDefinitionSet</span></span>
+<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">145</span>        <span class="tok-kw">return</span> <span class="tok-var">$plan</span>-&gt;<span class="tok-id">kind</span>() === <span class="tok-id">QueryKind</span>::<span class="tok-id">WRITE_SIMULATED</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">146</span>            || <span class="tok-var">$plan</span>-&gt;<span class="tok-id">kind</span>() === <span class="tok-id">QueryKind</span>::<span class="tok-id">DDL_SIMULATED</span>;</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">views</span>;</span>
+<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>    }</span>
+<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a></span>
+<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">150</span><span class="tok-com">     * Create an empty write-simulated result for skipped writes.</span></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a><span class="tok-com">     * Remember a generated identity, retaining the previous one for other writes.</span></span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">152</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">createEmptyWriteResult</span>(): <span class="tok-id">ExecuteResult</span></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">rememberInsertId</span>(?<span class="tok-id">string</span> <span class="tok-var">$identity</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">154</span>        <span class="tok-kw">return</span> <span class="tok-id">GenericExecuteResult</span>::<span class="tok-id">fromBufferedRows</span>([], <span class="tok-id">QueryKind</span>::<span class="tok-id">WRITE_SIMULATED</span>);</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lastInsertId</span> = <span class="tok-var">$identity</span> ?? <span class="tok-var">$this</span>-&gt;<span class="tok-id">lastInsertId</span>;</span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>    }</span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a></span>
+<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a><span class="tok-com">     * Enable ZTD behavior for this session.</span></span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">enable</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a>    {</span>
+<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">enabled</span> = <span class="tok-id">true</span>;</span>
+<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>    }</span>
+<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a></span>
+<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a><span class="tok-com">     * Disable ZTD behavior for this session.</span></span>
+<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">disable</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>    {</span>
+<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">enabled</span> = <span class="tok-id">false</span>;</span>
+<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>    }</span>
+<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a></span>
+<span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L93" data-diff="same"><a class="ln" href="#L93">93</a><span class="tok-com">     * Check whether ZTD mode is enabled.</span></span>
+<span class="src-line" id="L94" data-diff="same"><a class="ln" href="#L94">94</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L95" data-diff="same"><a class="ln" href="#L95">95</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">isEnabled</span>(): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L96" data-diff="same"><a class="ln" href="#L96">96</a>    {</span>
+<span class="src-line" id="L97" data-diff="same"><a class="ln" href="#L97">97</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">enabled</span>;</span>
+<span class="src-line" id="L98" data-diff="same"><a class="ln" href="#L98">98</a>    }</span>
+<span class="src-line" id="L99" data-diff="same"><a class="ln" href="#L99">99</a></span>
+<span class="src-line" id="L100" data-diff="same"><a class="ln" href="#L100">100</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L101" data-diff="same"><a class="ln" href="#L101">101</a><span class="tok-com">     * Provides the target used to apply transaction statements to shadow state.</span></span>
+<span class="src-line" id="L102" data-diff="same"><a class="ln" href="#L102">102</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L103" data-diff="same"><a class="ln" href="#L103">103</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">transactions</span>(): <span class="tok-id">TransactionTarget</span></span>
+<span class="src-line" id="L104" data-diff="same"><a class="ln" href="#L104">104</a>    {</span>
+<span class="src-line" id="L105" data-diff="same"><a class="ln" href="#L105">105</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">transactions</span>;</span>
+<span class="src-line" id="L106" data-diff="same"><a class="ln" href="#L106">106</a>    }</span>
+<span class="src-line" id="L107" data-diff="same"><a class="ln" href="#L107">107</a></span>
+<span class="src-line" id="L108" data-diff="same"><a class="ln" href="#L108">108</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L109" data-diff="same"><a class="ln" href="#L109">109</a><span class="tok-com">     * Starts a transaction over the shadow state.</span></span>
+<span class="src-line" id="L110" data-diff="same"><a class="ln" href="#L110">110</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L111" data-diff="same"><a class="ln" href="#L111">111</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">beginTransaction</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L112" data-diff="same"><a class="ln" href="#L112">112</a>    {</span>
+<span class="src-line" id="L113" data-diff="same"><a class="ln" href="#L113">113</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">transactions</span>-&gt;<span class="tok-id">begin</span>();</span>
+<span class="src-line" id="L114" data-diff="same"><a class="ln" href="#L114">114</a>    }</span>
+<span class="src-line" id="L115" data-diff="same"><a class="ln" href="#L115">115</a></span>
+<span class="src-line" id="L116" data-diff="same"><a class="ln" href="#L116">116</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L117" data-diff="same"><a class="ln" href="#L117">117</a><span class="tok-com">     * Keeps the current shadow state and discards transactional snapshots.</span></span>
+<span class="src-line" id="L118" data-diff="same"><a class="ln" href="#L118">118</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L119" data-diff="same"><a class="ln" href="#L119">119</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">commitTransaction</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L120" data-diff="same"><a class="ln" href="#L120">120</a>    {</span>
+<span class="src-line" id="L121" data-diff="same"><a class="ln" href="#L121">121</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">transactions</span>-&gt;<span class="tok-id">commit</span>();</span>
+<span class="src-line" id="L122" data-diff="same"><a class="ln" href="#L122">122</a>    }</span>
+<span class="src-line" id="L123" data-diff="same"><a class="ln" href="#L123">123</a></span>
+<span class="src-line" id="L124" data-diff="same"><a class="ln" href="#L124">124</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L125" data-diff="same"><a class="ln" href="#L125">125</a><span class="tok-com">     * Restores the shadow state captured when the transaction began.</span></span>
+<span class="src-line" id="L126" data-diff="same"><a class="ln" href="#L126">126</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L127" data-diff="same"><a class="ln" href="#L127">127</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">rollBackTransaction</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L128" data-diff="same"><a class="ln" href="#L128">128</a>    {</span>
+<span class="src-line" id="L129" data-diff="same"><a class="ln" href="#L129">129</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">transactions</span>-&gt;<span class="tok-id">rollBack</span>();</span>
+<span class="src-line" id="L130" data-diff="same"><a class="ln" href="#L130">130</a>    }</span>
+<span class="src-line" id="L131" data-diff="same"><a class="ln" href="#L131">131</a></span>
+<span class="src-line" id="L132" data-diff="same"><a class="ln" href="#L132">132</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L133" data-diff="same"><a class="ln" href="#L133">133</a><span class="tok-com">     * Applies a parsed transaction statement to this session&#039;s shadow state.</span></span>
+<span class="src-line" id="L134" data-diff="same"><a class="ln" href="#L134">134</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L135" data-diff="same"><a class="ln" href="#L135">135</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">applyTransactionStatement</span>(<span class="tok-id">TransactionStatement</span> <span class="tok-var">$statement</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L136" data-diff="same"><a class="ln" href="#L136">136</a>    {</span>
+<span class="src-line" id="L137" data-diff="same"><a class="ln" href="#L137">137</a>        <span class="tok-var">$statement</span>-&gt;<span class="tok-id">apply</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">transactions</span>);</span>
+<span class="src-line" id="L138" data-diff="same"><a class="ln" href="#L138">138</a>    }</span>
+<span class="src-line" id="L139" data-diff="same"><a class="ln" href="#L139">139</a></span>
+<span class="src-line" id="L140" data-diff="same"><a class="ln" href="#L140">140</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">222</span><span class="tok-com">     * Answers the transaction statement a statement is, if it is one.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">223</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">224</span><span class="tok-com">     * @param string $sql Statement as it was written</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">225</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">226</span><span class="tok-com">     * @return TransactionStatement|null What it does to the transaction, or null when it is not one</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">227</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">228</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">transactionStatement</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): ?<span class="tok-id">TransactionStatement</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">229</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">230</span>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">rewriter</span>-&gt;<span class="tok-id">transactionStatement</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">231</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">232</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">233</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L141" data-diff="same"><a class="ln" href="#L141">141</a><span class="tok-com">     * Answers the identity the last simulated insert would have been given.</span></span>
+<span class="src-line" id="L142" data-diff="same"><a class="ln" href="#L142">142</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L143" data-diff="same"><a class="ln" href="#L143">143</a><span class="tok-com">     * @return string|false The identity, or false when nothing has been inserted</span></span>
+<span class="src-line" id="L144" data-diff="same"><a class="ln" href="#L144">144</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L145" data-diff="same"><a class="ln" href="#L145">145</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lastInsertId</span>(): <span class="tok-id">string</span>|<span class="tok-id">false</span></span>
+<span class="src-line" id="L146" data-diff="same"><a class="ln" href="#L146">146</a>    {</span>
+<span class="src-line" id="L147" data-diff="same"><a class="ln" href="#L147">147</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">lastInsertId</span> ?? <span class="tok-id">false</span>;</span>
+<span class="src-line" id="L148" data-diff="same"><a class="ln" href="#L148">148</a>    }</span>
+<span class="src-line" id="L149" data-diff="same"><a class="ln" href="#L149">149</a></span>
+<span class="src-line" id="L150" data-diff="same"><a class="ln" href="#L150">150</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L151" data-diff="same"><a class="ln" href="#L151">151</a><span class="tok-com">     * Answers what a table was described as, where something described it.</span></span>
+<span class="src-line" id="L152" data-diff="same"><a class="ln" href="#L152">152</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L153" data-diff="same"><a class="ln" href="#L153">153</a><span class="tok-com">     * @param string $tableName Table to answer for</span></span>
+<span class="src-line" id="L154" data-diff="same"><a class="ln" href="#L154">154</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L155" data-diff="same"><a class="ln" href="#L155">155</a><span class="tok-com">     * @return TableDefinition|null Its description, or null when nothing has described it</span></span>
+<span class="src-line" id="L156" data-diff="same"><a class="ln" href="#L156">156</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L157" data-diff="same"><a class="ln" href="#L157">157</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">tableDefinition</span>(<span class="tok-id">string</span> <span class="tok-var">$tableName</span>): ?<span class="tok-id">TableDefinition</span></span>
+<span class="src-line" id="L158" data-diff="same"><a class="ln" href="#L158">158</a>    {</span>
+<span class="src-line" id="L159" data-diff="same"><a class="ln" href="#L159">159</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">registry</span>-&gt;<span class="tok-id">get</span>(<span class="tok-var">$tableName</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">253</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">254</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">255</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">256</span><span class="tok-com">     * Answers how this dialect writes COPY, where it writes it at all.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">257</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">258</span><span class="tok-com">     * @return CopySupport|null What the dialect supports, or null where it has no COPY</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">259</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">260</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">copySupport</span>(): ?<span class="tok-id">CopySupport</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">261</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">262</span>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">copySupport</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">263</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">264</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">265</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">266</span><span class="tok-com">     * Answers what a COPY statement is written against, where everything it needs is known.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">267</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">268</span><span class="tok-com">     * @param string $relation Relation as the statement named it</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">269</span><span class="tok-com">     * @param string|null $fields Column list as the statement wrote it, or null for every column</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">270</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">271</span><span class="tok-com">     * @return CopyTarget|null The target, or null when the dialect has no COPY or the table is undescribed</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">272</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">273</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">copyTarget</span>(<span class="tok-id">string</span> <span class="tok-var">$relation</span>, ?<span class="tok-id">string</span> <span class="tok-var">$fields</span>): ?<span class="tok-id">CopyTarget</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">274</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">275</span>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">copySupport</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">276</span>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">277</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">278</span>        <span class="tok-var">$definition</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">registry</span>-&gt;<span class="tok-id">get</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">copySupport</span>-&gt;<span class="tok-id">tableName</span>(<span class="tok-var">$relation</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">279</span>        <span class="tok-kw">if</span> (<span class="tok-var">$definition</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">280</span>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">281</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">282</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">283</span>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">copySupport</span>-&gt;<span class="tok-id">target</span>(<span class="tok-var">$relation</span>, <span class="tok-var">$fields</span>, <span class="tok-var">$definition</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">284</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">285</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">286</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">287</span><span class="tok-com">     * Answers how this dialect writes bound parameters, where it needs to be told.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">288</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">289</span><span class="tok-com">     * @return ParameterBindingCompiler|null The compiler, or null where the driver binds them itself</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">290</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">291</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">parameterBindingCompiler</span>(): ?<span class="tok-id">ParameterBindingCompiler</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">292</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">293</span>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">parameterBindingCompiler</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">294</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">295</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">296</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">297</span><span class="tok-com">     * Answers how this dialect reads the column types a driver reports.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">298</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">299</span><span class="tok-com">     * @return ResultColumnTypeResolver The resolver</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">300</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">301</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">resultColumnTypeResolver</span>(): <span class="tok-id">ResultColumnTypeResolver</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">302</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">303</span>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultColumnTypeResolver</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">304</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">305</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">306</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">307</span><span class="tok-com">     * Rewrite SQL using the configured rewriter.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">308</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">309</span><span class="tok-com">     * Catches exceptions from the rewriter and handles them based on config.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">310</span><span class="tok-com">     * For ignore/notice modes, returns a passthrough plan (READ with original SQL).</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">311</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">312</span><span class="tok-com">     * @throws DatabaseException When config is Exception mode and rewrite fails.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">313</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">314</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">rewrite</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-id">RewritePlan</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">315</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">316</span>        <span class="tok-kw">try</span> {</span>
+<span class="src-line" data-diff="removed"><span class="ln">317</span>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">rewriter</span>-&gt;<span class="tok-id">rewrite</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">318</span>        } <span class="tok-kw">catch</span> (<span class="tok-id">UnsupportedSqlException</span> <span class="tok-var">$e</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">319</span>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">refusals</span>-&gt;<span class="tok-id">forUnsupported</span>(<span class="tok-var">$e</span>, <span class="tok-var">$sql</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">320</span>        } <span class="tok-kw">catch</span> (<span class="tok-id">UnknownSchemaException</span> <span class="tok-var">$e</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">321</span>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">refusals</span>-&gt;<span class="tok-id">forUnknownSchema</span>(<span class="tok-var">$e</span>, <span class="tok-var">$sql</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">rewriter</span>-&gt;<span class="tok-id">emptyResultSelect</span>());</span>
+<span class="src-line" data-diff="removed"><span class="ln">322</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">323</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">324</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">325</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">326</span><span class="tok-com">     * @return list&lt;string&gt;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">327</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">328</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">splitStatements</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">329</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">330</span>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">rewriter</span>-&gt;<span class="tok-id">splitStatements</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">331</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">332</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">333</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">334</span><span class="tok-com">     * Process an already-executed statement based on the rewrite plan.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">335</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">336</span><span class="tok-com">     * This method handles post-execution logic like shadow application for write queries.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">337</span><span class="tok-com">     * Use this when you need to control statement preparation and execution externally.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">338</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">339</span><span class="tok-com">     * @param RewritePlan $plan The rewrite plan from rewrite().</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">340</span><span class="tok-com">     * @param StatementInterface $statement The already-executed statement.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">341</span><span class="tok-com">     * @return ExecuteResult The execution result.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">342</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">343</span><span class="tok-com">     * @throws DatabaseException When the shadow refuses the statement</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">344</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">345</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">processExecutedStatement</span>(<span class="tok-id">RewritePlan</span> <span class="tok-var">$plan</span>, <span class="tok-id">StatementInterface</span> <span class="tok-var">$statement</span>): <span class="tok-id">ExecuteResult</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">346</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">347</span>        <span class="tok-kw">if</span> (<span class="tok-var">$plan</span>-&gt;<span class="tok-id">kind</span>() === <span class="tok-id">QueryKind</span>::<span class="tok-id">READ</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">348</span>            <span class="tok-kw">return</span> <span class="tok-id">GenericExecuteResult</span>::<span class="tok-id">fromStatement</span>(<span class="tok-var">$statement</span>, <span class="tok-id">QueryKind</span>::<span class="tok-id">READ</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">349</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">350</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">351</span>        <span class="tok-var">$resultSet</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultSelectRunner</span>-&gt;<span class="tok-id">readResultSet</span>(<span class="tok-var">$statement</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultColumnTypeResolver</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">352</span>        <span class="tok-var">$rows</span> = <span class="tok-var">$resultSet</span>-&gt;<span class="tok-id">rows</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">353</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">354</span>        <span class="tok-var">$mutation</span> = <span class="tok-var">$plan</span>-&gt;<span class="tok-id">requireMutation</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">355</span>        <span class="tok-var">$impact</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">applyShadow</span>(<span class="tok-var">$mutation</span>, <span class="tok-var">$resultSet</span>, <span class="tok-var">$plan</span>-&gt;<span class="tok-id">sql</span>());</span>
+<span class="src-line" data-diff="removed"><span class="ln">356</span>        <span class="tok-var">$returningProjection</span> = <span class="tok-var">$plan</span>-&gt;<span class="tok-id">returningProjection</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">357</span>        <span class="tok-var">$resultRows</span> = <span class="tok-var">$returningProjection</span> !== <span class="tok-id">null</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">358</span>            ? <span class="tok-var">$returningProjection</span>-&gt;<span class="tok-id">project</span>(<span class="tok-var">$impact</span>-&gt;<span class="tok-id">returningRows</span>())</span>
+<span class="src-line" data-diff="removed"><span class="ln">359</span>            : <span class="tok-var">$rows</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">360</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">361</span>        <span class="tok-kw">return</span> <span class="tok-id">GenericExecuteResult</span>::<span class="tok-id">fromBufferedRows</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">362</span>            <span class="tok-var">$resultRows</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">363</span>            <span class="tok-id">QueryKind</span>::<span class="tok-id">WRITE_SIMULATED</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">364</span>            <span class="tok-var">$impact</span>-&gt;<span class="tok-id">affectedRowCount</span>(<span class="tok-var">$plan</span>-&gt;<span class="tok-id">affectedRowsMode</span>()),</span>
+<span class="src-line" data-diff="removed"><span class="ln">365</span>            <span class="tok-var">$returningProjection</span> !== <span class="tok-id">null</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">366</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">367</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">368</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">369</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">370</span><span class="tok-com">     * Run result-select query and apply shadow mutation.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">371</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">372</span><span class="tok-com">     * This method executes a result-select query using the provided executor,</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">373</span><span class="tok-com">     * then applies the mutation from the rewrite plan to the shadow store.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">374</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">375</span><span class="tok-com">     * @param RewritePlan $plan The rewrite plan containing the SQL and mutation.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">376</span><span class="tok-com">     * @param callable(string): (StatementInterface|false) $executor Function to execute SQL.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">377</span><span class="tok-com">     * @return array&lt;int, Row&gt; The affected rows.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">378</span><span class="tok-com">     * @throws UnsupportedSqlException When the plan carries no mutation to write.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">379</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">380</span><span class="tok-com">     * @throws DatabaseException When the shadow refuses the statement</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">381</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">382</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">runResultSelectAndApplyShadow</span>(<span class="tok-id">RewritePlan</span> <span class="tok-var">$plan</span>, <span class="tok-kw">callable</span> <span class="tok-var">$executor</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">383</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">384</span>        <span class="tok-var">$mutation</span> = <span class="tok-var">$plan</span>-&gt;<span class="tok-id">requireMutation</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">385</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">386</span>        <span class="tok-var">$resultSet</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultSelectRunner</span>-&gt;<span class="tok-id">runResultSet</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">387</span>            <span class="tok-var">$plan</span>-&gt;<span class="tok-id">sql</span>(),</span>
+<span class="src-line" data-diff="removed"><span class="ln">388</span>            <span class="tok-var">$executor</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">389</span>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultColumnTypeResolver</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">390</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">391</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">applyShadow</span>(<span class="tok-var">$mutation</span>, <span class="tok-var">$resultSet</span>, <span class="tok-var">$plan</span>-&gt;<span class="tok-id">sql</span>());</span>
+<span class="src-line" data-diff="removed"><span class="ln">392</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">393</span>        <span class="tok-kw">return</span> <span class="tok-var">$resultSet</span>-&gt;<span class="tok-id">rows</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">394</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">395</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">396</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">397</span><span class="tok-com">     * Execute an exec-style statement with ZTD rewriting and shadow application.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">398</span><span class="tok-com">     *</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">399</span><span class="tok-com">     * @param string $sql The original SQL statement.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">400</span><span class="tok-com">     * @return int|false The number of affected rows, or false on failure.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">401</span><span class="tok-com">     * @throws DatabaseException When config is Exception mode and rewrite fails.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">402</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">403</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">execStatement</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-id">int</span>|<span class="tok-id">false</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">404</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">405</span>        <span class="tok-var">$plan</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">rewrite</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">406</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">407</span>        <span class="tok-kw">if</span> (<span class="tok-var">$plan</span>-&gt;<span class="tok-id">kind</span>() === <span class="tok-id">QueryKind</span>::<span class="tok-id">SKIPPED</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">408</span>            <span class="tok-kw">return</span> <span class="tok-num">0</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">409</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">410</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">411</span>        <span class="tok-kw">if</span> (<span class="tok-var">$plan</span>-&gt;<span class="tok-id">kind</span>() === <span class="tok-id">QueryKind</span>::<span class="tok-id">READ</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">412</span>            <span class="tok-var">$stmt</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">connection</span>-&gt;<span class="tok-id">query</span>(<span class="tok-var">$plan</span>-&gt;<span class="tok-id">sql</span>());</span>
+<span class="src-line" data-diff="removed"><span class="ln">413</span>            <span class="tok-kw">if</span> (<span class="tok-var">$stmt</span> === <span class="tok-id">false</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">414</span>                <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">415</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">416</span>            <span class="tok-kw">return</span> <span class="tok-var">$stmt</span>-&gt;<span class="tok-id">rowCount</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">417</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">418</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">419</span>        <span class="tok-var">$mutation</span> = <span class="tok-var">$plan</span>-&gt;<span class="tok-id">requireMutation</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">420</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">421</span>        <span class="tok-var">$resultSet</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultSelectRunner</span>-&gt;<span class="tok-id">runResultSet</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">422</span>            <span class="tok-var">$plan</span>-&gt;<span class="tok-id">sql</span>(),</span>
+<span class="src-line" data-diff="removed"><span class="ln">423</span>            <span class="tok-kw">fn</span> (<span class="tok-id">string</span> <span class="tok-var">$s</span>) =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">connection</span>-&gt;<span class="tok-id">query</span>(<span class="tok-var">$s</span>),</span>
+<span class="src-line" data-diff="removed"><span class="ln">424</span>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultColumnTypeResolver</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">425</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">426</span>        <span class="tok-var">$impact</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">applyShadow</span>(<span class="tok-var">$mutation</span>, <span class="tok-var">$resultSet</span>, <span class="tok-var">$sql</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">427</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">428</span>        <span class="tok-kw">return</span> <span class="tok-var">$impact</span>-&gt;<span class="tok-id">affectedRowCount</span>(<span class="tok-var">$plan</span>-&gt;<span class="tok-id">affectedRowsMode</span>());</span>
+<span class="src-line" id="L160" data-diff="same"><a class="ln" href="#L160">160</a>    }</span>
+<span class="src-line" id="L161" data-diff="same"><a class="ln" href="#L161">161</a>}</span>
+<span class="src-line" id="L162" data-diff="same"><a class="ln" href="#L162">162</a></span>
+</code></pre>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>

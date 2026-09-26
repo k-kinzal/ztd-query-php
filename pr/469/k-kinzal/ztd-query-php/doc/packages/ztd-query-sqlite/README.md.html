@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZTD Query SQLite — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/469/k-kinzal/ztd-query-php/doc/packages/ztd-query-sqlite/README.md.html">
+<meta name="description" content="ZTD Query SQLite, a document of the k-kinzal/ztd-query-php package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="ZTD Query SQLite — ZTD Query PHP">
+<meta property="og:description" content="ZTD Query SQLite, a document of the k-kinzal/ztd-query-php package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/469/k-kinzal/ztd-query-php/doc/packages/ztd-query-sqlite/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/469/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">packages/ztd-query-sqlite/README.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 3a6c7e361a to working tree">3a6c7e361a <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 3a6c7e361a and working tree." data-off="This page documents what 3a6c7e361a had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>ZTD Query SQLite</h1><div class="symbol-meta"><span class="source-link">packages/ztd-query-sqlite/README.md</span></div></div>
+<section class="readme prose" data-diff="modified"><div class="doc-block" data-diff="same"><h2>ZTD Query SQLite</h2>
+</div><div class="doc-block" data-diff="same"><p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-sqlite/"><span class="md-target" title="https://img.shields.io/badge/docs-ztd--query--sqlite-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+</div><div class="doc-block" data-diff="same"><p>ZTD Query is a Zero Table Dependency testing library for PHP: it runs the SQL of an application on a real database engine without reading or writing any physical table. Before a query reaches the database, every table it references is replaced by a CTE holding the rows the test has written, and every INSERT, UPDATE, and DELETE is turned into a SELECT whose result is kept in the session, so later queries see the change. Tests therefore need no migrations, seeding, or cleanup, and they can run in parallel against one empty database. This package is the SQLite platform: it reads SQLite statements, rewrites them, and keeps track of the tables the session defines. Use it through the PDO adapter.</p>
+</div><div class="doc-block" data-diff="same"><h3>Requirements</h3>
+</div><div class="doc-block" data-diff="same"><ul><li>PHP 8.1+</li><li>SQLite 3.x</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>Installation</h3>
+</div><div class="doc-block" data-diff="same"><p>With PDO:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>composer require --dev k-kinzal/ztd-query-pdo-adapter k-kinzal/ztd-query-sqlite</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>Usage</h3>
+</div><div class="doc-block" data-diff="same"><p><code>ZtdPdo</code> extends <code>PDO</code>, so it can be passed wherever the application expects a PDO connection. Tables are created and filled through the same connection; they exist only in the session.</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">PDO</span>;
+<span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
+
+<span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">UserQueryTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span>
+{
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSelectsActiveUsers</span>(): <span class="tok-id">void</span>
+    {
+        <span class="tok-var">$pdo</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdPdo</span>(<span class="tok-str">&#039;sqlite::memory:&#039;</span>);
+        <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, active BOOLEAN NOT NULL)&#039;</span>);
+        <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&quot;INSERT INTO users (id, name, active) VALUES (1, &#039;Alice&#039;, TRUE), (2, &#039;Bob&#039;, FALSE)&quot;</span>);
+
+        <span class="tok-var">$statement</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-str">&#039;SELECT name FROM users WHERE active ORDER BY id&#039;</span>);
+        <span class="tok-var">$statement</span>-&gt;<span class="tok-id">execute</span>();
+
+        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;Alice&#039;</span>], <span class="tok-var">$statement</span>-&gt;<span class="tok-id">fetchAll</span>(<span class="tok-id">PDO</span>::<span class="tok-id">FETCH_COLUMN</span>));
+    }
+}</code></pre>
+</div><div class="doc-block" data-diff="same"><p><code>ZtdPdo::fromPdo($pdo)</code> wraps an existing connection instead of opening a new one, and <code>disableZtd()</code> and <code>enableZtd()</code> switch between the physical database and the session.</p>
+</div><div class="doc-block" data-diff="added"><h3>Platform injection</h3>
+</div><div class="doc-block" data-diff="added"><p>The database package implements the core <code>ZtdQuery\Platform</code> contract. Pass a platform when you need explicit dependency injection; otherwise the adapter selects one from the native driver.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Sqlite\SqlitePlatform</span>;
+
+<span class="tok-var">$native</span> = <span class="tok-kw">new</span> <span class="tok-id">PDO</span>(<span class="tok-str">&#039;sqlite::memory:&#039;</span>);
+<span class="tok-var">$pdo</span> = <span class="tok-id">ZtdPdo</span>::<span class="tok-id">fromPdo</span>(<span class="tok-var">$native</span>, <span class="tok-id">platform</span>: <span class="tok-kw">new</span> <span class="tok-id">SqlitePlatform</span>());</code></pre>
+</div><div class="doc-block" data-diff="added"><p>The platform provides schema reflection, SQL rewriting, parameter compilation, and result metadata interpretation. Core creates a separate <code>Session</code> for each wrapper; a platform instance can be reused without sharing virtual tables or transactions.</p>
+</div><div class="doc-block" data-diff="same"><h3>Configuration</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnknownSchemaBehavior</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnsupportedSqlBehavior</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\ZtdConfig</span>;
+
+<span class="tok-var">$config</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdConfig</span>(
+    <span class="tok-com">// Unsupported statements: Exception (default), Notice, or Ignore</span>
+    <span class="tok-id">unsupportedBehavior</span>: <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Exception</span>,
+
+    <span class="tok-com">// Tables the session does not know: Passthrough to the database (default), or Exception</span>
+    <span class="tok-id">unknownSchemaBehavior</span>: <span class="tok-id">UnknownSchemaBehavior</span>::<span class="tok-id">Exception</span>,
+
+    <span class="tok-com">// Per-statement overrides of unsupportedBehavior; the first matching rule wins</span>
+    <span class="tok-id">behaviorRules</span>: [
+        <span class="tok-str">&#039;CREATE INDEX&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,       <span class="tok-com">// case-insensitive prefix</span>
+        <span class="tok-str">&#039;/^SET\s+/i&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Notice</span>,          <span class="tok-com">// regular expression</span>
+    ],
+);
+
+<span class="tok-var">$pdo</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdPdo</span>(<span class="tok-var">$dsn</span>, <span class="tok-var">$user</span>, <span class="tok-var">$password</span>, <span class="tok-id">config</span>: <span class="tok-var">$config</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p><code>Ignore</code> skips the statement, <code>Notice</code> skips it and raises a PHP notice, and <code>Exception</code> throws an exception.</p>
+</div><div class="doc-block" data-diff="same"><h3>SQL Support</h3>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Statement</th><th>SQLite</th></tr></thead><tbody><tr><td>SELECT, including joins, grouping, set operations, subqueries, CTEs, recursive CTEs, and window functions</td><td>Supported</td></tr><tr><td>INSERT with VALUES or SELECT</td><td>Supported</td></tr><tr><td>Upsert</td><td><code>ON CONFLICT</code>, <code>INSERT OR ...</code>, <code>REPLACE</code></td></tr><tr><td>UPDATE and DELETE</td><td>Supported, including <code>UPDATE ... FROM</code></td></tr><tr><td><code>RETURNING</code></td><td>Supported</td></tr><tr><td>TRUNCATE</td><td>–</td></tr><tr><td>CREATE TABLE, DROP TABLE</td><td>Supported</td></tr><tr><td>ALTER TABLE</td><td>Supported</td></tr><tr><td>BEGIN, COMMIT, ROLLBACK</td><td>Applied to the session: ROLLBACK discards the writes made since BEGIN</td></tr><tr><td>Views, indexes, routines, triggers, SET, and server or user administration</td><td>Unsupported</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>Unsupported statements are handled as configured by <code>unsupportedBehavior</code>. The full specification is in <a href="../../../../../k-kinzal/ztd-query-php/doc/packages/ztd-query-sqlite/docs/spec.md.html">docs/spec.md</a>.</p>
+</div><div class="doc-block" data-diff="same"><h3>License</h3>
+</div><div class="doc-block" data-diff="same"><p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../assets/app.js" defer></script>
+</body>
+</html>
