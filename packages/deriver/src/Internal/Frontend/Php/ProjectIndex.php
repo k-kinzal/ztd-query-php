@@ -9,6 +9,7 @@ use Deriver\Api\Project\SourceFile;
 use Deriver\Api\Project\TargetProfile;
 use Deriver\Api\Reference\SourceRef;
 use Deriver\Api\Result\Frontier;
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Internal\IR\CallableIR;
 use Deriver\Internal\IR\ClassDeclaration;
 use Deriver\Internal\IR\Program;
@@ -133,7 +134,7 @@ final class ProjectIndex implements Program
      */
     public function register(CallableSource $source): void
     {
-        $key = strtolower($source->symbol);
+        $key = (new CallableIdentity())->key($source->symbol);
         if (isset($this->declarations[$key])) {
             $this->issues[] = new Frontier('INVALID_PROGRAM', $this->builder($source->path)->source($source->node), 'duplicate:' . $source->symbol);
             return;
@@ -159,7 +160,7 @@ final class ProjectIndex implements Program
     #[Override]
     public function callable(string $symbol): ?CallableIR
     {
-        $key = strtolower(ltrim($symbol, '\\'));
+        $key = (new CallableIdentity())->key($symbol);
         if (isset($this->graphs[$key])) {
             return $this->graphs[$key];
         }
@@ -180,11 +181,11 @@ final class ProjectIndex implements Program
     public function registerClosure(Expr\Closure|Expr\ArrowFunction $node, string $path, string $className): string
     {
         $symbol = 'closure:' . $path . ':' . $node->getStartFilePos() . ($className === '' ? '' : ':scope:' . $className);
-        if (!isset($this->declarations[strtolower($symbol)])) {
-            $this->register(new CallableSource($symbol, $node, $path, $className, $this->declarations[strtolower('script:' . $path)]->strict ?? false));
+        if (!isset($this->declarations[(new CallableIdentity())->key($symbol)])) {
+            $this->register(new CallableSource($symbol, $node, $path, $className, $this->declarations['script:' . $path]->strict ?? false));
         }
         if ($this->capturedClosures !== null) {
-            $this->capturedClosures[strtolower($symbol)] = $this->declarations[strtolower($symbol)];
+            $this->capturedClosures[(new CallableIdentity())->key($symbol)] = $this->declarations[(new CallableIdentity())->key($symbol)];
         }
         return $symbol;
     }

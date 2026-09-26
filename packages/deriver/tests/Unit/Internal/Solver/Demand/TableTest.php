@@ -44,6 +44,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
+#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Program::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
@@ -122,5 +123,15 @@ final class TableTest extends TestCase
         self::assertFalse($table->ready($cell));
         $cell->status = 'frontier';
         self::assertTrue($table->ready($cell));
+    }
+    public function testContextsKeepsCaseSensitiveOwnersSeparateFromNamedPhpAliases(): void
+    {
+        $table = new \Deriver\Internal\Solver\Demand\Table();
+        $table->owners = ['target' => 1,'target:default:X' => 2,'target:default:x' => 3,'closure:A.php:31' => 4,'closure:a.php:31' => 5];
+        self::assertSame(1, $table->contexts('\\TARGET'));
+        self::assertSame(2, $table->contexts('target:default:X'));
+        self::assertSame(3, $table->contexts('target:default:x'));
+        self::assertSame(4, $table->contexts('closure:A.php:31'));
+        self::assertSame(5, $table->contexts('closure:a.php:31'));
     }
 }

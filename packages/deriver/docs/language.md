@@ -102,3 +102,7 @@ The target syntax check rejects unparenthesized dereferencing of `new` expressio
 ## Object defaults
 
 Objects created by parameter defaults use the scalar coercion mode of the declaring file. This also applies to method, closure, arrow function, and promoted constructor parameter defaults. Supplying an argument skips the default expression; each omitted default allocates a fresh object. The [initializer corpus](../tests/Differential/InitializerSemanticsTest.php) compares these cases with PHP 8.3. See the [PHP argument manual](https://www.php.net/manual/en/functions.arguments.php) for object default syntax.
+
+### Names and captured paths
+
+Function and method selectors follow PHP's case-insensitive names and accept a leading namespace separator. Captured source paths remain case-sensitive: `A.php` and `a.php` identify separate inputs even when the host filesystem is case-insensitive. Constants, properties, and parameter defaults retain their case-sensitive names, so `$X = 1` and `$x = 2` keep distinct defaults when a call omits both arguments. The [identity corpus](../tests/Differential/CallableIdentitySemanticsTest.php) checks these distinctions against PHP 8.3; [integration tests](../tests/Integration/CallableIdentityTest.php) cover separate files, cached closures, query selectors, and registered models. See the [PHP function naming rules](https://www.php.net/manual/en/functions.user-defined.php).

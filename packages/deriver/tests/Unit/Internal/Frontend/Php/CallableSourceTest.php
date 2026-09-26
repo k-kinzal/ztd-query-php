@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
+#[UsesClass(\Deriver\Api\AnalysisSession::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
 #[UsesClass(\Deriver\Api\Execution\SourceLimits::class)]
 #[UsesClass(\Deriver\Api\Project\Configuration::class)]
@@ -58,6 +59,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\IR\Argument::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
+#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Parameter::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]

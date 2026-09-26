@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Internal\Frontend\Php;
 
+use Deriver\Api\Project\ProjectInput;
+use Deriver\Api\Project\SourceFile;
+use Deriver\Api\Project\TargetProfile;
+use Deriver\Internal\Frontend\Php\ProjectIndex;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(\Deriver\Internal\Frontend\Php\ProjectIndex::class)]
+#[CoversClass(ProjectIndex::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\Api\AnalysisSession::class)]
 #[UsesClass(\Deriver\Api\Execution\ResourceLimits::class)]
@@ -18,10 +22,10 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Api\InvalidInputException::class)]
 #[UsesClass(\Deriver\Api\Project\Configuration::class)]
 #[UsesClass(\Deriver\Api\Project\EntryPoint::class)]
-#[UsesClass(\Deriver\Api\Project\ProjectInput::class)]
+#[UsesClass(ProjectInput::class)]
 #[UsesClass(\Deriver\Api\Project\ProjectSnapshot::class)]
-#[UsesClass(\Deriver\Api\Project\SourceFile::class)]
-#[UsesClass(\Deriver\Api\Project\TargetProfile::class)]
+#[UsesClass(SourceFile::class)]
+#[UsesClass(TargetProfile::class)]
 #[UsesClass(\Deriver\Api\Query\Budget::class)]
 #[UsesClass(\Deriver\Api\Query\Query::class)]
 #[UsesClass(\Deriver\Api\Query\QueryScope::class)]
@@ -62,6 +66,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
+#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
+#[UsesClass(\Deriver\Internal\IR\ClassConstant::class)]
 #[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Program::class)]
@@ -198,8 +204,123 @@ final class ProjectIndexTest extends TestCase
     }
     public function testParseRejectsCombinedSyntaxSizeInsteadOfReturningAPartialWorld(): void
     {
-        $input = new \Deriver\Api\Project\ProjectInput([new \Deriver\Api\Project\SourceFile('a.php', '<?php return 1;'),new \Deriver\Api\Project\SourceFile('b.php', '<?php return 2;')]);
+        $input = new ProjectInput([new SourceFile('a.php', '<?php return 1;'),new SourceFile('b.php', '<?php return 2;')]);
         $this->expectException(\Deriver\Api\InvalidInputException::class);
-        new \Deriver\Internal\Frontend\Php\ProjectIndex('test', $input, new \Deriver\Api\Project\TargetProfile(), limits: new \Deriver\Api\Execution\SourceLimits(nodes: 3));
+        new ProjectIndex('test', $input, new TargetProfile(), limits: new \Deriver\Api\Execution\SourceLimits(nodes: 3));
+    }
+    public function testParseNormalizesPathsAndKeepsFilesHashesAndDeclarationsInStableOrder(): void
+    {
+        $first = '<?php function Z(){}';
+        $second = '<?php function A(){}';
+        $input = new ProjectInput([new SourceFile('z/./File.php', $first, true),new SourceFile('a\\File.php', $second)]);
+        $index = new ProjectIndex('snapshot', $input, new TargetProfile());
+        self::assertSame(['a/File.php','z/File.php'], array_keys($index->files));
+        self::assertSame(['a/File.php' => hash('sha256', $second),'z/File.php' => hash('sha256', $first)], $index->fileHashes);
+        self::assertSame('z/File.php', $index->files['z/File.php']->path);
+        self::assertTrue($index->files['z/File.php']->declarationsOnly);
+        self::assertSame(['A','Z','script:a/File.php'], $index->symbols());
+        self::assertSame(['a','script:a/File.php','z'], array_keys($index->declarations));
+        self::assertSame(0, $index->graphCount());
+    }
+
+    public function testParsePreservesScriptRangesStrictnessAndCaseSensitiveFileIdentities(): void
+    {
+        $upper = '<?php declare(strict_types=1);return 1;';
+        $lower = '<?php return 2;';
+        $index = new ProjectIndex('snapshot', new ProjectInput([new SourceFile('A.php', $upper),new SourceFile('a.php', $lower)]), new TargetProfile());
+        $first = $index->callable('script:A.php');
+        $second = $index->callable('script:a.php');
+        self::assertNotNull($first);
+        self::assertNotNull($second);
+        self::assertNotSame($first, $second);
+        self::assertTrue($first->strict);
+        self::assertFalse($second->strict);
+        self::assertSame('snapshot', $first->source->snapshotId);
+        self::assertSame('A.php', $first->source->path);
+        self::assertSame(0, $first->source->start);
+        self::assertSame(strlen($upper), $first->source->end);
+        self::assertSame(strlen($lower), $second->source->end);
+        self::assertSame([], $index->diagnostics());
+    }
+
+    public function testParseAdmitsTheExactCombinedSyntaxNodeLimit(): void
+    {
+        $index = new ProjectIndex('snapshot', new ProjectInput([new SourceFile('a.php', '<?php return 1;'),new SourceFile('b.php', '<?php return 2;')]), new TargetProfile(), limits:new \Deriver\Api\Execution\SourceLimits(nodes:4));
+        self::assertSame(4, $index->syntaxNodes);
+        self::assertSame(['script:a.php','script:b.php'], $index->symbols());
+    }
+
+    public function testParseReportsEveryInvalidFileWithItsOwnSourceCoordinates(): void
+    {
+        $index = new ProjectIndex('snapshot', new ProjectInput([new SourceFile('a.php', "<?php\nfunction broken("),new SourceFile('b.php', '<?php function other(')]), new TargetProfile());
+        $issues = $index->diagnostics();
+        self::assertCount(2, $issues);
+        self::assertSame(['INCOMPLETE_SOURCE','INCOMPLETE_SOURCE'], array_column($issues, 'code'));
+        self::assertSame('a.php', $issues[0]->at->path);
+        self::assertSame('snapshot', $issues[0]->at->snapshotId);
+        self::assertSame(2, $issues[0]->at->line);
+        self::assertSame(0, $issues[0]->at->start);
+        self::assertSame(strlen("<?php\nfunction broken("), $issues[0]->at->end);
+        self::assertSame('valid-php-source', $issues[0]->missingCapability);
+        self::assertSame('b.php', $issues[1]->at->path);
+        self::assertSame([], $index->symbols());
+    }
+
+    public function testRegisterRetainsTheOriginalDeclarationAndReportsTheDuplicateLocation(): void
+    {
+        $index = \Tests\Fake\FrontendFixture::index('<?php function TARGET(){return 1;}function target(){return 2;}');
+        self::assertCount(1, $index->diagnostics());
+        self::assertSame('duplicate:target', $index->diagnostics()[0]->operation);
+        self::assertGreaterThan($index->declarations['target']->node->getStartFilePos(), $index->diagnostics()[0]->at->start);
+        $body = $index->callable('target');
+        self::assertNotNull($body);
+        self::assertSame('TARGET', $body->symbol);
+        self::assertSame(1, $body->blocks[0]->instructions[0]->constant?->literal);
+    }
+
+    public function testRegisterClosureKeepsLexicalScopesAndRecordsEveryCapturedSource(): void
+    {
+        $index = \Tests\Fake\FrontendFixture::index('<?php declare(strict_types=1);');
+        $node = new \PhpParser\Node\Expr\ArrowFunction(['expr' => new \PhpParser\Node\Scalar\Int_(1)], ['startFilePos' => 31]);
+        $index->capturedClosures = [];
+        $a = $index->registerClosure($node, 'fixture.php', 'Alpha');
+        $b = $index->registerClosure($node, 'fixture.php', 'Beta');
+        $again = $index->registerClosure($node, 'fixture.php', 'Alpha');
+        self::assertSame('closure:fixture.php:31:scope:Alpha', $a);
+        self::assertSame('closure:fixture.php:31:scope:Beta', $b);
+        self::assertSame($a, $again);
+        self::assertSame([$a,$b], array_keys($index->capturedClosures));
+        self::assertSame($node, $index->declarations[$a]->node);
+        self::assertTrue($index->declarations[$a]->strict);
+        self::assertSame('Alpha', $index->declarations[$a]->className);
+        self::assertSame('Beta', $index->declarations[$b]->className);
+        self::assertSame([], $index->diagnostics());
+        self::assertSame(0, $index->graphCount());
+    }
+
+    public function testConstantPreservesConstantCaseAndNormalizesOnlyItsDeclaringClass(): void
+    {
+        $index = \Tests\Fake\FrontendFixture::index('<?php class Box{const VALUE=1;const value=2;}');
+        $upper = $index->constant('Box::VALUE');
+        $lower = $index->constant('Box::value');
+        self::assertNotNull($upper);
+        self::assertNotNull($lower);
+        self::assertNotSame($upper, $lower);
+        self::assertSame($upper, $index->constant('bOX::VALUE'));
+        self::assertSame(1, $upper->blocks[0]->instructions[0]->constant?->literal);
+        self::assertSame(2, $lower->blocks[0]->instructions[0]->constant?->literal);
+        self::assertSame('Box', $upper->className);
+        self::assertNull($index->constant('Box::missing'));
+        self::assertSame(2, $index->graphCount());
+    }
+
+    public function testBuilderReusesTheCapturedLineMapAndSnapshotOwnership(): void
+    {
+        $index = \Tests\Fake\FrontendFixture::index("<?php\nfunction target(){}");
+        $builder = $index->builder('fixture.php');
+        self::assertSame($index->lineMaps['fixture.php'], $builder->lines);
+        self::assertSame('test', $builder->snapshot);
+        self::assertSame('fixture.php', $builder->path);
+        self::assertSame("<?php\nfunction target(){}", $builder->contents);
     }
 }

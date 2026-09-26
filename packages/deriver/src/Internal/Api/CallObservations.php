@@ -6,6 +6,7 @@ namespace Deriver\Internal\Api;
 
 use Deriver\Api\Reference\ExpressionRef;
 use Deriver\Api\Reference\Observation;
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Internal\IR\Program;
 
 /**
@@ -47,7 +48,7 @@ final class CallObservations
                     }
                     $index = $instruction->operation === 'invoke' ? 0 : 1;
                     $name = $constants[$instruction->operands[$index] ?? '']->literal ?? null;
-                    if (!is_string($name) || strcasecmp($name, $symbol) !== 0) {
+                    if (!is_string($name) || (new CallableIdentity())->key($name) !== (new CallableIdentity())->key($symbol)) {
                         continue;
                     }
                     $arguments = [];

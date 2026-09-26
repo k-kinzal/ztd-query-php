@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Internal\Frontend\Php;
 
+use Deriver\Internal\IR\CallableIdentity;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
@@ -57,7 +58,7 @@ final class CallSiteIndex
     {
         if (!$root && ($node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction)) {
             $symbol = $this->index->registerClosure($node, $source->path, $source->className);
-            $pending[] = $this->index->declarations[strtolower($symbol)];
+            $pending[] = $this->index->declarations[(new CallableIdentity())->key($symbol)];
             return false;
         }
         if (!$root && ($node instanceof Stmt\Function_ || $node instanceof Stmt\ClassLike)) {
@@ -67,7 +68,7 @@ final class CallSiteIndex
         if ($node instanceof Expr\FuncCall || $node instanceof Expr\MethodCall || $node instanceof Expr\NullsafeMethodCall || $node instanceof Expr\StaticCall) {
             $name = $node->name;
             if ($name instanceof Node\Name || $name instanceof Node\Identifier) {
-                $found = strcasecmp($name->toString(), $selector) === 0;
+                $found = (new CallableIdentity())->key($name->toString()) === (new CallableIdentity())->key($selector);
             }
         }
         foreach ((new EffectInspection())->children($node) as $child) {

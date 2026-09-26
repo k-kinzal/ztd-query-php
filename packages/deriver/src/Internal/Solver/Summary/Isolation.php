@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Internal\Solver\Summary;
 
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Internal\IR\CallableIR;
 use Deriver\Internal\Solver\Context;
 use Deriver\Value\Term;
@@ -40,7 +41,7 @@ final class Isolation
         $work = 0;
         while ($pending !== []) {
             $current = array_pop($pending);
-            $key = strtolower($current->symbol);
+            $key = (new CallableIdentity())->key($current->symbol);
             if (isset($seen[$key])) {
                 continue;
             }
@@ -64,7 +65,7 @@ final class Isolation
      */
     public function local(CallableIR $body): bool
     {
-        $key = strtolower($body->symbol);
+        $key = (new CallableIdentity())->key($body->symbol);
         if ($body->byReference || $body->className !== '' || $body->captures !== [] || str_starts_with($key, 'script:') || isset($this->context->models->models[$key])) {
             return false;
         }

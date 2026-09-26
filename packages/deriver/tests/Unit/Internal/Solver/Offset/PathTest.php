@@ -55,6 +55,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
+#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
 #[UsesClass(Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Program::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]

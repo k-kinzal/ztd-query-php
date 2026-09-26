@@ -58,6 +58,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\IR\Argument::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
+#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Parameter::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
@@ -160,6 +161,7 @@ final class RegistryTest extends TestCase
         $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example', '1', 'f'), $plan);
         $registry = new \Deriver\Internal\Model\Registry(new \Deriver\Api\Project\Configuration(models:[$model]));
         self::assertSame($plan, $registry->describe('F')->plan);
+        self::assertSame($plan, $registry->describe('\\F')->plan);
         self::assertNull($registry->describe('unknown')->plan);
     }
 }

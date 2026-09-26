@@ -6,6 +6,7 @@ namespace Deriver\Internal\Model;
 
 use Deriver\Api\InvalidInputException;
 use Deriver\Api\Project\Configuration;
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Model\CallDescription;
 use Deriver\Model\CallModel;
 use Deriver\Model\ModelDecision;
@@ -51,7 +52,7 @@ final class Registry
         foreach ($configuration->models as $model) {
             $descriptor = (new ModelBoundary())->descriptor($model);
             $this->register($descriptor);
-            $candidates[strtolower(ltrim($descriptor->symbol, '\\'))][$descriptor->id] = $model;
+            $candidates[(new CallableIdentity())->key($descriptor->symbol)][$descriptor->id] = $model;
         }
         foreach ($candidates as $symbol => $models) {
             $descriptors = array_intersect_key($this->manifest, $models);
@@ -73,7 +74,7 @@ final class Registry
         if (isset($this->manifest[$descriptor->id])) {
             throw new InvalidInputException('MODEL_CONFLICT: repeated model ID ' . $descriptor->id);
         }
-        $symbol = strtolower(ltrim($descriptor->symbol, '\\'));
+        $symbol = (new CallableIdentity())->key($descriptor->symbol);
         if ($descriptor->id === '' || $descriptor->version === '' || $symbol === '') {
             throw new InvalidInputException('MODEL_CONTRACT_VIOLATION: model identity fields cannot be empty.');
         }
@@ -113,11 +114,11 @@ final class Registry
      */
     public function describe(string $symbol, string $receiverType = ''): ModelDecision
     {
-        $model = $this->models[strtolower($symbol)] ?? null;
+        $model = $this->models[(new CallableIdentity())->key($symbol)] ?? null;
         if ($model === null) {
             return ModelDecision::declined();
         }
-        $descriptor = $this->descriptors[strtolower($symbol)];
+        $descriptor = $this->descriptors[(new CallableIdentity())->key($symbol)];
         return (new ModelBoundary())->describe($model, new CallDescription($symbol, $descriptor->signature, $this->configuration->target, $receiverType, dependencyVersions: $this->configuration->dependencyVersions));
     }
 }

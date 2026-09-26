@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Internal\Solver;
 
 use Deriver\Internal\Constraint\Constraints;
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Internal\IR\CallableIR;
 use Deriver\Internal\IR\Instruction;
 use Deriver\Internal\IR\Terminator;
@@ -34,7 +35,7 @@ final class Machine
      */
     public function run(CallableIR $callable, State $initial): array
     {
-        $key = strtolower($callable->symbol);
+        $key = (new CallableIdentity())->key($callable->symbol);
         $this->context->active[$key] = ($this->context->active[$key] ?? 0) + 1;
         $available = $this->context->available($callable->source, call: true);
         if (!$available || $this->context->active[$key] > $this->context->query->budget()->recursion) {

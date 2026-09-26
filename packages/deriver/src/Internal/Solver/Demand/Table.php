@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Internal\Solver\Demand;
 
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Internal\IR\CallableIR;
 use Deriver\Internal\Solver\State;
 
@@ -71,7 +72,7 @@ final class Table
      */
     public function contexts(string $owner): int
     {
-        return $this->owners[strtolower($owner)] ?? 0;
+        return $this->owners[(new CallableIdentity())->key($owner)] ?? 0;
     }
 
     /**

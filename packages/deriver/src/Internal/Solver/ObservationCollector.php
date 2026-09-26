@@ -10,6 +10,7 @@ use Deriver\Api\Query\TupleQuery;
 use Deriver\Api\Query\ValueQuery;
 use Deriver\Api\Result\Alternative;
 use Deriver\Api\Result\Exceptional;
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Internal\IR\CallableIR;
 use Deriver\Internal\IR\Instruction;
 use Deriver\Internal\Memory\StorageCapture;
@@ -77,10 +78,10 @@ final class ObservationCollector
             }
             return;
         }
-        if (strtolower($q->symbol) !== strtolower($callable->symbol)) {
+        if ((new CallableIdentity())->key($q->symbol) !== (new CallableIdentity())->key($callable->symbol)) {
             return;
         }
-        if ($q->scope()->mode === 'symbolic' && ($this->context->active[strtolower($callable->symbol)] ?? 1) > 1) {
+        if ($q->scope()->mode === 'symbolic' && ($this->context->active[(new CallableIdentity())->key($callable->symbol)] ?? 1) > 1) {
             return;
         }
         $value = $state->memory->materialize($state->completion->value ?? Term::constant(null));

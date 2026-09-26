@@ -65,6 +65,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(BasicBlock::class)]
 #[UsesClass(CallableIR::class)]
+#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
 #[UsesClass(Instruction::class)]
 #[UsesClass(Terminator::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]

@@ -75,6 +75,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\IR\Argument::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(CallableIR::class)]
+#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
 #[UsesClass(\Deriver\Internal\IR\CatchTarget::class)]
 #[UsesClass(\Deriver\Internal\IR\ClassConstant::class)]
 #[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]

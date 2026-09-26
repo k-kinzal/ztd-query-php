@@ -64,6 +64,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(BasicBlock::class)]
 #[UsesClass(CallableIR::class)]
+#[UsesClass(\Deriver\Internal\IR\CallableIdentity::class)]
 #[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
 #[UsesClass(ExceptionRegion::class)]
 #[UsesClass(Instruction::class)]

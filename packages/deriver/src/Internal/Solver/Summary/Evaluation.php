@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Internal\Solver\Summary;
 
 use Deriver\Api\Query\ReturnQuery;
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Internal\IR\CallableIR;
 use Deriver\Internal\Solver\Control\ResidualPaths;
 use Deriver\Internal\Solver\Demand\Cell;
@@ -74,7 +75,7 @@ final class Evaluation
             return false;
         }
         $proof = new Isolation($context);
-        $key = strtolower($body->symbol);
+        $key = (new CallableIdentity())->key($body->symbol);
         $context->summaries->isolated[$key] ??= $proof->callable($body);
         if (!$context->summaries->isolated[$key]) {
             return false;

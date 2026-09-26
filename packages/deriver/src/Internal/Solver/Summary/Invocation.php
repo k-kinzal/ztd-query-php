@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Internal\Solver\Summary;
 
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Internal\IR\CallableIR;
 use Deriver\Internal\Solver\Demand\Key;
 use Deriver\Internal\Solver\State;
@@ -37,6 +38,6 @@ final class Invocation
         ksort($constraints);
         $guards = $entry->guard;
         ksort($guards);
-        return new Key($body->source->snapshotId, strtolower($body->symbol), 'entry', 'value', 'completion-and-locals', hash('sha256', serialize([$inputs, array_slice($history, -2)])), 'isolated-locals', hash('sha256', serialize([$guards, $constraints])));
+        return new Key($body->source->snapshotId, (new CallableIdentity())->key($body->symbol), 'entry', 'value', 'completion-and-locals', hash('sha256', serialize([$inputs, array_slice($history, -2)])), 'isolated-locals', hash('sha256', serialize([$guards, $constraints])));
     }
 }

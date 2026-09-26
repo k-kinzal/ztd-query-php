@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Internal\Solver\Call;
 
 use Deriver\Api\Reference\SourceRef;
+use Deriver\Internal\IR\CallableIdentity;
 use Deriver\Internal\IR\CallableIR;
 use Deriver\Internal\IR\Instruction;
 use Deriver\Internal\Model\PlanCompiler;
@@ -37,8 +38,8 @@ final class CallResolution
     public function body(string $symbol, Instruction $instruction, ?array $arguments = null, ?\Deriver\Internal\Solver\State $state = null, string $receiverType = ''): ?CallableIR
     {
         $source = $this->context->program->callable($symbol);
-        $model = $this->context->models->models[strtolower($symbol)] ?? null;
-        $descriptor = $this->context->models->descriptors[strtolower($symbol)] ?? null;
+        $model = $this->context->models->models[(new CallableIdentity())->key($symbol)] ?? null;
+        $descriptor = $this->context->models->descriptors[(new CallableIdentity())->key($symbol)] ?? null;
         if ($source !== null && !$source->external && !($descriptor->replaceSource ?? false)) {
             return $source;
         }
@@ -103,13 +104,13 @@ final class CallResolution
     public function name(string $symbol, Instruction $instruction): string
     {
         $fallback = $instruction->attributes['fallback'] ?? '';
-        if ($this->context->program->callable($symbol) !== null || isset($this->context->models->models[strtolower($symbol)])) {
+        if ($this->context->program->callable($symbol) !== null || isset($this->context->models->models[(new CallableIdentity())->key($symbol)])) {
             return $symbol;
         }
         if (!is_string($fallback) || $fallback === '') {
             return $symbol;
         }
         $standard = $this->context->configuration->standardModels ? (new Library())->model($fallback) : null;
-        return $this->context->program->callable($fallback) !== null || isset($this->context->models->models[strtolower($fallback)]) || $standard !== null ? $fallback : $symbol;
+        return $this->context->program->callable($fallback) !== null || isset($this->context->models->models[(new CallableIdentity())->key($fallback)]) || $standard !== null ? $fallback : $symbol;
     }
 }
