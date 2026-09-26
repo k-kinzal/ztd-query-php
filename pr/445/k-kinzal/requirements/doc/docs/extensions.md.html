@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Source and test extensions — ZTD Query PHP</title>
+<title>Extensions — ZTD Query PHP</title>
 <link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/445/k-kinzal/requirements/doc/docs/extensions.md.html">
-<meta name="description" content="Source and test extensions, a document of the k-kinzal/requirements package.">
+<meta name="description" content="Extensions, a document of the k-kinzal/requirements package.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ZTD Query PHP">
-<meta property="og:title" content="Source and test extensions — ZTD Query PHP">
-<meta property="og:description" content="Source and test extensions, a document of the k-kinzal/requirements package.">
+<meta property="og:title" content="Extensions — ZTD Query PHP">
+<meta property="og:description" content="Extensions, a document of the k-kinzal/requirements package.">
 <meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/445/k-kinzal/requirements/doc/docs/extensions.md.html">
 <meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/445/assets/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -29,19 +29,17 @@
 <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/extensions.md</span></nav>
 <div class="topbar-tools">
 <input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing f93d0df444 to working tree">f93d0df444 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<span class="diff-range" title="Comparing 2b829f23d1 to working tree">2b829f23d1 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
 <button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content" id="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between f93d0df444 and working tree." data-off="This page documents what f93d0df444 had and working tree no longer has. Switch to Diff to read it." hidden></p>
-<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Source and test extensions</h1><div class="symbol-meta"><span class="source-link">docs/extensions.md</span></div></div>
-<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Source and test extensions</h2>
-</div><div class="doc-block" data-diff="same"><p>A <strong>source extension</strong> retrieves reference material and selects its traceable units. A <strong>test extension</strong> runs a selected test and translates its result into specification verification. The test extension interface is named <code>RunnerExtension</code>; configuration registers it under <code>extensions.runners</code>.</p>
-</div><div class="doc-block" data-diff="same"><p>Both extension mechanisms are implemented by the core. Built-in HTML, JSON and other sources use <code>SourceExtension</code>, and the PHPUnit/Behat runners use <code>RunnerExtension</code>. Custom implementations run through the same <code>check</code>, <code>coverage</code> and <code>spec</code> commands. They can be used without changing the requirements package or installing a plugin into PHPUnit or Behat.</p>
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 2b829f23d1 and working tree." data-off="This page documents what 2b829f23d1 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Extensions</h1><div class="symbol-meta"><span class="source-link">docs/extensions.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Extensions</h2>
+</div><div class="doc-block" data-diff="same"><p>Extensions add source formats and test runners. A <strong>source extension</strong> reads a kind of document, for example an issue tracker, and returns its units. A <strong>runner extension</strong> runs a kind of test and returns its result. The built-in formats and the PHPUnit and Behat runners are implemented the same way.</p>
 </div><div class="doc-block" data-diff="same"><h3>Source extensions</h3>
-</div><div class="doc-block" data-diff="same"><p>A source extension implements this interface:</p>
 </div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">namespace</span> <span class="tok-id">Requirements\Source</span>;
 
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Model\Source</span>;
@@ -51,12 +49,10 @@
     <span class="tok-com">/** @return list&lt;Unit&gt; */</span>
     <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">select</span>(<span class="tok-id">Source</span> <span class="tok-var">$source</span>, <span class="tok-id">string</span> <span class="tok-var">$selector</span>, <span class="tok-id">string</span> <span class="tok-var">$directory</span>, <span class="tok-id">bool</span> <span class="tok-var">$live</span>): <span class="tok-kw">array</span>;
 }</code></pre>
-</div><div class="doc-block" data-diff="same"><p><code>Source</code> supplies <code>id</code>, <code>uri</code>, <code>format</code>, <code>selector</code>, optional <code>snapshot</code> and <code>sha256</code>, and an <code>options</code> mapping for service-specific settings. <code>$directory</code> is the directory containing the project&#039;s configuration. <code>$live</code> requests current upstream content rather than a pinned local cache; custom adapters decide how this applies to their service.</p>
-</div><div class="doc-block" data-diff="same"><p>The core calls <code>select()</code> first with the source&#039;s scope selector to enumerate the coverage denominator. It then calls it for each evidence selector. Scope selection may return many units; an evidence selection must return exactly one unit from that scope. Return <code>new Unit($stableLocation, $completeText)</code> for each unit:</p>
-</div><div class="doc-block" data-diff="same"><ul><li>Locations identify the same entry across requests and revisions. Use a stable issue criterion ID, message ID or document section location, rather than its text.</li><li>Locations and text must be nonempty. Equal locations in one resource must have equal text. Distinct locations can contain equal text.</li><li>Enumerate the scope independently of known specifications; otherwise missing specifications disappear from the coverage denominator.</li><li>Interpret supported selectors consistently. Return an empty list for a valid selector with no match; throw for retrieval failures or unsupported syntax. The core reports these failures and checks quote equality and scope membership.</li></ul>
-</div><div class="doc-block" data-diff="same"><p>A Slack or Jira adapter owns service retrieval, pagination and selector semantics. It can load its client from the consuming project&#039;s Composer autoloader, read credentials from the environment, and use <code>Source::options</code> for non-secret settings. When an API returns multiple pages, scope selection must enumerate every selected page. The core does not assume those services behave like HTML.</p>
-</div><div class="doc-block" data-diff="same"><h4>Create a source adapter</h4>
-</div><div class="doc-block" data-diff="same"><p>The runnable <span class="md-target" title="../examples/extensions/CatalogSource.php">CatalogSource</span> reads a JSON mapping of stable IDs to source text. <code>*</code> selects the whole catalog; an entry ID selects one quotation:</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Argument</th><th>Description</th></tr></thead><tbody><tr><td><code>$source</code></td><td>The definition&#039;s source: <code>id</code>, <code>uri</code>, <code>format</code>, <code>selector</code>, <code>snapshot</code>, <code>sha256</code> and <code>options</code>.</td></tr><tr><td><code>$selector</code></td><td>The scope selector first, then each evidence selector.</td></tr><tr><td><code>$directory</code></td><td>Directory of the configuration file.</td></tr><tr><td><code>$live</code></td><td><code>true</code> when <code>--live</code> asks for current content instead of a cache.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>Return <code>new Unit($location, $text)</code> for every unit the selector matches, or an empty list when it matches nothing. Throw when the document cannot be read or the selector is invalid.</p>
+</div><div class="doc-block" data-diff="same"><ul><li><strong>Enumerate the whole scope</strong>, independently of what the definitions quote. Otherwise untraced units disappear from coverage. Follow every page of a paged API.</li><li><strong>Use stable locations</strong>, such as an issue or section ID, not the text. The same location must always have the same text.</li><li><strong>Keep secrets out of definitions.</strong> Read credentials from the environment and use <code>options</code> for other settings.</li></ul>
+</div><div class="doc-block" data-diff="same"><p>This extension reads a JSON object of IDs to texts. <code>*</code> selects every entry:</p>
 </div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">Requirements\Model\Source</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Source\ResourceLoader</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Source\SourceExtension</span>;
@@ -86,20 +82,17 @@
         <span class="tok-kw">return</span> <span class="tok-var">$units</span>;
     }
 }</code></pre>
-</div><div class="doc-block" data-diff="same"><p><code>ResourceLoader</code> is optional. It supplies bounded HTTP(S)/local reads, ignored local snapshot caching and digest verification. Service adapters can use their own retrieval client and enforce their own time/size limits. The example catalog is project-authored synthetic data, so it can be committed; upstream snapshots remain untracked caches.</p>
-</div><div class="doc-block" data-diff="same"><h3>Test extensions</h3>
-</div><div class="doc-block" data-diff="same"><p>A test extension implements:</p>
+</div><div class="doc-block" data-diff="same"><p><code>ResourceLoader</code> reads local files and HTTP(S) URIs with the same size and time limits, snapshots and SHA-256 checks as the built-in formats. It is optional.</p>
+</div><div class="doc-block" data-diff="same"><h3>Runner extensions</h3>
 </div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">namespace</span> <span class="tok-id">Requirements\Test</span>;
 
 <span class="tok-kw">interface</span> <span class="tok-id">RunnerExtension</span>
 {
     <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">run</span>(<span class="tok-id">RunnerConfig</span> <span class="tok-var">$config</span>, <span class="tok-id">string</span> <span class="tok-var">$target</span>): <span class="tok-id">TestResult</span>;
 }</code></pre>
-</div><div class="doc-block" data-diff="same"><p><code>RunnerConfig</code> contains an argument-array <code>command</code>, absolute working <code>directory</code>, positive <code>timeout</code> in seconds and the registered <code>extension</code> name. <code>$target</code> is the test selection from an item&#039;s <code>tests</code> entry. Configuration chooses <strong>how</strong> to execute; definitions choose <strong>which</strong> test to execute.</p>
-</div><div class="doc-block" data-diff="same"><p>Return <code>new TestResult($status, $executedTests, $message)</code>. A passing result requires <code>status: passed</code> and a positive executed-test count. <code>failed</code>, <code>error</code> and <code>unverified</code> fail specification verification. A zero-test result never verifies a specification, even if the adapter returns <code>passed</code>. Include a useful failure message. Unsupported specifications are skipped by the core; an adapter must not turn failed or missing tests into an unsupported decision.</p>
-</div><div class="doc-block" data-diff="same"><p>The core executes each distinct runner-name/target pair once per <code>spec</code> invocation and shares that result across linked specifications. All linked results must pass. The CLI counts each successful target once in its passed/linked ratio, regardless of the adapter&#039;s executed-case count. That case count remains in the JSON <code>tests</code> field. For example, a successful method with 33 data-provider cases contributes <code>1/1</code> linked targets and <code>tests: 33</code>. <code>spec --no-test</code> displays <code>-/1</code> and never calls <code>run()</code>; extensions do not need to implement test discovery or result caching. A custom extension owns actual selection, execution and result interpretation; it must not report success solely because a process exited zero.</p>
-</div><div class="doc-block" data-diff="same"><h4>Create a test adapter</h4>
-</div><div class="doc-block" data-diff="same"><p>For a command that writes JUnit XML, use <code>ProcessRunner</code>:</p>
+</div><div class="doc-block" data-diff="same"><p><code>$config</code> holds the runner&#039;s <code>command</code>, working <code>directory</code>, <code>timeout</code> and <code>extension</code> from the <a href="../../../../k-kinzal/requirements/doc/docs/configuration.md.html">configuration</a>. <code>$target</code> is the <code>target</code> of a test in a definition file. <code>run()</code> is called once per distinct target and is not called with <code>--no-test</code>.</p>
+</div><div class="doc-block" data-diff="same"><p>Return <code>new TestResult($status, $executedTests, $message)</code>. Only <code>passed</code> with at least one executed test verifies a specification; <code>failed</code>, <code>error</code> and <code>unverified</code> fail it. Do not report success only because a process exited with <code>0</code>.</p>
+</div><div class="doc-block" data-diff="same"><p>For a command that writes JUnit XML, <code>ProcessRunner</code> does the work:</p>
 </div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\ProcessRunner</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\RunnerConfig</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\RunnerExtension</span>;
@@ -117,10 +110,9 @@
         );
     }
 }</code></pre>
-</div><div class="doc-block" data-diff="same"><p><code>ProcessRunner</code> appends those arguments to <code>command</code> without a shell, applies the working directory and timeout, reads reports from a fresh temporary directory, and removes them afterwards. Its <code>JUnit</code> reader rejects missing/malformed reports, zero executed tests, skips, pending/undefined cases, failures, errors and nonzero process exits. For another report protocol, execute and parse it in your adapter and enforce equivalent success rules.</p>
-</div><div class="doc-block" data-diff="same"><p>The complete <span class="md-target" title="../examples/extensions/ScenarioRunner.php">ScenarioRunner</span> and <span class="md-target" title="../examples/extensions/scenario.php">example command</span> exercise this contract by actually checking ASCII uppercase conversion. Replace the example assertion with your application tests. The built-in PHPUnit runner uses exact <code>Class::method</code> selection, including datasets; Behat uses <code>file.feature:line</code> scenario selection, including all outline examples.</p>
-</div><div class="doc-block" data-diff="same"><h3>Register and use extensions</h3>
-</div><div class="doc-block" data-diff="same"><p>Put extension classes in your project&#039;s Composer PSR-4 autoload paths, run <code>composer dump-autoload</code>, and load that autoloader with <code>bootstrap</code>:</p>
+</div><div class="doc-block" data-diff="same"><p>It appends the returned arguments to <code>command</code>, runs it without a shell in the working directory with the timeout, and reads the reports from a fresh temporary directory. The run fails when the report is missing or malformed, reports no test, or reports a failure, error, skip or pending test, or when the process exits nonzero.</p>
+</div><div class="doc-block" data-diff="same"><h3>Registering extensions</h3>
+</div><div class="doc-block" data-diff="same"><p>Autoload the classes from your project and load the autoloader with <code>bootstrap</code>:</p>
 </div><div class="doc-block" data-diff="same"><pre class="code"><code>version: 1
 bootstrap: vendor/autoload.php
 definitions: [requirements/*.yaml]
@@ -132,11 +124,8 @@ extensions:
 runners:
   acceptance:
     extension: scenario
-    command: [php, tests/scenario.php]
-    cwd: .
-    timeout: 30</code></pre>
-</div><div class="doc-block" data-diff="same"><p>Classes are instantiated with no arguments; use a no-argument constructor or constructor defaults. <code>lint</code> checks interface registration. The bootstrap and extensions are project code, just like the project&#039;s test suite. Names may override built-ins deliberately; normal built-in usage needs no explicit registration.</p>
-</div><div class="doc-block" data-diff="same"><p>Select the source adapter with <code>source.format</code> and the configured test runner with <code>tests[].runner</code>:</p>
+    command: [php, tests/scenario.php]</code></pre>
+</div><div class="doc-block" data-diff="same"><p>A definition then uses the source extension as its <code>format</code> and the runner by its configured name:</p>
 </div><div class="doc-block" data-diff="same"><pre class="code"><code>version: 1
 source:
   id: converter-catalog
@@ -152,13 +141,7 @@ items:
     tests:
       - runner: acceptance
         target: ascii-uppercase</code></pre>
-</div><div class="doc-block" data-diff="same"><p>Here <code>catalog</code> and <code>scenario</code> are extension names; <code>acceptance</code> is the configured runner instance. Several runner instances may share one extension with different commands, working directories or timeouts. Definition paths, source files and runner working directories are resolved relative to the configuration directory.</p>
-</div><div class="doc-block" data-diff="same"><p>From <code>packages/requirements</code>, run the complete bundled example:</p>
-</div><div class="doc-block" data-diff="same"><pre class="code"><code>php bin/requirements lint --config examples/extensions/requirements.yaml
-php bin/requirements check --config examples/extensions/requirements.yaml
-php bin/requirements coverage --config examples/extensions/requirements.yaml
-php bin/requirements spec --config examples/extensions/requirements.yaml</code></pre>
-</div><div class="doc-block" data-diff="same"><p>The sample bootstrap loads the two supplied classes directly, so these commands work after <code>composer install</code> without preparing another project. The integration tests execute this example through the real CLI and verify that both extension contracts participate in source coverage and test execution.</p>
+</div><div class="doc-block" data-diff="same"><p>Classes are created without constructor arguments, and lint checks that each implements its interface. Several runners can use the same extension with different commands. A registered name that equals a built-in one replaces it.</p>
 </div></section>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

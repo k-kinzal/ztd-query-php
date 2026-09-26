@@ -29,24 +29,33 @@
 <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">README.md</span></nav>
 <div class="topbar-tools">
 <input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing f93d0df444 to working tree">f93d0df444 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<span class="diff-range" title="Comparing 2b829f23d1 to working tree">2b829f23d1 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
 <button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content" id="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between f93d0df444 and working tree." data-off="This page documents what f93d0df444 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 2b829f23d1 and working tree." data-off="This page documents what 2b829f23d1 had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQL Formatter</h1><div class="symbol-meta"><span class="source-link">README.md</span></div></div>
 <section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>SQL Formatter</h2>
-</div><div class="doc-block" data-diff="same"><p><span class="md-target" title="LICENSE"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></span> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a></p>
-</div><div class="doc-block" data-diff="same"><p>Format MySQL, PostgreSQL, and SQLite strings with <strong>Compact</strong>, <strong>Expanded</strong>, <strong>Tabular</strong>, or <strong>River</strong> layouts. SQL Formatter uses the concrete syntax tree from <span class="md-target" title="../sql-parser/">sql-parser</span> to identify clauses, lists, expressions, and nested queries. It needs no schema or database connection.</p>
+</div><div class="doc-block" data-diff="same"><p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-formatter/"><span class="md-target" title="https://img.shields.io/badge/docs-sql--formatter-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+</div><div class="doc-block" data-diff="same"><p>SQL Formatter formats MySQL, PostgreSQL, and SQLite statements with the <strong>Compact</strong>, <strong>Expanded</strong>, <strong>Tabular</strong>, or <strong>River</strong> layout. It reads each statement with the lossless parser of <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-parser">sql-parser</a>, which is built from the official grammar of the selected database version, Expanded, Tabular, and River change only layout whitespace and keep keywords, identifiers, literals, and comments as written; Compact writes a canonical single form of the statement, without comments or optional whitespace. Every output is parsed again to confirm that its syntax is unchanged. No schema or database connection is needed.</p>
+</div><div class="doc-block" data-diff="same"><h3>Requirements</h3>
+</div><div class="doc-block" data-diff="same"><ul><li>PHP 8.1+ with the zlib extension</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>Support Syntax</h3>
+</div><div class="doc-block" data-diff="same"><p>The following grammar versions are supported. Pass the version tag to the parser given to the formatter; omitting it uses the default for that database.</p>
+</div><div class="doc-block" data-diff="same"><h4>MySQL</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>5.6.51</td><td><code>mysql-5.6.51</code></td><td></td></tr><tr><td>5.7.44</td><td><code>mysql-5.7.44</code></td><td></td></tr><tr><td>8.0.44</td><td><code>mysql-8.0.44</code></td><td></td></tr><tr><td>8.1.0</td><td><code>mysql-8.1.0</code></td><td></td></tr><tr><td>8.2.0</td><td><code>mysql-8.2.0</code></td><td></td></tr><tr><td>8.3.0</td><td><code>mysql-8.3.0</code></td><td></td></tr><tr><td>8.4.7</td><td><code>mysql-8.4.7</code></td><td>Yes</td></tr><tr><td>9.0.1</td><td><code>mysql-9.0.1</code></td><td></td></tr><tr><td>9.1.0</td><td><code>mysql-9.1.0</code></td><td></td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>PostgreSQL</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>17.2</td><td><code>pg-17.2</code></td><td>Yes</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>SQLite</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>3.47.2</td><td><code>sqlite-3.47.2</code></td><td>Yes</td></tr></tbody></table></div>
 </div><div class="doc-block" data-diff="same"><h3>Installation</h3>
 </div><div class="doc-block" data-diff="same"><pre class="code"><code>composer require k-kinzal/sql-formatter</code></pre>
-</div><div class="doc-block" data-diff="same"><p>Requires PHP 8.1+ and <code>k-kinzal/sql-parser</code> (which requires <code>ext-zlib</code>). In the monorepo, run <code>composer install</code> in this package to install its development tools and link the sibling parser.</p>
 </div><div class="doc-block" data-diff="same"><h3>Usage</h3>
-</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlFormatter\Facade\Formatter</span>;
-<span class="tok-kw">use</span> <span class="tok-id">SqlFormatter\Core\FormatOptions</span>;
+</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlFormatter\Core\FormatOptions</span>;
 <span class="tok-kw">use</span> <span class="tok-id">SqlFormatter\Core\Style</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFormatter\Facade\Formatter</span>;
 <span class="tok-kw">use</span> <span class="tok-id">SqlParser\MySql\MySqlParser</span>;
 
 <span class="tok-var">$formatter</span> = <span class="tok-kw">new</span> <span class="tok-id">Formatter</span>(
@@ -54,26 +63,7 @@
     <span class="tok-kw">new</span> <span class="tok-id">FormatOptions</span>(<span class="tok-id">style</span>: <span class="tok-id">Style</span>::<span class="tok-id">Expanded</span>, <span class="tok-id">indentWidth</span>: <span class="tok-num">4</span>),
 );
 
-<span class="tok-kw">echo</span> <span class="tok-var">$formatter</span>-&gt;<span class="tok-id">format</span>(
-    <span class="tok-str">&#039;SELECT id,name FROM users WHERE active=1 AND age&gt;=18 ORDER BY name;&#039;</span>,
-);</code></pre>
-</div><div class="doc-block" data-diff="same"><p>Pass <code>PostgreSqlParser</code> or <code>SqliteParser</code> for those dialects. The supplied parser selects the grammar release and MySQL <code>SqlMode</code>; reuse it and the formatter across calls. <code>MySqlParser::versions()</code>, <code>PostgreSqlParser::versions()</code>, and <code>SqliteParser::versions()</code> list the available releases. All 11 currently shipped releases are exercised by the tests.</p>
-</div><div class="doc-block" data-diff="same"><p><code>format(string $sql): string</code> accepts the same input as the supplied parser: MySQL parses one statement, including a compound statement; PostgreSQL and SQLite also accept semicolon-separated statements. Client commands such as MySQL <code>DELIMITER</code> are not server SQL. The parser&#039;s lexical and syntax exceptions are propagated for invalid input.</p>
-</div><div class="doc-block" data-diff="same"><h3>Layouts</h3>
-</div><div class="doc-block" data-diff="same"><p>The default is <code>Style::Expanded</code> with four spaces per nested block. <code>indentWidth</code> accepts 1 through 16. Both options are immutable.</p>
-</div><div class="doc-block" data-diff="same"><h4>Compact</h4>
-</div><div class="doc-block" data-diff="same"><pre class="code"><code>SELECT id,name FROM users WHERE active=1 AND age&gt;=18 ORDER BY name</code></pre>
-</div><div class="doc-block" data-diff="same"><p>Produces a compact canonical spelling for the selected dialect and release:</p>
-</div><div class="doc-block" data-diff="same"><ul><li>Removes ordinary comments, optional whitespace, and optional final statement terminators. Separators inside statement lists and stored programs, and terminators anchoring retained directives, remain.</li><li>Uppercases grammar keywords while preserving identifiers, including keywords used as names. Quoting, literal contents, and parameter markers remain intact.</li><li>Uses <code>&lt;&gt;</code> for inequality and <code>=</code> for SQLite&#039;s <code>==</code>. MySQL also normalizes <code>DISTINCTROW</code> to <code>DISTINCT</code>, <code>REGEXP</code> to <code>RLIKE</code>, <code>INTEGER</code> to <code>INT</code>, and <code>DECIMAL</code> to <code>DEC</code>.</li><li>Omits redundant <code>SELECT ALL</code>, ascending sort directions, <code>INNER</code> and <code>OUTER</code> join modifiers, explicit set-operation <code>DISTINCT</code>, and optional alias <code>AS</code>. <code>UNION ALL</code>, <code>SELECT DISTINCT</code>, <code>DESC</code>, and SQLite&#039;s <code>CROSS JOIN</code> remain distinct.</li><li>Removes expression parentheses only when reparsing confirms the same operand nesting. For example, <code>a+(b*c)</code> becomes <code>a+b*c</code>, while <code>a-(b-c)</code> retains its parentheses.</li></ul>
-</div><div class="doc-block" data-diff="same"><p>Optimizer hints (<code>/*+ ... */</code>), executable/version comments (<code>/*! ... */</code>), and MariaDB-style directives (<code>/*M! ... */</code>) are retained. Executable bodies are kept verbatim, including bodies inactive in the selected MySQL release. Newlines inside literals, identifiers, and directives can still appear in compact output.</p>
-</div><div class="doc-block" data-diff="same"><pre class="code"><code><span class="tok-var">$compact</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlFormatter\Facade\Formatter</span>(
-    <span class="tok-kw">new</span> <span class="tok-id">\SqlParser\Sqlite\SqliteParser</span>(),
-    <span class="tok-kw">new</span> <span class="tok-id">\SqlFormatter\Core\FormatOptions</span>(<span class="tok-id">\SqlFormatter\Core\Style</span>::<span class="tok-id">Compact</span>),
-);
-<span class="tok-var">$compact</span>-&gt;<span class="tok-id">format</span>(<span class="tok-str">&#039;select all (a) as x from t where a != 1 order by a asc;&#039;</span>);
-<span class="tok-com">// SELECT a x FROM t WHERE a&lt;&gt;1 ORDER BY a</span></code></pre>
-</div><div class="doc-block" data-diff="same"><p>This normal form is useful when comparing generated and serialized statements in fuzz tests. Equality covers the documented syntax normalizations; it is not a complete SQL equivalence decision procedure or a guarantee of the globally shortest possible query. No schema, collation, function catalog, or data is consulted. Identifier quoting, literal representations, join order, and algebraic expression rewrites are deliberately outside this contract. As with other SQL reformatting, database-generated labels for expressions without explicit aliases may change.</p>
-</div><div class="doc-block" data-diff="same"><h4>Expanded</h4>
+<span class="tok-kw">echo</span> <span class="tok-var">$formatter</span>-&gt;<span class="tok-id">format</span>(<span class="tok-str">&#039;SELECT id,name FROM users WHERE active=1 AND age&gt;=18 ORDER BY name;&#039;</span>);</code></pre>
 </div><div class="doc-block" data-diff="same"><pre class="code"><code>SELECT
     id,
     name
@@ -84,46 +74,8 @@ WHERE
     AND age &gt;= 18
 ORDER BY
     name;</code></pre>
-</div><div class="doc-block" data-diff="same"><p>Places clause bodies below their headers and list items on separate lines. Nested query and CASE blocks receive another indentation level.</p>
-</div><div class="doc-block" data-diff="same"><h4>Tabular</h4>
-</div><div class="doc-block" data-diff="same"><pre class="code"><code>SELECT   id,
-         name
-FROM     users
-WHERE    active = 1
-AND      age &gt;= 18
-ORDER BY name;</code></pre>
-</div><div class="doc-block" data-diff="same"><p>Left-aligns clause keywords and pads their right side to align their bodies. Continuation items use the body column.</p>
-</div><div class="doc-block" data-diff="same"><h4>River</h4>
-</div><div class="doc-block" data-diff="same"><pre class="code"><code>  SELECT id,
-         name
-    FROM users
-   WHERE active = 1
-     AND age &gt;= 18
-ORDER BY name;</code></pre>
-</div><div class="doc-block" data-diff="same"><p>Right-aligns clause keywords, creating a vertical boundary before their bodies. Alignment width is calculated from the headers in the enclosing block; nested queries have independent widths. This is a layout preset, not enforcement of all naming and query-design recommendations in a particular SQL style guide.</p>
-</div><div class="doc-block" data-diff="same"><h3>Preservation</h3>
-</div><div class="doc-block" data-diff="same"><p>Expanded, Tabular, and River preserve source spelling:</p>
-</div><div class="doc-block" data-diff="same"><ul><li>Keyword case, identifier spelling and quoting, literal contents, placeholders, parentheses, semicolons, and token order are preserved.</li><li>Comment-bearing trivia is retained verbatim, including optimizer hints and both active and inactive MySQL version comments. Such trivia takes precedence over layout whitespace; comments are not reflowed or moved between tokens.</li><li>Formatting does not resolve names, expand stars, add aliases, rewrite expressions, change dialect, or execute SQL.</li><li>Every output is parsed again with the same parser. Its grammar nodes, alternatives, token kinds, and token texts must match the input, independently of positions and layout whitespace. A mismatch raises <code>FormattingException</code> instead of returning SQL whose syntax changed.</li><li>Reformatting an already formatted string produces the same output.</li></ul>
-</div><div class="doc-block" data-diff="same"><p>Compact instead verifies a canonical syntax signature. It retains token kinds, identifier and literal spellings, directives, and operand nesting after the documented reductions. Every candidate parenthesis removal must parse with the same signature; required parentheses remain. Whitespace decisions use the supplied parser&#039;s lexer, including MySQL SQL modes and function-name adjacency rules. Compact is also idempotent. Parseability and canonical structure are checked at runtime; these checks do not prove arbitrary SQL transformations equivalent.</p>
-</div><div class="doc-block" data-diff="same"><p>Layout rules cover SELECT clauses, CTEs, joins, set operations, CASE expressions, window specifications, write statements, and table definitions. Other grammar constructs retain their syntax and receive token spacing; accepting a grammar construct does not imply a specialized multiline layout for every administrative or procedural statement.</p>
-</div><div class="doc-block" data-diff="same"><p>See <a href="../../../k-kinzal/sql-formatter/doc/docs/design.md.html">the design</a> for the dependency decision and layout pipeline, and <a href="../../../k-kinzal/sql-formatter/doc/docs/verification.md.html">verification</a> for the checks behind these guarantees.</p>
-</div><div class="doc-block" data-diff="same"><h3>Development</h3>
-</div><div class="doc-block" data-diff="same"><p>The execution regression tests require <code>ext-pdo_sqlite</code>; no database server is needed. This extension is a development dependency only.</p>
-</div><div class="doc-block" data-diff="same"><pre class="code"><code>composer install
-composer lint
-composer test:unit
-composer test
-composer bench:quick
-composer fuzz</code></pre>
-</div><div class="doc-block" data-diff="same"><p>The package uses the monorepo&#039;s PHP-AI-Toolkit reporter and executable PHPDoc examples, PHPStan at maximum level, PHP-CS-Fixer, PHPCompatibility, LOC and tree guards, Deptrac, ParaTest, and PHPBench. CI runs tests on PHP 8.1 through 8.5 and mutation testing with Infection.</p>
-</div><div class="doc-block" data-diff="same"><p>PHP-Fuzzer targets under <span class="md-target" title="fuzz/"><code>fuzz/</code></span> feed the formatter raw bytes and, per database and layout preset, statements sql-faker generates whose original and formatted texts must draw the same answer from MySQL, PostgreSQL, and SQLite. <code>composer fuzz</code> runs a smoke set, the equivalence targets replay sql-faker&#039;s seed corpora, and a nightly workflow runs every target. See <a href="../../../k-kinzal/sql-formatter/doc/fuzz/README.md.html"><code>fuzz/README.md</code></a>.</p>
 </div><div class="doc-block" data-diff="same"><h3>License</h3>
-</div><div class="doc-block" data-diff="same"><p>MIT. See <span class="md-target" title="LICENSE">LICENSE</span>.</p>
-</div><div class="doc-block" data-diff="same"><h3>Architecture</h3>
-</div><div class="doc-block" data-diff="same"><p><code>Core</code> owns formatting, layout, syntax traversal, canonicalization, and the <code>Dialect</code> contract. It receives the sql-parser core interface and injected grammar roles, keyword declarations, reduction rules, and lexical callbacks. It contains no concrete parser references, database names, or database-selection branches.</p>
-</div><div class="doc-block" data-diff="same"><p>Each <code>Platform</code> implementation declares its own grammar and lexical behavior. The platforms depend only on core contracts and never on each other. Grammar role lists cover the symbols shipped across each platform&#039;s supported releases.</p>
-</div><div class="doc-block" data-diff="same"><p><code>Facade</code> selects built-in rules for an existing parser and preserves its version and lexical modes. A caller can supply a custom <code>Core\Dialect</code> through the optional third constructor argument. Shared options, styles, and exceptions live in <code>Core</code>.</p>
-</div><div class="doc-block" data-diff="same"><p>Deptrac rejects both internal and sql-parser platform dependencies from Core. PHPStan rejects database words anywhere under <code>src/Core</code>, including comments, and other database names in each platform. Development scripts are not a CLI layer.</p>
+</div><div class="doc-block" data-diff="same"><p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
 </div></section>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

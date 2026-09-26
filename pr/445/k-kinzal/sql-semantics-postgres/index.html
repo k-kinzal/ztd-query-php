@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>k-kinzal/sql-semantics-postgres — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/445/k-kinzal/sql-semantics-postgres/">
+<meta name="description" content="PostgreSQL statement models, SQL reconstruction, and schema binding for SQL Semantics">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="k-kinzal/sql-semantics-postgres — ZTD Query PHP">
+<meta property="og:description" content="PostgreSQL statement models, SQL reconstruction, and schema binding for SQL Semantics">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/445/k-kinzal/sql-semantics-postgres/">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/445/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../k-kinzal/sql-semantics-postgres/index.html">k-kinzal/sql-semantics-postgres</a></div><nav class="sidebar-section"><div class="sidebar-title">On this page</div><ul class="sidebar-list"><li data-diff="same"><a href="#namespaces">Namespaces</a></li><li data-diff="same"><a href="#documents">Documents</a></li><li data-diff="same"><a href="#readme">README</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../k-kinzal/sql-semantics-postgres/all-items.html">All items</a></li><li data-diff="same"><a href="../../k-kinzal/sql-semantics-postgres/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../k-kinzal/sql-semantics-postgres/SqlSemantics/Platform/PostgreSql/index.html" title="SqlSemantics\Platform\PostgreSql">SqlSemantics\Platform\PostgreSql</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><span class="breadcrumb-current">k-kinzal/sql-semantics-postgres</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 2b829f23d1 to working tree">2b829f23d1 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 2b829f23d1 and working tree." data-off="This page documents what 2b829f23d1 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-package">package</span>k-kinzal/sql-semantics-postgres</h1></div>
+<p class="lede">PostgreSQL statement models, SQL reconstruction, and schema binding for SQL Semantics</p>
+<div class="relation-row"><span class="relation-label">Repository</span> <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com/k-kinzal/ztd-query-php</a></div>
+<div class="relation-row"><span class="relation-label">Depends on</span> <a href="../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a>, <a href="../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a>, <a href="../../k-kinzal/bison-parser/index.html">k-kinzal/bison-parser</a> <span class="chip chip-sm chip-ghost">require-dev</span>, <a href="../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a> <span class="chip chip-sm chip-ghost">require-dev</span>, <a href="../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a> <span class="chip chip-sm chip-ghost">require-dev</span></div>
+<div class="relation-row"><span class="relation-label">Required by</span> <a href="../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a> <span class="chip chip-sm chip-ghost">require-dev</span>, <a href="../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div>
+<section data-diff="same"><h2 id="namespaces">Namespaces<a class="anchor" href="#namespaces">§</a></h2><div class="table-wrap"><table class="symbol-table"><tr data-diff="same"><td><a href="../../k-kinzal/sql-semantics-postgres/SqlSemantics/Platform/PostgreSql/index.html">SqlSemantics\Platform\PostgreSql</a></td><td class="ns-counts"> <span class="ns-count k-class">5 classes</span> <span class="ns-count k-enum">1 enum</span></td></tr></table></div></section>
+<section data-diff="same"><h2 id="documents">Documents <span class="count">1</span><a class="anchor" href="#documents">§</a></h2><div class="table-wrap"><table class="symbol-table"><tr data-diff="same"><td><a href="../../k-kinzal/sql-semantics-postgres/doc/README.md.html">SQL Semantics for PostgreSQL</a></td><td class="item-ns">README.md</td></tr></table></div></section>
+<section class="readme prose" data-diff="same"><h2 id="readme">README<a class="anchor" href="#readme">§</a></h2><h2>SQL Semantics for PostgreSQL</h2>
+<p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-postgres/"><span class="md-target" title="https://img.shields.io/badge/docs-sql--semantics--postgres-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+<p>SQL Semantics for PostgreSQL adds PostgreSQL to <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics">SQL Semantics</a>: the typed statement models of the official PostgreSQL grammars and the PostgreSQL rules for schema binding. Installing it also installs the shared SQL Semantics runtime, and <code>Dialect::PostgreSql</code> selects PostgreSQL in the runtime&#039;s <code>Semantics</code>, <code>SchemaBuilder</code>, and <code>Binder</code>. No database connection is needed.</p>
+<h3>Requirements</h3>
+<ul><li>PHP 8.1+ with the zlib extension</li></ul>
+<h3>Support Syntax</h3>
+<p>The following grammar versions are supported. Pass the version tag as the second argument of <code>Semantics</code> or the third argument of <code>SchemaBuilder</code>; omitting it uses the default.</p>
+<div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>17.2</td><td><code>pg-17.2</code></td><td>Yes</td></tr></tbody></table></div>
+<h3>Installation</h3>
+<pre class="code"><code>composer require k-kinzal/sql-semantics-postgres</code></pre>
+<h3>Usage</h3>
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Dialect</span>;
+
+<span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&quot;INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;) RETURNING id&quot;</span>);
+
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">toString</span>(); <span class="tok-com">// &quot;INSERT INTO users ( id , name ) VALUES( 1 , &#039;Alice&#039; ) RETURNING id&quot;</span></code></pre>
+<p>See the <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics">SQL Semantics documentation</a> for statement models and schema binding.</p>
+<h3>License</h3>
+<p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
+</section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../assets/search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</body>
+</html>
