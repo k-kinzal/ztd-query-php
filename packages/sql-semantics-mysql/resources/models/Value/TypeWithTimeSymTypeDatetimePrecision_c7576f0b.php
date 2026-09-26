@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithTimeSymTypeDatetimePrecision_c7576f0b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithTimeSymTypeDatetimePrecision_c7576f0b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithTimeSymTypeDatetimePrecision_c7576f0b implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeDatetimePrecisionForm $typeDatetimePrecision,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($typeDatetimePrecision), 'The typeDatetimePrecision must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class TypeWithTimeSymTypeDatetimePrecision_c7576f0b implements \SqlSemanti
     {
         $writer->append('TIME');
         $this->typeDatetimePrecision->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new typeDatetimePrecision, preserving every other field.
+     */
+    public function withTypeDatetimePrecision(\SqlSemantics\Statement\Model\MySql\Role\TypeDatetimePrecisionForm $typeDatetimePrecision): self
+    {
+        return new self($typeDatetimePrecision);
     }
 }

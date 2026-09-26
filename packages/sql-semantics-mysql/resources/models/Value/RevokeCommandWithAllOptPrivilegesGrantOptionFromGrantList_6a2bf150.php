@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RevokeCommandWithAllOptPrivilegesGrantOptionFromGrantList_6a2bf150 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RevokeCommandWithAllOptPrivilegesGrantOptionFromGrantList_6a2bf150 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RevokeCommandWithAllOptPrivilegesGrantOptionFromGrantList_6a2bf150 implements \SqlSemantics\Statement\Model\MySql\Role\RevokeCommandForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromGrantList_6a2bf150 i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPrivileges), 'The optPrivileges must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantList), 'The grantList must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromGrantList_6a2bf150 i
         $writer->append('OPTION');
         $writer->append('FROM');
         $this->grantList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optPrivileges, preserving every other field.
+     */
+    public function withOptPrivileges(\SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges): self
+    {
+        return new self($optPrivileges, $this->grantList);
+    }
+
+    /**
+     * Returns a copy with a new grantList, preserving every other field.
+     */
+    public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self
+    {
+        return new self($this->optPrivileges, $grantList);
     }
 }

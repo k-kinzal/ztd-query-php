@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLineTermWithLinesLineTermList_97c5193f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLineTermWithLinesLineTermList_97c5193f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptLineTermWithLinesLineTermList_97c5193f implements \SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LineTermListForm $lineTermList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lineTermList), 'The lineTermList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptLineTermWithLinesLineTermList_97c5193f implements \SqlSemantics\S
     {
         $writer->append('LINES');
         $this->lineTermList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new lineTermList, preserving every other field.
+     */
+    public function withLineTermList(\SqlSemantics\Statement\Model\MySql\Role\LineTermListForm $lineTermList): self
+    {
+        return new self($lineTermList);
     }
 }

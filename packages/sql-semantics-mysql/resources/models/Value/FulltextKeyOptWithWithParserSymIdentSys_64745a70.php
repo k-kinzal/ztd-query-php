@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FulltextKeyOptWithWithParserSymIdentSys_64745a70 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FulltextKeyOptWithWithParserSymIdentSys_64745a70 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FulltextKeyOptWithWithParserSymIdentSys_64745a70 implements \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identSys), 'The identSys must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class FulltextKeyOptWithWithParserSymIdentSys_64745a70 implements \SqlSema
         $writer->append('WITH');
         $writer->append('PARSER');
         $this->identSys->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identSys, preserving every other field.
+     */
+    public function withIdentSys(\SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys): self
+    {
+        return new self($identSys);
     }
 }

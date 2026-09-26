@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FilterDefsWithFilterDefsFilterDef_f7c5468a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FilterDefsWithFilterDefsFilterDef_f7c5468a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FilterDefsWithFilterDefsFilterDef_f7c5468a implements \SqlSemantics\Statement\Model\MySql\Role\FilterDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FilterDefsWithFilterDefsFilterDef_f7c5468a implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDefsForm $filterDefs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDefForm $filterDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDefs), 'The filterDefs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDef), 'The filterDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FilterDefsWithFilterDefsFilterDef_f7c5468a implements \SqlSemantics\
         $this->filterDefs->write($writer);
         $writer->append(',');
         $this->filterDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new filterDefs, preserving every other field.
+     */
+    public function withFilterDefs(\SqlSemantics\Statement\Model\MySql\Role\FilterDefsForm $filterDefs): self
+    {
+        return new self($filterDefs, $this->filterDef);
+    }
+
+    /**
+     * Returns a copy with a new filterDef, preserving every other field.
+     */
+    public function withFilterDef(\SqlSemantics\Statement\Model\MySql\Role\FilterDefForm $filterDef): self
+    {
+        return new self($this->filterDefs, $filterDef);
     }
 }

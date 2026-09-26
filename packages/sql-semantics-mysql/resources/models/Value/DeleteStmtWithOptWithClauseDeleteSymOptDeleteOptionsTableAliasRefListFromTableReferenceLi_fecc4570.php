@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefListFromTableReferenceLi_fecc4570 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefListFromTableReferenceLi_fecc4570 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefListFromTableReferenceLi_fecc4570 implements \SqlSemantics\Statement\Model\MySql\Role\DeleteStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefListFromTableReferenceLi_fecc4570 implements \SqlSemantics\Statement\Model\MySql\Role\DeleteStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm $tableReferenceList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDeleteOptions), 'The optDeleteOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableAliasRefList), 'The tableAliasRefList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReferenceList), 'The tableReferenceList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +45,45 @@ final class DeleteStmtWithOptWithClauseDeleteSymOptDeleteOptionsTableAliasRefLis
         $writer->append('FROM');
         $this->tableReferenceList->write($writer);
         $this->where->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new with, preserving every other field.
+     */
+    public function withWith(\SqlSemantics\Statement\Model\MySql\Role\OptWithClauseForm $with): self
+    {
+        return new self($with, $this->optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new optDeleteOptions, preserving every other field.
+     */
+    public function withOptDeleteOptions(\SqlSemantics\Statement\Model\MySql\Role\OptDeleteOptionsForm $optDeleteOptions): self
+    {
+        return new self($this->with, $optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new tableAliasRefList, preserving every other field.
+     */
+    public function withTableAliasRefList(\SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList): self
+    {
+        return new self($this->with, $this->optDeleteOptions, $tableAliasRefList, $this->tableReferenceList, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new tableReferenceList, preserving every other field.
+     */
+    public function withTableReferenceList(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm $tableReferenceList): self
+    {
+        return new self($this->with, $this->optDeleteOptions, $this->tableAliasRefList, $tableReferenceList, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
+    {
+        return new self($this->with, $this->optDeleteOptions, $this->tableAliasRefList, $this->tableReferenceList, $where);
     }
 }

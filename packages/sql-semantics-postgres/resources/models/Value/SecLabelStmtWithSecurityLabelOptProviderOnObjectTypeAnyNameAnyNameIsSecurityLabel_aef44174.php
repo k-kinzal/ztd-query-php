@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SecLabelStmtWithSecurityLabelOptProviderOnObjectTypeAnyNameAnyNameIsSecurityLabel_aef44174 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SecLabelStmtWithSecurityLabelOptProviderOnObjectTypeAnyNameAnyNameIsSecurityLabel_aef44174 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SecLabelStmtWithSecurityLabelOptProviderOnObjectTypeAnyNameAnyNameIsSecurityLabel_aef44174 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SecLabelStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class SecLabelStmtWithSecurityLabelOptProviderOnObjectTypeAnyNameAnyNameIsSecurityLabel_aef44174 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SecLabelStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SecLabelStmtWithSecurityLabelOptProviderOnObjectTypeAnyNameAnyNameIs
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SecurityLabelForm $securityLabel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optProvider), 'The optProvider must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($objectTypeAnyName), 'The objectTypeAnyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($securityLabel), 'The securityLabel must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +44,37 @@ final class SecLabelStmtWithSecurityLabelOptProviderOnObjectTypeAnyNameAnyNameIs
         $this->anyName->write($writer);
         $writer->append('IS');
         $this->securityLabel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optProvider, preserving every other field.
+     */
+    public function withOptProvider(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProviderForm $optProvider): self
+    {
+        return new self($optProvider, $this->objectTypeAnyName, $this->anyName, $this->securityLabel);
+    }
+
+    /**
+     * Returns a copy with a new objectTypeAnyName, preserving every other field.
+     */
+    public function withObjectTypeAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeAnyNameForm $objectTypeAnyName): self
+    {
+        return new self($this->optProvider, $objectTypeAnyName, $this->anyName, $this->securityLabel);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($this->optProvider, $this->objectTypeAnyName, $anyName, $this->securityLabel);
+    }
+
+    /**
+     * Returns a copy with a new securityLabel, preserving every other field.
+     */
+    public function withSecurityLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\SecurityLabelForm $securityLabel): self
+    {
+        return new self($this->optProvider, $this->objectTypeAnyName, $this->anyName, $securityLabel);
     }
 }

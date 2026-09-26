@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableStmtWithAlterIndexAllInPTablespaceNameSetTablespaceNameOptNowait_b5ba4b20 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableStmtWithAlterIndexAllInPTablespaceNameSetTablespaceNameOptNowait_b5ba4b20 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTableStmtWithAlterIndexAllInPTablespaceNameSetTablespaceNameOptNowait_b5ba4b20 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterTableStmtWithAlterIndexAllInPTablespaceNameSetTablespaceNameOptNowait_b5ba4b20 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterTableStmtWithAlterIndexAllInPTablespaceNameSetTablespaceNameOpt
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitForm $optNowait,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name2), 'The name2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNowait), 'The optNowait must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +44,29 @@ final class AlterTableStmtWithAlterIndexAllInPTablespaceNameSetTablespaceNameOpt
         $writer->append('TABLESPACE');
         $this->name2->write($writer);
         $this->optNowait->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->name2, $this->optNowait);
+    }
+
+    /**
+     * Returns a copy with a new name2, preserving every other field.
+     */
+    public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
+    {
+        return new self($this->name, $name2, $this->optNowait);
+    }
+
+    /**
+     * Returns a copy with a new optNowait, preserving every other field.
+     */
+    public function withOptNowait(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitForm $optNowait): self
+    {
+        return new self($this->name, $this->name2, $optNowait);
     }
 }

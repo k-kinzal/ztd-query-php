@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceHeartbeatPeriodEqNumLiteral_0f59b648 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceHeartbeatPeriodEqNumLiteral_0f59b648 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithChangeReplicationSourceHeartbeatPeriodEqNumLiteral_0f59b648 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefWithChangeReplicationSourceHeartbeatPeriodEqNumLiteral_0f59
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceHeartbeatPeriodForm $changeReplicationSourceHeartbeatPeriod,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceHeartbeatPeriod), 'The changeReplicationSourceHeartbeatPeriod must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($numLiteral), 'The numLiteral must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefWithChangeReplicationSourceHeartbeatPeriodEqNumLiteral_0f59
         $this->changeReplicationSourceHeartbeatPeriod->write($writer);
         $writer->append('=');
         $this->numLiteral->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeReplicationSourceHeartbeatPeriod, preserving every other field.
+     */
+    public function withChangeReplicationSourceHeartbeatPeriod(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceHeartbeatPeriodForm $changeReplicationSourceHeartbeatPeriod): self
+    {
+        return new self($changeReplicationSourceHeartbeatPeriod, $this->numLiteral);
+    }
+
+    /**
+     * Returns a copy with a new numLiteral, preserving every other field.
+     */
+    public function withNumLiteral(\SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral): self
+    {
+        return new self($this->changeReplicationSourceHeartbeatPeriod, $numLiteral);
     }
 }

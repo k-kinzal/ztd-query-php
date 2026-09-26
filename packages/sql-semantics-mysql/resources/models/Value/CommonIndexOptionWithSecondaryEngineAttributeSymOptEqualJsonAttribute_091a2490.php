@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CommonIndexOptionWithSecondaryEngineAttributeSymOptEqualJsonAttribute_091a2490 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CommonIndexOptionWithSecondaryEngineAttributeSymOptEqualJsonAttribute_091a2490 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CommonIndexOptionWithSecondaryEngineAttributeSymOptEqualJsonAttribute_091a2490 implements \SqlSemantics\Statement\Model\MySql\Role\CommonIndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\IndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptFulltextIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpatialIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialIndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialIndexOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CommonIndexOptionWithSecondaryEngineAttributeSymOptEqualJsonAttribut
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JsonAttributeForm $jsonAttribute,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($jsonAttribute), 'The jsonAttribute must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CommonIndexOptionWithSecondaryEngineAttributeSymOptEqualJsonAttribut
         $writer->append('SECONDARY_ENGINE_ATTRIBUTE');
         $this->optEqual->write($writer);
         $this->jsonAttribute->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->jsonAttribute);
+    }
+
+    /**
+     * Returns a copy with a new jsonAttribute, preserving every other field.
+     */
+    public function withJsonAttribute(\SqlSemantics\Statement\Model\MySql\Role\JsonAttributeForm $jsonAttribute): self
+    {
+        return new self($this->optEqual, $jsonAttribute);
     }
 }

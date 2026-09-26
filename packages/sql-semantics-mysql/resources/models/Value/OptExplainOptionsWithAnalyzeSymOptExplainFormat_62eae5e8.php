@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptExplainOptionsWithAnalyzeSymOptExplainFormat_62eae5e8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptExplainOptionsWithAnalyzeSymOptExplainFormat_62eae5e8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptExplainOptionsWithAnalyzeSymOptExplainFormat_62eae5e8 implements \SqlSemantics\Statement\Model\MySql\Role\OptExplainOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExplainFormatForm $optExplainFormat,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExplainFormat), 'The optExplainFormat must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptExplainOptionsWithAnalyzeSymOptExplainFormat_62eae5e8 implements 
     {
         $writer->append('ANALYZE');
         $this->optExplainFormat->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optExplainFormat, preserving every other field.
+     */
+    public function withOptExplainFormat(\SqlSemantics\Statement\Model\MySql\Role\OptExplainFormatForm $optExplainFormat): self
+    {
+        return new self($optExplainFormat);
     }
 }

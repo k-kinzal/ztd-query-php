@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExprWithExprOrExpr_f24995de $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExprWithExprOrExpr_f24995de $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithExprOrExpr_f24995de implements \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,11 @@ final class ExprWithExprOrExpr_f24995de implements \SqlSemantics\Statement\Model
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrForm $or,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 4,  'mysql-5.7.44' => 5,  'mysql-8.0.44' => 10,  'mysql-8.1.0' => 10,  'mysql-8.2.0' => 10,  'mysql-8.3.0' => 10,  'mysql-8.4.7' => 10,  'mysql-9.0.1' => 10,  'mysql-9.1.0' => 10,));
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($or), 'The or must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 5,  'mysql-5.7.44' => 6,  'mysql-8.0.44' => 11,  'mysql-8.1.0' => 11,  'mysql-8.2.0' => 11,  'mysql-8.3.0' => 11,  'mysql-8.4.7' => 11,  'mysql-9.0.1' => 11,  'mysql-9.1.0' => 11,));
     }
 
     /**
@@ -32,5 +39,29 @@ final class ExprWithExprOrExpr_f24995de implements \SqlSemantics\Statement\Model
         $this->expr->write($writer);
         $this->or->write($writer);
         $this->expr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->or, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new or, preserving every other field.
+     */
+    public function withOr(\SqlSemantics\Statement\Model\MySql\Role\OrForm $or): self
+    {
+        return new self($this->expr, $or, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new expr2, preserving every other field.
+     */
+    public function withExpr2(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2): self
+    {
+        return new self($this->expr, $this->or, $expr2);
     }
 }

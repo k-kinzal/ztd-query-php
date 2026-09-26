@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoNameListOptNumSubparts_c9746b5c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoNameListOptNumSubparts_c9746b5c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoNameListOptNumSubparts_c9746b5c implements \SqlSemantics\Statement\Model\MySql\Role\OptSubPartForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoNameListOptN
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NameListForm $nameList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLinear), 'The optLinear must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyAlgo), 'The optKeyAlgo must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($nameList), 'The nameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNumSubparts), 'The optNumSubparts must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +45,37 @@ final class OptSubPartWithSubpartitionSymByOptLinearKeySymOptKeyAlgoNameListOptN
         $this->nameList->write($writer);
         $writer->append(')');
         $this->optNumSubparts->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optLinear, preserving every other field.
+     */
+    public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self
+    {
+        return new self($optLinear, $this->optKeyAlgo, $this->nameList, $this->optNumSubparts);
+    }
+
+    /**
+     * Returns a copy with a new optKeyAlgo, preserving every other field.
+     */
+    public function withOptKeyAlgo(\SqlSemantics\Statement\Model\MySql\Role\OptKeyAlgoForm $optKeyAlgo): self
+    {
+        return new self($this->optLinear, $optKeyAlgo, $this->nameList, $this->optNumSubparts);
+    }
+
+    /**
+     * Returns a copy with a new nameList, preserving every other field.
+     */
+    public function withNameList(\SqlSemantics\Statement\Model\MySql\Role\NameListForm $nameList): self
+    {
+        return new self($this->optLinear, $this->optKeyAlgo, $nameList, $this->optNumSubparts);
+    }
+
+    /**
+     * Returns a copy with a new optNumSubparts, preserving every other field.
+     */
+    public function withOptNumSubparts(\SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts): self
+    {
+        return new self($this->optLinear, $this->optKeyAlgo, $this->nameList, $optNumSubparts);
     }
 }

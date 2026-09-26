@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionStmtWithAlterExtensionNameUpdateAlterExtensionOptList_e0bf8b94 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionStmtWithAlterExtensionNameUpdateAlterExtensionOptList_e0bf8b94 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterExtensionStmtWithAlterExtensionNameUpdateAlterExtensionOptList_e0bf8b94 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterExtensionStmtWithAlterExtensionNameUpdateAlterExtensionOptList_e0bf8b94 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterExtensionStmtWithAlterExtensionNameUpdateAlterExtensionOptList_
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptListForm $alterExtensionOptList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterExtensionOptList), 'The alterExtensionOptList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class AlterExtensionStmtWithAlterExtensionNameUpdateAlterExtensionOptList_
         $this->name->write($writer);
         $writer->append('UPDATE');
         $this->alterExtensionOptList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->alterExtensionOptList);
+    }
+
+    /**
+     * Returns a copy with a new alterExtensionOptList, preserving every other field.
+     */
+    public function withAlterExtensionOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionOptListForm $alterExtensionOptList): self
+    {
+        return new self($this->name, $alterExtensionOptList);
     }
 }

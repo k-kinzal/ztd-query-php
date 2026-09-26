@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameStartWithUnboundedSymPrecedingSym_3ba59478 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameStartWithUnboundedSymPrecedingSym_3ba59478 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowFrameStartWithUnboundedSymPrecedingSym_3ba59478 implements \SqlSemantics\Statement\Model\MySql\Role\WindowFrameBoundForm, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameStartForm

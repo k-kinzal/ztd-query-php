@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SetResourceGroupStmtWithSetSymResourceSymGroupSymIdentForSymThreadIdListOptions_4d174e9e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SetResourceGroupStmtWithSetSymResourceSymGroupSymIdentForSymThreadIdListOptions_4d174e9e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SetResourceGroupStmtWithSetSymResourceSymGroupSymIdentForSymThreadIdListOptions_4d174e9e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SetResourceGroupStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class SetResourceGroupStmtWithSetSymResourceSymGroupSymIdentForSymThreadIdListOptions_4d174e9e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SetResourceGroupStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SetResourceGroupStmtWithSetSymResourceSymGroupSymIdentForSymThreadId
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListOptionsForm $threadIdListOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($threadIdListOptions), 'The threadIdListOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class SetResourceGroupStmtWithSetSymResourceSymGroupSymIdentForSymThreadId
         $this->ident->write($writer);
         $writer->append('FOR');
         $this->threadIdListOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->threadIdListOptions);
+    }
+
+    /**
+     * Returns a copy with a new threadIdListOptions, preserving every other field.
+     */
+    public function withThreadIdListOptions(\SqlSemantics\Statement\Model\MySql\Role\ThreadIdListOptionsForm $threadIdListOptions): self
+    {
+        return new self($this->ident, $threadIdListOptions);
     }
 }

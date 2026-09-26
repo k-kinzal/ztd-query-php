@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionModeItemWithDeferrable_f83461f0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionModeItemWithDeferrable_f83461f0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TransactionModeItemWithDeferrable_f83461f0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm

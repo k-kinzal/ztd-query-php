@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypes_860f8718 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypes_860f8718 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypes_860f8718 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransformElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes), 'The functionWithArgtypes must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +35,13 @@ final class TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypes_860
         $writer->append('WITH');
         $writer->append('FUNCTION');
         $this->functionWithArgtypes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new functionWithArgtypes, preserving every other field.
+     */
+    public function withFunctionWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes): self
+    {
+        return new self($functionWithArgtypes);
     }
 }

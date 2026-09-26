@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIndexLockAlgorithmWithAlterAlgorithmOptionAlterLockOption_139ee30a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIndexLockAlgorithmWithAlterAlgorithmOptionAlterLockOption_139ee30a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIndexLockAlgorithmWithAlterAlgorithmOptionAlterLockOption_139ee30a implements \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptIndexLockAlgorithmWithAlterAlgorithmOptionAlterLockOption_139ee30
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterAlgorithmOptionForm $alterAlgorithmOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterLockOptionForm $alterLockOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterAlgorithmOption), 'The alterAlgorithmOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterLockOption), 'The alterLockOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptIndexLockAlgorithmWithAlterAlgorithmOptionAlterLockOption_139ee30
     {
         $this->alterAlgorithmOption->write($writer);
         $this->alterLockOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterAlgorithmOption, preserving every other field.
+     */
+    public function withAlterAlgorithmOption(\SqlSemantics\Statement\Model\MySql\Role\AlterAlgorithmOptionForm $alterAlgorithmOption): self
+    {
+        return new self($alterAlgorithmOption, $this->alterLockOption);
+    }
+
+    /**
+     * Returns a copy with a new alterLockOption, preserving every other field.
+     */
+    public function withAlterLockOption(\SqlSemantics\Statement\Model\MySql\Role\AlterLockOptionForm $alterLockOption): self
+    {
+        return new self($this->alterAlgorithmOption, $alterLockOption);
     }
 }

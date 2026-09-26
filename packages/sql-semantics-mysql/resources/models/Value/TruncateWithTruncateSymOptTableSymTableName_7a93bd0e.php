@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TruncateWithTruncateSymOptTableSymTableName_7a93bd0e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TruncateWithTruncateSymOptTableSymTableName_7a93bd0e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\TruncateForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \Sql
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableSymForm $optTableSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableNameForm $tableName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableSym), 'The optTableSym must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableName), 'The tableName must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TruncateWithTruncateSymOptTableSymTableName_7a93bd0e implements \Sql
         $writer->append('TRUNCATE');
         $this->optTableSym->write($writer);
         $this->tableName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTableSym, preserving every other field.
+     */
+    public function withOptTableSym(\SqlSemantics\Statement\Model\MySql\Role\OptTableSymForm $optTableSym): self
+    {
+        return new self($optTableSym, $this->tableName);
+    }
+
+    /**
+     * Returns a copy with a new tableName, preserving every other field.
+     */
+    public function withTableName(\SqlSemantics\Statement\Model\MySql\Role\TableNameForm $tableName): self
+    {
+        return new self($this->optTableSym, $tableName);
     }
 }

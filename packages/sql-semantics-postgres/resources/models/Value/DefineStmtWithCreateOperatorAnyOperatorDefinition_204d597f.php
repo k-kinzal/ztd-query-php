@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefineStmtWithCreateOperatorAnyOperatorDefinition_204d597f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefineStmtWithCreateOperatorAnyOperatorDefinition_204d597f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DefineStmtWithCreateOperatorAnyOperatorDefinition_204d597f implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefineStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class DefineStmtWithCreateOperatorAnyOperatorDefinition_204d597f implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefineStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DefineStmtWithCreateOperatorAnyOperatorDefinition_204d597f implement
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm $anyOperator,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyOperator), 'The anyOperator must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($definition), 'The definition must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class DefineStmtWithCreateOperatorAnyOperatorDefinition_204d597f implement
         $writer->append('OPERATOR');
         $this->anyOperator->write($writer);
         $this->definition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyOperator, preserving every other field.
+     */
+    public function withAnyOperator(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm $anyOperator): self
+    {
+        return new self($anyOperator, $this->definition);
+    }
+
+    /**
+     * Returns a copy with a new definition, preserving every other field.
+     */
+    public function withDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition): self
+    {
+        return new self($this->anyOperator, $definition);
     }
 }

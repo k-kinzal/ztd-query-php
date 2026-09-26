@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TextStringLiteralWithTextString_88b96700 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TextStringLiteralWithTextString_88b96700 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TextStringLiteralWithTextString_88b96700 implements \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm, \SqlSemantics\Statement\Model\MySql\Role\OptDescribeColumnForm, \SqlSemantics\Statement\Model\MySql\Role\RoutineStringForm, \SqlSemantics\Statement\Model\MySql\Role\StringListForm, \SqlSemantics\Statement\Model\MySql\Role\TextStringForm, \SqlSemantics\Statement\Model\MySql\Role\XidForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $value,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['TEXT_STRING'], 'The value must be a complete TEXT_STRING lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TextStringLiteralWithTextString_88b96700 implements \SqlSemantics\St
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value);
     }
 }

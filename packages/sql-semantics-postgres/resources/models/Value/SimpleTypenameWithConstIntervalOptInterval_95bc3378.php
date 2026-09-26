@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SimpleTypenameWithConstIntervalOptInterval_95bc3378 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SimpleTypenameWithConstIntervalOptInterval_95bc3378 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SimpleTypenameWithConstIntervalOptInterval_95bc3378 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SimpleTypenameWithConstIntervalOptInterval_95bc3378 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm $constInterval,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptIntervalForm $optInterval,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constInterval), 'The constInterval must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optInterval), 'The optInterval must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SimpleTypenameWithConstIntervalOptInterval_95bc3378 implements \SqlS
     {
         $this->constInterval->write($writer);
         $this->optInterval->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new constInterval, preserving every other field.
+     */
+    public function withConstInterval(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstIntervalForm $constInterval): self
+    {
+        return new self($constInterval, $this->optInterval);
+    }
+
+    /**
+     * Returns a copy with a new optInterval, preserving every other field.
+     */
+    public function withOptInterval(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIntervalForm $optInterval): self
+    {
+        return new self($this->constInterval, $optInterval);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterPublicationStmtWithAlterPublicationNameDropPubObjList_6b939dba $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterPublicationStmtWithAlterPublicationNameDropPubObjList_6b939dba $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterPublicationStmtWithAlterPublicationNameDropPubObjList_6b939dba implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterPublicationStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterPublicationStmtWithAlterPublicationNameDropPubObjList_6b939dba implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterPublicationStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterPublicationStmtWithAlterPublicationNameDropPubObjList_6b939dba 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm $pubObjList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($pubObjList), 'The pubObjList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class AlterPublicationStmtWithAlterPublicationNameDropPubObjList_6b939dba 
         $this->name->write($writer);
         $writer->append('DROP');
         $this->pubObjList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->pubObjList);
+    }
+
+    /**
+     * Returns a copy with a new pubObjList, preserving every other field.
+     */
+    public function withPubObjList(\SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm $pubObjList): self
+    {
+        return new self($this->name, $pubObjList);
     }
 }

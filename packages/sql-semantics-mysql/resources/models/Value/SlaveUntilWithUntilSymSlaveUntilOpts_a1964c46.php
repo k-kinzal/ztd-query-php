@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveUntilWithUntilSymSlaveUntilOpts_a1964c46 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveUntilWithUntilSymSlaveUntilOpts_a1964c46 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveUntilWithUntilSymSlaveUntilOpts_a1964c46 implements \SqlSemantics\Statement\Model\MySql\Role\SlaveUntilForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveUntilOptsForm $slaveUntilOpts,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveUntilOpts), 'The slaveUntilOpts must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SlaveUntilWithUntilSymSlaveUntilOpts_a1964c46 implements \SqlSemanti
     {
         $writer->append('UNTIL');
         $this->slaveUntilOpts->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new slaveUntilOpts, preserving every other field.
+     */
+    public function withSlaveUntilOpts(\SqlSemantics\Statement\Model\MySql\Role\SlaveUntilOptsForm $slaveUntilOpts): self
+    {
+        return new self($slaveUntilOpts);
     }
 }

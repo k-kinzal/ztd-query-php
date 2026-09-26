@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithStorageSymStorageMedia_c5c6ae18 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithStorageSymStorageMedia_c5c6ae18 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnAttributeWithStorageSymStorageMedia_c5c6ae18 implements \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StorageMediaForm $storageMedia,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($storageMedia), 'The storageMedia must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ColumnAttributeWithStorageSymStorageMedia_c5c6ae18 implements \SqlSe
     {
         $writer->append('STORAGE');
         $this->storageMedia->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new storageMedia, preserving every other field.
+     */
+    public function withStorageMedia(\SqlSemantics\Statement\Model\MySql\Role\StorageMediaForm $storageMedia): self
+    {
+        return new self($storageMedia);
     }
 }

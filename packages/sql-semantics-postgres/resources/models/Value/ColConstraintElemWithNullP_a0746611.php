@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithNullP_a0746611 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithNullP_a0746611 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColConstraintElemWithNullP_a0746611 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintElemForm

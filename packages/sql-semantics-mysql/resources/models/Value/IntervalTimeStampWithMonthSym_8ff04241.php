@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithMonthSym_8ff04241 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithMonthSym_8ff04241 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntervalTimeStampWithMonthSym_8ff04241 implements \SqlSemantics\Statement\Model\MySql\Role\IntervalForm, \SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $monthSym,
     ) {
+        $this->assertMatchesPattern($monthSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['MONTH_SYM'], 'The monthSym must be a complete MONTH_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IntervalTimeStampWithMonthSym_8ff04241 implements \SqlSemantics\Stat
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->monthSym);
+    }
+
+    /**
+     * Returns a copy with a new monthSym, preserving every other field.
+     */
+    public function withMonthSym(string $monthSym): self
+    {
+        return new self($monthSym);
     }
 }

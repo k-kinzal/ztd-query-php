@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptHistogramUpdateParamWithWithNumBucketsSym_0a559c3e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptHistogramUpdateParamWithWithNumBucketsSym_0a559c3e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptHistogramUpdateParamWithWithNumBucketsSym_0a559c3e implements \SqlSemantics\Statement\Model\MySql\Role\OptHistogramUpdateParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $value,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptHistogramUpdateParamWithWithNumBucketsSym_0a559c3e implements \Sq
         $writer->append('WITH');
         $writer->append($this->value);
         $writer->append('BUCKETS');
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value);
     }
 }

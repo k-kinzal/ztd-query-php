@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptDuplicateAsQeWith_8befdf4f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptDuplicateAsQeWith_8befdf4f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptDuplicateAsQeWith_8befdf4f implements \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm

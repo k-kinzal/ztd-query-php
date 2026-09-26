@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ServerOptionWithSocketSymTextStringSys_00173a64 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ServerOptionWithSocketSymTextStringSys_00173a64 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ServerOptionWithSocketSymTextStringSys_00173a64 implements \SqlSemantics\Statement\Model\MySql\Role\ServerOptionForm, \SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ServerOptionWithSocketSymTextStringSys_00173a64 implements \SqlSeman
     {
         $writer->append('SOCKET');
         $this->textStringSys->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textStringSys, preserving every other field.
+     */
+    public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
+    {
+        return new self($textStringSys);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ServerOptionsListWithServerOptionsListServerOption_f2ff17cf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ServerOptionsListWithServerOptionsListServerOption_f2ff17cf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ServerOptionsListWithServerOptionsListServerOption_f2ff17cf implements \SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ServerOptionsListWithServerOptionsListServerOption_f2ff17cf implemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ServerOptionForm $serverOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($serverOptionsList), 'The serverOptionsList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($serverOption), 'The serverOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ServerOptionsListWithServerOptionsListServerOption_f2ff17cf implemen
         $this->serverOptionsList->write($writer);
         $writer->append(',');
         $this->serverOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new serverOptionsList, preserving every other field.
+     */
+    public function withServerOptionsList(\SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList): self
+    {
+        return new self($serverOptionsList, $this->serverOption);
+    }
+
+    /**
+     * Returns a copy with a new serverOption, preserving every other field.
+     */
+    public function withServerOption(\SqlSemantics\Statement\Model\MySql\Role\ServerOptionForm $serverOption): self
+    {
+        return new self($this->serverOptionsList, $serverOption);
     }
 }

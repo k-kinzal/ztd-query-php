@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PublicationObjSpecWithColIdIndirectionOptColumnListOptWhereClause_59edadba $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PublicationObjSpecWithColIdIndirectionOptColumnListOptWhereClause_59edadba $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PublicationObjSpecWithColIdIndirectionOptColumnListOptWhereClause_59edadba implements \SqlSemantics\Statement\Model\PostgreSql\Role\PublicationObjSpecForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class PublicationObjSpecWithColIdIndirectionOptColumnListOptWhereClause_59
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWhereClauseForm $optWhereClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indirection), 'The indirection must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumnList), 'The optColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWhereClause), 'The optWhereClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class PublicationObjSpecWithColIdIndirectionOptColumnListOptWhereClause_59
         $this->indirection->write($writer);
         $this->optColumnList->write($writer);
         $this->optWhereClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->indirection, $this->optColumnList, $this->optWhereClause);
+    }
+
+    /**
+     * Returns a copy with a new indirection, preserving every other field.
+     */
+    public function withIndirection(\SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionForm $indirection): self
+    {
+        return new self($this->colId, $indirection, $this->optColumnList, $this->optWhereClause);
+    }
+
+    /**
+     * Returns a copy with a new optColumnList, preserving every other field.
+     */
+    public function withOptColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList): self
+    {
+        return new self($this->colId, $this->indirection, $optColumnList, $this->optWhereClause);
+    }
+
+    /**
+     * Returns a copy with a new optWhereClause, preserving every other field.
+     */
+    public function withOptWhereClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWhereClauseForm $optWhereClause): self
+    {
+        return new self($this->colId, $this->indirection, $this->optColumnList, $optWhereClause);
     }
 }

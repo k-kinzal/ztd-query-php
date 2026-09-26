@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CacheKeyListOrEmptyWithKeyOrIndexOptKeyUsageList_1dbb2cae $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CacheKeyListOrEmptyWithKeyOrIndexOptKeyUsageList_1dbb2cae $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CacheKeyListOrEmptyWithKeyOrIndexOptKeyUsageList_1dbb2cae implements \SqlSemantics\Statement\Model\MySql\Role\CacheKeyListOrEmptyForm, \SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CacheKeyListOrEmptyWithKeyOrIndexOptKeyUsageList_1dbb2cae implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptKeyUsageListForm $optKeyUsageList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyOrIndex), 'The keyOrIndex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyUsageList), 'The optKeyUsageList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class CacheKeyListOrEmptyWithKeyOrIndexOptKeyUsageList_1dbb2cae implements
         $writer->append('(');
         $this->optKeyUsageList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new keyOrIndex, preserving every other field.
+     */
+    public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self
+    {
+        return new self($keyOrIndex, $this->optKeyUsageList);
+    }
+
+    /**
+     * Returns a copy with a new optKeyUsageList, preserving every other field.
+     */
+    public function withOptKeyUsageList(\SqlSemantics\Statement\Model\MySql\Role\OptKeyUsageListForm $optKeyUsageList): self
+    {
+        return new self($this->keyOrIndex, $optKeyUsageList);
     }
 }

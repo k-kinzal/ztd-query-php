@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyListFulltextKeyOpti_33172aa6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyListFulltextKeyOpti_33172aa6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyListFulltextKeyOpti_33172aa6 implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyListFulltextKeyOpti_33172aa6 implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm $fulltextKeyOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm $optIndexLockAlgorithm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltext), 'The fulltext must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($initKeyOptions), 'The initKeyOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyList), 'The keyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltextKeyOptions), 'The fulltextKeyOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIndexLockAlgorithm), 'The optIndexLockAlgorithm must be a generated immutable SQL value.');
     }
 
     /**
@@ -45,5 +54,61 @@ final class CreateWithCreateFulltextIndexSymIdentInitKeyOptionsOnTableIdentKeyLi
         $writer->append(')');
         $this->fulltextKeyOptions->write($writer);
         $this->optIndexLockAlgorithm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fulltext, preserving every other field.
+     */
+    public function withFulltext(\SqlSemantics\Statement\Model\MySql\Role\FulltextForm $fulltext): self
+    {
+        return new self($fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->fulltext, $ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new initKeyOptions, preserving every other field.
+     */
+    public function withInitKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm $initKeyOptions): self
+    {
+        return new self($this->fulltext, $this->ident, $initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $tableIdent, $this->keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new keyList, preserving every other field.
+     */
+    public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
+    {
+        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $keyList, $this->fulltextKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new fulltextKeyOptions, preserving every other field.
+     */
+    public function withFulltextKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm $fulltextKeyOptions): self
+    {
+        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $fulltextKeyOptions, $this->optIndexLockAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new optIndexLockAlgorithm, preserving every other field.
+     */
+    public function withOptIndexLockAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm $optIndexLockAlgorithm): self
+    {
+        return new self($this->fulltext, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->fulltextKeyOptions, $optIndexLockAlgorithm);
     }
 }

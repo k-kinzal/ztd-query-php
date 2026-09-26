@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreateMvTargetAsSelectStmtOptWith_04173bd0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreateMvTargetAsSelectStmtOptWith_04173bd0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreateMvTargetAsSelectStmtOptWith_04173bd0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateMatViewStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreateMvTargetAsSelectStmtOptWith_04173bd0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateMatViewStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreat
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNoLog), 'The optNoLog must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createMvTarget), 'The createMvTarget must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectStmt), 'The selectStmt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWithData), 'The optWithData must be a generated immutable SQL value.');
     }
 
     /**
@@ -41,5 +47,37 @@ final class CreateMatViewStmtWithCreateOptNoLogMaterializedViewIfPNotExistsCreat
         $writer->append('AS');
         $this->selectStmt->write($writer);
         $this->optWithData->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optNoLog, preserving every other field.
+     */
+    public function withOptNoLog(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNoLogForm $optNoLog): self
+    {
+        return new self($optNoLog, $this->createMvTarget, $this->selectStmt, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new createMvTarget, preserving every other field.
+     */
+    public function withCreateMvTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateMvTargetForm $createMvTarget): self
+    {
+        return new self($this->optNoLog, $createMvTarget, $this->selectStmt, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new selectStmt, preserving every other field.
+     */
+    public function withSelectStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt): self
+    {
+        return new self($this->optNoLog, $this->createMvTarget, $selectStmt, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new optWithData, preserving every other field.
+     */
+    public function withOptWithData(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData): self
+    {
+        return new self($this->optNoLog, $this->createMvTarget, $this->selectStmt, $optWithData);
     }
 }

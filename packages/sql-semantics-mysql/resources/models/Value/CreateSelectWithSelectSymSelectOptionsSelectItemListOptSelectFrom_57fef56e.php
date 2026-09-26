@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateSelectWithSelectSymSelectOptionsSelectItemListOptSelectFrom_57fef56e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateSelectWithSelectSymSelectOptionsSelectItemListOptSelectFrom_57fef56e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateSelectWithSelectSymSelectOptionsSelectItemListOptSelectFrom_57fef56e implements \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateSelectWithSelectSymSelectOptionsSelectItemListOptSelectFrom_57
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm $optSelectFrom,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($options), 'The options must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSelectFrom), 'The optSelectFrom must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class CreateSelectWithSelectSymSelectOptionsSelectItemListOptSelectFrom_57
         $this->options->write($writer);
         $this->projections->write($writer);
         $this->optSelectFrom->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new options, preserving every other field.
+     */
+    public function withOptions(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options): self
+    {
+        return new self($options, $this->projections, $this->optSelectFrom);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
+    {
+        return new self($this->options, $projections, $this->optSelectFrom);
+    }
+
+    /**
+     * Returns a copy with a new optSelectFrom, preserving every other field.
+     */
+    public function withOptSelectFrom(\SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm $optSelectFrom): self
+    {
+        return new self($this->options, $this->projections, $optSelectFrom);
     }
 }

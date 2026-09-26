@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DeallocateWithDeallocateOrDropPrepareSymIdent_32a2ecc2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DeallocateWithDeallocateOrDropPrepareSymIdent_32a2ecc2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DeallocateWithDeallocateOrDropPrepareSymIdent_32a2ecc2 implements \SqlSemantics\Statement\Model\MySql\Role\DeallocateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class DeallocateWithDeallocateOrDropPrepareSymIdent_32a2ecc2 implements \SqlSemantics\Statement\Model\MySql\Role\DeallocateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DeallocateWithDeallocateOrDropPrepareSymIdent_32a2ecc2 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeallocateOrDropForm $deallocateOrDrop,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($deallocateOrDrop), 'The deallocateOrDrop must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class DeallocateWithDeallocateOrDropPrepareSymIdent_32a2ecc2 implements \S
         $this->deallocateOrDrop->write($writer);
         $writer->append('PREPARE');
         $this->ident->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new deallocateOrDrop, preserving every other field.
+     */
+    public function withDeallocateOrDrop(\SqlSemantics\Statement\Model\MySql\Role\DeallocateOrDropForm $deallocateOrDrop): self
+    {
+        return new self($deallocateOrDrop, $this->ident);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->deallocateOrDrop, $ident);
     }
 }

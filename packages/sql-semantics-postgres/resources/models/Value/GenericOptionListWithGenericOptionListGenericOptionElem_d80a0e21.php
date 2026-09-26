@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 implements \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 imp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionListForm $genericOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm $genericOptionElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($genericOptionList), 'The genericOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($genericOptionElem), 'The genericOptionElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GenericOptionListWithGenericOptionListGenericOptionElem_d80a0e21 imp
         $this->genericOptionList->write($writer);
         $writer->append(',');
         $this->genericOptionElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new genericOptionList, preserving every other field.
+     */
+    public function withGenericOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionListForm $genericOptionList): self
+    {
+        return new self($genericOptionList, $this->genericOptionElem);
+    }
+
+    /**
+     * Returns a copy with a new genericOptionElem, preserving every other field.
+     */
+    public function withGenericOptionElem(\SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionElemForm $genericOptionElem): self
+    {
+        return new self($this->genericOptionList, $genericOptionElem);
     }
 }

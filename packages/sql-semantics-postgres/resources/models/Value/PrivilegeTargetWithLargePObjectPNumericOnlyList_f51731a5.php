@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrivilegeTargetWithLargePObjectPNumericOnlyList_f51731a5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrivilegeTargetWithLargePObjectPNumericOnlyList_f51731a5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PrivilegeTargetWithLargePObjectPNumericOnlyList_f51731a5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeTargetForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyListForm $numericOnlyList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($numericOnlyList), 'The numericOnlyList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class PrivilegeTargetWithLargePObjectPNumericOnlyList_f51731a5 implements 
         $writer->append('LARGE');
         $writer->append('OBJECT');
         $this->numericOnlyList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new numericOnlyList, preserving every other field.
+     */
+    public function withNumericOnlyList(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyListForm $numericOnlyList): self
+    {
+        return new self($numericOnlyList);
     }
 }

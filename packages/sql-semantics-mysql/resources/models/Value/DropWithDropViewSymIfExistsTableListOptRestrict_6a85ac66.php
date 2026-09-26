@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropWithDropViewSymIfExistsTableListOptRestrict_6a85ac66 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropWithDropViewSymIfExistsTableListOptRestrict_6a85ac66 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DropWithDropViewSymIfExistsTableListOptRestrict_6a85ac66 implements \SqlSemantics\Statement\Model\MySql\Role\DropForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class DropWithDropViewSymIfExistsTableListOptRestrict_6a85ac66 implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm $optRestrict,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableList), 'The tableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRestrict), 'The optRestrict must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class DropWithDropViewSymIfExistsTableListOptRestrict_6a85ac66 implements 
         $this->ifExists->write($writer);
         $this->tableList->write($writer);
         $this->optRestrict->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ifExists, preserving every other field.
+     */
+    public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
+    {
+        return new self($ifExists, $this->tableList, $this->optRestrict);
+    }
+
+    /**
+     * Returns a copy with a new tableList, preserving every other field.
+     */
+    public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
+    {
+        return new self($this->ifExists, $tableList, $this->optRestrict);
+    }
+
+    /**
+     * Returns a copy with a new optRestrict, preserving every other field.
+     */
+    public function withOptRestrict(\SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm $optRestrict): self
+    {
+        return new self($this->ifExists, $this->tableList, $optRestrict);
     }
 }

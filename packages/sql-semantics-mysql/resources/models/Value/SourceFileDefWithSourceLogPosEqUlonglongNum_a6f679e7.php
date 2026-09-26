@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceFileDefWithSourceLogPosEqUlonglongNum_a6f679e7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceFileDefWithSourceLogPosEqUlonglongNum_a6f679e7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceFileDefWithSourceLogPosEqUlonglongNum_a6f679e7 implements \SqlSemantics\Statement\Model\MySql\Role\ReplicaUntilForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm, \SqlSemantics\Statement\Model\MySql\Role\SourceFileDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceFileDefWithSourceLogPosEqUlonglongNum_a6f679e7 implements \Sql
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceLogPosForm $sourceLogPos,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlonglongNumForm $ulonglongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceLogPos), 'The sourceLogPos must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulonglongNum), 'The ulonglongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceFileDefWithSourceLogPosEqUlonglongNum_a6f679e7 implements \Sql
         $this->sourceLogPos->write($writer);
         $writer->append('=');
         $this->ulonglongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sourceLogPos, preserving every other field.
+     */
+    public function withSourceLogPos(\SqlSemantics\Statement\Model\MySql\Role\SourceLogPosForm $sourceLogPos): self
+    {
+        return new self($sourceLogPos, $this->ulonglongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulonglongNum, preserving every other field.
+     */
+    public function withUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\UlonglongNumForm $ulonglongNum): self
+    {
+        return new self($this->sourceLogPos, $ulonglongNum);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UdfExprWithRememberNameExprRememberEndSelectAlias_bf198dad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UdfExprWithRememberNameExprRememberEndSelectAlias_bf198dad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UdfExprWithRememberNameExprRememberEndSelectAlias_bf198dad implements \SqlSemantics\Statement\Model\MySql\Role\OptUdfExprListForm, \SqlSemantics\Statement\Model\MySql\Role\UdfExprForm, \SqlSemantics\Statement\Model\MySql\Role\UdfExprListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class UdfExprWithRememberNameExprRememberEndSelectAlias_bf198dad implement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectAliasForm $selectAlias,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName), 'The rememberName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberEnd), 'The rememberEnd must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectAlias), 'The selectAlias must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class UdfExprWithRememberNameExprRememberEndSelectAlias_bf198dad implement
         $this->expr->write($writer);
         $this->rememberEnd->write($writer);
         $this->selectAlias->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new rememberName, preserving every other field.
+     */
+    public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self
+    {
+        return new self($rememberName, $this->expr, $this->rememberEnd, $this->selectAlias);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->rememberName, $expr, $this->rememberEnd, $this->selectAlias);
+    }
+
+    /**
+     * Returns a copy with a new rememberEnd, preserving every other field.
+     */
+    public function withRememberEnd(\SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd): self
+    {
+        return new self($this->rememberName, $this->expr, $rememberEnd, $this->selectAlias);
+    }
+
+    /**
+     * Returns a copy with a new selectAlias, preserving every other field.
+     */
+    public function withSelectAlias(\SqlSemantics\Statement\Model\MySql\Role\SelectAliasForm $selectAlias): self
+    {
+        return new self($this->rememberName, $this->expr, $this->rememberEnd, $selectAlias);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpFetchListWithSpFetchListIdent_616638e3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpFetchListWithSpFetchListIdent_616638e3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpFetchListWithSpFetchListIdent_616638e3 implements \SqlSemantics\Statement\Model\MySql\Role\SpFetchListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SpFetchListWithSpFetchListIdent_616638e3 implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpFetchListForm $spFetchList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spFetchList), 'The spFetchList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SpFetchListWithSpFetchListIdent_616638e3 implements \SqlSemantics\St
         $this->spFetchList->write($writer);
         $writer->append(',');
         $this->ident->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spFetchList, preserving every other field.
+     */
+    public function withSpFetchList(\SqlSemantics\Statement\Model\MySql\Role\SpFetchListForm $spFetchList): self
+    {
+        return new self($spFetchList, $this->ident);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->spFetchList, $ident);
     }
 }

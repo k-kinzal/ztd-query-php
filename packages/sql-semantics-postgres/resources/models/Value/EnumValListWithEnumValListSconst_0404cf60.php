@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\EnumValListWithEnumValListSconst_0404cf60 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\EnumValListWithEnumValListSconst_0404cf60 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EnumValListWithEnumValListSconst_0404cf60 implements \SqlSemantics\Statement\Model\PostgreSql\Role\EnumValListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptEnumValListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class EnumValListWithEnumValListSconst_0404cf60 implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\EnumValListForm $enumValList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($enumValList), 'The enumValList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class EnumValListWithEnumValListSconst_0404cf60 implements \SqlSemantics\S
         $this->enumValList->write($writer);
         $writer->append(',');
         $this->sconst->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new enumValList, preserving every other field.
+     */
+    public function withEnumValList(\SqlSemantics\Statement\Model\PostgreSql\Role\EnumValListForm $enumValList): self
+    {
+        return new self($enumValList, $this->sconst);
+    }
+
+    /**
+     * Returns a copy with a new sconst, preserving every other field.
+     */
+    public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
+    {
+        return new self($this->enumValList, $sconst);
     }
 }

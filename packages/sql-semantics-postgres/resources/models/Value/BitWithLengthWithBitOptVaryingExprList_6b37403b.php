@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BitWithLengthWithBitOptVaryingExprList_6b37403b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BitWithLengthWithBitOptVaryingExprList_6b37403b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BitWithLengthWithBitOptVaryingExprList_6b37403b implements \SqlSemantics\Statement\Model\PostgreSql\Role\BitForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BitWithLengthForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstBitForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class BitWithLengthWithBitOptVaryingExprList_6b37403b implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVaryingForm $optVarying,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVarying), 'The optVarying must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class BitWithLengthWithBitOptVaryingExprList_6b37403b implements \SqlSeman
         $writer->append('(');
         $this->exprList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new optVarying, preserving every other field.
+     */
+    public function withOptVarying(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVaryingForm $optVarying): self
+    {
+        return new self($optVarying, $this->exprList);
+    }
+
+    /**
+     * Returns a copy with a new exprList, preserving every other field.
+     */
+    public function withExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm $exprList): self
+    {
+        return new self($this->optVarying, $exprList);
     }
 }

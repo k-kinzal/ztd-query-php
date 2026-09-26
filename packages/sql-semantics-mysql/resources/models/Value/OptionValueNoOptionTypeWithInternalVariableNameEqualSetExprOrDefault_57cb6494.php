@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithInternalVariableNameEqualSetExprOrDefault_57cb6494 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithInternalVariableNameEqualSetExprOrDefault_57cb6494 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptionValueNoOptionTypeWithInternalVariableNameEqualSetExprOrDefault_57cb6494 implements \SqlSemantics\Statement\Model\MySql\Role\OptionValueForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueNoOptionTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptionValueNoOptionTypeWithInternalVariableNameEqualSetExprOrDefault
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm $setExprOrDefault,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($internalVariableName), 'The internalVariableName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($setExprOrDefault), 'The setExprOrDefault must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class OptionValueNoOptionTypeWithInternalVariableNameEqualSetExprOrDefault
         $this->internalVariableName->write($writer);
         $this->equal->write($writer);
         $this->setExprOrDefault->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new internalVariableName, preserving every other field.
+     */
+    public function withInternalVariableName(\SqlSemantics\Statement\Model\MySql\Role\InternalVariableNameForm $internalVariableName): self
+    {
+        return new self($internalVariableName, $this->equal, $this->setExprOrDefault);
+    }
+
+    /**
+     * Returns a copy with a new equal, preserving every other field.
+     */
+    public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
+    {
+        return new self($this->internalVariableName, $equal, $this->setExprOrDefault);
+    }
+
+    /**
+     * Returns a copy with a new setExprOrDefault, preserving every other field.
+     */
+    public function withSetExprOrDefault(\SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm $setExprOrDefault): self
+    {
+        return new self($this->internalVariableName, $this->equal, $setExprOrDefault);
     }
 }

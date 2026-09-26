@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WhenListWithWhenSymExprThenSymExpr_dc2e3408 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WhenListWithWhenSymExprThenSymExpr_dc2e3408 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WhenListWithWhenSymExprThenSymExpr_dc2e3408 implements \SqlSemantics\Statement\Model\MySql\Role\WhenListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WhenListWithWhenSymExprThenSymExpr_dc2e3408 implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class WhenListWithWhenSymExprThenSymExpr_dc2e3408 implements \SqlSemantics
         $this->expr->write($writer);
         $writer->append('THEN');
         $this->expr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new expr2, preserving every other field.
+     */
+    public function withExpr2(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2): self
+    {
+        return new self($this->expr, $expr2);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterUserCommandUserFuncIdentifiedSymByTextString_038fc5d6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterUserCommandUserFuncIdentifiedSymByTextString_038fc5d6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterWithAlterUserCommandUserFuncIdentifiedSymByTextString_038fc5d6 implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterWithAlterUserCommandUserFuncIdentifiedSymByTextString_038fc5d6 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserFuncForm $userFunc,
         public readonly string $value,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUserCommand), 'The alterUserCommand must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userFunc), 'The userFunc must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['TEXT_STRING'], 'The value must be a complete TEXT_STRING lexical spelling.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterWithAlterUserCommandUserFuncIdentifiedSymByTextString_038fc5d6 
         $writer->append('IDENTIFIED');
         $writer->append('BY');
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new alterUserCommand, preserving every other field.
+     */
+    public function withAlterUserCommand(\SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand): self
+    {
+        return new self($alterUserCommand, $this->userFunc, $this->value);
+    }
+
+    /**
+     * Returns a copy with a new userFunc, preserving every other field.
+     */
+    public function withUserFunc(\SqlSemantics\Statement\Model\MySql\Role\UserFuncForm $userFunc): self
+    {
+        return new self($this->alterUserCommand, $userFunc, $this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($this->alterUserCommand, $this->userFunc, $value);
     }
 }

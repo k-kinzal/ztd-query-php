@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithSecondSym_3d0b0f01 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithSecondSym_3d0b0f01 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntervalTimeStampWithSecondSym_3d0b0f01 implements \SqlSemantics\Statement\Model\MySql\Role\IntervalForm, \SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $secondSym,
     ) {
+        $this->assertMatchesPattern($secondSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['SECOND_SYM'], 'The secondSym must be a complete SECOND_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IntervalTimeStampWithSecondSym_3d0b0f01 implements \SqlSemantics\Sta
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->secondSym);
+    }
+
+    /**
+     * Returns a copy with a new secondSym, preserving every other field.
+     */
+    public function withSecondSym(string $secondSym): self
+    {
+        return new self($secondSym);
     }
 }

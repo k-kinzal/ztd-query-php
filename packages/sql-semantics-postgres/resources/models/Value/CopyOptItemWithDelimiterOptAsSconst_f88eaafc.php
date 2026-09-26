@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyOptItemWithDelimiterOptAsSconst_f88eaafc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyOptItemWithDelimiterOptAsSconst_f88eaafc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CopyOptItemWithDelimiterOptAsSconst_f88eaafc implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptItemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CopyOptItemWithDelimiterOptAsSconst_f88eaafc implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm $optAs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAs), 'The optAs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CopyOptItemWithDelimiterOptAsSconst_f88eaafc implements \SqlSemantic
         $writer->append('DELIMITER');
         $this->optAs->write($writer);
         $this->sconst->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optAs, preserving every other field.
+     */
+    public function withOptAs(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAsForm $optAs): self
+    {
+        return new self($optAs, $this->sconst);
+    }
+
+    /**
+     * Returns a copy with a new sconst, preserving every other field.
+     */
+    public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
+    {
+        return new self($this->optAs, $sconst);
     }
 }

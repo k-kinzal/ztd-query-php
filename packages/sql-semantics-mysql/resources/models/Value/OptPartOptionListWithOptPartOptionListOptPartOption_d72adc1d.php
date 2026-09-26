@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptPartOptionListWithOptPartOptionListOptPartOption_d72adc1d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptPartOptionListWithOptPartOptionListOptPartOption_d72adc1d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptPartOptionListWithOptPartOptionListOptPartOption_d72adc1d implements \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptPartOptionListWithOptPartOptionListOptPartOption_d72adc1d impleme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionListForm $optPartOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionForm $optPartOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPartOptionList), 'The optPartOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPartOption), 'The optPartOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptPartOptionListWithOptPartOptionListOptPartOption_d72adc1d impleme
     {
         $this->optPartOptionList->write($writer);
         $this->optPartOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optPartOptionList, preserving every other field.
+     */
+    public function withOptPartOptionList(\SqlSemantics\Statement\Model\MySql\Role\OptPartOptionListForm $optPartOptionList): self
+    {
+        return new self($optPartOptionList, $this->optPartOption);
+    }
+
+    /**
+     * Returns a copy with a new optPartOption, preserving every other field.
+     */
+    public function withOptPartOption(\SqlSemantics\Statement\Model\MySql\Role\OptPartOptionForm $optPartOption): self
+    {
+        return new self($this->optPartOptionList, $optPartOption);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateSchemaStmtWithCreateSchemaIfPNotExistsColIdOptSchemaEltList_0d4d8913 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateSchemaStmtWithCreateSchemaIfPNotExistsColIdOptSchemaEltList_0d4d8913 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateSchemaStmtWithCreateSchemaIfPNotExistsColIdOptSchemaEltList_0d4d8913 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateSchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateSchemaStmtWithCreateSchemaIfPNotExistsColIdOptSchemaEltList_0d4d8913 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateSchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreateSchemaStmtWithCreateSchemaIfPNotExistsColIdOptSchemaEltList_0d
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSchemaEltList), 'The optSchemaEltList must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class CreateSchemaStmtWithCreateSchemaIfPNotExistsColIdOptSchemaEltList_0d
         $writer->append('EXISTS');
         $this->colId->write($writer);
         $this->optSchemaEltList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->optSchemaEltList);
+    }
+
+    /**
+     * Returns a copy with a new optSchemaEltList, preserving every other field.
+     */
+    public function withOptSchemaEltList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList): self
+    {
+        return new self($this->colId, $optSchemaEltList);
     }
 }

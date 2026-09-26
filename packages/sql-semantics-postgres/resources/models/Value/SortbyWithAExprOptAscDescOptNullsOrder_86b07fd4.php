@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SortbyWithAExprOptAscDescOptNullsOrder_86b07fd4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SortbyWithAExprOptAscDescOptNullsOrder_86b07fd4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SortbyWithAExprOptAscDescOptNullsOrder_86b07fd4 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SortbyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SortbyListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SortbyWithAExprOptAscDescOptNullsOrder_86b07fd4 implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAscDescForm $optAscDesc,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $optNullsOrder,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAscDesc), 'The optAscDesc must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNullsOrder), 'The optNullsOrder must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class SortbyWithAExprOptAscDescOptNullsOrder_86b07fd4 implements \SqlSeman
         $this->aExpr->write($writer);
         $this->optAscDesc->write($writer);
         $this->optNullsOrder->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($aExpr, $this->optAscDesc, $this->optNullsOrder);
+    }
+
+    /**
+     * Returns a copy with a new optAscDesc, preserving every other field.
+     */
+    public function withOptAscDesc(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAscDescForm $optAscDesc): self
+    {
+        return new self($this->aExpr, $optAscDesc, $this->optNullsOrder);
+    }
+
+    /**
+     * Returns a copy with a new optNullsOrder, preserving every other field.
+     */
+    public function withOptNullsOrder(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $optNullsOrder): self
+    {
+        return new self($this->aExpr, $this->optAscDesc, $optNullsOrder);
     }
 }

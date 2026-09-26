@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowColumnsStmtWithShowOptShowCmdTypeColumnsFromOrInTableIdentOptDbOptWildOrWhere_02885338 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowColumnsStmtWithShowOptShowCmdTypeColumnsFromOrInTableIdentOptDbOptWildOrWhere_02885338 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ShowColumnsStmtWithShowOptShowCmdTypeColumnsFromOrInTableIdentOptDbOptWildOrWhere_02885338 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ShowColumnsStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class ShowColumnsStmtWithShowOptShowCmdTypeColumnsFromOrInTableIdentOptDbOptWildOrWhere_02885338 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ShowColumnsStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class ShowColumnsStmtWithShowOptShowCmdTypeColumnsFromOrInTableIdentOptDbO
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optShowCmdType), 'The optShowCmdType must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($columns, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['COLUMNS'], 'The columns must be a complete COLUMNS lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fromOrIn), 'The fromOrIn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDb), 'The optDb must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWildOrWhere), 'The optWildOrWhere must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +47,53 @@ final class ShowColumnsStmtWithShowOptShowCmdTypeColumnsFromOrInTableIdentOptDbO
         $this->tableIdent->write($writer);
         $this->optDb->write($writer);
         $this->optWildOrWhere->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optShowCmdType, preserving every other field.
+     */
+    public function withOptShowCmdType(\SqlSemantics\Statement\Model\MySql\Role\OptShowCmdTypeForm $optShowCmdType): self
+    {
+        return new self($optShowCmdType, $this->columns, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->optWildOrWhere);
+    }
+
+    /**
+     * Returns a copy with a new columns, preserving every other field.
+     */
+    public function withColumns(string $columns): self
+    {
+        return new self($this->optShowCmdType, $columns, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->optWildOrWhere);
+    }
+
+    /**
+     * Returns a copy with a new fromOrIn, preserving every other field.
+     */
+    public function withFromOrIn(\SqlSemantics\Statement\Model\MySql\Role\FromOrInForm $fromOrIn): self
+    {
+        return new self($this->optShowCmdType, $this->columns, $fromOrIn, $this->tableIdent, $this->optDb, $this->optWildOrWhere);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->optShowCmdType, $this->columns, $this->fromOrIn, $tableIdent, $this->optDb, $this->optWildOrWhere);
+    }
+
+    /**
+     * Returns a copy with a new optDb, preserving every other field.
+     */
+    public function withOptDb(\SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb): self
+    {
+        return new self($this->optShowCmdType, $this->columns, $this->fromOrIn, $this->tableIdent, $optDb, $this->optWildOrWhere);
+    }
+
+    /**
+     * Returns a copy with a new optWildOrWhere, preserving every other field.
+     */
+    public function withOptWildOrWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere): self
+    {
+        return new self($this->optShowCmdType, $this->columns, $this->fromOrIn, $this->tableIdent, $this->optDb, $optWildOrWhere);
     }
 }

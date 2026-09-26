@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptResourceGroupPriorityWithThreadPrioritySymOptEqualSignedNum_b9f4ee77 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptResourceGroupPriorityWithThreadPrioritySymOptEqualSignedNum_b9f4ee77 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptResourceGroupPriorityWithThreadPrioritySymOptEqualSignedNum_b9f4ee77 implements \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupPriorityForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptResourceGroupPriorityWithThreadPrioritySymOptEqualSignedNum_b9f4e
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignedNumForm $signedNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signedNum), 'The signedNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptResourceGroupPriorityWithThreadPrioritySymOptEqualSignedNum_b9f4e
         $writer->append('THREAD_PRIORITY');
         $this->optEqual->write($writer);
         $this->signedNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->signedNum);
+    }
+
+    /**
+     * Returns a copy with a new signedNum, preserving every other field.
+     */
+    public function withSignedNum(\SqlSemantics\Statement\Model\MySql\Role\SignedNumForm $signedNum): self
+    {
+        return new self($this->optEqual, $signedNum);
     }
 }

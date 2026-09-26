@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Role;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Role\KwcolumnOptForm $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Role\KwcolumnOptForm $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface KwcolumnOptForm extends \SqlSemantics\Statement\Element

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithBlobSymOptFieldLength_f1fcf668 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithBlobSymOptFieldLength_f1fcf668 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithBlobSymOptFieldLength_f1fcf668 implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFieldLength), 'The optFieldLength must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class TypeWithBlobSymOptFieldLength_f1fcf668 implements \SqlSemantics\Stat
     {
         $writer->append('BLOB');
         $this->optFieldLength->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optFieldLength, preserving every other field.
+     */
+    public function withOptFieldLength(\SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength): self
+    {
+        return new self($optFieldLength);
     }
 }

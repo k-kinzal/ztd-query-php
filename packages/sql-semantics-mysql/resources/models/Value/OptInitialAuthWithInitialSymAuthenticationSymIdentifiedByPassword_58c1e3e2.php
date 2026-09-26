@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByPassword_58c1e3e2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByPassword_58c1e3e2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByPassword_58c1e3e2 implements \SqlSemantics\Statement\Model\MySql\Role\OptInitialAuthForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentifiedByPasswordForm $identifiedByPassword,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identifiedByPassword), 'The identifiedByPassword must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByPassword_58
         $writer->append('INITIAL');
         $writer->append('AUTHENTICATION');
         $this->identifiedByPassword->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identifiedByPassword, preserving every other field.
+     */
+    public function withIdentifiedByPassword(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedByPasswordForm $identifiedByPassword): self
+    {
+        return new self($identifiedByPassword);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTableStmtWithAlterTableSymTableIdentStandaloneAlterTableAction_cdacb9cb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTableStmtWithAlterTableSymTableIdentStandaloneAlterTableAction_cdacb9cb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTableStmtWithAlterTableSymTableIdentStandaloneAlterTableAction_cdacb9cb implements \SqlSemantics\Statement\Model\MySql\Role\AlterTableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class AlterTableStmtWithAlterTableSymTableIdentStandaloneAlterTableAction_cdacb9cb implements \SqlSemantics\Statement\Model\MySql\Role\AlterTableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTableStmtWithAlterTableSymTableIdentStandaloneAlterTableAction_
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm $standaloneAlterTableAction,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($standaloneAlterTableAction), 'The standaloneAlterTableAction must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AlterTableStmtWithAlterTableSymTableIdentStandaloneAlterTableAction_
         $writer->append('TABLE');
         $this->tableIdent->write($writer);
         $this->standaloneAlterTableAction->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->standaloneAlterTableAction);
+    }
+
+    /**
+     * Returns a copy with a new standaloneAlterTableAction, preserving every other field.
+     */
+    public function withStandaloneAlterTableAction(\SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm $standaloneAlterTableAction): self
+    {
+        return new self($this->tableIdent, $standaloneAlterTableAction);
     }
 }

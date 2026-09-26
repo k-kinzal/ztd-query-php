@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AssignToKeycachePartsWithTableIdentAdmPartitionCacheKeysSpec_c6d9ff7d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AssignToKeycachePartsWithTableIdentAdmPartitionCacheKeysSpec_c6d9ff7d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AssignToKeycachePartsWithTableIdentAdmPartitionCacheKeysSpec_c6d9ff7d implements \SqlSemantics\Statement\Model\MySql\Role\AssignToKeycachePartsForm, \SqlSemantics\Statement\Model\MySql\Role\KeycacheListOrPartsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AssignToKeycachePartsWithTableIdentAdmPartitionCacheKeysSpec_c6d9ff7
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm $admPartition,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($admPartition), 'The admPartition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($cacheKeysSpec), 'The cacheKeysSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class AssignToKeycachePartsWithTableIdentAdmPartitionCacheKeysSpec_c6d9ff7
         $this->tableIdent->write($writer);
         $this->admPartition->write($writer);
         $this->cacheKeysSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->admPartition, $this->cacheKeysSpec);
+    }
+
+    /**
+     * Returns a copy with a new admPartition, preserving every other field.
+     */
+    public function withAdmPartition(\SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm $admPartition): self
+    {
+        return new self($this->tableIdent, $admPartition, $this->cacheKeysSpec);
+    }
+
+    /**
+     * Returns a copy with a new cacheKeysSpec, preserving every other field.
+     */
+    public function withCacheKeysSpec(\SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec): self
+    {
+        return new self($this->tableIdent, $this->admPartition, $cacheKeysSpec);
     }
 }

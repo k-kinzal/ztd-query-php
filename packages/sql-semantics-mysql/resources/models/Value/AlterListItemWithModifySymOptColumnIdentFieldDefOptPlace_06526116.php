@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldDefForm $fieldDef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm $optPlace,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldDef), 'The fieldDef must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPlace), 'The optPlace must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 im
         $this->ident->write($writer);
         $this->fieldDef->write($writer);
         $this->optPlace->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optColumn, preserving every other field.
+     */
+    public function withOptColumn(\SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn): self
+    {
+        return new self($optColumn, $this->ident, $this->fieldDef, $this->optPlace);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->optColumn, $ident, $this->fieldDef, $this->optPlace);
+    }
+
+    /**
+     * Returns a copy with a new fieldDef, preserving every other field.
+     */
+    public function withFieldDef(\SqlSemantics\Statement\Model\MySql\Role\FieldDefForm $fieldDef): self
+    {
+        return new self($this->optColumn, $this->ident, $fieldDef, $this->optPlace);
+    }
+
+    /**
+     * Returns a copy with a new optPlace, preserving every other field.
+     */
+    public function withOptPlace(\SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm $optPlace): self
+    {
+        return new self($this->optColumn, $this->ident, $this->fieldDef, $optPlace);
     }
 }

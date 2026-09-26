@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTargetFromGranteeListOptDrop_b5cd8b8d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTargetFromGranteeListOptDrop_b5cd8b8d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTargetFromGranteeListOptDrop_b5cd8b8d implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTarge
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm $granteeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privileges), 'The privileges must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defaclPrivilegeTarget), 'The defaclPrivilegeTarget must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($granteeList), 'The granteeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +46,37 @@ final class DefAclActionWithRevokeGrantOptionForPrivilegesOnDefaclPrivilegeTarge
         $writer->append('FROM');
         $this->granteeList->write($writer);
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new privileges, preserving every other field.
+     */
+    public function withPrivileges(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegesForm $privileges): self
+    {
+        return new self($privileges, $this->defaclPrivilegeTarget, $this->granteeList, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new defaclPrivilegeTarget, preserving every other field.
+     */
+    public function withDefaclPrivilegeTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\DefaclPrivilegeTargetForm $defaclPrivilegeTarget): self
+    {
+        return new self($this->privileges, $defaclPrivilegeTarget, $this->granteeList, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new granteeList, preserving every other field.
+     */
+    public function withGranteeList(\SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm $granteeList): self
+    {
+        return new self($this->privileges, $this->defaclPrivilegeTarget, $granteeList, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optDropBehavior, preserving every other field.
+     */
+    public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
+    {
+        return new self($this->privileges, $this->defaclPrivilegeTarget, $this->granteeList, $optDropBehavior);
     }
 }

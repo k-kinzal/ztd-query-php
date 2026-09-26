@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmnumForm $nmnum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nmnum), 'The nmnum must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 implements \SqlSemantics\State
         $writer->append('(');
         $this->nmnum->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm, $this->dbnm, $this->nmnum);
+    }
+
+    /**
+     * Returns a copy with a new dbnm, preserving every other field.
+     */
+    public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
+    {
+        return new self($this->nm, $dbnm, $this->nmnum);
+    }
+
+    /**
+     * Returns a copy with a new nmnum, preserving every other field.
+     */
+    public function withNmnum(\SqlSemantics\Statement\Model\Sqlite\Role\NmnumForm $nmnum): self
+    {
+        return new self($this->nm, $this->dbnm, $nmnum);
     }
 }

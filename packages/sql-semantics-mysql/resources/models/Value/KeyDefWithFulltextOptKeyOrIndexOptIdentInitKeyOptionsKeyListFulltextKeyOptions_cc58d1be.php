@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyDefWithFulltextOptKeyOrIndexOptIdentInitKeyOptionsKeyListFulltextKeyOptions_cc58d1be $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyDefWithFulltextOptKeyOrIndexOptIdentInitKeyOptionsKeyListFulltextKeyOptions_cc58d1be $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyDefWithFulltextOptKeyOrIndexOptIdentInitKeyOptionsKeyListFulltextKeyOptions_cc58d1be implements \SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm, \SqlSemantics\Statement\Model\MySql\Role\KeyDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class KeyDefWithFulltextOptKeyOrIndexOptIdentInitKeyOptionsKeyListFulltext
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm $fulltextKeyOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltext), 'The fulltext must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyOrIndex), 'The optKeyOrIndex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($initKeyOptions), 'The initKeyOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyList), 'The keyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fulltextKeyOptions), 'The fulltextKeyOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +48,53 @@ final class KeyDefWithFulltextOptKeyOrIndexOptIdentInitKeyOptionsKeyListFulltext
         $this->keyList->write($writer);
         $writer->append(')');
         $this->fulltextKeyOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fulltext, preserving every other field.
+     */
+    public function withFulltext(\SqlSemantics\Statement\Model\MySql\Role\FulltextForm $fulltext): self
+    {
+        return new self($fulltext, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->fulltextKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new optKeyOrIndex, preserving every other field.
+     */
+    public function withOptKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm $optKeyOrIndex): self
+    {
+        return new self($this->fulltext, $optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $this->fulltextKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new optIdent, preserving every other field.
+     */
+    public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
+    {
+        return new self($this->fulltext, $this->optKeyOrIndex, $optIdent, $this->initKeyOptions, $this->keyList, $this->fulltextKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new initKeyOptions, preserving every other field.
+     */
+    public function withInitKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm $initKeyOptions): self
+    {
+        return new self($this->fulltext, $this->optKeyOrIndex, $this->optIdent, $initKeyOptions, $this->keyList, $this->fulltextKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new keyList, preserving every other field.
+     */
+    public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
+    {
+        return new self($this->fulltext, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $keyList, $this->fulltextKeyOptions);
+    }
+
+    /**
+     * Returns a copy with a new fulltextKeyOptions, preserving every other field.
+     */
+    public function withFulltextKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm $fulltextKeyOptions): self
+    {
+        return new self($this->fulltext, $this->optKeyOrIndex, $this->optIdent, $this->initKeyOptions, $this->keyList, $fulltextKeyOptions);
     }
 }

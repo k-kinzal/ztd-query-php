@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NvarcharWithNcharSymVarchar_30b2f5f7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NvarcharWithNcharSymVarchar_30b2f5f7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NvarcharWithNcharSymVarchar_30b2f5f7 implements \SqlSemantics\Statement\Model\MySql\Role\NvarcharForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $varchar,
     ) {
+        $this->assertMatchesPattern($varchar, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['VARCHAR'], 'The varchar must be a complete VARCHAR lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class NvarcharWithNcharSymVarchar_30b2f5f7 implements \SqlSemantics\Statem
     {
         $writer->append('NCHAR');
         $writer->append($this->varchar);
+    }
+
+    /**
+     * Returns a copy with a new varchar, preserving every other field.
+     */
+    public function withVarchar(string $varchar): self
+    {
+        return new self($varchar);
     }
 }

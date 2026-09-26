@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SqlstateWithSqlstateSymOptValueTextStringLiteral_c5b1b0d5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SqlstateWithSqlstateSymOptValueTextStringLiteral_c5b1b0d5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SqlstateWithSqlstateSymOptValueTextStringLiteral_c5b1b0d5 implements \SqlSemantics\Statement\Model\MySql\Role\OptSignalValueForm, \SqlSemantics\Statement\Model\MySql\Role\SignalValueForm, \SqlSemantics\Statement\Model\MySql\Role\SpCondForm, \SqlSemantics\Statement\Model\MySql\Role\SpHcondForm, \SqlSemantics\Statement\Model\MySql\Role\SpHcondElementForm, \SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm, \SqlSemantics\Statement\Model\MySql\Role\SqlstateForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SqlstateWithSqlstateSymOptValueTextStringLiteral_c5b1b0d5 implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptValueForm $optValue,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optValue), 'The optValue must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringLiteral), 'The textStringLiteral must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SqlstateWithSqlstateSymOptValueTextStringLiteral_c5b1b0d5 implements
         $writer->append('SQLSTATE');
         $this->optValue->write($writer);
         $this->textStringLiteral->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optValue, preserving every other field.
+     */
+    public function withOptValue(\SqlSemantics\Statement\Model\MySql\Role\OptValueForm $optValue): self
+    {
+        return new self($optValue, $this->textStringLiteral);
+    }
+
+    /**
+     * Returns a copy with a new textStringLiteral, preserving every other field.
+     */
+    public function withTextStringLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextStringLiteralForm $textStringLiteral): self
+    {
+        return new self($this->optValue, $textStringLiteral);
     }
 }

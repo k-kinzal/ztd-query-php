@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertFromConstructorWithInsertColumnsInsertValues_3986a30d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertFromConstructorWithInsertColumnsInsertValues_3986a30d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertFromConstructorWithInsertColumnsInsertValues_3986a30d implements \SqlSemantics\Statement\Model\MySql\Role\InsertFromConstructorForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertFromConstructorWithInsertColumnsInsertValues_3986a30d implemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm $insertColumns,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertValuesForm $insertValues,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertColumns), 'The insertColumns must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertValues), 'The insertValues must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class InsertFromConstructorWithInsertColumnsInsertValues_3986a30d implemen
         $this->insertColumns->write($writer);
         $writer->append(')');
         $this->insertValues->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new insertColumns, preserving every other field.
+     */
+    public function withInsertColumns(\SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm $insertColumns): self
+    {
+        return new self($insertColumns, $this->insertValues);
+    }
+
+    /**
+     * Returns a copy with a new insertValues, preserving every other field.
+     */
+    public function withInsertValues(\SqlSemantics\Statement\Model\MySql\Role\InsertValuesForm $insertValues): self
+    {
+        return new self($this->insertColumns, $insertValues);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlAttributeListWithXmlAttributeListXmlAttributeEl_1da5ac53 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlAttributeListWithXmlAttributeListXmlAttributeEl_1da5ac53 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmlAttributeListWithXmlAttributeListXmlAttributeEl_1da5ac53 implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class XmlAttributeListWithXmlAttributeListXmlAttributeEl_1da5ac53 implemen
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm $xmlAttributeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm $xmlAttributeEl,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlAttributeList), 'The xmlAttributeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlAttributeEl), 'The xmlAttributeEl must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class XmlAttributeListWithXmlAttributeListXmlAttributeEl_1da5ac53 implemen
         $this->xmlAttributeList->write($writer);
         $writer->append(',');
         $this->xmlAttributeEl->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new xmlAttributeList, preserving every other field.
+     */
+    public function withXmlAttributeList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm $xmlAttributeList): self
+    {
+        return new self($xmlAttributeList, $this->xmlAttributeEl);
+    }
+
+    /**
+     * Returns a copy with a new xmlAttributeEl, preserving every other field.
+     */
+    public function withXmlAttributeEl(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm $xmlAttributeEl): self
+    {
+        return new self($this->xmlAttributeList, $xmlAttributeEl);
     }
 }

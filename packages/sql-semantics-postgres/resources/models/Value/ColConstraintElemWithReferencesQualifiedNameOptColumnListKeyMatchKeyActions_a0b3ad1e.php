@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKeyActions_a0b3ad1e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKeyActions_a0b3ad1e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKeyActions_a0b3ad1e implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintElemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKey
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\KeyMatchForm $keyMatch,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm $keyActions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumnList), 'The optColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($keyMatch), 'The keyMatch must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($keyActions), 'The keyActions must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class ColConstraintElemWithReferencesQualifiedNameOptColumnListKeyMatchKey
         $this->optColumnList->write($writer);
         $this->keyMatch->write($writer);
         $this->keyActions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions);
+    }
+
+    /**
+     * Returns a copy with a new optColumnList, preserving every other field.
+     */
+    public function withOptColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList): self
+    {
+        return new self($this->qualifiedName, $optColumnList, $this->keyMatch, $this->keyActions);
+    }
+
+    /**
+     * Returns a copy with a new keyMatch, preserving every other field.
+     */
+    public function withKeyMatch(\SqlSemantics\Statement\Model\PostgreSql\Role\KeyMatchForm $keyMatch): self
+    {
+        return new self($this->qualifiedName, $this->optColumnList, $keyMatch, $this->keyActions);
+    }
+
+    /**
+     * Returns a copy with a new keyActions, preserving every other field.
+     */
+    public function withKeyActions(\SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm $keyActions): self
+    {
+        return new self($this->qualifiedName, $this->optColumnList, $this->keyMatch, $keyActions);
     }
 }

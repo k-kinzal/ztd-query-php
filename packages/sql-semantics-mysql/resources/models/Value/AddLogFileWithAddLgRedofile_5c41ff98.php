@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AddLogFileWithAddLgRedofile_5c41ff98 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AddLogFileWithAddLgRedofile_5c41ff98 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AddLogFileWithAddLgRedofile_5c41ff98 implements \SqlSemantics\Statement\Model\MySql\Role\AddLogFileForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LgRedofileForm $lgRedofile,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lgRedofile), 'The lgRedofile must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AddLogFileWithAddLgRedofile_5c41ff98 implements \SqlSemantics\Statem
     {
         $writer->append('ADD');
         $this->lgRedofile->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new lgRedofile, preserving every other field.
+     */
+    public function withLgRedofile(\SqlSemantics\Statement\Model\MySql\Role\LgRedofileForm $lgRedofile): self
+    {
+        return new self($lgRedofile);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartOptionValueListWithPasswordEqualPasswordPassword_98df9734 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartOptionValueListWithPasswordEqualPasswordPassword_98df9734 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StartOptionValueListWithPasswordEqualPasswordPassword_98df9734 implements \SqlSemantics\Statement\Model\MySql\Role\StartOptionValueListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StartOptionValueListWithPasswordEqualPasswordPassword_98df9734 imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PasswordForm $password,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($password), 'The password must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class StartOptionValueListWithPasswordEqualPasswordPassword_98df9734 imple
         $writer->append('(');
         $this->password->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new equal, preserving every other field.
+     */
+    public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
+    {
+        return new self($equal, $this->password);
+    }
+
+    /**
+     * Returns a copy with a new password, preserving every other field.
+     */
+    public function withPassword(\SqlSemantics\Statement\Model\MySql\Role\PasswordForm $password): self
+    {
+        return new self($this->equal, $password);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeycacheListWithKeycacheListAssignToKeycache_05a8c82b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeycacheListWithKeycacheListAssignToKeycache_05a8c82b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeycacheListWithKeycacheListAssignToKeycache_05a8c82b implements \SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm, \SqlSemantics\Statement\Model\MySql\Role\KeycacheListOrPartsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class KeycacheListWithKeycacheListAssignToKeycache_05a8c82b implements \Sq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm $keycacheList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AssignToKeycacheForm $assignToKeycache,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keycacheList), 'The keycacheList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($assignToKeycache), 'The assignToKeycache must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class KeycacheListWithKeycacheListAssignToKeycache_05a8c82b implements \Sq
         $this->keycacheList->write($writer);
         $writer->append(',');
         $this->assignToKeycache->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keycacheList, preserving every other field.
+     */
+    public function withKeycacheList(\SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm $keycacheList): self
+    {
+        return new self($keycacheList, $this->assignToKeycache);
+    }
+
+    /**
+     * Returns a copy with a new assignToKeycache, preserving every other field.
+     */
+    public function withAssignToKeycache(\SqlSemantics\Statement\Model\MySql\Role\AssignToKeycacheForm $assignToKeycache): self
+    {
+        return new self($this->keycacheList, $assignToKeycache);
     }
 }

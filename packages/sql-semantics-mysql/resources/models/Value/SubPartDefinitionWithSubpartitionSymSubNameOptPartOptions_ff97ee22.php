@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SubPartDefinitionWithSubpartitionSymSubNameOptPartOptions_ff97ee22 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SubPartDefinitionWithSubpartitionSymSubNameOptPartOptions_ff97ee22 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SubPartDefinitionWithSubpartitionSymSubNameOptPartOptions_ff97ee22 implements \SqlSemantics\Statement\Model\MySql\Role\SubPartDefinitionForm, \SqlSemantics\Statement\Model\MySql\Role\SubPartListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SubPartDefinitionWithSubpartitionSymSubNameOptPartOptions_ff97ee22 i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubNameForm $subName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm $optPartOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subName), 'The subName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPartOptions), 'The optPartOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SubPartDefinitionWithSubpartitionSymSubNameOptPartOptions_ff97ee22 i
         $writer->append('SUBPARTITION');
         $this->subName->write($writer);
         $this->optPartOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new subName, preserving every other field.
+     */
+    public function withSubName(\SqlSemantics\Statement\Model\MySql\Role\SubNameForm $subName): self
+    {
+        return new self($subName, $this->optPartOptions);
+    }
+
+    /**
+     * Returns a copy with a new optPartOptions, preserving every other field.
+     */
+    public function withOptPartOptions(\SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm $optPartOptions): self
+    {
+        return new self($this->subName, $optPartOptions);
     }
 }

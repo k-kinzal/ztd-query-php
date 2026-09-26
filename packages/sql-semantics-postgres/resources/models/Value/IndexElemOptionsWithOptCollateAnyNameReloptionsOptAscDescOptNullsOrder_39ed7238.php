@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IndexElemOptionsWithOptCollateAnyNameReloptionsOptAscDescOptNullsOrder_39ed7238 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IndexElemOptionsWithOptCollateAnyNameReloptionsOptAscDescOptNullsOrder_39ed7238 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IndexElemOptionsWithOptCollateAnyNameReloptionsOptAscDescOptNullsOrder_39ed7238 implements \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class IndexElemOptionsWithOptCollateAnyNameReloptionsOptAscDescOptNullsOrd
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAscDescForm $optAscDesc,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $optNullsOrder,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($reloptions), 'The reloptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAscDesc), 'The optAscDesc must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNullsOrder), 'The optNullsOrder must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +43,45 @@ final class IndexElemOptionsWithOptCollateAnyNameReloptionsOptAscDescOptNullsOrd
         $this->reloptions->write($writer);
         $this->optAscDesc->write($writer);
         $this->optNullsOrder->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optCollate, preserving every other field.
+     */
+    public function withOptCollate(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate): self
+    {
+        return new self($optCollate, $this->anyName, $this->reloptions, $this->optAscDesc, $this->optNullsOrder);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($this->optCollate, $anyName, $this->reloptions, $this->optAscDesc, $this->optNullsOrder);
+    }
+
+    /**
+     * Returns a copy with a new reloptions, preserving every other field.
+     */
+    public function withReloptions(\SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionsForm $reloptions): self
+    {
+        return new self($this->optCollate, $this->anyName, $reloptions, $this->optAscDesc, $this->optNullsOrder);
+    }
+
+    /**
+     * Returns a copy with a new optAscDesc, preserving every other field.
+     */
+    public function withOptAscDesc(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAscDescForm $optAscDesc): self
+    {
+        return new self($this->optCollate, $this->anyName, $this->reloptions, $optAscDesc, $this->optNullsOrder);
+    }
+
+    /**
+     * Returns a copy with a new optNullsOrder, preserving every other field.
+     */
+    public function withOptNullsOrder(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $optNullsOrder): self
+    {
+        return new self($this->optCollate, $this->anyName, $this->reloptions, $this->optAscDesc, $optNullsOrder);
     }
 }

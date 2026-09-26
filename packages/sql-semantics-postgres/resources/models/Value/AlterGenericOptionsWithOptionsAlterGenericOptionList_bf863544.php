@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterGenericOptionsWithOptionsAlterGenericOptionList_bf863544 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterGenericOptionsWithOptionsAlterGenericOptionList_bf863544 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterGenericOptionsWithOptionsAlterGenericOptionList_bf863544 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionListForm $alterGenericOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterGenericOptionList), 'The alterGenericOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class AlterGenericOptionsWithOptionsAlterGenericOptionList_bf863544 implem
         $writer->append('(');
         $this->alterGenericOptionList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new alterGenericOptionList, preserving every other field.
+     */
+    public function withAlterGenericOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionListForm $alterGenericOptionList): self
+    {
+        return new self($alterGenericOptionList);
     }
 }

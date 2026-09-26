@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SearchedCaseStmtWithCaseSymSearchedWhenClauseListElseClauseOptEndCaseSym_735630f5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SearchedCaseStmtWithCaseSymSearchedWhenClauseListElseClauseOptEndCaseSym_735630f5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SearchedCaseStmtWithCaseSymSearchedWhenClauseListElseClauseOptEndCaseSym_735630f5 implements \SqlSemantics\Statement\Model\MySql\Role\CaseStmtSpecificationForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SearchedCaseStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SearchedCaseStmtWithCaseSymSearchedWhenClauseListElseClauseOptEndCas
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseListForm $searchedWhenClauseList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ElseClauseOptForm $elseClauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($searchedWhenClauseList), 'The searchedWhenClauseList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($elseClauseOpt), 'The elseClauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class SearchedCaseStmtWithCaseSymSearchedWhenClauseListElseClauseOptEndCas
         $this->elseClauseOpt->write($writer);
         $writer->append('END');
         $writer->append('CASE');
+    }
+
+    /**
+     * Returns a copy with a new searchedWhenClauseList, preserving every other field.
+     */
+    public function withSearchedWhenClauseList(\SqlSemantics\Statement\Model\MySql\Role\SearchedWhenClauseListForm $searchedWhenClauseList): self
+    {
+        return new self($searchedWhenClauseList, $this->elseClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new elseClauseOpt, preserving every other field.
+     */
+    public function withElseClauseOpt(\SqlSemantics\Statement\Model\MySql\Role\ElseClauseOptForm $elseClauseOpt): self
+    {
+        return new self($this->searchedWhenClauseList, $elseClauseOpt);
     }
 }

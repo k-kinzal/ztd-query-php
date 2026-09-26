@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RemovePartitioningWithRemoveSymPartitioningSymHavePartitioning_97c654ea $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RemovePartitioningWithRemoveSymPartitioningSymHavePartitioning_97c654ea $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RemovePartitioningWithRemoveSymPartitioningSymHavePartitioning_97c654ea implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\RemovePartitioningForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($havePartitioning), 'The havePartitioning must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class RemovePartitioningWithRemoveSymPartitioningSymHavePartitioning_97c65
         $writer->append('REMOVE');
         $writer->append('PARTITIONING');
         $this->havePartitioning->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new havePartitioning, preserving every other field.
+     */
+    public function withHavePartitioning(\SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning): self
+    {
+        return new self($havePartitioning);
     }
 }

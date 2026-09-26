@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrepTypeClauseWithTypeList_c1e2c367 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrepTypeClauseWithTypeList_c1e2c367 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PrepTypeClauseWithTypeList_c1e2c367 implements \SqlSemantics\Statement\Model\PostgreSql\Role\PrepTypeClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm $typeList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeList), 'The typeList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class PrepTypeClauseWithTypeList_c1e2c367 implements \SqlSemantics\Stateme
         $writer->append('(');
         $this->typeList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new typeList, preserving every other field.
+     */
+    public function withTypeList(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm $typeList): self
+    {
+        return new self($typeList);
     }
 }

@@ -63,11 +63,18 @@ second constructor argument selects a shipped grammar release, for example
 8.4.7, PostgreSQL 17.2, and SQLite 3.47.2; all nine MySQL releases shipped by
 sql-faker are covered.
 
-`Statement::command` is an immutable model implementing `Statement\Element`.
+`Statement::command` is an immutable model implementing `Statement\Command`.
 Concrete forms expose named, typed constructor arguments and implement the SQL
 roles they can occupy. Models can also be constructed directly, without parsing.
 See [statement models](docs/statements.md) for a construction example and how the
 complete model vocabulary is generated.
+
+Generated `with<Field>()` methods and `Statement::withCommand()` return new values
+from structured arguments while preserving the original graph. Constructors
+express lexical, child-immutability, and operand-placement invariants through an
+`Assertion` trait backed by PHP `assert()`. Updates never call sql-parser or
+accept SQL strings in place of clauses or expressions. See
+[updating statement structure](docs/statements.md#updating-statement-structure).
 
 `toString()` reconstructs SQL; it does not preserve layout or comments. Identifier
 spelling, quoting, literal spelling, and SQL choices are preserved. Syntax errors

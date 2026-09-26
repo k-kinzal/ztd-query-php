@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OptRetainCurrentPasswordChoice_86de168e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OptRetainCurrentPasswordChoice_86de168e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum OptRetainCurrentPasswordChoice_86de168e: string implements \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm

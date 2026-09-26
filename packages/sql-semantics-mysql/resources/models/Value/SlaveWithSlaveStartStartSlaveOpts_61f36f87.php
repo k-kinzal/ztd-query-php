@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveWithSlaveStartStartSlaveOpts_61f36f87 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveWithSlaveStartStartSlaveOpts_61f36f87 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveWithSlaveStartStartSlaveOpts_61f36f87 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SlaveForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SlaveWithSlaveStartStartSlaveOpts_61f36f87 implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveStartForm $slaveStart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StartSlaveOptsForm $startSlaveOpts,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveStart), 'The slaveStart must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($startSlaveOpts), 'The startSlaveOpts must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SlaveWithSlaveStartStartSlaveOpts_61f36f87 implements \SqlSemantics\
     {
         $this->slaveStart->write($writer);
         $this->startSlaveOpts->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new slaveStart, preserving every other field.
+     */
+    public function withSlaveStart(\SqlSemantics\Statement\Model\MySql\Role\SlaveStartForm $slaveStart): self
+    {
+        return new self($slaveStart, $this->startSlaveOpts);
+    }
+
+    /**
+     * Returns a copy with a new startSlaveOpts, preserving every other field.
+     */
+    public function withStartSlaveOpts(\SqlSemantics\Statement\Model\MySql\Role\StartSlaveOptsForm $startSlaveOpts): self
+    {
+        return new self($this->slaveStart, $startSlaveOpts);
     }
 }

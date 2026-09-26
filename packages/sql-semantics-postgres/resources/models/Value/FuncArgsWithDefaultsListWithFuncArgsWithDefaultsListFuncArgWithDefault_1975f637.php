@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgsWithDefaultsListWithFuncArgsWithDefaultsListFuncArgWithDefault_1975f637 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgsWithDefaultsListWithFuncArgsWithDefaultsListFuncArgWithDefault_1975f637 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncArgsWithDefaultsListWithFuncArgsWithDefaultsListFuncArgWithDefault_1975f637 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncArgsWithDefaultsListWithFuncArgsWithDefaultsListFuncArgWithDefau
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm $funcArgsWithDefaultsList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgWithDefaultForm $funcArgWithDefault,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgsWithDefaultsList), 'The funcArgsWithDefaultsList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgWithDefault), 'The funcArgWithDefault must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FuncArgsWithDefaultsListWithFuncArgsWithDefaultsListFuncArgWithDefau
         $this->funcArgsWithDefaultsList->write($writer);
         $writer->append(',');
         $this->funcArgWithDefault->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcArgsWithDefaultsList, preserving every other field.
+     */
+    public function withFuncArgsWithDefaultsList(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm $funcArgsWithDefaultsList): self
+    {
+        return new self($funcArgsWithDefaultsList, $this->funcArgWithDefault);
+    }
+
+    /**
+     * Returns a copy with a new funcArgWithDefault, preserving every other field.
+     */
+    public function withFuncArgWithDefault(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgWithDefaultForm $funcArgWithDefault): self
+    {
+        return new self($this->funcArgsWithDefaultsList, $funcArgWithDefault);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseOptReloptionsOptTableSpace_48fc435e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseOptReloptionsOptTableSpace_48fc435e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseOptReloptionsOptTableSpace_48fc435e implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateMvTargetForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseO
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumnList), 'The optColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableAccessMethodClause), 'The tableAccessMethodClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optReloptions), 'The optReloptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTableSpace), 'The optTableSpace must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +43,45 @@ final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseO
         $this->tableAccessMethodClause->write($writer);
         $this->optReloptions->write($writer);
         $this->optTableSpace->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($qualifiedName, $this->optColumnList, $this->tableAccessMethodClause, $this->optReloptions, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optColumnList, preserving every other field.
+     */
+    public function withOptColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList): self
+    {
+        return new self($this->qualifiedName, $optColumnList, $this->tableAccessMethodClause, $this->optReloptions, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new tableAccessMethodClause, preserving every other field.
+     */
+    public function withTableAccessMethodClause(\SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm $tableAccessMethodClause): self
+    {
+        return new self($this->qualifiedName, $this->optColumnList, $tableAccessMethodClause, $this->optReloptions, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optReloptions, preserving every other field.
+     */
+    public function withOptReloptions(\SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions): self
+    {
+        return new self($this->qualifiedName, $this->optColumnList, $this->tableAccessMethodClause, $optReloptions, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optTableSpace, preserving every other field.
+     */
+    public function withOptTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace): self
+    {
+        return new self($this->qualifiedName, $this->optColumnList, $this->tableAccessMethodClause, $this->optReloptions, $optTableSpace);
     }
 }

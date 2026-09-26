@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartDefListWithPartDefListPartDefinition_8715b6fe $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartDefListWithPartDefListPartDefinition_8715b6fe $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartDefListWithPartDefListPartDefinition_8715b6fe implements \SqlSemantics\Statement\Model\MySql\Role\PartDefListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartDefListWithPartDefListPartDefinition_8715b6fe implements \SqlSem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartDefinitionForm $partDefinition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partDefList), 'The partDefList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partDefinition), 'The partDefinition must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class PartDefListWithPartDefListPartDefinition_8715b6fe implements \SqlSem
         $this->partDefList->write($writer);
         $writer->append(',');
         $this->partDefinition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new partDefList, preserving every other field.
+     */
+    public function withPartDefList(\SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList): self
+    {
+        return new self($partDefList, $this->partDefinition);
+    }
+
+    /**
+     * Returns a copy with a new partDefinition, preserving every other field.
+     */
+    public function withPartDefinition(\SqlSemantics\Statement\Model\MySql\Role\PartDefinitionForm $partDefinition): self
+    {
+        return new self($this->partDefList, $partDefinition);
     }
 }

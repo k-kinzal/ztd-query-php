@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptExtendedDescribeWithExtendedSym_89f19dfd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptExtendedDescribeWithExtendedSym_89f19dfd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptExtendedDescribeWithExtendedSym_89f19dfd implements \SqlSemantics\Statement\Model\MySql\Role\OptExtendedDescribeForm

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAddPTableConstraint_74a4af80 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAddPTableConstraint_74a4af80 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdWithAddPTableConstraint_74a4af80 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableConstraintForm $tableConstraint,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableConstraint), 'The tableConstraint must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AlterTableCmdWithAddPTableConstraint_74a4af80 implements \SqlSemanti
     {
         $writer->append('ADD');
         $this->tableConstraint->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableConstraint, preserving every other field.
+     */
+    public function withTableConstraint(\SqlSemantics\Statement\Model\PostgreSql\Role\TableConstraintForm $tableConstraint): self
+    {
+        return new self($tableConstraint);
     }
 }

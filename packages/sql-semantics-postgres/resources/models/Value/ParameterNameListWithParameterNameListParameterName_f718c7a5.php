@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ParameterNameListWithParameterNameListParameterName_f718c7a5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ParameterNameListWithParameterNameListParameterName_f718c7a5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ParameterNameListWithParameterNameListParameterName_f718c7a5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ParameterNameListWithParameterNameListParameterName_f718c7a5 impleme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameListForm $parameterNameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameForm $parameterName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($parameterNameList), 'The parameterNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($parameterName), 'The parameterName must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ParameterNameListWithParameterNameListParameterName_f718c7a5 impleme
         $this->parameterNameList->write($writer);
         $writer->append(',');
         $this->parameterName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new parameterNameList, preserving every other field.
+     */
+    public function withParameterNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameListForm $parameterNameList): self
+    {
+        return new self($parameterNameList, $this->parameterName);
+    }
+
+    /**
+     * Returns a copy with a new parameterName, preserving every other field.
+     */
+    public function withParameterName(\SqlSemantics\Statement\Model\PostgreSql\Role\ParameterNameForm $parameterName): self
+    {
+        return new self($this->parameterNameList, $parameterName);
     }
 }

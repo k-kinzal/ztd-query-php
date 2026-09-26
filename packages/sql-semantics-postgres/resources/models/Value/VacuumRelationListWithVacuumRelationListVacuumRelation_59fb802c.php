@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VacuumRelationListWithVacuumRelationListVacuumRelation_59fb802c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VacuumRelationListWithVacuumRelationListVacuumRelation_59fb802c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VacuumRelationListWithVacuumRelationListVacuumRelation_59fb802c implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class VacuumRelationListWithVacuumRelationListVacuumRelation_59fb802c impl
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationListForm $vacuumRelationList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationForm $vacuumRelation,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($vacuumRelationList), 'The vacuumRelationList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($vacuumRelation), 'The vacuumRelation must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class VacuumRelationListWithVacuumRelationListVacuumRelation_59fb802c impl
         $this->vacuumRelationList->write($writer);
         $writer->append(',');
         $this->vacuumRelation->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new vacuumRelationList, preserving every other field.
+     */
+    public function withVacuumRelationList(\SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationListForm $vacuumRelationList): self
+    {
+        return new self($vacuumRelationList, $this->vacuumRelation);
+    }
+
+    /**
+     * Returns a copy with a new vacuumRelation, preserving every other field.
+     */
+    public function withVacuumRelation(\SqlSemantics\Statement\Model\PostgreSql\Role\VacuumRelationForm $vacuumRelation): self
+    {
+        return new self($this->vacuumRelationList, $vacuumRelation);
     }
 }

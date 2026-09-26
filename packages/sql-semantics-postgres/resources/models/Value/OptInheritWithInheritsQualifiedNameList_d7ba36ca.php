@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptInheritWithInheritsQualifiedNameList_d7ba36ca $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptInheritWithInheritsQualifiedNameList_d7ba36ca $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptInheritWithInheritsQualifiedNameList_d7ba36ca implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptInheritForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameListForm $qualifiedNameList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedNameList), 'The qualifiedNameList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class OptInheritWithInheritsQualifiedNameList_d7ba36ca implements \SqlSema
         $writer->append('(');
         $this->qualifiedNameList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new qualifiedNameList, preserving every other field.
+     */
+    public function withQualifiedNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameListForm $qualifiedNameList): self
+    {
+        return new self($qualifiedNameList);
     }
 }

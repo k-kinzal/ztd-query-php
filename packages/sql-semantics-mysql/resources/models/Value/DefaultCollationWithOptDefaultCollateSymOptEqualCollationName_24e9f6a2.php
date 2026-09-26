@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DefaultCollationWithOptDefaultCollateSymOptEqualCollationName_24e9f6a2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DefaultCollationWithOptDefaultCollateSymOptEqualCollationName_24e9f6a2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DefaultCollationWithOptDefaultCollateSymOptEqualCollationName_24e9f6a2 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionForm, \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionForm, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm, \SqlSemantics\Statement\Model\MySql\Role\DefaultCollationForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateDatabaseOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class DefaultCollationWithOptDefaultCollateSymOptEqualCollationName_24e9f6
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CollationNameForm $collationName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDefault), 'The optDefault must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($collationName), 'The collationName must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class DefaultCollationWithOptDefaultCollateSymOptEqualCollationName_24e9f6
         $writer->append('COLLATE');
         $this->optEqual->write($writer);
         $this->collationName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optDefault, preserving every other field.
+     */
+    public function withOptDefault(\SqlSemantics\Statement\Model\MySql\Role\OptDefaultForm $optDefault): self
+    {
+        return new self($optDefault, $this->optEqual, $this->collationName);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($this->optDefault, $optEqual, $this->collationName);
+    }
+
+    /**
+     * Returns a copy with a new collationName, preserving every other field.
+     */
+    public function withCollationName(\SqlSemantics\Statement\Model\MySql\Role\CollationNameForm $collationName): self
+    {
+        return new self($this->optDefault, $this->optEqual, $collationName);
     }
 }

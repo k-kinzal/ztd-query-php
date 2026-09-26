@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptParenthesizedSeqOptListWithSeqOptList_160c06ad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptParenthesizedSeqOptListWithSeqOptList_160c06ad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptParenthesizedSeqOptListWithSeqOptList_160c06ad implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptParenthesizedSeqOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm $seqOptList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($seqOptList), 'The seqOptList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptParenthesizedSeqOptListWithSeqOptList_160c06ad implements \SqlSem
         $writer->append('(');
         $this->seqOptList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new seqOptList, preserving every other field.
+     */
+    public function withSeqOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm $seqOptList): self
+    {
+        return new self($seqOptList);
     }
 }

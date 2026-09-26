@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectInitWithSelectSymSelectPart2OptUnionClause_19253f1c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectInitWithSelectSymSelectPart2OptUnionClause_19253f1c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectInitWithSelectSymSelectPart2OptUnionClause_19253f1c implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\SelectForm, \SqlSemantics\Statement\Model\MySql\Role\SelectInitForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelectInitWithSelectSymSelectPart2OptUnionClause_19253f1c implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectPart2), 'The selectPart2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionClause), 'The optUnionClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SelectInitWithSelectSymSelectPart2OptUnionClause_19253f1c implements
         $writer->append('SELECT');
         $this->selectPart2->write($writer);
         $this->optUnionClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectPart2, preserving every other field.
+     */
+    public function withSelectPart2(\SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2): self
+    {
+        return new self($selectPart2, $this->optUnionClause);
+    }
+
+    /**
+     * Returns a copy with a new optUnionClause, preserving every other field.
+     */
+    public function withOptUnionClause(\SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause): self
+    {
+        return new self($this->selectPart2, $optUnionClause);
     }
 }

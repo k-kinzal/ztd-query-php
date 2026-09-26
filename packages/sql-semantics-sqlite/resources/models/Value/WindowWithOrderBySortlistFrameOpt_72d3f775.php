@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowWithOrderBySortlistFrameOpt_72d3f775 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowWithOrderBySortlistFrameOpt_72d3f775 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowWithOrderBySortlistFrameOpt_72d3f775 implements \SqlSemantics\Statement\Model\Sqlite\Role\WindowForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WindowWithOrderBySortlistFrameOpt_72d3f775 implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm $frameOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortlist), 'The sortlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($frameOpt), 'The frameOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class WindowWithOrderBySortlistFrameOpt_72d3f775 implements \SqlSemantics\
         $writer->append('BY');
         $this->sortlist->write($writer);
         $this->frameOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sortlist, preserving every other field.
+     */
+    public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
+    {
+        return new self($sortlist, $this->frameOpt);
+    }
+
+    /**
+     * Returns a copy with a new frameOpt, preserving every other field.
+     */
+    public function withFrameOpt(\SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm $frameOpt): self
+    {
+        return new self($this->sortlist, $frameOpt);
     }
 }

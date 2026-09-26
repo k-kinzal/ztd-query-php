@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateUserMappingStmtWithCreateUserMappingIfPNotExistsForAuthIdentServerNameCreateGenericOptions_1ed39cc2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateUserMappingStmtWithCreateUserMappingIfPNotExistsForAuthIdentServerNameCreateGenericOptions_1ed39cc2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateUserMappingStmtWithCreateUserMappingIfPNotExistsForAuthIdentServerNameCreateGenericOptions_1ed39cc2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateUserMappingStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateUserMappingStmtWithCreateUserMappingIfPNotExistsForAuthIdentServerNameCreateGenericOptions_1ed39cc2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateUserMappingStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateUserMappingStmtWithCreateUserMappingIfPNotExistsForAuthIdentSe
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($authIdent), 'The authIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createGenericOptions), 'The createGenericOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +45,29 @@ final class CreateUserMappingStmtWithCreateUserMappingIfPNotExistsForAuthIdentSe
         $writer->append('SERVER');
         $this->name->write($writer);
         $this->createGenericOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new authIdent, preserving every other field.
+     */
+    public function withAuthIdent(\SqlSemantics\Statement\Model\PostgreSql\Role\AuthIdentForm $authIdent): self
+    {
+        return new self($authIdent, $this->name, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->authIdent, $name, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new createGenericOptions, preserving every other field.
+     */
+    public function withCreateGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions): self
+    {
+        return new self($this->authIdent, $this->name, $createGenericOptions);
     }
 }

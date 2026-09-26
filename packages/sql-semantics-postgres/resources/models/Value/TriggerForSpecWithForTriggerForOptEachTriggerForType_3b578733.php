@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerForSpecWithForTriggerForOptEachTriggerForType_3b578733 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerForSpecWithForTriggerForOptEachTriggerForType_3b578733 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerForSpecWithForTriggerForOptEachTriggerForType_3b578733 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerForSpecForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TriggerForSpecWithForTriggerForOptEachTriggerForType_3b578733 implem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerForOptEachForm $triggerForOptEach,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerForTypeForm $triggerForType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerForOptEach), 'The triggerForOptEach must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerForType), 'The triggerForType must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TriggerForSpecWithForTriggerForOptEachTriggerForType_3b578733 implem
         $writer->append('FOR');
         $this->triggerForOptEach->write($writer);
         $this->triggerForType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new triggerForOptEach, preserving every other field.
+     */
+    public function withTriggerForOptEach(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerForOptEachForm $triggerForOptEach): self
+    {
+        return new self($triggerForOptEach, $this->triggerForType);
+    }
+
+    /**
+     * Returns a copy with a new triggerForType, preserving every other field.
+     */
+    public function withTriggerForType(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerForTypeForm $triggerForType): self
+    {
+        return new self($this->triggerForOptEach, $triggerForType);
     }
 }

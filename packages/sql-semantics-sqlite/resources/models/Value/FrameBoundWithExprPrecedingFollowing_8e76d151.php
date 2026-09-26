@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameBoundWithExprPrecedingFollowing_8e76d151 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameBoundWithExprPrecedingFollowing_8e76d151 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FrameBoundWithExprPrecedingFollowing_8e76d151 implements \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundForm, \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundEForm, \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundSForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FrameBoundWithExprPrecedingFollowing_8e76d151 implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly string $precedingFollowing,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($precedingFollowing, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['PRECEDING|FOLLOWING'], 'The precedingFollowing must be a complete PRECEDING|FOLLOWING lexical spelling.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FrameBoundWithExprPrecedingFollowing_8e76d151 implements \SqlSemanti
     {
         $this->expr->write($writer);
         $writer->append($this->precedingFollowing);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->precedingFollowing);
+    }
+
+    /**
+     * Returns a copy with a new precedingFollowing, preserving every other field.
+     */
+    public function withPrecedingFollowing(string $precedingFollowing): self
+    {
+        return new self($this->expr, $precedingFollowing);
     }
 }

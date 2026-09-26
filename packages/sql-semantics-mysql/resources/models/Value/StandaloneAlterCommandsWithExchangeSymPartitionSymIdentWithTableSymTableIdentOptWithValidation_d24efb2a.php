@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithExchangeSymPartitionSymIdentWithTableSymTableIdentOptWithValidation_d24efb2a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithExchangeSymPartitionSymIdentWithTableSymTableIdentOptWithValidation_d24efb2a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StandaloneAlterCommandsWithExchangeSymPartitionSymIdentWithTableSymTableIdentOptWithValidation_d24efb2a implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class StandaloneAlterCommandsWithExchangeSymPartitionSymIdentWithTableSymT
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWithValidationForm $optWithValidation,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWithValidation), 'The optWithValidation must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +41,29 @@ final class StandaloneAlterCommandsWithExchangeSymPartitionSymIdentWithTableSymT
         $writer->append('TABLE');
         $this->tableIdent->write($writer);
         $this->optWithValidation->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->tableIdent, $this->optWithValidation);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->ident, $tableIdent, $this->optWithValidation);
+    }
+
+    /**
+     * Returns a copy with a new optWithValidation, preserving every other field.
+     */
+    public function withOptWithValidation(\SqlSemantics\Statement\Model\MySql\Role\OptWithValidationForm $optWithValidation): self
+    {
+        return new self($this->ident, $this->tableIdent, $optWithValidation);
     }
 }

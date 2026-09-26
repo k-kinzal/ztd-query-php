@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ResetOptionWithMasterOrBinaryLogsAndGtidsSourceResetOptions_876feb96 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ResetOptionWithMasterOrBinaryLogsAndGtidsSourceResetOptions_876feb96 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ResetOptionWithMasterOrBinaryLogsAndGtidsSourceResetOptions_876feb96 implements \SqlSemantics\Statement\Model\MySql\Role\ResetOptionForm, \SqlSemantics\Statement\Model\MySql\Role\ResetOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ResetOptionWithMasterOrBinaryLogsAndGtidsSourceResetOptions_876feb96
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MasterOrBinaryLogsAndGtidsForm $masterOrBinaryLogsAndGtids,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceResetOptionsForm $sourceResetOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($masterOrBinaryLogsAndGtids), 'The masterOrBinaryLogsAndGtids must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceResetOptions), 'The sourceResetOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ResetOptionWithMasterOrBinaryLogsAndGtidsSourceResetOptions_876feb96
     {
         $this->masterOrBinaryLogsAndGtids->write($writer);
         $this->sourceResetOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new masterOrBinaryLogsAndGtids, preserving every other field.
+     */
+    public function withMasterOrBinaryLogsAndGtids(\SqlSemantics\Statement\Model\MySql\Role\MasterOrBinaryLogsAndGtidsForm $masterOrBinaryLogsAndGtids): self
+    {
+        return new self($masterOrBinaryLogsAndGtids, $this->sourceResetOptions);
+    }
+
+    /**
+     * Returns a copy with a new sourceResetOptions, preserving every other field.
+     */
+    public function withSourceResetOptions(\SqlSemantics\Statement\Model\MySql\Role\SourceResetOptionsForm $sourceResetOptions): self
+    {
+        return new self($this->masterOrBinaryLogsAndGtids, $sourceResetOptions);
     }
 }

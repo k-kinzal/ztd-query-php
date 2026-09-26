@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTablespaceOptionListWithAlterTablespaceOptionListOptCommaAlterTablespaceOption_d88a4091 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTablespaceOptionListWithAlterTablespaceOptionListOptCommaAlterTablespaceOption_d88a4091 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTablespaceOptionListWithAlterTablespaceOptionListOptCommaAlterTablespaceOption_d88a4091 implements \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterTablespaceOptionListWithAlterTablespaceOptionListOptCommaAlterT
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionForm $alterTablespaceOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterTablespaceOptionList), 'The alterTablespaceOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterTablespaceOption), 'The alterTablespaceOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class AlterTablespaceOptionListWithAlterTablespaceOptionListOptCommaAlterT
         $this->alterTablespaceOptionList->write($writer);
         $this->optComma->write($writer);
         $this->alterTablespaceOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterTablespaceOptionList, preserving every other field.
+     */
+    public function withAlterTablespaceOptionList(\SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionListForm $alterTablespaceOptionList): self
+    {
+        return new self($alterTablespaceOptionList, $this->optComma, $this->alterTablespaceOption);
+    }
+
+    /**
+     * Returns a copy with a new optComma, preserving every other field.
+     */
+    public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
+    {
+        return new self($this->alterTablespaceOptionList, $optComma, $this->alterTablespaceOption);
+    }
+
+    /**
+     * Returns a copy with a new alterTablespaceOption, preserving every other field.
+     */
+    public function withAlterTablespaceOption(\SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionForm $alterTablespaceOption): self
+    {
+        return new self($this->alterTablespaceOptionList, $this->optComma, $alterTablespaceOption);
     }
 }

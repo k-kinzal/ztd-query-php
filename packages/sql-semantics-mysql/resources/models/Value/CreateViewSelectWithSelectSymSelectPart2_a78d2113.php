@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateViewSelectWithSelectSymSelectPart2_a78d2113 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateViewSelectWithSelectSymSelectPart2_a78d2113 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateViewSelectWithSelectSymSelectPart2_a78d2113 implements \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm, \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectParenForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectPart2), 'The selectPart2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CreateViewSelectWithSelectSymSelectPart2_a78d2113 implements \SqlSem
     {
         $writer->append('SELECT');
         $this->selectPart2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectPart2, preserving every other field.
+     */
+    public function withSelectPart2(\SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form $selectPart2): self
+    {
+        return new self($selectPart2);
     }
 }

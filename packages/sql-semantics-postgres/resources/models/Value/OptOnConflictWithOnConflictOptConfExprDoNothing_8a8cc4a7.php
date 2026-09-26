@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptOnConflictWithOnConflictOptConfExprDoNothing_8a8cc4a7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptOnConflictWithOnConflictOptConfExprDoNothing_8a8cc4a7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptOnConflictWithOnConflictOptConfExprDoNothing_8a8cc4a7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptOnConflictForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConfExprForm $optConfExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConfExpr), 'The optConfExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +35,13 @@ final class OptOnConflictWithOnConflictOptConfExprDoNothing_8a8cc4a7 implements 
         $this->optConfExpr->write($writer);
         $writer->append('DO');
         $writer->append('NOTHING');
+    }
+
+    /**
+     * Returns a copy with a new optConfExpr, preserving every other field.
+     */
+    public function withOptConfExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConfExprForm $optConfExpr): self
+    {
+        return new self($optConfExpr);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserWithUserDropFactorDropFactor_be850b18 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserWithUserDropFactorDropFactor_be850b18 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterUserWithUserDropFactorDropFactor_be850b18 implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserForm, \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterUserWithUserDropFactorDropFactor_be850b18 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($factor), 'The factor must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($factor2), 'The factor2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterUserWithUserDropFactorDropFactor_be850b18 implements \SqlSemant
         $this->factor->write($writer);
         $writer->append('DROP');
         $this->factor2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->factor, $this->factor2);
+    }
+
+    /**
+     * Returns a copy with a new factor, preserving every other field.
+     */
+    public function withFactor(\SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor): self
+    {
+        return new self($this->user, $factor, $this->factor2);
+    }
+
+    /**
+     * Returns a copy with a new factor2, preserving every other field.
+     */
+    public function withFactor2(\SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor2): self
+    {
+        return new self($this->user, $this->factor, $factor2);
     }
 }

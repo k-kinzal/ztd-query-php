@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithGeneratedGeneratedWhenAsIdentityPOptParenthesizedSeqOptList_4cfcf06d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithGeneratedGeneratedWhenAsIdentityPOptParenthesizedSeqOptList_4cfcf06d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColConstraintElemWithGeneratedGeneratedWhenAsIdentityPOptParenthesizedSeqOptList_4cfcf06d implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintElemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColConstraintElemWithGeneratedGeneratedWhenAsIdentityPOptParenthesiz
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GeneratedWhenForm $generatedWhen,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptParenthesizedSeqOptListForm $optParenthesizedSeqOptList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($generatedWhen), 'The generatedWhen must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optParenthesizedSeqOptList), 'The optParenthesizedSeqOptList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class ColConstraintElemWithGeneratedGeneratedWhenAsIdentityPOptParenthesiz
         $writer->append('AS');
         $writer->append('IDENTITY');
         $this->optParenthesizedSeqOptList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new generatedWhen, preserving every other field.
+     */
+    public function withGeneratedWhen(\SqlSemantics\Statement\Model\PostgreSql\Role\GeneratedWhenForm $generatedWhen): self
+    {
+        return new self($generatedWhen, $this->optParenthesizedSeqOptList);
+    }
+
+    /**
+     * Returns a copy with a new optParenthesizedSeqOptList, preserving every other field.
+     */
+    public function withOptParenthesizedSeqOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptParenthesizedSeqOptListForm $optParenthesizedSeqOptList): self
+    {
+        return new self($this->generatedWhen, $optParenthesizedSeqOptList);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement;
  *
  * @visibility public
  * @example Accepting a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Element $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Element $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface Element

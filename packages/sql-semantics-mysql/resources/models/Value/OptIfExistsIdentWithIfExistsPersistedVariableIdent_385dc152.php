@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIfExistsIdentWithIfExistsPersistedVariableIdent_385dc152 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIfExistsIdentWithIfExistsPersistedVariableIdent_385dc152 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIfExistsIdentWithIfExistsPersistedVariableIdent_385dc152 implements \SqlSemantics\Statement\Model\MySql\Role\OptIfExistsIdentForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptIfExistsIdentWithIfExistsPersistedVariableIdent_385dc152 implemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PersistedVariableIdentForm $persistedVariableIdent,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($persistedVariableIdent), 'The persistedVariableIdent must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptIfExistsIdentWithIfExistsPersistedVariableIdent_385dc152 implemen
     {
         $this->ifExists->write($writer);
         $this->persistedVariableIdent->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ifExists, preserving every other field.
+     */
+    public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
+    {
+        return new self($ifExists, $this->persistedVariableIdent);
+    }
+
+    /**
+     * Returns a copy with a new persistedVariableIdent, preserving every other field.
+     */
+    public function withPersistedVariableIdent(\SqlSemantics\Statement\Model\MySql\Role\PersistedVariableIdentForm $persistedVariableIdent): self
+    {
+        return new self($this->ifExists, $persistedVariableIdent);
     }
 }

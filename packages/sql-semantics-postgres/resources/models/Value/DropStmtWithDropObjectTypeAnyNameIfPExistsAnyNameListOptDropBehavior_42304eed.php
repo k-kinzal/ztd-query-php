@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropStmtWithDropObjectTypeAnyNameIfPExistsAnyNameListOptDropBehavior_42304eed $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropStmtWithDropObjectTypeAnyNameIfPExistsAnyNameListOptDropBehavior_42304eed $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DropStmtWithDropObjectTypeAnyNameIfPExistsAnyNameListOptDropBehavior_42304eed implements \SqlSemantics\Statement\Model\PostgreSql\Role\DropStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class DropStmtWithDropObjectTypeAnyNameIfPExistsAnyNameListOptDropBehavior_42304eed implements \SqlSemantics\Statement\Model\PostgreSql\Role\DropStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class DropStmtWithDropObjectTypeAnyNameIfPExistsAnyNameListOptDropBehavior
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameListForm $anyNameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($objectTypeAnyName), 'The objectTypeAnyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyNameList), 'The anyNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class DropStmtWithDropObjectTypeAnyNameIfPExistsAnyNameListOptDropBehavior
         $writer->append('EXISTS');
         $this->anyNameList->write($writer);
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new objectTypeAnyName, preserving every other field.
+     */
+    public function withObjectTypeAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeAnyNameForm $objectTypeAnyName): self
+    {
+        return new self($objectTypeAnyName, $this->anyNameList, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new anyNameList, preserving every other field.
+     */
+    public function withAnyNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameListForm $anyNameList): self
+    {
+        return new self($this->objectTypeAnyName, $anyNameList, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optDropBehavior, preserving every other field.
+     */
+    public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
+    {
+        return new self($this->objectTypeAnyName, $this->anyNameList, $optDropBehavior);
     }
 }

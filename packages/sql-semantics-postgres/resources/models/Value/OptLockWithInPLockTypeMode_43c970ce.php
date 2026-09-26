@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptLockWithInPLockTypeMode_43c970ce $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptLockWithInPLockTypeMode_43c970ce $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptLockWithInPLockTypeMode_43c970ce implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptLockForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\LockTypeForm $lockType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($lockType), 'The lockType must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptLockWithInPLockTypeMode_43c970ce implements \SqlSemantics\Stateme
         $writer->append('IN');
         $this->lockType->write($writer);
         $writer->append('MODE');
+    }
+
+    /**
+     * Returns a copy with a new lockType, preserving every other field.
+     */
+    public function withLockType(\SqlSemantics\Statement\Model\PostgreSql\Role\LockTypeForm $lockType): self
+    {
+        return new self($lockType);
     }
 }

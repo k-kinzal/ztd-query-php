@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IndexElemWithFuncExprWindowlessIndexElemOptions_d397f329 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IndexElemWithFuncExprWindowlessIndexElemOptions_d397f329 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IndexElemWithFuncExprWindowlessIndexElemOptions_d397f329 implements \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\IndexIncludingParamsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\IndexParamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class IndexElemWithFuncExprWindowlessIndexElemOptions_d397f329 implements 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm $indexElemOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcExprWindowless), 'The funcExprWindowless must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexElemOptions), 'The indexElemOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class IndexElemWithFuncExprWindowlessIndexElemOptions_d397f329 implements 
     {
         $this->funcExprWindowless->write($writer);
         $this->indexElemOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcExprWindowless, preserving every other field.
+     */
+    public function withFuncExprWindowless(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless): self
+    {
+        return new self($funcExprWindowless, $this->indexElemOptions);
+    }
+
+    /**
+     * Returns a copy with a new indexElemOptions, preserving every other field.
+     */
+    public function withIndexElemOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm $indexElemOptions): self
+    {
+        return new self($this->funcExprWindowless, $indexElemOptions);
     }
 }

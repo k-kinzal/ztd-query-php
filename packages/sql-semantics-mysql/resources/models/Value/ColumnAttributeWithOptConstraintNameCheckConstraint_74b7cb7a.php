@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithOptConstraintNameCheckConstraint_74b7cb7a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithOptConstraintNameCheckConstraint_74b7cb7a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnAttributeWithOptConstraintNameCheckConstraint_74b7cb7a implements \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColumnAttributeWithOptConstraintNameCheckConstraint_74b7cb7a impleme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptConstraintNameForm $optConstraintName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CheckConstraintForm $checkConstraint,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optConstraintName), 'The optConstraintName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($checkConstraint), 'The checkConstraint must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ColumnAttributeWithOptConstraintNameCheckConstraint_74b7cb7a impleme
     {
         $this->optConstraintName->write($writer);
         $this->checkConstraint->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optConstraintName, preserving every other field.
+     */
+    public function withOptConstraintName(\SqlSemantics\Statement\Model\MySql\Role\OptConstraintNameForm $optConstraintName): self
+    {
+        return new self($optConstraintName, $this->checkConstraint);
+    }
+
+    /**
+     * Returns a copy with a new checkConstraint, preserving every other field.
+     */
+    public function withCheckConstraint(\SqlSemantics\Statement\Model\MySql\Role\CheckConstraintForm $checkConstraint): self
+    {
+        return new self($this->optConstraintName, $checkConstraint);
     }
 }

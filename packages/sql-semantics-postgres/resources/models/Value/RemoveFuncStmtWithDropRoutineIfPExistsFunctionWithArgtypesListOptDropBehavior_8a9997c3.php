@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RemoveFuncStmtWithDropRoutineIfPExistsFunctionWithArgtypesListOptDropBehavior_8a9997c3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RemoveFuncStmtWithDropRoutineIfPExistsFunctionWithArgtypesListOptDropBehavior_8a9997c3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RemoveFuncStmtWithDropRoutineIfPExistsFunctionWithArgtypesListOptDropBehavior_8a9997c3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RemoveFuncStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class RemoveFuncStmtWithDropRoutineIfPExistsFunctionWithArgtypesListOptDropBehavior_8a9997c3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RemoveFuncStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RemoveFuncStmtWithDropRoutineIfPExistsFunctionWithArgtypesListOptDro
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesListForm $functionWithArgtypesList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypesList), 'The functionWithArgtypesList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class RemoveFuncStmtWithDropRoutineIfPExistsFunctionWithArgtypesListOptDro
         $writer->append('EXISTS');
         $this->functionWithArgtypesList->write($writer);
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new functionWithArgtypesList, preserving every other field.
+     */
+    public function withFunctionWithArgtypesList(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesListForm $functionWithArgtypesList): self
+    {
+        return new self($functionWithArgtypesList, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optDropBehavior, preserving every other field.
+     */
+    public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
+    {
+        return new self($this->functionWithArgtypesList, $optDropBehavior);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericOnlyListWithNumericOnlyListNumericOnly_5687e37b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericOnlyListWithNumericOnlyListNumericOnly_5687e37b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NumericOnlyListWithNumericOnlyListNumericOnly_5687e37b implements \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class NumericOnlyListWithNumericOnlyListNumericOnly_5687e37b implements \S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyListForm $numericOnlyList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($numericOnlyList), 'The numericOnlyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($numericOnly), 'The numericOnly must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class NumericOnlyListWithNumericOnlyListNumericOnly_5687e37b implements \S
         $this->numericOnlyList->write($writer);
         $writer->append(',');
         $this->numericOnly->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new numericOnlyList, preserving every other field.
+     */
+    public function withNumericOnlyList(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyListForm $numericOnlyList): self
+    {
+        return new self($numericOnlyList, $this->numericOnly);
+    }
+
+    /**
+     * Returns a copy with a new numericOnly, preserving every other field.
+     */
+    public function withNumericOnly(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly): self
+    {
+        return new self($this->numericOnlyList, $numericOnly);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 implements \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateListForm $insertUpdateList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertUpdateElemForm $insertUpdateElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertUpdateList), 'The insertUpdateList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertUpdateElem), 'The insertUpdateElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class InsertUpdateListWithInsertUpdateListInsertUpdateElem_22c65a33 implem
         $this->insertUpdateList->write($writer);
         $writer->append(',');
         $this->insertUpdateElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new insertUpdateList, preserving every other field.
+     */
+    public function withInsertUpdateList(\SqlSemantics\Statement\Model\MySql\Role\InsertUpdateListForm $insertUpdateList): self
+    {
+        return new self($insertUpdateList, $this->insertUpdateElem);
+    }
+
+    /**
+     * Returns a copy with a new insertUpdateElem, preserving every other field.
+     */
+    public function withInsertUpdateElem(\SqlSemantics\Statement\Model\MySql\Role\InsertUpdateElemForm $insertUpdateElem): self
+    {
+        return new self($this->insertUpdateList, $insertUpdateElem);
     }
 }

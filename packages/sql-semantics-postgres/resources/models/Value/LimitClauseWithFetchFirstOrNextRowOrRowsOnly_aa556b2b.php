@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\LimitClauseWithFetchFirstOrNextRowOrRowsOnly_aa556b2b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\LimitClauseWithFetchFirstOrNextRowOrRowsOnly_aa556b2b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LimitClauseWithFetchFirstOrNextRowOrRowsOnly_aa556b2b implements \SqlSemantics\Statement\Model\PostgreSql\Role\LimitClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class LimitClauseWithFetchFirstOrNextRowOrRowsOnly_aa556b2b implements \Sq
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FirstOrNextForm $firstOrNext,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowOrRowsForm $rowOrRows,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($firstOrNext), 'The firstOrNext must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowOrRows), 'The rowOrRows must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class LimitClauseWithFetchFirstOrNextRowOrRowsOnly_aa556b2b implements \Sq
         $this->firstOrNext->write($writer);
         $this->rowOrRows->write($writer);
         $writer->append('ONLY');
+    }
+
+    /**
+     * Returns a copy with a new firstOrNext, preserving every other field.
+     */
+    public function withFirstOrNext(\SqlSemantics\Statement\Model\PostgreSql\Role\FirstOrNextForm $firstOrNext): self
+    {
+        return new self($firstOrNext, $this->rowOrRows);
+    }
+
+    /**
+     * Returns a copy with a new rowOrRows, preserving every other field.
+     */
+    public function withRowOrRows(\SqlSemantics\Statement\Model\PostgreSql\Role\RowOrRowsForm $rowOrRows): self
+    {
+        return new self($this->firstOrNext, $rowOrRows);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NormalKeyOptsWithNormalKeyOptsNormalKeyOpt_11094c2c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NormalKeyOptsWithNormalKeyOptsNormalKeyOpt_11094c2c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NormalKeyOptsWithNormalKeyOptsNormalKeyOpt_11094c2c implements \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class NormalKeyOptsWithNormalKeyOptsNormalKeyOpt_11094c2c implements \SqlS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptsForm $normalKeyOpts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptForm $normalKeyOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($normalKeyOpts), 'The normalKeyOpts must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($normalKeyOpt), 'The normalKeyOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class NormalKeyOptsWithNormalKeyOptsNormalKeyOpt_11094c2c implements \SqlS
     {
         $this->normalKeyOpts->write($writer);
         $this->normalKeyOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new normalKeyOpts, preserving every other field.
+     */
+    public function withNormalKeyOpts(\SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptsForm $normalKeyOpts): self
+    {
+        return new self($normalKeyOpts, $this->normalKeyOpt);
+    }
+
+    /**
+     * Returns a copy with a new normalKeyOpt, preserving every other field.
+     */
+    public function withNormalKeyOpt(\SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptForm $normalKeyOpt): self
+    {
+        return new self($this->normalKeyOpts, $normalKeyOpt);
     }
 }

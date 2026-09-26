@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OperArgtypesWithTypenameTypename_af6fe672 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OperArgtypesWithTypenameTypename_af6fe672 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OperArgtypesWithTypenameTypename_af6fe672 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OperArgtypesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OperArgtypesWithTypenameTypename_af6fe672 implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename2), 'The typename2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class OperArgtypesWithTypenameTypename_af6fe672 implements \SqlSemantics\S
         $writer->append(',');
         $this->typename2->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($typename, $this->typename2);
+    }
+
+    /**
+     * Returns a copy with a new typename2, preserving every other field.
+     */
+    public function withTypename2(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename2): self
+    {
+        return new self($this->typename, $typename2);
     }
 }

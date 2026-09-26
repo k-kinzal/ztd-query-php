@@ -123,6 +123,7 @@ final class PlatformTest extends TestCase
         $platform = Dialect::PostgreSql->platform();
         $parser = $platform->parser();
         $value = $platform->values($parser->version())->read($parser->parse('SELECT 42'));
+        self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
         self::assertSame('SELECT 42', (new \SqlSemantics\Statement\Statement($value))->toString());
     }
 

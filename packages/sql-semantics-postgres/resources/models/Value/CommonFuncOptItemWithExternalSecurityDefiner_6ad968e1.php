@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CommonFuncOptItemWithExternalSecurityDefiner_6ad968e1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CommonFuncOptItemWithExternalSecurityDefiner_6ad968e1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CommonFuncOptItemWithExternalSecurityDefiner_6ad968e1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CommonFuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm

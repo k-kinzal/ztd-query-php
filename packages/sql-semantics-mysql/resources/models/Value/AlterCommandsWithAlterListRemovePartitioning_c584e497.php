@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsWithAlterListRemovePartitioning_c584e497 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsWithAlterListRemovePartitioning_c584e497 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterCommandsWithAlterListRemovePartitioning_c584e497 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterCommandsWithAlterListRemovePartitioning_c584e497 implements \Sq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RemovePartitioningForm $removePartitioning,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterList), 'The alterList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($removePartitioning), 'The removePartitioning must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AlterCommandsWithAlterListRemovePartitioning_c584e497 implements \Sq
     {
         $this->alterList->write($writer);
         $this->removePartitioning->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterList, preserving every other field.
+     */
+    public function withAlterList(\SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList): self
+    {
+        return new self($alterList, $this->removePartitioning);
+    }
+
+    /**
+     * Returns a copy with a new removePartitioning, preserving every other field.
+     */
+    public function withRemovePartitioning(\SqlSemantics\Statement\Model\MySql\Role\RemovePartitioningForm $removePartitioning): self
+    {
+        return new self($this->alterList, $removePartitioning);
     }
 }

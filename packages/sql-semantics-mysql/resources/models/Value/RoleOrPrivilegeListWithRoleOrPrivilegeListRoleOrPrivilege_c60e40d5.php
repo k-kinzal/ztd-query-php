@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleOrPrivilegeListWithRoleOrPrivilegeListRoleOrPrivilege_c60e40d5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleOrPrivilegeListWithRoleOrPrivilegeListRoleOrPrivilege_c60e40d5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RoleOrPrivilegeListWithRoleOrPrivilegeListRoleOrPrivilege_c60e40d5 implements \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RoleOrPrivilegeListWithRoleOrPrivilegeListRoleOrPrivilege_c60e40d5 i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeForm $roleOrPrivilege,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleOrPrivilegeList), 'The roleOrPrivilegeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleOrPrivilege), 'The roleOrPrivilege must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class RoleOrPrivilegeListWithRoleOrPrivilegeListRoleOrPrivilege_c60e40d5 i
         $this->roleOrPrivilegeList->write($writer);
         $writer->append(',');
         $this->roleOrPrivilege->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleOrPrivilegeList, preserving every other field.
+     */
+    public function withRoleOrPrivilegeList(\SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList): self
+    {
+        return new self($roleOrPrivilegeList, $this->roleOrPrivilege);
+    }
+
+    /**
+     * Returns a copy with a new roleOrPrivilege, preserving every other field.
+     */
+    public function withRoleOrPrivilege(\SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeForm $roleOrPrivilege): self
+    {
+        return new self($this->roleOrPrivilegeList, $roleOrPrivilege);
     }
 }

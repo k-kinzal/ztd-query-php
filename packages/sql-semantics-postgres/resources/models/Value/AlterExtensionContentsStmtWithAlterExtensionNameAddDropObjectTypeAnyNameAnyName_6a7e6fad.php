@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionContentsStmtWithAlterExtensionNameAddDropObjectTypeAnyNameAnyName_6a7e6fad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionContentsStmtWithAlterExtensionNameAddDropObjectTypeAnyNameAnyName_6a7e6fad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropObjectTypeAnyNameAnyName_6a7e6fad implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionContentsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropObjectTypeAnyNameAnyName_6a7e6fad implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionContentsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropObjectTypeAny
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeAnyNameForm $objectTypeAnyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($addDrop), 'The addDrop must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($objectTypeAnyName), 'The objectTypeAnyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropObjectTypeAny
         $this->addDrop->write($writer);
         $this->objectTypeAnyName->write($writer);
         $this->anyName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->addDrop, $this->objectTypeAnyName, $this->anyName);
+    }
+
+    /**
+     * Returns a copy with a new addDrop, preserving every other field.
+     */
+    public function withAddDrop(\SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop): self
+    {
+        return new self($this->name, $addDrop, $this->objectTypeAnyName, $this->anyName);
+    }
+
+    /**
+     * Returns a copy with a new objectTypeAnyName, preserving every other field.
+     */
+    public function withObjectTypeAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeAnyNameForm $objectTypeAnyName): self
+    {
+        return new self($this->name, $this->addDrop, $objectTypeAnyName, $this->anyName);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($this->name, $this->addDrop, $this->objectTypeAnyName, $anyName);
     }
 }

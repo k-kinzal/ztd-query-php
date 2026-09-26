@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinedTableWithTableReferenceNaturalJoinTypeTableFactor_e7df9b6f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinedTableWithTableReferenceNaturalJoinTypeTableFactor_e7df9b6f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinedTableWithTableReferenceNaturalJoinTypeTableFactor_e7df9b6f implements \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinedTableForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class JoinedTableWithTableReferenceNaturalJoinTypeTableFactor_e7df9b6f imp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NaturalJoinTypeForm $naturalJoinType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($naturalJoinType), 'The naturalJoinType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableFactor), 'The tableFactor must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class JoinedTableWithTableReferenceNaturalJoinTypeTableFactor_e7df9b6f imp
         $this->tableReference->write($writer);
         $this->naturalJoinType->write($writer);
         $this->tableFactor->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableReference, preserving every other field.
+     */
+    public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
+    {
+        return new self($tableReference, $this->naturalJoinType, $this->tableFactor);
+    }
+
+    /**
+     * Returns a copy with a new naturalJoinType, preserving every other field.
+     */
+    public function withNaturalJoinType(\SqlSemantics\Statement\Model\MySql\Role\NaturalJoinTypeForm $naturalJoinType): self
+    {
+        return new self($this->tableReference, $naturalJoinType, $this->tableFactor);
+    }
+
+    /**
+     * Returns a copy with a new tableFactor, preserving every other field.
+     */
+    public function withTableFactor(\SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor): self
+    {
+        return new self($this->tableReference, $this->naturalJoinType, $tableFactor);
     }
 }

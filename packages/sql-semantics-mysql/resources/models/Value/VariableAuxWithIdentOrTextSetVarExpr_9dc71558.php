@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VariableAuxWithIdentOrTextSetVarExpr_9dc71558 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VariableAuxWithIdentOrTextSetVarExpr_9dc71558 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VariableAuxWithIdentOrTextSetVarExpr_9dc71558 implements \SqlSemantics\Statement\Model\MySql\Role\VariableAuxForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class VariableAuxWithIdentOrTextSetVarExpr_9dc71558 implements \SqlSemanti
         public readonly string $setVar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($setVar, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['SET_VAR'], 'The setVar must be a complete SET_VAR lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class VariableAuxWithIdentOrTextSetVarExpr_9dc71558 implements \SqlSemanti
         $this->identOrText->write($writer);
         $writer->append($this->setVar);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($identOrText, $this->setVar, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new setVar, preserving every other field.
+     */
+    public function withSetVar(string $setVar): self
+    {
+        return new self($this->identOrText, $setVar, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->identOrText, $this->setVar, $expr);
     }
 }

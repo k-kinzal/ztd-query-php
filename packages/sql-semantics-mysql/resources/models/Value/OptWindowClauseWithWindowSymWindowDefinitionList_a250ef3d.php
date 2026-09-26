@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptWindowClauseWithWindowSymWindowDefinitionList_a250ef3d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptWindowClauseWithWindowSymWindowDefinitionList_a250ef3d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptWindowClauseWithWindowSymWindowDefinitionList_a250ef3d implements \SqlSemantics\Statement\Model\MySql\Role\OptWindowClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowDefinitionListForm $windowDefinitionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowDefinitionList), 'The windowDefinitionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptWindowClauseWithWindowSymWindowDefinitionList_a250ef3d implements
     {
         $writer->append('WINDOW');
         $this->windowDefinitionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new windowDefinitionList, preserving every other field.
+     */
+    public function withWindowDefinitionList(\SqlSemantics\Statement\Model\MySql\Role\WindowDefinitionListForm $windowDefinitionList): self
+    {
+        return new self($windowDefinitionList);
     }
 }

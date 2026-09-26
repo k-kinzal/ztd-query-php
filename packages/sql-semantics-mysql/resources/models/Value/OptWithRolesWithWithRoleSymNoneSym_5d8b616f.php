@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptWithRolesWithWithRoleSymNoneSym_5d8b616f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptWithRolesWithWithRoleSymNoneSym_5d8b616f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptWithRolesWithWithRoleSymNoneSym_5d8b616f implements \SqlSemantics\Statement\Model\MySql\Role\OptWithRolesForm

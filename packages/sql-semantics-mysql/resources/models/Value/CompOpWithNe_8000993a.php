@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CompOpWithNe_8000993a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CompOpWithNe_8000993a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CompOpWithNe_8000993a implements \SqlSemantics\Statement\Model\MySql\Role\CompOpForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $ne,
     ) {
+        $this->assertMatchesPattern($ne, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NE'], 'The ne must be a complete NE lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class CompOpWithNe_8000993a implements \SqlSemantics\Statement\Model\MySql
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->ne);
+    }
+
+    /**
+     * Returns a copy with a new ne, preserving every other field.
+     */
+    public function withNe(string $ne): self
+    {
+        return new self($ne);
     }
 }

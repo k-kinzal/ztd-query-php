@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NumericTypeWithFloatSym_1955dc5a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NumericTypeWithFloatSym_1955dc5a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NumericTypeWithFloatSym_1955dc5a implements \SqlSemantics\Statement\Model\MySql\Role\NumericTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $floatSym,
     ) {
+        $this->assertMatchesPattern($floatSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['FLOAT_SYM'], 'The floatSym must be a complete FLOAT_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class NumericTypeWithFloatSym_1955dc5a implements \SqlSemantics\Statement\
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->floatSym);
+    }
+
+    /**
+     * Returns a copy with a new floatSym, preserving every other field.
+     */
+    public function withFloatSym(string $floatSym): self
+    {
+        return new self($floatSym);
     }
 }

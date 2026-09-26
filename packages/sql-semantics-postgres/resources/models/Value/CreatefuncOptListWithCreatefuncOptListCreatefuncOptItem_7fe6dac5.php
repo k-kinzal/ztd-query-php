@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatefuncOptListWithCreatefuncOptListCreatefuncOptItem_7fe6dac5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatefuncOptListWithCreatefuncOptListCreatefuncOptItem_7fe6dac5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreatefuncOptListWithCreatefuncOptListCreatefuncOptItem_7fe6dac5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreatefuncOptListWithCreatefuncOptListCreatefuncOptItem_7fe6dac5 imp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm $createfuncOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm $createfuncOptItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createfuncOptList), 'The createfuncOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createfuncOptItem), 'The createfuncOptItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CreatefuncOptListWithCreatefuncOptListCreatefuncOptItem_7fe6dac5 imp
     {
         $this->createfuncOptList->write($writer);
         $this->createfuncOptItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createfuncOptList, preserving every other field.
+     */
+    public function withCreatefuncOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm $createfuncOptList): self
+    {
+        return new self($createfuncOptList, $this->createfuncOptItem);
+    }
+
+    /**
+     * Returns a copy with a new createfuncOptItem, preserving every other field.
+     */
+    public function withCreatefuncOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm $createfuncOptItem): self
+    {
+        return new self($this->createfuncOptList, $createfuncOptItem);
     }
 }

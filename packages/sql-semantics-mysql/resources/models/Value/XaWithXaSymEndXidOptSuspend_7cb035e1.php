@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\XaWithXaSymEndXidOptSuspend_7cb035e1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\XaWithXaSymEndXidOptSuspend_7cb035e1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class XaWithXaSymEndXidOptSuspend_7cb035e1 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Model\MySql\Role\XaForm
+final class XaWithXaSymEndXidOptSuspend_7cb035e1 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Model\MySql\Role\XaForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class XaWithXaSymEndXidOptSuspend_7cb035e1 implements \SqlSemantics\Statem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\XidForm $xid,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSuspendForm $optSuspend,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($xid), 'The xid must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSuspend), 'The optSuspend must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class XaWithXaSymEndXidOptSuspend_7cb035e1 implements \SqlSemantics\Statem
         $writer->append('END');
         $this->xid->write($writer);
         $this->optSuspend->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new xid, preserving every other field.
+     */
+    public function withXid(\SqlSemantics\Statement\Model\MySql\Role\XidForm $xid): self
+    {
+        return new self($xid, $this->optSuspend);
+    }
+
+    /**
+     * Returns a copy with a new optSuspend, preserving every other field.
+     */
+    public function withOptSuspend(\SqlSemantics\Statement\Model\MySql\Role\OptSuspendForm $optSuspend): self
+    {
+        return new self($this->xid, $optSuspend);
     }
 }

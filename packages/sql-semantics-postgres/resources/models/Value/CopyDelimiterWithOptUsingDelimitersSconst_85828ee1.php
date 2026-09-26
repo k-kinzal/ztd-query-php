@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyDelimiterWithOptUsingDelimitersSconst_85828ee1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyDelimiterWithOptUsingDelimitersSconst_85828ee1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CopyDelimiterWithOptUsingDelimitersSconst_85828ee1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyDelimiterForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CopyDelimiterWithOptUsingDelimitersSconst_85828ee1 implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptUsingForm $optUsing,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optUsing), 'The optUsing must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sconst), 'The sconst must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CopyDelimiterWithOptUsingDelimitersSconst_85828ee1 implements \SqlSe
         $this->optUsing->write($writer);
         $writer->append('DELIMITERS');
         $this->sconst->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optUsing, preserving every other field.
+     */
+    public function withOptUsing(\SqlSemantics\Statement\Model\PostgreSql\Role\OptUsingForm $optUsing): self
+    {
+        return new self($optUsing, $this->sconst);
+    }
+
+    /**
+     * Returns a copy with a new sconst, preserving every other field.
+     */
+    public function withSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm $sconst): self
+    {
+        return new self($this->optUsing, $sconst);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionsWithCreateTableOptionCreateTableOptions_cbabf0e5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionsWithCreateTableOptionCreateTableOptions_cbabf0e5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateTableOptionsWithCreateTableOptionCreateTableOptions_cbabf0e5 implements \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreateTableOptionsWithCreateTableOptionCreateTableOptions_cbabf0e5 i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm $createTableOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm $createTableOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOption), 'The createTableOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOptions), 'The createTableOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CreateTableOptionsWithCreateTableOptionCreateTableOptions_cbabf0e5 i
         $this->createTableOption->write($writer);
         $writer->append(',');
         $this->createTableOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createTableOption, preserving every other field.
+     */
+    public function withCreateTableOption(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm $createTableOption): self
+    {
+        return new self($createTableOption, $this->createTableOptions);
+    }
+
+    /**
+     * Returns a copy with a new createTableOptions, preserving every other field.
+     */
+    public function withCreateTableOptions(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm $createTableOptions): self
+    {
+        return new self($this->createTableOption, $createTableOptions);
     }
 }

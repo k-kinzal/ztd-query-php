@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SeqOptElemWithIncrementOptByNumericOnly_32b3caaa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SeqOptElemWithIncrementOptByNumericOnly_32b3caaa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SeqOptElemWithIncrementOptByNumericOnly_32b3caaa implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptSeqOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SeqOptElemWithIncrementOptByNumericOnly_32b3caaa implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptByForm $optBy,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optBy), 'The optBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($numericOnly), 'The numericOnly must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SeqOptElemWithIncrementOptByNumericOnly_32b3caaa implements \SqlSema
         $writer->append('INCREMENT');
         $this->optBy->write($writer);
         $this->numericOnly->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optBy, preserving every other field.
+     */
+    public function withOptBy(\SqlSemantics\Statement\Model\PostgreSql\Role\OptByForm $optBy): self
+    {
+        return new self($optBy, $this->numericOnly);
+    }
+
+    /**
+     * Returns a copy with a new numericOnly, preserving every other field.
+     */
+    public function withNumericOnly(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly): self
+    {
+        return new self($this->optBy, $numericOnly);
     }
 }

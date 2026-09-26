@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropTypeNameWithSchema_23bc5d99 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropTypeNameWithSchema_23bc5d99 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DropTypeNameWithSchema_23bc5d99 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DropTypeNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeNameForm

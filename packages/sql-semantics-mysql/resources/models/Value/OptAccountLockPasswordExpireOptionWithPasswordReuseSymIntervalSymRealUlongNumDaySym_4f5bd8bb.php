@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAccountLockPasswordExpireOptionWithPasswordReuseSymIntervalSymRealUlongNumDaySym_4f5bd8bb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAccountLockPasswordExpireOptionWithPasswordReuseSymIntervalSymRealUlongNumDaySym_4f5bd8bb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptAccountLockPasswordExpireOptionWithPasswordReuseSymIntervalSymRealUlongNumDaySym_4f5bd8bb implements \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionForm, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptAccountLockPasswordExpireOptionWithPasswordReuseSymIntervalSymRea
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum,
         public readonly string $daySym,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlongNum), 'The realUlongNum must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($daySym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DAY_SYM'], 'The daySym must be a complete DAY_SYM lexical spelling.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class OptAccountLockPasswordExpireOptionWithPasswordReuseSymIntervalSymRea
         $writer->append('INTERVAL');
         $this->realUlongNum->write($writer);
         $writer->append($this->daySym);
+    }
+
+    /**
+     * Returns a copy with a new realUlongNum, preserving every other field.
+     */
+    public function withRealUlongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum): self
+    {
+        return new self($realUlongNum, $this->daySym);
+    }
+
+    /**
+     * Returns a copy with a new daySym, preserving every other field.
+     */
+    public function withDaySym(string $daySym): self
+    {
+        return new self($this->realUlongNum, $daySym);
     }
 }

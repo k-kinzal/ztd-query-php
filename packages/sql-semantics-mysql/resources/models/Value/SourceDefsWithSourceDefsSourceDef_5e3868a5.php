@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefsWithSourceDefsSourceDef_5e3868a5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefsWithSourceDefsSourceDef_5e3868a5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefsWithSourceDefsSourceDef_5e3868a5 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefsWithSourceDefsSourceDef_5e3868a5 implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm $sourceDefs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm $sourceDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceDefs), 'The sourceDefs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceDef), 'The sourceDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefsWithSourceDefsSourceDef_5e3868a5 implements \SqlSemantics\
         $this->sourceDefs->write($writer);
         $writer->append(',');
         $this->sourceDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sourceDefs, preserving every other field.
+     */
+    public function withSourceDefs(\SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm $sourceDefs): self
+    {
+        return new self($sourceDefs, $this->sourceDef);
+    }
+
+    /**
+     * Returns a copy with a new sourceDef, preserving every other field.
+     */
+    public function withSourceDef(\SqlSemantics\Statement\Model\MySql\Role\SourceDefForm $sourceDef): self
+    {
+        return new self($this->sourceDefs, $sourceDef);
     }
 }

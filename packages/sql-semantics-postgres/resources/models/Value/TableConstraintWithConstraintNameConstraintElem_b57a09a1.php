@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableConstraintWithConstraintNameConstraintElem_b57a09a1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableConstraintWithConstraintNameConstraintElem_b57a09a1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableConstraintWithConstraintNameConstraintElem_b57a09a1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableConstraintWithConstraintNameConstraintElem_b57a09a1 implements 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintElemForm $constraintElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constraintElem), 'The constraintElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableConstraintWithConstraintNameConstraintElem_b57a09a1 implements 
         $writer->append('CONSTRAINT');
         $this->name->write($writer);
         $this->constraintElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->constraintElem);
+    }
+
+    /**
+     * Returns a copy with a new constraintElem, preserving every other field.
+     */
+    public function withConstraintElem(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintElemForm $constraintElem): self
+    {
+        return new self($this->name, $constraintElem);
     }
 }

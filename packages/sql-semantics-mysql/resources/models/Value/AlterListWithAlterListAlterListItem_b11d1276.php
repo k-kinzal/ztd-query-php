@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListWithAlterListAlterListItem_b11d1276 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListWithAlterListAlterListItem_b11d1276 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListWithAlterListAlterListItem_b11d1276 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterListWithAlterListAlterListItem_b11d1276 implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm $alterListItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterList), 'The alterList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterListItem), 'The alterListItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterListWithAlterListAlterListItem_b11d1276 implements \SqlSemantic
         $this->alterList->write($writer);
         $writer->append(',');
         $this->alterListItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterList, preserving every other field.
+     */
+    public function withAlterList(\SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList): self
+    {
+        return new self($alterList, $this->alterListItem);
+    }
+
+    /**
+     * Returns a copy with a new alterListItem, preserving every other field.
+     */
+    public function withAlterListItem(\SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm $alterListItem): self
+    {
+        return new self($this->alterList, $alterListItem);
     }
 }

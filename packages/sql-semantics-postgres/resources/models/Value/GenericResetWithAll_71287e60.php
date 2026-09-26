@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GenericResetWithAll_71287e60 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GenericResetWithAll_71287e60 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GenericResetWithAll_71287e60 implements \SqlSemantics\Statement\Model\PostgreSql\Role\GenericResetForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ResetRestForm

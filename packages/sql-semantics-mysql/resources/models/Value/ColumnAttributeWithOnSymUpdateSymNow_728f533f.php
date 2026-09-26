@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithOnSymUpdateSymNow_728f533f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithOnSymUpdateSymNow_728f533f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnAttributeWithOnSymUpdateSymNow_728f533f implements \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NowForm $now,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($now), 'The now must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class ColumnAttributeWithOnSymUpdateSymNow_728f533f implements \SqlSemanti
         $writer->append('ON');
         $writer->append('UPDATE');
         $this->now->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new now, preserving every other field.
+     */
+    public function withNow(\SqlSemantics\Statement\Model\MySql\Role\NowForm $now): self
+    {
+        return new self($now);
     }
 }

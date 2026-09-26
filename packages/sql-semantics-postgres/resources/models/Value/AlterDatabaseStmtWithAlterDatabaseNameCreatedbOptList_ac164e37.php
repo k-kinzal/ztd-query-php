@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterDatabaseStmtWithAlterDatabaseNameCreatedbOptList_ac164e37 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterDatabaseStmtWithAlterDatabaseNameCreatedbOptList_ac164e37 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterDatabaseStmtWithAlterDatabaseNameCreatedbOptList_ac164e37 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterDatabaseStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterDatabaseStmtWithAlterDatabaseNameCreatedbOptList_ac164e37 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterDatabaseStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterDatabaseStmtWithAlterDatabaseNameCreatedbOptList_ac164e37 imple
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptListForm $createdbOptList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createdbOptList), 'The createdbOptList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AlterDatabaseStmtWithAlterDatabaseNameCreatedbOptList_ac164e37 imple
         $writer->append('DATABASE');
         $this->name->write($writer);
         $this->createdbOptList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->createdbOptList);
+    }
+
+    /**
+     * Returns a copy with a new createdbOptList, preserving every other field.
+     */
+    public function withCreatedbOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptListForm $createdbOptList): self
+    {
+        return new self($this->name, $createdbOptList);
     }
 }

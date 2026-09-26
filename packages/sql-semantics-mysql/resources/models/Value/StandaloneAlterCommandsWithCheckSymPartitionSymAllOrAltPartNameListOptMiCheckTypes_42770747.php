@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithCheckSymPartitionSymAllOrAltPartNameListOptMiCheckTypes_42770747 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithCheckSymPartitionSymAllOrAltPartNameListOptMiCheckTypes_42770747 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StandaloneAlterCommandsWithCheckSymPartitionSymAllOrAltPartNameListOptMiCheckTypes_42770747 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StandaloneAlterCommandsWithCheckSymPartitionSymAllOrAltPartNameListO
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptMiCheckTypesForm $optMiCheckTypes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($allOrAltPartNameList), 'The allOrAltPartNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optMiCheckTypes), 'The optMiCheckTypes must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class StandaloneAlterCommandsWithCheckSymPartitionSymAllOrAltPartNameListO
         $writer->append('PARTITION');
         $this->allOrAltPartNameList->write($writer);
         $this->optMiCheckTypes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new allOrAltPartNameList, preserving every other field.
+     */
+    public function withAllOrAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList): self
+    {
+        return new self($allOrAltPartNameList, $this->optMiCheckTypes);
+    }
+
+    /**
+     * Returns a copy with a new optMiCheckTypes, preserving every other field.
+     */
+    public function withOptMiCheckTypes(\SqlSemantics\Statement\Model\MySql\Role\OptMiCheckTypesForm $optMiCheckTypes): self
+    {
+        return new self($this->allOrAltPartNameList, $optMiCheckTypes);
     }
 }

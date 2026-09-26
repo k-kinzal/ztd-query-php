@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CharWithCharSym_92bfbc3c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CharWithCharSym_92bfbc3c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CharWithCharSym_92bfbc3c implements \SqlSemantics\Statement\Model\MySql\Role\CharForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $charSym,
     ) {
+        $this->assertMatchesPattern($charSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['CHAR_SYM'], 'The charSym must be a complete CHAR_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class CharWithCharSym_92bfbc3c implements \SqlSemantics\Statement\Model\My
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->charSym);
+    }
+
+    /**
+     * Returns a copy with a new charSym, preserving every other field.
+     */
+    public function withCharSym(string $charSym): self
+    {
+        return new self($charSym);
     }
 }

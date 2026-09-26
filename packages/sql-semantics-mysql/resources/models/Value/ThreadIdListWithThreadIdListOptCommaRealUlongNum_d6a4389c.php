@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c implements \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm, \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($threadIdList), 'The threadIdList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlongNum), 'The realUlongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class ThreadIdListWithThreadIdListOptCommaRealUlongNum_d6a4389c implements
         $this->threadIdList->write($writer);
         $this->optComma->write($writer);
         $this->realUlongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new threadIdList, preserving every other field.
+     */
+    public function withThreadIdList(\SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm $threadIdList): self
+    {
+        return new self($threadIdList, $this->optComma, $this->realUlongNum);
+    }
+
+    /**
+     * Returns a copy with a new optComma, preserving every other field.
+     */
+    public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
+    {
+        return new self($this->threadIdList, $optComma, $this->realUlongNum);
+    }
+
+    /**
+     * Returns a copy with a new realUlongNum, preserving every other field.
+     */
+    public function withRealUlongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum): self
+    {
+        return new self($this->threadIdList, $this->optComma, $realUlongNum);
     }
 }

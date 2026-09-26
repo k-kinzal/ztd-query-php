@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartValueItemListWithPartValueItemListPartValueExprItem_64fb07a9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartValueItemListWithPartValueItemListPartValueExprItem_64fb07a9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartValueItemListWithPartValueItemListPartValueExprItem_64fb07a9 implements \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartValueItemListWithPartValueItemListPartValueExprItem_64fb07a9 imp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm $partValueItemList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm $partValueExprItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partValueItemList), 'The partValueItemList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partValueExprItem), 'The partValueExprItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class PartValueItemListWithPartValueItemListPartValueExprItem_64fb07a9 imp
         $this->partValueItemList->write($writer);
         $writer->append(',');
         $this->partValueExprItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new partValueItemList, preserving every other field.
+     */
+    public function withPartValueItemList(\SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm $partValueItemList): self
+    {
+        return new self($partValueItemList, $this->partValueExprItem);
+    }
+
+    /**
+     * Returns a copy with a new partValueExprItem, preserving every other field.
+     */
+    public function withPartValueExprItem(\SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm $partValueExprItem): self
+    {
+        return new self($this->partValueItemList, $partValueExprItem);
     }
 }

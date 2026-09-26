@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BareLabelKeywordWithTruncate_9519b85c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BareLabelKeywordWithTruncate_9519b85c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BareLabelKeywordWithTruncate_9519b85c implements \SqlSemantics\Statement\Model\PostgreSql\Role\BareColLabelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BareLabelKeywordForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $name,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['TRUNCATE'], 'The name must be a complete TRUNCATE lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class BareLabelKeywordWithTruncate_9519b85c implements \SqlSemantics\State
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name);
     }
 }

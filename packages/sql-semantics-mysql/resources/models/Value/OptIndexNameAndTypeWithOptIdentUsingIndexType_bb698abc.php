@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIndexNameAndTypeWithOptIdentUsingIndexType_bb698abc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIndexNameAndTypeWithOptIdentUsingIndexType_bb698abc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIndexNameAndTypeWithOptIdentUsingIndexType_bb698abc implements \SqlSemantics\Statement\Model\MySql\Role\OptIndexNameAndTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptIndexNameAndTypeWithOptIdentUsingIndexType_bb698abc implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexType), 'The indexType must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptIndexNameAndTypeWithOptIdentUsingIndexType_bb698abc implements \S
         $this->optIdent->write($writer);
         $writer->append('USING');
         $this->indexType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optIdent, preserving every other field.
+     */
+    public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
+    {
+        return new self($optIdent, $this->indexType);
+    }
+
+    /**
+     * Returns a copy with a new indexType, preserving every other field.
+     */
+    public function withIndexType(\SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType): self
+    {
+        return new self($this->optIdent, $indexType);
     }
 }

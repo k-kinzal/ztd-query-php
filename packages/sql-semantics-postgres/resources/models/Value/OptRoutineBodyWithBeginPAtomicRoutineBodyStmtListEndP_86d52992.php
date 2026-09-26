@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptRoutineBodyWithBeginPAtomicRoutineBodyStmtListEndP_86d52992 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptRoutineBodyWithBeginPAtomicRoutineBodyStmtListEndP_86d52992 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptRoutineBodyWithBeginPAtomicRoutineBodyStmtListEndP_86d52992 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptRoutineBodyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtListForm $routineBodyStmtList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($routineBodyStmtList), 'The routineBodyStmtList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class OptRoutineBodyWithBeginPAtomicRoutineBodyStmtListEndP_86d52992 imple
         $writer->append('ATOMIC');
         $this->routineBodyStmtList->write($writer);
         $writer->append('END');
+    }
+
+    /**
+     * Returns a copy with a new routineBodyStmtList, preserving every other field.
+     */
+    public function withRoutineBodyStmtList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtListForm $routineBodyStmtList): self
+    {
+        return new self($routineBodyStmtList);
     }
 }

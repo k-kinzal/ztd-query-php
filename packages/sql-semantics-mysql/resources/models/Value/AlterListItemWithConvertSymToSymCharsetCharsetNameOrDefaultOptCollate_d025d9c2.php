@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithConvertSymToSymCharsetCharsetNameOrDefaultOptCollate_d025d9c2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithConvertSymToSymCharsetCharsetNameOrDefaultOptCollate_d025d9c2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithConvertSymToSymCharsetCharsetNameOrDefaultOptCollate_d025d9c2 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterListItemWithConvertSymToSymCharsetCharsetNameOrDefaultOptCollat
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameOrDefaultForm $charsetNameOrDefault,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charset), 'The charset must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetNameOrDefault), 'The charsetNameOrDefault must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterListItemWithConvertSymToSymCharsetCharsetNameOrDefaultOptCollat
         $this->charset->write($writer);
         $this->charsetNameOrDefault->write($writer);
         $this->optCollate->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new charset, preserving every other field.
+     */
+    public function withCharset(\SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset): self
+    {
+        return new self($charset, $this->charsetNameOrDefault, $this->optCollate);
+    }
+
+    /**
+     * Returns a copy with a new charsetNameOrDefault, preserving every other field.
+     */
+    public function withCharsetNameOrDefault(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameOrDefaultForm $charsetNameOrDefault): self
+    {
+        return new self($this->charset, $charsetNameOrDefault, $this->optCollate);
+    }
+
+    /**
+     * Returns a copy with a new optCollate, preserving every other field.
+     */
+    public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
+    {
+        return new self($this->charset, $this->charsetNameOrDefault, $optCollate);
     }
 }

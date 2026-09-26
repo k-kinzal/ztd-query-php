@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewSelectAuxWithCreateViewSelectParenUnionOpt_a7302c97 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewSelectAuxWithCreateViewSelectParenUnionOpt_a7302c97 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewSelectAuxWithCreateViewSelectParenUnionOpt_a7302c97 implements \SqlSemantics\Statement\Model\MySql\Role\ViewSelectAuxForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ViewSelectAuxWithCreateViewSelectParenUnionOpt_a7302c97 implements \
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectParenForm $createViewSelectParen,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createViewSelectParen), 'The createViewSelectParen must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOpt), 'The unionOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class ViewSelectAuxWithCreateViewSelectParenUnionOpt_a7302c97 implements \
         $this->createViewSelectParen->write($writer);
         $writer->append(')');
         $this->unionOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createViewSelectParen, preserving every other field.
+     */
+    public function withCreateViewSelectParen(\SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectParenForm $createViewSelectParen): self
+    {
+        return new self($createViewSelectParen, $this->unionOpt);
+    }
+
+    /**
+     * Returns a copy with a new unionOpt, preserving every other field.
+     */
+    public function withUnionOpt(\SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt): self
+    {
+        return new self($this->createViewSelectParen, $unionOpt);
     }
 }

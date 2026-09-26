@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerTimeWithBeforeAfter_fa3bc32b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerTimeWithBeforeAfter_fa3bc32b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerTimeWithBeforeAfter_fa3bc32b implements \SqlSemantics\Statement\Model\Sqlite\Role\TriggerTimeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $beforeAfter,
     ) {
+        $this->assertMatchesPattern($beforeAfter, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['BEFORE|AFTER'], 'The beforeAfter must be a complete BEFORE|AFTER lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TriggerTimeWithBeforeAfter_fa3bc32b implements \SqlSemantics\Stateme
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->beforeAfter);
+    }
+
+    /**
+     * Returns a copy with a new beforeAfter, preserving every other field.
+     */
+    public function withBeforeAfter(string $beforeAfter): self
+    {
+        return new self($beforeAfter);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AllKeyOptWithCommentSymTextStringSys_0a571b94 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AllKeyOptWithCommentSymTextStringSys_0a571b94 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AllKeyOptWithCommentSymTextStringSys_0a571b94 implements \SqlSemantics\Statement\Model\MySql\Role\AllKeyOptForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptsForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptsForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AllKeyOptWithCommentSymTextStringSys_0a571b94 implements \SqlSemanti
     {
         $writer->append('COMMENT');
         $this->textStringSys->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textStringSys, preserving every other field.
+     */
+    public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
+    {
+        return new self($textStringSys);
     }
 }

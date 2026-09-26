@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrivilegeTargetWithDomainPAnyNameList_249296ac $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrivilegeTargetWithDomainPAnyNameList_249296ac $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PrivilegeTargetWithDomainPAnyNameList_249296ac implements \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeTargetForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameListForm $anyNameList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyNameList), 'The anyNameList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class PrivilegeTargetWithDomainPAnyNameList_249296ac implements \SqlSemant
     {
         $writer->append('DOMAIN');
         $this->anyNameList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyNameList, preserving every other field.
+     */
+    public function withAnyNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameListForm $anyNameList): self
+    {
+        return new self($anyNameList);
     }
 }

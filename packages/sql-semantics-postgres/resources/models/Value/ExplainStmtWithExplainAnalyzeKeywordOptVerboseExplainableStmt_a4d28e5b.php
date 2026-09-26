@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e5b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e5b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e5b implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e5b implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($analyzeKeyword), 'The analyzeKeyword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVerbose), 'The optVerbose must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($explainableStmt), 'The explainableStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e
         $this->analyzeKeyword->write($writer);
         $this->optVerbose->write($writer);
         $this->explainableStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new analyzeKeyword, preserving every other field.
+     */
+    public function withAnalyzeKeyword(\SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeKeywordForm $analyzeKeyword): self
+    {
+        return new self($analyzeKeyword, $this->optVerbose, $this->explainableStmt);
+    }
+
+    /**
+     * Returns a copy with a new optVerbose, preserving every other field.
+     */
+    public function withOptVerbose(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose): self
+    {
+        return new self($this->analyzeKeyword, $optVerbose, $this->explainableStmt);
+    }
+
+    /**
+     * Returns a copy with a new explainableStmt, preserving every other field.
+     */
+    public function withExplainableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt): self
+    {
+        return new self($this->analyzeKeyword, $this->optVerbose, $explainableStmt);
     }
 }

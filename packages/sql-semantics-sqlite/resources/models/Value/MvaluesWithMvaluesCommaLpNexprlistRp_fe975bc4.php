@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\MvaluesWithMvaluesCommaLpNexprlistRp_fe975bc4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\MvaluesWithMvaluesCommaLpNexprlistRp_fe975bc4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class MvaluesWithMvaluesCommaLpNexprlistRp_fe975bc4 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Model\Sqlite\Role\MvaluesForm, \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm
+final class MvaluesWithMvaluesCommaLpNexprlistRp_fe975bc4 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Model\Sqlite\Role\MvaluesForm, \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class MvaluesWithMvaluesCommaLpNexprlistRp_fe975bc4 implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\MvaluesForm $mvalues,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($mvalues), 'The mvalues must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nexprlist), 'The nexprlist must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class MvaluesWithMvaluesCommaLpNexprlistRp_fe975bc4 implements \SqlSemanti
         $writer->append('(');
         $this->nexprlist->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new mvalues, preserving every other field.
+     */
+    public function withMvalues(\SqlSemantics\Statement\Model\Sqlite\Role\MvaluesForm $mvalues): self
+    {
+        return new self($mvalues, $this->nexprlist);
+    }
+
+    /**
+     * Returns a copy with a new nexprlist, preserving every other field.
+     */
+    public function withNexprlist(\SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist): self
+    {
+        return new self($this->mvalues, $nexprlist);
     }
 }

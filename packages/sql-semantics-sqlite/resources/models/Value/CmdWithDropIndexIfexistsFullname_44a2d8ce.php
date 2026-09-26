@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithDropIndexIfexistsFullname_44a2d8ce $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithDropIndexIfexistsFullname_44a2d8ce $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithDropIndexIfexistsFullname_44a2d8ce implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithDropIndexIfexistsFullname_44a2d8ce implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CmdWithDropIndexIfexistsFullname_44a2d8ce implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IfexistsForm $ifexists,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm $fullname,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ifexists), 'The ifexists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($fullname), 'The fullname must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class CmdWithDropIndexIfexistsFullname_44a2d8ce implements \SqlSemantics\S
         $writer->append('INDEX');
         $this->ifexists->write($writer);
         $this->fullname->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ifexists, preserving every other field.
+     */
+    public function withIfexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfexistsForm $ifexists): self
+    {
+        return new self($ifexists, $this->fullname);
+    }
+
+    /**
+     * Returns a copy with a new fullname, preserving every other field.
+     */
+    public function withFullname(\SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm $fullname): self
+    {
+        return new self($this->ifexists, $fullname);
     }
 }

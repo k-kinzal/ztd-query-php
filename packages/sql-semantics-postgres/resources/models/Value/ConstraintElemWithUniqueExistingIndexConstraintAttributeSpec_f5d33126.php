@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstraintElemWithUniqueExistingIndexConstraintAttributeSpec_f5d33126 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstraintElemWithUniqueExistingIndexConstraintAttributeSpec_f5d33126 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConstraintElemWithUniqueExistingIndexConstraintAttributeSpec_f5d33126 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ConstraintElemWithUniqueExistingIndexConstraintAttributeSpec_f5d3312
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExistingIndexForm $existingIndex,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($existingIndex), 'The existingIndex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constraintAttributeSpec), 'The constraintAttributeSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ConstraintElemWithUniqueExistingIndexConstraintAttributeSpec_f5d3312
         $writer->append('UNIQUE');
         $this->existingIndex->write($writer);
         $this->constraintAttributeSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new existingIndex, preserving every other field.
+     */
+    public function withExistingIndex(\SqlSemantics\Statement\Model\PostgreSql\Role\ExistingIndexForm $existingIndex): self
+    {
+        return new self($existingIndex, $this->constraintAttributeSpec);
+    }
+
+    /**
+     * Returns a copy with a new constraintAttributeSpec, preserving every other field.
+     */
+    public function withConstraintAttributeSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec): self
+    {
+        return new self($this->existingIndex, $constraintAttributeSpec);
     }
 }

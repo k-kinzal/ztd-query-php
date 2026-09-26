@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithCharsetOptWildOrWhere_1fb9e7f3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithCharsetOptWildOrWhere_1fb9e7f3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithCharsetOptWildOrWhere_1fb9e7f3 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ShowParamWithCharsetOptWildOrWhere_1fb9e7f3 implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charset), 'The charset must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWildOrWhere), 'The optWildOrWhere must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ShowParamWithCharsetOptWildOrWhere_1fb9e7f3 implements \SqlSemantics
     {
         $this->charset->write($writer);
         $this->optWildOrWhere->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new charset, preserving every other field.
+     */
+    public function withCharset(\SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset): self
+    {
+        return new self($charset, $this->optWildOrWhere);
+    }
+
+    /**
+     * Returns a copy with a new optWildOrWhere, preserving every other field.
+     */
+    public function withOptWildOrWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere): self
+    {
+        return new self($this->charset, $optWildOrWhere);
     }
 }

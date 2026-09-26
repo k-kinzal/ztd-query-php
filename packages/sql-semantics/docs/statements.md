@@ -5,6 +5,10 @@ dialect and grammar release. It accepts statements without requiring declaration
 for their tables, columns, or functions. The output is an immutable `Statement`
 containing a typed command value. Schema-dependent binding remains a separate API.
 
+`Statement::command` implements `Command`, the role for complete commands and
+command sequences. Individual fragments implement `Element` and can be printed
+with `Writer::render($fragment)`.
+
 The models under `Statement\Model\{MySql,PostgreSql,Sqlite}` contain:
 
 - `Role` interfaces describing which SQL positions a value can occupy.
@@ -41,6 +45,85 @@ their child implements the enclosing roles. Fixed productions become enum
 choices where possible. SQL terms such as `IS UNKNOWN` and `EXCLUDE NO OTHERS`
 are ordinary language constructs, never unclassified results.
 
+## Updating statement structure
+
+Every data-bearing generated field has a corresponding typed `with<Field>()`
+method. It returns a new instance of the same concrete form through its
+constructor, sharing the unchanged immutable children. `Statement::withCommand()`
+replaces the complete command. Neither these methods nor the constructors run
+sql-parser, tokenize SQL, or reconstruct and reanalyze SQL text.
+
+For example, this SQLite update builds a WHERE clause from an identifier,
+comparison, and integer value:
+
+```php
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Statement\Model\Sqlite\Value\EcmdWithCmdxSemi_b7577a8f as CommandEnvelope;
+use SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprEqNeExpr_49d16f16 as Comparison;
+use SqlSemantics\Statement\Model\Sqlite\Value\ExprWithIdj_e1794d68 as Field;
+use SqlSemantics\Statement\Model\Sqlite\Value\OneselectWithSelectDistinctSelcollistFromWhereOptGroupbyOptHavingOptOrderbyOptLimitOpt_218e0475 as Select;
+use SqlSemantics\Statement\Model\Sqlite\Value\TermWithInteger_298801b2 as IntegerValue;
+use SqlSemantics\Statement\Model\Sqlite\Value\WhereOptWithWhereExpr_93445e09 as Where;
+
+$original = (new Semantics(Dialect::Sqlite))->analyze('SELECT foo FROM items');
+$command = $original->command;
+
+if ($command instanceof CommandEnvelope && $command->cmdx instanceof Select) {
+    $where = new Where(new Comparison(new Field('foo'), '=', new IntegerValue('1')));
+    $select = $command->cmdx->withWhere($where);
+    $updated = $original->withCommand($command->withCmdx($select));
+
+    $original->toString(); // SELECT foo FROM items
+    $updated->toString();  // SELECT foo FROM items WHERE foo = 1
+}
+```
+
+The `instanceof` checks select the concrete form returned by the initial analysis;
+the update itself accepts only structured values. `withWhere()` takes that
+database's WHERE role, never a string. Strings remain only at lexical leaves,
+where they preserve identifier quoting, literal spelling, and operator aliases.
+Their declared spelling domains are asserted by the constructor. Use an explicit
+absence model to remove an optional clause. To change to another SQL form,
+construct that form and replace it through its enclosing role.
+
+The shared `Assertion` trait expresses construction invariants using PHP's
+standard `assert()`. Generated constructors call named assertions such as
+`assertMatchesPattern()` and `assertOperandBindingStrength()`, and state that
+children belong to the generated immutable vocabulary. These are programming
+contracts, not a validation API or a recoverable error-reporting protocol.
+Construction and copying state the same invariants. Assertion execution follows
+the application's PHP assertion settings.
+
+Operand placement must preserve the represented grouping. For example, replacing
+the left operand of multiplication with an addition requires an explicit
+parenthesized-expression value. The generator records upstream expression
+precedence and associativity for operand-boundary assertions. The writer never
+silently changes the expression or inserts SQL parsed from a string. Parentheses
+are part of the structure, including when equal precedence still requires them
+on a right operand, as in `10 - (3 - 1)`.
+
+The object graph remains immutable: generated classes are final, their fields
+are readonly, and constructors assert that structured children are generated
+values. Statement additionally asserts that its root graph contains final
+objects with readonly scalar or immutable SQL fields. Mutable custom role
+implementations do not satisfy these contracts.
+
+Updates preserve model roles and state lexical and operand-placement invariants.
+They do not perform schema binding, database validation, or a complete SQL
+semantic analysis. In particular, database types, object existence and execution
+success remain outside this structural API. Models still share forms across
+grammar releases; updating does not add a release-specific parser check.
+
+### Compatibility
+
+`with<Field>()` methods are additions; generated class names and constructor
+argument names are unchanged. Constructors now state their spelling, child, and
+operand-placement invariants. `Statement` accepts `Command` instead of arbitrary
+`Element`, so callers that previously used it to print fragments should use
+`Writer::render()` instead. PostgreSQL and SQLite command sequences remain valid
+Statement roots.
+
 ## Generating the complete vocabulary
 
 ```sh
@@ -64,6 +147,9 @@ releases. Shared forms implement the union of the roles they can occupy across
 releases. Generation always processes the selected database's whole release set together.
 
 Each database package's `resources/models` contains its parser-independent definitions.
+Its generated `Contract\Contracts` supplies immutable model membership, lexical
+spelling domains and operand binding strengths. These are construction facts,
+not parser tables; updates do not load parsing or tokenization machinery.
 `resources/mapping` contains version-specific construction recipes, loaded only
 by the database `Platform::values()` through `Core/Analysis/ValueReader::fromFile()`. During analysis the reader visits the transient
 parser tree, constructs typed values, and releases that tree. Statements never

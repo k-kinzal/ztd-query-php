@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoutineStringWithDollarQuotedStringSym_ac3f5bd6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoutineStringWithDollarQuotedStringSym_ac3f5bd6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RoutineStringWithDollarQuotedStringSym_ac3f5bd6 implements \SqlSemantics\Statement\Model\MySql\Role\RoutineStringForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $dollarQuotedStringSym,
     ) {
+        $this->assertMatchesPattern($dollarQuotedStringSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DOLLAR_QUOTED_STRING_SYM'], 'The dollarQuotedStringSym must be a complete DOLLAR_QUOTED_STRING_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class RoutineStringWithDollarQuotedStringSym_ac3f5bd6 implements \SqlSeman
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->dollarQuotedStringSym);
+    }
+
+    /**
+     * Returns a copy with a new dollarQuotedStringSym, preserving every other field.
+     */
+    public function withDollarQuotedStringSym(string $dollarQuotedStringSym): self
+    {
+        return new self($dollarQuotedStringSym);
     }
 }

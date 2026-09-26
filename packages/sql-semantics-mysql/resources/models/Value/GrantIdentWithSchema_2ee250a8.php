@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantIdentWithSchema_2ee250a8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantIdentWithSchema_2ee250a8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantIdentWithSchema_2ee250a8 implements \SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SchemaForm $schema,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($schema), 'The schema must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class GrantIdentWithSchema_2ee250a8 implements \SqlSemantics\Statement\Mod
         $this->schema->write($writer);
         $writer->append('.');
         $writer->append('*');
+    }
+
+    /**
+     * Returns a copy with a new schema, preserving every other field.
+     */
+    public function withSchema(\SqlSemantics\Statement\Model\MySql\Role\SchemaForm $schema): self
+    {
+        return new self($schema);
     }
 }

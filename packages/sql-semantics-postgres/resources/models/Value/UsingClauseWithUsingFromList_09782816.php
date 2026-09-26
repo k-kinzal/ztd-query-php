@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\UsingClauseWithUsingFromList_09782816 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\UsingClauseWithUsingFromList_09782816 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UsingClauseWithUsingFromList_09782816 implements \SqlSemantics\Statement\Model\PostgreSql\Role\UsingClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($fromList), 'The fromList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class UsingClauseWithUsingFromList_09782816 implements \SqlSemantics\State
     {
         $writer->append('USING');
         $this->fromList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fromList, preserving every other field.
+     */
+    public function withFromList(\SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList): self
+    {
+        return new self($fromList);
     }
 }

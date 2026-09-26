@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\WindowDefinitionWithColIdAsWindowSpecification_ee2388c7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\WindowDefinitionWithColIdAsWindowSpecification_ee2388c7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowDefinitionWithColIdAsWindowSpecification_ee2388c7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\WindowDefinitionForm, \SqlSemantics\Statement\Model\PostgreSql\Role\WindowDefinitionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WindowDefinitionWithColIdAsWindowSpecification_ee2388c7 implements \
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WindowSpecificationForm $windowSpecification,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($windowSpecification), 'The windowSpecification must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class WindowDefinitionWithColIdAsWindowSpecification_ee2388c7 implements \
         $this->colId->write($writer);
         $writer->append('AS');
         $this->windowSpecification->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->windowSpecification);
+    }
+
+    /**
+     * Returns a copy with a new windowSpecification, preserving every other field.
+     */
+    public function withWindowSpecification(\SqlSemantics\Statement\Model\PostgreSql\Role\WindowSpecificationForm $windowSpecification): self
+    {
+        return new self($this->colId, $windowSpecification);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerCmdWithScanptSelectScanpt_2cdaedbb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerCmdWithScanptSelectScanpt_2cdaedbb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerCmdWithScanptSelectScanpt_2cdaedbb implements \SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TriggerCmdWithScanptSelectScanpt_2cdaedbb implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scanpt), 'The scanpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($select), 'The select must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scanpt2), 'The scanpt2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TriggerCmdWithScanptSelectScanpt_2cdaedbb implements \SqlSemantics\S
         $this->scanpt->write($writer);
         $this->select->write($writer);
         $this->scanpt2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new scanpt, preserving every other field.
+     */
+    public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self
+    {
+        return new self($scanpt, $this->select, $this->scanpt2);
+    }
+
+    /**
+     * Returns a copy with a new select, preserving every other field.
+     */
+    public function withSelect(\SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select): self
+    {
+        return new self($this->scanpt, $select, $this->scanpt2);
+    }
+
+    /**
+     * Returns a copy with a new scanpt2, preserving every other field.
+     */
+    public function withScanpt2(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt2): self
+    {
+        return new self($this->scanpt, $this->select, $scanpt2);
     }
 }

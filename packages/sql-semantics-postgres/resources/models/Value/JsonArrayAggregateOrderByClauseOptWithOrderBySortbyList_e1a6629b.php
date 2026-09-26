@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonArrayAggregateOrderByClauseOptWithOrderBySortbyList_e1a6629b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonArrayAggregateOrderByClauseOptWithOrderBySortbyList_e1a6629b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonArrayAggregateOrderByClauseOptWithOrderBySortbyList_e1a6629b implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayAggregateOrderByClauseOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SortbyListForm $sortbyList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($sortbyList), 'The sortbyList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class JsonArrayAggregateOrderByClauseOptWithOrderBySortbyList_e1a6629b imp
         $writer->append('ORDER');
         $writer->append('BY');
         $this->sortbyList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sortbyList, preserving every other field.
+     */
+    public function withSortbyList(\SqlSemantics\Statement\Model\PostgreSql\Role\SortbyListForm $sortbyList): self
+    {
+        return new self($sortbyList);
     }
 }

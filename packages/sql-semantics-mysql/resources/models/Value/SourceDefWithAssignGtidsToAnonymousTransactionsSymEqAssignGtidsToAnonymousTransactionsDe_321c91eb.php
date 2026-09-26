@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithAssignGtidsToAnonymousTransactionsSymEqAssignGtidsToAnonymousTransactionsDe_321c91eb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithAssignGtidsToAnonymousTransactionsSymEqAssignGtidsToAnonymousTransactionsDe_321c91eb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithAssignGtidsToAnonymousTransactionsSymEqAssignGtidsToAnonymousTransactionsDe_321c91eb implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AssignGtidsToAnonymousTransactionsDefForm $assignGtidsToAnonymousTransactionsDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($assignGtidsToAnonymousTransactionsDef), 'The assignGtidsToAnonymousTransactionsDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SourceDefWithAssignGtidsToAnonymousTransactionsSymEqAssignGtidsToAno
         $writer->append('ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS');
         $writer->append('=');
         $this->assignGtidsToAnonymousTransactionsDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new assignGtidsToAnonymousTransactionsDef, preserving every other field.
+     */
+    public function withAssignGtidsToAnonymousTransactionsDef(\SqlSemantics\Statement\Model\MySql\Role\AssignGtidsToAnonymousTransactionsDefForm $assignGtidsToAnonymousTransactionsDef): self
+    {
+        return new self($assignGtidsToAnonymousTransactionsDef);
     }
 }

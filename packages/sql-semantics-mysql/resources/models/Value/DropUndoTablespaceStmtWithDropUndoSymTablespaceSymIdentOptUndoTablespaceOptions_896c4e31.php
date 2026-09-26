@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropUndoTablespaceStmtWithDropUndoSymTablespaceSymIdentOptUndoTablespaceOptions_896c4e31 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropUndoTablespaceStmtWithDropUndoSymTablespaceSymIdentOptUndoTablespaceOptions_896c4e31 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DropUndoTablespaceStmtWithDropUndoSymTablespaceSymIdentOptUndoTablespaceOptions_896c4e31 implements \SqlSemantics\Statement\Model\MySql\Role\DropUndoTablespaceStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class DropUndoTablespaceStmtWithDropUndoSymTablespaceSymIdentOptUndoTablespaceOptions_896c4e31 implements \SqlSemantics\Statement\Model\MySql\Role\DropUndoTablespaceStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DropUndoTablespaceStmtWithDropUndoSymTablespaceSymIdentOptUndoTables
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUndoTablespaceOptionsForm $optUndoTablespaceOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUndoTablespaceOptions), 'The optUndoTablespaceOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class DropUndoTablespaceStmtWithDropUndoSymTablespaceSymIdentOptUndoTables
         $writer->append('TABLESPACE');
         $this->ident->write($writer);
         $this->optUndoTablespaceOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->optUndoTablespaceOptions);
+    }
+
+    /**
+     * Returns a copy with a new optUndoTablespaceOptions, preserving every other field.
+     */
+    public function withOptUndoTablespaceOptions(\SqlSemantics\Statement\Model\MySql\Role\OptUndoTablespaceOptionsForm $optUndoTablespaceOptions): self
+    {
+        return new self($this->ident, $optUndoTablespaceOptions);
     }
 }

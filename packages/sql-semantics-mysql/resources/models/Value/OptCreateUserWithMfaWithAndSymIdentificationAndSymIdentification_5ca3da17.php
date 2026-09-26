@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptCreateUserWithMfaWithAndSymIdentificationAndSymIdentification_5ca3da17 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptCreateUserWithMfaWithAndSymIdentificationAndSymIdentification_5ca3da17 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptCreateUserWithMfaWithAndSymIdentificationAndSymIdentification_5ca3da17 implements \SqlSemantics\Statement\Model\MySql\Role\OptCreateUserWithMfaForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptCreateUserWithMfaWithAndSymIdentificationAndSymIdentification_5ca
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identification), 'The identification must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identification2), 'The identification2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class OptCreateUserWithMfaWithAndSymIdentificationAndSymIdentification_5ca
         $this->identification->write($writer);
         $writer->append('AND');
         $this->identification2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identification, preserving every other field.
+     */
+    public function withIdentification(\SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification): self
+    {
+        return new self($identification, $this->identification2);
+    }
+
+    /**
+     * Returns a copy with a new identification2, preserving every other field.
+     */
+    public function withIdentification2(\SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification2): self
+    {
+        return new self($this->identification, $identification2);
     }
 }

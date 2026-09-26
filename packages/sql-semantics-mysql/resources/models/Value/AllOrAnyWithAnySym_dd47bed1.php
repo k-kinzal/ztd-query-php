@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AllOrAnyWithAnySym_dd47bed1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AllOrAnyWithAnySym_dd47bed1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AllOrAnyWithAnySym_dd47bed1 implements \SqlSemantics\Statement\Model\MySql\Role\AllOrAnyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $anySym,
     ) {
+        $this->assertMatchesPattern($anySym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['ANY_SYM'], 'The anySym must be a complete ANY_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class AllOrAnyWithAnySym_dd47bed1 implements \SqlSemantics\Statement\Model
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->anySym);
+    }
+
+    /**
+     * Returns a copy with a new anySym, preserving every other field.
+     */
+    public function withAnySym(string $anySym): self
+    {
+        return new self($anySym);
     }
 }

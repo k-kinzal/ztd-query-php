@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptOnConflictWithOnConflictOptConfExprDoUpdateSetSetClauseListWhereClause_e0d5ce03 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptOnConflictWithOnConflictOptConfExprDoUpdateSetSetClauseListWhereClause_e0d5ce03 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptOnConflictWithOnConflictOptConfExprDoUpdateSetSetClauseListWhereClause_e0d5ce03 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptOnConflictForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptOnConflictWithOnConflictOptConfExprDoUpdateSetSetClauseListWhereC
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConfExpr), 'The optConfExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setClauseList), 'The setClauseList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +42,29 @@ final class OptOnConflictWithOnConflictOptConfExprDoUpdateSetSetClauseListWhereC
         $writer->append('SET');
         $this->setClauseList->write($writer);
         $this->where->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optConfExpr, preserving every other field.
+     */
+    public function withOptConfExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConfExprForm $optConfExpr): self
+    {
+        return new self($optConfExpr, $this->setClauseList, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new setClauseList, preserving every other field.
+     */
+    public function withSetClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList): self
+    {
+        return new self($this->optConfExpr, $setClauseList, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where): self
+    {
+        return new self($this->optConfExpr, $this->setClauseList, $where);
     }
 }

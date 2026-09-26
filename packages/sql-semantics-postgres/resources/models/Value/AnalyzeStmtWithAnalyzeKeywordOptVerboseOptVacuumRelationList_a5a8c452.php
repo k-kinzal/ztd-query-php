@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c452 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c452 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c452 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c452 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c45
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($analyzeKeyword), 'The analyzeKeyword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVerbose), 'The optVerbose must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVacuumRelationList), 'The optVacuumRelationList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class AnalyzeStmtWithAnalyzeKeywordOptVerboseOptVacuumRelationList_a5a8c45
         $this->analyzeKeyword->write($writer);
         $this->optVerbose->write($writer);
         $this->optVacuumRelationList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new analyzeKeyword, preserving every other field.
+     */
+    public function withAnalyzeKeyword(\SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeKeywordForm $analyzeKeyword): self
+    {
+        return new self($analyzeKeyword, $this->optVerbose, $this->optVacuumRelationList);
+    }
+
+    /**
+     * Returns a copy with a new optVerbose, preserving every other field.
+     */
+    public function withOptVerbose(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose): self
+    {
+        return new self($this->analyzeKeyword, $optVerbose, $this->optVacuumRelationList);
+    }
+
+    /**
+     * Returns a copy with a new optVacuumRelationList, preserving every other field.
+     */
+    public function withOptVacuumRelationList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList): self
+    {
+        return new self($this->analyzeKeyword, $this->optVerbose, $optVacuumRelationList);
     }
 }

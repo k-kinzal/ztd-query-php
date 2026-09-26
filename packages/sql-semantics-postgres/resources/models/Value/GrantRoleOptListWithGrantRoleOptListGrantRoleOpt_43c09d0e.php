@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GrantRoleOptListWithGrantRoleOptListGrantRoleOpt_43c09d0e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GrantRoleOptListWithGrantRoleOptListGrantRoleOpt_43c09d0e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantRoleOptListWithGrantRoleOptListGrantRoleOpt_43c09d0e implements \SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GrantRoleOptListWithGrantRoleOptListGrantRoleOpt_43c09d0e implements
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptListForm $grantRoleOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptForm $grantRoleOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($grantRoleOptList), 'The grantRoleOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($grantRoleOpt), 'The grantRoleOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GrantRoleOptListWithGrantRoleOptListGrantRoleOpt_43c09d0e implements
         $this->grantRoleOptList->write($writer);
         $writer->append(',');
         $this->grantRoleOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new grantRoleOptList, preserving every other field.
+     */
+    public function withGrantRoleOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptListForm $grantRoleOptList): self
+    {
+        return new self($grantRoleOptList, $this->grantRoleOpt);
+    }
+
+    /**
+     * Returns a copy with a new grantRoleOpt, preserving every other field.
+     */
+    public function withGrantRoleOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptForm $grantRoleOpt): self
+    {
+        return new self($this->grantRoleOptList, $grantRoleOpt);
     }
 }

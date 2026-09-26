@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithJoinedTableAliasClause_c50a46c5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithJoinedTableAliasClause_c50a46c5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableRefWithJoinedTableAliasClause_c50a46c5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableRefWithJoinedTableAliasClause_c50a46c5 implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JoinedTableForm $joinedTable,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AliasClauseForm $aliasClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($joinedTable), 'The joinedTable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aliasClause), 'The aliasClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class TableRefWithJoinedTableAliasClause_c50a46c5 implements \SqlSemantics
         $this->joinedTable->write($writer);
         $writer->append(')');
         $this->aliasClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new joinedTable, preserving every other field.
+     */
+    public function withJoinedTable(\SqlSemantics\Statement\Model\PostgreSql\Role\JoinedTableForm $joinedTable): self
+    {
+        return new self($joinedTable, $this->aliasClause);
+    }
+
+    /**
+     * Returns a copy with a new aliasClause, preserving every other field.
+     */
+    public function withAliasClause(\SqlSemantics\Statement\Model\PostgreSql\Role\AliasClauseForm $aliasClause): self
+    {
+        return new self($this->joinedTable, $aliasClause);
     }
 }

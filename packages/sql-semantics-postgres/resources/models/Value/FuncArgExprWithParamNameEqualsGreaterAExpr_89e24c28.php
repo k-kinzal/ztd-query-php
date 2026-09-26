@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgExprWithParamNameEqualsGreaterAExpr_89e24c28 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgExprWithParamNameEqualsGreaterAExpr_89e24c28 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncArgExprWithParamNameEqualsGreaterAExpr_89e24c28 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class FuncArgExprWithParamNameEqualsGreaterAExpr_89e24c28 implements \SqlS
         public readonly string $equalsGreater,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($paramName), 'The paramName must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($equalsGreater, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['EQUALS_GREATER'], 'The equalsGreater must be a complete EQUALS_GREATER lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class FuncArgExprWithParamNameEqualsGreaterAExpr_89e24c28 implements \SqlS
         $this->paramName->write($writer);
         $writer->append($this->equalsGreater);
         $this->aExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new paramName, preserving every other field.
+     */
+    public function withParamName(\SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm $paramName): self
+    {
+        return new self($paramName, $this->equalsGreater, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new equalsGreater, preserving every other field.
+     */
+    public function withEqualsGreater(string $equalsGreater): self
+    {
+        return new self($this->paramName, $equalsGreater, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->paramName, $this->equalsGreater, $aExpr);
     }
 }

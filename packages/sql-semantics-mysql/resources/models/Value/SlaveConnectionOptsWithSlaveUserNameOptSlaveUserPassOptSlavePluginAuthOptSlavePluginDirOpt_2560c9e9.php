@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAuthOptSlavePluginDirOpt_2560c9e9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAuthOptSlavePluginDirOpt_2560c9e9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAuthOptSlavePluginDirOpt_2560c9e9 implements \SqlSemantics\Statement\Model\MySql\Role\SlaveConnectionOptsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAu
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlavePluginAuthOptForm $slavePluginAuthOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlavePluginDirOptForm $slavePluginDirOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveUserNameOpt), 'The slaveUserNameOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveUserPassOpt), 'The slaveUserPassOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slavePluginAuthOpt), 'The slavePluginAuthOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slavePluginDirOpt), 'The slavePluginDirOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class SlaveConnectionOptsWithSlaveUserNameOptSlaveUserPassOptSlavePluginAu
         $this->slaveUserPassOpt->write($writer);
         $this->slavePluginAuthOpt->write($writer);
         $this->slavePluginDirOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new slaveUserNameOpt, preserving every other field.
+     */
+    public function withSlaveUserNameOpt(\SqlSemantics\Statement\Model\MySql\Role\SlaveUserNameOptForm $slaveUserNameOpt): self
+    {
+        return new self($slaveUserNameOpt, $this->slaveUserPassOpt, $this->slavePluginAuthOpt, $this->slavePluginDirOpt);
+    }
+
+    /**
+     * Returns a copy with a new slaveUserPassOpt, preserving every other field.
+     */
+    public function withSlaveUserPassOpt(\SqlSemantics\Statement\Model\MySql\Role\SlaveUserPassOptForm $slaveUserPassOpt): self
+    {
+        return new self($this->slaveUserNameOpt, $slaveUserPassOpt, $this->slavePluginAuthOpt, $this->slavePluginDirOpt);
+    }
+
+    /**
+     * Returns a copy with a new slavePluginAuthOpt, preserving every other field.
+     */
+    public function withSlavePluginAuthOpt(\SqlSemantics\Statement\Model\MySql\Role\SlavePluginAuthOptForm $slavePluginAuthOpt): self
+    {
+        return new self($this->slaveUserNameOpt, $this->slaveUserPassOpt, $slavePluginAuthOpt, $this->slavePluginDirOpt);
+    }
+
+    /**
+     * Returns a copy with a new slavePluginDirOpt, preserving every other field.
+     */
+    public function withSlavePluginDirOpt(\SqlSemantics\Statement\Model\MySql\Role\SlavePluginDirOptForm $slavePluginDirOpt): self
+    {
+        return new self($this->slaveUserNameOpt, $this->slaveUserPassOpt, $this->slavePluginAuthOpt, $slavePluginDirOpt);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartValuesInWithPartValueList_27328ce6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartValuesInWithPartValueList_27328ce6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartValuesInWithPartValueList_27328ce6 implements \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm $partValueList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partValueList), 'The partValueList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class PartValuesInWithPartValueList_27328ce6 implements \SqlSemantics\Stat
         $writer->append('(');
         $this->partValueList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new partValueList, preserving every other field.
+     */
+    public function withPartValueList(\SqlSemantics\Statement\Model\MySql\Role\PartValueListForm $partValueList): self
+    {
+        return new self($partValueList);
     }
 }

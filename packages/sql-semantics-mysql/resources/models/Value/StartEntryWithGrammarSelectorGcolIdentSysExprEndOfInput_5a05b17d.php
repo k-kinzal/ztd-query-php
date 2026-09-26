@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartEntryWithGrammarSelectorGcolIdentSysExprEndOfInput_5a05b17d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartEntryWithGrammarSelectorGcolIdentSysExprEndOfInput_5a05b17d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StartEntryWithGrammarSelectorGcolIdentSysExprEndOfInput_5a05b17d implements \SqlSemantics\Statement\Model\MySql\Role\StartEntryForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class StartEntryWithGrammarSelectorGcolIdentSysExprEndOfInput_5a05b17d imp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
     ) {
+        $this->assertMatchesPattern($grammarSelectorGcol, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GRAMMAR_SELECTOR_GCOL'], 'The grammarSelectorGcol must be a complete GRAMMAR_SELECTOR_GCOL lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identSys), 'The identSys must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class StartEntryWithGrammarSelectorGcolIdentSysExprEndOfInput_5a05b17d imp
         $writer->append('(');
         $this->expr->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new grammarSelectorGcol, preserving every other field.
+     */
+    public function withGrammarSelectorGcol(string $grammarSelectorGcol): self
+    {
+        return new self($grammarSelectorGcol, $this->identSys, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new identSys, preserving every other field.
+     */
+    public function withIdentSys(\SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys): self
+    {
+        return new self($this->grammarSelectorGcol, $identSys, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->grammarSelectorGcol, $this->identSys, $expr);
     }
 }

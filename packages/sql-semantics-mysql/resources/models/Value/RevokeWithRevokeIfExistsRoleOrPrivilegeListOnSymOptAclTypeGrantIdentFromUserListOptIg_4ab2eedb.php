@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RevokeWithRevokeIfExistsRoleOrPrivilegeListOnSymOptAclTypeGrantIdentFromUserListOptIg_4ab2eedb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RevokeWithRevokeIfExistsRoleOrPrivilegeListOnSymOptAclTypeGrantIdentFromUserListOptIg_4ab2eedb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RevokeWithRevokeIfExistsRoleOrPrivilegeListOnSymOptAclTypeGrantIdentFromUserListOptIg_4ab2eedb implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\RevokeForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class RevokeWithRevokeIfExistsRoleOrPrivilegeListOnSymOptAclTypeGrantIdentFromUserListOptIg_4ab2eedb implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\RevokeForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class RevokeWithRevokeIfExistsRoleOrPrivilegeListOnSymOptAclTypeGrantIdent
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreUnknownUserForm $optIgnoreUnknownUser,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleOrPrivilegeList), 'The roleOrPrivilegeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAclType), 'The optAclType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantIdent), 'The grantIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userList), 'The userList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnoreUnknownUser), 'The optIgnoreUnknownUser must be a generated immutable SQL value.');
     }
 
     /**
@@ -41,5 +49,53 @@ final class RevokeWithRevokeIfExistsRoleOrPrivilegeListOnSymOptAclTypeGrantIdent
         $writer->append('FROM');
         $this->userList->write($writer);
         $this->optIgnoreUnknownUser->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ifExists, preserving every other field.
+     */
+    public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
+    {
+        return new self($ifExists, $this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $this->optIgnoreUnknownUser);
+    }
+
+    /**
+     * Returns a copy with a new roleOrPrivilegeList, preserving every other field.
+     */
+    public function withRoleOrPrivilegeList(\SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm $roleOrPrivilegeList): self
+    {
+        return new self($this->ifExists, $roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $this->optIgnoreUnknownUser);
+    }
+
+    /**
+     * Returns a copy with a new optAclType, preserving every other field.
+     */
+    public function withOptAclType(\SqlSemantics\Statement\Model\MySql\Role\OptAclTypeForm $optAclType): self
+    {
+        return new self($this->ifExists, $this->roleOrPrivilegeList, $optAclType, $this->grantIdent, $this->userList, $this->optIgnoreUnknownUser);
+    }
+
+    /**
+     * Returns a copy with a new grantIdent, preserving every other field.
+     */
+    public function withGrantIdent(\SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm $grantIdent): self
+    {
+        return new self($this->ifExists, $this->roleOrPrivilegeList, $this->optAclType, $grantIdent, $this->userList, $this->optIgnoreUnknownUser);
+    }
+
+    /**
+     * Returns a copy with a new userList, preserving every other field.
+     */
+    public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
+    {
+        return new self($this->ifExists, $this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $userList, $this->optIgnoreUnknownUser);
+    }
+
+    /**
+     * Returns a copy with a new optIgnoreUnknownUser, preserving every other field.
+     */
+    public function withOptIgnoreUnknownUser(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreUnknownUserForm $optIgnoreUnknownUser): self
+    {
+        return new self($this->ifExists, $this->roleOrPrivilegeList, $this->optAclType, $this->grantIdent, $this->userList, $optIgnoreUnknownUser);
     }
 }

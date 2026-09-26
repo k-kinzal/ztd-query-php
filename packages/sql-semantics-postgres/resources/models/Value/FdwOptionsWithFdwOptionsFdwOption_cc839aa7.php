@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FdwOptionsWithFdwOptionsFdwOption_cc839aa7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FdwOptionsWithFdwOptionsFdwOption_cc839aa7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FdwOptionsWithFdwOptionsFdwOption_cc839aa7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptFdwOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FdwOptionsWithFdwOptionsFdwOption_cc839aa7 implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionsForm $fdwOptions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionForm $fdwOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($fdwOptions), 'The fdwOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($fdwOption), 'The fdwOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FdwOptionsWithFdwOptionsFdwOption_cc839aa7 implements \SqlSemantics\
     {
         $this->fdwOptions->write($writer);
         $this->fdwOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fdwOptions, preserving every other field.
+     */
+    public function withFdwOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionsForm $fdwOptions): self
+    {
+        return new self($fdwOptions, $this->fdwOption);
+    }
+
+    /**
+     * Returns a copy with a new fdwOption, preserving every other field.
+     */
+    public function withFdwOption(\SqlSemantics\Statement\Model\PostgreSql\Role\FdwOptionForm $fdwOption): self
+    {
+        return new self($this->fdwOptions, $fdwOption);
     }
 }

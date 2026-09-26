@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b4efac80 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b4efac80 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b4efac80 implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOuter), 'The optOuter must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableFactor), 'The tableFactor must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($usingList), 'The usingList must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +45,37 @@ final class JoinTableWithTableRefRightOptOuterJoinSymTableFactorUsingUsingList_b
         $writer->append('(');
         $this->usingList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new tableRef, preserving every other field.
+     */
+    public function withTableRef(\SqlSemantics\Statement\Model\MySql\Role\TableRefForm $tableRef): self
+    {
+        return new self($tableRef, $this->optOuter, $this->tableFactor, $this->usingList);
+    }
+
+    /**
+     * Returns a copy with a new optOuter, preserving every other field.
+     */
+    public function withOptOuter(\SqlSemantics\Statement\Model\MySql\Role\OptOuterForm $optOuter): self
+    {
+        return new self($this->tableRef, $optOuter, $this->tableFactor, $this->usingList);
+    }
+
+    /**
+     * Returns a copy with a new tableFactor, preserving every other field.
+     */
+    public function withTableFactor(\SqlSemantics\Statement\Model\MySql\Role\TableFactorForm $tableFactor): self
+    {
+        return new self($this->tableRef, $this->optOuter, $tableFactor, $this->usingList);
+    }
+
+    /**
+     * Returns a copy with a new usingList, preserving every other field.
+     */
+    public function withUsingList(\SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList): self
+    {
+        return new self($this->tableRef, $this->optOuter, $this->tableFactor, $usingList);
     }
 }

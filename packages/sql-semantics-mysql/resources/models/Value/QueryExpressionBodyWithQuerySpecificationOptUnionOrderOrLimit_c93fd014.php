@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionBodyWithQuerySpecificationOptUnionOrderOrLimit_c93fd014 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionBodyWithQuerySpecificationOptUnionOrderOrLimit_c93fd014 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QueryExpressionBodyWithQuerySpecificationOptUnionOrderOrLimit_c93fd014 implements \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class QueryExpressionBodyWithQuerySpecificationOptUnionOrderOrLimit_c93fd0
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($query), 'The query must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionOrderOrLimit), 'The optUnionOrderOrLimit must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class QueryExpressionBodyWithQuerySpecificationOptUnionOrderOrLimit_c93fd0
     {
         $this->query->write($writer);
         $this->optUnionOrderOrLimit->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new query, preserving every other field.
+     */
+    public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query): self
+    {
+        return new self($query, $this->optUnionOrderOrLimit);
+    }
+
+    /**
+     * Returns a copy with a new optUnionOrderOrLimit, preserving every other field.
+     */
+    public function withOptUnionOrderOrLimit(\SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit): self
+    {
+        return new self($this->query, $optUnionOrderOrLimit);
     }
 }

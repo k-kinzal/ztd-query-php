@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ResetOptionsWithResetOptionsResetOption_7e7b7df8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ResetOptionsWithResetOptionsResetOption_7e7b7df8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ResetOptionsWithResetOptionsResetOption_7e7b7df8 implements \SqlSemantics\Statement\Model\MySql\Role\ResetOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ResetOptionsWithResetOptionsResetOption_7e7b7df8 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ResetOptionsForm $resetOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ResetOptionForm $resetOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($resetOptions), 'The resetOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($resetOption), 'The resetOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ResetOptionsWithResetOptionsResetOption_7e7b7df8 implements \SqlSema
         $this->resetOptions->write($writer);
         $writer->append(',');
         $this->resetOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new resetOptions, preserving every other field.
+     */
+    public function withResetOptions(\SqlSemantics\Statement\Model\MySql\Role\ResetOptionsForm $resetOptions): self
+    {
+        return new self($resetOptions, $this->resetOption);
+    }
+
+    /**
+     * Returns a copy with a new resetOption, preserving every other field.
+     */
+    public function withResetOption(\SqlSemantics\Statement\Model\MySql\Role\ResetOptionForm $resetOption): self
+    {
+        return new self($this->resetOptions, $resetOption);
     }
 }

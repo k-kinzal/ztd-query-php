@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RealUlonglongNumWithLongNum_183e573e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RealUlonglongNumWithLongNum_183e573e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RealUlonglongNumWithLongNum_183e573e implements \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm, \SqlSemantics\Statement\Model\MySql\Role\SizeNumberForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $longNum,
     ) {
+        $this->assertMatchesPattern($longNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['LONG_NUM'], 'The longNum must be a complete LONG_NUM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class RealUlonglongNumWithLongNum_183e573e implements \SqlSemantics\Statem
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->longNum);
+    }
+
+    /**
+     * Returns a copy with a new longNum, preserving every other field.
+     */
+    public function withLongNum(string $longNum): self
+    {
+        return new self($longNum);
     }
 }

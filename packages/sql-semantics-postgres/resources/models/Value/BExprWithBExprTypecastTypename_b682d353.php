@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BExprWithBExprTypecastTypename_b682d353 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BExprWithBExprTypecastTypename_b682d353 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,10 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
         public readonly string $typecast,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 21,));
+        $this->assertMatchesPattern($typecast, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['TYPECAST'], 'The typecast must be a complete TYPECAST lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +38,29 @@ final class BExprWithBExprTypecastTypename_b682d353 implements \SqlSemantics\Sta
         $this->bExpr->write($writer);
         $writer->append($this->typecast);
         $this->typename->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bExpr, preserving every other field.
+     */
+    public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
+    {
+        return new self($bExpr, $this->typecast, $this->typename);
+    }
+
+    /**
+     * Returns a copy with a new typecast, preserving every other field.
+     */
+    public function withTypecast(string $typecast): self
+    {
+        return new self($this->bExpr, $typecast, $this->typename);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->bExpr, $this->typecast, $typename);
     }
 }

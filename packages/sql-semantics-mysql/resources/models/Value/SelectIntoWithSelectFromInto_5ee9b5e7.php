@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectIntoWithSelectFromInto_5ee9b5e7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectIntoWithSelectFromInto_5ee9b5e7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectIntoWithSelectFromInto_5ee9b5e7 implements \SqlSemantics\Statement\Model\MySql\Role\SelectIntoForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelectIntoWithSelectFromInto_5ee9b5e7 implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectFromForm $selectFrom,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IntoForm $into,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectFrom), 'The selectFrom must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($into), 'The into must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SelectIntoWithSelectFromInto_5ee9b5e7 implements \SqlSemantics\State
     {
         $this->selectFrom->write($writer);
         $this->into->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectFrom, preserving every other field.
+     */
+    public function withSelectFrom(\SqlSemantics\Statement\Model\MySql\Role\SelectFromForm $selectFrom): self
+    {
+        return new self($selectFrom, $this->into);
+    }
+
+    /**
+     * Returns a copy with a new into, preserving every other field.
+     */
+    public function withInto(\SqlSemantics\Statement\Model\MySql\Role\IntoForm $into): self
+    {
+        return new self($this->selectFrom, $into);
     }
 }

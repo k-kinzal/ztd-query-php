@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerOneEventWithUpdateOfColumnList_a77aa72c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerOneEventWithUpdateOfColumnList_a77aa72c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerOneEventWithUpdateOfColumnList_a77aa72c implements \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerEventsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerOneEventForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class TriggerOneEventWithUpdateOfColumnList_a77aa72c implements \SqlSemant
         $writer->append('UPDATE');
         $writer->append('OF');
         $this->columnList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columnList, preserving every other field.
+     */
+    public function withColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList): self
+    {
+        return new self($columnList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WqlistWithWqlistCommaWqitem_3ab99d95 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WqlistWithWqlistCommaWqitem_3ab99d95 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WqlistWithWqlistCommaWqitem_3ab99d95 implements \SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WqlistWithWqlistCommaWqitem_3ab99d95 implements \SqlSemantics\Statem
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm $wqlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WqitemForm $wqitem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($wqlist), 'The wqlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($wqitem), 'The wqitem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class WqlistWithWqlistCommaWqitem_3ab99d95 implements \SqlSemantics\Statem
         $this->wqlist->write($writer);
         $writer->append(',');
         $this->wqitem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new wqlist, preserving every other field.
+     */
+    public function withWqlist(\SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm $wqlist): self
+    {
+        return new self($wqlist, $this->wqitem);
+    }
+
+    /**
+     * Returns a copy with a new wqitem, preserving every other field.
+     */
+    public function withWqitem(\SqlSemantics\Statement\Model\Sqlite\Role\WqitemForm $wqitem): self
+    {
+        return new self($this->wqlist, $wqitem);
     }
 }

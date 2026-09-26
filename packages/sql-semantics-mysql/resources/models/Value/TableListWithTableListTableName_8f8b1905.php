@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableListWithTableListTableName_8f8b1905 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableListWithTableListTableName_8f8b1905 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableListWithTableListTableName_8f8b1905 implements \SqlSemantics\Statement\Model\MySql\Role\OptTableListForm, \SqlSemantics\Statement\Model\MySql\Role\TableListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableListWithTableListTableName_8f8b1905 implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableNameForm $tableName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableList), 'The tableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableName), 'The tableName must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableListWithTableListTableName_8f8b1905 implements \SqlSemantics\St
         $this->tableList->write($writer);
         $writer->append(',');
         $this->tableName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableList, preserving every other field.
+     */
+    public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
+    {
+        return new self($tableList, $this->tableName);
+    }
+
+    /**
+     * Returns a copy with a new tableName, preserving every other field.
+     */
+    public function withTableName(\SqlSemantics\Statement\Model\MySql\Role\TableNameForm $tableName): self
+    {
+        return new self($this->tableList, $tableName);
     }
 }

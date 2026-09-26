@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldsWithFieldsInsertIdent_655406b3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldsWithFieldsInsertIdent_655406b3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldsWithFieldsInsertIdent_655406b3 implements \SqlSemantics\Statement\Model\MySql\Role\FieldsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FieldsWithFieldsInsertIdent_655406b3 implements \SqlSemantics\Statem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldsForm $fields,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertIdentForm $insertIdent,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fields), 'The fields must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertIdent), 'The insertIdent must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FieldsWithFieldsInsertIdent_655406b3 implements \SqlSemantics\Statem
         $this->fields->write($writer);
         $writer->append(',');
         $this->insertIdent->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fields, preserving every other field.
+     */
+    public function withFields(\SqlSemantics\Statement\Model\MySql\Role\FieldsForm $fields): self
+    {
+        return new self($fields, $this->insertIdent);
+    }
+
+    /**
+     * Returns a copy with a new insertIdent, preserving every other field.
+     */
+    public function withInsertIdent(\SqlSemantics\Statement\Model\MySql\Role\InsertIdentForm $insertIdent): self
+    {
+        return new self($this->fields, $insertIdent);
     }
 }

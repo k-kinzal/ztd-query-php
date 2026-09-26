@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptExplainForSchemaWithForSymDatabaseIdentOrText_73971dbf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptExplainForSchemaWithForSymDatabaseIdentOrText_73971dbf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptExplainForSchemaWithForSymDatabaseIdentOrText_73971dbf implements \SqlSemantics\Statement\Model\MySql\Role\OptExplainForSchemaForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptExplainForSchemaWithForSymDatabaseIdentOrText_73971dbf implements
         public readonly string $database,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
     ) {
+        $this->assertMatchesPattern($database, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASE'], 'The database must be a complete DATABASE lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptExplainForSchemaWithForSymDatabaseIdentOrText_73971dbf implements
         $writer->append('FOR');
         $writer->append($this->database);
         $this->identOrText->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new database, preserving every other field.
+     */
+    public function withDatabase(string $database): self
+    {
+        return new self($database, $this->identOrText);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($this->database, $identOrText);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b822d86 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b822d86 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b822d86 implements \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinedTableForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($outerJoinType), 'The outerJoinType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference2), 'The tableReference2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class JoinedTableWithTableReferenceOuterJoinTypeTableReferenceOnSymExpr_5b
         $this->tableReference2->write($writer);
         $writer->append('ON');
         $this->expr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableReference, preserving every other field.
+     */
+    public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
+    {
+        return new self($tableReference, $this->outerJoinType, $this->tableReference2, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new outerJoinType, preserving every other field.
+     */
+    public function withOuterJoinType(\SqlSemantics\Statement\Model\MySql\Role\OuterJoinTypeForm $outerJoinType): self
+    {
+        return new self($this->tableReference, $outerJoinType, $this->tableReference2, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new tableReference2, preserving every other field.
+     */
+    public function withTableReference2(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2): self
+    {
+        return new self($this->tableReference, $this->outerJoinType, $tableReference2, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->tableReference, $this->outerJoinType, $this->tableReference2, $expr);
     }
 }

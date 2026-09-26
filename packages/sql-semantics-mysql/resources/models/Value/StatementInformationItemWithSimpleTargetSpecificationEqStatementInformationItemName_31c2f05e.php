@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StatementInformationItemWithSimpleTargetSpecificationEqStatementInformationItemName_31c2f05e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StatementInformationItemWithSimpleTargetSpecificationEqStatementInformationItemName_31c2f05e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StatementInformationItemWithSimpleTargetSpecificationEqStatementInformationItemName_31c2f05e implements \SqlSemantics\Statement\Model\MySql\Role\DiagnosticsInformationForm, \SqlSemantics\Statement\Model\MySql\Role\StatementInformationForm, \SqlSemantics\Statement\Model\MySql\Role\StatementInformationItemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StatementInformationItemWithSimpleTargetSpecificationEqStatementInfo
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleTargetSpecificationForm $simpleTargetSpecification,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StatementInformationItemNameForm $statementInformationItemName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleTargetSpecification), 'The simpleTargetSpecification must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($statementInformationItemName), 'The statementInformationItemName must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class StatementInformationItemWithSimpleTargetSpecificationEqStatementInfo
         $this->simpleTargetSpecification->write($writer);
         $writer->append('=');
         $this->statementInformationItemName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleTargetSpecification, preserving every other field.
+     */
+    public function withSimpleTargetSpecification(\SqlSemantics\Statement\Model\MySql\Role\SimpleTargetSpecificationForm $simpleTargetSpecification): self
+    {
+        return new self($simpleTargetSpecification, $this->statementInformationItemName);
+    }
+
+    /**
+     * Returns a copy with a new statementInformationItemName, preserving every other field.
+     */
+    public function withStatementInformationItemName(\SqlSemantics\Statement\Model\MySql\Role\StatementInformationItemNameForm $statementInformationItemName): self
+    {
+        return new self($this->simpleTargetSpecification, $statementInformationItemName);
     }
 }

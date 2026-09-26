@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QuerySpecOptionWithAll_94793b3d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QuerySpecOptionWithAll_94793b3d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QuerySpecOptionWithAll_94793b3d implements \SqlSemantics\Statement\Model\MySql\Role\OptQuerySpecOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\QuerySpecOptionForm, \SqlSemantics\Statement\Model\MySql\Role\QuerySpecOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionForm, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm

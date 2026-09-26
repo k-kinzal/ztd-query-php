@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ColumnnameWithNmTypetoken_92826a89 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ColumnnameWithNmTypetoken_92826a89 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnnameWithNmTypetoken_92826a89 implements \SqlSemantics\Statement\Model\Sqlite\Role\ColumnnameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColumnnameWithNmTypetoken_92826a89 implements \SqlSemantics\Statemen
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm $typetoken,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($typetoken), 'The typetoken must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ColumnnameWithNmTypetoken_92826a89 implements \SqlSemantics\Statemen
     {
         $this->nm->write($writer);
         $this->typetoken->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm, $this->typetoken);
+    }
+
+    /**
+     * Returns a copy with a new typetoken, preserving every other field.
+     */
+    public function withTypetoken(\SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm $typetoken): self
+    {
+        return new self($this->nm, $typetoken);
     }
 }

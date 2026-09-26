@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VacuumStmtWithVacuumUtilityOptionListOptVacuumRelationList_1f3768c1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VacuumStmtWithVacuumUtilityOptionListOptVacuumRelationList_1f3768c1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class VacuumStmtWithVacuumUtilityOptionListOptVacuumRelationList_1f3768c1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class VacuumStmtWithVacuumUtilityOptionListOptVacuumRelationList_1f3768c1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class VacuumStmtWithVacuumUtilityOptionListOptVacuumRelationList_1f3768c1 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($utilityOptionList), 'The utilityOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVacuumRelationList), 'The optVacuumRelationList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class VacuumStmtWithVacuumUtilityOptionListOptVacuumRelationList_1f3768c1 
         $this->utilityOptionList->write($writer);
         $writer->append(')');
         $this->optVacuumRelationList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new utilityOptionList, preserving every other field.
+     */
+    public function withUtilityOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList): self
+    {
+        return new self($utilityOptionList, $this->optVacuumRelationList);
+    }
+
+    /**
+     * Returns a copy with a new optVacuumRelationList, preserving every other field.
+     */
+    public function withOptVacuumRelationList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList): self
+    {
+        return new self($this->utilityOptionList, $optVacuumRelationList);
     }
 }

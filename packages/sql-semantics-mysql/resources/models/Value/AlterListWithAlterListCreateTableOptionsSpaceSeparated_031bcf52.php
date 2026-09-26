@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListWithAlterListCreateTableOptionsSpaceSeparated_031bcf52 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListWithAlterListCreateTableOptionsSpaceSeparated_031bcf52 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListWithAlterListCreateTableOptionsSpaceSeparated_031bcf52 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterListWithAlterListCreateTableOptionsSpaceSeparated_031bcf52 impl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm $createTableOptionsSpaceSeparated,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterList), 'The alterList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOptionsSpaceSeparated), 'The createTableOptionsSpaceSeparated must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterListWithAlterListCreateTableOptionsSpaceSeparated_031bcf52 impl
         $this->alterList->write($writer);
         $writer->append(',');
         $this->createTableOptionsSpaceSeparated->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterList, preserving every other field.
+     */
+    public function withAlterList(\SqlSemantics\Statement\Model\MySql\Role\AlterListForm $alterList): self
+    {
+        return new self($alterList, $this->createTableOptionsSpaceSeparated);
+    }
+
+    /**
+     * Returns a copy with a new createTableOptionsSpaceSeparated, preserving every other field.
+     */
+    public function withCreateTableOptionsSpaceSeparated(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm $createTableOptionsSpaceSeparated): self
+    {
+        return new self($this->alterList, $createTableOptionsSpaceSeparated);
     }
 }

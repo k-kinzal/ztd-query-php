@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmltableColumnListWithXmltableColumnListXmltableColumnEl_27a55e42 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmltableColumnListWithXmltableColumnListXmltableColumnEl_27a55e42 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmltableColumnListWithXmltableColumnListXmltableColumnEl_27a55e42 implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class XmltableColumnListWithXmltableColumnListXmltableColumnEl_27a55e42 im
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm $xmltableColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnElForm $xmltableColumnEl,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmltableColumnList), 'The xmltableColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmltableColumnEl), 'The xmltableColumnEl must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class XmltableColumnListWithXmltableColumnListXmltableColumnEl_27a55e42 im
         $this->xmltableColumnList->write($writer);
         $writer->append(',');
         $this->xmltableColumnEl->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new xmltableColumnList, preserving every other field.
+     */
+    public function withXmltableColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm $xmltableColumnList): self
+    {
+        return new self($xmltableColumnList, $this->xmltableColumnEl);
+    }
+
+    /**
+     * Returns a copy with a new xmltableColumnEl, preserving every other field.
+     */
+    public function withXmltableColumnEl(\SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnElForm $xmltableColumnEl): self
+    {
+        return new self($this->xmltableColumnList, $xmltableColumnEl);
     }
 }

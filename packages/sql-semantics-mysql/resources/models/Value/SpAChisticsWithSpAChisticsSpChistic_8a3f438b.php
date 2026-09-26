@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpAChisticsWithSpAChisticsSpChistic_8a3f438b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpAChisticsWithSpAChisticsSpChistic_8a3f438b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpAChisticsWithSpAChisticsSpChistic_8a3f438b implements \SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SpAChisticsWithSpAChisticsSpChistic_8a3f438b implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm $spAChistics,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpChisticForm $spChistic,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spAChistics), 'The spAChistics must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spChistic), 'The spChistic must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SpAChisticsWithSpAChisticsSpChistic_8a3f438b implements \SqlSemantic
     {
         $this->spAChistics->write($writer);
         $this->spChistic->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spAChistics, preserving every other field.
+     */
+    public function withSpAChistics(\SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm $spAChistics): self
+    {
+        return new self($spAChistics, $this->spChistic);
+    }
+
+    /**
+     * Returns a copy with a new spChistic, preserving every other field.
+     */
+    public function withSpChistic(\SqlSemantics\Statement\Model\MySql\Role\SpChisticForm $spChistic): self
+    {
+        return new self($this->spAChistics, $spChistic);
     }
 }

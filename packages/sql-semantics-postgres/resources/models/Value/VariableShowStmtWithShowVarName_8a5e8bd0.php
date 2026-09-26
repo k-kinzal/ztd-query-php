@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VariableShowStmtWithShowVarName_8a5e8bd0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VariableShowStmtWithShowVarName_8a5e8bd0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class VariableShowStmtWithShowVarName_8a5e8bd0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\VariableShowStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class VariableShowStmtWithShowVarName_8a5e8bd0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\VariableShowStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VarNameForm $varName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($varName), 'The varName must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class VariableShowStmtWithShowVarName_8a5e8bd0 implements \SqlSemantics\St
     {
         $writer->append('SHOW');
         $this->varName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new varName, preserving every other field.
+     */
+    public function withVarName(\SqlSemantics\Statement\Model\PostgreSql\Role\VarNameForm $varName): self
+    {
+        return new self($varName);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserWithUserIdentifiedWithPluginByPasswordReplaceSymTextStringPasswordOptRetainCurr_8bca43fb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserWithUserIdentifiedWithPluginByPasswordReplaceSymTextStringPasswordOptRetainCurr_8bca43fb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterUserWithUserIdentifiedWithPluginByPasswordReplaceSymTextStringPasswordOptRetainCurr_8bca43fb implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserForm, \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class AlterUserWithUserIdentifiedWithPluginByPasswordReplaceSymTextStringP
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identifiedWithPluginByPassword), 'The identifiedWithPluginByPassword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringPassword), 'The textStringPassword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRetainCurrentPassword), 'The optRetainCurrentPassword must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class AlterUserWithUserIdentifiedWithPluginByPasswordReplaceSymTextStringP
         $writer->append('REPLACE');
         $this->textStringPassword->write($writer);
         $this->optRetainCurrentPassword->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->identifiedWithPluginByPassword, $this->textStringPassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new identifiedWithPluginByPassword, preserving every other field.
+     */
+    public function withIdentifiedWithPluginByPassword(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginByPasswordForm $identifiedWithPluginByPassword): self
+    {
+        return new self($this->user, $identifiedWithPluginByPassword, $this->textStringPassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new textStringPassword, preserving every other field.
+     */
+    public function withTextStringPassword(\SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword): self
+    {
+        return new self($this->user, $this->identifiedWithPluginByPassword, $textStringPassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new optRetainCurrentPassword, preserving every other field.
+     */
+    public function withOptRetainCurrentPassword(\SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword): self
+    {
+        return new self($this->user, $this->identifiedWithPluginByPassword, $this->textStringPassword, $optRetainCurrentPassword);
     }
 }

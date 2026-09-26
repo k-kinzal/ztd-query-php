@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConstraintEnforcementWithOptNotEnforcedSym_238b2fa2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConstraintEnforcementWithOptNotEnforcedSym_238b2fa2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConstraintEnforcementWithOptNotEnforcedSym_238b2fa2 implements \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\ConstraintEnforcementForm, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptConstraintEnforcementForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNotForm $optNot,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNot), 'The optNot must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ConstraintEnforcementWithOptNotEnforcedSym_238b2fa2 implements \SqlS
     {
         $this->optNot->write($writer);
         $writer->append('ENFORCED');
+    }
+
+    /**
+     * Returns a copy with a new optNot, preserving every other field.
+     */
+    public function withOptNot(\SqlSemantics\Statement\Model\MySql\Role\OptNotForm $optNot): self
+    {
+        return new self($optNot);
     }
 }

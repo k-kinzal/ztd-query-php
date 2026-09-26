@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowDefinitionListWithWindowDefinitionListWindowDefinition_e74c196c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowDefinitionListWithWindowDefinitionListWindowDefinition_e74c196c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowDefinitionListWithWindowDefinitionListWindowDefinition_e74c196c implements \SqlSemantics\Statement\Model\MySql\Role\WindowDefinitionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WindowDefinitionListWithWindowDefinitionListWindowDefinition_e74c196
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowDefinitionListForm $windowDefinitionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowDefinitionForm $windowDefinition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowDefinitionList), 'The windowDefinitionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowDefinition), 'The windowDefinition must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class WindowDefinitionListWithWindowDefinitionListWindowDefinition_e74c196
         $this->windowDefinitionList->write($writer);
         $writer->append(',');
         $this->windowDefinition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new windowDefinitionList, preserving every other field.
+     */
+    public function withWindowDefinitionList(\SqlSemantics\Statement\Model\MySql\Role\WindowDefinitionListForm $windowDefinitionList): self
+    {
+        return new self($windowDefinitionList, $this->windowDefinition);
+    }
+
+    /**
+     * Returns a copy with a new windowDefinition, preserving every other field.
+     */
+    public function withWindowDefinition(\SqlSemantics\Statement\Model\MySql\Role\WindowDefinitionForm $windowDefinition): self
+    {
+        return new self($this->windowDefinitionList, $windowDefinition);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AttrsWithAttrsAttrName_372ebb47 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AttrsWithAttrsAttrName_372ebb47 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AttrsWithAttrsAttrName_372ebb47 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AttrsWithAttrsAttrName_372ebb47 implements \SqlSemantics\Statement\M
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AttrNameForm $attrName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($attrs), 'The attrs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($attrName), 'The attrName must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AttrsWithAttrsAttrName_372ebb47 implements \SqlSemantics\Statement\M
         $this->attrs->write($writer);
         $writer->append('.');
         $this->attrName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new attrs, preserving every other field.
+     */
+    public function withAttrs(\SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs): self
+    {
+        return new self($attrs, $this->attrName);
+    }
+
+    /**
+     * Returns a copy with a new attrName, preserving every other field.
+     */
+    public function withAttrName(\SqlSemantics\Statement\Model\PostgreSql\Role\AttrNameForm $attrName): self
+    {
+        return new self($this->attrs, $attrName);
     }
 }

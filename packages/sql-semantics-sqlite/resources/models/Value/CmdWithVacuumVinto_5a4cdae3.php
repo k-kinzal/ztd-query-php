@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithVacuumVinto_5a4cdae3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithVacuumVinto_5a4cdae3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithVacuumVinto_5a4cdae3 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithVacuumVinto_5a4cdae3 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VintoForm $vinto,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vinto), 'The vinto must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CmdWithVacuumVinto_5a4cdae3 implements \SqlSemantics\Statement\Model
     {
         $writer->append('VACUUM');
         $this->vinto->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new vinto, preserving every other field.
+     */
+    public function withVinto(\SqlSemantics\Statement\Model\Sqlite\Role\VintoForm $vinto): self
+    {
+        return new self($vinto);
     }
 }

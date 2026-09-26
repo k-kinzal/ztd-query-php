@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\ChangeReplicationSourceSslVerifyServerCertChoice_9caa0d1f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\ChangeReplicationSourceSslVerifyServerCertChoice_9caa0d1f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum ChangeReplicationSourceSslVerifyServerCertChoice_9caa0d1f: string implements \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslVerifyServerCertForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionWithEngineAttributeSymOptEqualJsonAttribute_058118a6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionWithEngineAttributeSymOptEqualJsonAttribute_058118a6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateTableOptionWithEngineAttributeSymOptEqualJsonAttribute_058118a6 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreateTableOptionWithEngineAttributeSymOptEqualJsonAttribute_058118a
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JsonAttributeForm $jsonAttribute,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($jsonAttribute), 'The jsonAttribute must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CreateTableOptionWithEngineAttributeSymOptEqualJsonAttribute_058118a
         $writer->append('ENGINE_ATTRIBUTE');
         $this->optEqual->write($writer);
         $this->jsonAttribute->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->jsonAttribute);
+    }
+
+    /**
+     * Returns a copy with a new jsonAttribute, preserving every other field.
+     */
+    public function withJsonAttribute(\SqlSemantics\Statement\Model\MySql\Role\JsonAttributeForm $jsonAttribute): self
+    {
+        return new self($this->optEqual, $jsonAttribute);
     }
 }

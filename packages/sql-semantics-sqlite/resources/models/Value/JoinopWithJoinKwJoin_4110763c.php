@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\JoinopWithJoinKwJoin_4110763c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\JoinopWithJoinKwJoin_4110763c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinopWithJoinKwJoin_4110763c implements \SqlSemantics\Statement\Model\Sqlite\Role\JoinopForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $joinKw,
     ) {
+        $this->assertMatchesPattern($joinKw, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['JOIN_KW'], 'The joinKw must be a complete JOIN_KW lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class JoinopWithJoinKwJoin_4110763c implements \SqlSemantics\Statement\Mod
     {
         $writer->append($this->joinKw);
         $writer->append('JOIN');
+    }
+
+    /**
+     * Returns a copy with a new joinKw, preserving every other field.
+     */
+    public function withJoinKw(string $joinKw): self
+    {
+        return new self($joinKw);
     }
 }

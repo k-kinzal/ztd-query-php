@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterRoleStmtWithAlterUserRoleSpecOptWithAlterOptRoleList_793c5033 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterRoleStmtWithAlterUserRoleSpecOptWithAlterOptRoleList_793c5033 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterRoleStmtWithAlterUserRoleSpecOptWithAlterOptRoleList_793c5033 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterRoleStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterRoleStmtWithAlterUserRoleSpecOptWithAlterOptRoleList_793c5033 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterRoleStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterRoleStmtWithAlterUserRoleSpecOptWithAlterOptRoleList_793c5033 i
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleListForm $alterOptRoleList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterOptRoleList), 'The alterOptRoleList must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterRoleStmtWithAlterUserRoleSpecOptWithAlterOptRoleList_793c5033 i
         $this->roleSpec->write($writer);
         $this->optWith->write($writer);
         $this->alterOptRoleList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleSpec, preserving every other field.
+     */
+    public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
+    {
+        return new self($roleSpec, $this->optWith, $this->alterOptRoleList);
+    }
+
+    /**
+     * Returns a copy with a new optWith, preserving every other field.
+     */
+    public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
+    {
+        return new self($this->roleSpec, $optWith, $this->alterOptRoleList);
+    }
+
+    /**
+     * Returns a copy with a new alterOptRoleList, preserving every other field.
+     */
+    public function withAlterOptRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleListForm $alterOptRoleList): self
+    {
+        return new self($this->roleSpec, $this->optWith, $alterOptRoleList);
     }
 }

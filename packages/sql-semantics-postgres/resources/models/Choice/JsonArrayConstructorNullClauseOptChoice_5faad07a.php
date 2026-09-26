@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\JsonArrayConstructorNullClauseOptChoice_5faad07a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\JsonArrayConstructorNullClauseOptChoice_5faad07a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum JsonArrayConstructorNullClauseOptChoice_5faad07a: string implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayConstructorNullClauseOptForm

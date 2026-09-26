@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerEventWithUpdateOfIdlist_1483bd2b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerEventWithUpdateOfIdlist_1483bd2b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerEventWithUpdateOfIdlist_1483bd2b implements \SqlSemantics\Statement\Model\Sqlite\Role\TriggerEventForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($idlist), 'The idlist must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class TriggerEventWithUpdateOfIdlist_1483bd2b implements \SqlSemantics\Sta
         $writer->append('UPDATE');
         $writer->append('OF');
         $this->idlist->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new idlist, preserving every other field.
+     */
+    public function withIdlist(\SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist): self
+    {
+        return new self($idlist);
     }
 }

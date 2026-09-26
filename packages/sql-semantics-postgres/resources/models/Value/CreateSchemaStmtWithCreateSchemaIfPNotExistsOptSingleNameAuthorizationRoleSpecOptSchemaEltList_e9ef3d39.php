@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateSchemaStmtWithCreateSchemaIfPNotExistsOptSingleNameAuthorizationRoleSpecOptSchemaEltList_e9ef3d39 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateSchemaStmtWithCreateSchemaIfPNotExistsOptSingleNameAuthorizationRoleSpecOptSchemaEltList_e9ef3d39 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateSchemaStmtWithCreateSchemaIfPNotExistsOptSingleNameAuthorizationRoleSpecOptSchemaEltList_e9ef3d39 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateSchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateSchemaStmtWithCreateSchemaIfPNotExistsOptSingleNameAuthorizationRoleSpecOptSchemaEltList_e9ef3d39 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateSchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateSchemaStmtWithCreateSchemaIfPNotExistsOptSingleNameAuthorizati
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSingleName), 'The optSingleName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSchemaEltList), 'The optSchemaEltList must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +43,29 @@ final class CreateSchemaStmtWithCreateSchemaIfPNotExistsOptSingleNameAuthorizati
         $writer->append('AUTHORIZATION');
         $this->roleSpec->write($writer);
         $this->optSchemaEltList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optSingleName, preserving every other field.
+     */
+    public function withOptSingleName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSingleNameForm $optSingleName): self
+    {
+        return new self($optSingleName, $this->roleSpec, $this->optSchemaEltList);
+    }
+
+    /**
+     * Returns a copy with a new roleSpec, preserving every other field.
+     */
+    public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
+    {
+        return new self($this->optSingleName, $roleSpec, $this->optSchemaEltList);
+    }
+
+    /**
+     * Returns a copy with a new optSchemaEltList, preserving every other field.
+     */
+    public function withOptSchemaEltList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList): self
+    {
+        return new self($this->optSingleName, $this->roleSpec, $optSchemaEltList);
     }
 }

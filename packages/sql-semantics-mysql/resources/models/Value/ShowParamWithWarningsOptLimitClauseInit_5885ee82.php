@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithWarningsOptLimitClauseInit_5885ee82 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithWarningsOptLimitClauseInit_5885ee82 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithWarningsOptLimitClauseInit_5885ee82 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseInitForm $optLimitClauseInit,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClauseInit), 'The optLimitClauseInit must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ShowParamWithWarningsOptLimitClauseInit_5885ee82 implements \SqlSema
     {
         $writer->append('WARNINGS');
         $this->optLimitClauseInit->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClauseInit, preserving every other field.
+     */
+    public function withOptLimitClauseInit(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseInitForm $optLimitClauseInit): self
+    {
+        return new self($optLimitClauseInit);
     }
 }

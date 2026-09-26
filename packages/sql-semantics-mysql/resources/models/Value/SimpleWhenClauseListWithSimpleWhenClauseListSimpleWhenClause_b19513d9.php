@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleWhenClauseListWithSimpleWhenClauseListSimpleWhenClause_b19513d9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleWhenClauseListWithSimpleWhenClauseListSimpleWhenClause_b19513d9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SimpleWhenClauseListWithSimpleWhenClauseListSimpleWhenClause_b19513d9 implements \SqlSemantics\Statement\Model\MySql\Role\SimpleWhenClauseListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SimpleWhenClauseListWithSimpleWhenClauseListSimpleWhenClause_b19513d
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleWhenClauseListForm $simpleWhenClauseList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleWhenClauseForm $simpleWhenClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleWhenClauseList), 'The simpleWhenClauseList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleWhenClause), 'The simpleWhenClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SimpleWhenClauseListWithSimpleWhenClauseListSimpleWhenClause_b19513d
     {
         $this->simpleWhenClauseList->write($writer);
         $this->simpleWhenClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleWhenClauseList, preserving every other field.
+     */
+    public function withSimpleWhenClauseList(\SqlSemantics\Statement\Model\MySql\Role\SimpleWhenClauseListForm $simpleWhenClauseList): self
+    {
+        return new self($simpleWhenClauseList, $this->simpleWhenClause);
+    }
+
+    /**
+     * Returns a copy with a new simpleWhenClause, preserving every other field.
+     */
+    public function withSimpleWhenClause(\SqlSemantics\Statement\Model\MySql\Role\SimpleWhenClauseForm $simpleWhenClause): self
+    {
+        return new self($this->simpleWhenClauseList, $simpleWhenClause);
     }
 }

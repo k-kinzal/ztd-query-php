@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\JoinopWithCommaJoin_2b032ba0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\JoinopWithCommaJoin_2b032ba0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinopWithCommaJoin_2b032ba0 implements \SqlSemantics\Statement\Model\Sqlite\Role\JoinopForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $commaJoin,
     ) {
+        $this->assertMatchesPattern($commaJoin, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['COMMA|JOIN'], 'The commaJoin must be a complete COMMA|JOIN lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class JoinopWithCommaJoin_2b032ba0 implements \SqlSemantics\Statement\Mode
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->commaJoin);
+    }
+
+    /**
+     * Returns a copy with a new commaJoin, preserving every other field.
+     */
+    public function withCommaJoin(string $commaJoin): self
+    {
+        return new self($commaJoin);
     }
 }

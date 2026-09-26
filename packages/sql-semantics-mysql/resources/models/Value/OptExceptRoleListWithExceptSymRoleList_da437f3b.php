@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptExceptRoleListWithExceptSymRoleList_da437f3b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptExceptRoleListWithExceptSymRoleList_da437f3b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptExceptRoleListWithExceptSymRoleList_da437f3b implements \SqlSemantics\Statement\Model\MySql\Role\OptExceptRoleListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleListForm $roleList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleList), 'The roleList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptExceptRoleListWithExceptSymRoleList_da437f3b implements \SqlSeman
     {
         $writer->append('EXCEPT');
         $this->roleList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleList, preserving every other field.
+     */
+    public function withRoleList(\SqlSemantics\Statement\Model\MySql\Role\RoleListForm $roleList): self
+    {
+        return new self($roleList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TablespaceOptionsWithTablespaceOptionsTablespaceOption_f33adb44 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TablespaceOptionsWithTablespaceOptionsTablespaceOption_f33adb44 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TablespaceOptionsWithTablespaceOptionsTablespaceOption_f33adb44 implements \SqlSemantics\Statement\Model\MySql\Role\OptTablespaceOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TablespaceOptionsWithTablespaceOptionsTablespaceOption_f33adb44 impl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionsForm $tablespaceOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionForm $tablespaceOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceOptions), 'The tablespaceOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceOption), 'The tablespaceOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TablespaceOptionsWithTablespaceOptionsTablespaceOption_f33adb44 impl
         $this->tablespaceOptions->write($writer);
         $writer->append(',');
         $this->tablespaceOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tablespaceOptions, preserving every other field.
+     */
+    public function withTablespaceOptions(\SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionsForm $tablespaceOptions): self
+    {
+        return new self($tablespaceOptions, $this->tablespaceOption);
+    }
+
+    /**
+     * Returns a copy with a new tablespaceOption, preserving every other field.
+     */
+    public function withTablespaceOption(\SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionForm $tablespaceOption): self
+    {
+        return new self($this->tablespaceOptions, $tablespaceOption);
     }
 }

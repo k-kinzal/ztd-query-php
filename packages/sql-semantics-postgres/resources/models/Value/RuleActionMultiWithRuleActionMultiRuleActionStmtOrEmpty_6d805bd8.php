@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RuleActionMultiWithRuleActionMultiRuleActionStmtOrEmpty_6d805bd8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RuleActionMultiWithRuleActionMultiRuleActionStmtOrEmpty_6d805bd8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RuleActionMultiWithRuleActionMultiRuleActionStmtOrEmpty_6d805bd8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RuleActionMultiWithRuleActionMultiRuleActionStmtOrEmpty_6d805bd8 imp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm $ruleActionMulti,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm $ruleActionStmtOrEmpty,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($ruleActionMulti), 'The ruleActionMulti must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($ruleActionStmtOrEmpty), 'The ruleActionStmtOrEmpty must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class RuleActionMultiWithRuleActionMultiRuleActionStmtOrEmpty_6d805bd8 imp
         $this->ruleActionMulti->write($writer);
         $writer->append(';');
         $this->ruleActionStmtOrEmpty->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ruleActionMulti, preserving every other field.
+     */
+    public function withRuleActionMulti(\SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm $ruleActionMulti): self
+    {
+        return new self($ruleActionMulti, $this->ruleActionStmtOrEmpty);
+    }
+
+    /**
+     * Returns a copy with a new ruleActionStmtOrEmpty, preserving every other field.
+     */
+    public function withRuleActionStmtOrEmpty(\SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm $ruleActionStmtOrEmpty): self
+    {
+        return new self($this->ruleActionMulti, $ruleActionStmtOrEmpty);
     }
 }

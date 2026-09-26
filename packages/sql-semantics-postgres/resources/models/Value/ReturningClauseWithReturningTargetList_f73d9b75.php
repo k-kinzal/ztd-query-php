@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReturningClauseWithReturningTargetList_f73d9b75 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReturningClauseWithReturningTargetList_f73d9b75 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReturningClauseWithReturningTargetList_f73d9b75 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm $projections,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ReturningClauseWithReturningTargetList_f73d9b75 implements \SqlSeman
     {
         $writer->append('RETURNING');
         $this->projections->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm $projections): self
+    {
+        return new self($projections);
     }
 }

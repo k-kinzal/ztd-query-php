@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptCIncludeWithIncludeColumnList_fbc89048 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptCIncludeWithIncludeColumnList_fbc89048 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptCIncludeWithIncludeColumnList_fbc89048 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptCIncludeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class OptCIncludeWithIncludeColumnList_fbc89048 implements \SqlSemantics\S
         $writer->append('(');
         $this->columnList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new columnList, preserving every other field.
+     */
+    public function withColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList): self
+    {
+        return new self($columnList);
     }
 }

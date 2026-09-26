@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\RollbackForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\RollbackForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChainForm $optChain,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReleaseForm $optRelease,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWork), 'The optWork must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChain), 'The optChain must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRelease), 'The optRelease must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 implements
         $this->optWork->write($writer);
         $this->optChain->write($writer);
         $this->optRelease->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optWork, preserving every other field.
+     */
+    public function withOptWork(\SqlSemantics\Statement\Model\MySql\Role\OptWorkForm $optWork): self
+    {
+        return new self($optWork, $this->optChain, $this->optRelease);
+    }
+
+    /**
+     * Returns a copy with a new optChain, preserving every other field.
+     */
+    public function withOptChain(\SqlSemantics\Statement\Model\MySql\Role\OptChainForm $optChain): self
+    {
+        return new self($this->optWork, $optChain, $this->optRelease);
+    }
+
+    /**
+     * Returns a copy with a new optRelease, preserving every other field.
+     */
+    public function withOptRelease(\SqlSemantics\Statement\Model\MySql\Role\OptReleaseForm $optRelease): self
+    {
+        return new self($this->optWork, $this->optChain, $optRelease);
     }
 }

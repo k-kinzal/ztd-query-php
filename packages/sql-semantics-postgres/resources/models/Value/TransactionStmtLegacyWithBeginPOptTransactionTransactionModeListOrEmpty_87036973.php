@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionStmtLegacyWithBeginPOptTransactionTransactionModeListOrEmpty_87036973 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionStmtLegacyWithBeginPOptTransactionTransactionModeListOrEmpty_87036973 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class TransactionStmtLegacyWithBeginPOptTransactionTransactionModeListOrEmpty_87036973 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionStmtLegacyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class TransactionStmtLegacyWithBeginPOptTransactionTransactionModeListOrEmpty_87036973 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionStmtLegacyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TransactionStmtLegacyWithBeginPOptTransactionTransactionModeListOrEm
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm $transactionModeListOrEmpty,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTransaction), 'The optTransaction must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($transactionModeListOrEmpty), 'The transactionModeListOrEmpty must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TransactionStmtLegacyWithBeginPOptTransactionTransactionModeListOrEm
         $writer->append('BEGIN');
         $this->optTransaction->write($writer);
         $this->transactionModeListOrEmpty->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTransaction, preserving every other field.
+     */
+    public function withOptTransaction(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction): self
+    {
+        return new self($optTransaction, $this->transactionModeListOrEmpty);
+    }
+
+    /**
+     * Returns a copy with a new transactionModeListOrEmpty, preserving every other field.
+     */
+    public function withTransactionModeListOrEmpty(\SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm $transactionModeListOrEmpty): self
+    {
+        return new self($this->optTransaction, $transactionModeListOrEmpty);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OpclassDropWithFunctionIconstTypeList_648db824 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OpclassDropWithFunctionIconstTypeList_648db824 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OpclassDropWithFunctionIconstTypeList_648db824 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassDropListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OpclassDropWithFunctionIconstTypeList_648db824 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm $typeList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeList), 'The typeList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class OpclassDropWithFunctionIconstTypeList_648db824 implements \SqlSemant
         $writer->append('(');
         $this->typeList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new iconst, preserving every other field.
+     */
+    public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
+    {
+        return new self($iconst, $this->typeList);
+    }
+
+    /**
+     * Returns a copy with a new typeList, preserving every other field.
+     */
+    public function withTypeList(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm $typeList): self
+    {
+        return new self($this->iconst, $typeList);
     }
 }

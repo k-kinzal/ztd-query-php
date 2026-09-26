@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExistsLpSelectRp_c7d40730 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExistsLpSelectRp_c7d40730 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithExistsLpSelectRp_c7d40730 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($select), 'The select must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class ExprWithExistsLpSelectRp_c7d40730 implements \SqlSemantics\Statement
         $writer->append('(');
         $this->select->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new select, preserving every other field.
+     */
+    public function withSelect(\SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select): self
+    {
+        return new self($select);
     }
 }

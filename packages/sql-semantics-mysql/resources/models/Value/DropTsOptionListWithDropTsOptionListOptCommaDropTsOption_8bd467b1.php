@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 implements \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptDropTsOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm $dropTsOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($dropTsOptionList), 'The dropTsOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($dropTsOption), 'The dropTsOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class DropTsOptionListWithDropTsOptionListOptCommaDropTsOption_8bd467b1 im
         $this->dropTsOptionList->write($writer);
         $this->optComma->write($writer);
         $this->dropTsOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new dropTsOptionList, preserving every other field.
+     */
+    public function withDropTsOptionList(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionListForm $dropTsOptionList): self
+    {
+        return new self($dropTsOptionList, $this->optComma, $this->dropTsOption);
+    }
+
+    /**
+     * Returns a copy with a new optComma, preserving every other field.
+     */
+    public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
+    {
+        return new self($this->dropTsOptionList, $optComma, $this->dropTsOption);
+    }
+
+    /**
+     * Returns a copy with a new dropTsOption, preserving every other field.
+     */
+    public function withDropTsOption(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm $dropTsOption): self
+    {
+        return new self($this->dropTsOptionList, $this->optComma, $dropTsOption);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParseTreeStmtWithShowParseTreeSymSimpleStatement_c9ca69eb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParseTreeStmtWithShowParseTreeSymSimpleStatement_c9ca69eb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ShowParseTreeStmtWithShowParseTreeSymSimpleStatement_c9ca69eb implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ShowParseTreeStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class ShowParseTreeStmtWithShowParseTreeSymSimpleStatement_c9ca69eb implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ShowParseTreeStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm $simpleStatement,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleStatement), 'The simpleStatement must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class ShowParseTreeStmtWithShowParseTreeSymSimpleStatement_c9ca69eb implem
         $writer->append('SHOW');
         $writer->append('PARSE_TREE');
         $this->simpleStatement->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleStatement, preserving every other field.
+     */
+    public function withSimpleStatement(\SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm $simpleStatement): self
+    {
+        return new self($simpleStatement);
     }
 }

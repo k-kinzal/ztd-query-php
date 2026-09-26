@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\LockStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\LockStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 i
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptLockForm $optLock,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitForm $optNowait,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTable), 'The optTable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprList), 'The relationExprList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optLock), 'The optLock must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNowait), 'The optNowait must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class LockStmtWithLockPOptTableRelationExprListOptLockOptNowait_701471b5 i
         $this->relationExprList->write($writer);
         $this->optLock->write($writer);
         $this->optNowait->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTable, preserving every other field.
+     */
+    public function withOptTable(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableForm $optTable): self
+    {
+        return new self($optTable, $this->relationExprList, $this->optLock, $this->optNowait);
+    }
+
+    /**
+     * Returns a copy with a new relationExprList, preserving every other field.
+     */
+    public function withRelationExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList): self
+    {
+        return new self($this->optTable, $relationExprList, $this->optLock, $this->optNowait);
+    }
+
+    /**
+     * Returns a copy with a new optLock, preserving every other field.
+     */
+    public function withOptLock(\SqlSemantics\Statement\Model\PostgreSql\Role\OptLockForm $optLock): self
+    {
+        return new self($this->optTable, $this->relationExprList, $optLock, $this->optNowait);
+    }
+
+    /**
+     * Returns a copy with a new optNowait, preserving every other field.
+     */
+    public function withOptNowait(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitForm $optNowait): self
+    {
+        return new self($this->optTable, $this->relationExprList, $this->optLock, $optNowait);
     }
 }

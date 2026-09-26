@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LineTermWithTerminatedByTextString_d51a5d08 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LineTermWithTerminatedByTextString_d51a5d08 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LineTermWithTerminatedByTextString_d51a5d08 implements \SqlSemantics\Statement\Model\MySql\Role\LineTermForm, \SqlSemantics\Statement\Model\MySql\Role\LineTermListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textString), 'The textString must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class LineTermWithTerminatedByTextString_d51a5d08 implements \SqlSemantics
         $writer->append('TERMINATED');
         $writer->append('BY');
         $this->textString->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textString, preserving every other field.
+     */
+    public function withTextString(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString): self
+    {
+        return new self($textString);
     }
 }

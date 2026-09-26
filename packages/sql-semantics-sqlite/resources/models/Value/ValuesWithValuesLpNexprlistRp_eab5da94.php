@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ValuesWithValuesLpNexprlistRp_eab5da94 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ValuesWithValuesLpNexprlistRp_eab5da94 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ValuesWithValuesLpNexprlistRp_eab5da94 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm, \SqlSemantics\Statement\Model\Sqlite\Role\ValuesForm
+final class ValuesWithValuesLpNexprlistRp_eab5da94 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm, \SqlSemantics\Statement\Model\Sqlite\Role\ValuesForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nexprlist), 'The nexprlist must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class ValuesWithValuesLpNexprlistRp_eab5da94 implements \SqlSemantics\Stat
         $writer->append('(');
         $this->nexprlist->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new nexprlist, preserving every other field.
+     */
+    public function withNexprlist(\SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist): self
+    {
+        return new self($nexprlist);
     }
 }

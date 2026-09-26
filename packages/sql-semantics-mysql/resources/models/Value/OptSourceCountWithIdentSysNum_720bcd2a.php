@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSourceCountWithIdentSysNum_720bcd2a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSourceCountWithIdentSysNum_720bcd2a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptSourceCountWithIdentSysNum_720bcd2a implements \SqlSemantics\Statement\Model\MySql\Role\OptSourceCountForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptSourceCountWithIdentSysNum_720bcd2a implements \SqlSemantics\Stat
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys,
         public readonly string $value,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identSys), 'The identSys must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptSourceCountWithIdentSysNum_720bcd2a implements \SqlSemantics\Stat
     {
         $this->identSys->write($writer);
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new identSys, preserving every other field.
+     */
+    public function withIdentSys(\SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys): self
+    {
+        return new self($identSys, $this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($this->identSys, $value);
     }
 }

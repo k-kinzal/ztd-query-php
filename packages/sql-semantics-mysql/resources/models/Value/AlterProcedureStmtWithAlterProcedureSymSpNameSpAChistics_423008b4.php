@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterProcedureStmtWithAlterProcedureSymSpNameSpAChistics_423008b4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterProcedureStmtWithAlterProcedureSymSpNameSpAChistics_423008b4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterProcedureStmtWithAlterProcedureSymSpNameSpAChistics_423008b4 implements \SqlSemantics\Statement\Model\MySql\Role\AlterProcedureStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class AlterProcedureStmtWithAlterProcedureSymSpNameSpAChistics_423008b4 implements \SqlSemantics\Statement\Model\MySql\Role\AlterProcedureStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterProcedureStmtWithAlterProcedureSymSpNameSpAChistics_423008b4 im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm $spAChistics,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spAChistics), 'The spAChistics must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AlterProcedureStmtWithAlterProcedureSymSpNameSpAChistics_423008b4 im
         $writer->append('PROCEDURE');
         $this->spName->write($writer);
         $this->spAChistics->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spName, preserving every other field.
+     */
+    public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
+    {
+        return new self($spName, $this->spAChistics);
+    }
+
+    /**
+     * Returns a copy with a new spAChistics, preserving every other field.
+     */
+    public function withSpAChistics(\SqlSemantics\Statement\Model\MySql\Role\SpAChisticsForm $spAChistics): self
+    {
+        return new self($this->spName, $spAChistics);
     }
 }

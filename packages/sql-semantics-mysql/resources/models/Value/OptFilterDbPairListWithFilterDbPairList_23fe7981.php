@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptFilterDbPairListWithFilterDbPairList_23fe7981 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptFilterDbPairListWithFilterDbPairList_23fe7981 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptFilterDbPairListWithFilterDbPairList_23fe7981 implements \SqlSemantics\Statement\Model\MySql\Role\OptFilterDbPairListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm $filterDbPairList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbPairList), 'The filterDbPairList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptFilterDbPairListWithFilterDbPairList_23fe7981 implements \SqlSema
         $writer->append('(');
         $this->filterDbPairList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new filterDbPairList, preserving every other field.
+     */
+    public function withFilterDbPairList(\SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm $filterDbPairList): self
+    {
+        return new self($filterDbPairList);
     }
 }

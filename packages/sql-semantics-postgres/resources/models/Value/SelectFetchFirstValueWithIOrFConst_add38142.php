@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SelectFetchFirstValueWithIOrFConst_add38142 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SelectFetchFirstValueWithIOrFConst_add38142 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectFetchFirstValueWithIOrFConst_add38142 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IOrFConstForm $iOrFConst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iOrFConst), 'The iOrFConst must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SelectFetchFirstValueWithIOrFConst_add38142 implements \SqlSemantics
     {
         $writer->append('-');
         $this->iOrFConst->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new iOrFConst, preserving every other field.
+     */
+    public function withIOrFConst(\SqlSemantics\Statement\Model\PostgreSql\Role\IOrFConstForm $iOrFConst): self
+    {
+        return new self($iOrFConst);
     }
 }

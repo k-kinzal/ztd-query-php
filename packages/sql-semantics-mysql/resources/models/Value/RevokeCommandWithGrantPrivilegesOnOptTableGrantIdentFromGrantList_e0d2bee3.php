@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RevokeCommandWithGrantPrivilegesOnOptTableGrantIdentFromGrantList_e0d2bee3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RevokeCommandWithGrantPrivilegesOnOptTableGrantIdentFromGrantList_e0d2bee3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RevokeCommandWithGrantPrivilegesOnOptTableGrantIdentFromGrantList_e0d2bee3 implements \SqlSemantics\Statement\Model\MySql\Role\RevokeCommandForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class RevokeCommandWithGrantPrivilegesOnOptTableGrantIdentFromGrantList_e0
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm $grantIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantPrivileges), 'The grantPrivileges must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTable), 'The optTable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantIdent), 'The grantIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantList), 'The grantList must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class RevokeCommandWithGrantPrivilegesOnOptTableGrantIdentFromGrantList_e0
         $this->grantIdent->write($writer);
         $writer->append('FROM');
         $this->grantList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new grantPrivileges, preserving every other field.
+     */
+    public function withGrantPrivileges(\SqlSemantics\Statement\Model\MySql\Role\GrantPrivilegesForm $grantPrivileges): self
+    {
+        return new self($grantPrivileges, $this->optTable, $this->grantIdent, $this->grantList);
+    }
+
+    /**
+     * Returns a copy with a new optTable, preserving every other field.
+     */
+    public function withOptTable(\SqlSemantics\Statement\Model\MySql\Role\OptTableForm $optTable): self
+    {
+        return new self($this->grantPrivileges, $optTable, $this->grantIdent, $this->grantList);
+    }
+
+    /**
+     * Returns a copy with a new grantIdent, preserving every other field.
+     */
+    public function withGrantIdent(\SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm $grantIdent): self
+    {
+        return new self($this->grantPrivileges, $this->optTable, $grantIdent, $this->grantList);
+    }
+
+    /**
+     * Returns a copy with a new grantList, preserving every other field.
+     */
+    public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self
+    {
+        return new self($this->grantPrivileges, $this->optTable, $this->grantIdent, $grantList);
     }
 }

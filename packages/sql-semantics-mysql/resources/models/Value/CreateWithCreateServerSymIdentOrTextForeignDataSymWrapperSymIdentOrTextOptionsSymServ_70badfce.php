@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrTextOptionsSymServ_70badfce $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrTextOptionsSymServ_70badfce $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrTextOptionsSymServ_70badfce implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrTextOptionsSymServ_70badfce implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrT
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText2), 'The identOrText2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($serverOptionsList), 'The serverOptionsList must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +45,29 @@ final class CreateWithCreateServerSymIdentOrTextForeignDataSymWrapperSymIdentOrT
         $writer->append('(');
         $this->serverOptionsList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($identOrText, $this->identOrText2, $this->serverOptionsList);
+    }
+
+    /**
+     * Returns a copy with a new identOrText2, preserving every other field.
+     */
+    public function withIdentOrText2(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText2): self
+    {
+        return new self($this->identOrText, $identOrText2, $this->serverOptionsList);
+    }
+
+    /**
+     * Returns a copy with a new serverOptionsList, preserving every other field.
+     */
+    public function withServerOptionsList(\SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList): self
+    {
+        return new self($this->identOrText, $this->identOrText2, $serverOptionsList);
     }
 }

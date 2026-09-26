@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithPrimaryKeyOptDefinitionOptConsTableSpace_1f3f1040 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithPrimaryKeyOptDefinitionOptConsTableSpace_1f3f1040 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColConstraintElemWithPrimaryKeyOptDefinitionOptConsTableSpace_1f3f1040 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintElemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColConstraintElemWithPrimaryKeyOptDefinitionOptConsTableSpace_1f3f10
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm $optConsTableSpace,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDefinition), 'The optDefinition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConsTableSpace), 'The optConsTableSpace must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class ColConstraintElemWithPrimaryKeyOptDefinitionOptConsTableSpace_1f3f10
         $writer->append('KEY');
         $this->optDefinition->write($writer);
         $this->optConsTableSpace->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optDefinition, preserving every other field.
+     */
+    public function withOptDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition): self
+    {
+        return new self($optDefinition, $this->optConsTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optConsTableSpace, preserving every other field.
+     */
+    public function withOptConsTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm $optConsTableSpace): self
+    {
+        return new self($this->optDefinition, $optConsTableSpace);
     }
 }

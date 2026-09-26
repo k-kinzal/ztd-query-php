@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatedbOptItemWithCreatedbOptNameOptEqualNumericOnly_cbd96249 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatedbOptItemWithCreatedbOptNameOptEqualNumericOnly_cbd96249 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreatedbOptItemWithCreatedbOptNameOptEqualNumericOnly_cbd96249 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreatedbOptItemWithCreatedbOptNameOptEqualNumericOnly_cbd96249 imple
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createdbOptName), 'The createdbOptName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($numericOnly), 'The numericOnly must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class CreatedbOptItemWithCreatedbOptNameOptEqualNumericOnly_cbd96249 imple
         $this->createdbOptName->write($writer);
         $this->optEqual->write($writer);
         $this->numericOnly->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createdbOptName, preserving every other field.
+     */
+    public function withCreatedbOptName(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptNameForm $createdbOptName): self
+    {
+        return new self($createdbOptName, $this->optEqual, $this->numericOnly);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\PostgreSql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($this->createdbOptName, $optEqual, $this->numericOnly);
+    }
+
+    /**
+     * Returns a copy with a new numericOnly, preserving every other field.
+     */
+    public function withNumericOnly(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly): self
+    {
+        return new self($this->createdbOptName, $this->optEqual, $numericOnly);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymTableIdentOptValidation_292cdc81 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymTableIdentOptValidation_292cdc81 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StandaloneAlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymTableIdentOptValidation_292cdc81 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class StandaloneAlterCommandsWithExchangeSymPartitionSymAltPartNameItemWit
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptValidationForm $optValidation,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($altPartNameItem), 'The altPartNameItem must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optValidation), 'The optValidation must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +41,29 @@ final class StandaloneAlterCommandsWithExchangeSymPartitionSymAltPartNameItemWit
         $writer->append('TABLE');
         $this->tableIdent->write($writer);
         $this->optValidation->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new altPartNameItem, preserving every other field.
+     */
+    public function withAltPartNameItem(\SqlSemantics\Statement\Model\MySql\Role\AltPartNameItemForm $altPartNameItem): self
+    {
+        return new self($altPartNameItem, $this->tableIdent, $this->optValidation);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->altPartNameItem, $tableIdent, $this->optValidation);
+    }
+
+    /**
+     * Returns a copy with a new optValidation, preserving every other field.
+     */
+    public function withOptValidation(\SqlSemantics\Statement\Model\MySql\Role\OptValidationForm $optValidation): self
+    {
+        return new self($this->altPartNameItem, $this->tableIdent, $optValidation);
     }
 }

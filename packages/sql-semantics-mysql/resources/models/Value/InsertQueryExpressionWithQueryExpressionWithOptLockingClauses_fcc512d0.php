@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertQueryExpressionWithQueryExpressionWithOptLockingClauses_fcc512d0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertQueryExpressionWithQueryExpressionWithOptLockingClauses_fcc512d0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertQueryExpressionWithQueryExpressionWithOptLockingClauses_fcc512d0 implements \SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm, \SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm $queryExpressionWithOptLockingClauses,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionWithOptLockingClauses), 'The queryExpressionWithOptLockingClauses must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class InsertQueryExpressionWithQueryExpressionWithOptLockingClauses_fcc512
         $writer->append('(');
         $writer->append(')');
         $this->queryExpressionWithOptLockingClauses->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new queryExpressionWithOptLockingClauses, preserving every other field.
+     */
+    public function withQueryExpressionWithOptLockingClauses(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm $queryExpressionWithOptLockingClauses): self
+    {
+        return new self($queryExpressionWithOptLockingClauses);
     }
 }

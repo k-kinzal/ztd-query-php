@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea implements \SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionForm, \SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionElForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea implements \Sql
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm $optSliceBound,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm $optSliceBound2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSliceBound), 'The optSliceBound must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSliceBound2), 'The optSliceBound2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class IndirectionElWithOptSliceBoundOptSliceBound_bc1730ea implements \Sql
         $writer->append(':');
         $this->optSliceBound2->write($writer);
         $writer->append(']');
+    }
+
+    /**
+     * Returns a copy with a new optSliceBound, preserving every other field.
+     */
+    public function withOptSliceBound(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm $optSliceBound): self
+    {
+        return new self($optSliceBound, $this->optSliceBound2);
+    }
+
+    /**
+     * Returns a copy with a new optSliceBound2, preserving every other field.
+     */
+    public function withOptSliceBound2(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm $optSliceBound2): self
+    {
+        return new self($this->optSliceBound, $optSliceBound2);
     }
 }

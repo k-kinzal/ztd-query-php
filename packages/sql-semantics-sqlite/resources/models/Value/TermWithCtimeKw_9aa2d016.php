@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TermWithCtimeKw_9aa2d016 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TermWithCtimeKw_9aa2d016 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TermWithCtimeKw_9aa2d016 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\TermForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $ctimeKw,
     ) {
+        $this->assertMatchesPattern($ctimeKw, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['CTIME_KW'], 'The ctimeKw must be a complete CTIME_KW lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TermWithCtimeKw_9aa2d016 implements \SqlSemantics\Statement\Model\Sq
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->ctimeKw);
+    }
+
+    /**
+     * Returns a copy with a new ctimeKw, preserving every other field.
+     */
+    public function withCtimeKw(string $ctimeKw): self
+    {
+        return new self($ctimeKw);
     }
 }

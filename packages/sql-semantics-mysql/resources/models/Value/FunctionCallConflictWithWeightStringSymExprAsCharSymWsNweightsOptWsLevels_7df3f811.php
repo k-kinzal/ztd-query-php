@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FunctionCallConflictWithWeightStringSymExprAsCharSymWsNweightsOptWsLevels_7df3f811 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FunctionCallConflictWithWeightStringSymExprAsCharSymWsNweightsOptWsLevels_7df3f811 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FunctionCallConflictWithWeightStringSymExprAsCharSymWsNweightsOptWsLevels_7df3f811 implements \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\FunctionCallConflictForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class FunctionCallConflictWithWeightStringSymExprAsCharSymWsNweightsOptWsL
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsNweightsForm $wsNweights,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWsLevelsForm $optWsLevels,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($charSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['CHAR_SYM'], 'The charSym must be a complete CHAR_SYM lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsNweights), 'The wsNweights must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWsLevels), 'The optWsLevels must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +44,37 @@ final class FunctionCallConflictWithWeightStringSymExprAsCharSymWsNweightsOptWsL
         $this->wsNweights->write($writer);
         $this->optWsLevels->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->charSym, $this->wsNweights, $this->optWsLevels);
+    }
+
+    /**
+     * Returns a copy with a new charSym, preserving every other field.
+     */
+    public function withCharSym(string $charSym): self
+    {
+        return new self($this->expr, $charSym, $this->wsNweights, $this->optWsLevels);
+    }
+
+    /**
+     * Returns a copy with a new wsNweights, preserving every other field.
+     */
+    public function withWsNweights(\SqlSemantics\Statement\Model\MySql\Role\WsNweightsForm $wsNweights): self
+    {
+        return new self($this->expr, $this->charSym, $wsNweights, $this->optWsLevels);
+    }
+
+    /**
+     * Returns a copy with a new optWsLevels, preserving every other field.
+     */
+    public function withOptWsLevels(\SqlSemantics\Statement\Model\MySql\Role\OptWsLevelsForm $optWsLevels): self
+    {
+        return new self($this->expr, $this->charSym, $this->wsNweights, $optWsLevels);
     }
 }

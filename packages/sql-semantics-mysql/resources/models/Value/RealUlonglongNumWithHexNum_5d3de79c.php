@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RealUlonglongNumWithHexNum_5d3de79c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RealUlonglongNumWithHexNum_5d3de79c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RealUlonglongNumWithHexNum_5d3de79c implements \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm, \SqlSemantics\Statement\Model\MySql\Role\SizeNumberForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $hexNum,
     ) {
+        $this->assertMatchesPattern($hexNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['HEX_NUM'], 'The hexNum must be a complete HEX_NUM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class RealUlonglongNumWithHexNum_5d3de79c implements \SqlSemantics\Stateme
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->hexNum);
+    }
+
+    /**
+     * Returns a copy with a new hexNum, preserving every other field.
+     */
+    public function withHexNum(string $hexNum): self
+    {
+        return new self($hexNum);
     }
 }

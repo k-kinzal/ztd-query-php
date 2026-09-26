@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetClauseWithSetTargetListAExpr_2139c5ca $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetClauseWithSetTargetListAExpr_2139c5ca $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetClauseWithSetTargetListAExpr_2139c5ca implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SetClauseWithSetTargetListAExpr_2139c5ca implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetListForm $setTargetList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setTargetList), 'The setTargetList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class SetClauseWithSetTargetListAExpr_2139c5ca implements \SqlSemantics\St
         $writer->append(')');
         $writer->append('=');
         $this->aExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setTargetList, preserving every other field.
+     */
+    public function withSetTargetList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetListForm $setTargetList): self
+    {
+        return new self($setTargetList, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->setTargetList, $aExpr);
     }
 }

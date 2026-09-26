@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TruncateStmtWithTruncateOptTableRelationExprListOptRestartSeqsOptDropBehavior_5924edcc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TruncateStmtWithTruncateOptTableRelationExprListOptRestartSeqsOptDropBehavior_5924edcc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class TruncateStmtWithTruncateOptTableRelationExprListOptRestartSeqsOptDropBehavior_5924edcc implements \SqlSemantics\Statement\Model\PostgreSql\Role\TruncateStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class TruncateStmtWithTruncateOptTableRelationExprListOptRestartSeqsOptDropBehavior_5924edcc implements \SqlSemantics\Statement\Model\PostgreSql\Role\TruncateStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class TruncateStmtWithTruncateOptTableRelationExprListOptRestartSeqsOptDro
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptRestartSeqsForm $optRestartSeqs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTable), 'The optTable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprList), 'The relationExprList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optRestartSeqs), 'The optRestartSeqs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class TruncateStmtWithTruncateOptTableRelationExprListOptRestartSeqsOptDro
         $this->relationExprList->write($writer);
         $this->optRestartSeqs->write($writer);
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTable, preserving every other field.
+     */
+    public function withOptTable(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableForm $optTable): self
+    {
+        return new self($optTable, $this->relationExprList, $this->optRestartSeqs, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new relationExprList, preserving every other field.
+     */
+    public function withRelationExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList): self
+    {
+        return new self($this->optTable, $relationExprList, $this->optRestartSeqs, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optRestartSeqs, preserving every other field.
+     */
+    public function withOptRestartSeqs(\SqlSemantics\Statement\Model\PostgreSql\Role\OptRestartSeqsForm $optRestartSeqs): self
+    {
+        return new self($this->optTable, $this->relationExprList, $optRestartSeqs, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optDropBehavior, preserving every other field.
+     */
+    public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
+    {
+        return new self($this->optTable, $this->relationExprList, $this->optRestartSeqs, $optDropBehavior);
     }
 }

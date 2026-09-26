@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RenameWithRenameTableOrTablesTableToTableList_c1667a43 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RenameWithRenameTableOrTablesTableToTableList_c1667a43 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RenameWithRenameTableOrTablesTableToTableList_c1667a43 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\RenameForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class RenameWithRenameTableOrTablesTableToTableList_c1667a43 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\RenameForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RenameWithRenameTableOrTablesTableToTableList_c1667a43 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableToTableListForm $tableToTableList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOrTables), 'The tableOrTables must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableToTableList), 'The tableToTableList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class RenameWithRenameTableOrTablesTableToTableList_c1667a43 implements \S
         $writer->append('RENAME');
         $this->tableOrTables->write($writer);
         $this->tableToTableList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableOrTables, preserving every other field.
+     */
+    public function withTableOrTables(\SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables): self
+    {
+        return new self($tableOrTables, $this->tableToTableList);
+    }
+
+    /**
+     * Returns a copy with a new tableToTableList, preserving every other field.
+     */
+    public function withTableToTableList(\SqlSemantics\Statement\Model\MySql\Role\TableToTableListForm $tableToTableList): self
+    {
+        return new self($this->tableOrTables, $tableToTableList);
     }
 }

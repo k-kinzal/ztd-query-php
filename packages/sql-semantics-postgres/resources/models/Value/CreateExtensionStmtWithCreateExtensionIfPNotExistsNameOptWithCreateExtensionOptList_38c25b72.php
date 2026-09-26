@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateExtensionStmtWithCreateExtensionIfPNotExistsNameOptWithCreateExtensionOptList_38c25b72 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateExtensionStmtWithCreateExtensionIfPNotExistsNameOptWithCreateExtensionOptList_38c25b72 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateExtensionStmtWithCreateExtensionIfPNotExistsNameOptWithCreateExtensionOptList_38c25b72 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateExtensionStmtWithCreateExtensionIfPNotExistsNameOptWithCreateExtensionOptList_38c25b72 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateExtensionStmtWithCreateExtensionIfPNotExistsNameOptWithCreateE
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptListForm $createExtensionOptList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createExtensionOptList), 'The createExtensionOptList must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +42,29 @@ final class CreateExtensionStmtWithCreateExtensionIfPNotExistsNameOptWithCreateE
         $this->name->write($writer);
         $this->optWith->write($writer);
         $this->createExtensionOptList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->optWith, $this->createExtensionOptList);
+    }
+
+    /**
+     * Returns a copy with a new optWith, preserving every other field.
+     */
+    public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
+    {
+        return new self($this->name, $optWith, $this->createExtensionOptList);
+    }
+
+    /**
+     * Returns a copy with a new createExtensionOptList, preserving every other field.
+     */
+    public function withCreateExtensionOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateExtensionOptListForm $createExtensionOptList): self
+    {
+        return new self($this->name, $this->optWith, $createExtensionOptList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptRoleListWithOptRoleListCreateOptRoleElem_a047c5ba $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptRoleListWithOptRoleListCreateOptRoleElem_a047c5ba $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptRoleListWithOptRoleListCreateOptRoleElem_a047c5ba implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptRoleListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptRoleListWithOptRoleListCreateOptRoleElem_a047c5ba implements \Sql
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptRoleListForm $optRoleList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateOptRoleElemForm $createOptRoleElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optRoleList), 'The optRoleList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createOptRoleElem), 'The createOptRoleElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptRoleListWithOptRoleListCreateOptRoleElem_a047c5ba implements \Sql
     {
         $this->optRoleList->write($writer);
         $this->createOptRoleElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optRoleList, preserving every other field.
+     */
+    public function withOptRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptRoleListForm $optRoleList): self
+    {
+        return new self($optRoleList, $this->createOptRoleElem);
+    }
+
+    /**
+     * Returns a copy with a new createOptRoleElem, preserving every other field.
+     */
+    public function withCreateOptRoleElem(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateOptRoleElemForm $createOptRoleElem): self
+    {
+        return new self($this->optRoleList, $createOptRoleElem);
     }
 }

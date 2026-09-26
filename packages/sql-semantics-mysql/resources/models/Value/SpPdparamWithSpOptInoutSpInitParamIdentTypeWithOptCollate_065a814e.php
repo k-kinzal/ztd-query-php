@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpPdparamWithSpOptInoutSpInitParamIdentTypeWithOptCollate_065a814e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpPdparamWithSpOptInoutSpInitParamIdentTypeWithOptCollate_065a814e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpPdparamWithSpOptInoutSpInitParamIdentTypeWithOptCollate_065a814e implements \SqlSemantics\Statement\Model\MySql\Role\SpPdparamForm, \SqlSemantics\Statement\Model\MySql\Role\SpPdparamListForm, \SqlSemantics\Statement\Model\MySql\Role\SpPdparamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SpPdparamWithSpOptInoutSpInitParamIdentTypeWithOptCollate_065a814e i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeWithOptCollateForm $typeWithOptCollate,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spOptInout), 'The spOptInout must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spInitParam), 'The spInitParam must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($typeWithOptCollate), 'The typeWithOptCollate must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class SpPdparamWithSpOptInoutSpInitParamIdentTypeWithOptCollate_065a814e i
         $this->spInitParam->write($writer);
         $this->ident->write($writer);
         $this->typeWithOptCollate->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spOptInout, preserving every other field.
+     */
+    public function withSpOptInout(\SqlSemantics\Statement\Model\MySql\Role\SpOptInoutForm $spOptInout): self
+    {
+        return new self($spOptInout, $this->spInitParam, $this->ident, $this->typeWithOptCollate);
+    }
+
+    /**
+     * Returns a copy with a new spInitParam, preserving every other field.
+     */
+    public function withSpInitParam(\SqlSemantics\Statement\Model\MySql\Role\SpInitParamForm $spInitParam): self
+    {
+        return new self($this->spOptInout, $spInitParam, $this->ident, $this->typeWithOptCollate);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->spOptInout, $this->spInitParam, $ident, $this->typeWithOptCollate);
+    }
+
+    /**
+     * Returns a copy with a new typeWithOptCollate, preserving every other field.
+     */
+    public function withTypeWithOptCollate(\SqlSemantics\Statement\Model\MySql\Role\TypeWithOptCollateForm $typeWithOptCollate): self
+    {
+        return new self($this->spOptInout, $this->spInitParam, $this->ident, $typeWithOptCollate);
     }
 }

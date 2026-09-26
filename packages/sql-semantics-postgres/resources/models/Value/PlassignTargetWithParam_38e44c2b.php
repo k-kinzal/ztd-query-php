@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PlassignTargetWithParam_38e44c2b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PlassignTargetWithParam_38e44c2b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PlassignTargetWithParam_38e44c2b implements \SqlSemantics\Statement\Model\PostgreSql\Role\PlassignTargetForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $param,
     ) {
+        $this->assertMatchesPattern($param, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['PARAM'], 'The param must be a complete PARAM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class PlassignTargetWithParam_38e44c2b implements \SqlSemantics\Statement\
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->param);
+    }
+
+    /**
+     * Returns a copy with a new param, preserving every other field.
+     */
+    public function withParam(string $param): self
+    {
+        return new self($param);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadKeysWithTableIdentOptCacheKeyListOptIgnoreLeaves_e52fbc81 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadKeysWithTableIdentOptCacheKeyListOptIgnoreLeaves_e52fbc81 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PreloadKeysWithTableIdentOptCacheKeyListOptIgnoreLeaves_e52fbc81 implements \SqlSemantics\Statement\Model\MySql\Role\PreloadKeysForm, \SqlSemantics\Statement\Model\MySql\Role\PreloadListForm, \SqlSemantics\Statement\Model\MySql\Role\PreloadListOrPartsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class PreloadKeysWithTableIdentOptCacheKeyListOptIgnoreLeaves_e52fbc81 imp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCacheKeyListForm $optCacheKeyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm $optIgnoreLeaves,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCacheKeyList), 'The optCacheKeyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnoreLeaves), 'The optIgnoreLeaves must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class PreloadKeysWithTableIdentOptCacheKeyListOptIgnoreLeaves_e52fbc81 imp
         $this->tableIdent->write($writer);
         $this->optCacheKeyList->write($writer);
         $this->optIgnoreLeaves->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->optCacheKeyList, $this->optIgnoreLeaves);
+    }
+
+    /**
+     * Returns a copy with a new optCacheKeyList, preserving every other field.
+     */
+    public function withOptCacheKeyList(\SqlSemantics\Statement\Model\MySql\Role\OptCacheKeyListForm $optCacheKeyList): self
+    {
+        return new self($this->tableIdent, $optCacheKeyList, $this->optIgnoreLeaves);
+    }
+
+    /**
+     * Returns a copy with a new optIgnoreLeaves, preserving every other field.
+     */
+    public function withOptIgnoreLeaves(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm $optIgnoreLeaves): self
+    {
+        return new self($this->tableIdent, $this->optCacheKeyList, $optIgnoreLeaves);
     }
 }

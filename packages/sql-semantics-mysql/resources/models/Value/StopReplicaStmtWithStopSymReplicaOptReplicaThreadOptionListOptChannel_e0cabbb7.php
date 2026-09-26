@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StopReplicaStmtWithStopSymReplicaOptReplicaThreadOptionListOptChannel_e0cabbb7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StopReplicaStmtWithStopSymReplicaOptReplicaThreadOptionListOptChannel_e0cabbb7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class StopReplicaStmtWithStopSymReplicaOptReplicaThreadOptionListOptChannel_e0cabbb7 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StopReplicaStmtForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class StopReplicaStmtWithStopSymReplicaOptReplicaThreadOptionListOptChannel_e0cabbb7 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StopReplicaStmtForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class StopReplicaStmtWithStopSymReplicaOptReplicaThreadOptionListOptChanne
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReplicaThreadOptionListForm $optReplicaThreadOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replica), 'The replica must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optReplicaThreadOptionList), 'The optReplicaThreadOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class StopReplicaStmtWithStopSymReplicaOptReplicaThreadOptionListOptChanne
         $this->replica->write($writer);
         $this->optReplicaThreadOptionList->write($writer);
         $this->optChannel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new replica, preserving every other field.
+     */
+    public function withReplica(\SqlSemantics\Statement\Model\MySql\Role\ReplicaForm $replica): self
+    {
+        return new self($replica, $this->optReplicaThreadOptionList, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optReplicaThreadOptionList, preserving every other field.
+     */
+    public function withOptReplicaThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\OptReplicaThreadOptionListForm $optReplicaThreadOptionList): self
+    {
+        return new self($this->replica, $optReplicaThreadOptionList, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optChannel, preserving every other field.
+     */
+    public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
+    {
+        return new self($this->replica, $this->optReplicaThreadOptionList, $optChannel);
     }
 }

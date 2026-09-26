@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserStmtWithAlterUserCommandUserOptUserRegistration_6bae80ee $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserStmtWithAlterUserCommandUserOptUserRegistration_6bae80ee $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterUserStmtWithAlterUserCommandUserOptUserRegistration_6bae80ee implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class AlterUserStmtWithAlterUserCommandUserOptUserRegistration_6bae80ee implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterUserStmtWithAlterUserCommandUserOptUserRegistration_6bae80ee im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUserRegistrationForm $optUserRegistration,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUserCommand), 'The alterUserCommand must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUserRegistration), 'The optUserRegistration must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class AlterUserStmtWithAlterUserCommandUserOptUserRegistration_6bae80ee im
         $this->alterUserCommand->write($writer);
         $this->user->write($writer);
         $this->optUserRegistration->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterUserCommand, preserving every other field.
+     */
+    public function withAlterUserCommand(\SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand): self
+    {
+        return new self($alterUserCommand, $this->user, $this->optUserRegistration);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($this->alterUserCommand, $user, $this->optUserRegistration);
+    }
+
+    /**
+     * Returns a copy with a new optUserRegistration, preserving every other field.
+     */
+    public function withOptUserRegistration(\SqlSemantics\Statement\Model\MySql\Role\OptUserRegistrationForm $optUserRegistration): self
+    {
+        return new self($this->alterUserCommand, $this->user, $optUserRegistration);
     }
 }

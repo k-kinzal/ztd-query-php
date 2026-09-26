@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PurgeOptionsWithBinarySymLogsSymPurgeOption_9f6011a7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PurgeOptionsWithBinarySymLogsSymPurgeOption_9f6011a7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PurgeOptionsWithBinarySymLogsSymPurgeOption_9f6011a7 implements \SqlSemantics\Statement\Model\MySql\Role\PurgeOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PurgeOptionForm $purgeOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($purgeOption), 'The purgeOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class PurgeOptionsWithBinarySymLogsSymPurgeOption_9f6011a7 implements \Sql
         $writer->append('BINARY');
         $writer->append('LOGS');
         $this->purgeOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new purgeOption, preserving every other field.
+     */
+    public function withPurgeOption(\SqlSemantics\Statement\Model\MySql\Role\PurgeOptionForm $purgeOption): self
+    {
+        return new self($purgeOption);
     }
 }

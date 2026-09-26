@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntTypeWithTinyintSym_d556f0ba $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntTypeWithTinyintSym_d556f0ba $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntTypeWithTinyintSym_d556f0ba implements \SqlSemantics\Statement\Model\MySql\Role\IntTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $tinyintSym,
     ) {
+        $this->assertMatchesPattern($tinyintSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['TINYINT_SYM'], 'The tinyintSym must be a complete TINYINT_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IntTypeWithTinyintSym_d556f0ba implements \SqlSemantics\Statement\Mo
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->tinyintSym);
+    }
+
+    /**
+     * Returns a copy with a new tinyintSym, preserving every other field.
+     */
+    public function withTinyintSym(string $tinyintSym): self
+    {
+        return new self($tinyintSym);
     }
 }

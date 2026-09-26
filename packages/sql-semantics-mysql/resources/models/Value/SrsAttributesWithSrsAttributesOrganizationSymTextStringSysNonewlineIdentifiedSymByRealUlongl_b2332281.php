@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SrsAttributesWithSrsAttributesOrganizationSymTextStringSysNonewlineIdentifiedSymByRealUlongl_b2332281 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SrsAttributesWithSrsAttributesOrganizationSymTextStringSysNonewlineIdentifiedSymByRealUlongl_b2332281 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SrsAttributesWithSrsAttributesOrganizationSymTextStringSysNonewlineIdentifiedSymByRealUlongl_b2332281 implements \SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SrsAttributesWithSrsAttributesOrganizationSymTextStringSysNonewlineI
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($srsAttributes), 'The srsAttributes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlonglongNum), 'The realUlonglongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class SrsAttributesWithSrsAttributesOrganizationSymTextStringSysNonewlineI
         $writer->append('IDENTIFIED');
         $writer->append('BY');
         $this->realUlonglongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new srsAttributes, preserving every other field.
+     */
+    public function withSrsAttributes(\SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes): self
+    {
+        return new self($srsAttributes, $this->textStringSysNonewline, $this->realUlonglongNum);
+    }
+
+    /**
+     * Returns a copy with a new textStringSysNonewline, preserving every other field.
+     */
+    public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
+    {
+        return new self($this->srsAttributes, $textStringSysNonewline, $this->realUlonglongNum);
+    }
+
+    /**
+     * Returns a copy with a new realUlonglongNum, preserving every other field.
+     */
+    public function withRealUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum): self
+    {
+        return new self($this->srsAttributes, $this->textStringSysNonewline, $realUlonglongNum);
     }
 }

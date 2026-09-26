@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SingleMultiWithFromTableAliasRefListUsingJoinTableListWhereClause_88f99312 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SingleMultiWithFromTableAliasRefListUsingJoinTableListWhereClause_88f99312 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SingleMultiWithFromTableAliasRefListUsingJoinTableListWhereClause_88f99312 implements \SqlSemantics\Statement\Model\MySql\Role\SingleMultiForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SingleMultiWithFromTableAliasRefListUsingJoinTableListWhereClause_88
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableAliasRefList), 'The tableAliasRefList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($joinTableList), 'The joinTableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class SingleMultiWithFromTableAliasRefListUsingJoinTableListWhereClause_88
         $writer->append('USING');
         $this->joinTableList->write($writer);
         $this->where->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableAliasRefList, preserving every other field.
+     */
+    public function withTableAliasRefList(\SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList): self
+    {
+        return new self($tableAliasRefList, $this->joinTableList, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new joinTableList, preserving every other field.
+     */
+    public function withJoinTableList(\SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList): self
+    {
+        return new self($this->tableAliasRefList, $joinTableList, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where): self
+    {
+        return new self($this->tableAliasRefList, $this->joinTableList, $where);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SecLabelStmtWithSecurityLabelOptProviderOnFunctionFunctionWithArgtypesIsSecurityLabel_911fe2d0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SecLabelStmtWithSecurityLabelOptProviderOnFunctionFunctionWithArgtypesIsSecurityLabel_911fe2d0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SecLabelStmtWithSecurityLabelOptProviderOnFunctionFunctionWithArgtypesIsSecurityLabel_911fe2d0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SecLabelStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class SecLabelStmtWithSecurityLabelOptProviderOnFunctionFunctionWithArgtypesIsSecurityLabel_911fe2d0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SecLabelStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SecLabelStmtWithSecurityLabelOptProviderOnFunctionFunctionWithArgtyp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SecurityLabelForm $securityLabel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optProvider), 'The optProvider must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes), 'The functionWithArgtypes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($securityLabel), 'The securityLabel must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +42,29 @@ final class SecLabelStmtWithSecurityLabelOptProviderOnFunctionFunctionWithArgtyp
         $this->functionWithArgtypes->write($writer);
         $writer->append('IS');
         $this->securityLabel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optProvider, preserving every other field.
+     */
+    public function withOptProvider(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProviderForm $optProvider): self
+    {
+        return new self($optProvider, $this->functionWithArgtypes, $this->securityLabel);
+    }
+
+    /**
+     * Returns a copy with a new functionWithArgtypes, preserving every other field.
+     */
+    public function withFunctionWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes): self
+    {
+        return new self($this->optProvider, $functionWithArgtypes, $this->securityLabel);
+    }
+
+    /**
+     * Returns a copy with a new securityLabel, preserving every other field.
+     */
+    public function withSecurityLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\SecurityLabelForm $securityLabel): self
+    {
+        return new self($this->optProvider, $this->functionWithArgtypes, $securityLabel);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableAliasRefListWithTableAliasRefListTableIdentOptWild_364e8f7a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableAliasRefListWithTableAliasRefListTableIdentOptWild_364e8f7a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableAliasRefListWithTableAliasRefListTableIdentOptWild_364e8f7a implements \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableAliasRefListWithTableAliasRefListTableIdentOptWild_364e8f7a imp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentOptWildForm $tableIdentOptWild,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableAliasRefList), 'The tableAliasRefList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdentOptWild), 'The tableIdentOptWild must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableAliasRefListWithTableAliasRefListTableIdentOptWild_364e8f7a imp
         $this->tableAliasRefList->write($writer);
         $writer->append(',');
         $this->tableIdentOptWild->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableAliasRefList, preserving every other field.
+     */
+    public function withTableAliasRefList(\SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList): self
+    {
+        return new self($tableAliasRefList, $this->tableIdentOptWild);
+    }
+
+    /**
+     * Returns a copy with a new tableIdentOptWild, preserving every other field.
+     */
+    public function withTableIdentOptWild(\SqlSemantics\Statement\Model\MySql\Role\TableIdentOptWildForm $tableIdentOptWild): self
+    {
+        return new self($this->tableAliasRefList, $tableIdentOptWild);
     }
 }

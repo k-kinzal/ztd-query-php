@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntoDestinationWithDumpfileTextStringFilesystem_3f14f32a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntoDestinationWithDumpfileTextStringFilesystem_3f14f32a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntoDestinationWithDumpfileTextStringFilesystem_3f14f32a implements \SqlSemantics\Statement\Model\MySql\Role\IntoDestinationForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringFilesystem), 'The textStringFilesystem must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class IntoDestinationWithDumpfileTextStringFilesystem_3f14f32a implements 
     {
         $writer->append('DUMPFILE');
         $this->textStringFilesystem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textStringFilesystem, preserving every other field.
+     */
+    public function withTextStringFilesystem(\SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem): self
+    {
+        return new self($textStringFilesystem);
     }
 }

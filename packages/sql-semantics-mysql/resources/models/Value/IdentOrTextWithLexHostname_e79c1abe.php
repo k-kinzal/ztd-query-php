@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentOrTextWithLexHostname_e79c1abe $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentOrTextWithLexHostname_e79c1abe $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IdentOrTextWithLexHostname_e79c1abe implements \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm, \SqlSemantics\Statement\Model\MySql\Role\CharsetNameOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\CollationNameForm, \SqlSemantics\Statement\Model\MySql\Role\CollationNameOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\EngineOrAllForm, \SqlSemantics\Statement\Model\MySql\Role\GrantListForm, \SqlSemantics\Statement\Model\MySql\Role\GrantUserForm, \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm, \SqlSemantics\Statement\Model\MySql\Role\IntoDestinationForm, \SqlSemantics\Statement\Model\MySql\Role\KnownStorageEnginesForm, \SqlSemantics\Statement\Model\MySql\Role\OldOrNewCharsetNameForm, \SqlSemantics\Statement\Model\MySql\Role\OldOrNewCharsetNameOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\PrivilegeCheckDefForm, \SqlSemantics\Statement\Model\MySql\Role\RvalueSystemVariableForm, \SqlSemantics\Statement\Model\MySql\Role\SelectVarIdentForm, \SqlSemantics\Statement\Model\MySql\Role\SelectVarListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectVarListInitForm, \SqlSemantics\Statement\Model\MySql\Role\StorageEnginesForm, \SqlSemantics\Statement\Model\MySql\Role\SubNameForm, \SqlSemantics\Statement\Model\MySql\Role\UserForm, \SqlSemantics\Statement\Model\MySql\Role\UserIdentOrTextForm, \SqlSemantics\Statement\Model\MySql\Role\UserListForm, \SqlSemantics\Statement\Model\MySql\Role\VariableAuxForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $name,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['LEX_HOSTNAME'], 'The name must be a complete LEX_HOSTNAME lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IdentOrTextWithLexHostname_e79c1abe implements \SqlSemantics\Stateme
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name);
     }
 }

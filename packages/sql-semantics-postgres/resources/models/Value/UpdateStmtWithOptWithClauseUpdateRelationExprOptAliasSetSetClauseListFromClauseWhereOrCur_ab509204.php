@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseListFromClauseWhereOrCur_ab509204 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseListFromClauseWhereOrCur_ab509204 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseListFromClauseWhereOrCur_ab509204 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UpdateStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseListFromClauseWhereOrCur_ab509204 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UpdateStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhereOrCurrentClauseForm $whereOrCurrentClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprOptAlias), 'The relationExprOptAlias must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setClauseList), 'The setClauseList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($from), 'The from must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($whereOrCurrentClause), 'The whereOrCurrentClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($returningClause), 'The returningClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +48,53 @@ final class UpdateStmtWithOptWithClauseUpdateRelationExprOptAliasSetSetClauseLis
         $this->from->write($writer);
         $this->whereOrCurrentClause->write($writer);
         $this->returningClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new with, preserving every other field.
+     */
+    public function withWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with): self
+    {
+        return new self($with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new relationExprOptAlias, preserving every other field.
+     */
+    public function withRelationExprOptAlias(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprOptAliasForm $relationExprOptAlias): self
+    {
+        return new self($this->with, $relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new setClauseList, preserving every other field.
+     */
+    public function withSetClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList): self
+    {
+        return new self($this->with, $this->relationExprOptAlias, $setClauseList, $this->from, $this->whereOrCurrentClause, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new from, preserving every other field.
+     */
+    public function withFrom(\SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm $from): self
+    {
+        return new self($this->with, $this->relationExprOptAlias, $this->setClauseList, $from, $this->whereOrCurrentClause, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new whereOrCurrentClause, preserving every other field.
+     */
+    public function withWhereOrCurrentClause(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereOrCurrentClauseForm $whereOrCurrentClause): self
+    {
+        return new self($this->with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $whereOrCurrentClause, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new returningClause, preserving every other field.
+     */
+    public function withReturningClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause): self
+    {
+        return new self($this->with, $this->relationExprOptAlias, $this->setClauseList, $this->from, $this->whereOrCurrentClause, $returningClause);
     }
 }

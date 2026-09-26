@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OverClauseWithOverLpWindowRp_f91aff11 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OverClauseWithOverLpWindowRp_f91aff11 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OverClauseWithOverLpWindowRp_f91aff11 implements \SqlSemantics\Statement\Model\Sqlite\Role\FilterOverForm, \SqlSemantics\Statement\Model\Sqlite\Role\OverClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WindowForm $window,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($window), 'The window must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class OverClauseWithOverLpWindowRp_f91aff11 implements \SqlSemantics\State
         $writer->append('(');
         $this->window->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new window, preserving every other field.
+     */
+    public function withWindow(\SqlSemantics\Statement\Model\Sqlite\Role\WindowForm $window): self
+    {
+        return new self($window);
     }
 }

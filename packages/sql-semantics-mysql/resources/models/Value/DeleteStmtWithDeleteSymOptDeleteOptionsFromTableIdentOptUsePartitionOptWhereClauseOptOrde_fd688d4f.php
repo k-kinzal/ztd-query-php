@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DeleteStmtWithDeleteSymOptDeleteOptionsFromTableIdentOptUsePartitionOptWhereClauseOptOrde_fd688d4f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DeleteStmtWithDeleteSymOptDeleteOptionsFromTableIdentOptUsePartitionOptWhereClauseOptOrde_fd688d4f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DeleteStmtWithDeleteSymOptDeleteOptionsFromTableIdentOptUsePartitionOptWhereClauseOptOrde_fd688d4f implements \SqlSemantics\Statement\Model\MySql\Role\DeleteStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class DeleteStmtWithDeleteSymOptDeleteOptionsFromTableIdentOptUsePartitionOptWhereClauseOptOrde_fd688d4f implements \SqlSemantics\Statement\Model\MySql\Role\DeleteStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class DeleteStmtWithDeleteSymOptDeleteOptionsFromTableIdentOptUsePartition
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSimpleLimitForm $optSimpleLimit,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDeleteOptions), 'The optDeleteOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUsePartition), 'The optUsePartition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSimpleLimit), 'The optSimpleLimit must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +48,53 @@ final class DeleteStmtWithDeleteSymOptDeleteOptionsFromTableIdentOptUsePartition
         $this->where->write($writer);
         $this->orderBy->write($writer);
         $this->optSimpleLimit->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optDeleteOptions, preserving every other field.
+     */
+    public function withOptDeleteOptions(\SqlSemantics\Statement\Model\MySql\Role\OptDeleteOptionsForm $optDeleteOptions): self
+    {
+        return new self($optDeleteOptions, $this->tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->optDeleteOptions, $tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit);
+    }
+
+    /**
+     * Returns a copy with a new optUsePartition, preserving every other field.
+     */
+    public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
+    {
+        return new self($this->optDeleteOptions, $this->tableIdent, $optUsePartition, $this->where, $this->orderBy, $this->optSimpleLimit);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
+    {
+        return new self($this->optDeleteOptions, $this->tableIdent, $this->optUsePartition, $where, $this->orderBy, $this->optSimpleLimit);
+    }
+
+    /**
+     * Returns a copy with a new orderBy, preserving every other field.
+     */
+    public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
+    {
+        return new self($this->optDeleteOptions, $this->tableIdent, $this->optUsePartition, $this->where, $orderBy, $this->optSimpleLimit);
+    }
+
+    /**
+     * Returns a copy with a new optSimpleLimit, preserving every other field.
+     */
+    public function withOptSimpleLimit(\SqlSemantics\Statement\Model\MySql\Role\OptSimpleLimitForm $optSimpleLimit): self
+    {
+        return new self($this->optDeleteOptions, $this->tableIdent, $this->optUsePartition, $this->where, $this->orderBy, $optSimpleLimit);
     }
 }

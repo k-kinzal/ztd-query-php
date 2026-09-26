@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ValidatorClauseWithNoValidator_5dd1c8ec $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ValidatorClauseWithNoValidator_5dd1c8ec $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ValidatorClauseWithNoValidator_5dd1c8ec implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptValidatorForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ValidatorClauseForm

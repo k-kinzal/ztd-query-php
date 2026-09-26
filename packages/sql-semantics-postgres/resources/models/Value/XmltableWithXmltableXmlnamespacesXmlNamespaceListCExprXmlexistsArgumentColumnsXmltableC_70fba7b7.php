@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmltableWithXmltableXmlnamespacesXmlNamespaceListCExprXmlexistsArgumentColumnsXmltableC_70fba7b7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmltableWithXmltableXmlnamespacesXmlNamespaceListCExprXmlexistsArgumentColumnsXmltableC_70fba7b7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmltableWithXmltableXmlnamespacesXmlNamespaceListCExprXmlexistsArgumentColumnsXmltableC_70fba7b7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class XmltableWithXmltableXmlnamespacesXmlNamespaceListCExprXmlexistsArgum
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlexistsArgumentForm $xmlexistsArgument,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm $xmltableColumnList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlNamespaceList), 'The xmlNamespaceList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cExpr), 'The cExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlexistsArgument), 'The xmlexistsArgument must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmltableColumnList), 'The xmltableColumnList must be a generated immutable SQL value.');
     }
 
     /**
@@ -42,5 +48,37 @@ final class XmltableWithXmltableXmlnamespacesXmlNamespaceListCExprXmlexistsArgum
         $writer->append('COLUMNS');
         $this->xmltableColumnList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new xmlNamespaceList, preserving every other field.
+     */
+    public function withXmlNamespaceList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceListForm $xmlNamespaceList): self
+    {
+        return new self($xmlNamespaceList, $this->cExpr, $this->xmlexistsArgument, $this->xmltableColumnList);
+    }
+
+    /**
+     * Returns a copy with a new cExpr, preserving every other field.
+     */
+    public function withCExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr): self
+    {
+        return new self($this->xmlNamespaceList, $cExpr, $this->xmlexistsArgument, $this->xmltableColumnList);
+    }
+
+    /**
+     * Returns a copy with a new xmlexistsArgument, preserving every other field.
+     */
+    public function withXmlexistsArgument(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlexistsArgumentForm $xmlexistsArgument): self
+    {
+        return new self($this->xmlNamespaceList, $this->cExpr, $xmlexistsArgument, $this->xmltableColumnList);
+    }
+
+    /**
+     * Returns a copy with a new xmltableColumnList, preserving every other field.
+     */
+    public function withXmltableColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm $xmltableColumnList): self
+    {
+        return new self($this->xmlNamespaceList, $this->cExpr, $this->xmlexistsArgument, $xmltableColumnList);
     }
 }

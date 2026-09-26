@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RevokeCommandWithGrantPrivilegesOnFunctionSymGrantIdentFromUserList_3828301b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RevokeCommandWithGrantPrivilegesOnFunctionSymGrantIdentFromUserList_3828301b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RevokeCommandWithGrantPrivilegesOnFunctionSymGrantIdentFromUserList_3828301b implements \SqlSemantics\Statement\Model\MySql\Role\RevokeCommandForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class RevokeCommandWithGrantPrivilegesOnFunctionSymGrantIdentFromUserList_
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm $grantIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantPrivileges), 'The grantPrivileges must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantIdent), 'The grantIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userList), 'The userList must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class RevokeCommandWithGrantPrivilegesOnFunctionSymGrantIdentFromUserList_
         $this->grantIdent->write($writer);
         $writer->append('FROM');
         $this->userList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new grantPrivileges, preserving every other field.
+     */
+    public function withGrantPrivileges(\SqlSemantics\Statement\Model\MySql\Role\GrantPrivilegesForm $grantPrivileges): self
+    {
+        return new self($grantPrivileges, $this->grantIdent, $this->userList);
+    }
+
+    /**
+     * Returns a copy with a new grantIdent, preserving every other field.
+     */
+    public function withGrantIdent(\SqlSemantics\Statement\Model\MySql\Role\GrantIdentForm $grantIdent): self
+    {
+        return new self($this->grantPrivileges, $grantIdent, $this->userList);
+    }
+
+    /**
+     * Returns a copy with a new userList, preserving every other field.
+     */
+    public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
+    {
+        return new self($this->grantPrivileges, $this->grantIdent, $userList);
     }
 }

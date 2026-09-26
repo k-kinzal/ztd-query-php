@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromOptLimitClause_749a6365 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromOptLimitClause_749a6365 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromOptLimitClause_749a6365 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ShowBinlogEventsStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromOptLimitClause_749a6365 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ShowBinlogEventsStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromO
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm $binlogFrom,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinlogIn), 'The optBinlogIn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($binlogFrom), 'The binlogFrom must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class ShowBinlogEventsStmtWithShowBinlogSymEventsSymOptBinlogInBinlogFromO
         $this->optBinlogIn->write($writer);
         $this->binlogFrom->write($writer);
         $this->optLimitClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optBinlogIn, preserving every other field.
+     */
+    public function withOptBinlogIn(\SqlSemantics\Statement\Model\MySql\Role\OptBinlogInForm $optBinlogIn): self
+    {
+        return new self($optBinlogIn, $this->binlogFrom, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new binlogFrom, preserving every other field.
+     */
+    public function withBinlogFrom(\SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm $binlogFrom): self
+    {
+        return new self($this->optBinlogIn, $binlogFrom, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClause, preserving every other field.
+     */
+    public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
+    {
+        return new self($this->optBinlogIn, $this->binlogFrom, $optLimitClause);
     }
 }

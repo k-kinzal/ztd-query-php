@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithOptFullTablesOptDbOptWildOrWhere_1b84ea15 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithOptFullTablesOptDbOptWildOrWhere_1b84ea15 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithOptFullTablesOptDbOptWildOrWhere_1b84ea15 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ShowParamWithOptFullTablesOptDbOptWildOrWhere_1b84ea15 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFull), 'The optFull must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDb), 'The optDb must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWildOrWhere), 'The optWildOrWhere must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class ShowParamWithOptFullTablesOptDbOptWildOrWhere_1b84ea15 implements \S
         $writer->append('TABLES');
         $this->optDb->write($writer);
         $this->optWildOrWhere->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optFull, preserving every other field.
+     */
+    public function withOptFull(\SqlSemantics\Statement\Model\MySql\Role\OptFullForm $optFull): self
+    {
+        return new self($optFull, $this->optDb, $this->optWildOrWhere);
+    }
+
+    /**
+     * Returns a copy with a new optDb, preserving every other field.
+     */
+    public function withOptDb(\SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb): self
+    {
+        return new self($this->optFull, $optDb, $this->optWildOrWhere);
+    }
+
+    /**
+     * Returns a copy with a new optWildOrWhere, preserving every other field.
+     */
+    public function withOptWildOrWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere): self
+    {
+        return new self($this->optFull, $this->optDb, $optWildOrWhere);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithDropOptColumnIdentOptRestrict_0b5b1d41 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithDropOptColumnIdentOptRestrict_0b5b1d41 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithDropOptColumnIdentOptRestrict_0b5b1d41 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterListItemWithDropOptColumnIdentOptRestrict_0b5b1d41 implements \
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm $optRestrict,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRestrict), 'The optRestrict must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class AlterListItemWithDropOptColumnIdentOptRestrict_0b5b1d41 implements \
         $this->optColumn->write($writer);
         $this->ident->write($writer);
         $this->optRestrict->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optColumn, preserving every other field.
+     */
+    public function withOptColumn(\SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn): self
+    {
+        return new self($optColumn, $this->ident, $this->optRestrict);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->optColumn, $ident, $this->optRestrict);
+    }
+
+    /**
+     * Returns a copy with a new optRestrict, preserving every other field.
+     */
+    public function withOptRestrict(\SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm $optRestrict): self
+    {
+        return new self($this->optColumn, $this->ident, $optRestrict);
     }
 }

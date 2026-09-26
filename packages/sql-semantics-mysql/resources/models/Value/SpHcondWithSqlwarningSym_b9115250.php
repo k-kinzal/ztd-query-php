@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpHcondWithSqlwarningSym_b9115250 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpHcondWithSqlwarningSym_b9115250 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpHcondWithSqlwarningSym_b9115250 implements \SqlSemantics\Statement\Model\MySql\Role\SpHcondForm, \SqlSemantics\Statement\Model\MySql\Role\SpHcondElementForm, \SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm

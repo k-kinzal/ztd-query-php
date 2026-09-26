@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpElseifsWithElseifSymSpIf_c8735ebb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpElseifsWithElseifSymSpIf_c8735ebb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpElseifsWithElseifSymSpIf_c8735ebb implements \SqlSemantics\Statement\Model\MySql\Role\SpElseifsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpIfForm $spIf,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spIf), 'The spIf must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SpElseifsWithElseifSymSpIf_c8735ebb implements \SqlSemantics\Stateme
     {
         $writer->append('ELSEIF');
         $this->spIf->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spIf, preserving every other field.
+     */
+    public function withSpIf(\SqlSemantics\Statement\Model\MySql\Role\SpIfForm $spIf): self
+    {
+        return new self($spIf);
     }
 }

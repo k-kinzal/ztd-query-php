@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_3b18d0d8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_3b18d0d8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_3b18d0d8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateAmStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_3b18d0d8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateAmStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AmTypeForm $amType,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($amType), 'The amType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($handlerName), 'The handlerName must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +42,29 @@ final class CreateAmStmtWithCreateAccessMethodNameTypePAmTypeHandlerHandlerName_
         $this->amType->write($writer);
         $writer->append('HANDLER');
         $this->handlerName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->amType, $this->handlerName);
+    }
+
+    /**
+     * Returns a copy with a new amType, preserving every other field.
+     */
+    public function withAmType(\SqlSemantics\Statement\Model\PostgreSql\Role\AmTypeForm $amType): self
+    {
+        return new self($this->name, $amType, $this->handlerName);
+    }
+
+    /**
+     * Returns a copy with a new handlerName, preserving every other field.
+     */
+    public function withHandlerName(\SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName): self
+    {
+        return new self($this->name, $this->amType, $handlerName);
     }
 }

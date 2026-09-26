@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewQueryBlockWithQueryExpressionWithOptLockingClausesViewCheckOption_9ccd525e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewQueryBlockWithQueryExpressionWithOptLockingClausesViewCheckOption_9ccd525e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewQueryBlockWithQueryExpressionWithOptLockingClausesViewCheckOption_9ccd525e implements \SqlSemantics\Statement\Model\MySql\Role\ViewQueryBlockForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ViewQueryBlockWithQueryExpressionWithOptLockingClausesViewCheckOptio
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm $queryExpressionWithOptLockingClauses,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewCheckOptionForm $viewCheckOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionWithOptLockingClauses), 'The queryExpressionWithOptLockingClauses must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewCheckOption), 'The viewCheckOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ViewQueryBlockWithQueryExpressionWithOptLockingClausesViewCheckOptio
     {
         $this->queryExpressionWithOptLockingClauses->write($writer);
         $this->viewCheckOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new queryExpressionWithOptLockingClauses, preserving every other field.
+     */
+    public function withQueryExpressionWithOptLockingClauses(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm $queryExpressionWithOptLockingClauses): self
+    {
+        return new self($queryExpressionWithOptLockingClauses, $this->viewCheckOption);
+    }
+
+    /**
+     * Returns a copy with a new viewCheckOption, preserving every other field.
+     */
+    public function withViewCheckOption(\SqlSemantics\Statement\Model\MySql\Role\ViewCheckOptionForm $viewCheckOption): self
+    {
+        return new self($this->queryExpressionWithOptLockingClauses, $viewCheckOption);
     }
 }

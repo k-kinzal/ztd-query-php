@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UndoTablespaceOptionListWithUndoTablespaceOptionListOptCommaUndoTablespaceOption_2c6d0b06 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UndoTablespaceOptionListWithUndoTablespaceOptionListOptCommaUndoTablespaceOption_2c6d0b06 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UndoTablespaceOptionListWithUndoTablespaceOptionListOptCommaUndoTablespaceOption_2c6d0b06 implements \SqlSemantics\Statement\Model\MySql\Role\OptUndoTablespaceOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class UndoTablespaceOptionListWithUndoTablespaceOptionListOptCommaUndoTabl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionForm $undoTablespaceOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($undoTablespaceOptionList), 'The undoTablespaceOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($undoTablespaceOption), 'The undoTablespaceOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class UndoTablespaceOptionListWithUndoTablespaceOptionListOptCommaUndoTabl
         $this->undoTablespaceOptionList->write($writer);
         $this->optComma->write($writer);
         $this->undoTablespaceOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new undoTablespaceOptionList, preserving every other field.
+     */
+    public function withUndoTablespaceOptionList(\SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionListForm $undoTablespaceOptionList): self
+    {
+        return new self($undoTablespaceOptionList, $this->optComma, $this->undoTablespaceOption);
+    }
+
+    /**
+     * Returns a copy with a new optComma, preserving every other field.
+     */
+    public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
+    {
+        return new self($this->undoTablespaceOptionList, $optComma, $this->undoTablespaceOption);
+    }
+
+    /**
+     * Returns a copy with a new undoTablespaceOption, preserving every other field.
+     */
+    public function withUndoTablespaceOption(\SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionForm $undoTablespaceOption): self
+    {
+        return new self($this->undoTablespaceOptionList, $this->optComma, $undoTablespaceOption);
     }
 }

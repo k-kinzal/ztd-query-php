@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAddPColumnDef_94749c41 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAddPColumnDef_94749c41 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdWithAddPColumnDef_94749c41 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnDefForm $columnDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnDef), 'The columnDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AlterTableCmdWithAddPColumnDef_94749c41 implements \SqlSemantics\Sta
     {
         $writer->append('ADD');
         $this->columnDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columnDef, preserving every other field.
+     */
+    public function withColumnDef(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnDefForm $columnDef): self
+    {
+        return new self($columnDef);
     }
 }

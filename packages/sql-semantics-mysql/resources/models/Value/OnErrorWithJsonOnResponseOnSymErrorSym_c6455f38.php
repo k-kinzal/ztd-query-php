@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OnErrorWithJsonOnResponseOnSymErrorSym_c6455f38 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OnErrorWithJsonOnResponseOnSymErrorSym_c6455f38 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OnErrorWithJsonOnResponseOnSymErrorSym_c6455f38 implements \SqlSemantics\Statement\Model\MySql\Role\OnErrorForm, \SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorForm, \SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorJsonTableForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JsonOnResponseForm $jsonOnResponse,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($jsonOnResponse), 'The jsonOnResponse must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OnErrorWithJsonOnResponseOnSymErrorSym_c6455f38 implements \SqlSeman
         $this->jsonOnResponse->write($writer);
         $writer->append('ON');
         $writer->append('ERROR');
+    }
+
+    /**
+     * Returns a copy with a new jsonOnResponse, preserving every other field.
+     */
+    public function withJsonOnResponse(\SqlSemantics\Statement\Model\MySql\Role\JsonOnResponseForm $jsonOnResponse): self
+    {
+        return new self($jsonOnResponse);
     }
 }

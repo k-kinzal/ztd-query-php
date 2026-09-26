@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterOptColumnColIdAddPGeneratedGeneratedWhenAsIdentityPOptParenthesizedSeq_2b4cc759 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterOptColumnColIdAddPGeneratedGeneratedWhenAsIdentityPOptParenthesizedSeq_2b4cc759 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdWithAlterOptColumnColIdAddPGeneratedGeneratedWhenAsIdentityPOptParenthesizedSeq_2b4cc759 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class AlterTableCmdWithAlterOptColumnColIdAddPGeneratedGeneratedWhenAsIden
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GeneratedWhenForm $generatedWhen,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptParenthesizedSeqOptListForm $optParenthesizedSeqOptList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($generatedWhen), 'The generatedWhen must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optParenthesizedSeqOptList), 'The optParenthesizedSeqOptList must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +45,37 @@ final class AlterTableCmdWithAlterOptColumnColIdAddPGeneratedGeneratedWhenAsIden
         $writer->append('AS');
         $writer->append('IDENTITY');
         $this->optParenthesizedSeqOptList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optColumn, preserving every other field.
+     */
+    public function withOptColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn): self
+    {
+        return new self($optColumn, $this->colId, $this->generatedWhen, $this->optParenthesizedSeqOptList);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($this->optColumn, $colId, $this->generatedWhen, $this->optParenthesizedSeqOptList);
+    }
+
+    /**
+     * Returns a copy with a new generatedWhen, preserving every other field.
+     */
+    public function withGeneratedWhen(\SqlSemantics\Statement\Model\PostgreSql\Role\GeneratedWhenForm $generatedWhen): self
+    {
+        return new self($this->optColumn, $this->colId, $generatedWhen, $this->optParenthesizedSeqOptList);
+    }
+
+    /**
+     * Returns a copy with a new optParenthesizedSeqOptList, preserving every other field.
+     */
+    public function withOptParenthesizedSeqOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptParenthesizedSeqOptListForm $optParenthesizedSeqOptList): self
+    {
+        return new self($this->optColumn, $this->colId, $this->generatedWhen, $optParenthesizedSeqOptList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptCycleClauseWithCycleColumnListSetColIdToAexprConstDefaultAexprConstUsingColId_93eb5ab1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptCycleClauseWithCycleColumnListSetColIdToAexprConstDefaultAexprConstUsingColId_93eb5ab1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptCycleClauseWithCycleColumnListSetColIdToAexprConstDefaultAexprConstUsingColId_93eb5ab1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptCycleClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class OptCycleClauseWithCycleColumnListSetColIdToAexprConstDefaultAexprCon
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AexprConstForm $aexprConst2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aexprConst), 'The aexprConst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aexprConst2), 'The aexprConst2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId2), 'The colId2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -41,5 +48,45 @@ final class OptCycleClauseWithCycleColumnListSetColIdToAexprConstDefaultAexprCon
         $this->aexprConst2->write($writer);
         $writer->append('USING');
         $this->colId2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columnList, preserving every other field.
+     */
+    public function withColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList): self
+    {
+        return new self($columnList, $this->colId, $this->aexprConst, $this->aexprConst2, $this->colId2);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($this->columnList, $colId, $this->aexprConst, $this->aexprConst2, $this->colId2);
+    }
+
+    /**
+     * Returns a copy with a new aexprConst, preserving every other field.
+     */
+    public function withAexprConst(\SqlSemantics\Statement\Model\PostgreSql\Role\AexprConstForm $aexprConst): self
+    {
+        return new self($this->columnList, $this->colId, $aexprConst, $this->aexprConst2, $this->colId2);
+    }
+
+    /**
+     * Returns a copy with a new aexprConst2, preserving every other field.
+     */
+    public function withAexprConst2(\SqlSemantics\Statement\Model\PostgreSql\Role\AexprConstForm $aexprConst2): self
+    {
+        return new self($this->columnList, $this->colId, $this->aexprConst, $aexprConst2, $this->colId2);
+    }
+
+    /**
+     * Returns a copy with a new colId2, preserving every other field.
+     */
+    public function withColId2(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId2): self
+    {
+        return new self($this->columnList, $this->colId, $this->aexprConst, $this->aexprConst2, $colId2);
     }
 }

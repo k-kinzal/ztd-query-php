@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableWildWithIdentIdent_e2b883f2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableWildWithIdentIdent_e2b883f2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableWildWithIdentIdent_e2b883f2 implements \SqlSemantics\Statement\Model\MySql\Role\FieldsForm, \SqlSemantics\Statement\Model\MySql\Role\InsertIdentForm, \SqlSemantics\Statement\Model\MySql\Role\SelectItemForm, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm, \SqlSemantics\Statement\Model\MySql\Role\TableWildForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableWildWithIdentIdent_e2b883f2 implements \SqlSemantics\Statement\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident2), 'The ident2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class TableWildWithIdentIdent_e2b883f2 implements \SqlSemantics\Statement\
         $this->ident2->write($writer);
         $writer->append('.');
         $writer->append('*');
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->ident2);
+    }
+
+    /**
+     * Returns a copy with a new ident2, preserving every other field.
+     */
+    public function withIdent2(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident2): self
+    {
+        return new self($this->ident, $ident2);
     }
 }

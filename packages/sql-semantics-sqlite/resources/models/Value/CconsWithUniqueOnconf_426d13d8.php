@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CconsWithUniqueOnconf_426d13d8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CconsWithUniqueOnconf_426d13d8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CconsWithUniqueOnconf_426d13d8 implements \SqlSemantics\Statement\Model\Sqlite\Role\CconsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm $onconf,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($onconf), 'The onconf must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CconsWithUniqueOnconf_426d13d8 implements \SqlSemantics\Statement\Mo
     {
         $writer->append('UNIQUE');
         $this->onconf->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new onconf, preserving every other field.
+     */
+    public function withOnconf(\SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm $onconf): self
+    {
+        return new self($onconf);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIgnoreLinesWithIgnoreSymNumLinesOrRows_518c1061 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIgnoreLinesWithIgnoreSymNumLinesOrRows_518c1061 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIgnoreLinesWithIgnoreSymNumLinesOrRows_518c1061 implements \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLinesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptIgnoreLinesWithIgnoreSymNumLinesOrRows_518c1061 implements \SqlSe
         public readonly string $value,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LinesOrRowsForm $linesOrRows,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($linesOrRows), 'The linesOrRows must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptIgnoreLinesWithIgnoreSymNumLinesOrRows_518c1061 implements \SqlSe
         $writer->append('IGNORE');
         $writer->append($this->value);
         $this->linesOrRows->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value, $this->linesOrRows);
+    }
+
+    /**
+     * Returns a copy with a new linesOrRows, preserving every other field.
+     */
+    public function withLinesOrRows(\SqlSemantics\Statement\Model\MySql\Role\LinesOrRowsForm $linesOrRows): self
+    {
+        return new self($this->value, $linesOrRows);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SortbyWithAExprUsingQualAllOpOptNullsOrder_f10885c2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SortbyWithAExprUsingQualAllOpOptNullsOrder_f10885c2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SortbyWithAExprUsingQualAllOpOptNullsOrder_f10885c2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SortbyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SortbyListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SortbyWithAExprUsingQualAllOpOptNullsOrder_f10885c2 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualAllOpForm $qualAllOp,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $optNullsOrder,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualAllOp), 'The qualAllOp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNullsOrder), 'The optNullsOrder must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class SortbyWithAExprUsingQualAllOpOptNullsOrder_f10885c2 implements \SqlS
         $writer->append('USING');
         $this->qualAllOp->write($writer);
         $this->optNullsOrder->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($aExpr, $this->qualAllOp, $this->optNullsOrder);
+    }
+
+    /**
+     * Returns a copy with a new qualAllOp, preserving every other field.
+     */
+    public function withQualAllOp(\SqlSemantics\Statement\Model\PostgreSql\Role\QualAllOpForm $qualAllOp): self
+    {
+        return new self($this->aExpr, $qualAllOp, $this->optNullsOrder);
+    }
+
+    /**
+     * Returns a copy with a new optNullsOrder, preserving every other field.
+     */
+    public function withOptNullsOrder(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $optNullsOrder): self
+    {
+        return new self($this->aExpr, $this->qualAllOp, $optNullsOrder);
     }
 }

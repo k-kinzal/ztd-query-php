@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IsolationLevelWithIsolationLevelSymIsolationTypes_8770c38e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IsolationLevelWithIsolationLevelSymIsolationTypes_8770c38e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IsolationLevelWithIsolationLevelSymIsolationTypes_8770c38e implements \SqlSemantics\Statement\Model\MySql\Role\IsolationLevelForm, \SqlSemantics\Statement\Model\MySql\Role\TransactionCharacteristicsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IsolationTypesForm $isolationTypes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($isolationTypes), 'The isolationTypes must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class IsolationLevelWithIsolationLevelSymIsolationTypes_8770c38e implement
         $writer->append('ISOLATION');
         $writer->append('LEVEL');
         $this->isolationTypes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new isolationTypes, preserving every other field.
+     */
+    public function withIsolationTypes(\SqlSemantics\Statement\Model\MySql\Role\IsolationTypesForm $isolationTypes): self
+    {
+        return new self($isolationTypes);
     }
 }

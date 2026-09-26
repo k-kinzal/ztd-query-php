@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartEntryWithGrammarSelectorExprBitExprEndOfInput_a19910d8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartEntryWithGrammarSelectorExprBitExprEndOfInput_a19910d8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StartEntryWithGrammarSelectorExprBitExprEndOfInput_a19910d8 implements \SqlSemantics\Statement\Model\MySql\Role\StartEntryForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StartEntryWithGrammarSelectorExprBitExprEndOfInput_a19910d8 implemen
         public readonly string $grammarSelectorExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
     ) {
+        $this->assertMatchesPattern($grammarSelectorExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GRAMMAR_SELECTOR_EXPR'], 'The grammarSelectorExpr must be a complete GRAMMAR_SELECTOR_EXPR lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class StartEntryWithGrammarSelectorExprBitExprEndOfInput_a19910d8 implemen
     {
         $writer->append($this->grammarSelectorExpr);
         $this->bitExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new grammarSelectorExpr, preserving every other field.
+     */
+    public function withGrammarSelectorExpr(string $grammarSelectorExpr): self
+    {
+        return new self($grammarSelectorExpr, $this->bitExpr);
+    }
+
+    /**
+     * Returns a copy with a new bitExpr, preserving every other field.
+     */
+    public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
+    {
+        return new self($this->grammarSelectorExpr, $bitExpr);
     }
 }

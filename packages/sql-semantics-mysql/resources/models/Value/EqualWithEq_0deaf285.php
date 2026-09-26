@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EqualWithEq_0deaf285 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EqualWithEq_0deaf285 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EqualWithEq_0deaf285 implements \SqlSemantics\Statement\Model\MySql\Role\EqualForm, \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OldAggrListWithOldAggrListOldAggrElem_789b6ea5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OldAggrListWithOldAggrListOldAggrElem_789b6ea5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm $oldAggrList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrElemForm $oldAggrElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($oldAggrList), 'The oldAggrList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($oldAggrElem), 'The oldAggrElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemant
         $this->oldAggrList->write($writer);
         $writer->append(',');
         $this->oldAggrElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new oldAggrList, preserving every other field.
+     */
+    public function withOldAggrList(\SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm $oldAggrList): self
+    {
+        return new self($oldAggrList, $this->oldAggrElem);
+    }
+
+    /**
+     * Returns a copy with a new oldAggrElem, preserving every other field.
+     */
+    public function withOldAggrElem(\SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrElemForm $oldAggrElem): self
+    {
+        return new self($this->oldAggrList, $oldAggrElem);
     }
 }

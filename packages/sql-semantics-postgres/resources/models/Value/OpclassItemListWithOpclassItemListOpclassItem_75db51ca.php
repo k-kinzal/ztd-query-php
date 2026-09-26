@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OpclassItemListWithOpclassItemListOpclassItem_75db51ca $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OpclassItemListWithOpclassItemListOpclassItem_75db51ca $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OpclassItemListWithOpclassItemListOpclassItem_75db51ca implements \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OpclassItemListWithOpclassItemListOpclassItem_75db51ca implements \S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm $opclassItemList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemForm $opclassItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($opclassItemList), 'The opclassItemList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($opclassItem), 'The opclassItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OpclassItemListWithOpclassItemListOpclassItem_75db51ca implements \S
         $this->opclassItemList->write($writer);
         $writer->append(',');
         $this->opclassItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new opclassItemList, preserving every other field.
+     */
+    public function withOpclassItemList(\SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm $opclassItemList): self
+    {
+        return new self($opclassItemList, $this->opclassItem);
+    }
+
+    /**
+     * Returns a copy with a new opclassItem, preserving every other field.
+     */
+    public function withOpclassItem(\SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemForm $opclassItem): self
+    {
+        return new self($this->opclassItemList, $opclassItem);
     }
 }

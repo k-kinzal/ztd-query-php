@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OnEmptyWithJsonOnResponseOnSymEmptySym_c3c091ca $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OnEmptyWithJsonOnResponseOnSymEmptySym_c3c091ca $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OnEmptyWithJsonOnResponseOnSymEmptySym_c3c091ca implements \SqlSemantics\Statement\Model\MySql\Role\OnEmptyForm, \SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorForm, \SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorJsonTableForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JsonOnResponseForm $jsonOnResponse,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($jsonOnResponse), 'The jsonOnResponse must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OnEmptyWithJsonOnResponseOnSymEmptySym_c3c091ca implements \SqlSeman
         $this->jsonOnResponse->write($writer);
         $writer->append('ON');
         $writer->append('EMPTY');
+    }
+
+    /**
+     * Returns a copy with a new jsonOnResponse, preserving every other field.
+     */
+    public function withJsonOnResponse(\SqlSemantics\Statement\Model\MySql\Role\JsonOnResponseForm $jsonOnResponse): self
+    {
+        return new self($jsonOnResponse);
     }
 }

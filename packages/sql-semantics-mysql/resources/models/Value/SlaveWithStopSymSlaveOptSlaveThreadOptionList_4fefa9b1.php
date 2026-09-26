@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveWithStopSymSlaveOptSlaveThreadOptionList_4fefa9b1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveWithStopSymSlaveOptSlaveThreadOptionList_4fefa9b1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveWithStopSymSlaveOptSlaveThreadOptionList_4fefa9b1 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SlaveForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSlaveThreadOptionListForm $optSlaveThreadOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSlaveThreadOptionList), 'The optSlaveThreadOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SlaveWithStopSymSlaveOptSlaveThreadOptionList_4fefa9b1 implements \S
         $writer->append('STOP');
         $writer->append('SLAVE');
         $this->optSlaveThreadOptionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optSlaveThreadOptionList, preserving every other field.
+     */
+    public function withOptSlaveThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\OptSlaveThreadOptionListForm $optSlaveThreadOptionList): self
+    {
+        return new self($optSlaveThreadOptionList);
     }
 }

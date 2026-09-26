@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAccountLockPasswordExpireOptionWithPasswordExpireDefault_b5ae667f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAccountLockPasswordExpireOptionWithPasswordExpireDefault_b5ae667f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptAccountLockPasswordExpireOptionWithPasswordExpireDefault_b5ae667f implements \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionForm, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PasswordExpireForm $passwordExpire,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($passwordExpire), 'The passwordExpire must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireDefault_b5ae667f
     {
         $this->passwordExpire->write($writer);
         $writer->append('DEFAULT');
+    }
+
+    /**
+     * Returns a copy with a new passwordExpire, preserving every other field.
+     */
+    public function withPasswordExpire(\SqlSemantics\Statement\Model\MySql\Role\PasswordExpireForm $passwordExpire): self
+    {
+        return new self($passwordExpire);
     }
 }

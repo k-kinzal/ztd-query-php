@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateViewSelectParenWithCreateViewSelectParen_dc706592 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateViewSelectParenWithCreateViewSelectParen_dc706592 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateViewSelectParenWithCreateViewSelectParen_dc706592 implements \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectParenForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectParenForm $createViewSelectParen,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createViewSelectParen), 'The createViewSelectParen must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class CreateViewSelectParenWithCreateViewSelectParen_dc706592 implements \
         $writer->append('(');
         $this->createViewSelectParen->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new createViewSelectParen, preserving every other field.
+     */
+    public function withCreateViewSelectParen(\SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectParenForm $createViewSelectParen): self
+    {
+        return new self($createViewSelectParen);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleIdentOrTextWithLexHostname_6e6fdaca $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleIdentOrTextWithLexHostname_6e6fdaca $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RoleIdentOrTextWithLexHostname_6e6fdaca implements \SqlSemantics\Statement\Model\MySql\Role\RoleForm, \SqlSemantics\Statement\Model\MySql\Role\RoleIdentOrTextForm, \SqlSemantics\Statement\Model\MySql\Role\RoleListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $lexHostname,
     ) {
+        $this->assertMatchesPattern($lexHostname, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['LEX_HOSTNAME'], 'The lexHostname must be a complete LEX_HOSTNAME lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class RoleIdentOrTextWithLexHostname_6e6fdaca implements \SqlSemantics\Sta
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->lexHostname);
+    }
+
+    /**
+     * Returns a copy with a new lexHostname, preserving every other field.
+     */
+    public function withLexHostname(string $lexHostname): self
+    {
+        return new self($lexHostname);
     }
 }

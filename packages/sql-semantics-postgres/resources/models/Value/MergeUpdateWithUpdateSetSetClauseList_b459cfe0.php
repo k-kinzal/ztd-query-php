@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MergeUpdateWithUpdateSetSetClauseList_b459cfe0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MergeUpdateWithUpdateSetSetClauseList_b459cfe0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MergeUpdateWithUpdateSetSetClauseList_b459cfe0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\MergeUpdateForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setClauseList), 'The setClauseList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class MergeUpdateWithUpdateSetSetClauseList_b459cfe0 implements \SqlSemant
         $writer->append('UPDATE');
         $writer->append('SET');
         $this->setClauseList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setClauseList, preserving every other field.
+     */
+    public function withSetClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList): self
+    {
+        return new self($setClauseList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectStmtWithIntoWithQueryExpressionIntoClauseLockingClauseList_0be943b9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectStmtWithIntoWithQueryExpressionIntoClauseLockingClauseList_0be943b9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SelectStmtWithIntoWithQueryExpressionIntoClauseLockingClauseList_0be943b9 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SelectStmtWithIntoForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class SelectStmtWithIntoWithQueryExpressionIntoClauseLockingClauseList_0be943b9 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SelectStmtWithIntoForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SelectStmtWithIntoWithQueryExpressionIntoClauseLockingClauseList_0be
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IntoClauseForm $intoClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm $lockingClauseList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($query), 'The query must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($intoClause), 'The intoClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lockingClauseList), 'The lockingClauseList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class SelectStmtWithIntoWithQueryExpressionIntoClauseLockingClauseList_0be
         $this->query->write($writer);
         $this->intoClause->write($writer);
         $this->lockingClauseList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new query, preserving every other field.
+     */
+    public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionForm $query): self
+    {
+        return new self($query, $this->intoClause, $this->lockingClauseList);
+    }
+
+    /**
+     * Returns a copy with a new intoClause, preserving every other field.
+     */
+    public function withIntoClause(\SqlSemantics\Statement\Model\MySql\Role\IntoClauseForm $intoClause): self
+    {
+        return new self($this->query, $intoClause, $this->lockingClauseList);
+    }
+
+    /**
+     * Returns a copy with a new lockingClauseList, preserving every other field.
+     */
+    public function withLockingClauseList(\SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm $lockingClauseList): self
+    {
+        return new self($this->query, $this->intoClause, $lockingClauseList);
     }
 }

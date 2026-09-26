@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewSelectWithViewSelectAuxViewCheckOption_8fd363d7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewSelectWithViewSelectAuxViewCheckOption_8fd363d7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewSelectWithViewSelectAuxViewCheckOption_8fd363d7 implements \SqlSemantics\Statement\Model\MySql\Role\ViewSelectForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ViewSelectWithViewSelectAuxViewCheckOption_8fd363d7 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewSelectAuxForm $viewSelectAux,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewCheckOptionForm $viewCheckOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewSelectAux), 'The viewSelectAux must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewCheckOption), 'The viewCheckOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ViewSelectWithViewSelectAuxViewCheckOption_8fd363d7 implements \SqlS
     {
         $this->viewSelectAux->write($writer);
         $this->viewCheckOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new viewSelectAux, preserving every other field.
+     */
+    public function withViewSelectAux(\SqlSemantics\Statement\Model\MySql\Role\ViewSelectAuxForm $viewSelectAux): self
+    {
+        return new self($viewSelectAux, $this->viewCheckOption);
+    }
+
+    /**
+     * Returns a copy with a new viewCheckOption, preserving every other field.
+     */
+    public function withViewCheckOption(\SqlSemantics\Statement\Model\MySql\Role\ViewCheckOptionForm $viewCheckOption): self
+    {
+        return new self($this->viewSelectAux, $viewCheckOption);
     }
 }

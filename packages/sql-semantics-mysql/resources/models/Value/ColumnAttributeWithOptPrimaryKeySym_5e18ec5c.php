@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithOptPrimaryKeySym_5e18ec5c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithOptPrimaryKeySym_5e18ec5c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnAttributeWithOptPrimaryKeySym_5e18ec5c implements \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPrimaryForm $optPrimary,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPrimary), 'The optPrimary must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ColumnAttributeWithOptPrimaryKeySym_5e18ec5c implements \SqlSemantic
     {
         $this->optPrimary->write($writer);
         $writer->append('KEY');
+    }
+
+    /**
+     * Returns a copy with a new optPrimary, preserving every other field.
+     */
+    public function withOptPrimary(\SqlSemantics\Statement\Model\MySql\Role\OptPrimaryForm $optPrimary): self
+    {
+        return new self($optPrimary);
     }
 }

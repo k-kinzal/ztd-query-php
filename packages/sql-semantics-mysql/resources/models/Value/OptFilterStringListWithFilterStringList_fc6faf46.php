@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptFilterStringListWithFilterStringList_fc6faf46 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptFilterStringListWithFilterStringList_fc6faf46 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptFilterStringListWithFilterStringList_fc6faf46 implements \SqlSemantics\Statement\Model\MySql\Role\OptFilterStringListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterStringListForm $filterStringList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterStringList), 'The filterStringList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptFilterStringListWithFilterStringList_fc6faf46 implements \SqlSema
         $writer->append('(');
         $this->filterStringList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new filterStringList, preserving every other field.
+     */
+    public function withFilterStringList(\SqlSemantics\Statement\Model\MySql\Role\FilterStringListForm $filterStringList): self
+    {
+        return new self($filterStringList);
     }
 }

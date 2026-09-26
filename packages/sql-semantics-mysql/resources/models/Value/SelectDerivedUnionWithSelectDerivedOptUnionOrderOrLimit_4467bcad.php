@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad implements \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad imp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm $selectDerived,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectDerived), 'The selectDerived must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionOrderOrLimit), 'The optUnionOrderOrLimit must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SelectDerivedUnionWithSelectDerivedOptUnionOrderOrLimit_4467bcad imp
     {
         $this->selectDerived->write($writer);
         $this->optUnionOrderOrLimit->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectDerived, preserving every other field.
+     */
+    public function withSelectDerived(\SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm $selectDerived): self
+    {
+        return new self($selectDerived, $this->optUnionOrderOrLimit);
+    }
+
+    /**
+     * Returns a copy with a new optUnionOrderOrLimit, preserving every other field.
+     */
+    public function withOptUnionOrderOrLimit(\SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit): self
+    {
+        return new self($this->selectDerived, $optUnionOrderOrLimit);
     }
 }

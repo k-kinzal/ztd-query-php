@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingList_55e39a12 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingList_55e39a12 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingList_55e39a12 implements \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinedTableForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingLi
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($innerJoinType), 'The innerJoinType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference2), 'The tableReference2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($usingList), 'The usingList must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReferenceUsingUsingLi
         $writer->append('(');
         $this->usingList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new tableReference, preserving every other field.
+     */
+    public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
+    {
+        return new self($tableReference, $this->innerJoinType, $this->tableReference2, $this->usingList);
+    }
+
+    /**
+     * Returns a copy with a new innerJoinType, preserving every other field.
+     */
+    public function withInnerJoinType(\SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm $innerJoinType): self
+    {
+        return new self($this->tableReference, $innerJoinType, $this->tableReference2, $this->usingList);
+    }
+
+    /**
+     * Returns a copy with a new tableReference2, preserving every other field.
+     */
+    public function withTableReference2(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2): self
+    {
+        return new self($this->tableReference, $this->innerJoinType, $tableReference2, $this->usingList);
+    }
+
+    /**
+     * Returns a copy with a new usingList, preserving every other field.
+     */
+    public function withUsingList(\SqlSemantics\Statement\Model\MySql\Role\UsingListForm $usingList): self
+    {
+        return new self($this->tableReference, $this->innerJoinType, $this->tableReference2, $usingList);
     }
 }

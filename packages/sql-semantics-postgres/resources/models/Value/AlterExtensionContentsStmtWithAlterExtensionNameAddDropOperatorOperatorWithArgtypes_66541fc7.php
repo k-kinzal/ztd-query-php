@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOperatorWithArgtypes_66541fc7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOperatorWithArgtypes_66541fc7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOperatorWithArgtypes_66541fc7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionContentsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOperatorWithArgtypes_66541fc7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionContentsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOpera
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($addDrop), 'The addDrop must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorWithArgtypes), 'The operatorWithArgtypes must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorOpera
         $this->addDrop->write($writer);
         $writer->append('OPERATOR');
         $this->operatorWithArgtypes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->addDrop, $this->operatorWithArgtypes);
+    }
+
+    /**
+     * Returns a copy with a new addDrop, preserving every other field.
+     */
+    public function withAddDrop(\SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop): self
+    {
+        return new self($this->name, $addDrop, $this->operatorWithArgtypes);
+    }
+
+    /**
+     * Returns a copy with a new operatorWithArgtypes, preserving every other field.
+     */
+    public function withOperatorWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes): self
+    {
+        return new self($this->name, $this->addDrop, $operatorWithArgtypes);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UlongNumWithUlonglongNum_6eb47d62 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UlongNumWithUlonglongNum_6eb47d62 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UlongNumWithUlonglongNum_6eb47d62 implements \SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdForm, \SqlSemantics\Statement\Model\MySql\Role\IgnoreServerIdListForm, \SqlSemantics\Statement\Model\MySql\Role\SpCondForm, \SqlSemantics\Statement\Model\MySql\Role\SpHcondForm, \SqlSemantics\Statement\Model\MySql\Role\SpHcondElementForm, \SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm, \SqlSemantics\Statement\Model\MySql\Role\TernaryOptionForm, \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $ulonglongNum,
     ) {
+        $this->assertMatchesPattern($ulonglongNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['ULONGLONG_NUM'], 'The ulonglongNum must be a complete ULONGLONG_NUM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class UlongNumWithUlonglongNum_6eb47d62 implements \SqlSemantics\Statement
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->ulonglongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulonglongNum, preserving every other field.
+     */
+    public function withUlonglongNum(string $ulonglongNum): self
+    {
+        return new self($ulonglongNum);
     }
 }

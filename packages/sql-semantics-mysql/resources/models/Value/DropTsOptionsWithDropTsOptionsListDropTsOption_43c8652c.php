@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropTsOptionsWithDropTsOptionsListDropTsOption_43c8652c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropTsOptionsWithDropTsOptionsListDropTsOption_43c8652c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DropTsOptionsWithDropTsOptionsListDropTsOption_43c8652c implements \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DropTsOptionsWithDropTsOptionsListDropTsOption_43c8652c implements \
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsListForm $dropTsOptionsList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm $dropTsOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($dropTsOptionsList), 'The dropTsOptionsList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($dropTsOption), 'The dropTsOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class DropTsOptionsWithDropTsOptionsListDropTsOption_43c8652c implements \
         $this->dropTsOptionsList->write($writer);
         $writer->append(',');
         $this->dropTsOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new dropTsOptionsList, preserving every other field.
+     */
+    public function withDropTsOptionsList(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsListForm $dropTsOptionsList): self
+    {
+        return new self($dropTsOptionsList, $this->dropTsOption);
+    }
+
+    /**
+     * Returns a copy with a new dropTsOption, preserving every other field.
+     */
+    public function withDropTsOption(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm $dropTsOption): self
+    {
+        return new self($this->dropTsOptionsList, $dropTsOption);
     }
 }

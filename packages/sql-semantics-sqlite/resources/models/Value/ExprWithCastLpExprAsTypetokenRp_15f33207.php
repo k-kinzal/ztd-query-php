@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithCastLpExprAsTypetokenRp_15f33207 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithCastLpExprAsTypetokenRp_15f33207 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithCastLpExprAsTypetokenRp_15f33207 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExprWithCastLpExprAsTypetokenRp_15f33207 implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm $typetoken,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($typetoken), 'The typetoken must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class ExprWithCastLpExprAsTypetokenRp_15f33207 implements \SqlSemantics\St
         $writer->append('AS');
         $this->typetoken->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->typetoken);
+    }
+
+    /**
+     * Returns a copy with a new typetoken, preserving every other field.
+     */
+    public function withTypetoken(\SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm $typetoken): self
+    {
+        return new self($this->expr, $typetoken);
     }
 }

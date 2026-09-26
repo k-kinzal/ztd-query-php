@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlterTablespaceOptions_8e45b3ac $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlterTablespaceOptions_8e45b3ac $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlterTablespaceOptions_8e45b3ac implements \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlterTablespaceOptions_8e45b3ac implements \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlter
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm $optAlterTablespaceOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tsDatafile), 'The tsDatafile must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAlterTablespaceOptions), 'The optAlterTablespaceOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class AlterTablespaceStmtWithAlterTablespaceSymIdentDropTsDatafileOptAlter
         $writer->append('DROP');
         $this->tsDatafile->write($writer);
         $this->optAlterTablespaceOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->tsDatafile, $this->optAlterTablespaceOptions);
+    }
+
+    /**
+     * Returns a copy with a new tsDatafile, preserving every other field.
+     */
+    public function withTsDatafile(\SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile): self
+    {
+        return new self($this->ident, $tsDatafile, $this->optAlterTablespaceOptions);
+    }
+
+    /**
+     * Returns a copy with a new optAlterTablespaceOptions, preserving every other field.
+     */
+    public function withOptAlterTablespaceOptions(\SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm $optAlterTablespaceOptions): self
+    {
+        return new self($this->ident, $this->tsDatafile, $optAlterTablespaceOptions);
     }
 }

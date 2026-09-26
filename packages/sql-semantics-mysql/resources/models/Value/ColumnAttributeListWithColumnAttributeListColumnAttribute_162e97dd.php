@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd implements \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm $columnAttributeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm $columnAttribute,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnAttributeList), 'The columnAttributeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnAttribute), 'The columnAttribute must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ColumnAttributeListWithColumnAttributeListColumnAttribute_162e97dd i
     {
         $this->columnAttributeList->write($writer);
         $this->columnAttribute->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columnAttributeList, preserving every other field.
+     */
+    public function withColumnAttributeList(\SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm $columnAttributeList): self
+    {
+        return new self($columnAttributeList, $this->columnAttribute);
+    }
+
+    /**
+     * Returns a copy with a new columnAttribute, preserving every other field.
+     */
+    public function withColumnAttribute(\SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm $columnAttribute): self
+    {
+        return new self($this->columnAttributeList, $columnAttribute);
     }
 }

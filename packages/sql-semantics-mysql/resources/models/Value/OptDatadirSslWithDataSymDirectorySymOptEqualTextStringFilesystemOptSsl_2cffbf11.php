@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptDatadirSslWithDataSymDirectorySymOptEqualTextStringFilesystemOptSsl_2cffbf11 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptDatadirSslWithDataSymDirectorySymOptEqualTextStringFilesystemOptSsl_2cffbf11 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptDatadirSslWithDataSymDirectorySymOptEqualTextStringFilesystemOptSsl_2cffbf11 implements \SqlSemantics\Statement\Model\MySql\Role\OptDatadirSslForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptDatadirSslWithDataSymDirectorySymOptEqualTextStringFilesystemOptS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSslForm $optSsl,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringFilesystem), 'The textStringFilesystem must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSsl), 'The optSsl must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class OptDatadirSslWithDataSymDirectorySymOptEqualTextStringFilesystemOptS
         $this->optEqual->write($writer);
         $this->textStringFilesystem->write($writer);
         $this->optSsl->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->textStringFilesystem, $this->optSsl);
+    }
+
+    /**
+     * Returns a copy with a new textStringFilesystem, preserving every other field.
+     */
+    public function withTextStringFilesystem(\SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem): self
+    {
+        return new self($this->optEqual, $textStringFilesystem, $this->optSsl);
+    }
+
+    /**
+     * Returns a copy with a new optSsl, preserving every other field.
+     */
+    public function withOptSsl(\SqlSemantics\Statement\Model\MySql\Role\OptSslForm $optSsl): self
+    {
+        return new self($this->optEqual, $this->textStringFilesystem, $optSsl);
     }
 }

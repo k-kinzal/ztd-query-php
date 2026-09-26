@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExplainableStmtWithOptExplainForSchemaDeleteStmt_262d4fa4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExplainableStmtWithOptExplainForSchemaDeleteStmt_262d4fa4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExplainableStmtWithOptExplainForSchemaDeleteStmt_262d4fa4 implements \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExplainableStmtWithOptExplainForSchemaDeleteStmt_262d4fa4 implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExplainForSchemaForm $optExplainForSchema,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeleteStmtForm $deleteStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExplainForSchema), 'The optExplainForSchema must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($deleteStmt), 'The deleteStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ExplainableStmtWithOptExplainForSchemaDeleteStmt_262d4fa4 implements
     {
         $this->optExplainForSchema->write($writer);
         $this->deleteStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optExplainForSchema, preserving every other field.
+     */
+    public function withOptExplainForSchema(\SqlSemantics\Statement\Model\MySql\Role\OptExplainForSchemaForm $optExplainForSchema): self
+    {
+        return new self($optExplainForSchema, $this->deleteStmt);
+    }
+
+    /**
+     * Returns a copy with a new deleteStmt, preserving every other field.
+     */
+    public function withDeleteStmt(\SqlSemantics\Statement\Model\MySql\Role\DeleteStmtForm $deleteStmt): self
+    {
+        return new self($this->optExplainForSchema, $deleteStmt);
     }
 }

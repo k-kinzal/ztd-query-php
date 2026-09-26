@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonBehaviorClauseOptWithJsonBehaviorOnEmptyPJsonBehaviorOnErrorP_4ab19b87 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonBehaviorClauseOptWithJsonBehaviorOnEmptyPJsonBehaviorOnErrorP_4ab19b87 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonBehaviorClauseOptWithJsonBehaviorOnEmptyPJsonBehaviorOnErrorP_4ab19b87 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorClauseOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JsonBehaviorClauseOptWithJsonBehaviorOnEmptyPJsonBehaviorOnErrorP_4a
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonBehavior), 'The jsonBehavior must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonBehavior2), 'The jsonBehavior2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class JsonBehaviorClauseOptWithJsonBehaviorOnEmptyPJsonBehaviorOnErrorP_4a
         $this->jsonBehavior2->write($writer);
         $writer->append('ON');
         $writer->append('ERROR');
+    }
+
+    /**
+     * Returns a copy with a new jsonBehavior, preserving every other field.
+     */
+    public function withJsonBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior): self
+    {
+        return new self($jsonBehavior, $this->jsonBehavior2);
+    }
+
+    /**
+     * Returns a copy with a new jsonBehavior2, preserving every other field.
+     */
+    public function withJsonBehavior2(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonBehaviorForm $jsonBehavior2): self
+    {
+        return new self($this->jsonBehavior, $jsonBehavior2);
     }
 }

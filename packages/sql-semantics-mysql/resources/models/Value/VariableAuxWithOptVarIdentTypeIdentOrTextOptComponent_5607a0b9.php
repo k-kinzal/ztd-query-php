@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 implements \SqlSemantics\Statement\Model\MySql\Role\VariableAuxForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptComponentForm $optComponent,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optVarIdentType), 'The optVarIdentType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComponent), 'The optComponent must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class VariableAuxWithOptVarIdentTypeIdentOrTextOptComponent_5607a0b9 imple
         $this->optVarIdentType->write($writer);
         $this->identOrText->write($writer);
         $this->optComponent->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optVarIdentType, preserving every other field.
+     */
+    public function withOptVarIdentType(\SqlSemantics\Statement\Model\MySql\Role\OptVarIdentTypeForm $optVarIdentType): self
+    {
+        return new self($optVarIdentType, $this->identOrText, $this->optComponent);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($this->optVarIdentType, $identOrText, $this->optComponent);
+    }
+
+    /**
+     * Returns a copy with a new optComponent, preserving every other field.
+     */
+    public function withOptComponent(\SqlSemantics\Statement\Model\MySql\Role\OptComponentForm $optComponent): self
+    {
+        return new self($this->optVarIdentType, $this->identOrText, $optComponent);
     }
 }

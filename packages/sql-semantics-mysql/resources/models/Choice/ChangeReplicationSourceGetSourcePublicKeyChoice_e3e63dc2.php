@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\ChangeReplicationSourceGetSourcePublicKeyChoice_e3e63dc2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\ChangeReplicationSourceGetSourcePublicKeyChoice_e3e63dc2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum ChangeReplicationSourceGetSourcePublicKeyChoice_e3e63dc2: string implements \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceGetSourcePublicKeyForm

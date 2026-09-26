@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithCharSymOptCharsetWithOptBinary_5b2e9d22 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithCharSymOptCharsetWithOptBinary_5b2e9d22 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithCharSymOptCharsetWithOptBinary_5b2e9d22 implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypeWithCharSymOptCharsetWithOptBinary_5b2e9d22 implements \SqlSeman
         public readonly string $charSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary,
     ) {
+        $this->assertMatchesPattern($charSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['CHAR_SYM'], 'The charSym must be a complete CHAR_SYM lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCharsetWithOptBinary), 'The optCharsetWithOptBinary must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TypeWithCharSymOptCharsetWithOptBinary_5b2e9d22 implements \SqlSeman
     {
         $writer->append($this->charSym);
         $this->optCharsetWithOptBinary->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new charSym, preserving every other field.
+     */
+    public function withCharSym(string $charSym): self
+    {
+        return new self($charSym, $this->optCharsetWithOptBinary);
+    }
+
+    /**
+     * Returns a copy with a new optCharsetWithOptBinary, preserving every other field.
+     */
+    public function withOptCharsetWithOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary): self
+    {
+        return new self($this->charSym, $optCharsetWithOptBinary);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SimpleSelectWithSelectClauseExceptSetQuantifierSelectClause_5a7ba6bd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SimpleSelectWithSelectClauseExceptSetQuantifierSelectClause_5a7ba6bd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SimpleSelectWithSelectClauseExceptSetQuantifierSelectClause_5a7ba6bd implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectNoParensForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleSelectForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class SimpleSelectWithSelectClauseExceptSetQuantifierSelectClause_5a7ba6bd implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectNoParensForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleSelectForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SimpleSelectWithSelectClauseExceptSetQuantifierSelectClause_5a7ba6bd
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetQuantifierForm $setQuantifier,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectClause), 'The selectClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setQuantifier), 'The setQuantifier must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectClause2), 'The selectClause2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class SimpleSelectWithSelectClauseExceptSetQuantifierSelectClause_5a7ba6bd
         $writer->append('EXCEPT');
         $this->setQuantifier->write($writer);
         $this->selectClause2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectClause, preserving every other field.
+     */
+    public function withSelectClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause): self
+    {
+        return new self($selectClause, $this->setQuantifier, $this->selectClause2);
+    }
+
+    /**
+     * Returns a copy with a new setQuantifier, preserving every other field.
+     */
+    public function withSetQuantifier(\SqlSemantics\Statement\Model\PostgreSql\Role\SetQuantifierForm $setQuantifier): self
+    {
+        return new self($this->selectClause, $setQuantifier, $this->selectClause2);
+    }
+
+    /**
+     * Returns a copy with a new selectClause2, preserving every other field.
+     */
+    public function withSelectClause2(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectClauseForm $selectClause2): self
+    {
+        return new self($this->selectClause, $this->setQuantifier, $selectClause2);
     }
 }

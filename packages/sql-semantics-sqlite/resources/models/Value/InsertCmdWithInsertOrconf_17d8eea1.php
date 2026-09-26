@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\InsertCmdWithInsertOrconf_17d8eea1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\InsertCmdWithInsertOrconf_17d8eea1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertCmdWithInsertOrconf_17d8eea1 implements \SqlSemantics\Statement\Model\Sqlite\Role\InsertCmdForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm $orconf,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($orconf), 'The orconf must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class InsertCmdWithInsertOrconf_17d8eea1 implements \SqlSemantics\Statemen
     {
         $writer->append('INSERT');
         $this->orconf->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new orconf, preserving every other field.
+     */
+    public function withOrconf(\SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm $orconf): self
+    {
+        return new self($orconf);
     }
 }

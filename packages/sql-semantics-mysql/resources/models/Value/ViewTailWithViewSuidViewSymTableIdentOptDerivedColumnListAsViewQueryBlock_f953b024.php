@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewTailWithViewSuidViewSymTableIdentOptDerivedColumnListAsViewQueryBlock_f953b024 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewTailWithViewSuidViewSymTableIdentOptDerivedColumnListAsViewQueryBlock_f953b024 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewTailWithViewSuidViewSymTableIdentOptDerivedColumnListAsViewQueryBlock_f953b024 implements \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class ViewTailWithViewSuidViewSymTableIdentOptDerivedColumnListAsViewQuery
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewQueryBlockForm $viewQueryBlock,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewSuid), 'The viewSuid must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDerivedColumnList), 'The optDerivedColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewQueryBlock), 'The viewQueryBlock must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class ViewTailWithViewSuidViewSymTableIdentOptDerivedColumnListAsViewQuery
         $this->optDerivedColumnList->write($writer);
         $writer->append('AS');
         $this->viewQueryBlock->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new viewSuid, preserving every other field.
+     */
+    public function withViewSuid(\SqlSemantics\Statement\Model\MySql\Role\ViewSuidForm $viewSuid): self
+    {
+        return new self($viewSuid, $this->tableIdent, $this->optDerivedColumnList, $this->viewQueryBlock);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->viewSuid, $tableIdent, $this->optDerivedColumnList, $this->viewQueryBlock);
+    }
+
+    /**
+     * Returns a copy with a new optDerivedColumnList, preserving every other field.
+     */
+    public function withOptDerivedColumnList(\SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList): self
+    {
+        return new self($this->viewSuid, $this->tableIdent, $optDerivedColumnList, $this->viewQueryBlock);
+    }
+
+    /**
+     * Returns a copy with a new viewQueryBlock, preserving every other field.
+     */
+    public function withViewQueryBlock(\SqlSemantics\Statement\Model\MySql\Role\ViewQueryBlockForm $viewQueryBlock): self
+    {
+        return new self($this->viewSuid, $this->tableIdent, $this->optDerivedColumnList, $viewQueryBlock);
     }
 }

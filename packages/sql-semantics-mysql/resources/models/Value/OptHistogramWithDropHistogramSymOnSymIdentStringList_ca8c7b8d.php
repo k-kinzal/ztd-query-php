@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptHistogramWithDropHistogramSymOnSymIdentStringList_ca8c7b8d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptHistogramWithDropHistogramSymOnSymIdentStringList_ca8c7b8d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptHistogramWithDropHistogramSymOnSymIdentStringList_ca8c7b8d implements \SqlSemantics\Statement\Model\MySql\Role\OptHistogramForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentStringListForm $identStringList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identStringList), 'The identStringList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class OptHistogramWithDropHistogramSymOnSymIdentStringList_ca8c7b8d implem
         $writer->append('HISTOGRAM');
         $writer->append('ON');
         $this->identStringList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identStringList, preserving every other field.
+     */
+    public function withIdentStringList(\SqlSemantics\Statement\Model\MySql\Role\IdentStringListForm $identStringList): self
+    {
+        return new self($identStringList);
     }
 }

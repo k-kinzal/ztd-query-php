@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\MiRepairTypesWithMiRepairTypesMiRepairType_ea14dd21 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\MiRepairTypesWithMiRepairTypesMiRepairType_ea14dd21 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MiRepairTypesWithMiRepairTypesMiRepairType_ea14dd21 implements \SqlSemantics\Statement\Model\MySql\Role\MiRepairTypesForm, \SqlSemantics\Statement\Model\MySql\Role\OptMiRepairTypeForm, \SqlSemantics\Statement\Model\MySql\Role\OptMiRepairTypesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class MiRepairTypesWithMiRepairTypesMiRepairType_ea14dd21 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MiRepairTypesForm $miRepairTypes,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MiRepairTypeForm $miRepairType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($miRepairTypes), 'The miRepairTypes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($miRepairType), 'The miRepairType must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class MiRepairTypesWithMiRepairTypesMiRepairType_ea14dd21 implements \SqlS
     {
         $this->miRepairTypes->write($writer);
         $this->miRepairType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new miRepairTypes, preserving every other field.
+     */
+    public function withMiRepairTypes(\SqlSemantics\Statement\Model\MySql\Role\MiRepairTypesForm $miRepairTypes): self
+    {
+        return new self($miRepairTypes, $this->miRepairType);
+    }
+
+    /**
+     * Returns a copy with a new miRepairType, preserving every other field.
+     */
+    public function withMiRepairType(\SqlSemantics\Statement\Model\MySql\Role\MiRepairTypeForm $miRepairType): self
+    {
+        return new self($this->miRepairTypes, $miRepairType);
     }
 }

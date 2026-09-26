@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSelectFromWithSelectFromSelectLockType_ba6af1d9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSelectFromWithSelectFromSelectLockType_ba6af1d9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptSelectFromWithSelectFromSelectLockType_ba6af1d9 implements \SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptSelectFromWithSelectFromSelectLockType_ba6af1d9 implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectFromForm $selectFrom,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm $selectLockType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectFrom), 'The selectFrom must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectLockType), 'The selectLockType must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptSelectFromWithSelectFromSelectLockType_ba6af1d9 implements \SqlSe
     {
         $this->selectFrom->write($writer);
         $this->selectLockType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectFrom, preserving every other field.
+     */
+    public function withSelectFrom(\SqlSemantics\Statement\Model\MySql\Role\SelectFromForm $selectFrom): self
+    {
+        return new self($selectFrom, $this->selectLockType);
+    }
+
+    /**
+     * Returns a copy with a new selectLockType, preserving every other field.
+     */
+    public function withSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm $selectLockType): self
+    {
+        return new self($this->selectFrom, $selectLockType);
     }
 }

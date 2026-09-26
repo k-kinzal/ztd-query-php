@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptProcedureAnalyseClauseWithProcedureSymAnalyseSymOptProcedureAnalyseParams_8fe27cc3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptProcedureAnalyseClauseWithProcedureSymAnalyseSymOptProcedureAnalyseParams_8fe27cc3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptProcedureAnalyseClauseWithProcedureSymAnalyseSymOptProcedureAnalyseParams_8fe27cc3 implements \SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseParamsForm $optProcedureAnalyseParams,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optProcedureAnalyseParams), 'The optProcedureAnalyseParams must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +35,13 @@ final class OptProcedureAnalyseClauseWithProcedureSymAnalyseSymOptProcedureAnaly
         $writer->append('(');
         $this->optProcedureAnalyseParams->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new optProcedureAnalyseParams, preserving every other field.
+     */
+    public function withOptProcedureAnalyseParams(\SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseParamsForm $optProcedureAnalyseParams): self
+    {
+        return new self($optProcedureAnalyseParams);
     }
 }

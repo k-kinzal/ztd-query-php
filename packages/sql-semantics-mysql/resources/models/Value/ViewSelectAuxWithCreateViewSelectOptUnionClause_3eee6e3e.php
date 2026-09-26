@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewSelectAuxWithCreateViewSelectOptUnionClause_3eee6e3e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewSelectAuxWithCreateViewSelectOptUnionClause_3eee6e3e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewSelectAuxWithCreateViewSelectOptUnionClause_3eee6e3e implements \SqlSemantics\Statement\Model\MySql\Role\ViewSelectAuxForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ViewSelectAuxWithCreateViewSelectOptUnionClause_3eee6e3e implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm $createViewSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createViewSelect), 'The createViewSelect must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionClause), 'The optUnionClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ViewSelectAuxWithCreateViewSelectOptUnionClause_3eee6e3e implements 
     {
         $this->createViewSelect->write($writer);
         $this->optUnionClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createViewSelect, preserving every other field.
+     */
+    public function withCreateViewSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm $createViewSelect): self
+    {
+        return new self($createViewSelect, $this->optUnionClause);
+    }
+
+    /**
+     * Returns a copy with a new optUnionClause, preserving every other field.
+     */
+    public function withOptUnionClause(\SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause): self
+    {
+        return new self($this->createViewSelect, $optUnionClause);
     }
 }

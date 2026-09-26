@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OverClauseWithOverWindowSpecification_70b0296a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OverClauseWithOverWindowSpecification_70b0296a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OverClauseWithOverWindowSpecification_70b0296a implements \SqlSemantics\Statement\Model\PostgreSql\Role\OverClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WindowSpecificationForm $windowSpecification,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($windowSpecification), 'The windowSpecification must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OverClauseWithOverWindowSpecification_70b0296a implements \SqlSemant
     {
         $writer->append('OVER');
         $this->windowSpecification->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new windowSpecification, preserving every other field.
+     */
+    public function withWindowSpecification(\SqlSemantics\Statement\Model\PostgreSql\Role\WindowSpecificationForm $windowSpecification): self
+    {
+        return new self($windowSpecification);
     }
 }

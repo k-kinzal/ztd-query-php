@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ParseToplevelWithModePlpgsqlAssign2PlAssignStmt_3054bfa0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ParseToplevelWithModePlpgsqlAssign2PlAssignStmt_3054bfa0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ParseToplevelWithModePlpgsqlAssign2PlAssignStmt_3054bfa0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ParseToplevelWithModePlpgsqlAssign2PlAssignStmt_3054bfa0 implements 
         public readonly string $modePlpgsqlAssign2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PlAssignStmtForm $plAssignStmt,
     ) {
+        $this->assertMatchesPattern($modePlpgsqlAssign2, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['MODE_PLPGSQL_ASSIGN2'], 'The modePlpgsqlAssign2 must be a complete MODE_PLPGSQL_ASSIGN2 lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($plAssignStmt), 'The plAssignStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ParseToplevelWithModePlpgsqlAssign2PlAssignStmt_3054bfa0 implements 
     {
         $writer->append($this->modePlpgsqlAssign2);
         $this->plAssignStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new modePlpgsqlAssign2, preserving every other field.
+     */
+    public function withModePlpgsqlAssign2(string $modePlpgsqlAssign2): self
+    {
+        return new self($modePlpgsqlAssign2, $this->plAssignStmt);
+    }
+
+    /**
+     * Returns a copy with a new plAssignStmt, preserving every other field.
+     */
+    public function withPlAssignStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\PlAssignStmtForm $plAssignStmt): self
+    {
+        return new self($this->modePlpgsqlAssign2, $plAssignStmt);
     }
 }

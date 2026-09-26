@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Role;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface CopyFileNameForm extends \SqlSemantics\Statement\Element

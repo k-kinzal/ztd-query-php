@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CconsWithDefaultMinusScantokTerm_aee20286 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CconsWithDefaultMinusScantokTerm_aee20286 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CconsWithDefaultMinusScantokTerm_aee20286 implements \SqlSemantics\Statement\Model\Sqlite\Role\CconsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CconsWithDefaultMinusScantokTerm_aee20286 implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScantokForm $scantok,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TermForm $term,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scantok), 'The scantok must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($term), 'The term must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class CconsWithDefaultMinusScantokTerm_aee20286 implements \SqlSemantics\S
         $writer->append('-');
         $this->scantok->write($writer);
         $this->term->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new scantok, preserving every other field.
+     */
+    public function withScantok(\SqlSemantics\Statement\Model\Sqlite\Role\ScantokForm $scantok): self
+    {
+        return new self($scantok, $this->term);
+    }
+
+    /**
+     * Returns a copy with a new term, preserving every other field.
+     */
+    public function withTerm(\SqlSemantics\Statement\Model\Sqlite\Role\TermForm $term): self
+    {
+        return new self($this->scantok, $term);
     }
 }

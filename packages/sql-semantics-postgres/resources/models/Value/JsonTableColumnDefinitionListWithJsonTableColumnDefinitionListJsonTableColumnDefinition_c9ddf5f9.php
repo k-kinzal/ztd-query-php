@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableColumnDefinitionListWithJsonTableColumnDefinitionListJsonTableColumnDefinition_c9ddf5f9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableColumnDefinitionListWithJsonTableColumnDefinitionListJsonTableColumnDefinition_c9ddf5f9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonTableColumnDefinitionListWithJsonTableColumnDefinitionListJsonTableColumnDefinition_c9ddf5f9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JsonTableColumnDefinitionListWithJsonTableColumnDefinitionListJsonTa
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionForm $jsonTableColumnDefinition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTableColumnDefinitionList), 'The jsonTableColumnDefinitionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTableColumnDefinition), 'The jsonTableColumnDefinition must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class JsonTableColumnDefinitionListWithJsonTableColumnDefinitionListJsonTa
         $this->jsonTableColumnDefinitionList->write($writer);
         $writer->append(',');
         $this->jsonTableColumnDefinition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new jsonTableColumnDefinitionList, preserving every other field.
+     */
+    public function withJsonTableColumnDefinitionList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList): self
+    {
+        return new self($jsonTableColumnDefinitionList, $this->jsonTableColumnDefinition);
+    }
+
+    /**
+     * Returns a copy with a new jsonTableColumnDefinition, preserving every other field.
+     */
+    public function withJsonTableColumnDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionForm $jsonTableColumnDefinition): self
+    {
+        return new self($this->jsonTableColumnDefinitionList, $jsonTableColumnDefinition);
     }
 }

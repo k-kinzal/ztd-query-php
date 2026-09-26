@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByRandomPassword_6e35d393 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByRandomPassword_6e35d393 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByRandomPassword_6e35d393 implements \SqlSemantics\Statement\Model\MySql\Role\OptInitialAuthForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentifiedByRandomPasswordForm $identifiedByRandomPassword,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identifiedByRandomPassword), 'The identifiedByRandomPassword must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptInitialAuthWithInitialSymAuthenticationSymIdentifiedByRandomPassw
         $writer->append('INITIAL');
         $writer->append('AUTHENTICATION');
         $this->identifiedByRandomPassword->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identifiedByRandomPassword, preserving every other field.
+     */
+    public function withIdentifiedByRandomPassword(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedByRandomPasswordForm $identifiedByRandomPassword): self
+    {
+        return new self($identifiedByRandomPassword);
     }
 }

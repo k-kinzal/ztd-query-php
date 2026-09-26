@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptViewTail_35de15a4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptViewTail_35de15a4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptViewTail_35de15a4 implements \SqlSemantics\Statement\Model\MySql\Role\ViewOrTriggerOrSpOrEventForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptViewTail
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewReplaceOrAlgorithm), 'The viewReplaceOrAlgorithm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definerOpt), 'The definerOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewTail), 'The viewTail must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class ViewOrTriggerOrSpOrEventWithViewReplaceOrAlgorithmDefinerOptViewTail
         $this->viewReplaceOrAlgorithm->write($writer);
         $this->definerOpt->write($writer);
         $this->viewTail->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new viewReplaceOrAlgorithm, preserving every other field.
+     */
+    public function withViewReplaceOrAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\ViewReplaceOrAlgorithmForm $viewReplaceOrAlgorithm): self
+    {
+        return new self($viewReplaceOrAlgorithm, $this->definerOpt, $this->viewTail);
+    }
+
+    /**
+     * Returns a copy with a new definerOpt, preserving every other field.
+     */
+    public function withDefinerOpt(\SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt): self
+    {
+        return new self($this->viewReplaceOrAlgorithm, $definerOpt, $this->viewTail);
+    }
+
+    /**
+     * Returns a copy with a new viewTail, preserving every other field.
+     */
+    public function withViewTail(\SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail): self
+    {
+        return new self($this->viewReplaceOrAlgorithm, $this->definerOpt, $viewTail);
     }
 }

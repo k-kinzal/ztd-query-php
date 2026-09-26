@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterOptColumnIconstSetStatisticsSetStatisticsValue_6025904f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterOptColumnIconstSetStatisticsSetStatisticsValue_6025904f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdWithAlterOptColumnIconstSetStatisticsSetStatisticsValue_6025904f implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterTableCmdWithAlterOptColumnIconstSetStatisticsSetStatisticsValue
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetStatisticsValueForm $setStatisticsValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setStatisticsValue), 'The setStatisticsValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class AlterTableCmdWithAlterOptColumnIconstSetStatisticsSetStatisticsValue
         $writer->append('SET');
         $writer->append('STATISTICS');
         $this->setStatisticsValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optColumn, preserving every other field.
+     */
+    public function withOptColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn): self
+    {
+        return new self($optColumn, $this->iconst, $this->setStatisticsValue);
+    }
+
+    /**
+     * Returns a copy with a new iconst, preserving every other field.
+     */
+    public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
+    {
+        return new self($this->optColumn, $iconst, $this->setStatisticsValue);
+    }
+
+    /**
+     * Returns a copy with a new setStatisticsValue, preserving every other field.
+     */
+    public function withSetStatisticsValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SetStatisticsValueForm $setStatisticsValue): self
+    {
+        return new self($this->optColumn, $this->iconst, $setStatisticsValue);
     }
 }

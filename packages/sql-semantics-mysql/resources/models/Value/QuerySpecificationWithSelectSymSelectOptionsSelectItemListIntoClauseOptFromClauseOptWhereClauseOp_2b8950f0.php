@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClauseOptFromClauseOptWhereClauseOp_2b8950f0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClauseOptFromClauseOptWhereClauseOp_2b8950f0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClauseOptFromClauseOptWhereClauseOp_2b8950f0 implements \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm, \SqlSemantics\Statement\Model\MySql\Role\QueryPrimaryForm, \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -27,6 +29,14 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptHavingClauseForm $optHavingClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowClauseForm $optWindowClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($options), 'The options must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($intoClause), 'The intoClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($from), 'The from must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optGroupClause), 'The optGroupClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optHavingClause), 'The optHavingClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWindowClause), 'The optWindowClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -43,5 +53,69 @@ final class QuerySpecificationWithSelectSymSelectOptionsSelectItemListIntoClause
         $this->optGroupClause->write($writer);
         $this->optHavingClause->write($writer);
         $this->optWindowClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new options, preserving every other field.
+     */
+    public function withOptions(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options): self
+    {
+        return new self($options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
+    {
+        return new self($this->options, $projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause);
+    }
+
+    /**
+     * Returns a copy with a new intoClause, preserving every other field.
+     */
+    public function withIntoClause(\SqlSemantics\Statement\Model\MySql\Role\IntoClauseForm $intoClause): self
+    {
+        return new self($this->options, $this->projections, $intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause);
+    }
+
+    /**
+     * Returns a copy with a new from, preserving every other field.
+     */
+    public function withFrom(\SqlSemantics\Statement\Model\MySql\Role\OptFromClauseForm $from): self
+    {
+        return new self($this->options, $this->projections, $this->intoClause, $from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
+    {
+        return new self($this->options, $this->projections, $this->intoClause, $this->from, $where, $this->optGroupClause, $this->optHavingClause, $this->optWindowClause);
+    }
+
+    /**
+     * Returns a copy with a new optGroupClause, preserving every other field.
+     */
+    public function withOptGroupClause(\SqlSemantics\Statement\Model\MySql\Role\OptGroupClauseForm $optGroupClause): self
+    {
+        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $optGroupClause, $this->optHavingClause, $this->optWindowClause);
+    }
+
+    /**
+     * Returns a copy with a new optHavingClause, preserving every other field.
+     */
+    public function withOptHavingClause(\SqlSemantics\Statement\Model\MySql\Role\OptHavingClauseForm $optHavingClause): self
+    {
+        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $optHavingClause, $this->optWindowClause);
+    }
+
+    /**
+     * Returns a copy with a new optWindowClause, preserving every other field.
+     */
+    public function withOptWindowClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowClauseForm $optWindowClause): self
+    {
+        return new self($this->options, $this->projections, $this->intoClause, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $optWindowClause);
     }
 }

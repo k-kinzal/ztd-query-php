@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\StmtmultiWithStmtmultiToplevelStmt_39421977 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\StmtmultiWithStmtmultiToplevelStmt_39421977 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class StmtmultiWithStmtmultiToplevelStmt_39421977 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm
+final class StmtmultiWithStmtmultiToplevelStmt_39421977 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StmtmultiWithStmtmultiToplevelStmt_39421977 implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm $stmtmulti,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm $toplevelStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($stmtmulti), 'The stmtmulti must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($toplevelStmt), 'The toplevelStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class StmtmultiWithStmtmultiToplevelStmt_39421977 implements \SqlSemantics
         $this->stmtmulti->write($writer);
         $writer->append(';');
         $this->toplevelStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new stmtmulti, preserving every other field.
+     */
+    public function withStmtmulti(\SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm $stmtmulti): self
+    {
+        return new self($stmtmulti, $this->toplevelStmt);
+    }
+
+    /**
+     * Returns a copy with a new toplevelStmt, preserving every other field.
+     */
+    public function withToplevelStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm $toplevelStmt): self
+    {
+        return new self($this->stmtmulti, $toplevelStmt);
     }
 }

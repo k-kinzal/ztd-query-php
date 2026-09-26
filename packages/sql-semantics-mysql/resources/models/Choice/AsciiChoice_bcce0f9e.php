@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\AsciiChoice_bcce0f9e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\AsciiChoice_bcce0f9e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum AsciiChoice_bcce0f9e: string implements \SqlSemantics\Statement\Model\MySql\Role\AsciiForm, \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm, \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm

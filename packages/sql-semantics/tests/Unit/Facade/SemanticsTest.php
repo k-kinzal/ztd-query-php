@@ -17,6 +17,8 @@ use SqlSemantics\Platform\Sqlite\Dialect as SqliteDialect;
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[UsesClass(\SqlSemantics\Statement\Statement::class)]
 #[UsesClass(\SqlSemantics\Statement\Writer::class)]
+#[UsesClass(\SqlSemantics\Statement\Assertion::class)]
+#[UsesClass(\SqlSemantics\Statement\ImmutableGraph::class)]
 #[Medium]
 final class SemanticsTest extends TestCase
 {

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ForLockingClauseWithForReadOnly_0e79b9ff $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ForLockingClauseWithForReadOnly_0e79b9ff $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ForLockingClauseWithForReadOnly_0e79b9ff implements \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm

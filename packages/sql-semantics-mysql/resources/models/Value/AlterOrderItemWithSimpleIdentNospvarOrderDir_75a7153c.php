@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterOrderItemWithSimpleIdentNospvarOrderDir_75a7153c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterOrderItemWithSimpleIdentNospvarOrderDir_75a7153c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterOrderItemWithSimpleIdentNospvarOrderDir_75a7153c implements \SqlSemantics\Statement\Model\MySql\Role\AlterOrderItemForm, \SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterOrderItemWithSimpleIdentNospvarOrderDir_75a7153c implements \Sq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleIdentNospvar), 'The simpleIdentNospvar must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderDir), 'The orderDir must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AlterOrderItemWithSimpleIdentNospvarOrderDir_75a7153c implements \Sq
     {
         $this->simpleIdentNospvar->write($writer);
         $this->orderDir->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleIdentNospvar, preserving every other field.
+     */
+    public function withSimpleIdentNospvar(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar): self
+    {
+        return new self($simpleIdentNospvar, $this->orderDir);
+    }
+
+    /**
+     * Returns a copy with a new orderDir, preserving every other field.
+     */
+    public function withOrderDir(\SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir): self
+    {
+        return new self($this->simpleIdentNospvar, $orderDir);
     }
 }

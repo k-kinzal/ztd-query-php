@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLoadDataSetSpecWithSetLoadDataSetList_f0085494 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLoadDataSetSpecWithSetLoadDataSetList_f0085494 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptLoadDataSetSpecWithSetLoadDataSetList_f0085494 implements \SqlSemantics\Statement\Model\MySql\Role\OptLoadDataSetSpecForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LoadDataSetListForm $loadDataSetList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($loadDataSetList), 'The loadDataSetList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptLoadDataSetSpecWithSetLoadDataSetList_f0085494 implements \SqlSem
     {
         $writer->append('SET');
         $this->loadDataSetList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new loadDataSetList, preserving every other field.
+     */
+    public function withLoadDataSetList(\SqlSemantics\Statement\Model\MySql\Role\LoadDataSetListForm $loadDataSetList): self
+    {
+        return new self($loadDataSetList);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\IdentifiedByRandomPasswordChoice_694f299c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\IdentifiedByRandomPasswordChoice_694f299c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum IdentifiedByRandomPasswordChoice_694f299c: string implements \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm, \SqlSemantics\Statement\Model\MySql\Role\IdentifiedByRandomPasswordForm

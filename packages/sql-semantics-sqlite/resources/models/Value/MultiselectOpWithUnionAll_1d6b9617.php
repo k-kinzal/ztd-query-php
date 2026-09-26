@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\MultiselectOpWithUnionAll_1d6b9617 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\MultiselectOpWithUnionAll_1d6b9617 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MultiselectOpWithUnionAll_1d6b9617 implements \SqlSemantics\Statement\Model\Sqlite\Role\MultiselectOpForm

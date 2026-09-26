@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 implements \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DuplicateForm $duplicate,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm $asCreateQueryExpression,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($duplicate), 'The duplicate must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($asCreateQueryExpression), 'The asCreateQueryExpression must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptDuplicateAsQeWithDuplicateAsCreateQueryExpression_396a67d9 implem
     {
         $this->duplicate->write($writer);
         $this->asCreateQueryExpression->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new duplicate, preserving every other field.
+     */
+    public function withDuplicate(\SqlSemantics\Statement\Model\MySql\Role\DuplicateForm $duplicate): self
+    {
+        return new self($duplicate, $this->asCreateQueryExpression);
+    }
+
+    /**
+     * Returns a copy with a new asCreateQueryExpression, preserving every other field.
+     */
+    public function withAsCreateQueryExpression(\SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm $asCreateQueryExpression): self
+    {
+        return new self($this->duplicate, $asCreateQueryExpression);
     }
 }

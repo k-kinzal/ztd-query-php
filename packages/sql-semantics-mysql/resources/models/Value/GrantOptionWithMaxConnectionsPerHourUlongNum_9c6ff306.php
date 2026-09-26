@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantOptionWithMaxConnectionsPerHourUlongNum_9c6ff306 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantOptionWithMaxConnectionsPerHourUlongNum_9c6ff306 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantOptionWithMaxConnectionsPerHourUlongNum_9c6ff306 implements \SqlSemantics\Statement\Model\MySql\Role\GrantOptionForm, \SqlSemantics\Statement\Model\MySql\Role\GrantOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class GrantOptionWithMaxConnectionsPerHourUlongNum_9c6ff306 implements \Sq
     {
         $writer->append('MAX_CONNECTIONS_PER_HOUR');
         $this->ulongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ulongNum, preserving every other field.
+     */
+    public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
+    {
+        return new self($ulongNum);
     }
 }

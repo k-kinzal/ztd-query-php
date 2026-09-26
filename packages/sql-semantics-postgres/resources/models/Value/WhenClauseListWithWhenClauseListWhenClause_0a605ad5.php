@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\WhenClauseListWithWhenClauseListWhenClause_0a605ad5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\WhenClauseListWithWhenClauseListWhenClause_0a605ad5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WhenClauseListWithWhenClauseListWhenClause_0a605ad5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WhenClauseListWithWhenClauseListWhenClause_0a605ad5 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm $whenClauseList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseForm $whenClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($whenClauseList), 'The whenClauseList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($whenClause), 'The whenClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class WhenClauseListWithWhenClauseListWhenClause_0a605ad5 implements \SqlS
     {
         $this->whenClauseList->write($writer);
         $this->whenClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new whenClauseList, preserving every other field.
+     */
+    public function withWhenClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm $whenClauseList): self
+    {
+        return new self($whenClauseList, $this->whenClause);
+    }
+
+    /**
+     * Returns a copy with a new whenClause, preserving every other field.
+     */
+    public function withWhenClause(\SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseForm $whenClause): self
+    {
+        return new self($this->whenClauseList, $whenClause);
     }
 }

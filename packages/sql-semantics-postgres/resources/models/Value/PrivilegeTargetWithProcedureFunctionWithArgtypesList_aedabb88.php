@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrivilegeTargetWithProcedureFunctionWithArgtypesList_aedabb88 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PrivilegeTargetWithProcedureFunctionWithArgtypesList_aedabb88 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PrivilegeTargetWithProcedureFunctionWithArgtypesList_aedabb88 implements \SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeTargetForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesListForm $functionWithArgtypesList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypesList), 'The functionWithArgtypesList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class PrivilegeTargetWithProcedureFunctionWithArgtypesList_aedabb88 implem
     {
         $writer->append('PROCEDURE');
         $this->functionWithArgtypesList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new functionWithArgtypesList, preserving every other field.
+     */
+    public function withFunctionWithArgtypesList(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesListForm $functionWithArgtypesList): self
+    {
+        return new self($functionWithArgtypesList);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\VisibilityChoice_d7208761 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\VisibilityChoice_d7208761 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum VisibilityChoice_d7208761: string implements \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\CommonIndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\IndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptFulltextIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpatialIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialIndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\VisibilityForm

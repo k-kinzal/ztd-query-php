@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithCharOptBinary_6079e418 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithCharOptBinary_6079e418 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithCharOptBinary_6079e418 implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypeWithCharOptBinary_6079e418 implements \SqlSemantics\Statement\Mo
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharForm $char,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($char), 'The char must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinary), 'The optBinary must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TypeWithCharOptBinary_6079e418 implements \SqlSemantics\Statement\Mo
     {
         $this->char->write($writer);
         $this->optBinary->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new char, preserving every other field.
+     */
+    public function withChar(\SqlSemantics\Statement\Model\MySql\Role\CharForm $char): self
+    {
+        return new self($char, $this->optBinary);
+    }
+
+    /**
+     * Returns a copy with a new optBinary, preserving every other field.
+     */
+    public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self
+    {
+        return new self($this->char, $optBinary);
     }
 }

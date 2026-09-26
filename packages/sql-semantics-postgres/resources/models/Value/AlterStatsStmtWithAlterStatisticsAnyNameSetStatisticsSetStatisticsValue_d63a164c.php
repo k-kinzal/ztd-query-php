@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterStatsStmtWithAlterStatisticsAnyNameSetStatisticsSetStatisticsValue_d63a164c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterStatsStmtWithAlterStatisticsAnyNameSetStatisticsSetStatisticsValue_d63a164c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterStatsStmtWithAlterStatisticsAnyNameSetStatisticsSetStatisticsValue_d63a164c implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterStatsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterStatsStmtWithAlterStatisticsAnyNameSetStatisticsSetStatisticsValue_d63a164c implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterStatsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterStatsStmtWithAlterStatisticsAnyNameSetStatisticsSetStatisticsVa
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetStatisticsValueForm $setStatisticsValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setStatisticsValue), 'The setStatisticsValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class AlterStatsStmtWithAlterStatisticsAnyNameSetStatisticsSetStatisticsVa
         $writer->append('SET');
         $writer->append('STATISTICS');
         $this->setStatisticsValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->setStatisticsValue);
+    }
+
+    /**
+     * Returns a copy with a new setStatisticsValue, preserving every other field.
+     */
+    public function withSetStatisticsValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SetStatisticsValueForm $setStatisticsValue): self
+    {
+        return new self($this->anyName, $setStatisticsValue);
     }
 }

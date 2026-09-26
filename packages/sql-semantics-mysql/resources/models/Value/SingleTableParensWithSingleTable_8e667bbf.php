@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SingleTableParensWithSingleTable_8e667bbf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SingleTableParensWithSingleTable_8e667bbf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SingleTableParensWithSingleTable_8e667bbf implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\SingleTableParensForm, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SingleTableForm $singleTable,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($singleTable), 'The singleTable must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SingleTableParensWithSingleTable_8e667bbf implements \SqlSemantics\S
         $writer->append('(');
         $this->singleTable->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new singleTable, preserving every other field.
+     */
+    public function withSingleTable(\SqlSemantics\Statement\Model\MySql\Role\SingleTableForm $singleTable): self
+    {
+        return new self($singleTable);
     }
 }

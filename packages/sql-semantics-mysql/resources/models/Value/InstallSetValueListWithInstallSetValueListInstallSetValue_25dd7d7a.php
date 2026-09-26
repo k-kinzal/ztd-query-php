@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InstallSetValueListWithInstallSetValueListInstallSetValue_25dd7d7a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InstallSetValueListWithInstallSetValueListInstallSetValue_25dd7d7a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InstallSetValueListWithInstallSetValueListInstallSetValue_25dd7d7a implements \SqlSemantics\Statement\Model\MySql\Role\InstallSetValueListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InstallSetValueListWithInstallSetValueListInstallSetValue_25dd7d7a i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InstallSetValueListForm $installSetValueList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InstallSetValueForm $installSetValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($installSetValueList), 'The installSetValueList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($installSetValue), 'The installSetValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class InstallSetValueListWithInstallSetValueListInstallSetValue_25dd7d7a i
         $this->installSetValueList->write($writer);
         $writer->append(',');
         $this->installSetValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new installSetValueList, preserving every other field.
+     */
+    public function withInstallSetValueList(\SqlSemantics\Statement\Model\MySql\Role\InstallSetValueListForm $installSetValueList): self
+    {
+        return new self($installSetValueList, $this->installSetValue);
+    }
+
+    /**
+     * Returns a copy with a new installSetValue, preserving every other field.
+     */
+    public function withInstallSetValue(\SqlSemantics\Statement\Model\MySql\Role\InstallSetValueForm $installSetValue): self
+    {
+        return new self($this->installSetValueList, $installSetValue);
     }
 }

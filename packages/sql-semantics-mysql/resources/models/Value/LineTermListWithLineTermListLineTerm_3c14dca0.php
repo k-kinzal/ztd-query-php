@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LineTermListWithLineTermListLineTerm_3c14dca0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LineTermListWithLineTermListLineTerm_3c14dca0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LineTermListWithLineTermListLineTerm_3c14dca0 implements \SqlSemantics\Statement\Model\MySql\Role\LineTermListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class LineTermListWithLineTermListLineTerm_3c14dca0 implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LineTermListForm $lineTermList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LineTermForm $lineTerm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lineTermList), 'The lineTermList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lineTerm), 'The lineTerm must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class LineTermListWithLineTermListLineTerm_3c14dca0 implements \SqlSemanti
     {
         $this->lineTermList->write($writer);
         $this->lineTerm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new lineTermList, preserving every other field.
+     */
+    public function withLineTermList(\SqlSemantics\Statement\Model\MySql\Role\LineTermListForm $lineTermList): self
+    {
+        return new self($lineTermList, $this->lineTerm);
+    }
+
+    /**
+     * Returns a copy with a new lineTerm, preserving every other field.
+     */
+    public function withLineTerm(\SqlSemantics\Statement\Model\MySql\Role\LineTermForm $lineTerm): self
+    {
+        return new self($this->lineTermList, $lineTerm);
     }
 }

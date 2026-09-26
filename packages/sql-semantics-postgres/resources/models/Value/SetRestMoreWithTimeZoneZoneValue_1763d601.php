@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetRestMoreWithTimeZoneZoneValue_1763d601 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetRestMoreWithTimeZoneZoneValue_1763d601 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetRestMoreWithTimeZoneZoneValue_1763d601 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestMoreForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ZoneValueForm $zoneValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($zoneValue), 'The zoneValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SetRestMoreWithTimeZoneZoneValue_1763d601 implements \SqlSemantics\S
         $writer->append('TIME');
         $writer->append('ZONE');
         $this->zoneValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new zoneValue, preserving every other field.
+     */
+    public function withZoneValue(\SqlSemantics\Statement\Model\PostgreSql\Role\ZoneValueForm $zoneValue): self
+    {
+        return new self($zoneValue);
     }
 }

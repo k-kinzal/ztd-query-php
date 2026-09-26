@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ValuesRowListWithValuesRowListRowValueExplicit_734510f7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ValuesRowListWithValuesRowListRowValueExplicit_734510f7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ValuesRowListWithValuesRowListRowValueExplicit_734510f7 implements \SqlSemantics\Statement\Model\MySql\Role\ValuesRowListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ValuesRowListWithValuesRowListRowValueExplicit_734510f7 implements \
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValuesRowListForm $valuesRowList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RowValueExplicitForm $rowValueExplicit,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($valuesRowList), 'The valuesRowList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rowValueExplicit), 'The rowValueExplicit must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ValuesRowListWithValuesRowListRowValueExplicit_734510f7 implements \
         $this->valuesRowList->write($writer);
         $writer->append(',');
         $this->rowValueExplicit->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new valuesRowList, preserving every other field.
+     */
+    public function withValuesRowList(\SqlSemantics\Statement\Model\MySql\Role\ValuesRowListForm $valuesRowList): self
+    {
+        return new self($valuesRowList, $this->rowValueExplicit);
+    }
+
+    /**
+     * Returns a copy with a new rowValueExplicit, preserving every other field.
+     */
+    public function withRowValueExplicit(\SqlSemantics\Statement\Model\MySql\Role\RowValueExplicitForm $rowValueExplicit): self
+    {
+        return new self($this->valuesRowList, $rowValueExplicit);
     }
 }

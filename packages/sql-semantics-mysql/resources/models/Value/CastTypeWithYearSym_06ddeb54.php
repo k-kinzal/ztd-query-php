@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithYearSym_06ddeb54 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithYearSym_06ddeb54 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CastTypeWithYearSym_06ddeb54 implements \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $yearSym,
     ) {
+        $this->assertMatchesPattern($yearSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['YEAR_SYM'], 'The yearSym must be a complete YEAR_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class CastTypeWithYearSym_06ddeb54 implements \SqlSemantics\Statement\Mode
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->yearSym);
+    }
+
+    /**
+     * Returns a copy with a new yearSym, preserving every other field.
+     */
+    public function withYearSym(string $yearSym): self
+    {
+        return new self($yearSym);
     }
 }

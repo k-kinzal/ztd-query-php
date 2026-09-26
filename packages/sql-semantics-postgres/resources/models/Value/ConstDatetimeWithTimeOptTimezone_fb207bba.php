@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstDatetimeWithTimeOptTimezone_fb207bba $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstDatetimeWithTimeOptTimezone_fb207bba $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConstDatetimeWithTimeOptTimezone_fb207bba implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstDatetimeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTimezoneForm $optTimezone,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTimezone), 'The optTimezone must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ConstDatetimeWithTimeOptTimezone_fb207bba implements \SqlSemantics\S
     {
         $writer->append('TIME');
         $this->optTimezone->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTimezone, preserving every other field.
+     */
+    public function withOptTimezone(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTimezoneForm $optTimezone): self
+    {
+        return new self($optTimezone);
     }
 }

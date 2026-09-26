@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpTailWithProcedureSymOptIfNotExistsSpNameSpPdparamListSpCChisticsSpProcStmt_e4ef21a0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpTailWithProcedureSymOptIfNotExistsSpNameSpPdparamListSpCChisticsSpProcStmt_e4ef21a0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpTailWithProcedureSymOptIfNotExistsSpNameSpPdparamListSpCChisticsSpProcStmt_e4ef21a0 implements \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\SpTailForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class SpTailWithProcedureSymOptIfNotExistsSpNameSpPdparamListSpCChisticsSp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spPdparamList), 'The spPdparamList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spCChistics), 'The spCChistics must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmt), 'The spProcStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +46,45 @@ final class SpTailWithProcedureSymOptIfNotExistsSpNameSpPdparamListSpCChisticsSp
         $writer->append(')');
         $this->spCChistics->write($writer);
         $this->spProcStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optIfNotExists, preserving every other field.
+     */
+    public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
+    {
+        return new self($optIfNotExists, $this->spName, $this->spPdparamList, $this->spCChistics, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spName, preserving every other field.
+     */
+    public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
+    {
+        return new self($this->optIfNotExists, $spName, $this->spPdparamList, $this->spCChistics, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spPdparamList, preserving every other field.
+     */
+    public function withSpPdparamList(\SqlSemantics\Statement\Model\MySql\Role\SpPdparamListForm $spPdparamList): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $spPdparamList, $this->spCChistics, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spCChistics, preserving every other field.
+     */
+    public function withSpCChistics(\SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->spPdparamList, $spCChistics, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spProcStmt, preserving every other field.
+     */
+    public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->spPdparamList, $this->spCChistics, $spProcStmt);
     }
 }

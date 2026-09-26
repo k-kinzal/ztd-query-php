@@ -7,6 +7,14 @@ models without a parser, vary their data, and verify the resulting SQL. Weak
 references verify that lowering releases parser nodes and tokens. Deptrac checks
 the entire generated model namespace and prohibits parser dependencies there.
 
+Structural-update tests replace and remove a WHERE clause, preserve the original
+Statement, and check that unchanged children remain shared. A separate-process
+test constructs and updates values without loading the SQL parser. Lexical
+spelling and explicit-grouping cases exercise the generated construction
+assertions; the test suite follows the project's rule against treating engine
+errors as an expected public failure API. Model regeneration checks cover the
+typed copy methods and generated construction contracts as well as writers.
+
 The schema-dependent binding API is also tested with all three databases. Tests
 cover schema construction and reuse, default namespaces and grammar context,
 binding and alias visibility, self joins, nested outer joins, NULL provenance,

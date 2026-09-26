@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UpdateListWithUpdateListUpdateElem_f0ee3f6c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UpdateListWithUpdateListUpdateElem_f0ee3f6c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UpdateListWithUpdateListUpdateElem_f0ee3f6c implements \SqlSemantics\Statement\Model\MySql\Role\UpdateListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class UpdateListWithUpdateListUpdateElem_f0ee3f6c implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UpdateListForm $updateList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UpdateElemForm $updateElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($updateList), 'The updateList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($updateElem), 'The updateElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class UpdateListWithUpdateListUpdateElem_f0ee3f6c implements \SqlSemantics
         $this->updateList->write($writer);
         $writer->append(',');
         $this->updateElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new updateList, preserving every other field.
+     */
+    public function withUpdateList(\SqlSemantics\Statement\Model\MySql\Role\UpdateListForm $updateList): self
+    {
+        return new self($updateList, $this->updateElem);
+    }
+
+    /**
+     * Returns a copy with a new updateElem, preserving every other field.
+     */
+    public function withUpdateElem(\SqlSemantics\Statement\Model\MySql\Role\UpdateElemForm $updateElem): self
+    {
+        return new self($this->updateList, $updateElem);
     }
 }

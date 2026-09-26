@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RowsfromListWithRowsfromListRowsfromItem_e3116189 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RowsfromListWithRowsfromListRowsfromItem_e3116189 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RowsfromListWithRowsfromListRowsfromItem_e3116189 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RowsfromListWithRowsfromListRowsfromItem_e3116189 implements \SqlSem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm $rowsfromList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromItemForm $rowsfromItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowsfromList), 'The rowsfromList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($rowsfromItem), 'The rowsfromItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class RowsfromListWithRowsfromListRowsfromItem_e3116189 implements \SqlSem
         $this->rowsfromList->write($writer);
         $writer->append(',');
         $this->rowsfromItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new rowsfromList, preserving every other field.
+     */
+    public function withRowsfromList(\SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm $rowsfromList): self
+    {
+        return new self($rowsfromList, $this->rowsfromItem);
+    }
+
+    /**
+     * Returns a copy with a new rowsfromItem, preserving every other field.
+     */
+    public function withRowsfromItem(\SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromItemForm $rowsfromItem): self
+    {
+        return new self($this->rowsfromList, $rowsfromItem);
     }
 }

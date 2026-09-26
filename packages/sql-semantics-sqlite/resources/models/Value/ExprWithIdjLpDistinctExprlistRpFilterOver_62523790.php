@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithIdjLpDistinctExprlistRpFilterOver_62523790 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithIdjLpDistinctExprlistRpFilterOver_62523790 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithIdjLpDistinctExprlistRpFilterOver_62523790 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class ExprWithIdjLpDistinctExprlistRpFilterOver_62523790 implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FilterOverForm $filterOver,
     ) {
+        $this->assertMatchesPattern($idj, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['idj'], 'The idj must be a complete idj lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($distinct), 'The distinct must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($exprlist), 'The exprlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($filterOver), 'The filterOver must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class ExprWithIdjLpDistinctExprlistRpFilterOver_62523790 implements \SqlSe
         $this->exprlist->write($writer);
         $writer->append(')');
         $this->filterOver->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new idj, preserving every other field.
+     */
+    public function withIdj(string $idj): self
+    {
+        return new self($idj, $this->distinct, $this->exprlist, $this->filterOver);
+    }
+
+    /**
+     * Returns a copy with a new distinct, preserving every other field.
+     */
+    public function withDistinct(\SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct): self
+    {
+        return new self($this->idj, $distinct, $this->exprlist, $this->filterOver);
+    }
+
+    /**
+     * Returns a copy with a new exprlist, preserving every other field.
+     */
+    public function withExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist): self
+    {
+        return new self($this->idj, $this->distinct, $exprlist, $this->filterOver);
+    }
+
+    /**
+     * Returns a copy with a new filterOver, preserving every other field.
+     */
+    public function withFilterOver(\SqlSemantics\Statement\Model\Sqlite\Role\FilterOverForm $filterOver): self
+    {
+        return new self($this->idj, $this->distinct, $this->exprlist, $filterOver);
     }
 }

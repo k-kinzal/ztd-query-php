@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantOptionsWithWithGrantOptionList_7f7d5bbd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantOptionsWithWithGrantOptionList_7f7d5bbd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantOptionsWithWithGrantOptionList_7f7d5bbd implements \SqlSemantics\Statement\Model\MySql\Role\GrantOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantOptionListForm $grantOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantOptionList), 'The grantOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class GrantOptionsWithWithGrantOptionList_7f7d5bbd implements \SqlSemantic
     {
         $writer->append('WITH');
         $this->grantOptionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new grantOptionList, preserving every other field.
+     */
+    public function withGrantOptionList(\SqlSemantics\Statement\Model\MySql\Role\GrantOptionListForm $grantOptionList): self
+    {
+        return new self($grantOptionList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupClauseWithGroupSymByGroupListOlapOpt_ec4e111c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupClauseWithGroupSymByGroupListOlapOpt_ec4e111c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GroupClauseWithGroupSymByGroupListOlapOpt_ec4e111c implements \SqlSemantics\Statement\Model\MySql\Role\GroupClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GroupClauseWithGroupSymByGroupListOlapOpt_ec4e111c implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupListForm $groupList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OlapOptForm $olapOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupList), 'The groupList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($olapOpt), 'The olapOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class GroupClauseWithGroupSymByGroupListOlapOpt_ec4e111c implements \SqlSe
         $writer->append('BY');
         $this->groupList->write($writer);
         $this->olapOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new groupList, preserving every other field.
+     */
+    public function withGroupList(\SqlSemantics\Statement\Model\MySql\Role\GroupListForm $groupList): self
+    {
+        return new self($groupList, $this->olapOpt);
+    }
+
+    /**
+     * Returns a copy with a new olapOpt, preserving every other field.
+     */
+    public function withOlapOpt(\SqlSemantics\Statement\Model\MySql\Role\OlapOptForm $olapOpt): self
+    {
+        return new self($this->groupList, $olapOpt);
     }
 }

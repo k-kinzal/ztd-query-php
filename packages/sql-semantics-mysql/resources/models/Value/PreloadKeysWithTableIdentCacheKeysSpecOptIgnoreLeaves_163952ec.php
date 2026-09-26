@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadKeysWithTableIdentCacheKeysSpecOptIgnoreLeaves_163952ec $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadKeysWithTableIdentCacheKeysSpecOptIgnoreLeaves_163952ec $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PreloadKeysWithTableIdentCacheKeysSpecOptIgnoreLeaves_163952ec implements \SqlSemantics\Statement\Model\MySql\Role\PreloadKeysForm, \SqlSemantics\Statement\Model\MySql\Role\PreloadListForm, \SqlSemantics\Statement\Model\MySql\Role\PreloadListOrPartsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class PreloadKeysWithTableIdentCacheKeysSpecOptIgnoreLeaves_163952ec imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm $optIgnoreLeaves,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($cacheKeysSpec), 'The cacheKeysSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnoreLeaves), 'The optIgnoreLeaves must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class PreloadKeysWithTableIdentCacheKeysSpecOptIgnoreLeaves_163952ec imple
         $this->tableIdent->write($writer);
         $this->cacheKeysSpec->write($writer);
         $this->optIgnoreLeaves->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->cacheKeysSpec, $this->optIgnoreLeaves);
+    }
+
+    /**
+     * Returns a copy with a new cacheKeysSpec, preserving every other field.
+     */
+    public function withCacheKeysSpec(\SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm $cacheKeysSpec): self
+    {
+        return new self($this->tableIdent, $cacheKeysSpec, $this->optIgnoreLeaves);
+    }
+
+    /**
+     * Returns a copy with a new optIgnoreLeaves, preserving every other field.
+     */
+    public function withOptIgnoreLeaves(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreLeavesForm $optIgnoreLeaves): self
+    {
+        return new self($this->tableIdent, $this->cacheKeysSpec, $optIgnoreLeaves);
     }
 }

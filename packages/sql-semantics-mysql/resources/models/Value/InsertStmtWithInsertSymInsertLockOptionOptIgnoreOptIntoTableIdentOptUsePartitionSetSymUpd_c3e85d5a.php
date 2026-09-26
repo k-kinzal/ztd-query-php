@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOptUsePartitionSetSymUpd_c3e85d5a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOptUsePartitionSetSymUpd_c3e85d5a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOptUsePartitionSetSymUpd_c3e85d5a implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\InsertStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOptUsePartitionSetSymUpd_c3e85d5a implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\InsertStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -27,6 +29,14 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptValuesReferenceForm $optValuesReference,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm $optInsertUpdateList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertLockOption), 'The insertLockOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnore), 'The optIgnore must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optInto), 'The optInto must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUsePartition), 'The optUsePartition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($updateList), 'The updateList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optValuesReference), 'The optValuesReference must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optInsertUpdateList), 'The optInsertUpdateList must be a generated immutable SQL value.');
     }
 
     /**
@@ -44,5 +54,69 @@ final class InsertStmtWithInsertSymInsertLockOptionOptIgnoreOptIntoTableIdentOpt
         $this->updateList->write($writer);
         $this->optValuesReference->write($writer);
         $this->optInsertUpdateList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new insertLockOption, preserving every other field.
+     */
+    public function withInsertLockOption(\SqlSemantics\Statement\Model\MySql\Role\InsertLockOptionForm $insertLockOption): self
+    {
+        return new self($insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->updateList, $this->optValuesReference, $this->optInsertUpdateList);
+    }
+
+    /**
+     * Returns a copy with a new optIgnore, preserving every other field.
+     */
+    public function withOptIgnore(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm $optIgnore): self
+    {
+        return new self($this->insertLockOption, $optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->updateList, $this->optValuesReference, $this->optInsertUpdateList);
+    }
+
+    /**
+     * Returns a copy with a new optInto, preserving every other field.
+     */
+    public function withOptInto(\SqlSemantics\Statement\Model\MySql\Role\OptIntoForm $optInto): self
+    {
+        return new self($this->insertLockOption, $this->optIgnore, $optInto, $this->tableIdent, $this->optUsePartition, $this->updateList, $this->optValuesReference, $this->optInsertUpdateList);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $tableIdent, $this->optUsePartition, $this->updateList, $this->optValuesReference, $this->optInsertUpdateList);
+    }
+
+    /**
+     * Returns a copy with a new optUsePartition, preserving every other field.
+     */
+    public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
+    {
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $optUsePartition, $this->updateList, $this->optValuesReference, $this->optInsertUpdateList);
+    }
+
+    /**
+     * Returns a copy with a new updateList, preserving every other field.
+     */
+    public function withUpdateList(\SqlSemantics\Statement\Model\MySql\Role\UpdateListForm $updateList): self
+    {
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $updateList, $this->optValuesReference, $this->optInsertUpdateList);
+    }
+
+    /**
+     * Returns a copy with a new optValuesReference, preserving every other field.
+     */
+    public function withOptValuesReference(\SqlSemantics\Statement\Model\MySql\Role\OptValuesReferenceForm $optValuesReference): self
+    {
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->updateList, $optValuesReference, $this->optInsertUpdateList);
+    }
+
+    /**
+     * Returns a copy with a new optInsertUpdateList, preserving every other field.
+     */
+    public function withOptInsertUpdateList(\SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateListForm $optInsertUpdateList): self
+    {
+        return new self($this->insertLockOption, $this->optIgnore, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->updateList, $this->optValuesReference, $optInsertUpdateList);
     }
 }

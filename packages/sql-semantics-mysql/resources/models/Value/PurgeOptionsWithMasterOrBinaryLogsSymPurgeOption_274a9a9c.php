@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PurgeOptionsWithMasterOrBinaryLogsSymPurgeOption_274a9a9c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PurgeOptionsWithMasterOrBinaryLogsSymPurgeOption_274a9a9c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PurgeOptionsWithMasterOrBinaryLogsSymPurgeOption_274a9a9c implements \SqlSemantics\Statement\Model\MySql\Role\PurgeOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PurgeOptionsWithMasterOrBinaryLogsSymPurgeOption_274a9a9c implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\MasterOrBinaryForm $masterOrBinary,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PurgeOptionForm $purgeOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($masterOrBinary), 'The masterOrBinary must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($purgeOption), 'The purgeOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class PurgeOptionsWithMasterOrBinaryLogsSymPurgeOption_274a9a9c implements
         $this->masterOrBinary->write($writer);
         $writer->append('LOGS');
         $this->purgeOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new masterOrBinary, preserving every other field.
+     */
+    public function withMasterOrBinary(\SqlSemantics\Statement\Model\MySql\Role\MasterOrBinaryForm $masterOrBinary): self
+    {
+        return new self($masterOrBinary, $this->purgeOption);
+    }
+
+    /**
+     * Returns a copy with a new purgeOption, preserving every other field.
+     */
+    public function withPurgeOption(\SqlSemantics\Statement\Model\MySql\Role\PurgeOptionForm $purgeOption): self
+    {
+        return new self($this->masterOrBinary, $purgeOption);
     }
 }

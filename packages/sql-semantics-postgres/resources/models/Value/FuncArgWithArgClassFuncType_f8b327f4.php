@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgWithArgClassFuncType_f8b327f4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgWithArgClassFuncType_f8b327f4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncArgWithArgClassFuncType_f8b327f4 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgWithDefaultForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncArgWithArgClassFuncType_f8b327f4 implements \SqlSemantics\Statem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ArgClassForm $argClass,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm $funcType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($argClass), 'The argClass must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcType), 'The funcType must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FuncArgWithArgClassFuncType_f8b327f4 implements \SqlSemantics\Statem
     {
         $this->argClass->write($writer);
         $this->funcType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new argClass, preserving every other field.
+     */
+    public function withArgClass(\SqlSemantics\Statement\Model\PostgreSql\Role\ArgClassForm $argClass): self
+    {
+        return new self($argClass, $this->funcType);
+    }
+
+    /**
+     * Returns a copy with a new funcType, preserving every other field.
+     */
+    public function withFuncType(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm $funcType): self
+    {
+        return new self($this->argClass, $funcType);
     }
 }

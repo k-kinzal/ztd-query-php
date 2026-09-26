@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindowOrderByClauseOptWindowFrame_4a73fee5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindowOrderByClauseOptWindowFrame_4a73fee5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindowOrderByClauseOptWindowFrame_4a73fee5 implements \SqlSemantics\Statement\Model\MySql\Role\WindowSpecDetailsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindo
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowOrderByClauseForm $optWindowOrderByClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameClauseForm $optWindowFrameClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExistingWindowName), 'The optExistingWindowName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPartitionClause), 'The optPartitionClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWindowOrderByClause), 'The optWindowOrderByClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWindowFrameClause), 'The optWindowFrameClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class WindowSpecDetailsWithOptExistingWindowNameOptPartitionClauseOptWindo
         $this->optPartitionClause->write($writer);
         $this->optWindowOrderByClause->write($writer);
         $this->optWindowFrameClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optExistingWindowName, preserving every other field.
+     */
+    public function withOptExistingWindowName(\SqlSemantics\Statement\Model\MySql\Role\OptExistingWindowNameForm $optExistingWindowName): self
+    {
+        return new self($optExistingWindowName, $this->optPartitionClause, $this->optWindowOrderByClause, $this->optWindowFrameClause);
+    }
+
+    /**
+     * Returns a copy with a new optPartitionClause, preserving every other field.
+     */
+    public function withOptPartitionClause(\SqlSemantics\Statement\Model\MySql\Role\OptPartitionClauseForm $optPartitionClause): self
+    {
+        return new self($this->optExistingWindowName, $optPartitionClause, $this->optWindowOrderByClause, $this->optWindowFrameClause);
+    }
+
+    /**
+     * Returns a copy with a new optWindowOrderByClause, preserving every other field.
+     */
+    public function withOptWindowOrderByClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowOrderByClauseForm $optWindowOrderByClause): self
+    {
+        return new self($this->optExistingWindowName, $this->optPartitionClause, $optWindowOrderByClause, $this->optWindowFrameClause);
+    }
+
+    /**
+     * Returns a copy with a new optWindowFrameClause, preserving every other field.
+     */
+    public function withOptWindowFrameClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowFrameClauseForm $optWindowFrameClause): self
+    {
+        return new self($this->optExistingWindowName, $this->optPartitionClause, $this->optWindowOrderByClause, $optWindowFrameClause);
     }
 }

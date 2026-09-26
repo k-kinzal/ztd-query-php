@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RelationExprListWithRelationExprListRelationExpr_c059294c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RelationExprListWithRelationExprListRelationExpr_c059294c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RelationExprListWithRelationExprListRelationExpr_c059294c implements \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RelationExprListWithRelationExprListRelationExpr_c059294c implements
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprList), 'The relationExprList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class RelationExprListWithRelationExprListRelationExpr_c059294c implements
         $this->relationExprList->write($writer);
         $writer->append(',');
         $this->relationExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new relationExprList, preserving every other field.
+     */
+    public function withRelationExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList): self
+    {
+        return new self($relationExprList, $this->relationExpr);
+    }
+
+    /**
+     * Returns a copy with a new relationExpr, preserving every other field.
+     */
+    public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
+    {
+        return new self($this->relationExprList, $relationExpr);
     }
 }

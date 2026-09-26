@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithCollationSymWildAndWhere_7c0bd923 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithCollationSymWildAndWhere_7c0bd923 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithCollationSymWildAndWhere_7c0bd923 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wildAndWhere), 'The wildAndWhere must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ShowParamWithCollationSymWildAndWhere_7c0bd923 implements \SqlSemant
     {
         $writer->append('COLLATION');
         $this->wildAndWhere->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new wildAndWhere, preserving every other field.
+     */
+    public function withWildAndWhere(\SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere): self
+    {
+        return new self($wildAndWhere);
     }
 }

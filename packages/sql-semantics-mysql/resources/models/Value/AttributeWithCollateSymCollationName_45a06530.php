@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AttributeWithCollateSymCollationName_45a06530 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AttributeWithCollateSymCollationName_45a06530 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AttributeWithCollateSymCollationName_45a06530 implements \SqlSemantics\Statement\Model\MySql\Role\AttributeForm, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CollationNameForm $collationName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($collationName), 'The collationName must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AttributeWithCollateSymCollationName_45a06530 implements \SqlSemanti
     {
         $writer->append('COLLATE');
         $this->collationName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new collationName, preserving every other field.
+     */
+    public function withCollationName(\SqlSemantics\Statement\Model\MySql\Role\CollationNameForm $collationName): self
+    {
+        return new self($collationName);
     }
 }

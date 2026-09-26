@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableToTableWithTableIdentToSymTableIdent_3bc05998 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableToTableWithTableIdentToSymTableIdent_3bc05998 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableToTableWithTableIdentToSymTableIdent_3bc05998 implements \SqlSemantics\Statement\Model\MySql\Role\TableToTableForm, \SqlSemantics\Statement\Model\MySql\Role\TableToTableListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableToTableWithTableIdentToSymTableIdent_3bc05998 implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent2), 'The tableIdent2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableToTableWithTableIdentToSymTableIdent_3bc05998 implements \SqlSe
         $this->tableIdent->write($writer);
         $writer->append('TO');
         $this->tableIdent2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->tableIdent2);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent2, preserving every other field.
+     */
+    public function withTableIdent2(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent2): self
+    {
+        return new self($this->tableIdent, $tableIdent2);
     }
 }

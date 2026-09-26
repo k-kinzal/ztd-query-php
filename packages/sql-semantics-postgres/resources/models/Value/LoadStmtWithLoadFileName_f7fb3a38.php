@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\LoadStmtWithLoadFileName_f7fb3a38 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\LoadStmtWithLoadFileName_f7fb3a38 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class LoadStmtWithLoadFileName_f7fb3a38 implements \SqlSemantics\Statement\Model\PostgreSql\Role\LoadStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class LoadStmtWithLoadFileName_f7fb3a38 implements \SqlSemantics\Statement\Model\PostgreSql\Role\LoadStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FileNameForm $fileName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($fileName), 'The fileName must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class LoadStmtWithLoadFileName_f7fb3a38 implements \SqlSemantics\Statement
     {
         $writer->append('LOAD');
         $this->fileName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fileName, preserving every other field.
+     */
+    public function withFileName(\SqlSemantics\Statement\Model\PostgreSql\Role\FileNameForm $fileName): self
+    {
+        return new self($fileName);
     }
 }

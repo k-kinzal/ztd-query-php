@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprLtGtGeLeExpr_c64bb14c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprLtGtGeLeExpr_c64bb14c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithExprLtGtGeLeExpr_c64bb14c implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,11 @@ final class ExprWithExprLtGtGeLeExpr_c64bb14c implements \SqlSemantics\Statement
         public readonly string $ltGtGeLe,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 5,));
+        $this->assertMatchesPattern($ltGtGeLe, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['LT|GT|GE|LE'], 'The ltGtGeLe must be a complete LT|GT|GE|LE lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr2, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 6,));
     }
 
     /**
@@ -32,5 +39,29 @@ final class ExprWithExprLtGtGeLeExpr_c64bb14c implements \SqlSemantics\Statement
         $this->expr->write($writer);
         $writer->append($this->ltGtGeLe);
         $this->expr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->ltGtGeLe, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new ltGtGeLe, preserving every other field.
+     */
+    public function withLtGtGeLe(string $ltGtGeLe): self
+    {
+        return new self($this->expr, $ltGtGeLe, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new expr2, preserving every other field.
+     */
+    public function withExpr2(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2): self
+    {
+        return new self($this->expr, $this->ltGtGeLe, $expr2);
     }
 }

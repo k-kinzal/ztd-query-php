@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ValidatorClauseWithValidatorHandlerName_8075bff1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ValidatorClauseWithValidatorHandlerName_8075bff1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ValidatorClauseWithValidatorHandlerName_8075bff1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptValidatorForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ValidatorClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($handlerName), 'The handlerName must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ValidatorClauseWithValidatorHandlerName_8075bff1 implements \SqlSema
     {
         $writer->append('VALIDATOR');
         $this->handlerName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new handlerName, preserving every other field.
+     */
+    public function withHandlerName(\SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName): self
+    {
+        return new self($handlerName);
     }
 }

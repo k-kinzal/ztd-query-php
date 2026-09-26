@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CommonTableExprWithIdentOptDerivedColumnListAsTableSubquery_42edd512 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CommonTableExprWithIdentOptDerivedColumnListAsTableSubquery_42edd512 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CommonTableExprWithIdentOptDerivedColumnListAsTableSubquery_42edd512 implements \SqlSemantics\Statement\Model\MySql\Role\CommonTableExprForm, \SqlSemantics\Statement\Model\MySql\Role\WithListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CommonTableExprWithIdentOptDerivedColumnListAsTableSubquery_42edd512
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDerivedColumnList), 'The optDerivedColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableSubquery), 'The tableSubquery must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class CommonTableExprWithIdentOptDerivedColumnListAsTableSubquery_42edd512
         $this->optDerivedColumnList->write($writer);
         $writer->append('AS');
         $this->tableSubquery->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->optDerivedColumnList, $this->tableSubquery);
+    }
+
+    /**
+     * Returns a copy with a new optDerivedColumnList, preserving every other field.
+     */
+    public function withOptDerivedColumnList(\SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList): self
+    {
+        return new self($this->ident, $optDerivedColumnList, $this->tableSubquery);
+    }
+
+    /**
+     * Returns a copy with a new tableSubquery, preserving every other field.
+     */
+    public function withTableSubquery(\SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery): self
+    {
+        return new self($this->ident, $this->optDerivedColumnList, $tableSubquery);
     }
 }

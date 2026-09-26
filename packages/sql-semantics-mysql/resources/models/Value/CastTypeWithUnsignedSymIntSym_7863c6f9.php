@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithUnsignedSymIntSym_7863c6f9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithUnsignedSymIntSym_7863c6f9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CastTypeWithUnsignedSymIntSym_7863c6f9 implements \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $intSym,
     ) {
+        $this->assertMatchesPattern($intSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['INT_SYM'], 'The intSym must be a complete INT_SYM lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CastTypeWithUnsignedSymIntSym_7863c6f9 implements \SqlSemantics\Stat
     {
         $writer->append('UNSIGNED');
         $writer->append($this->intSym);
+    }
+
+    /**
+     * Returns a copy with a new intSym, preserving every other field.
+     */
+    public function withIntSym(string $intSym): self
+    {
+        return new self($intSym);
     }
 }

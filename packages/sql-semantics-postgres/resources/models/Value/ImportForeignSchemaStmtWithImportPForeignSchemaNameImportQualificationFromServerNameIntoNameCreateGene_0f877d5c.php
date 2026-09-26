@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificationFromServerNameIntoNameCreateGene_0f877d5c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificationFromServerNameIntoNameCreateGene_0f877d5c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificationFromServerNameIntoNameCreateGene_0f877d5c implements \SqlSemantics\Statement\Model\PostgreSql\Role\ImportForeignSchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificationFromServerNameIntoNameCreateGene_0f877d5c implements \SqlSemantics\Statement\Model\PostgreSql\Role\ImportForeignSchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificati
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name3,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($importQualification), 'The importQualification must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name2), 'The name2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name3), 'The name3 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createGenericOptions), 'The createGenericOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -42,5 +49,45 @@ final class ImportForeignSchemaStmtWithImportPForeignSchemaNameImportQualificati
         $writer->append('INTO');
         $this->name3->write($writer);
         $this->createGenericOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->importQualification, $this->name2, $this->name3, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new importQualification, preserving every other field.
+     */
+    public function withImportQualification(\SqlSemantics\Statement\Model\PostgreSql\Role\ImportQualificationForm $importQualification): self
+    {
+        return new self($this->name, $importQualification, $this->name2, $this->name3, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new name2, preserving every other field.
+     */
+    public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
+    {
+        return new self($this->name, $this->importQualification, $name2, $this->name3, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new name3, preserving every other field.
+     */
+    public function withName3(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name3): self
+    {
+        return new self($this->name, $this->importQualification, $this->name2, $name3, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new createGenericOptions, preserving every other field.
+     */
+    public function withCreateGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions): self
+    {
+        return new self($this->name, $this->importQualification, $this->name2, $this->name3, $createGenericOptions);
     }
 }

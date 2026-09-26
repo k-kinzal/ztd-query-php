@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionWithOptLockingClausesWithQueryExpressionLockingClauseList_c7e0cf77 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionWithOptLockingClausesWithQueryExpressionLockingClauseList_c7e0cf77 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QueryExpressionWithOptLockingClausesWithQueryExpressionLockingClauseList_c7e0cf77 implements \SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm, \SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm, \SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class QueryExpressionWithOptLockingClausesWithQueryExpressionLockingClause
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionForm $query,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm $lockingClauseList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($query), 'The query must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lockingClauseList), 'The lockingClauseList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class QueryExpressionWithOptLockingClausesWithQueryExpressionLockingClause
     {
         $this->query->write($writer);
         $this->lockingClauseList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new query, preserving every other field.
+     */
+    public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionForm $query): self
+    {
+        return new self($query, $this->lockingClauseList);
+    }
+
+    /**
+     * Returns a copy with a new lockingClauseList, preserving every other field.
+     */
+    public function withLockingClauseList(\SqlSemantics\Statement\Model\MySql\Role\LockingClauseListForm $lockingClauseList): self
+    {
+        return new self($this->query, $lockingClauseList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsageList_d0ca86e4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsageList_d0ca86e4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsageList_d0ca86e4 implements \SqlSemantics\Statement\Model\MySql\Role\IndexHintDefinitionForm, \SqlSemantics\Statement\Model\MySql\Role\IndexHintsListForm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexHintsListForm, \SqlSemantics\Statement\Model\MySql\Role\OptKeyDefinitionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsag
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexHintClauseForm $indexHintClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyUsageListForm $keyUsageList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexHintType), 'The indexHintType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyOrIndex), 'The keyOrIndex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexHintClause), 'The indexHintClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyUsageList), 'The keyUsageList must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsag
         $writer->append('(');
         $this->keyUsageList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new indexHintType, preserving every other field.
+     */
+    public function withIndexHintType(\SqlSemantics\Statement\Model\MySql\Role\IndexHintTypeForm $indexHintType): self
+    {
+        return new self($indexHintType, $this->keyOrIndex, $this->indexHintClause, $this->keyUsageList);
+    }
+
+    /**
+     * Returns a copy with a new keyOrIndex, preserving every other field.
+     */
+    public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self
+    {
+        return new self($this->indexHintType, $keyOrIndex, $this->indexHintClause, $this->keyUsageList);
+    }
+
+    /**
+     * Returns a copy with a new indexHintClause, preserving every other field.
+     */
+    public function withIndexHintClause(\SqlSemantics\Statement\Model\MySql\Role\IndexHintClauseForm $indexHintClause): self
+    {
+        return new self($this->indexHintType, $this->keyOrIndex, $indexHintClause, $this->keyUsageList);
+    }
+
+    /**
+     * Returns a copy with a new keyUsageList, preserving every other field.
+     */
+    public function withKeyUsageList(\SqlSemantics\Statement\Model\MySql\Role\KeyUsageListForm $keyUsageList): self
+    {
+        return new self($this->indexHintType, $this->keyOrIndex, $this->indexHintClause, $keyUsageList);
     }
 }

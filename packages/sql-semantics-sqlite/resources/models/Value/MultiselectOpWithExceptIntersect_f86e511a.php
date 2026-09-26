@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\MultiselectOpWithExceptIntersect_f86e511a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\MultiselectOpWithExceptIntersect_f86e511a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MultiselectOpWithExceptIntersect_f86e511a implements \SqlSemantics\Statement\Model\Sqlite\Role\MultiselectOpForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $exceptIntersect,
     ) {
+        $this->assertMatchesPattern($exceptIntersect, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['EXCEPT|INTERSECT'], 'The exceptIntersect must be a complete EXCEPT|INTERSECT lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class MultiselectOpWithExceptIntersect_f86e511a implements \SqlSemantics\S
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->exceptIntersect);
+    }
+
+    /**
+     * Returns a copy with a new exceptIntersect, preserving every other field.
+     */
+    public function withExceptIntersect(string $exceptIntersect): self
+    {
+        return new self($exceptIntersect);
     }
 }

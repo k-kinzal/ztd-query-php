@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CreateTableArgsWithLpColumnlistConslistOptRpTableOptionSet_9c826ddf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CreateTableArgsWithLpColumnlistConslistOptRpTableOptionSet_9c826ddf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateTableArgsWithLpColumnlistConslistOptRpTableOptionSet_9c826ddf implements \SqlSemantics\Statement\Model\Sqlite\Role\CreateTableArgsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateTableArgsWithLpColumnlistConslistOptRpTableOptionSet_9c826ddf 
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ConslistOptForm $conslistOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm $tableOptionSet,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($columnlist), 'The columnlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($conslistOpt), 'The conslistOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($tableOptionSet), 'The tableOptionSet must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class CreateTableArgsWithLpColumnlistConslistOptRpTableOptionSet_9c826ddf 
         $this->conslistOpt->write($writer);
         $writer->append(')');
         $this->tableOptionSet->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columnlist, preserving every other field.
+     */
+    public function withColumnlist(\SqlSemantics\Statement\Model\Sqlite\Role\ColumnlistForm $columnlist): self
+    {
+        return new self($columnlist, $this->conslistOpt, $this->tableOptionSet);
+    }
+
+    /**
+     * Returns a copy with a new conslistOpt, preserving every other field.
+     */
+    public function withConslistOpt(\SqlSemantics\Statement\Model\Sqlite\Role\ConslistOptForm $conslistOpt): self
+    {
+        return new self($this->columnlist, $conslistOpt, $this->tableOptionSet);
+    }
+
+    /**
+     * Returns a copy with a new tableOptionSet, preserving every other field.
+     */
+    public function withTableOptionSet(\SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm $tableOptionSet): self
+    {
+        return new self($this->columnlist, $this->conslistOpt, $tableOptionSet);
     }
 }

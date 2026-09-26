@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantWithGrantClearPrivilegesGrantCommand_7560798e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantWithGrantClearPrivilegesGrantCommand_7560798e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class GrantWithGrantClearPrivilegesGrantCommand_7560798e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\GrantForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class GrantWithGrantClearPrivilegesGrantCommand_7560798e implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\GrantForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GrantWithGrantClearPrivilegesGrantCommand_7560798e implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantCommandForm $grantCommand,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($clearPrivileges), 'The clearPrivileges must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantCommand), 'The grantCommand must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GrantWithGrantClearPrivilegesGrantCommand_7560798e implements \SqlSe
         $writer->append('GRANT');
         $this->clearPrivileges->write($writer);
         $this->grantCommand->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new clearPrivileges, preserving every other field.
+     */
+    public function withClearPrivileges(\SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges): self
+    {
+        return new self($clearPrivileges, $this->grantCommand);
+    }
+
+    /**
+     * Returns a copy with a new grantCommand, preserving every other field.
+     */
+    public function withGrantCommand(\SqlSemantics\Statement\Model\MySql\Role\GrantCommandForm $grantCommand): self
+    {
+        return new self($this->clearPrivileges, $grantCommand);
     }
 }

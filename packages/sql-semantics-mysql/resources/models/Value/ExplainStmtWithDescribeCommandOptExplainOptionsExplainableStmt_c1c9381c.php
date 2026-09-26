@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c9381c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c9381c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c9381c implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c9381c implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c93
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExplainOptionsForm $optExplainOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm $explainableStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($describeCommand), 'The describeCommand must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExplainOptions), 'The optExplainOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($explainableStmt), 'The explainableStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class ExplainStmtWithDescribeCommandOptExplainOptionsExplainableStmt_c1c93
         $this->describeCommand->write($writer);
         $this->optExplainOptions->write($writer);
         $this->explainableStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new describeCommand, preserving every other field.
+     */
+    public function withDescribeCommand(\SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm $describeCommand): self
+    {
+        return new self($describeCommand, $this->optExplainOptions, $this->explainableStmt);
+    }
+
+    /**
+     * Returns a copy with a new optExplainOptions, preserving every other field.
+     */
+    public function withOptExplainOptions(\SqlSemantics\Statement\Model\MySql\Role\OptExplainOptionsForm $optExplainOptions): self
+    {
+        return new self($this->describeCommand, $optExplainOptions, $this->explainableStmt);
+    }
+
+    /**
+     * Returns a copy with a new explainableStmt, preserving every other field.
+     */
+    public function withExplainableStmt(\SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm $explainableStmt): self
+    {
+        return new self($this->describeCommand, $this->optExplainOptions, $explainableStmt);
     }
 }

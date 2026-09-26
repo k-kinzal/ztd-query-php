@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveUntilOptsWithSqlAfterMtsGaps_ea6037e8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveUntilOptsWithSqlAfterMtsGaps_ea6037e8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveUntilOptsWithSqlAfterMtsGaps_ea6037e8 implements \SqlSemantics\Statement\Model\MySql\Role\SlaveUntilOptsForm

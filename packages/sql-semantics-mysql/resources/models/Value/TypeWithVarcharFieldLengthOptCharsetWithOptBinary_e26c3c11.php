@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 implement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($varchar), 'The varchar must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldLength), 'The fieldLength must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCharsetWithOptBinary), 'The optCharsetWithOptBinary must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TypeWithVarcharFieldLengthOptCharsetWithOptBinary_e26c3c11 implement
         $this->varchar->write($writer);
         $this->fieldLength->write($writer);
         $this->optCharsetWithOptBinary->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new varchar, preserving every other field.
+     */
+    public function withVarchar(\SqlSemantics\Statement\Model\MySql\Role\VarcharForm $varchar): self
+    {
+        return new self($varchar, $this->fieldLength, $this->optCharsetWithOptBinary);
+    }
+
+    /**
+     * Returns a copy with a new fieldLength, preserving every other field.
+     */
+    public function withFieldLength(\SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength): self
+    {
+        return new self($this->varchar, $fieldLength, $this->optCharsetWithOptBinary);
+    }
+
+    /**
+     * Returns a copy with a new optCharsetWithOptBinary, preserving every other field.
+     */
+    public function withOptCharsetWithOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary): self
+    {
+        return new self($this->varchar, $this->fieldLength, $optCharsetWithOptBinary);
     }
 }

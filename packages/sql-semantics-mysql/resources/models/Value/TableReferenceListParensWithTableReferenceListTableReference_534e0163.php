@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableReferenceListParensWithTableReferenceListTableReference_534e0163 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableReferenceListParensWithTableReferenceListTableReference_534e0163 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableReferenceListParensWithTableReferenceListTableReference_534e0163 implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListParensForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableReferenceListParensWithTableReferenceListTableReference_534e016
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm $tableReferenceList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReferenceList), 'The tableReferenceList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class TableReferenceListParensWithTableReferenceListTableReference_534e016
         $writer->append(',');
         $this->tableReference->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new tableReferenceList, preserving every other field.
+     */
+    public function withTableReferenceList(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm $tableReferenceList): self
+    {
+        return new self($tableReferenceList, $this->tableReference);
+    }
+
+    /**
+     * Returns a copy with a new tableReference, preserving every other field.
+     */
+    public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
+    {
+        return new self($this->tableReferenceList, $tableReference);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterOrderListWithAlterOrderListAlterOrderItem_3f858882 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterOrderListWithAlterOrderListAlterOrderItem_3f858882 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterOrderListWithAlterOrderListAlterOrderItem_3f858882 implements \SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterOrderListWithAlterOrderListAlterOrderItem_3f858882 implements \
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm $alterOrderList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterOrderItemForm $alterOrderItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterOrderList), 'The alterOrderList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterOrderItem), 'The alterOrderItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterOrderListWithAlterOrderListAlterOrderItem_3f858882 implements \
         $this->alterOrderList->write($writer);
         $writer->append(',');
         $this->alterOrderItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterOrderList, preserving every other field.
+     */
+    public function withAlterOrderList(\SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm $alterOrderList): self
+    {
+        return new self($alterOrderList, $this->alterOrderItem);
+    }
+
+    /**
+     * Returns a copy with a new alterOrderItem, preserving every other field.
+     */
+    public function withAlterOrderItem(\SqlSemantics\Statement\Model\MySql\Role\AlterOrderItemForm $alterOrderItem): self
+    {
+        return new self($this->alterOrderList, $alterOrderItem);
     }
 }

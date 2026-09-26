@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReloptionListWithReloptionListReloptionElem_499dc88f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReloptionListWithReloptionListReloptionElem_499dc88f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReloptionListWithReloptionListReloptionElem_499dc88f implements \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ReloptionListWithReloptionListReloptionElem_499dc88f implements \Sql
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm $reloptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionElemForm $reloptionElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($reloptionList), 'The reloptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($reloptionElem), 'The reloptionElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ReloptionListWithReloptionListReloptionElem_499dc88f implements \Sql
         $this->reloptionList->write($writer);
         $writer->append(',');
         $this->reloptionElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new reloptionList, preserving every other field.
+     */
+    public function withReloptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm $reloptionList): self
+    {
+        return new self($reloptionList, $this->reloptionElem);
+    }
+
+    /**
+     * Returns a copy with a new reloptionElem, preserving every other field.
+     */
+    public function withReloptionElem(\SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionElemForm $reloptionElem): self
+    {
+        return new self($this->reloptionList, $reloptionElem);
     }
 }

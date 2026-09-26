@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsWithAlterCommandListPartitioning_c6485e9e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsWithAlterCommandListPartitioning_c6485e9e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterCommandsWithAlterCommandListPartitioning_c6485e9e implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterCommandsWithAlterCommandListPartitioning_c6485e9e implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm $alterCommandList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartitioningForm $partitioning,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterCommandList), 'The alterCommandList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partitioning), 'The partitioning must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AlterCommandsWithAlterCommandListPartitioning_c6485e9e implements \S
     {
         $this->alterCommandList->write($writer);
         $this->partitioning->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterCommandList, preserving every other field.
+     */
+    public function withAlterCommandList(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm $alterCommandList): self
+    {
+        return new self($alterCommandList, $this->partitioning);
+    }
+
+    /**
+     * Returns a copy with a new partitioning, preserving every other field.
+     */
+    public function withPartitioning(\SqlSemantics\Statement\Model\MySql\Role\PartitioningForm $partitioning): self
+    {
+        return new self($this->alterCommandList, $partitioning);
     }
 }

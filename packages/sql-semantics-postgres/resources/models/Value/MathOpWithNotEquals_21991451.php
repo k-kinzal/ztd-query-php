@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MathOpWithNotEquals_21991451 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MathOpWithNotEquals_21991451 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MathOpWithNotEquals_21991451 implements \SqlSemantics\Statement\Model\PostgreSql\Role\MathOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AllOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\QualAllOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $notEquals,
     ) {
+        $this->assertMatchesPattern($notEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['NOT_EQUALS'], 'The notEquals must be a complete NOT_EQUALS lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class MathOpWithNotEquals_21991451 implements \SqlSemantics\Statement\Mode
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->notEquals);
+    }
+
+    /**
+     * Returns a copy with a new notEquals, preserving every other field.
+     */
+    public function withNotEquals(string $notEquals): self
+    {
+        return new self($notEquals);
     }
 }

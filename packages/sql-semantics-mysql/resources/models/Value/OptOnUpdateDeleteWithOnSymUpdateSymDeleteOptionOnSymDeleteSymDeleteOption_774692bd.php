@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptOnUpdateDeleteWithOnSymUpdateSymDeleteOptionOnSymDeleteSymDeleteOption_774692bd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptOnUpdateDeleteWithOnSymUpdateSymDeleteOptionOnSymDeleteSymDeleteOption_774692bd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptOnUpdateDeleteWithOnSymUpdateSymDeleteOptionOnSymDeleteSymDeleteOption_774692bd implements \SqlSemantics\Statement\Model\MySql\Role\OptOnUpdateDeleteForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptOnUpdateDeleteWithOnSymUpdateSymDeleteOptionOnSymDeleteSymDeleteO
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($deleteOption), 'The deleteOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($deleteOption2), 'The deleteOption2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class OptOnUpdateDeleteWithOnSymUpdateSymDeleteOptionOnSymDeleteSymDeleteO
         $writer->append('ON');
         $writer->append('DELETE');
         $this->deleteOption2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new deleteOption, preserving every other field.
+     */
+    public function withDeleteOption(\SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption): self
+    {
+        return new self($deleteOption, $this->deleteOption2);
+    }
+
+    /**
+     * Returns a copy with a new deleteOption2, preserving every other field.
+     */
+    public function withDeleteOption2(\SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption2): self
+    {
+        return new self($this->deleteOption, $deleteOption2);
     }
 }

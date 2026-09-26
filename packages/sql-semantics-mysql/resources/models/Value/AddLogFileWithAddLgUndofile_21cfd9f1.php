@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AddLogFileWithAddLgUndofile_21cfd9f1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AddLogFileWithAddLgUndofile_21cfd9f1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AddLogFileWithAddLgUndofile_21cfd9f1 implements \SqlSemantics\Statement\Model\MySql\Role\AddLogFileForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LgUndofileForm $lgUndofile,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lgUndofile), 'The lgUndofile must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AddLogFileWithAddLgUndofile_21cfd9f1 implements \SqlSemantics\Statem
     {
         $writer->append('ADD');
         $this->lgUndofile->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new lgUndofile, preserving every other field.
+     */
+    public function withLgUndofile(\SqlSemantics\Statement\Model\MySql\Role\LgUndofileForm $lgUndofile): self
+    {
+        return new self($lgUndofile);
     }
 }

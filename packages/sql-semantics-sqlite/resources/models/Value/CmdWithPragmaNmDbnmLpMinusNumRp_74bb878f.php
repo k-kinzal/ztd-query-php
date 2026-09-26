@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\MinusNumForm $minusNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($minusNum), 'The minusNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class CmdWithPragmaNmDbnmLpMinusNumRp_74bb878f implements \SqlSemantics\St
         $writer->append('(');
         $this->minusNum->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm, $this->dbnm, $this->minusNum);
+    }
+
+    /**
+     * Returns a copy with a new dbnm, preserving every other field.
+     */
+    public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
+    {
+        return new self($this->nm, $dbnm, $this->minusNum);
+    }
+
+    /**
+     * Returns a copy with a new minusNum, preserving every other field.
+     */
+    public function withMinusNum(\SqlSemantics\Statement\Model\Sqlite\Role\MinusNumForm $minusNum): self
+    {
+        return new self($this->nm, $this->dbnm, $minusNum);
     }
 }

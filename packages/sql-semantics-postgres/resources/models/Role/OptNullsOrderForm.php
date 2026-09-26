@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Role;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Role\OptNullsOrderForm $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 interface OptNullsOrderForm extends \SqlSemantics\Statement\Element

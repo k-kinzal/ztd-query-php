@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TermWithNullFloatBlob_0bfe6b30 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TermWithNullFloatBlob_0bfe6b30 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TermWithNullFloatBlob_0bfe6b30 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\TermForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $nullFloatBlob,
     ) {
+        $this->assertMatchesPattern($nullFloatBlob, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['NULL|FLOAT|BLOB'], 'The nullFloatBlob must be a complete NULL|FLOAT|BLOB lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TermWithNullFloatBlob_0bfe6b30 implements \SqlSemantics\Statement\Mo
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->nullFloatBlob);
+    }
+
+    /**
+     * Returns a copy with a new nullFloatBlob, preserving every other field.
+     */
+    public function withNullFloatBlob(string $nullFloatBlob): self
+    {
+        return new self($nullFloatBlob);
     }
 }

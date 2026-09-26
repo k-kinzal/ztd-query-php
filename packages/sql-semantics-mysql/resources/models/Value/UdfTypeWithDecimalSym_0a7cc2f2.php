@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UdfTypeWithDecimalSym_0a7cc2f2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UdfTypeWithDecimalSym_0a7cc2f2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UdfTypeWithDecimalSym_0a7cc2f2 implements \SqlSemantics\Statement\Model\MySql\Role\UdfTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $decimalSym,
     ) {
+        $this->assertMatchesPattern($decimalSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DECIMAL_SYM'], 'The decimalSym must be a complete DECIMAL_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class UdfTypeWithDecimalSym_0a7cc2f2 implements \SqlSemantics\Statement\Mo
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->decimalSym);
+    }
+
+    /**
+     * Returns a copy with a new decimalSym, preserving every other field.
+     */
+    public function withDecimalSym(string $decimalSym): self
+    {
+        return new self($decimalSym);
     }
 }

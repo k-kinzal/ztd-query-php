@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstDatetimeWithTimestampIconstOptTimezone_23c15834 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstDatetimeWithTimestampIconstOptTimezone_23c15834 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConstDatetimeWithTimestampIconstOptTimezone_23c15834 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstDatetimeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ConstDatetimeWithTimestampIconstOptTimezone_23c15834 implements \Sql
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTimezoneForm $optTimezone,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTimezone), 'The optTimezone must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class ConstDatetimeWithTimestampIconstOptTimezone_23c15834 implements \Sql
         $this->iconst->write($writer);
         $writer->append(')');
         $this->optTimezone->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new iconst, preserving every other field.
+     */
+    public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
+    {
+        return new self($iconst, $this->optTimezone);
+    }
+
+    /**
+     * Returns a copy with a new optTimezone, preserving every other field.
+     */
+    public function withOptTimezone(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTimezoneForm $optTimezone): self
+    {
+        return new self($this->iconst, $optTimezone);
     }
 }

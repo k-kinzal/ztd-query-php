@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OptReplicaResetOptionsChoice_66c44b99 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OptReplicaResetOptionsChoice_66c44b99 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum OptReplicaResetOptionsChoice_66c44b99: string implements \SqlSemantics\Statement\Model\MySql\Role\OptReplicaResetOptionsForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTypeCmdWithAlterAttributeColIdOptSetDataTypePTypenameOptCollateClauseOptDropBehavior_a82acfbd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTypeCmdWithAlterAttributeColIdOptSetDataTypePTypenameOptCollateClauseOptDropBehavior_a82acfbd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTypeCmdWithAlterAttributeColIdOptSetDataTypePTypenameOptCollateClauseOptDropBehavior_a82acfbd implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTypeCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTypeCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class AlterTypeCmdWithAlterAttributeColIdOptSetDataTypePTypenameOptCollate
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateClauseForm $optCollateClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSetData), 'The optSetData must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCollateClause), 'The optCollateClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +46,45 @@ final class AlterTypeCmdWithAlterAttributeColIdOptSetDataTypePTypenameOptCollate
         $this->typename->write($writer);
         $this->optCollateClause->write($writer);
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->optSetData, $this->typename, $this->optCollateClause, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optSetData, preserving every other field.
+     */
+    public function withOptSetData(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSetDataForm $optSetData): self
+    {
+        return new self($this->colId, $optSetData, $this->typename, $this->optCollateClause, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->colId, $this->optSetData, $typename, $this->optCollateClause, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optCollateClause, preserving every other field.
+     */
+    public function withOptCollateClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateClauseForm $optCollateClause): self
+    {
+        return new self($this->colId, $this->optSetData, $this->typename, $optCollateClause, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optDropBehavior, preserving every other field.
+     */
+    public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
+    {
+        return new self($this->colId, $this->optSetData, $this->typename, $this->optCollateClause, $optDropBehavior);
     }
 }

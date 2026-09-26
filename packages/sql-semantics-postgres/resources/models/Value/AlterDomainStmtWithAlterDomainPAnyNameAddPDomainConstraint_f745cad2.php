@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterDomainStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterDomainStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DomainConstraintForm $domainConstraint,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($domainConstraint), 'The domainConstraint must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class AlterDomainStmtWithAlterDomainPAnyNameAddPDomainConstraint_f745cad2 
         $this->anyName->write($writer);
         $writer->append('ADD');
         $this->domainConstraint->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->domainConstraint);
+    }
+
+    /**
+     * Returns a copy with a new domainConstraint, preserving every other field.
+     */
+    public function withDomainConstraint(\SqlSemantics\Statement\Model\PostgreSql\Role\DomainConstraintForm $domainConstraint): self
+    {
+        return new self($this->anyName, $domainConstraint);
     }
 }

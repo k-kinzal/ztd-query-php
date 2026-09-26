@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptOnUpdateDeleteWithOnSymUpdateSymDeleteOption_085f45de $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptOnUpdateDeleteWithOnSymUpdateSymDeleteOption_085f45de $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptOnUpdateDeleteWithOnSymUpdateSymDeleteOption_085f45de implements \SqlSemantics\Statement\Model\MySql\Role\OptOnUpdateDeleteForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($deleteOption), 'The deleteOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptOnUpdateDeleteWithOnSymUpdateSymDeleteOption_085f45de implements 
         $writer->append('ON');
         $writer->append('UPDATE');
         $this->deleteOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new deleteOption, preserving every other field.
+     */
+    public function withDeleteOption(\SqlSemantics\Statement\Model\MySql\Role\DeleteOptionForm $deleteOption): self
+    {
+        return new self($deleteOption);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupListWithOrderIdentOrderDir_d2167d69 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupListWithOrderIdentOrderDir_d2167d69 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GroupListWithOrderIdentOrderDir_d2167d69 implements \SqlSemantics\Statement\Model\MySql\Role\GroupListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GroupListWithOrderIdentOrderDir_d2167d69 implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm $orderIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderIdent), 'The orderIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderDir), 'The orderDir must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class GroupListWithOrderIdentOrderDir_d2167d69 implements \SqlSemantics\St
     {
         $this->orderIdent->write($writer);
         $this->orderDir->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new orderIdent, preserving every other field.
+     */
+    public function withOrderIdent(\SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm $orderIdent): self
+    {
+        return new self($orderIdent, $this->orderDir);
+    }
+
+    /**
+     * Returns a copy with a new orderDir, preserving every other field.
+     */
+    public function withOrderDir(\SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir): self
+    {
+        return new self($this->orderIdent, $orderDir);
     }
 }

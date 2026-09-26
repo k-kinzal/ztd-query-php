@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewSelectAuxWithCreateViewSelectUnionClause_9e46b84a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewSelectAuxWithCreateViewSelectUnionClause_9e46b84a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewSelectAuxWithCreateViewSelectUnionClause_9e46b84a implements \SqlSemantics\Statement\Model\MySql\Role\ViewSelectAuxForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ViewSelectAuxWithCreateViewSelectUnionClause_9e46b84a implements \Sq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm $createViewSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createViewSelect), 'The createViewSelect must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionClause), 'The unionClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ViewSelectAuxWithCreateViewSelectUnionClause_9e46b84a implements \Sq
     {
         $this->createViewSelect->write($writer);
         $this->unionClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createViewSelect, preserving every other field.
+     */
+    public function withCreateViewSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateViewSelectForm $createViewSelect): self
+    {
+        return new self($createViewSelect, $this->unionClause);
+    }
+
+    /**
+     * Returns a copy with a new unionClause, preserving every other field.
+     */
+    public function withUnionClause(\SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause): self
+    {
+        return new self($this->createViewSelect, $unionClause);
     }
 }

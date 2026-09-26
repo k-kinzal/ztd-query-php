@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\StatsParamsWithStatsParamsStatsParam_1884e53d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\StatsParamsWithStatsParamsStatsParam_1884e53d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StatsParamsWithStatsParamsStatsParam_1884e53d implements \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StatsParamsWithStatsParamsStatsParam_1884e53d implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm $statsParam,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($statsParams), 'The statsParams must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($statsParam), 'The statsParam must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class StatsParamsWithStatsParamsStatsParam_1884e53d implements \SqlSemanti
         $this->statsParams->write($writer);
         $writer->append(',');
         $this->statsParam->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new statsParams, preserving every other field.
+     */
+    public function withStatsParams(\SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams): self
+    {
+        return new self($statsParams, $this->statsParam);
+    }
+
+    /**
+     * Returns a copy with a new statsParam, preserving every other field.
+     */
+    public function withStatsParam(\SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm $statsParam): self
+    {
+        return new self($this->statsParams, $statsParam);
     }
 }

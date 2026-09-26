@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConnectOptionWithMaxUserConnectionsSymUlongNum_bef2c04b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConnectOptionWithMaxUserConnectionsSymUlongNum_bef2c04b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConnectOptionWithMaxUserConnectionsSymUlongNum_bef2c04b implements \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionForm, \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ConnectOptionWithMaxUserConnectionsSymUlongNum_bef2c04b implements \
     {
         $writer->append('MAX_USER_CONNECTIONS');
         $this->ulongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ulongNum, preserving every other field.
+     */
+    public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
+    {
+        return new self($ulongNum);
     }
 }

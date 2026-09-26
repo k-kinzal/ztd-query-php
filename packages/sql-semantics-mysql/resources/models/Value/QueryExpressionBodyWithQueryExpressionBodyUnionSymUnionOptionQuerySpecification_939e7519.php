@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySpecification_939e7519 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySpecification_939e7519 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySpecification_939e7519 implements \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionBody), 'The queryExpressionBody must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOption), 'The unionOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($query), 'The query must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySp
         $writer->append('UNION');
         $this->unionOption->write($writer);
         $this->query->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new queryExpressionBody, preserving every other field.
+     */
+    public function withQueryExpressionBody(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody): self
+    {
+        return new self($queryExpressionBody, $this->unionOption, $this->query);
+    }
+
+    /**
+     * Returns a copy with a new unionOption, preserving every other field.
+     */
+    public function withUnionOption(\SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption): self
+    {
+        return new self($this->queryExpressionBody, $unionOption, $this->query);
+    }
+
+    /**
+     * Returns a copy with a new query, preserving every other field.
+     */
+    public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query): self
+    {
+        return new self($this->queryExpressionBody, $this->unionOption, $query);
     }
 }

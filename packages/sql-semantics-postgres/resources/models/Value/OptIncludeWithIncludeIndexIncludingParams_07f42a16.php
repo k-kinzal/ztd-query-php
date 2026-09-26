@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptIncludeWithIncludeIndexIncludingParams_07f42a16 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptIncludeWithIncludeIndexIncludingParams_07f42a16 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIncludeWithIncludeIndexIncludingParams_07f42a16 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptIncludeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexIncludingParamsForm $indexIncludingParams,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexIncludingParams), 'The indexIncludingParams must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class OptIncludeWithIncludeIndexIncludingParams_07f42a16 implements \SqlSe
         $writer->append('(');
         $this->indexIncludingParams->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new indexIncludingParams, preserving every other field.
+     */
+    public function withIndexIncludingParams(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexIncludingParamsForm $indexIncludingParams): self
+    {
+        return new self($indexIncludingParams);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ObjectPrivilegeWithShowDatabases_8ed02d0d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ObjectPrivilegeWithShowDatabases_8ed02d0d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ObjectPrivilegeWithShowDatabases_8ed02d0d implements \SqlSemantics\Statement\Model\MySql\Role\GrantPrivilegesForm, \SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeForm, \SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $databases,
     ) {
+        $this->assertMatchesPattern($databases, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASES'], 'The databases must be a complete DATABASES lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ObjectPrivilegeWithShowDatabases_8ed02d0d implements \SqlSemantics\S
     {
         $writer->append('SHOW');
         $writer->append($this->databases);
+    }
+
+    /**
+     * Returns a copy with a new databases, preserving every other field.
+     */
+    public function withDatabases(string $databases): self
+    {
+        return new self($databases);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithData_626e62c9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithData_626e62c9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithData_626e62c9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateAsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithData_626e62c9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateAsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithD
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createAsTarget), 'The createAsTarget must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectStmt), 'The selectStmt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWithData), 'The optWithData must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class CreateAsStmtWithCreateOptTempTableCreateAsTargetAsSelectStmtOptWithD
         $writer->append('AS');
         $this->selectStmt->write($writer);
         $this->optWithData->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTemp, preserving every other field.
+     */
+    public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
+    {
+        return new self($optTemp, $this->createAsTarget, $this->selectStmt, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new createAsTarget, preserving every other field.
+     */
+    public function withCreateAsTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateAsTargetForm $createAsTarget): self
+    {
+        return new self($this->optTemp, $createAsTarget, $this->selectStmt, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new selectStmt, preserving every other field.
+     */
+    public function withSelectStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt): self
+    {
+        return new self($this->optTemp, $this->createAsTarget, $selectStmt, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new optWithData, preserving every other field.
+     */
+    public function withOptWithData(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData): self
+    {
+        return new self($this->optTemp, $this->createAsTarget, $this->selectStmt, $optWithData);
     }
 }

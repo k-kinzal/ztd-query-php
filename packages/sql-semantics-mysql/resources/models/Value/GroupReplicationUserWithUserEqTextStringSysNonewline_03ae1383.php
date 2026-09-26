@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupReplicationUserWithUserEqTextStringSysNonewline_03ae1383 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupReplicationUserWithUserEqTextStringSysNonewline_03ae1383 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GroupReplicationUserWithUserEqTextStringSysNonewline_03ae1383 implements \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionForm, \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationUserForm, \SqlSemantics\Statement\Model\MySql\Role\OptGroupReplicationStartOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GroupReplicationUserWithUserEqTextStringSysNonewline_03ae1383 implem
         public readonly string $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
     ) {
+        $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GroupReplicationUserWithUserEqTextStringSysNonewline_03ae1383 implem
         $writer->append($this->user);
         $writer->append('=');
         $this->textStringSysNonewline->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(string $user): self
+    {
+        return new self($user, $this->textStringSysNonewline);
+    }
+
+    /**
+     * Returns a copy with a new textStringSysNonewline, preserving every other field.
+     */
+    public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
+    {
+        return new self($this->user, $textStringSysNonewline);
     }
 }

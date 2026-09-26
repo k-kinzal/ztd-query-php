@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionStmtWithRollbackOptTransactionOptTransactionChain_c0df2fdf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionStmtWithRollbackOptTransactionOptTransactionChain_c0df2fdf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class TransactionStmtWithRollbackOptTransactionOptTransactionChain_c0df2fdf implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class TransactionStmtWithRollbackOptTransactionOptTransactionChain_c0df2fdf implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TransactionStmtWithRollbackOptTransactionOptTransactionChain_c0df2fd
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionChainForm $optTransactionChain,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTransaction), 'The optTransaction must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTransactionChain), 'The optTransactionChain must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TransactionStmtWithRollbackOptTransactionOptTransactionChain_c0df2fd
         $writer->append('ROLLBACK');
         $this->optTransaction->write($writer);
         $this->optTransactionChain->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTransaction, preserving every other field.
+     */
+    public function withOptTransaction(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionForm $optTransaction): self
+    {
+        return new self($optTransaction, $this->optTransactionChain);
+    }
+
+    /**
+     * Returns a copy with a new optTransactionChain, preserving every other field.
+     */
+    public function withOptTransactionChain(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTransactionChainForm $optTransactionChain): self
+    {
+        return new self($this->optTransaction, $optTransactionChain);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartElemWithFuncExprWindowlessOptCollateOptQualifiedName_8559096d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PartElemWithFuncExprWindowlessOptCollateOptQualifiedName_8559096d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartElemWithFuncExprWindowlessOptCollateOptQualifiedName_8559096d implements \SqlSemantics\Statement\Model\PostgreSql\Role\PartElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PartParamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class PartElemWithFuncExprWindowlessOptCollateOptQualifiedName_8559096d im
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcExprWindowless), 'The funcExprWindowless must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optQualifiedName), 'The optQualifiedName must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class PartElemWithFuncExprWindowlessOptCollateOptQualifiedName_8559096d im
         $this->funcExprWindowless->write($writer);
         $this->optCollate->write($writer);
         $this->optQualifiedName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcExprWindowless, preserving every other field.
+     */
+    public function withFuncExprWindowless(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless): self
+    {
+        return new self($funcExprWindowless, $this->optCollate, $this->optQualifiedName);
+    }
+
+    /**
+     * Returns a copy with a new optCollate, preserving every other field.
+     */
+    public function withOptCollate(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate): self
+    {
+        return new self($this->funcExprWindowless, $optCollate, $this->optQualifiedName);
+    }
+
+    /**
+     * Returns a copy with a new optQualifiedName, preserving every other field.
+     */
+    public function withOptQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName): self
+    {
+        return new self($this->funcExprWindowless, $this->optCollate, $optQualifiedName);
     }
 }

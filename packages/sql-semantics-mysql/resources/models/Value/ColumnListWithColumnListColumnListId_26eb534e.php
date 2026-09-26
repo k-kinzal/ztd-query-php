@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnListWithColumnListColumnListId_26eb534e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnListWithColumnListColumnListId_26eb534e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnListWithColumnListColumnListId_26eb534e implements \SqlSemantics\Statement\Model\MySql\Role\ColumnListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColumnListWithColumnListColumnListId_26eb534e implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnListForm $columnList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnListIdForm $columnListId,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnListId), 'The columnListId must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ColumnListWithColumnListColumnListId_26eb534e implements \SqlSemanti
         $this->columnList->write($writer);
         $writer->append(',');
         $this->columnListId->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columnList, preserving every other field.
+     */
+    public function withColumnList(\SqlSemantics\Statement\Model\MySql\Role\ColumnListForm $columnList): self
+    {
+        return new self($columnList, $this->columnListId);
+    }
+
+    /**
+     * Returns a copy with a new columnListId, preserving every other field.
+     */
+    public function withColumnListId(\SqlSemantics\Statement\Model\MySql\Role\ColumnListIdForm $columnListId): self
+    {
+        return new self($this->columnList, $columnListId);
     }
 }

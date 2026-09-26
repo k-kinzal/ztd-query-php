@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SelcollistWithSclpScanptNmDotStar_bbe31973 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SelcollistWithSclpScanptNmDotStar_bbe31973 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelcollistWithSclpScanptNmDotStar_bbe31973 implements \SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SelcollistWithSclpScanptNmDotStar_bbe31973 implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sclp), 'The sclp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scanpt), 'The scanpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class SelcollistWithSclpScanptNmDotStar_bbe31973 implements \SqlSemantics\
         $this->nm->write($writer);
         $writer->append('.');
         $writer->append('*');
+    }
+
+    /**
+     * Returns a copy with a new sclp, preserving every other field.
+     */
+    public function withSclp(\SqlSemantics\Statement\Model\Sqlite\Role\SclpForm $sclp): self
+    {
+        return new self($sclp, $this->scanpt, $this->nm);
+    }
+
+    /**
+     * Returns a copy with a new scanpt, preserving every other field.
+     */
+    public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self
+    {
+        return new self($this->sclp, $scanpt, $this->nm);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->sclp, $this->scanpt, $nm);
     }
 }

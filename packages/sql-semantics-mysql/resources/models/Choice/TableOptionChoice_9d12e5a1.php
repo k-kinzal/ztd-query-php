@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\TableOptionChoice_9d12e5a1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\TableOptionChoice_9d12e5a1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum TableOptionChoice_9d12e5a1: string implements \SqlSemantics\Statement\Model\MySql\Role\OptTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\TableOptionForm, \SqlSemantics\Statement\Model\MySql\Role\TableOptionsForm

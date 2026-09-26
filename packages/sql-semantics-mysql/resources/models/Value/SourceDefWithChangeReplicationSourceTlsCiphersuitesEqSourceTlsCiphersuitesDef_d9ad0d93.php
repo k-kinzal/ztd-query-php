@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceTlsCiphersuitesEqSourceTlsCiphersuitesDef_d9ad0d93 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceTlsCiphersuitesEqSourceTlsCiphersuitesDef_d9ad0d93 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithChangeReplicationSourceTlsCiphersuitesEqSourceTlsCiphersuitesDef_d9ad0d93 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefWithChangeReplicationSourceTlsCiphersuitesEqSourceTlsCipher
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceTlsCiphersuitesForm $changeReplicationSourceTlsCiphersuites,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceTlsCiphersuitesDefForm $sourceTlsCiphersuitesDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceTlsCiphersuites), 'The changeReplicationSourceTlsCiphersuites must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceTlsCiphersuitesDef), 'The sourceTlsCiphersuitesDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefWithChangeReplicationSourceTlsCiphersuitesEqSourceTlsCipher
         $this->changeReplicationSourceTlsCiphersuites->write($writer);
         $writer->append('=');
         $this->sourceTlsCiphersuitesDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeReplicationSourceTlsCiphersuites, preserving every other field.
+     */
+    public function withChangeReplicationSourceTlsCiphersuites(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceTlsCiphersuitesForm $changeReplicationSourceTlsCiphersuites): self
+    {
+        return new self($changeReplicationSourceTlsCiphersuites, $this->sourceTlsCiphersuitesDef);
+    }
+
+    /**
+     * Returns a copy with a new sourceTlsCiphersuitesDef, preserving every other field.
+     */
+    public function withSourceTlsCiphersuitesDef(\SqlSemantics\Statement\Model\MySql\Role\SourceTlsCiphersuitesDefForm $sourceTlsCiphersuitesDef): self
+    {
+        return new self($this->changeReplicationSourceTlsCiphersuites, $sourceTlsCiphersuitesDef);
     }
 }

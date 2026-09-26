@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyGenericOptArgWithCopyGenericOptArgList_2ecb7de6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyGenericOptArgWithCopyGenericOptArgList_2ecb7de6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CopyGenericOptArgWithCopyGenericOptArgList_2ecb7de6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm $copyGenericOptArgList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyGenericOptArgList), 'The copyGenericOptArgList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class CopyGenericOptArgWithCopyGenericOptArgList_2ecb7de6 implements \SqlS
         $writer->append('(');
         $this->copyGenericOptArgList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new copyGenericOptArgList, preserving every other field.
+     */
+    public function withCopyGenericOptArgList(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm $copyGenericOptArgList): self
+    {
+        return new self($copyGenericOptArgList);
     }
 }

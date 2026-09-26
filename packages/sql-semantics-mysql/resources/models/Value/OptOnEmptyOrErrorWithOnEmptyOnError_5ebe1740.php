@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptOnEmptyOrErrorWithOnEmptyOnError_5ebe1740 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptOnEmptyOrErrorWithOnEmptyOnError_5ebe1740 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptOnEmptyOrErrorWithOnEmptyOnError_5ebe1740 implements \SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorForm, \SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorJsonTableForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptOnEmptyOrErrorWithOnEmptyOnError_5ebe1740 implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OnEmptyForm $onEmpty,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OnErrorForm $onError,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($onEmpty), 'The onEmpty must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($onError), 'The onError must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptOnEmptyOrErrorWithOnEmptyOnError_5ebe1740 implements \SqlSemantic
     {
         $this->onEmpty->write($writer);
         $this->onError->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new onEmpty, preserving every other field.
+     */
+    public function withOnEmpty(\SqlSemantics\Statement\Model\MySql\Role\OnEmptyForm $onEmpty): self
+    {
+        return new self($onEmpty, $this->onError);
+    }
+
+    /**
+     * Returns a copy with a new onError, preserving every other field.
+     */
+    public function withOnError(\SqlSemantics\Statement\Model\MySql\Role\OnErrorForm $onError): self
+    {
+        return new self($this->onEmpty, $onError);
     }
 }

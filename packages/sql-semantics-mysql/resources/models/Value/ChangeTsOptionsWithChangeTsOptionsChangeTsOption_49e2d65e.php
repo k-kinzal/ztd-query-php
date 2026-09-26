@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ChangeTsOptionsWithChangeTsOptionsChangeTsOption_49e2d65e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ChangeTsOptionsWithChangeTsOptionsChangeTsOption_49e2d65e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ChangeTsOptionsWithChangeTsOptionsChangeTsOption_49e2d65e implements \SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ChangeTsOptionsWithChangeTsOptionsChangeTsOption_49e2d65e implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionsForm $changeTsOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionForm $changeTsOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeTsOptions), 'The changeTsOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeTsOption), 'The changeTsOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ChangeTsOptionsWithChangeTsOptionsChangeTsOption_49e2d65e implements
     {
         $this->changeTsOptions->write($writer);
         $this->changeTsOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeTsOptions, preserving every other field.
+     */
+    public function withChangeTsOptions(\SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionsForm $changeTsOptions): self
+    {
+        return new self($changeTsOptions, $this->changeTsOption);
+    }
+
+    /**
+     * Returns a copy with a new changeTsOption, preserving every other field.
+     */
+    public function withChangeTsOption(\SqlSemantics\Statement\Model\MySql\Role\ChangeTsOptionForm $changeTsOption): self
+    {
+        return new self($this->changeTsOptions, $changeTsOption);
     }
 }

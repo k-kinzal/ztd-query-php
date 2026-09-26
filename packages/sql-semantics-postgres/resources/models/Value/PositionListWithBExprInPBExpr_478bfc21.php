@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PositionListWithBExprInPBExpr_478bfc21 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PositionListWithBExprInPBExpr_478bfc21 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PositionListWithBExprInPBExpr_478bfc21 implements \SqlSemantics\Statement\Model\PostgreSql\Role\PositionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PositionListWithBExprInPBExpr_478bfc21 implements \SqlSemantics\Stat
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr2), 'The bExpr2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class PositionListWithBExprInPBExpr_478bfc21 implements \SqlSemantics\Stat
         $this->bExpr->write($writer);
         $writer->append('IN');
         $this->bExpr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bExpr, preserving every other field.
+     */
+    public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
+    {
+        return new self($bExpr, $this->bExpr2);
+    }
+
+    /**
+     * Returns a copy with a new bExpr2, preserving every other field.
+     */
+    public function withBExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr2): self
+    {
+        return new self($this->bExpr, $bExpr2);
     }
 }

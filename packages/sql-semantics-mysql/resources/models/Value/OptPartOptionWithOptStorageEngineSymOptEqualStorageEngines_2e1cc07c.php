@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptPartOptionWithOptStorageEngineSymOptEqualStorageEngines_2e1cc07c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptPartOptionWithOptStorageEngineSymOptEqualStorageEngines_2e1cc07c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptPartOptionWithOptStorageEngineSymOptEqualStorageEngines_2e1cc07c implements \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionForm, \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptPartOptionWithOptStorageEngineSymOptEqualStorageEngines_2e1cc07c 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StorageEnginesForm $storageEngines,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optStorage), 'The optStorage must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($storageEngines), 'The storageEngines must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class OptPartOptionWithOptStorageEngineSymOptEqualStorageEngines_2e1cc07c 
         $writer->append('ENGINE');
         $this->optEqual->write($writer);
         $this->storageEngines->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optStorage, preserving every other field.
+     */
+    public function withOptStorage(\SqlSemantics\Statement\Model\MySql\Role\OptStorageForm $optStorage): self
+    {
+        return new self($optStorage, $this->optEqual, $this->storageEngines);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($this->optStorage, $optEqual, $this->storageEngines);
+    }
+
+    /**
+     * Returns a copy with a new storageEngines, preserving every other field.
+     */
+    public function withStorageEngines(\SqlSemantics\Statement\Model\MySql\Role\StorageEnginesForm $storageEngines): self
+    {
+        return new self($this->optStorage, $this->optEqual, $storageEngines);
     }
 }

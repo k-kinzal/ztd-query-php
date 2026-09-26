@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OperatorWithArgtypesListWithOperatorWithArgtypesListOperatorWithArgtypes_2e31256a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OperatorWithArgtypesListWithOperatorWithArgtypesListOperatorWithArgtypes_2e31256a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OperatorWithArgtypesListWithOperatorWithArgtypesListOperatorWithArgtypes_2e31256a implements \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OperatorWithArgtypesListWithOperatorWithArgtypesListOperatorWithArgt
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesListForm $operatorWithArgtypesList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorWithArgtypesList), 'The operatorWithArgtypesList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorWithArgtypes), 'The operatorWithArgtypes must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OperatorWithArgtypesListWithOperatorWithArgtypesListOperatorWithArgt
         $this->operatorWithArgtypesList->write($writer);
         $writer->append(',');
         $this->operatorWithArgtypes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new operatorWithArgtypesList, preserving every other field.
+     */
+    public function withOperatorWithArgtypesList(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesListForm $operatorWithArgtypesList): self
+    {
+        return new self($operatorWithArgtypesList, $this->operatorWithArgtypes);
+    }
+
+    /**
+     * Returns a copy with a new operatorWithArgtypes, preserving every other field.
+     */
+    public function withOperatorWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes): self
+    {
+        return new self($this->operatorWithArgtypesList, $operatorWithArgtypes);
     }
 }

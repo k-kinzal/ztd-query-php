@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GcolAttributeWithNotNullSym_c22a7da6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GcolAttributeWithNotNullSym_c22a7da6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GcolAttributeWithNotNullSym_c22a7da6 implements \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptGcolAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NotForm $not,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($not), 'The not must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class GcolAttributeWithNotNullSym_c22a7da6 implements \SqlSemantics\Statem
     {
         $this->not->write($writer);
         $writer->append('NULL');
+    }
+
+    /**
+     * Returns a copy with a new not, preserving every other field.
+     */
+    public function withNot(\SqlSemantics\Statement\Model\MySql\Role\NotForm $not): self
+    {
+        return new self($not);
     }
 }

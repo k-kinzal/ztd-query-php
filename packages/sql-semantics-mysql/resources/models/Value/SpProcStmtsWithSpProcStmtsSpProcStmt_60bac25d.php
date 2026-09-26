@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpProcStmtsWithSpProcStmtsSpProcStmt_60bac25d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpProcStmtsWithSpProcStmtsSpProcStmt_60bac25d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpProcStmtsWithSpProcStmtsSpProcStmt_60bac25d implements \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SpProcStmtsWithSpProcStmtsSpProcStmt_60bac25d implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtsForm $spProcStmts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmts), 'The spProcStmts must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmt), 'The spProcStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SpProcStmtsWithSpProcStmtsSpProcStmt_60bac25d implements \SqlSemanti
         $this->spProcStmts->write($writer);
         $this->spProcStmt->write($writer);
         $writer->append(';');
+    }
+
+    /**
+     * Returns a copy with a new spProcStmts, preserving every other field.
+     */
+    public function withSpProcStmts(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtsForm $spProcStmts): self
+    {
+        return new self($spProcStmts, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spProcStmt, preserving every other field.
+     */
+    public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
+    {
+        return new self($this->spProcStmts, $spProcStmt);
     }
 }

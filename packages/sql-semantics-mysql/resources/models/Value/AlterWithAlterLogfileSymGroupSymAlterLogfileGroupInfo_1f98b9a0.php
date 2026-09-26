@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterLogfileSymGroupSymAlterLogfileGroupInfo_1f98b9a0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterLogfileSymGroupSymAlterLogfileGroupInfo_1f98b9a0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterWithAlterLogfileSymGroupSymAlterLogfileGroupInfo_1f98b9a0 implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupInfoForm $alterLogfileGroupInfo,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterLogfileGroupInfo), 'The alterLogfileGroupInfo must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class AlterWithAlterLogfileSymGroupSymAlterLogfileGroupInfo_1f98b9a0 imple
         $writer->append('LOGFILE');
         $writer->append('GROUP');
         $this->alterLogfileGroupInfo->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterLogfileGroupInfo, preserving every other field.
+     */
+    public function withAlterLogfileGroupInfo(\SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupInfoForm $alterLogfileGroupInfo): self
+    {
+        return new self($alterLogfileGroupInfo);
     }
 }

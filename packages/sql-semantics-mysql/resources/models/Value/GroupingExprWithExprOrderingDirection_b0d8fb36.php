@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupingExprWithExprOrderingDirection_b0d8fb36 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupingExprWithExprOrderingDirection_b0d8fb36 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GroupingExprWithExprOrderingDirection_b0d8fb36 implements \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GroupingExprWithExprOrderingDirection_b0d8fb36 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderingDirectionForm $orderingDirection,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderingDirection), 'The orderingDirection must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class GroupingExprWithExprOrderingDirection_b0d8fb36 implements \SqlSemant
     {
         $this->expr->write($writer);
         $this->orderingDirection->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->orderingDirection);
+    }
+
+    /**
+     * Returns a copy with a new orderingDirection, preserving every other field.
+     */
+    public function withOrderingDirection(\SqlSemantics\Statement\Model\MySql\Role\OrderingDirectionForm $orderingDirection): self
+    {
+        return new self($this->expr, $orderingDirection);
     }
 }

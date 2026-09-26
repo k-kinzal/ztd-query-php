@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonFormatClauseWithFormatLaJsonEncodingName_35bf3aa1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonFormatClauseWithFormatLaJsonEncodingName_35bf3aa1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonFormatClauseWithFormatLaJsonEncodingName_35bf3aa1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JsonFormatClauseWithFormatLaJsonEncodingName_35bf3aa1 implements \Sq
         public readonly string $formatLa,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
     ) {
+        $this->assertMatchesPattern($formatLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['FORMAT_LA'], 'The formatLa must be a complete FORMAT_LA lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class JsonFormatClauseWithFormatLaJsonEncodingName_35bf3aa1 implements \Sq
         $writer->append('JSON');
         $writer->append('ENCODING');
         $this->name->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new formatLa, preserving every other field.
+     */
+    public function withFormatLa(string $formatLa): self
+    {
+        return new self($formatLa, $this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->formatLa, $name);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldListWithFieldListFieldListItem_ff2bc09a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldListWithFieldListFieldListItem_ff2bc09a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldListWithFieldListFieldListItem_ff2bc09a implements \SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FieldListWithFieldListFieldListItem_ff2bc09a implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldListForm $fieldList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm $fieldListItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldList), 'The fieldList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldListItem), 'The fieldListItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FieldListWithFieldListFieldListItem_ff2bc09a implements \SqlSemantic
         $this->fieldList->write($writer);
         $writer->append(',');
         $this->fieldListItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fieldList, preserving every other field.
+     */
+    public function withFieldList(\SqlSemantics\Statement\Model\MySql\Role\FieldListForm $fieldList): self
+    {
+        return new self($fieldList, $this->fieldListItem);
+    }
+
+    /**
+     * Returns a copy with a new fieldListItem, preserving every other field.
+     */
+    public function withFieldListItem(\SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm $fieldListItem): self
+    {
+        return new self($this->fieldList, $fieldListItem);
     }
 }

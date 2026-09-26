@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CharacterWithVarchar_8aee5cad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CharacterWithVarchar_8aee5cad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CharacterWithVarchar_8aee5cad implements \SqlSemantics\Statement\Model\PostgreSql\Role\CharacterForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CharacterWithoutLengthForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstCharacterForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm

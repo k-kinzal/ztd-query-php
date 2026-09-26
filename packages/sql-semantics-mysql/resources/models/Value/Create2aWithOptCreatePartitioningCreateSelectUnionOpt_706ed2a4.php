@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\Create2aWithOptCreatePartitioningCreateSelectUnionOpt_706ed2a4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\Create2aWithOptCreatePartitioningCreateSelectUnionOpt_706ed2a4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class Create2aWithOptCreatePartitioningCreateSelectUnionOpt_706ed2a4 implements \SqlSemantics\Statement\Model\MySql\Role\Create2aForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class Create2aWithOptCreatePartitioningCreateSelectUnionOpt_706ed2a4 imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCreatePartitioning), 'The optCreatePartitioning must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createSelect), 'The createSelect must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOpt), 'The unionOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class Create2aWithOptCreatePartitioningCreateSelectUnionOpt_706ed2a4 imple
         $this->createSelect->write($writer);
         $writer->append(')');
         $this->unionOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optCreatePartitioning, preserving every other field.
+     */
+    public function withOptCreatePartitioning(\SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm $optCreatePartitioning): self
+    {
+        return new self($optCreatePartitioning, $this->createSelect, $this->unionOpt);
+    }
+
+    /**
+     * Returns a copy with a new createSelect, preserving every other field.
+     */
+    public function withCreateSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect): self
+    {
+        return new self($this->optCreatePartitioning, $createSelect, $this->unionOpt);
+    }
+
+    /**
+     * Returns a copy with a new unionOpt, preserving every other field.
+     */
+    public function withUnionOpt(\SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt): self
+    {
+        return new self($this->optCreatePartitioning, $this->createSelect, $unionOpt);
     }
 }

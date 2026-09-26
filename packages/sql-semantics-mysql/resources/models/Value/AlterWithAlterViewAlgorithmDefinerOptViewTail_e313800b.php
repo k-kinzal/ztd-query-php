@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewAlgorithm), 'The viewAlgorithm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($definerOpt), 'The definerOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewTail), 'The viewTail must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class AlterWithAlterViewAlgorithmDefinerOptViewTail_e313800b implements \S
         $this->viewAlgorithm->write($writer);
         $this->definerOpt->write($writer);
         $this->viewTail->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new viewAlgorithm, preserving every other field.
+     */
+    public function withViewAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\ViewAlgorithmForm $viewAlgorithm): self
+    {
+        return new self($viewAlgorithm, $this->definerOpt, $this->viewTail);
+    }
+
+    /**
+     * Returns a copy with a new definerOpt, preserving every other field.
+     */
+    public function withDefinerOpt(\SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm $definerOpt): self
+    {
+        return new self($this->viewAlgorithm, $definerOpt, $this->viewTail);
+    }
+
+    /**
+     * Returns a copy with a new viewTail, preserving every other field.
+     */
+    public function withViewTail(\SqlSemantics\Statement\Model\MySql\Role\ViewTailForm $viewTail): self
+    {
+        return new self($this->viewAlgorithm, $this->definerOpt, $viewTail);
     }
 }

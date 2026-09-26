@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\LimitClauseWithLimitSelectLimitValueSelectOffsetValue_95a37e6a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\LimitClauseWithLimitSelectLimitValueSelectOffsetValue_95a37e6a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LimitClauseWithLimitSelectLimitValueSelectOffsetValue_95a37e6a implements \SqlSemantics\Statement\Model\PostgreSql\Role\LimitClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSelectLimitForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class LimitClauseWithLimitSelectLimitValueSelectOffsetValue_95a37e6a imple
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm $selectLimitValue,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm $selectOffsetValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectLimitValue), 'The selectLimitValue must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectOffsetValue), 'The selectOffsetValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class LimitClauseWithLimitSelectLimitValueSelectOffsetValue_95a37e6a imple
         $this->selectLimitValue->write($writer);
         $writer->append(',');
         $this->selectOffsetValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectLimitValue, preserving every other field.
+     */
+    public function withSelectLimitValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm $selectLimitValue): self
+    {
+        return new self($selectLimitValue, $this->selectOffsetValue);
+    }
+
+    /**
+     * Returns a copy with a new selectOffsetValue, preserving every other field.
+     */
+    public function withSelectOffsetValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm $selectOffsetValue): self
+    {
+        return new self($this->selectLimitValue, $selectOffsetValue);
     }
 }

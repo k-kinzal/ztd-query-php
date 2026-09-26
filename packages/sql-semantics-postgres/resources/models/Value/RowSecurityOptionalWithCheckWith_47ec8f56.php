@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RowSecurityOptionalWithCheckWith_47ec8f56 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RowSecurityOptionalWithCheckWith_47ec8f56 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RowSecurityOptionalWithCheckWith_47ec8f56 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RowSecurityOptionalWithCheckForm

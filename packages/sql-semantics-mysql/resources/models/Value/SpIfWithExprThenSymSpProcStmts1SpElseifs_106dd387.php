@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 implements \SqlSemantics\Statement\Model\MySql\Role\SpIfForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 implements \SqlSem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form $spProcStmts1,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpElseifsForm $spElseifs,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmts1), 'The spProcStmts1 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spElseifs), 'The spElseifs must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class SpIfWithExprThenSymSpProcStmts1SpElseifs_106dd387 implements \SqlSem
         $writer->append('THEN');
         $this->spProcStmts1->write($writer);
         $this->spElseifs->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->spProcStmts1, $this->spElseifs);
+    }
+
+    /**
+     * Returns a copy with a new spProcStmts1, preserving every other field.
+     */
+    public function withSpProcStmts1(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form $spProcStmts1): self
+    {
+        return new self($this->expr, $spProcStmts1, $this->spElseifs);
+    }
+
+    /**
+     * Returns a copy with a new spElseifs, preserving every other field.
+     */
+    public function withSpElseifs(\SqlSemantics\Statement\Model\MySql\Role\SpElseifsForm $spElseifs): self
+    {
+        return new self($this->expr, $this->spProcStmts1, $spElseifs);
     }
 }

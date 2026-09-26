@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\StlPrefixWithSeltablistJoinop_d0edaade $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\StlPrefixWithSeltablistJoinop_d0edaade $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StlPrefixWithSeltablistJoinop_d0edaade implements \SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StlPrefixWithSeltablistJoinop_d0edaade implements \SqlSemantics\Stat
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm $seltablist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\JoinopForm $joinop,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($seltablist), 'The seltablist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($joinop), 'The joinop must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class StlPrefixWithSeltablistJoinop_d0edaade implements \SqlSemantics\Stat
     {
         $this->seltablist->write($writer);
         $this->joinop->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new seltablist, preserving every other field.
+     */
+    public function withSeltablist(\SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm $seltablist): self
+    {
+        return new self($seltablist, $this->joinop);
+    }
+
+    /**
+     * Returns a copy with a new joinop, preserving every other field.
+     */
+    public function withJoinop(\SqlSemantics\Statement\Model\Sqlite\Role\JoinopForm $joinop): self
+    {
+        return new self($this->seltablist, $joinop);
     }
 }

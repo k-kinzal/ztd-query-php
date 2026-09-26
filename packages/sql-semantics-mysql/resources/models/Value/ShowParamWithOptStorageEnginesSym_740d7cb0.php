@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithOptStorageEnginesSym_740d7cb0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithOptStorageEnginesSym_740d7cb0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithOptStorageEnginesSym_740d7cb0 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptStorageForm $optStorage,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optStorage), 'The optStorage must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ShowParamWithOptStorageEnginesSym_740d7cb0 implements \SqlSemantics\
     {
         $this->optStorage->write($writer);
         $writer->append('ENGINES');
+    }
+
+    /**
+     * Returns a copy with a new optStorage, preserving every other field.
+     */
+    public function withOptStorage(\SqlSemantics\Statement\Model\MySql\Role\OptStorageForm $optStorage): self
+    {
+        return new self($optStorage);
     }
 }

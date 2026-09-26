@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithRelationExprOptAliasClauseTablesampleClause_e6aaffe3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithRelationExprOptAliasClauseTablesampleClause_e6aaffe3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableRefWithRelationExprOptAliasClauseTablesampleClause_e6aaffe3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TableRefWithRelationExprOptAliasClauseTablesampleClause_e6aaffe3 imp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TablesampleClauseForm $tablesampleClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAliasClause), 'The optAliasClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tablesampleClause), 'The tablesampleClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TableRefWithRelationExprOptAliasClauseTablesampleClause_e6aaffe3 imp
         $this->relationExpr->write($writer);
         $this->optAliasClause->write($writer);
         $this->tablesampleClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new relationExpr, preserving every other field.
+     */
+    public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
+    {
+        return new self($relationExpr, $this->optAliasClause, $this->tablesampleClause);
+    }
+
+    /**
+     * Returns a copy with a new optAliasClause, preserving every other field.
+     */
+    public function withOptAliasClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause): self
+    {
+        return new self($this->relationExpr, $optAliasClause, $this->tablesampleClause);
+    }
+
+    /**
+     * Returns a copy with a new tablesampleClause, preserving every other field.
+     */
+    public function withTablesampleClause(\SqlSemantics\Statement\Model\PostgreSql\Role\TablesampleClauseForm $tablesampleClause): self
+    {
+        return new self($this->relationExpr, $this->optAliasClause, $tablesampleClause);
     }
 }

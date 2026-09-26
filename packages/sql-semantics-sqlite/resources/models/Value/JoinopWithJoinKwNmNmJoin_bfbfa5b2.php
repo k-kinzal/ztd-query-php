@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\JoinopWithJoinKwNmNmJoin_bfbfa5b2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\JoinopWithJoinKwNmNmJoin_bfbfa5b2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinopWithJoinKwNmNmJoin_bfbfa5b2 implements \SqlSemantics\Statement\Model\Sqlite\Role\JoinopForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class JoinopWithJoinKwNmNmJoin_bfbfa5b2 implements \SqlSemantics\Statement
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2,
     ) {
+        $this->assertMatchesPattern($joinKw, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['JOIN_KW'], 'The joinKw must be a complete JOIN_KW lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm2), 'The nm2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class JoinopWithJoinKwNmNmJoin_bfbfa5b2 implements \SqlSemantics\Statement
         $this->nm->write($writer);
         $this->nm2->write($writer);
         $writer->append('JOIN');
+    }
+
+    /**
+     * Returns a copy with a new joinKw, preserving every other field.
+     */
+    public function withJoinKw(string $joinKw): self
+    {
+        return new self($joinKw, $this->nm, $this->nm2);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->joinKw, $nm, $this->nm2);
+    }
+
+    /**
+     * Returns a copy with a new nm2, preserving every other field.
+     */
+    public function withNm2(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2): self
+    {
+        return new self($this->joinKw, $this->nm, $nm2);
     }
 }

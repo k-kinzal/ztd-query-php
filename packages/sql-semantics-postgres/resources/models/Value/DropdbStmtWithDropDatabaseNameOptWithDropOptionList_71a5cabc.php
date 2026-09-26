@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropdbStmtWithDropDatabaseNameOptWithDropOptionList_71a5cabc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropdbStmtWithDropDatabaseNameOptWithDropOptionList_71a5cabc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DropdbStmtWithDropDatabaseNameOptWithDropOptionList_71a5cabc implements \SqlSemantics\Statement\Model\PostgreSql\Role\DropdbStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class DropdbStmtWithDropDatabaseNameOptWithDropOptionList_71a5cabc implements \SqlSemantics\Statement\Model\PostgreSql\Role\DropdbStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class DropdbStmtWithDropDatabaseNameOptWithDropOptionList_71a5cabc impleme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionListForm $dropOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($dropOptionList), 'The dropOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +41,29 @@ final class DropdbStmtWithDropDatabaseNameOptWithDropOptionList_71a5cabc impleme
         $writer->append('(');
         $this->dropOptionList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->optWith, $this->dropOptionList);
+    }
+
+    /**
+     * Returns a copy with a new optWith, preserving every other field.
+     */
+    public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
+    {
+        return new self($this->name, $optWith, $this->dropOptionList);
+    }
+
+    /**
+     * Returns a copy with a new dropOptionList, preserving every other field.
+     */
+    public function withDropOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionListForm $dropOptionList): self
+    {
+        return new self($this->name, $this->optWith, $dropOptionList);
     }
 }

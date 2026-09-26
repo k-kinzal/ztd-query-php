@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IndexElemWithAExprIndexElemOptions_90349fe6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IndexElemWithAExprIndexElemOptions_90349fe6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IndexElemWithAExprIndexElemOptions_90349fe6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\IndexIncludingParamsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\IndexParamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class IndexElemWithAExprIndexElemOptions_90349fe6 implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm $indexElemOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexElemOptions), 'The indexElemOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class IndexElemWithAExprIndexElemOptions_90349fe6 implements \SqlSemantics
         $this->aExpr->write($writer);
         $writer->append(')');
         $this->indexElemOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($aExpr, $this->indexElemOptions);
+    }
+
+    /**
+     * Returns a copy with a new indexElemOptions, preserving every other field.
+     */
+    public function withIndexElemOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm $indexElemOptions): self
+    {
+        return new self($this->aExpr, $indexElemOptions);
     }
 }

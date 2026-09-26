@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterInstanceActionWithRotateSymIdentOrTextMasterSymKeySym_b558a985 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterInstanceActionWithRotateSymIdentOrTextMasterSymKeySym_b558a985 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterInstanceActionWithRotateSymIdentOrTextMasterSymKeySym_b558a985 implements \SqlSemantics\Statement\Model\MySql\Role\AlterInstanceActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class AlterInstanceActionWithRotateSymIdentOrTextMasterSymKeySym_b558a985 
         $this->identOrText->write($writer);
         $writer->append('MASTER');
         $writer->append('KEY');
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($identOrText);
     }
 }

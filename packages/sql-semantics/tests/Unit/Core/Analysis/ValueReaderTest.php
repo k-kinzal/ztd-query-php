@@ -19,6 +19,8 @@ use WeakReference;
 #[UsesClass(\SqlSemantics\Statement\Element::class)]
 #[UsesClass(\SqlSemantics\Statement\Statement::class)]
 #[UsesClass(\SqlSemantics\Statement\Writer::class)]
+#[UsesClass(\SqlSemantics\Statement\Assertion::class)]
+#[UsesClass(\SqlSemantics\Statement\ImmutableGraph::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
@@ -36,6 +38,7 @@ final class ValueReaderTest extends TestCase
         unset($tree);
         self::assertNull($treeReference->get());
         self::assertNull($tokenReference->get());
+        self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
         self::assertSame('SELECT 123', (new \SqlSemantics\Statement\Statement($value))->toString());
     }
 
@@ -43,6 +46,7 @@ final class ValueReaderTest extends TestCase
     {
         $parser = PostgreSqlDialect::PostgreSql->platform()->parser();
         $value = PostgreSqlDialect::PostgreSql->platform()->values($parser->version())->read($parser->parse('VALUES (42)'));
+        self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
         self::assertSame('VALUES( 42 )', (new \SqlSemantics\Statement\Statement($value))->toString());
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptEscapeWithEscapeSymSimpleExpr_caf47b30 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptEscapeWithEscapeSymSimpleExpr_caf47b30 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptEscapeWithEscapeSymSimpleExpr_caf47b30 implements \SqlSemantics\Statement\Model\MySql\Role\OptEscapeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptEscapeWithEscapeSymSimpleExpr_caf47b30 implements \SqlSemantics\S
     {
         $writer->append('ESCAPE');
         $this->simpleExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleExpr, preserving every other field.
+     */
+    public function withSimpleExpr(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr): self
+    {
+        return new self($simpleExpr);
     }
 }

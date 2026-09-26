@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StoredRoutineBodyWithAsRoutineString_32cbfbab $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StoredRoutineBodyWithAsRoutineString_32cbfbab $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StoredRoutineBodyWithAsRoutineString_32cbfbab implements \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoutineStringForm $routineString,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($routineString), 'The routineString must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class StoredRoutineBodyWithAsRoutineString_32cbfbab implements \SqlSemanti
     {
         $writer->append('AS');
         $this->routineString->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new routineString, preserving every other field.
+     */
+    public function withRoutineString(\SqlSemantics\Statement\Model\MySql\Role\RoutineStringForm $routineString): self
+    {
+        return new self($routineString);
     }
 }

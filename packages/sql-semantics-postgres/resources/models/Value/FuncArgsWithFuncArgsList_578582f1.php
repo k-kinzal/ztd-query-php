@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgsWithFuncArgsList_578582f1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgsWithFuncArgsList_578582f1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncArgsWithFuncArgsList_578582f1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsListForm $funcArgsList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgsList), 'The funcArgsList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class FuncArgsWithFuncArgsList_578582f1 implements \SqlSemantics\Statement
         $writer->append('(');
         $this->funcArgsList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new funcArgsList, preserving every other field.
+     */
+    public function withFuncArgsList(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsListForm $funcArgsList): self
+    {
+        return new self($funcArgsList);
     }
 }

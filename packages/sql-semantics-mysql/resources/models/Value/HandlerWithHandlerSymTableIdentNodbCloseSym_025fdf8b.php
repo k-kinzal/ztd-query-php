@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\HandlerWithHandlerSymTableIdentNodbCloseSym_025fdf8b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\HandlerWithHandlerSymTableIdentNodbCloseSym_025fdf8b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class HandlerWithHandlerSymTableIdentNodbCloseSym_025fdf8b implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\HandlerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentNodbForm $tableIdentNodb,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdentNodb), 'The tableIdentNodb must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class HandlerWithHandlerSymTableIdentNodbCloseSym_025fdf8b implements \Sql
         $writer->append('HANDLER');
         $this->tableIdentNodb->write($writer);
         $writer->append('CLOSE');
+    }
+
+    /**
+     * Returns a copy with a new tableIdentNodb, preserving every other field.
+     */
+    public function withTableIdentNodb(\SqlSemantics\Statement\Model\MySql\Role\TableIdentNodbForm $tableIdentNodb): self
+    {
+        return new self($tableIdentNodb);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JtColumnWithIdentTypeOptCollateJtColumnTypePathSymTextLiteralOptOnEmptyOrErrorJsonTable_08c038c0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JtColumnWithIdentTypeOptCollateJtColumnTypePathSymTextLiteralOptOnEmptyOrErrorJsonTable_08c038c0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JtColumnWithIdentTypeOptCollateJtColumnTypePathSymTextLiteralOptOnEmptyOrErrorJsonTable_08c038c0 implements \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm, \SqlSemantics\Statement\Model\MySql\Role\JtColumnForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class JtColumnWithIdentTypeOptCollateJtColumnTypePathSymTextLiteralOptOnEm
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm $textLiteral,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorJsonTableForm $optOnEmptyOrErrorJsonTable,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($type), 'The type must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($jtColumnType), 'The jtColumnType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textLiteral), 'The textLiteral must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOnEmptyOrErrorJsonTable), 'The optOnEmptyOrErrorJsonTable must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +47,53 @@ final class JtColumnWithIdentTypeOptCollateJtColumnTypePathSymTextLiteralOptOnEm
         $writer->append('PATH');
         $this->textLiteral->write($writer);
         $this->optOnEmptyOrErrorJsonTable->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->type, $this->optCollate, $this->jtColumnType, $this->textLiteral, $this->optOnEmptyOrErrorJsonTable);
+    }
+
+    /**
+     * Returns a copy with a new type, preserving every other field.
+     */
+    public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
+    {
+        return new self($this->ident, $type, $this->optCollate, $this->jtColumnType, $this->textLiteral, $this->optOnEmptyOrErrorJsonTable);
+    }
+
+    /**
+     * Returns a copy with a new optCollate, preserving every other field.
+     */
+    public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
+    {
+        return new self($this->ident, $this->type, $optCollate, $this->jtColumnType, $this->textLiteral, $this->optOnEmptyOrErrorJsonTable);
+    }
+
+    /**
+     * Returns a copy with a new jtColumnType, preserving every other field.
+     */
+    public function withJtColumnType(\SqlSemantics\Statement\Model\MySql\Role\JtColumnTypeForm $jtColumnType): self
+    {
+        return new self($this->ident, $this->type, $this->optCollate, $jtColumnType, $this->textLiteral, $this->optOnEmptyOrErrorJsonTable);
+    }
+
+    /**
+     * Returns a copy with a new textLiteral, preserving every other field.
+     */
+    public function withTextLiteral(\SqlSemantics\Statement\Model\MySql\Role\TextLiteralForm $textLiteral): self
+    {
+        return new self($this->ident, $this->type, $this->optCollate, $this->jtColumnType, $textLiteral, $this->optOnEmptyOrErrorJsonTable);
+    }
+
+    /**
+     * Returns a copy with a new optOnEmptyOrErrorJsonTable, preserving every other field.
+     */
+    public function withOptOnEmptyOrErrorJsonTable(\SqlSemantics\Statement\Model\MySql\Role\OptOnEmptyOrErrorJsonTableForm $optOnEmptyOrErrorJsonTable): self
+    {
+        return new self($this->ident, $this->type, $this->optCollate, $this->jtColumnType, $this->textLiteral, $optOnEmptyOrErrorJsonTable);
     }
 }

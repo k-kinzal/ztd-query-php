@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncAliasClauseWithAsTableFuncElementList_55e9e4f0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncAliasClauseWithAsTableFuncElementList_55e9e4f0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncAliasClauseWithAsTableFuncElementList_55e9e4f0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm $tableFuncElementList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncElementList), 'The tableFuncElementList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class FuncAliasClauseWithAsTableFuncElementList_55e9e4f0 implements \SqlSe
         $writer->append('(');
         $this->tableFuncElementList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new tableFuncElementList, preserving every other field.
+     */
+    public function withTableFuncElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm $tableFuncElementList): self
+    {
+        return new self($tableFuncElementList);
     }
 }

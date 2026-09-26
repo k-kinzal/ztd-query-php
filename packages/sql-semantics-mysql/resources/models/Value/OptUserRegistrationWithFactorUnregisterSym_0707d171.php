@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptUserRegistrationWithFactorUnregisterSym_0707d171 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptUserRegistrationWithFactorUnregisterSym_0707d171 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptUserRegistrationWithFactorUnregisterSym_0707d171 implements \SqlSemantics\Statement\Model\MySql\Role\OptUserRegistrationForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($factor), 'The factor must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptUserRegistrationWithFactorUnregisterSym_0707d171 implements \SqlS
     {
         $this->factor->write($writer);
         $writer->append('UNREGISTER');
+    }
+
+    /**
+     * Returns a copy with a new factor, preserving every other field.
+     */
+    public function withFactor(\SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor): self
+    {
+        return new self($factor);
     }
 }

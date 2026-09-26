@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionsWithCreateTableOptionsOptCommaCreateTableOption_1a46c03c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionsWithCreateTableOptionsOptCommaCreateTableOption_1a46c03c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateTableOptionsWithCreateTableOptionsOptCommaCreateTableOption_1a46c03c implements \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateTableOptionsWithCreateTableOptionsOptCommaCreateTableOption_1a
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm $createTableOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOptions), 'The createTableOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOption), 'The createTableOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class CreateTableOptionsWithCreateTableOptionsOptCommaCreateTableOption_1a
         $this->createTableOptions->write($writer);
         $this->optComma->write($writer);
         $this->createTableOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createTableOptions, preserving every other field.
+     */
+    public function withCreateTableOptions(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm $createTableOptions): self
+    {
+        return new self($createTableOptions, $this->optComma, $this->createTableOption);
+    }
+
+    /**
+     * Returns a copy with a new optComma, preserving every other field.
+     */
+    public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
+    {
+        return new self($this->createTableOptions, $optComma, $this->createTableOption);
+    }
+
+    /**
+     * Returns a copy with a new createTableOption, preserving every other field.
+     */
+    public function withCreateTableOption(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm $createTableOption): self
+    {
+        return new self($this->createTableOptions, $this->optComma, $createTableOption);
     }
 }

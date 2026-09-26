@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 implements \SqlSemantics\Statement\Model\Sqlite\Role\ColumnlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 implements 
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ColumnnameForm $columnname,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm $carglist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($columnlist), 'The columnlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($columnname), 'The columnname must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($carglist), 'The carglist must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class ColumnlistWithColumnlistCommaColumnnameCarglist_106fb537 implements 
         $writer->append(',');
         $this->columnname->write($writer);
         $this->carglist->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columnlist, preserving every other field.
+     */
+    public function withColumnlist(\SqlSemantics\Statement\Model\Sqlite\Role\ColumnlistForm $columnlist): self
+    {
+        return new self($columnlist, $this->columnname, $this->carglist);
+    }
+
+    /**
+     * Returns a copy with a new columnname, preserving every other field.
+     */
+    public function withColumnname(\SqlSemantics\Statement\Model\Sqlite\Role\ColumnnameForm $columnname): self
+    {
+        return new self($this->columnlist, $columnname, $this->carglist);
+    }
+
+    /**
+     * Returns a copy with a new carglist, preserving every other field.
+     */
+    public function withCarglist(\SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm $carglist): self
+    {
+        return new self($this->columnlist, $this->columnname, $carglist);
     }
 }

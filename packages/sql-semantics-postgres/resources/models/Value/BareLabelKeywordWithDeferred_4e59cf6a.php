@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BareLabelKeywordWithDeferred_4e59cf6a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BareLabelKeywordWithDeferred_4e59cf6a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BareLabelKeywordWithDeferred_4e59cf6a implements \SqlSemantics\Statement\Model\PostgreSql\Role\BareColLabelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BareLabelKeywordForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $name,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['DEFERRED'], 'The name must be a complete DEFERRED lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class BareLabelKeywordWithDeferred_4e59cf6a implements \SqlSemantics\State
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name);
     }
 }

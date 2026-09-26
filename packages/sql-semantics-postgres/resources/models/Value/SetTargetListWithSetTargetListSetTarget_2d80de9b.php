@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetTargetListWithSetTargetListSetTarget_2d80de9b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetTargetListWithSetTargetListSetTarget_2d80de9b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetTargetListWithSetTargetListSetTarget_2d80de9b implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SetTargetListWithSetTargetListSetTarget_2d80de9b implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetListForm $setTargetList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetForm $setTarget,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setTargetList), 'The setTargetList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setTarget), 'The setTarget must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SetTargetListWithSetTargetListSetTarget_2d80de9b implements \SqlSema
         $this->setTargetList->write($writer);
         $writer->append(',');
         $this->setTarget->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setTargetList, preserving every other field.
+     */
+    public function withSetTargetList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetListForm $setTargetList): self
+    {
+        return new self($setTargetList, $this->setTarget);
+    }
+
+    /**
+     * Returns a copy with a new setTarget, preserving every other field.
+     */
+    public function withSetTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetForm $setTarget): self
+    {
+        return new self($this->setTargetList, $setTarget);
     }
 }

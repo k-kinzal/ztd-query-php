@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldsOrVarsWithFieldsOrVarsFieldOrVar_61b4443d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldsOrVarsWithFieldsOrVarsFieldOrVar_61b4443d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldsOrVarsWithFieldsOrVarsFieldOrVar_61b4443d implements \SqlSemantics\Statement\Model\MySql\Role\FieldsOrVarsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FieldsOrVarsWithFieldsOrVarsFieldOrVar_61b4443d implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldsOrVarsForm $fieldsOrVars,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOrVarForm $fieldOrVar,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldsOrVars), 'The fieldsOrVars must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOrVar), 'The fieldOrVar must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FieldsOrVarsWithFieldsOrVarsFieldOrVar_61b4443d implements \SqlSeman
         $this->fieldsOrVars->write($writer);
         $writer->append(',');
         $this->fieldOrVar->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fieldsOrVars, preserving every other field.
+     */
+    public function withFieldsOrVars(\SqlSemantics\Statement\Model\MySql\Role\FieldsOrVarsForm $fieldsOrVars): self
+    {
+        return new self($fieldsOrVars, $this->fieldOrVar);
+    }
+
+    /**
+     * Returns a copy with a new fieldOrVar, preserving every other field.
+     */
+    public function withFieldOrVar(\SqlSemantics\Statement\Model\MySql\Role\FieldOrVarForm $fieldOrVar): self
+    {
+        return new self($this->fieldsOrVars, $fieldOrVar);
     }
 }
