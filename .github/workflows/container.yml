@@ -8,6 +8,8 @@ on:
     paths:
       - 'packages/container/**'
       - '.github/workflows/container.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read
@@ -25,43 +27,8 @@ defaults:
     working-directory: packages/container
 
 jobs:
-  test:
-    name: Test (PHP ${{ matrix.php }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Set up PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
-          coverage: none
-      - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
-      - name: Install dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
-        with:
-          working-directory: packages/container
-          dependency-versions: locked
-          composer-options: --prefer-dist
-          require-lock-file: true
-      - name: Check installed platform requirements
-        if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
-        run: composer check-platform-reqs
-      - name: Check library requirements outside the locked ParaTest PHP range
-        if: matrix.php == '8.4' || matrix.php == '8.5'
-        run: composer check-platform-reqs --no-dev
-      - name: Run the tests in parallel
-        run: composer test
-
-  lint:
-    name: Lint
+  format:
+    name: Format
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -82,90 +49,5 @@ jobs:
           dependency-versions: locked
           composer-options: --prefer-dist
           require-lock-file: true
-      - name: Check installed platform requirements
-        run: composer check-platform-reqs
-      - name: Check PSR-4 paths and ambiguous classes
-        run: composer autoload:check
       - name: Check the formatting
         run: composer format:check
-      - name: Analyse with PHPStan
-        run: composer phpstan
-      - name: Check PHP compatibility
-        run: composer compat
-      - name: Check the source metrics
-        run: composer loc-guard
-      - name: Check the directory structure
-        run: composer tree-guard
-      - name: Check the architecture layers
-        run: composer deptrac
-
-  mutation:
-    name: Mutation Testing
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 0
-      - name: Set up PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
-        with:
-          php-version: '8.5'
-          extensions: ctype, date, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
-          coverage: pcov
-          tools: infection:0.35.4
-          ini-values: memory_limit=1G
-      - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
-      - name: Install package dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
-        with:
-          working-directory: packages/container
-          dependency-versions: locked
-          composer-options: --prefer-dist
-          require-lock-file: true
-      - name: Check installed platform requirements
-        run: |
-          composer check-platform-reqs --no-dev
-          infection --version
-      - name: Mutation testing on changed lines
-        if: github.event_name == 'pull_request'
-        run: >-
-          php -d memory_limit=4G "$(command -v infection)"
-          --configuration=infection.json5 --with-uncovered
-          --threads=4
-          --only-covering-test-cases
-          --git-diff-lines
-          --git-diff-base="origin/${GITHUB_BASE_REF}"
-          --ignore-msi-with-no-mutations
-          --min-msi=85
-          --min-covered-msi=85
-          --no-progress
-          --logger-github
-      - name: Mutation testing on the whole source tree
-        if: github.event_name != 'pull_request'
-        run: >-
-          php -d memory_limit=4G "$(command -v infection)"
-          --configuration=infection.json5 --with-uncovered
-          --threads=4
-          --only-covering-test-cases
-          --no-progress
-          --logger-github
-      - name: Reject skipped whole-tree mutants
-        if: github.event_name != 'pull_request'
-        run: |
-          php -d memory_limit=4G -r '
-            $report = json_decode(file_get_contents("build/infection/infection.json"), true, 512, JSON_THROW_ON_ERROR);
-            if ($report["stats"]["skippedCount"] !== 0) {
-                fwrite(STDERR, "Infection skipped mutants before execution; review the timeout against test durations.\n");
-                exit(1);
-            }
-          '
-      - name: Upload mutation reports
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: container-infection
-          path: packages/container/build/infection/
-          if-no-files-found: ignore

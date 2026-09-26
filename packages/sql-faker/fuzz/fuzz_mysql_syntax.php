@@ -40,7 +40,7 @@ use Fuzz\Target\MySqlSyntaxCheck;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\MySqlProvider;
 use Testcontainers\Testcontainers;
 
 $mysqlVersion = getenv('MYSQL_VERSION') !== false ? getenv('MYSQL_VERSION') : '8.4.7';

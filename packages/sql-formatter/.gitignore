@@ -1,0 +1,7 @@
+/.deptrac.cache
+/fuzz/corpus/
+/fuzz/coverage/
+/crash-*
+/minimized-*
+/timeout-*
+/oom-*

@@ -14,6 +14,9 @@ parameters:
             'src/Compiler/*': [mysql, postgres, pgsql, sqlite, mariadb]
             'src/Generation/*': [mysql, postgres, pgsql, sqlite, mariadb]
             'src/Grammar/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/MySql/*': [postgres, pgsql, sqlite]
+            'src/PostgreSql/*': [mysql, mariadb, sqlite]
+            'src/Sqlite/*': [mysql, mariadb, postgres, pgsql]
         forbiddenNamespacePrefixes:
             - 'Tests\Fixture'
             - 'Tests\Fixtures'

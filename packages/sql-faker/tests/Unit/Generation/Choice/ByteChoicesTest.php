@@ -51,6 +51,14 @@ final class ByteChoicesTest extends TestCase
     }
 
 
+    public function testEncodeWritesTheLittleEndianBytesIndexReadsBack(): void
+    {
+        self::assertSame("\x00\x01", ByteChoices::encode(300, 256));
+        self::assertSame("\x00", ByteChoices::encode(1, 0));
+        self::assertSame(256, (new ByteChoices(ByteChoices::encode(300, 256)))->index(300));
+        self::assertSame(65536, (new ByteChoices(ByteChoices::encode(65537, 65536)))->index(65537));
+    }
+
     public function testIndexReducesUnsignedEightByteValuesWithoutIntegerOverflow(): void
     {
         self::assertSame(1, (new ByteChoices(str_repeat("\xff", 8)))->index(PHP_INT_MAX));

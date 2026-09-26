@@ -30,7 +30,7 @@ use Fuzz\Target\PgSyntaxCheck;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSql\PostgreSqlProvider;
 use Testcontainers\Testcontainers;
 
 fwrite(STDERR, "Starting PostgreSQL container...\n");

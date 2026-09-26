@@ -24,12 +24,13 @@ final class GenerationPlan
      * @param non-empty-string|null $startRule Rule the walk begins at, or null for the grammar entry point
      * @param array<string, non-empty-list<ProductionPattern>> $patterns Patterns directing each occurrence of a rule
      * @param array<string, ProductionPattern> $patternsForEveryOccurrence Pattern directing every further occurrence of a rule
-     * @param array<string, non-empty-list<string>> $lexemes Lexemes directing each occurrence of a terminal
+     * @param array<string, array<int, string>> $lexemes Lexemes directing each occurrence of a terminal
      * @param non-empty-string|null $lexicalTarget Lexical rule to realize instead of walking the grammar
      * @param array<string, int> $parameters Parameters the lexical target is realized with
      * @param TRequiresNonEmpty $requiresNonEmpty Whether the walk must produce at least one symbol
      * @param bool $reserveSteps Whether to budget the remaining form and prefer fewer rule expansions
      * @param array<string, non-empty-list<string>> $candidateKeys Exact candidate semantics by terminal occurrence
+     * @param array<string, RulePlan> $rules Scoped production, list and lexical conditions
      * @visibility SqlFaker\Generation\Choice
      */
     public function __construct(
@@ -44,6 +45,7 @@ final class GenerationPlan
         private readonly bool $reserveSteps = false,
         private readonly ?int $expansionBudget = null,
         private readonly array $candidateKeys = [],
+        private readonly array $rules = [],
     ) {
     }
 
@@ -55,8 +57,6 @@ final class GenerationPlan
     {
         return new self(null, [], [], [], null, [], false, PHP_INT_MAX);
     }
-
-
 
     /**
      * Directs a walk that begins at one rule instead of the grammar entry point.
@@ -126,12 +126,13 @@ final class GenerationPlan
             $this->reserveSteps,
             $this->expansionBudget,
             $this->candidateKeys,
+            $this->rules,
         );
     }
 
     /**
      * Answers a plan that spells each occurrence of a terminal the way the caller asked.
-     * @param array<string, non-empty-list<string>> $lexemes Lexemes directing each occurrence of a terminal
+     * @param array<string, array<int, string>> $lexemes Lexemes directing each occurrence of a terminal
      * @return self<TRequiresNonEmpty> Plan carrying those lexemes
      * @throws InvalidArgumentException When a required generation constraint is empty
      */
@@ -141,19 +142,7 @@ final class GenerationPlan
             throw new InvalidArgumentException('A lexical generation plan requires lexemes.');
         }
 
-        return new self(
-            $this->startRule,
-            $this->patterns,
-            $this->patternsForEveryOccurrence,
-            $lexemes,
-            $this->lexicalTarget,
-            $this->parameters,
-            $this->requiresNonEmpty,
-            $this->maxDepth,
-            $this->reserveSteps,
-            $this->expansionBudget,
-            $this->candidateKeys,
-        );
+        return $this->refine(lexemes: $lexemes);
     }
 
     /**
@@ -162,19 +151,62 @@ final class GenerationPlan
      */
     public function withMaxDepth(int $maxDepth): self
     {
+        return $this->refine(maxDepth: max(1, $maxDepth));
+    }
+
+    /**
+     * Adds subtree conditions without choosing unrelated grammar alternatives.
+     * @return self<TRequiresNonEmpty>
+     * @throws InvalidArgumentException When the rule or combined conditions are invalid
+     */
+    public function withRule(string $rule, RulePlan $plan): self
+    {
+        $rules = new RulePlan(rules: $this->rules);
+        return $this->refine(rules: $rules->withRule($rule, $plan)->rules);
+    }
+
+    /**
+     * Copies independent settings while preserving the start rule and output guarantee.
+     * @param array<string, ProductionPattern>|null $patternsForEveryOccurrence
+     * @param array<string, array<int, string>>|null $lexemes
+     * @param array<string, non-empty-list<string>>|null $candidateKeys
+     * @param array<string, RulePlan>|null $rules
+     * @param positive-int|null $maxDepth
+     * @param positive-int|null $expansionBudget
+     * @return self<TRequiresNonEmpty>
+     * @visibility namespace
+     */
+    public function refine(
+        ?array $patternsForEveryOccurrence = null,
+        ?array $lexemes = null,
+        ?array $candidateKeys = null,
+        ?array $rules = null,
+        ?int $maxDepth = null,
+        ?int $expansionBudget = null,
+        ?bool $reserveSteps = null,
+    ): self {
         return new self(
             $this->startRule,
             $this->patterns,
-            $this->patternsForEveryOccurrence,
-            $this->lexemes,
+            $patternsForEveryOccurrence ?? $this->patternsForEveryOccurrence,
+            $lexemes ?? $this->lexemes,
             $this->lexicalTarget,
             $this->parameters,
             $this->requiresNonEmpty,
-            max(1, $maxDepth),
-            $this->reserveSteps,
-            $this->expansionBudget,
-            $this->candidateKeys,
+            $maxDepth ?? $this->maxDepth,
+            $reserveSteps ?? $this->reserveSteps,
+            $expansionBudget ?? $this->expansionBudget,
+            $candidateKeys ?? $this->candidateKeys,
+            $rules ?? $this->rules,
         );
+    }
+
+    /**
+     * @return array<string, RulePlan>
+     */
+    public function rules(): array
+    {
+        return $this->rules;
     }
 
     /**
@@ -241,19 +273,7 @@ final class GenerationPlan
             throw new InvalidArgumentException('A generation plan rule must not be empty.');
         }
 
-        return new self(
-            $this->startRule,
-            $this->patterns,
-            [...$this->patternsForEveryOccurrence, $rule => $pattern],
-            $this->lexemes,
-            $this->lexicalTarget,
-            $this->parameters,
-            $this->requiresNonEmpty,
-            $this->maxDepth,
-            $this->reserveSteps,
-            $this->expansionBudget,
-            $this->candidateKeys,
-        );
+        return $this->refine(patternsForEveryOccurrence: [...$this->patternsForEveryOccurrence, $rule => $pattern]);
     }
 
     /**
@@ -307,19 +327,7 @@ final class GenerationPlan
      */
     public function withStepBudget(): self
     {
-        return new self(
-            $this->startRule,
-            $this->patterns,
-            $this->patternsForEveryOccurrence,
-            $this->lexemes,
-            $this->lexicalTarget,
-            $this->parameters,
-            $this->requiresNonEmpty,
-            $this->maxDepth,
-            true,
-            $this->expansionBudget,
-            $this->candidateKeys,
-        );
+        return $this->refine(reserveSteps: true);
     }
 
     /**
@@ -340,19 +348,7 @@ final class GenerationPlan
         if ($budget < 1) {
             throw new InvalidArgumentException('Expansion budget must be positive.');
         }
-        return new self(
-            $this->startRule,
-            $this->patterns,
-            $this->patternsForEveryOccurrence,
-            $this->lexemes,
-            $this->lexicalTarget,
-            $this->parameters,
-            $this->requiresNonEmpty,
-            $this->maxDepth,
-            $this->reserveSteps,
-            $budget,
-            $this->candidateKeys
-        );
+        return $this->refine(expansionBudget: $budget);
     }
 
     /**
@@ -362,19 +358,7 @@ final class GenerationPlan
      */
     public function withCandidateKeys(array $keys): self
     {
-        return new self(
-            $this->startRule,
-            $this->patterns,
-            $this->patternsForEveryOccurrence,
-            $this->lexemes,
-            $this->lexicalTarget,
-            $this->parameters,
-            $this->requiresNonEmpty,
-            $this->maxDepth,
-            $this->reserveSteps,
-            $this->expansionBudget,
-            $keys
-        );
+        return $this->refine(candidateKeys: $keys);
     }
 
     /**

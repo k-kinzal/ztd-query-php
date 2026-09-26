@@ -10,8 +10,6 @@ namespace SqlFaker\MySql\Generation;
  * @visibility public
  * @example Enumerate the supported statement choices
  *     array_column(\SqlFaker\MySql\Generation\StatementRule::cases(), 'name') // => ['Select', 'Insert', 'Update', 'Delete', 'CreateTable', 'AlterTable', 'DropTable', 'SimpleStatement']
- * @example Use the existing StatementType alias
- *     \SqlFaker\MySql\StatementType::Select === \SqlFaker\MySql\Generation\StatementRule::Select // => true
  */
 enum StatementRule: string
 {

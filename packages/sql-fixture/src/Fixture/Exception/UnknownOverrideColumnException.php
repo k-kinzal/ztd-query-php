@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlFixture\Fixture\Exception;
 
-use SqlFixture\InvalidOverrideException;
 use SqlFixture\Schema\TableSchema;
 
 /**

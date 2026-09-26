@@ -6,7 +6,7 @@ use Faker\Factory;
 use Fuzz\Robustness\Target\RobustnessTarget;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\MySqlProvider;
 
 $provider = new MySqlProvider(Factory::create(), 'mysql-8.4.7');
 $planner = $provider->planner();

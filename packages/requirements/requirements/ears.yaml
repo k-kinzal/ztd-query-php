@@ -1,0 +1,161 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source:
+  id: ears-patterns
+  uri: 'https://alistairmavin.com/ears/'
+  format: html
+  selector: '.single-about > blockquote:nth-of-type(1) > p, .single-about > blockquote:nth-of-type(2) > p, .single-about > blockquote:nth-of-type(3) > p, .single-about > blockquote:nth-of-type(4) > p, .single-about > blockquote:nth-of-type(5) > p, .single-about > blockquote:nth-of-type(6) > p, .single-about > blockquote:nth-of-type(7) > p, .single-about > blockquote:first-of-type + p, .single-about > blockquote:last-of-type + p + p'
+items:
+  -
+    id: EARS-001
+    statement: 'The EARS validator shall require preconditions before a trigger and a system response.'
+    evidence:
+      -
+        selector: '.single-about > blockquote:nth-of-type(1) > p'
+        quote: 'While <optional pre-condition>, when <optional trigger>, the <system name> shall <system response>'
+    labels:
+      - ears
+      - syntax
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsClauseOrder'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsClauseOrder'
+  -
+    id: EARS-002
+    statement: 'The EARS validator shall accept a system name followed by `shall` and a nonempty response.'
+    evidence:
+      -
+        selector: '.single-about > blockquote:nth-of-type(2) > p'
+        quote: 'The <system name> shall <system response>'
+    labels:
+      - ears
+      - syntax
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsSystemResponse'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsSystemResponse'
+  -
+    id: EARS-003
+    statement: 'When a state driven statement is validated, the EARS validator shall require a nonempty While clause before the system response.'
+    evidence:
+      -
+        selector: '.single-about > blockquote:nth-of-type(3) > p'
+        quote: 'While <precondition(s)>, the <system name> shall <system response>'
+    labels:
+      - ears
+      - syntax
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsStateDriven'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsStateDriven'
+  -
+    id: EARS-004
+    statement: 'When an event driven statement is validated, the EARS validator shall require a nonempty When clause before the system response.'
+    evidence:
+      -
+        selector: '.single-about > blockquote:nth-of-type(4) > p'
+        quote: 'When <trigger>, the <system name> shall <system response>'
+    labels:
+      - ears
+      - syntax
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsEventDriven'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsEventDriven'
+  -
+    id: EARS-005
+    statement: 'When an optional feature statement is validated, the EARS validator shall require a nonempty Where clause before the system response.'
+    evidence:
+      -
+        selector: '.single-about > blockquote:nth-of-type(5) > p'
+        quote: 'Where <feature is included>, the <system name> shall <system response>'
+    labels:
+      - ears
+      - syntax
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsOptionalFeature'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsOptionalFeature'
+  -
+    id: EARS-006
+    statement: 'When an unwanted behaviour statement is validated, the EARS validator shall require If followed by a nonempty trigger and then the system response.'
+    evidence:
+      -
+        selector: '.single-about > blockquote:nth-of-type(6) > p'
+        quote: 'If <trigger>, then the <system name> shall <system response>'
+    labels:
+      - ears
+      - syntax
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsUnwantedBehaviour'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsUnwantedBehaviour'
+  -
+    id: EARS-007
+    statement: 'When a complex statement is validated, the EARS validator shall accept a While clause followed by a When clause and the system response.'
+    evidence:
+      -
+        selector: '.single-about > blockquote:nth-of-type(7) > p'
+        quote: 'While <precondition(s)>, When <trigger>, the <system name> shall <system response>'
+    labels:
+      - ears
+      - syntax
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsComplex'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsComplex'
+  -
+    id: EARS-008
+    statement: 'The EARS validator shall accept zero or multiple preconditions and responses and require one system and at most one trigger.'
+    evidence:
+      -
+        selector: '.single-about > blockquote:first-of-type + p'
+        quote: 'The EARS ruleset states that a requirement must have: Zero or many preconditions; Zero or one trigger; One system name; One or many system responses.'
+    labels:
+      - ears
+      - syntax
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsCardinality'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsCardinality'
+  -
+    id: EARS-009
+    statement: 'When a complex unwanted behaviour statement is validated, the EARS validator shall require If and Then around its trigger.'
+    evidence:
+      -
+        selector: '.single-about > blockquote:last-of-type + p + p'
+        quote: 'Complex requirements for unwanted behaviour also include the If-Then keywords.'
+    labels:
+      - ears
+      - syntax
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateAcceptsComplexUnwantedBehaviour'
+      -
+        runner: unit
+        target: 'Tests\Unit\Ears\ValidatorTest::testValidateRejectsComplexUnwantedBehaviour'

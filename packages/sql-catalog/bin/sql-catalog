@@ -1,0 +1,33 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+namespace SqlCatalog\Bin;
+
+use SqlCatalog\Cli\CatalogCommand;
+
+(static function (): void {
+    $candidates = [
+        __DIR__ . '/../vendor/autoload.php',
+        __DIR__ . '/../../../autoload.php',
+        __DIR__ . '/../../autoload.php',
+    ];
+    foreach ($candidates as $candidate) {
+        if (is_file($candidate)) {
+            require $candidate;
+
+            return;
+        }
+    }
+    fwrite(STDERR, "sql-catalog: install the package dependencies with composer first.\n");
+    exit(3);
+})();
+
+$arguments = array_values(array_slice($_SERVER['argv'] ?? [], 1));
+$result = (new CatalogCommand())->run(array_map('strval', $arguments));
+
+fwrite(STDOUT, $result->output);
+fwrite(STDERR, $result->error);
+
+exit($result->exitCode->value);

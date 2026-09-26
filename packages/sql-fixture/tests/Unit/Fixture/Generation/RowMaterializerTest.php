@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\Fixture\Generation\RowMaterializer as Subject;
 use SqlFixture\Fixture\GenerationRun;
 use SqlFixture\Fixture\RowSpec;
-use SqlFixture\FixtureGenerator;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Provider\FixtureGenerator;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
@@ -54,7 +54,7 @@ use SqlFixture\Schema\TableSchema;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Exception\InvalidOverrideException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]

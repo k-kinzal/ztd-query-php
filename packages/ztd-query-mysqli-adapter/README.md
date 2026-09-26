@@ -1,184 +1,93 @@
 # ZTD Query MySQLi Adapter
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docs](https://img.shields.io/badge/docs-ztd--query--mysqli--adapter-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-mysqli-adapter/)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-MySQLi adapter for [ZTD Query PHP](https://github.com/k-kinzal/ztd-query-core). Drop-in replacement for mysqli that transparently applies Zero Table Dependency query transformation.
-
-## Overview
-
-This package provides `ZtdMysqli` and `ZtdMysqliStatement`, which extend `mysqli` and `mysqli_stmt` respectively. They intercept SQL queries and transform them using CTE (Common Table Expression) shadowing, enabling SQL unit testing without modifying physical databases.
-
-- **Drop-in replacement** - `ZtdMysqli` extends `mysqli` and is type-compatible everywhere `mysqli` is expected
-- **Transparent rewriting** - All queries are automatically rewritten at `prepare()`/`query()`/`execute_query()` time
-- **Toggle on/off** - Enable or disable ZTD mode at runtime with `enableZtd()`/`disableZtd()`
-- **Wrap existing connections** - Use `ZtdMysqli::fromMysqli()` to wrap an existing mysqli instance without creating a new connection
+ZTD Query is a Zero Table Dependency testing library for PHP: it runs the SQL of an application on a real database engine without reading or writing any physical table. Before a query reaches the database, every table it references is replaced by a CTE holding the rows the test has written, and every INSERT, UPDATE, and DELETE is turned into a SELECT whose result is kept in the session, so later queries see the change. Tests therefore need no migrations, seeding, or cleanup, and they can run in parallel against one empty database. This package is the mysqli adapter: `ZtdMysqli` extends `mysqli` and applies ZTD to every query it runs on MySQL.
 
 ## Requirements
 
-- PHP 8.1 or higher
-- MySQLi extension
-- MySQL 8.0.11 - 9.1
-- [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-core) (core)
-- [k-kinzal/ztd-query-mysql](https://github.com/k-kinzal/ztd-query-mysql) (MySQL platform)
+- PHP 8.1+ with the mysqli extension
+- MySQL 8.0.11–9.1
 
 ## Installation
 
+MySQL:
+
 ```bash
-composer require --dev k-kinzal/ztd-query-mysqli-adapter
+composer require --dev k-kinzal/ztd-query-mysqli-adapter k-kinzal/ztd-query-mysql
 ```
 
 ## Usage
 
-### Creating a New Connection
+`ZtdMysqli` extends `mysqli`, so it can be passed wherever the application expects a mysqli connection. Tables are created and filled through the same connection; they exist only in the session.
+
+```php
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
+
+final class UserQueryTest extends TestCase
+{
+    public function testSelectsActiveUsers(): void
+    {
+        $mysqli = new ZtdMysqli('127.0.0.1', 'root', 'root', 'test');
+        $mysqli->query('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, active BOOLEAN NOT NULL)');
+        $mysqli->query("INSERT INTO users (id, name, active) VALUES (1, 'Alice', TRUE), (2, 'Bob', FALSE)");
+
+        $result = $mysqli->execute_query('SELECT name FROM users WHERE active = ? ORDER BY id', [1]);
+
+        self::assertSame([['name' => 'Alice']], $result->fetch_all(MYSQLI_ASSOC));
+    }
+}
+```
+
+`ZtdMysqli::fromMysqli($mysqli)` wraps an existing connection instead of opening a new one, and `disableZtd()` and `enableZtd()` switch between the physical database and the session. Read the number of affected rows with `lastAffectedRows()`; the `affected_rows` property is not available on a `ZtdMysqli`.
+
+## Configuration
 
 ```php
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
-
-$mysqli = new ZtdMysqli('localhost', 'user', 'password', 'test');
-
-// Define schema and insert fixture data
-$mysqli->query('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255))');
-$mysqli->query("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')");
-$mysqli->query("INSERT INTO users (id, name, email) VALUES (2, 'Bob', 'bob@example.com')");
-
-// Query against fixture data (no physical table access)
-$stmt = $mysqli->prepare('SELECT * FROM users WHERE id = ?');
-$stmt->bind_param('i', $id);
-$id = 1;
-$stmt->execute();
-$result = $stmt->get_result();
-$row = $result->fetch_assoc();
-// ['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']
-```
-
-### Wrapping an Existing mysqli Instance
-
-```php
-use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
-
-$existingMysqli = new mysqli('localhost', 'user', 'password', 'test');
-$ztdMysqli = ZtdMysqli::fromMysqli($existingMysqli);
-```
-
-### Testing Write Operations
-
-INSERT/UPDATE/DELETE statements are converted to SELECT queries that return the affected rows:
-
-```php
-$mysqli->query('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
-$mysqli->query("INSERT INTO users (id, name) VALUES (1, 'Alice')");
-
-// INSERT returns the inserted row data
-$result = $mysqli->query("INSERT INTO users (id, name) VALUES (2, 'Bob')");
-$row = $result->fetch_assoc();
-// ['id' => 2, 'name' => 'Bob']
-
-// UPDATE returns the updated row data
-$result = $mysqli->query("UPDATE users SET name = 'Alice Updated' WHERE id = 1");
-$row = $result->fetch_assoc();
-// ['id' => 1, 'name' => 'Alice Updated']
-
-// DELETE returns the deleted row data
-$result = $mysqli->query("DELETE FROM users WHERE id = 1");
-$row = $result->fetch_assoc();
-// ['id' => 1, 'name' => 'Alice']
-```
-
-### Enabling/Disabling ZTD Mode
-
-```php
-$mysqli = new ZtdMysqli('localhost', 'user', 'password', 'test');
-
-// Disable ZTD to execute against physical database
-$mysqli->disableZtd();
-$mysqli->query('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
-
-// Re-enable ZTD for testing
-$mysqli->enableZtd();
-
-// Check current status
-$mysqli->isZtdEnabled(); // true
-```
-
-### Affected Row Count
-
-Due to PHP's C extension property handler, `$mysqli->affected_rows` may not work reliably with ZTD operations. Use the dedicated method instead:
-
-```php
-$mysqli->query("INSERT INTO users (id, name) VALUES (1, 'Alice')");
-$affectedRows = $mysqli->lastAffectedRows();
-// 1
-```
-
-### Configuration
-
-```php
-use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
-use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\UnknownSchemaBehavior;
+use ZtdQuery\Config\UnsupportedSqlBehavior;
+use ZtdQuery\Config\ZtdConfig;
 
 $config = new ZtdConfig(
+    // Unsupported statements: Exception (default), Notice, or Ignore
     unsupportedBehavior: UnsupportedSqlBehavior::Exception,
+
+    // Tables the session does not know: Passthrough to the database (default), or Exception
     unknownSchemaBehavior: UnknownSchemaBehavior::Exception,
+
+    // Per-statement overrides of unsupportedBehavior; the first matching rule wins
     behaviorRules: [
-        'BEGIN' => UnsupportedSqlBehavior::Ignore,
-        'COMMIT' => UnsupportedSqlBehavior::Ignore,
-        'ROLLBACK' => UnsupportedSqlBehavior::Ignore,
+        'CREATE INDEX' => UnsupportedSqlBehavior::Ignore,       // case-insensitive prefix
+        '/^SET\s+/i' => UnsupportedSqlBehavior::Notice,          // regular expression
     ],
 );
 
-$mysqli = new ZtdMysqli('localhost', 'user', 'password', 'test', config: $config);
+$mysqli = new ZtdMysqli($host, $user, $password, $database, config: $config);
 ```
 
-| Option | Values | Description |
-|--------|--------|-------------|
-| `unsupportedBehavior` | `Ignore`, `Notice`, `Exception` | Default behavior when unsupported SQL is executed |
-| `unknownSchemaBehavior` | `Passthrough`, `Exception` | Behavior when unknown table is referenced |
-| `behaviorRules` | `array<string, UnsupportedSqlBehavior>` | Per-pattern behavior overrides (first match wins) |
+`Ignore` skips the statement, `Notice` skips it and raises a PHP notice, and `Exception` throws an exception.
 
-## API Reference
+## SQL Support
 
-### ZtdMysqli
+| Statement | MySQL |
+|-----------|-------|
+| SELECT, including joins, grouping, set operations, subqueries, CTEs, recursive CTEs, and window functions | Supported |
+| INSERT with VALUES or SELECT | Supported |
+| Upsert | `ON DUPLICATE KEY UPDATE`, `INSERT IGNORE`, `REPLACE` |
+| UPDATE and DELETE | Supported, including multi-table forms and `ORDER BY ... LIMIT` |
+| `RETURNING` | – |
+| TRUNCATE | Supported |
+| CREATE TABLE, DROP TABLE | Supported |
+| ALTER TABLE | Supported |
+| BEGIN, COMMIT, ROLLBACK | Applied to the session: ROLLBACK discards the writes made since BEGIN |
+| Views, indexes, routines, triggers, SET, and server or user administration | Unsupported |
 
-| Method | Description |
-|--------|-------------|
-| `__construct($hostname, $username, $password, $database, $port, $socket, $config)` | Create a new ZTD-wrapped mysqli connection |
-| `ZtdMysqli::fromMysqli($mysqli, $config)` | Wrap an existing mysqli instance |
-| `enableZtd()` | Enable ZTD mode |
-| `disableZtd()` | Disable ZTD mode |
-| `isZtdEnabled()` | Check whether ZTD mode is enabled |
-| `lastAffectedRows()` | Get affected row count from the last ZTD or regular operation |
-| `prepare($query)` | Prepare a statement (rewritten if ZTD enabled) |
-| `query($query, $resultMode)` | Execute a query with ZTD processing |
-| `real_query($query)` | Execute a query without fetching results |
-| `execute_query($query, $params)` | Execute a parameterized query |
-
-All other mysqli methods (`begin_transaction`, `commit`, `rollback`, `real_escape_string`, etc.) are delegated to the inner mysqli instance. Properties are delegated via `__get`/`__isset`.
-
-### ZtdMysqliStatement
-
-Extends `mysqli_stmt` with ZTD-aware behavior. `execute()`, `get_result()`, and `bind_param()` work transparently. Use `ztdAffectedRows()` to get the ZTD-aware affected row count for write operations.
-
-## Development
-
-```bash
-# Run unit tests
-composer test:unit
-
-# Run integration tests (requires Docker)
-composer test:integration
-
-# Run all tests
-composer test
-
-# Run linter (PHP-CS-Fixer + PHPStan level max)
-composer lint
-
-# Fix code style
-composer format
-```
+Unsupported statements are handled as configured by `unsupportedBehavior`. The full specification is in [ztd-query-mysql](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/ztd-query-mysql/docs/spec.md).
 
 ## License
 

@@ -1,0 +1,33 @@
+version: 1
+source:
+  id: example-grammar
+  uri: source.html
+  format: html
+  selector: 'main p'
+items:
+  -
+    id: REQ-001
+    kind: requirement
+    statement: 'A name starts with a letter.'
+    evidence:
+      -
+        selector: '#names'
+        quote: 'A name starts with a letter.'
+  -
+    id: SPEC-001
+    statement: 'When a name is read, the parser shall require a leading letter.'
+    requirements:
+      - REQ-001
+    labels:
+      - grammar
+    category: lexical
+  -
+    id: GENERATOR-001
+    statement: 'The generator shall produce C code.'
+    status: unsupported
+    reason: 'The parser reads grammars and does not generate C code.'
+    evidence:
+      -
+        selector: '#generation'
+        quote: 'The generator produces C code.'
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'

@@ -1,0 +1,119 @@
+{
+    "name": "k-kinzal/requirements",
+    "description": "Links source text, EARS specifications, and tests for PHP projects",
+    "type": "library",
+    "license": "MIT",
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/requirements",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/requirements/"
+    },
+    "require": {
+        "php": "^8.1",
+        "ext-dom": "*",
+        "ext-libxml": "*",
+        "ext-mbstring": "*",
+        "league/commonmark": "^2.7",
+        "opis/json-schema": "^2.6",
+        "symfony/console": "^6.4",
+        "symfony/css-selector": "^6.4",
+        "symfony/dom-crawler": "^6.4",
+        "symfony/http-client": "^6.4",
+        "symfony/process": "^6.4",
+        "symfony/yaml": "^6.4"
+    },
+    "require-dev": {
+        "behat/behat": "^3.14",
+        "brianium/paratest": "^7.3",
+        "deptrac/deptrac": "^3.0",
+        "friendsofphp/php-cs-fixer": "^3.95.25",
+        "k-kinzal/php-ai-toolkit": "dev-main",
+        "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^10.5",
+        "squizlabs/php_codesniffer": "^4.0.4"
+    },
+    "repositories": [
+        {
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Requirements\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/requirements"
+    ],
+    "scripts": {
+        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
+        "compat": "phpcs",
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
+        "docgen": "docgen --packages=. --title=k-kinzal/requirements",
+        "docgen:diff": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --diff=origin/main --serve"
+        ],
+        "docgen:fresh": "@docgen --no-cache",
+        "docgen:serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --serve"
+        ],
+        "doctest": "phpunit --testsuite doctest",
+        "format": "php-cs-fixer fix --allow-risky=yes",
+        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "lint": [
+            "@autoload:check",
+            "@format:check",
+            "@phpstan",
+            "@compat",
+            "@loc-guard",
+            "@tree-guard",
+            "@deptrac"
+        ],
+        "loc-guard": "loc-guard --config=loc.yaml",
+        "phpstan": "phpstan analyse --memory-limit=1G",
+        "test": "paratest --processes=auto",
+        "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:integration": "phpunit --testsuite integration",
+        "test:unit": "phpunit --testsuite unit",
+        "tree-guard": "tree-guard --config=tree.yaml"
+    },
+    "scripts-descriptions": {
+        "autoload:check": "Check that the PSR-4 autoload mapping is strict and unambiguous.",
+        "compat": "Check compatibility with PHP 8.1 and later with PHP_CodeSniffer.",
+        "deptrac": "Check the layer dependencies with Deptrac.",
+        "docgen": "Generate the API documentation into build/docs.",
+        "docgen:diff": "Generate the API documentation marked with the changes against origin/main, and serve it.",
+        "docgen:fresh": "Generate the API documentation without the cache.",
+        "docgen:serve": "Generate the API documentation and serve it locally.",
+        "doctest": "Run the @example blocks of the PHPDoc as tests.",
+        "format": "Fix the code style with PHP-CS-Fixer.",
+        "format:check": "Check the code style with PHP-CS-Fixer without changing files.",
+        "lint": "Run every static check: autoload, formatting, PHPStan, PHP compatibility, size and tree guards, and layer dependencies.",
+        "loc-guard": "Check file size limits.",
+        "phpstan": "Run PHPStan.",
+        "test": "Run all test suites in parallel.",
+        "test:coverage": "Run the unit tests in parallel and write the coverage and JUnit reports to build/.",
+        "test:integration": "Run the integration tests, which run the command line against real PHPUnit, Behat and extension processes.",
+        "test:unit": "Run the unit tests.",
+        "tree-guard": "Check the directory structure rules."
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "platform": {
+            "php": "8.1.0"
+        },
+        "sort-packages": true
+    }
+}

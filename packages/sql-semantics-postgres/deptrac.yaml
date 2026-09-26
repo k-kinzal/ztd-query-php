@@ -1,0 +1,36 @@
+deptrac:
+  paths: [./src, ./resources/models]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Statements
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Statement\\.*'
+    - name: Core
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Core\\.*'
+    - name: Facade
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Facade\\.*'
+    - name: ParserCore
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\(Parser|Lexer)\\.*'
+    - name: Platform
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\PostgreSql\\.*'
+    - name: ParserPlatform
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\PostgreSql\\.*'
+  ruleset:
+    Statements: []
+    Core: [ParserCore, Statements]
+    Facade: [Core, Statements]
+    ParserCore: []
+    Platform: [Core, ParserCore, ParserPlatform]
+    ParserPlatform: []

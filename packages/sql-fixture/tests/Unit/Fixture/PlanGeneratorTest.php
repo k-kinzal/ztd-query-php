@@ -15,7 +15,6 @@ use SqlFixture\Fixture\PlanSchemaException;
 use SqlFixture\Fixture\PlanSchemaValidator;
 use SqlFixture\Fixture\RowSpec;
 use SqlFixture\Fixture\TableOverrides;
-use SqlFixture\FixtureGenerator;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Plan\PlanParser;
@@ -25,6 +24,7 @@ use SqlFixture\Plan\RelationKind;
 use SqlFixture\Plan\RelationSide;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
+use SqlFixture\Provider\FixtureGenerator;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\StaticSchemaResolver;
@@ -73,7 +73,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
-#[UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\InvalidOverrideException::class)]
 #[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
 #[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
 #[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
@@ -146,6 +146,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
 #[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
 #[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
 final class PlanGeneratorTest extends TestCase
 {
     #[Test]
@@ -1496,6 +1497,11 @@ final class PlanGeneratorTest extends TestCase
 
     public function testGenerateSeededCaseSelectionIsReproducible(): void
     {
+        /**
+         * Destructors of earlier Faker instances reset the shared random seed.
+         * Collect them before starting the seeded generation below.
+         */
+        gc_collect_cycles();
 
         $schemas = new StaticSchemaResolver([
             new TableSchema('comments', [

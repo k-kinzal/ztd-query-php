@@ -45,4 +45,20 @@ final class ListValueRuleTest extends TestCase
         $input = new TerminalSequence([], productions: [new ProductionOccurrence(0, null, 'part_value_item', 0)]);
         self::assertSame($input, (new ListValueRule())->rewrite($input));
     }
+
+    public function testRewriteDisambiguatesLegacyScalarsWithoutChangingTheirTuple(): void
+    {
+        $tupleOpen = new TerminalOccurrence('(', 10, [0, 1], ['part_values_in', 'part_value_item']);
+        $scalarOpen = new TerminalOccurrence('(', 11, [0, 1, 2], ['part_values_in', 'part_value_item', 'part_value_expr_item']);
+        $value = new TerminalOccurrence('NUM', 12, [0, 1, 2], ['part_values_in', 'part_value_item', 'part_value_expr_item']);
+        $scalarClose = new TerminalOccurrence(')', 13, [0, 1, 2], ['part_values_in', 'part_value_item', 'part_value_expr_item']);
+        $tupleClose = new TerminalOccurrence(')', 14, [0, 1], ['part_values_in', 'part_value_item']);
+        $input = new TerminalSequence([$tupleOpen, $scalarOpen, $value, $scalarClose, $tupleClose], productions: [new ProductionOccurrence(0, null, 'part_values_in', 0), new ProductionOccurrence(1, 0, 'part_value_item', 0), new ProductionOccurrence(2, 1, 'part_value_expr_item', 0)]);
+        $rule = new ListValueRule('part_value_expr_item');
+        $result = $rule->rewrite($input);
+        self::assertSame(['(', '+', '(', 'NUM', ')', ')'], $result->names());
+        self::assertSame($tupleOpen, $result->terminals[0]);
+        self::assertSame($tupleClose, $result->terminals[5]);
+        self::assertSame($result, $rule->rewrite($result));
+    }
 }

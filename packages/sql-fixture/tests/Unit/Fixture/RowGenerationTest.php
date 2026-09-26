@@ -8,7 +8,7 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Fixture\RowGeneration as Subject;
-use SqlFixture\FixtureGenerator;
+use SqlFixture\Provider\FixtureGenerator;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 
@@ -29,7 +29,7 @@ use SqlFixture\Schema\TableSchema;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Exception\InvalidOverrideException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
