@@ -3,6 +3,10 @@
     "description": "Container definitions for testcontainers-php used across k-kinzal/ztd-query-php",
     "type": "library",
     "license": "MIT",
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/container",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
+    },
     "require": {
         "php": "^8.1",
         "ext-pdo": "*",
@@ -10,6 +14,10 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95.25"
+    },
+    "suggest": {
+        "ext-pdo_mysql": "Required for MySQL containers",
+        "ext-pdo_pgsql": "Required for PostgreSQL containers"
     },
     "autoload": {
         "psr-4": {
@@ -20,18 +28,14 @@
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
     },
+    "scripts-descriptions": {
+        "format": "Fix the code style with PHP-CS-Fixer.",
+        "format:check": "Check the code style with PHP-CS-Fixer without changing files."
+    },
     "config": {
         "platform": {
             "php": "8.1.0"
         },
         "sort-packages": true
-    },
-    "support": {
-        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/container",
-        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
-    },
-    "suggest": {
-        "ext-pdo_mysql": "Required for MySQL containers",
-        "ext-pdo_pgsql": "Required for PostgreSQL containers"
     }
 }
