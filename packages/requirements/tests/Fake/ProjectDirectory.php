@@ -31,7 +31,11 @@ final class ProjectDirectory
      */
     public function __construct()
     {
-        $this->directory = sys_get_temp_dir() . '/requirements-test-' . bin2hex(random_bytes(8));
+        $temporary = realpath(sys_get_temp_dir());
+        if ($temporary === false) {
+            throw new RuntimeException('Cannot resolve the temporary directory.');
+        }
+        $this->directory = $temporary . '/requirements-test-' . bin2hex(random_bytes(8));
         if (!mkdir($this->directory, 0700)) {
             throw new RuntimeException('Cannot create test workspace.');
         }
