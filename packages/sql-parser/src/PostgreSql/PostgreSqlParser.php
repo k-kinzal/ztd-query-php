@@ -6,6 +6,7 @@ namespace SqlParser\PostgreSql;
 
 use RuntimeException;
 use SqlParser\Lexer\LexicalException;
+use SqlParser\Lexer\ParameterSyntax;
 use SqlParser\Lexer\TerminalIndex;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\LrParser;
@@ -38,6 +39,9 @@ use SqlParser\Table\TableFile;
  *     $parser->parse($sql)->toString() === $sql // => true
  * @example Rejecting an unsupported release
  *     new \SqlParser\PostgreSql\PostgreSqlParser('pg-9.6.0') // throws \RuntimeException: Unsupported
+ * @example Reading a statement written for PDO
+ *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser(parameters: \SqlParser\Lexer\ParameterSyntax::Pdo);
+ *     $parser->tokenize('SELECT id FROM users WHERE id = :id OR id = ?')[7]->name // => 'PARAM'
  */
 final class PostgreSqlParser implements SqlParser
 {
@@ -52,14 +56,15 @@ final class PostgreSqlParser implements SqlParser
      *
      * @param string|null $version Release tag such as `pg-17.2`, or null for the newest shipped
      * @param VersionRegistry $registry Record of shipped releases
+     * @param ParameterSyntax $parameters Which parameter markers are read; the server reads only `$1`
      *
      * @throws RuntimeException When the release is not shipped or its resources are missing
      */
-    public function __construct(?string $version = null, VersionRegistry $registry = new VersionRegistry())
+    public function __construct(?string $version = null, VersionRegistry $registry = new VersionRegistry(), ParameterSyntax $parameters = ParameterSyntax::Native)
     {
         $this->version = PostgreSqlVersion::resolve($version, $registry);
         $this->table = (new TableFile())->load($this->version->release->tablePath);
-        $this->lexer = new PostgreSqlLexer(KeywordTable::load($this->version->release->keywordPath));
+        $this->lexer = new PostgreSqlLexer(KeywordTable::load($this->version->release->keywordPath), parameters: $parameters);
     }
 
     /**

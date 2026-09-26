@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Cursor;
 use SqlParser\Lexer\Lexeme;
 use SqlParser\Lexer\LexicalException;
+use SqlParser\Lexer\ParameterSyntax;
 use SqlParser\PostgreSql\Lexer\KeywordTable;
 use SqlParser\PostgreSql\Lexer\OperatorScanner;
 use SqlParser\PostgreSql\Lexer\Scan;
@@ -21,11 +22,32 @@ use SqlParser\PostgreSql\Lexer\Scan;
 #[UsesClass(LexicalException::class)]
 #[UsesClass(KeywordTable::class)]
 #[UsesClass(Scan::class)]
+#[UsesClass(ParameterSyntax::class)]
 #[UsesClass(\SqlParser\Lexer\SourcePosition::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
 #[Small]
 final class OperatorScannerTest extends TestCase
 {
+    public function testScanReadsPdoParametersOnlyUnderThePdoSyntax(): void
+    {
+        $scanner = new OperatorScanner();
+        $scan = static fn (string $sql, ParameterSyntax $parameters): Scan => new Scan(new Cursor($sql), new KeywordTable([]), $parameters);
+
+        $named = $scanner->scan($scan(':user_id = 1', ParameterSyntax::Pdo));
+        self::assertSame('PARAM', $named->name);
+        self::assertSame(':user_id', $named->text);
+        self::assertSame('PARAM', $scanner->scan($scan('? ', ParameterSyntax::Pdo))->name);
+        self::assertSame('PARAM', $scanner->scan($scan('?|', ParameterSyntax::Pdo))->name);
+        self::assertSame('Op', $scanner->scan($scan('?? ', ParameterSyntax::Pdo))->name);
+        self::assertSame('??|', $scanner->scan($scan('??| ', ParameterSyntax::Pdo))->text);
+        self::assertSame('TYPECAST', $scanner->scan($scan('::int', ParameterSyntax::Pdo))->name);
+        self::assertSame('COLON_EQUALS', $scanner->scan($scan(':= 1', ParameterSyntax::Pdo))->name);
+        self::assertSame(':', $scanner->scan($scan(': id', ParameterSyntax::Pdo))->name);
+        self::assertSame(':', $scanner->scan($scan(':user_id', ParameterSyntax::Native))->name);
+        self::assertSame('Op', $scanner->scan($scan('? ', ParameterSyntax::Native))->name);
+        self::assertSame('?|', $scanner->scan($scan('?| ', ParameterSyntax::Native))->text);
+    }
+
     public function testScan(): void
     {
         $scanner = new OperatorScanner();
