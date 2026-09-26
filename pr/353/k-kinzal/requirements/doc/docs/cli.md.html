@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command Line — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/353/k-kinzal/requirements/doc/docs/cli.md.html">
+<meta name="description" content="Command Line, a document of the k-kinzal/requirements package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Command Line — ZTD Query PHP">
+<meta property="og:description" content="Command Line, a document of the k-kinzal/requirements package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/353/k-kinzal/requirements/doc/docs/cli.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/353/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/requirements/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/index.html" title="Requirements\Config">Requirements\Config</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/Markdown/index.html" title="Requirements\Config\Markdown">Requirements\Config\Markdown</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/Markdown/Profile/index.html" title="Requirements\Config\Markdown\Profile">Requirements\Config\Markdown\Profile</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Config/Markdown/Render/index.html" title="Requirements\Config\Markdown\Render">Requirements\Config\Markdown\Render</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Console/index.html" title="Requirements\Console">Requirements\Console</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Ears/index.html" title="Requirements\Ears">Requirements\Ears</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Input/index.html" title="Requirements\Input">Requirements\Input</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Model/index.html" title="Requirements\Model">Requirements\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Report/index.html" title="Requirements\Report">Requirements\Report</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Source/index.html" title="Requirements\Source">Requirements\Source</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Test/index.html" title="Requirements\Test">Requirements\Test</a></li><li data-diff="same"><a href="../../../../k-kinzal/requirements/Requirements/Verification/index.html" title="Requirements\Verification">Requirements\Verification</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/cli.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing e6fb7d54ca to working tree">e6fb7d54ca <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between e6fb7d54ca and working tree." data-off="This page documents what e6fb7d54ca had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Command Line</h1><div class="symbol-meta"><span class="source-link">docs/cli.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>Command Line</h2>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>vendor/bin/requirements &lt;command&gt; [options]</code></pre>
+</div><div class="doc-block" data-diff="same"><p>Run <code>requirements --help</code> for the command list and <code>requirements &lt;command&gt; --help</code> for the options of one command. Help works without a configuration file.</p>
+</div><div class="doc-block" data-diff="same"><h3>Commands</h3>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>lint</code></td><td>Checks the configuration and definition files. See <a href="../../../../k-kinzal/requirements/doc/docs/lint.md.html">lint</a>.</td></tr><tr><td><code>check</code></td><td>Checks that every quotation still matches its source.</td></tr><tr><td><code>coverage</code></td><td>Reports how much of each source scope is covered, and fails below the configured thresholds.</td></tr><tr><td><code>spec</code></td><td>Lists specifications and requirements and runs their linked tests.</td></tr><tr><td><code>format</code></td><td>Rewrites definition files into their canonical layout.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>A typical CI job runs them in this order:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>requirements lint
+requirements format --check
+requirements check
+requirements coverage
+requirements spec --strict</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>Options</h3>
+</div><div class="doc-block" data-diff="same"><p>Every command accepts these:</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Option</th><th>Description</th></tr></thead><tbody><tr><td><code>-c</code>, <code>--config=FILE</code></td><td>Configuration file. Default <code>requirements.yaml</code>.</td></tr><tr><td><code>--json</code></td><td>Write a complete JSON report to stdout instead of tables.</td></tr><tr><td><code>-q</code>, <code>--quiet</code>, <code>--ansi</code>, <code>--no-ansi</code></td><td>Control terminal output.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Command</th><th>Option</th><th>Description</th></tr></thead><tbody><tr><td><code>check</code>, <code>coverage</code></td><td><code>--live</code></td><td>Read sources from their URIs instead of snapshots.</td></tr><tr><td><code>coverage</code></td><td><code>--min-coverage=N</code></td><td>Override <code>coverage.minimum</code>.</td></tr><tr><td><code>coverage</code></td><td><code>--write-snapshot=FILE</code></td><td>Write a coverage snapshot. See <a href="#ci">CI</a>.</td></tr><tr><td><code>coverage</code></td><td><code>--snapshot=FILE</code></td><td>Compare with a snapshot of the base revision.</td></tr><tr><td><code>coverage</code></td><td><code>--min-diff-coverage=N</code></td><td>Override <code>coverage.diff_minimum</code>.</td></tr><tr><td><code>coverage</code></td><td><code>--allow-removed</code></td><td>Accept units that the snapshot has and the current scope does not.</td></tr><tr><td><code>spec</code></td><td><code>--no-test</code></td><td>List the records without running tests.</td></tr><tr><td><code>spec</code></td><td><code>--strict</code></td><td>Fail when no records match or a selected supported specification has no linked tests.</td></tr><tr><td><code>spec</code></td><td><code>--all</code></td><td>Include tests marked <code>run: manual</code>.</td></tr><tr><td><code>spec</code></td><td><code>--id</code>, <code>--label</code>, <code>--category</code>, <code>--source</code>, <code>--status</code>, <code>--kind</code>, <code>--origin</code></td><td>Select records by an exact value. Several filters must all match.</td></tr><tr><td><code>spec</code></td><td><code>--without-source</code></td><td>Select items without a source.</td></tr><tr><td><code>format</code></td><td><code>--check</code></td><td>Report files that would change, without writing them.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h3>Exit codes</h3>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody><tr><td><code>0</code></td><td>Success.</td></tr><tr><td><code>1</code></td><td>A check, threshold, test or <code>format --check</code> failed.</td></tr><tr><td><code>2</code></td><td>Invalid configuration or options, a lint error, or an unrecoverable error.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h3>Coverage</h3>
+</div><div class="doc-block" data-diff="same"><p>A source&#039;s <code>selector</code> defines its units. A unit is covered when a specification quotes it, directly or through a requirement it implements. Units quoted only by unsupported specifications count as covered too, and the report shows them separately. Items without a source do not change coverage. Coverage says nothing about tests; <code>spec</code> checks those.</p>
+</div><div class="doc-block" data-diff="same"><h3>Test results</h3>
+</div><div class="doc-block" data-diff="same"><p><code>spec</code> runs each automatic test once, even when several specifications share it, and shows <strong>passed / linked</strong> tests per record. A data provider or scenario outline counts as one test.</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Situation</th><th>Result</th><th>Tests</th><th>Fails <code>spec</code></th></tr></thead><tbody><tr><td>All three linked tests pass</td><td><code>passed</code></td><td><code>3/3</code></td><td>no</td></tr><tr><td>One of three fails, is skipped or runs no test</td><td><code>failed</code></td><td><code>2/3</code></td><td>yes</td></tr><tr><td>Supported specification without tests</td><td><code>unverified</code></td><td><code>0/0</code></td><td>only with <code>--strict</code></td></tr><tr><td>Two tests pass; one manual test is deferred</td><td><code>deferred</code></td><td><code>2/3</code></td><td>no</td></tr><tr><td>Unsupported specification</td><td><code>unsupported</code></td><td><code>-/3</code></td><td>no</td></tr><tr><td>Requirement</td><td><code>not-applicable</code></td><td><code>-/0</code></td><td>no</td></tr><tr><td>Run with <code>--no-test</code></td><td><code>not-run</code></td><td><code>-/3</code></td><td>no</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p>A test passes only when its command exits with <code>0</code> and reports at least one executed test with no failures, errors, skips or pending steps.</p>
+</div><div class="doc-block" data-diff="same"><h3>CI</h3>
+</div><div class="doc-block" data-diff="same"><p>To require full coverage of what a pull request adds or changes, commit a coverage snapshot and compare against the one on the base branch:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>requirements coverage --write-snapshot requirements-snapshot.json</code></pre>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>git show &quot;origin/$GITHUB_BASE_REF:requirements-snapshot.json&quot; &gt; /tmp/base-snapshot.json
+requirements coverage --snapshot /tmp/base-snapshot.json --min-diff-coverage 100</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The snapshot lists every unit in scope with a fingerprint of its text and of the items that quote it; it contains no source text. A unit is new or changed when its fingerprint differs, including when a quoting item&#039;s statement, status, reason or tests change. Take the snapshot from the base branch, never from the pull request itself. A unit that disappears from the scope fails the run unless <code>--allow-removed</code> is given.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
