@@ -5,7 +5,7 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQL, and SQLite. It parses SQL with [sql-parser](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-parser), builds a schema from CREATE TABLE statements, and binds a SELECT against it: names are resolved to table uses and columns, expressions get dialect types, and every value carries conservative NULL facts and the relation occurrences it comes from. The result is an immutable bound statement that keeps the original syntax tree. No database connection is needed, and SQL outside the supported surface is rejected with `SemanticException` rather than silently ignored.
+SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQL, and SQLite. It turns any statement of the shipped grammars into an immutable, typed statement model that writes the SQL back, and it binds SELECT statements against a schema built from CREATE TABLE statements, resolving names, types, conservative NULL facts, and the relation occurrences each value comes from. No database connection is needed. This package is the shared runtime; install it through the package of your database.
 
 ## Requirements
 
@@ -13,12 +13,14 @@ SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQ
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the dialect and, optionally, the version tag to `SchemaBuilder`; omitting the version tag uses the default for that database. MySQL 5.6 and 5.7 grammars are not supported.
+The following grammar versions are supported. Pass the dialect of your database package and, optionally, the version tag to `Semantics` or `SchemaBuilder`; omitting the version tag uses the default for that database. Schema binding with `SchemaBuilder` and `Binder` requires MySQL 8.0 or later.
 
 ### MySQL
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
+| 5.6.51 | `mysql-5.6.51` | |
+| 5.7.44 | `mysql-5.7.44` | |
 | 8.0.44 | `mysql-8.0.44` | |
 | 8.1.0 | `mysql-8.1.0` | |
 | 8.2.0 | `mysql-8.2.0` | |
@@ -41,39 +43,46 @@ The following grammar versions are supported. Pass the dialect and, optionally, 
 
 ## Installation
 
+Install the package of your database; it installs this runtime.
+
+MySQL:
+
 ```bash
-composer require k-kinzal/sql-semantics
+composer require k-kinzal/sql-semantics-mysql
 ```
+
+PostgreSQL:
+
+```bash
+composer require k-kinzal/sql-semantics-postgres
+```
+
+SQLite:
+
+```bash
+composer require k-kinzal/sql-semantics-sqlite
+```
+
+Each package provides its dialect: `SqlSemantics\Platform\MySql\Dialect::MySql`, `SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql`, or `SqlSemantics\Platform\Sqlite\Dialect::Sqlite`.
 
 ## Usage
 
 ```php
-use SqlSemantics\Binder;
-use SqlSemantics\Dialect;
-use SqlSemantics\SchemaBuilder;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\PostgreSql\Dialect;
 
-$schema = (new SchemaBuilder(Dialect::PostgreSql))->build(<<<'SQL'
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY,
-    parent_id INTEGER,
-    score INTEGER NOT NULL
-);
+$statement = (new Semantics(Dialect::PostgreSql))->analyze(<<<'SQL'
+WITH changed AS (
+    UPDATE accounts SET balance = balance + 10 WHERE id = 7 RETURNING id, balance
+)
+SELECT id, balance FROM changed;
 SQL);
 
-$statement = (new Binder($schema))->bind(<<<'SQL'
-SELECT
-    child.id,
-    parent.score AS parent_score,
-    COALESCE(parent.score, 0) AS effective_score
-FROM users AS child
-LEFT JOIN users AS parent ON child.parent_id = parent.id;
-SQL);
-
-$statement->outputs[1]->expression->type->name;                // 'integer'
-$statement->outputs[1]->expression->nullability->value;        // 'maybe-null', because of the LEFT JOIN
-$statement->outputs[2]->expression->nullability->value;        // 'not-null'
-$statement->outputs[2]->expression->lineage()[0]->relationId;  // 'r1', the parent occurrence of users
+$statement->command;    // the typed model of the statement
+$statement->toString(); // 'WITH changed AS( UPDATE accounts SET balance = balance + 10 WHERE id = 7 RETURNING id , balance ) SELECT id , balance FROM changed ;'
 ```
+
+See [statement models](docs/statements.md) for building statements without SQL, and [schema binding](docs/binding.md) for names, types, and NULL facts.
 
 ## License
 

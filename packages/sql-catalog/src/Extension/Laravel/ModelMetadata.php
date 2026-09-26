@@ -7,8 +7,8 @@ namespace SqlCatalog\Extension\Laravel;
 use PhpParser\ConstExprEvaluationException;
 use PhpParser\ConstExprEvaluator;
 use PhpParser\Node\Expr;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Php\ProgramIndex;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Php\ProgramIndex;
 
 /**
  * Reads source-declared model metadata without loading model or framework code.
@@ -53,6 +53,8 @@ final class ModelMetadata
             'model' => Domain::literal($className),
             'dialect' => Domain::literal($dialect),
             'timestamps' => Domain::literal($this->property($className, 'timestamps') !== false),
+            'perPage' => Domain::literal($this->property($className, 'perPage') ?? 15),
+            'keyType' => Domain::literal($this->property($className, 'keyType') ?? 'int'),
         ]);
         if ($this->index->isInstanceOf($className, self::SOFT_DELETES)) {
             $deleted = $this->constant($className, 'DELETED_AT') ?? 'deleted_at';
@@ -85,7 +87,7 @@ final class ModelMetadata
                     $state = $state->reject('Unmodelled Eloquent override or boot hook: ' . $shape->name . '::' . $method);
                 }
             }
-            foreach (['table', 'primaryKey', 'connection', 'timestamps', 'with', 'withCount'] as $property) {
+            foreach (['table', 'primaryKey', 'keyType', 'perPage', 'connection', 'timestamps', 'with', 'withCount'] as $property) {
                 if (isset($shape->assignedProperties[$property])) {
                     $state = $state->reject('Mutable Eloquent metadata: ' . $property);
                 }
@@ -98,9 +100,9 @@ final class ModelMetadata
     /**
      * Rejects unresolved defaults and implicit additional queries.
      */
-    public function guardDefaults(\SqlCatalog\Php\ClassShape $shape, QueryState $state): QueryState
+    public function guardDefaults(\SqlCatalog\Core\Php\ClassShape $shape, QueryState $state): QueryState
     {
-        foreach (['table', 'primaryKey', 'connection', 'timestamps', 'with', 'withCount'] as $property) {
+        foreach (['table', 'primaryKey', 'keyType', 'perPage', 'connection', 'timestamps', 'with', 'withCount'] as $property) {
             $expression = $shape->propertyDefaults[$property] ?? null;
             if ($expression === null) {
                 continue;

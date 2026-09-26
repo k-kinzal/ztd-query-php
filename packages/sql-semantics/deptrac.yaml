@@ -3,46 +3,24 @@ deptrac:
   analyser:
     types: [class, use]
   layers:
-    - name: API
+    - name: Statements
       collectors:
-        - type: classNameRegex
-          value: '/^SqlSemantics\\(Binder|SchemaBuilder)$/'
-    - name: Foundation
+        - type: classLike
+          value: '^SqlSemantics\\Statement\\.*'
+    - name: Core
       collectors:
-        - type: classNameRegex
-          value: '/^SqlSemantics\\(Dialect|SemanticException)$/'
-    - name: Syntax
+        - type: classLike
+          value: '^SqlSemantics\\Core\\.*'
+    - name: Facade
       collectors:
-        - type: directory
-          value: 'src/Ast/'
-    - name: Binding
+        - type: classLike
+          value: '^SqlSemantics\\Facade\\.*'
+    - name: ParserCore
       collectors:
-        - type: directory
-          value: 'src/Binding/'
-    - name: Model
-      collectors:
-        - type: directory
-          value: 'src/Model/'
-    - name: Schema
-      collectors:
-        - type: classNameRegex
-          value: '/^SqlSemantics\\Schema$/'
-        - type: directory
-          value: 'src/Schema/'
-    - name: Types
-      collectors:
-        - type: directory
-          value: 'src/Type/'
-    - name: Parser
-      collectors:
-        - type: classNameRegex
-          value: '/^SqlParser\\/'
+        - type: classLike
+          value: '^SqlParser\\(Parser|Lexer)\\.*'
   ruleset:
-    API: [Foundation, Syntax, Binding, Schema, Model, Parser]
-    Foundation: [Parser]
-    Syntax: [Foundation, Schema, Types, Parser]
-    Binding: [Foundation, Syntax, Schema, Model, Types, Parser]
-    Model: [Schema, Types, Parser]
-    Schema: [Foundation, Types, Parser]
-    Types: [Foundation]
-    Parser: []
+    Statements: []
+    Core: [ParserCore, Statements]
+    Facade: [Core, Statements]
+    ParserCore: []

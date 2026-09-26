@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "450baebdbfc47f56c6865b32bd4d67c7",
+    "content-hash": "c081d33ec1257a06b7fbbcd953766c0b",
     "packages": [
         {
             "name": "fakerphp/faker",
@@ -75,7 +75,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/bison-parser",
-                "reference": "63a2258118825bb13bcd2845f9b34a3d153a0a52"
+                "reference": "441f0f29ebf98c6a50e3d7211789363224c56aa7"
             },
             "require": {
                 "php": "^8.1"
@@ -197,7 +197,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/lemon-parser",
-                "reference": "236bd5dfce667cacf5965edb11213efb4682903e"
+                "reference": "6878535b93ab1e5cdeec5cb66a98ac0ee9ef769a"
             },
             "require": {
                 "php": "^8.1"
@@ -319,7 +319,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-catalog",
-                "reference": "20f06efa517de3c1159599a6800a8f4c12def6fb"
+                "reference": "537962001fc90543e60979f837af50fc6ab373e7"
             },
             "require": {
                 "ext-json": "*",
@@ -459,7 +459,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "f07c91f968774cdbdd09c796bda6604b8ea44f62"
+                "reference": "98adb9f3138fdbf662eff4f3a8eddbe8438fe4ad"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -490,12 +490,7 @@
             "autoload": {
                 "psr-4": {
                     "SqlFaker\\": "src/"
-                },
-                "files": [
-                    "src/MySql/StatementType.php",
-                    "src/PostgreSql/StatementType.php",
-                    "src/Sqlite/StatementType.php"
-                ]
+                }
             },
             "autoload-dev": {
                 "psr-4": {
@@ -625,7 +620,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "039d0fc7952200272302628c0ec7ba86b38e5b07"
+                "reference": "727486768564090ef9e8509b0f21ac4bab3f709a"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -769,7 +764,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-formatter",
-                "reference": "6b1acbf73075f0b8bbf19607f235a0e29411d14d"
+                "reference": "c8706d38c29c2787f2dac7ba5edc41ed63fd74c1"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -778,6 +773,7 @@
             "require-dev": {
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
+                "ext-pdo_sqlite": "*",
                 "fakerphp/faker": "^1.23",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/container": "dev-main",
@@ -800,6 +796,7 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/",
                     "Bench\\": "bench/"
                 }
             },
@@ -844,6 +841,106 @@
                 ],
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:equivalence:mysql": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/equivalence-mysql') || mkdir('fuzz/corpus/equivalence-mysql', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_equivalence.php fuzz/corpus/equivalence-mysql/ --timeout=60"
+                ],
+                "fuzz:equivalence:mysql:compact": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=compact",
+                    "@fuzz:equivalence:mysql"
+                ],
+                "fuzz:equivalence:mysql:expanded": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=expanded",
+                    "@fuzz:equivalence:mysql"
+                ],
+                "fuzz:equivalence:mysql:river": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=river",
+                    "@fuzz:equivalence:mysql"
+                ],
+                "fuzz:equivalence:mysql:tabular": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=tabular",
+                    "@fuzz:equivalence:mysql"
+                ],
+                "fuzz:equivalence:pg": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/equivalence-pg') || mkdir('fuzz/corpus/equivalence-pg', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_equivalence.php fuzz/corpus/equivalence-pg/ --timeout=60"
+                ],
+                "fuzz:equivalence:pg:compact": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=compact",
+                    "@fuzz:equivalence:pg"
+                ],
+                "fuzz:equivalence:pg:expanded": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=expanded",
+                    "@fuzz:equivalence:pg"
+                ],
+                "fuzz:equivalence:pg:river": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=river",
+                    "@fuzz:equivalence:pg"
+                ],
+                "fuzz:equivalence:pg:tabular": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=tabular",
+                    "@fuzz:equivalence:pg"
+                ],
+                "fuzz:equivalence:sqlite": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/equivalence-sqlite') || mkdir('fuzz/corpus/equivalence-sqlite', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_equivalence.php fuzz/corpus/equivalence-sqlite/ --timeout=60"
+                ],
+                "fuzz:equivalence:sqlite:compact": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=compact",
+                    "@fuzz:equivalence:sqlite"
+                ],
+                "fuzz:equivalence:sqlite:expanded": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=expanded",
+                    "@fuzz:equivalence:sqlite"
+                ],
+                "fuzz:equivalence:sqlite:river": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=river",
+                    "@fuzz:equivalence:sqlite"
+                ],
+                "fuzz:equivalence:sqlite:tabular": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@putenv SQLFORMATTER_STYLE=tabular",
+                    "@fuzz:equivalence:sqlite"
+                ],
+                "fuzz:format:mysql": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/format-mysql') || mkdir('fuzz/corpus/format-mysql', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_format.php fuzz/corpus/format-mysql/"
+                ],
+                "fuzz:format:pg": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/format-pg') || mkdir('fuzz/corpus/format-pg', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_format.php fuzz/corpus/format-pg/"
+                ],
+                "fuzz:format:sqlite": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/format-sqlite') || mkdir('fuzz/corpus/format-sqlite', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_format.php fuzz/corpus/format-sqlite/"
+                ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:format:mysql --max-runs=100",
+                    "@fuzz:format:pg --max-runs=100",
+                    "@fuzz:format:sqlite --max-runs=100",
+                    "@fuzz:equivalence:sqlite --max-runs=100"
                 ],
                 "lint": [
                     "@autoload:check",
@@ -891,7 +988,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-parser",
-                "reference": "be6d12ff60d581bdc4dba01d1046b7e346acb9d4"
+                "reference": "4400aaab117b7ff3685fb6bab3bc0eb64c531dcd"
             },
             "require": {
                 "ext-zlib": "*",
@@ -1052,9 +1149,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics",
-                "reference": "d7c32fcf95740ec4caf77a7cbc3826e7d1e341ee"
+                "reference": "64e3a90b2e2f120bb18bf6960cfa10aa43bc0f61"
             },
             "require": {
+                "composer-runtime-api": "^2.2",
                 "k-kinzal/sql-parser": "dev-main",
                 "php": "^8.1"
             },
@@ -1062,7 +1160,12 @@
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
+                "k-kinzal/lemon-parser": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
+                "k-kinzal/sql-semantics-mysql": "dev-main",
+                "k-kinzal/sql-semantics-postgres": "dev-main",
+                "k-kinzal/sql-semantics-sqlite": "dev-main",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -1070,6 +1173,9 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
+            "bin": [
+                "bin/build-models.php"
+            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1155,10 +1261,448 @@
             "license": [
                 "MIT"
             ],
-            "description": "SQL semantic binding: schema declarations, bound statements, types, nullability, and value provenance",
+            "description": "Typed SQL statement analysis and reconstruction, with schema-dependent binding and value provenance",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "k-kinzal/sql-semantics-mysql",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/sql-semantics-mysql",
+                "reference": "11fa5f3bddc2692c24a561feca11173209701cf8"
+            },
+            "require": {
+                "k-kinzal/sql-parser": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "fakerphp/faker": "^1.23",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "k-kinzal/sql-faker": "dev-main",
+                "k-kinzal/sql-formatter": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SqlSemantics\\Platform\\MySql\\": "src/",
+                    "SqlSemantics\\Statement\\Model\\MySql\\": "resources/models/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/",
+                    "Fuzz\\": "fuzz/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "build:models": [
+                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=mysql --output=resources"
+                ],
+                "build:models:check": [
+                    "@build:models --check"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/sql-semantics-mysql"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:roundtrip": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:seeds --",
+                    "@php fuzz/run.php mysql"
+                ],
+                "fuzz:seeds": [
+                    "@php fuzz/seed.php mysql"
+                ],
+                "fuzz:smoke": [
+                    "@fuzz:roundtrip --max-runs=100"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "MySql statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-mysql",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "k-kinzal/sql-semantics-postgres",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/sql-semantics-postgres",
+                "reference": "796a89c417a4cbf0f5079929817276d5fc9da154"
+            },
+            "require": {
+                "k-kinzal/sql-parser": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "fakerphp/faker": "^1.23",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "k-kinzal/sql-faker": "dev-main",
+                "k-kinzal/sql-formatter": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SqlSemantics\\Platform\\PostgreSql\\": "src/",
+                    "SqlSemantics\\Statement\\Model\\PostgreSql\\": "resources/models/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/",
+                    "Fuzz\\": "fuzz/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "build:models": [
+                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=postgresql --output=resources"
+                ],
+                "build:models:check": [
+                    "@build:models --check"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/sql-semantics-postgres"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:roundtrip": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:seeds --",
+                    "@php fuzz/run.php pg"
+                ],
+                "fuzz:seeds": [
+                    "@php fuzz/seed.php pg"
+                ],
+                "fuzz:smoke": [
+                    "@fuzz:roundtrip --max-runs=100"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "PostgreSql statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-postgres",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-postgres/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "k-kinzal/sql-semantics-sqlite",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/sql-semantics-sqlite",
+                "reference": "8b03a4a3cbb727eeb0da260e0b094ee0b142108f"
+            },
+            "require": {
+                "k-kinzal/sql-parser": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "fakerphp/faker": "^1.23",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/lemon-parser": "dev-main",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "k-kinzal/sql-faker": "dev-main",
+                "k-kinzal/sql-formatter": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SqlSemantics\\Platform\\Sqlite\\": "src/",
+                    "SqlSemantics\\Statement\\Model\\Sqlite\\": "resources/models/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/",
+                    "Fuzz\\": "fuzz/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "build:models": [
+                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=sqlite --output=resources"
+                ],
+                "build:models:check": [
+                    "@build:models --check"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/sql-semantics-sqlite"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:roundtrip": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:seeds --",
+                    "@php fuzz/run.php sqlite"
+                ],
+                "fuzz:seeds": [
+                    "@php fuzz/seed.php sqlite"
+                ],
+                "fuzz:smoke": [
+                    "@fuzz:roundtrip --max-runs=100"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Sqlite statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-sqlite",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/"
             },
             "transport-options": {
                 "relative": true
@@ -1170,7 +1714,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-core",
-                "reference": "a5226deddbc34519edff29847f716623eda4ecd2"
+                "reference": "d836177265a3d4c411fc8e9a59320e937f18a214"
             },
             "require": {
                 "php": "^8.1"
@@ -1304,7 +1848,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysql",
-                "reference": "a19c4c14c26621db13f41df1f715b1c5f772646e"
+                "reference": "447090c1846bbdc9a727ad6574f14eeb1aba3f69"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1453,7 +1997,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysqli-adapter",
-                "reference": "c1f64e040c94985d8fadb3a435fd43eb14baf5f1"
+                "reference": "dcc13cd7889ca5576d014353f522188b30108fac"
             },
             "require": {
                 "ext-mysqli": "*",
@@ -1623,7 +2167,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-pdo-adapter",
-                "reference": "fa5171a0adc4acba12592f72b3267c010334e874"
+                "reference": "b50714036ca61ac57ab2b81d0d26eca274c493a7"
             },
             "require": {
                 "ext-pdo": "*",
@@ -1854,7 +2398,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-postgres",
-                "reference": "8e01f89ba5aeefa6c336180e63f5d6a5c77816dc"
+                "reference": "b4970aa3c13aca6d71d9a3fe0cede243945c74c3"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -2005,7 +2549,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-sqlite",
-                "reference": "c61eaf950320b9fbab78ff7140ea3a093e2190c9"
+                "reference": "8dca125e494c34a9c5e3ef3842627ae77eed96e6"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -2421,6 +2965,89 @@
             "time": "2026-06-05T06:23:12+00:00"
         },
         {
+            "name": "symfony/polyfill-ctype",
+            "version": "v1.37.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-ctype.git",
+                "reference": "141046a8f9477948ff284fa65be2095baafb94f2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/141046a8f9477948ff284fa65be2095baafb94f2",
+                "reference": "141046a8f9477948ff284fa65be2095baafb94f2",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "provide": {
+                "ext-ctype": "*"
+            },
+            "suggest": {
+                "ext-ctype": "For best performance"
+            },
+            "type": "library",
+            "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Ctype\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Gert de Pagter",
+                    "email": "BackEndTea@gmail.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill for ctype functions",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "ctype",
+                "polyfill",
+                "portable"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.37.0"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-04-10T16:19:22+00:00"
+        },
+        {
             "name": "symfony/polyfill-mbstring",
             "version": "v1.38.2",
             "source": {
@@ -2588,6 +3215,82 @@
                 }
             ],
             "time": "2026-04-10T16:19:22+00:00"
+        },
+        {
+            "name": "symfony/yaml",
+            "version": "v6.4.45",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/yaml.git",
+                "reference": "a778aba2d7130eba6150cc80cb692988a361ee4b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/a778aba2d7130eba6150cc80cb692988a361ee4b",
+                "reference": "a778aba2d7130eba6150cc80cb692988a361ee4b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1",
+                "symfony/deprecation-contracts": "^2.5|^3",
+                "symfony/polyfill-ctype": "^1.8"
+            },
+            "conflict": {
+                "symfony/console": "<5.4"
+            },
+            "require-dev": {
+                "symfony/console": "^5.4|^6.0|^7.0"
+            },
+            "bin": [
+                "Resources/bin/yaml-lint"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Yaml\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Loads and dumps YAML files",
+            "homepage": "https://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/yaml/tree/v6.4.45"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-08-30T00:27:22+00:00"
         }
     ],
     "packages-dev": [
@@ -2823,7 +3526,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/requirements",
-                "reference": "1602dcec76784dc7a292d5d7127f971799fa0ad9"
+                "reference": "d1896e73a8baba0540ffee2a3f80b224f79709fd"
             },
             "require": {
                 "ext-dom": "*",
@@ -4177,89 +4880,6 @@
             "time": "2026-08-04T08:41:16+00:00"
         },
         {
-            "name": "symfony/polyfill-ctype",
-            "version": "v1.37.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/polyfill-ctype.git",
-                "reference": "141046a8f9477948ff284fa65be2095baafb94f2"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/141046a8f9477948ff284fa65be2095baafb94f2",
-                "reference": "141046a8f9477948ff284fa65be2095baafb94f2",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.2"
-            },
-            "provide": {
-                "ext-ctype": "*"
-            },
-            "suggest": {
-                "ext-ctype": "For best performance"
-            },
-            "type": "library",
-            "extra": {
-                "thanks": {
-                    "url": "https://github.com/symfony/polyfill",
-                    "name": "symfony/polyfill"
-                }
-            },
-            "autoload": {
-                "files": [
-                    "bootstrap.php"
-                ],
-                "psr-4": {
-                    "Symfony\\Polyfill\\Ctype\\": ""
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Gert de Pagter",
-                    "email": "BackEndTea@gmail.com"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "https://symfony.com/contributors"
-                }
-            ],
-            "description": "Symfony polyfill for ctype functions",
-            "homepage": "https://symfony.com",
-            "keywords": [
-                "compatibility",
-                "ctype",
-                "polyfill",
-                "portable"
-            ],
-            "support": {
-                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.37.0"
-            },
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/nicolas-grekas",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2026-04-10T16:19:22+00:00"
-        },
-        {
             "name": "symfony/polyfill-intl-grapheme",
             "version": "v1.41.0",
             "source": {
@@ -4746,82 +5366,6 @@
                 }
             ],
             "time": "2026-09-11T09:03:57+00:00"
-        },
-        {
-            "name": "symfony/yaml",
-            "version": "v6.4.45",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/yaml.git",
-                "reference": "a778aba2d7130eba6150cc80cb692988a361ee4b"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/a778aba2d7130eba6150cc80cb692988a361ee4b",
-                "reference": "a778aba2d7130eba6150cc80cb692988a361ee4b",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.1",
-                "symfony/deprecation-contracts": "^2.5|^3",
-                "symfony/polyfill-ctype": "^1.8"
-            },
-            "conflict": {
-                "symfony/console": "<5.4"
-            },
-            "require-dev": {
-                "symfony/console": "^5.4|^6.0|^7.0"
-            },
-            "bin": [
-                "Resources/bin/yaml-lint"
-            ],
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Component\\Yaml\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "https://symfony.com/contributors"
-                }
-            ],
-            "description": "Loads and dumps YAML files",
-            "homepage": "https://symfony.com",
-            "support": {
-                "source": "https://github.com/symfony/yaml/tree/v6.4.45"
-            },
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/nicolas-grekas",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2026-08-30T00:27:22+00:00"
         }
     ],
     "aliases": [],
@@ -4837,6 +5381,9 @@
         "k-kinzal/sql-formatter": 20,
         "k-kinzal/sql-parser": 20,
         "k-kinzal/sql-semantics": 20,
+        "k-kinzal/sql-semantics-mysql": 20,
+        "k-kinzal/sql-semantics-postgres": 20,
+        "k-kinzal/sql-semantics-sqlite": 20,
         "k-kinzal/ztd-query-core": 20,
         "k-kinzal/ztd-query-mysql": 20,
         "k-kinzal/ztd-query-mysqli-adapter": 20,

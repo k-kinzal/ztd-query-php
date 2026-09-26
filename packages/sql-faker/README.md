@@ -52,7 +52,7 @@ composer require --dev k-kinzal/sql-faker
 
 ```php
 use Faker\Factory;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\MySqlProvider;
 
 $faker = Factory::create();
 $faker->addProvider(new MySqlProvider($faker));

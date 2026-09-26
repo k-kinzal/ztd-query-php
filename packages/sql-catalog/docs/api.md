@@ -1,9 +1,9 @@
 # PHP API
 
-The command line is built on `SqlCatalog\Analyzer`. Use it directly to analyze source in tests or tools, or to register custom extensions and function models.
+The command line is built on `SqlCatalog\Facade\Analyzer`. Use it directly to analyze source in tests or tools, or to register custom extensions and function models.
 
 ```php
-use SqlCatalog\Analyzer;
+use SqlCatalog\Facade\Analyzer;
 
 $catalog = (new Analyzer())->analyzePaths(['src']);
 
@@ -37,8 +37,8 @@ $catalog->entries()[0]->sql(); // 'SELECT id FROM users'
 ## Options
 
 ```php
-use SqlCatalog\Analysis\EvaluationBudget;
-use SqlCatalog\AnalysisOptions;
+use SqlCatalog\Core\Analysis\EvaluationBudget;
+use SqlCatalog\Facade\AnalysisOptions;
 
 $options = new AnalysisOptions(
     extensions: ['pdo', 'laravel'],
@@ -79,11 +79,11 @@ $options = new AnalysisOptions(
 | `severity()` | The highest severity of the findings, or `Severity::Info`. |
 | `hasFinding(FindingRule $rule)` | Whether the entry has a finding of the rule. |
 
-To select entries the way the command line filters do, use `SqlCatalog\Filter\CatalogFilter`:
+To select entries the way the command line filters do, use `SqlCatalog\Core\Filter\CatalogFilter`:
 
 ```php
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Filter\CatalogFilter;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Filter\CatalogFilter;
 
 $risky = (new CatalogFilter(namespaces: ['App\Repository'], minimumSeverity: Severity::High))->apply($catalog);
 ```
@@ -91,9 +91,9 @@ $risky = (new CatalogFilter(namespaces: ['App\Repository'], minimumSeverity: Sev
 ## Reports
 
 ```php
-use SqlCatalog\Reporter\ReporterRegistry;
+use SqlCatalog\Facade\Builtins;
 
-$artifacts = ReporterRegistry::withBuiltins()->get('json')->render($catalog);
+$artifacts = Builtins::reporters()->get('json')->render($catalog);
 $json = $artifacts->get('catalog.json');
 ```
 
@@ -104,9 +104,9 @@ $json = $artifacts->get('catalog.json');
 Register [function models](configuration.md#function-models) as callables:
 
 ```php
-use SqlCatalog\Analysis\FunctionModel\Registry;
-use SqlCatalog\Analyzer;
-use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Core\Analysis\FunctionModel\Registry;
+use SqlCatalog\Facade\Analyzer;
+use SqlCatalog\Core\Evaluation\Domain;
 
 $models = Registry::withBuiltins();
 $models->register('App\table_name', static fn (array $arguments): Domain => Domain::literal('users'));

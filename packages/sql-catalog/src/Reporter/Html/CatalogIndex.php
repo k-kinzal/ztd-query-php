@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Reporter\Html;
 
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Severity;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Severity;
 
 /**
  * The catalog grouped along every route a reader can take to a statement.

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Cli\ArtifactWriter;
 use SqlCatalog\Cli\WriteFailureException;
-use SqlCatalog\Reporter\CatalogArtifacts;
+use SqlCatalog\Core\Reporter\CatalogArtifacts;
 
 #[CoversClass(ArtifactWriter::class)]
 #[UsesClass(CatalogArtifacts::class)]

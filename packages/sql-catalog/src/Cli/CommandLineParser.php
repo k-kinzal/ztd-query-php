@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Cli;
 
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Configuration;
-use SqlCatalog\Filter\CatalogFilter;
-use SqlCatalog\InvalidConfigurationException;
-use SqlCatalog\Sql\StatementKind;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Filter\CatalogFilter;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Facade\Configuration;
+use SqlCatalog\Facade\InvalidConfigurationException;
 
 /**
  * Reads the arguments the command was invoked with.

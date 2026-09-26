@@ -134,7 +134,8 @@ When a statement is reached along several paths, the values of all of them are m
 
 - String and number literals, interpolated strings, heredocs and nowdocs.
 - Global constants, class constants, `::class` and enum cases, including `->value` and `->name`. A parameter typed as a backed enum resolves to the values of its cases.
-- Properties of `$this`: the declared default, a promoted constructor parameter, and what the class's own methods assign.
+- An element of an array written out in full, even when the key is not known. `self::TABLES[$kind]` with `$kind` from a request gives one statement per value in `TABLES`. An element the array does not hold, or an alternative that is not an array, stays a gap.
+- Properties of `$this`: the declared default, a promoted constructor parameter, and what the class's own methods assign. A static property that nothing in the class assigns reads as its declared default.
 - Parameters, through every caller in the analyzed source, following PHP's method dispatch.
 - Calls into the analyzed source, including calls on interfaces and abstract classes, across their implementations.
 - The functions that have a [function model](configuration.md#function-models).

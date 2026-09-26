@@ -7,17 +7,23 @@ namespace Tests\Unit\Reporter\Html\Page;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\AnalysisProblem;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Finding;
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Placeholder;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Catalog\StatementPart;
-use SqlCatalog\Catalog\ValueDomain;
+use SqlCatalog\Core\Catalog\AnalysisProblem;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Finding;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Placeholder;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\ValueDomain;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
@@ -30,12 +36,6 @@ use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
 use SqlCatalog\Reporter\Html\StatementRow;
 use SqlCatalog\Reporter\Html\TableName;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(TablePage::class)]
 #[UsesClass(CallSite::class)]
@@ -74,7 +74,7 @@ final class TablePageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1 FROM users'), ['users', 'posts'], [], new CallSite('a.php', 1, 'App\\R::find', 'pdo.query'), []),
             new CatalogEntry('a2', StatementKind::Insert, TextPattern::fromText('INSERT INTO users'), ['users'], [], new CallSite('a.php', 2, 'helper', 'pdo.query'), []),
         ]);
-        $page = (new TablePage())->render(new ReportSite($catalog), 'users');
+        $page = (new TablePage())->render(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'users');
 
         self::assertStringContainsString('<h1><code>users</code><span class="count">2 statements</span></h1>', $page);
         self::assertStringContainsString('read by 1 statement, written by 1 statement.', $page);
@@ -98,7 +98,7 @@ final class TablePageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users'], [], new CallSite('src/a.php', 1, 'App\\R::find', 'pdo.query'), []),
             new CatalogEntry('a2', StatementKind::Delete, TextPattern::fromText('DELETE'), ['users'], [], new CallSite('src/a.php', 2, 'App\\R::find', 'pdo.query'), []),
         ];
-        $site = new ReportSite(new Catalog($entries));
+        $site = new ReportSite(new Catalog($entries), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertStringContainsString(
             '<tr><td><a class="mono" href="../classes/app-r.html#fn-app-r-find">R::find</a></td><td><a class="muted" href="../files/src-a-php.html">src/a.php</a></'
@@ -118,7 +118,7 @@ final class TablePageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
 
-        self::assertSame('', (new TablePage())->alongside(new ReportSite($catalog), 'users'));
+        self::assertSame('', (new TablePage())->alongside(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'users'));
     }
 
     public function testGroupsListOnlyTheUsesPresent(): void
@@ -126,7 +126,7 @@ final class TablePageTest extends TestCase
         $entries = [
             new CatalogEntry('a1', StatementKind::Show, TextPattern::fromText('SHOW TABLES'), ['users'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ];
-        $groups = (new TablePage())->groups(new ReportSite(new Catalog($entries)), 'users', $entries);
+        $groups = (new TablePage())->groups(new ReportSite(new Catalog($entries), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'users', $entries);
 
         self::assertStringStartsWith('<section class="group" id="other"><h3>Other statements<span class="count">1</span></h3>', $groups);
         self::assertStringNotContainsString('id="reads"', $groups);
@@ -166,7 +166,7 @@ final class TablePageTest extends TestCase
                 ['On this page', [['Used from', '#used-from', null, false], ['Named alongside', '#alongside', null, false], ['Reads', '#reads', null, false]], null],
                 ['Tables', [['users', 'tables/users.html', 2, false], ['posts', 'tables/posts.html', 1, true]], 'tables.html'],
             ],
-            (new TablePage())->context(new ReportSite($catalog), 'posts'),
+            (new TablePage())->context(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'posts'),
         );
     }
 
@@ -212,7 +212,7 @@ final class TablePageTest extends TestCase
             ]),
         ];
         $catalog = new Catalog($entries, [new AnalysisProblem('src/broken.php', 'broken')]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<h1><code>posts</code><span class="count">4 statements</span></h1><p class="lede">This table is read by 2 statements, written by 2 statement'

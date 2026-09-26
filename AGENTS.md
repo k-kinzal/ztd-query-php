@@ -65,7 +65,12 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/sql-fixture/README.md](packages/sql-fixture/README.md) - Generating fixture data from CREATE TABLE statements, databases, or DDL files: requirements, supported databases, installation, and usage
 - [packages/sql-formatter/README.md](packages/sql-formatter/README.md) - Formatting SQL with layout presets: requirements, supported versions, installation, and usage
 - [packages/sql-parser/README.md](packages/sql-parser/README.md) - Lossless LALR(1) SQL parsers built from the official grammars
-- [packages/sql-semantics/README.md](packages/sql-semantics/README.md) - Binding SQL to a schema: requirements, supported versions, installation, and usage
+- [packages/sql-semantics/README.md](packages/sql-semantics/README.md) - Typed statement models and schema binding for MySQL, PostgreSQL, and SQLite: requirements, supported versions, installation, and usage
+- [packages/sql-semantics/docs/binding.md](packages/sql-semantics/docs/binding.md) - Binding SELECT statements to a schema: the result, NULL facts, and the supported surface
+- [packages/sql-semantics/docs/statements.md](packages/sql-semantics/docs/statements.md) - Typed statement models and SQL reconstruction
+- [packages/sql-semantics-mysql/README.md](packages/sql-semantics-mysql/README.md) - MySQL support for SQL Semantics: requirements, supported versions, installation, and usage
+- [packages/sql-semantics-postgres/README.md](packages/sql-semantics-postgres/README.md) - PostgreSQL support for SQL Semantics: requirements, supported versions, installation, and usage
+- [packages/sql-semantics-sqlite/README.md](packages/sql-semantics-sqlite/README.md) - SQLite support for SQL Semantics: requirements, supported versions, installation, and usage
 - [packages/ztd-query-core/README.md](packages/ztd-query-core/README.md) - ZTD Query core: requirements, installation, usage, configuration, and SQL support
 - [packages/ztd-query-core/docs/mechanism.md](packages/ztd-query-core/docs/mechanism.md) - The Zero Table Dependency model: what it is, how it works, and its scope
 - [packages/ztd-query-mysql/README.md](packages/ztd-query-mysql/README.md) - MySQL platform: requirements, installation, usage, configuration, and SQL support

@@ -55,7 +55,7 @@ items:
         target: 'Tests\Unit\Generation\Derivation\DerivationTest::testOfRewritesTheStartSymbolUntilOnlyTerminalsAreLeft'
       -
         runner: unit
-        target: 'Tests\Unit\Provider\SqlGeneratorFactoryTest::testForMySqlRealizesTheDocumentedSelectExample'
+        target: 'Tests\Unit\MySql\Generation\SqlGeneratorFactoryTest::testCreateRealizesTheDocumentedSelectExample'
     category: derivation
   -
     id: ALG-DERIVE-002
@@ -225,7 +225,7 @@ items:
         target: 'Tests\Unit\Generation\SqlGeneratorTest::testRealizeOffersTheWholeZeroBasedCandidateRange'
       -
         runner: unit
-        target: 'Tests\Unit\Provider\SqlGeneratorFactoryTest::testForMySqlRealizesTheDocumentedSelectExample'
+        target: 'Tests\Unit\MySql\Generation\SqlGeneratorFactoryTest::testCreateRealizesTheDocumentedSelectExample'
     category: lexeme
   -
     id: ALG-LEXEME-002

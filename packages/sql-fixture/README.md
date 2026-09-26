@@ -44,7 +44,7 @@ composer require --dev k-kinzal/sql-fixture
 
 ```php
 use Faker\Factory;
-use SqlFixture\FixtureProvider;
+use SqlFixture\Provider\FixtureProvider;
 
 $faker = Factory::create();
 $faker->addProvider(new FixtureProvider($faker));
@@ -53,11 +53,11 @@ $user = $faker->fixture(
     'CREATE TABLE users (
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(255) NOT NULL,
-        status ENUM("active", "inactive")
+        status ENUM("active", "inactive") NOT NULL
     )',
     ['name' => 'Alice'],
 );
-// ['name' => 'Alice', 'status' => 'active']
+// For example: ['name' => 'Alice', 'status' => 'active']
 ```
 
 ## License

@@ -39,16 +39,16 @@ A function or method call between the declaration and the database call might re
 
 ## Writing an extension
 
-Implement `SqlCatalog\Extension\ExtensionInterface` and register it on an `ExtensionRegistry`. Custom extensions are used through the [PHP API](api.md); the command line uses the built-in ones.
+Implement `SqlCatalog\Core\Extension\ExtensionInterface` and register it on an `ExtensionRegistry`. Custom extensions are used through the [PHP API](api.md); the command line uses the built-in ones.
 
 ```php
-use SqlCatalog\AnalysisOptions;
-use SqlCatalog\Analyzer;
-use SqlCatalog\Extension\ExtensionInterface;
-use SqlCatalog\Extension\ExtensionRegistry;
-use SqlCatalog\Extension\SinkCallKind;
-use SqlCatalog\Extension\SinkRole;
-use SqlCatalog\Extension\SinkSpec;
+use SqlCatalog\Facade\AnalysisOptions;
+use SqlCatalog\Facade\Analyzer;
+use SqlCatalog\Core\Extension\ExtensionInterface;
+use SqlCatalog\Facade\Builtins;
+use SqlCatalog\Core\Extension\SinkCallKind;
+use SqlCatalog\Core\Extension\SinkRole;
+use SqlCatalog\Core\Extension\SinkSpec;
 
 final class AppDatabaseExtension implements ExtensionInterface
 {
@@ -68,7 +68,7 @@ final class AppDatabaseExtension implements ExtensionInterface
     }
 }
 
-$registry = ExtensionRegistry::withBuiltins();
+$registry = Builtins::extensions();
 $registry->register(new AppDatabaseExtension());
 $catalog = (new Analyzer($registry))->analyzePaths(['src'], new AnalysisOptions(['pdo', 'app']));
 ```
@@ -108,7 +108,7 @@ $catalog = (new Analyzer($registry))->analyzePaths(['src'], new AnalysisOptions(
 
 ## Source models
 
-An extension can also implement `SqlCatalog\Extension\Model\ModelProviderInterface`, whose `models(ModelContext $context): ModelSet` supplies:
+An extension can also implement `SqlCatalog\Core\Extension\Model\ModelProviderInterface`, whose `models(ModelContext $context): ModelSet` supplies:
 
 | `ModelSet` argument | Description |
 |---------------------|-------------|
@@ -124,11 +124,11 @@ A call model returns the value of a call, or `null` to decline it. `CallContext`
 
 ```php
 use PhpParser\Node\Expr\FuncCall;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Extension\Model\CallContext;
-use SqlCatalog\Extension\Model\ModelContext;
-use SqlCatalog\Extension\Model\ModelProviderInterface;
-use SqlCatalog\Extension\Model\ModelSet;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Extension\Model\CallContext;
+use SqlCatalog\Core\Extension\Model\ModelContext;
+use SqlCatalog\Core\Extension\Model\ModelProviderInterface;
+use SqlCatalog\Core\Extension\Model\ModelSet;
 
 final class ApplicationSql implements ModelProviderInterface
 {

@@ -7,17 +7,23 @@ namespace Tests\Unit\Reporter\Html\Page;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\AnalysisProblem;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Finding;
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Placeholder;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Catalog\StatementPart;
-use SqlCatalog\Catalog\ValueDomain;
+use SqlCatalog\Core\Catalog\AnalysisProblem;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Finding;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Placeholder;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\ValueDomain;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
@@ -30,12 +36,6 @@ use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
 use SqlCatalog\Reporter\Html\StatementRow;
 use SqlCatalog\Reporter\Html\TableName;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(ClassPage::class)]
 #[UsesClass(CallSite::class)]
@@ -74,7 +74,7 @@ final class ClassPageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users'], [], new CallSite('src/a.php', 9, 'App\\R::find', 'pdo.query'), []),
             new CatalogEntry('a2', StatementKind::Insert, TextPattern::fromText('INSERT'), ['users'], [], new CallSite('src/a.php', 3, 'App\\R::add', 'pdo.query'), []),
         ]);
-        $page = (new ClassPage())->render(new ReportSite($catalog), 'App\\R');
+        $page = (new ClassPage())->render(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'App\\R');
 
         self::assertStringContainsString('<h1><code>R</code><span class="count">2 statements</span></h1>', $page);
         self::assertStringContainsString('2 statements in 2 methods of <code>App\\R</code>, written in <a href="../files/src-a-php.html">src/a.php</a>.', $page);
@@ -84,7 +84,7 @@ final class ClassPageTest extends TestCase
 
     public function testTablesSaySoWhenNoneIsNamed(): void
     {
-        self::assertSame('<h2 id="tables">Tables</h2><p class="empty-inline">No statement here names a table.</p>', (new ClassPage())->tables(new ReportSite(new Catalog()), []));
+        self::assertSame('<h2 id="tables">Tables</h2><p class="empty-inline">No statement here names a table.</p>', (new ClassPage())->tables(new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), []));
     }
 
     public function testMethodsAreInTheOrderTheyAreWritten(): void
@@ -100,7 +100,7 @@ final class ClassPageTest extends TestCase
     public function testSectionsHeadEachMethodWithWhereItStarts(): void
     {
         $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 9, 'R::find', 'pdo.query'), []);
-        $site = new ReportSite(new Catalog([$entry]));
+        $site = new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertStringStartsWith(
             '<section class="group" id="fn-r-find"><h3><code>R::find</code><span class="count">1</span><span class="muted">a.php:9</span><a class="anchor" href="#fn-r-find">#</a></h3><ol class="rows">',
@@ -112,7 +112,7 @@ final class ClassPageTest extends TestCase
     {
         $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 9, 'R::find', 'pdo.query'), []);
 
-        self::assertSame([['Tables', 'tables'], ['find', 'fn-r-find']], (new ClassPage())->anchors(new ReportSite(new Catalog([$entry])), [$entry]));
+        self::assertSame([['Tables', 'tables'], ['find', 'fn-r-find']], (new ClassPage())->anchors(new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), [$entry]));
     }
 
 
@@ -129,7 +129,7 @@ final class ClassPageTest extends TestCase
                 ['On this page', [['Tables', '#tables', null, false], ['find', '#fn-app-r-find', null, false]], null],
                 ['Classes in App', [['R', 'classes/app-r.html', 1, true], ['S', 'classes/app-s.html', 1, false]], 'namespaces.html'],
             ],
-            (new ClassPage())->context(new ReportSite($catalog), 'App\\R'),
+            (new ClassPage())->context(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), 'App\\R'),
         );
     }
 
@@ -175,7 +175,7 @@ final class ClassPageTest extends TestCase
             ]),
         ];
         $catalog = new Catalog($entries, [new AnalysisProblem('src/broken.php', 'broken')]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<h1><code>R</code><span class="count">5 statements</span></h1><p class="lede">5 statements in 2 methods of <code>App\\R</code>, written in <a'

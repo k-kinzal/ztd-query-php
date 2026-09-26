@@ -7,6 +7,11 @@ includes:
 
 parameters:
     toolkit:
+        forbiddenTermsByPath:
+            'src/Core/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Platform/MySql/*': [postgres, pgsql, sqlite]
+            'src/Platform/PostgreSql/*': [mysql, mariadb, sqlite]
+            'src/Platform/Sqlite/*': [mysql, mariadb, postgres, pgsql]
         visibilityExemptNamespacePrefixes:
             - 'Tests'
             - 'Fuzz'

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace SqlCatalog\Cli;
 
 use RuntimeException;
-use SqlCatalog\AnalysisOptions;
-use SqlCatalog\Analyzer;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Configuration;
-use SqlCatalog\InvalidConfigurationException;
-use SqlCatalog\Reporter\ReporterRegistry;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Reporter\ReporterRegistry;
+use SqlCatalog\Facade\AnalysisOptions;
+use SqlCatalog\Facade\Analyzer;
+use SqlCatalog\Facade\Configuration;
+use SqlCatalog\Facade\InvalidConfigurationException;
 use Throwable;
 
 /**
@@ -40,7 +40,7 @@ final class CatalogCommand
     public function __construct(?Analyzer $analyzer = null, ?ReporterRegistry $reporters = null)
     {
         $this->analyzer = $analyzer ?? new Analyzer();
-        $this->reporters = $reporters ?? ReporterRegistry::withBuiltins();
+        $this->reporters = $reporters ?? \SqlCatalog\Facade\Builtins::reporters();
         $this->parser = new CommandLineParser();
         $this->writer = new ArtifactWriter();
     }
@@ -66,9 +66,9 @@ final class CatalogCommand
      *
      * @throws InvalidConfigurationException When the requested configuration cannot be loaded
      * @throws InvalidCommandLineException When no path was given to analyze
-     * @throws \SqlCatalog\Source\SourceScanException When a path cannot be read
-     * @throws \SqlCatalog\Extension\UnknownExtensionException When an extension is not registered
-     * @throws \SqlCatalog\Reporter\UnknownReporterException When the reporter is not registered
+     * @throws \SqlCatalog\Core\Source\SourceScanException When a path cannot be read
+     * @throws \SqlCatalog\Core\Extension\UnknownExtensionException When an extension is not registered
+     * @throws \SqlCatalog\Core\Reporter\UnknownReporterException When the reporter is not registered
      * @throws WriteFailureException When the report cannot be written
      */
     public function execute(CommandLine $command): CommandResult
@@ -125,7 +125,7 @@ final class CatalogCommand
     /**
      * Renders the catalog where the command line asked for it.
      *
-     * @throws \SqlCatalog\Reporter\UnknownReporterException When the reporter is not registered
+     * @throws \SqlCatalog\Core\Reporter\UnknownReporterException When the reporter is not registered
      * @throws WriteFailureException When the report cannot be written
      */
     public function report(CommandLine $command, Catalog $catalog): CommandResult

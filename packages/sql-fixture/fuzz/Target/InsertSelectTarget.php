@@ -9,7 +9,7 @@ use Faker\Factory;
 use Faker\Generator;
 use JsonException;
 use PDO;
-use SqlFixture\FixtureProvider;
+use SqlFixture\Provider\FixtureProvider;
 
 /**
  * Fuzz target for INSERT/SELECT consistency validation.

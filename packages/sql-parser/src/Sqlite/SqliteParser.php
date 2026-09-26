@@ -10,6 +10,7 @@ use SqlParser\Lexer\TerminalIndex;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\LrParser;
 use SqlParser\Parser\Node;
+use SqlParser\Parser\SqlParser;
 use SqlParser\Parser\SyntaxException;
 use SqlParser\Resource\VersionRegistry;
 use SqlParser\Sqlite\Lexer\KeywordTable;
@@ -39,7 +40,7 @@ use SqlParser\Table\TableFile;
  * @example Rejecting an unsupported release
  *     new \SqlParser\Sqlite\SqliteParser('sqlite-2.8.17') // throws \RuntimeException: Unsupported
  */
-final class SqliteParser
+final class SqliteParser implements SqlParser
 {
     private readonly SqliteVersion $version;
 

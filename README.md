@@ -20,7 +20,10 @@ It is also an experiment with AI agents. ZTD is complex, and this repository tes
 | [sql-fixture](packages/sql-fixture/) | Faker provider for generating test fixture data from schemas |
 | [sql-formatter](packages/sql-formatter/) | SQL formatter with layout presets, built on the sql-parser syntax tree |
 | [sql-parser](packages/sql-parser/) | Lossless LALR(1) SQL parsers built from the official grammars |
-| [sql-semantics](packages/sql-semantics/) | Binds SQL to a schema, resolving names, types, nullability, and value provenance |
+| [sql-semantics](packages/sql-semantics/) | Typed statement models and schema binding: names, types, nullability, and value provenance |
+| [sql-semantics-mysql](packages/sql-semantics-mysql/) | MySQL statement models and binding rules for sql-semantics |
+| [sql-semantics-postgres](packages/sql-semantics-postgres/) | PostgreSQL statement models and binding rules for sql-semantics |
+| [sql-semantics-sqlite](packages/sql-semantics-sqlite/) | SQLite statement models and binding rules for sql-semantics |
 | [ztd-query-core](packages/ztd-query-core/) | Core library: session, shadow store, rewrite planning, and platform contracts |
 | [ztd-query-mysql](packages/ztd-query-mysql/) | MySQL platform: SQL parsing, classification, rewriting, schema reflection |
 | [ztd-query-mysqli-adapter](packages/ztd-query-mysqli-adapter/) | MySQLi adapter: drop-in `ZtdMysqli` / `ZtdMysqliStatement` |

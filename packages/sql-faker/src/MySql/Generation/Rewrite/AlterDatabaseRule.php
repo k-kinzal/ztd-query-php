@@ -27,13 +27,13 @@ final class AlterDatabaseRule implements RewriteRule
     #[Override]
     public function rewrite(TerminalSequence $sequence): TerminalSequence
     {
-        foreach ($sequence->occurrences('alter_database_stmt') as $occurrence) {
+        foreach ([...$sequence->occurrences('alter_database_stmt'), ...$sequence->occurrences('alter')] as $occurrence) {
             $name = $sequence->child($occurrence, 'ident_or_empty');
             if ($name !== null && $sequence->range($name->id) !== null) {
                 continue;
             }
             $range = $sequence->range($occurrence);
-            if ($range === null || !in_array($sequence->nameAt($range[0] + 2), ['ENCRYPTION_SYM', 'CHARSET', 'CHAR_SYM', 'COLLATE_SYM'], true)) {
+            if ($range === null || $sequence->nameAt($range[0]) !== 'ALTER' || $sequence->nameAt($range[0] + 1) !== 'DATABASE' || !in_array($sequence->nameAt($range[0] + 2), ['ENCRYPTION_SYM', 'CHARSET', 'CHAR_SYM', 'COLLATE_SYM'], true)) {
                 continue;
             }
             $option = $sequence->terminals[$range[0] + 2];

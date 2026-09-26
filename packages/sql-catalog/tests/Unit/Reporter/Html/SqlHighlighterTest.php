@@ -8,14 +8,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\SqlHighlighter;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(SqlHighlighter::class)]
 #[UsesClass(HtmlText::class)]

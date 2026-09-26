@@ -53,12 +53,12 @@ function-models:
 | Static method | `App\Catalog\TableNameModel::evaluate` |
 | Function | `App\Catalog\table_name_model` |
 
-The model is loaded through the project's Composer autoloader. It receives the evaluated arguments as a `list<SqlCatalog\Evaluation\Domain>`, in source order, and returns a `Domain` or `null`:
+The model is loaded through the project's Composer autoloader. It receives the evaluated arguments as a `list<SqlCatalog\Core\Evaluation\Domain>`, in source order, and returns a `Domain` or `null`:
 
 ```php
 namespace App\Catalog;
 
-use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\Domain;
 
 final class TableNameModel
 {

@@ -7,28 +7,28 @@ namespace Tests\Unit\Extension\Laravel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Evaluation\ArrayEntry;
-use SqlCatalog\Evaluation\ArrayTerm;
-use SqlCatalog\Evaluation\Domain;
-use SqlCatalog\Evaluation\LiteralTerm;
-use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Evaluation\OpaqueTerm;
-use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Core\Evaluation\ArrayEntry;
+use SqlCatalog\Core\Evaluation\ArrayTerm;
+use SqlCatalog\Core\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\LiteralTerm;
+use SqlCatalog\Core\Evaluation\ObjectTerm;
+use SqlCatalog\Core\Evaluation\OpaqueTerm;
+use SqlCatalog\Core\Evaluation\PatternTerm;
+use SqlCatalog\Core\Php\ClassShape;
+use SqlCatalog\Core\Php\MethodShape;
+use SqlCatalog\Core\Php\ParameterShape;
+use SqlCatalog\Core\Php\ParsedFile;
+use SqlCatalog\Core\Php\ProgramIndex;
+use SqlCatalog\Core\Php\ProgramIndexBuilder;
+use SqlCatalog\Core\Php\SourceParser;
+use SqlCatalog\Core\Php\TypeReader;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\TextGeneralization;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Extension\Laravel\ModelMetadata;
 use SqlCatalog\Extension\Laravel\QueryState;
-use SqlCatalog\Php\ClassShape;
-use SqlCatalog\Php\MethodShape;
-use SqlCatalog\Php\ParameterShape;
-use SqlCatalog\Php\ParsedFile;
-use SqlCatalog\Php\ProgramIndex;
-use SqlCatalog\Php\ProgramIndexBuilder;
-use SqlCatalog\Php\SourceParser;
-use SqlCatalog\Php\TypeReader;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\TextGeneralization;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(ModelMetadata::class)]
 #[UsesClass(Domain::class)]
@@ -64,7 +64,13 @@ final class ModelMetadataTest extends TestCase
         self::assertSame('removed_at', $state->string('deletedColumn'));
         self::assertTrue($state->get('softDeletes')->soleLiteral()?->value);
         self::assertFalse($state->get('timestamps')->soleLiteral()?->value);
+        self::assertSame(15, $state->get('perPage')->soleLiteral()?->value);
+        self::assertSame('int', $state->string('keyType'));
         self::assertArrayNotHasKey('problem', $state->fields);
+        $tenant = (new SourceParser())->parse('tenant.php', '<?php class Tenant extends \\Illuminate\\Database\\Eloquent\\Model { protected $table = "tenants"; protected $perPage = 7; protected $keyType = "string"; }');
+        $state = (new ModelMetadata((new ProgramIndexBuilder())->build([$tenant])))->state('Tenant', 'pgsql');
+        self::assertSame(7, $state->get('perPage')->soleLiteral()?->value);
+        self::assertSame('string', $state->string('keyType'));
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerGuardLeavesHooksTraitsAndMutableMetadataOpen')]

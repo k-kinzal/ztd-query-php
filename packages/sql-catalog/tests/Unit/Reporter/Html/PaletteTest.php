@@ -7,10 +7,10 @@ namespace Tests\Unit\Reporter\Html;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Sql\StatementKind;
 use SqlCatalog\Reporter\Html\Palette;
-use SqlCatalog\Sql\StatementKind;
 
 #[CoversClass(Palette::class)]
 final class PaletteTest extends TestCase

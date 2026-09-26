@@ -34,10 +34,10 @@ use Fuzz\Target\PgEquivalence;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\PostgreSqlProvider;
-use SqlFormatter\FormatOptions;
-use SqlFormatter\Formatter;
-use SqlFormatter\Style;
+use SqlFaker\PostgreSql\PostgreSqlProvider;
+use SqlFormatter\Core\FormatOptions;
+use SqlFormatter\Core\Style;
+use SqlFormatter\Facade\Formatter;
 use SqlParser\PostgreSql\PostgreSqlParser;
 use Testcontainers\Testcontainers;
 

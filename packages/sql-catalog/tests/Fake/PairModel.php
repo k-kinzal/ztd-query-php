@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use SqlCatalog\Evaluation\ArrayEntry;
-use SqlCatalog\Evaluation\ArrayTerm;
-use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Core\Evaluation\ArrayEntry;
+use SqlCatalog\Core\Evaluation\ArrayTerm;
+use SqlCatalog\Core\Evaluation\Domain;
 
 /**
  * A custom model that selects two placeholders.

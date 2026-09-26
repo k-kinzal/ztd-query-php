@@ -7,17 +7,23 @@ namespace Tests\Unit\Reporter\Html;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\AnalysisProblem;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Finding;
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Placeholder;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Catalog\StatementPart;
-use SqlCatalog\Catalog\ValueDomain;
+use SqlCatalog\Core\Catalog\AnalysisProblem;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Finding;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Placeholder;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\ValueDomain;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
@@ -29,12 +35,6 @@ use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
 use SqlCatalog\Reporter\Html\StatementRow;
 use SqlCatalog\Reporter\Html\TableName;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(StatementList::class)]
 #[UsesClass(CallSite::class)]
@@ -69,7 +69,7 @@ final class StatementListTest extends TestCase
     public function testRowsListEveryStatementAndSaySoWhenThereIsNone(): void
     {
         $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 4, 'f', 'pdo.query'), []);
-        $site = new ReportSite(new Catalog([$entry]));
+        $site = new ReportSite(new Catalog([$entry]), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
         $list = new StatementList();
 
         self::assertStringStartsWith('<ol class="rows"><li class="row" data-kind="select"', $list->rows($site, 'index.html', [$entry]));
@@ -140,7 +140,7 @@ final class StatementListTest extends TestCase
             ]),
         ];
         $catalog = new Catalog($entries, [new AnalysisProblem('src/broken.php', 'broken')]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<div class="facets" role="group" aria-label="Narrow the listing"><input type="search" name="narrow" class="input facet-search" placeholder="Narrow by '

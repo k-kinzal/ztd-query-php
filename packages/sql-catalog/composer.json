@@ -72,7 +72,9 @@
             }
         }
     ],
-    "bin": ["bin/sql-catalog"],
+    "bin": [
+        "bin/sql-catalog"
+    ],
     "autoload": {
         "psr-4": {
             "SqlCatalog\\": "src/"

@@ -7,17 +7,23 @@ namespace Tests\Unit\Reporter\Html\Page;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Catalog\AnalysisProblem;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Catalog\Catalog;
-use SqlCatalog\Catalog\CatalogEntry;
-use SqlCatalog\Catalog\Finding;
-use SqlCatalog\Catalog\FindingRule;
-use SqlCatalog\Catalog\Placeholder;
-use SqlCatalog\Catalog\Resolution;
-use SqlCatalog\Catalog\Severity;
-use SqlCatalog\Catalog\StatementPart;
-use SqlCatalog\Catalog\ValueDomain;
+use SqlCatalog\Core\Catalog\AnalysisProblem;
+use SqlCatalog\Core\Catalog\CallSite;
+use SqlCatalog\Core\Catalog\Catalog;
+use SqlCatalog\Core\Catalog\CatalogEntry;
+use SqlCatalog\Core\Catalog\Finding;
+use SqlCatalog\Core\Catalog\FindingRule;
+use SqlCatalog\Core\Catalog\Placeholder;
+use SqlCatalog\Core\Catalog\Resolution;
+use SqlCatalog\Core\Catalog\Severity;
+use SqlCatalog\Core\Catalog\StatementPart;
+use SqlCatalog\Core\Catalog\ValueDomain;
+use SqlCatalog\Core\Sql\StatementKind;
+use SqlCatalog\Core\Text\LiteralText;
+use SqlCatalog\Core\Text\Origin;
+use SqlCatalog\Core\Text\TextHole;
+use SqlCatalog\Core\Text\TextPattern;
+use SqlCatalog\Core\Type\TypeShape;
 use SqlCatalog\Reporter\Html\CatalogIndex;
 use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
@@ -30,12 +36,6 @@ use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
 use SqlCatalog\Reporter\Html\StatementRow;
 use SqlCatalog\Reporter\Html\TableName;
-use SqlCatalog\Sql\StatementKind;
-use SqlCatalog\Text\LiteralText;
-use SqlCatalog\Text\Origin;
-use SqlCatalog\Text\TextHole;
-use SqlCatalog\Text\TextPattern;
-use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(NamespacePage::class)]
 #[UsesClass(CallSite::class)]
@@ -74,12 +74,12 @@ final class NamespacePageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'App\\R::find', 'pdo.query'), []),
             new CatalogEntry('a2', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 2, 'helper', 'pdo.query'), []),
         ]);
-        $page = (new NamespacePage())->render(new ReportSite($catalog));
+        $page = (new NamespacePage())->render(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()));
 
         self::assertStringContainsString('<h1>Namespaces<span class="count">2 namespaces</span></h1>', $page);
         self::assertStringContainsString('<h2 id="ns-global-namespace"><code>(global namespace)</code>', $page);
         self::assertStringContainsString('<h2 id="ns-app"><code>App</code>', $page);
-        self::assertStringContainsString('No statement was found.', (new NamespacePage())->render(new ReportSite(new Catalog())));
+        self::assertStringContainsString('No statement was found.', (new NamespacePage())->render(new ReportSite(new Catalog(), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())));
     }
 
     public function testSectionLeadsFromAClassToItsPageAndFromAFunctionToItsFile(): void
@@ -89,7 +89,7 @@ final class NamespacePageTest extends TestCase
             new CatalogEntry('a2', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('src/b.php', 2, 'helper', 'pdo.query'), []),
             new CatalogEntry('a3', StatementKind::Select, TextPattern::fromText('SELECT 3'), [], [], new CallSite('src/c.php', 2, '{main}', 'pdo.query'), []),
         ];
-        $section = (new NamespacePage())->section(new ReportSite(new Catalog($entries)), '', $entries);
+        $section = (new NamespacePage())->section(new ReportSite(new Catalog($entries), formatter: \SqlCatalog\Facade\Builtins::sqlFormatter()), '', $entries);
 
         self::assertStringContainsString('<a class="anchor" href="statements.html?namespace=">All statements</a>', $section);
         self::assertStringContainsString('<tr><td><a class="mono" href="classes/r.html">R</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-a-php.html">src/a.php</'
@@ -115,7 +115,7 @@ final class NamespacePageTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'App\\R::find', 'pdo.query'), []),
         ]);
 
-        self::assertSame([['App', 'ns-app']], (new NamespacePage())->anchors(new ReportSite($catalog)));
+        self::assertSame([['App', 'ns-app']], (new NamespacePage())->anchors(new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter())));
     }
 
 
@@ -173,7 +173,7 @@ final class NamespacePageTest extends TestCase
             ]),
         ];
         $catalog = new Catalog($entries, [new AnalysisProblem('src/broken.php', 'broken')]);
-        $site = new ReportSite($catalog);
+        $site = new ReportSite($catalog, formatter: \SqlCatalog\Facade\Builtins::sqlFormatter());
 
         self::assertSame(
             '<h1>Namespaces<span class="count">3 namespaces</span></h1><p class="lede">The classes and functions that issue statements, under the namespace each is'
