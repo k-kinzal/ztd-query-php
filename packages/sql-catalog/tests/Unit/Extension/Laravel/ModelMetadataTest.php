@@ -64,7 +64,13 @@ final class ModelMetadataTest extends TestCase
         self::assertSame('removed_at', $state->string('deletedColumn'));
         self::assertTrue($state->get('softDeletes')->soleLiteral()?->value);
         self::assertFalse($state->get('timestamps')->soleLiteral()?->value);
+        self::assertSame(15, $state->get('perPage')->soleLiteral()?->value);
+        self::assertSame('int', $state->string('keyType'));
         self::assertArrayNotHasKey('problem', $state->fields);
+        $tenant = (new SourceParser())->parse('tenant.php', '<?php class Tenant extends \\Illuminate\\Database\\Eloquent\\Model { protected $table = "tenants"; protected $perPage = 7; protected $keyType = "string"; }');
+        $state = (new ModelMetadata((new ProgramIndexBuilder())->build([$tenant])))->state('Tenant', 'pgsql');
+        self::assertSame(7, $state->get('perPage')->soleLiteral()?->value);
+        self::assertSame('string', $state->string('keyType'));
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerGuardLeavesHooksTraitsAndMutableMetadataOpen')]

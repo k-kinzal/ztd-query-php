@@ -963,6 +963,48 @@ PHP;
         self::assertSame('select * from `users`', $catalog->entries()[1]->sql());
     }
 
+    #[DataProvider('providerBuilderQueriesWithUnresolvedValues')]
+    public function testAnalyzeSourceKeepsTheBuilderStatementWhenOnlyAValueIsUnresolved(string $source, string $expected, bool $exact): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; '.$source], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertSame($expected, $catalog->entries()[0]->sql());
+        self::assertSame($exact, $catalog->entries()[0]->searchClosed());
+    }
+
+    /**
+     * @return iterable<array{string, string, bool}>
+     */
+    public static function providerBuilderQueriesWithUnresolvedValues(): iterable
+    {
+        yield ['function f(array $ids) { DB::table("users")->select("id", "name")->whereIn("id", $ids)->get()->all(); }', 'select "id", "name" from "users" where "id" in ({$})', false];
+        yield ['function f($group) { DB::connection()->table("users")->where("group_id", $group)->pluck("name")->all(); }', 'select "name" from "users" where "group_id" = ?', true];
+        yield ['function f(int $a, ?string $b, array $ids) { DB::table("users")->where("a", $a)->where("b", $b)->whereIn("id", $ids)->delete(); }', 'delete from "users" where "a" = ? and "b" = ? and "id" in ({$})', false];
+        yield ['function f(int $a) { DB::table("users")->where(["a" => $a, "b" => null])->get(); }', 'select * from "users" where ("a" = ? and "b" is null)', true];
+        yield ['function f(int $n) { DB::table("users")->limit($n)->get(); }', 'select * from "users" limit {$}', false];
+        yield ['function f(\\Illuminate\\Database\\ConnectionInterface $db, bool $active) { $sql = "SELECT 1"; $db->select($sql); }', 'SELECT 1', true];
+        yield ['function f(\\Illuminate\\Database\\ConnectionInterface $db) { $db->table("users")->where("id", 1)->get(); }', 'select * from "users" where "id" = ?', true];
+        yield ['function f(string $name) { DB::table("users")->insertGetId(["name" => $name]); }', 'insert into "users" ("name") values (?)', true];
+        yield ['function f() { DB::table("users")->whereJsonContains("tags", "x")->get(); }', '{$}', false];
+    }
+
+    public function testAnalyzeSourceReportsBothOutcomesOfAConditionalBuilderCallback(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; function f($name) { DB::table("users")->when($name, fn ($q, $v) => $q->where("name", "like", $v))->orderBy("id")->get(); }'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        $statements = array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries());
+        sort($statements);
+        self::assertSame(['select * from "users" order by "id" asc', 'select * from "users" where "name" like ? order by "id" asc'], $statements);
+    }
+
+    public function testAnalyzeSourceListsTheCountAndPageStatementsOfPaginate(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; DB::table("users")->where("active", 1)->paginate(20);'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        $statements = array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries());
+        sort($statements);
+        self::assertSame(['select * from "users" where "active" = ? limit 20 offset {$}', 'select count(*) as "aggregate" from "users" where "active" = ?'], $statements);
+        self::assertSame(Resolution::ExternalInput, $catalog->entries()[0]->resolution());
+    }
+
     #[DataProvider('providerUnmodelledBuilderEscapes')]
     public function testAnalyzeSourceKeepsEachUnmodelledEscapeOfABuilderOpen(string $call): void
     {

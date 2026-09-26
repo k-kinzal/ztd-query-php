@@ -51,6 +51,46 @@ SQL statements. A builder returned by a source-declared helper can be followed.
 Unknown calls that receive a tracked builder leave its effects open. The
 analyzer does not execute PHP or descend through Laravel to PDO.
 
+## How unresolved values are reported
+
+A statement is compiled from every operation the analyzer could read, and only
+the part it could not read is left open. A comparison value that is not a
+literal null is compiled as a bound placeholder, whatever its static type, and
+the binding shows the type the value may take:
+
+```php
+function find(Request $request, array $ids)
+{
+    return DB::table('users')
+        ->where('group_id', $request->input('group_id'))
+        ->whereIn('id', $ids)
+        ->limit($request->integer('limit'))
+        ->get();
+}
+```
+
+```sql
+select * from `users` where `group_id` = ? and `id` in ({$}) limit {$}
+```
+
+The `in` list and the limit are gaps because their length and value come from
+outside the analyzed code; their origin is kept, so a list that arrives through
+a request superglobal is reported as external input. The statement is reported
+as `incomplete-model` rather than `resolved`, and `searchClosed` is false.
+
+Laravel's null normalization, which turns `where('column', null)` into
+`is null`, and its empty-set constants for `whereIn('column', [])` are
+reconstructed from literals only. The null and emptiness guards that usually
+precede such calls are not evaluated, so a nullable value is reported as a
+placeholder with a nullable binding type, not as an `is null` alternative.
+
+A builder method the extension does not model leaves the whole statement open,
+because an unknown method can change any part of the SQL. The gap quotes the
+method name in the JSON and HTML reports. A conditional callback through `when`
+or `unless` produces both outcomes, since the condition is not evaluated; a
+receiver that accumulates more than eight alternatives is marked open and the
+statement is reported as cut short.
+
 ## Supported operations
 
 Support applies to the standard overloads below with resolvable identifiers and
@@ -58,35 +98,46 @@ complete array shapes. Named or unpacked arguments are currently incomplete.
 
 | Area | Supported forms |
 | --- | --- |
-| Query creation | `DB::table`, `DB::connection(...)->table`, Illuminate connection `table`, model `query` and static builder calls |
+| Query creation | `DB::table` with an optional alias, `DB::connection(...)->table`, `table` on an Illuminate connection, `ConnectionInterface`, `DatabaseManager` or `ConnectionResolverInterface`, `from`, model `query` and static builder calls, `newQuery`, `toBase`, `getQuery` |
 | Projection | `select`, `addSelect`, `selectRaw`, terminal column arguments, `DB::raw` expressions |
-| Predicates | Scalar `where` / `orWhere`, null tests, `whereIn` / `whereNotIn`, between tests, `whereColumn`, `whereRaw`, nested predicate closures and arrow functions |
-| Clauses | Simple inner/left/right column joins, `groupBy`, `havingRaw`, ordering including raw SQL, non-negative literal limits/offsets, argument-free `distinct` |
-| Reads | `get`, `all`, `first`, `firstOrFail`, scalar `find`, `pluck`, `count`, `sum`, `avg`, `min`, `max`, `exists`, `doesntExist` |
-| Writes | Single-row and bulk `insert`, `insertOrIgnore`, simple `update` and `delete` without write modifiers |
+| Predicates | Scalar `where` / `orWhere` including the explicit boolean argument and the array form, null tests, `whereIn` / `whereNotIn`, between tests, `whereColumn`, `whereRaw`, nested predicate closures and arrow functions, `when` / `unless` with closures |
+| Clauses | Simple inner/left/right column joins, `groupBy`, `having` / `orHaving`, `havingRaw` / `orHavingRaw`, ordering including raw SQL, `latest` / `oldest`, limits and offsets, argument-free `distinct` |
+| Reads | `get`, `all`, `first`, `firstOrFail`, `sole`, `value`, `find` / `findOrFail` with a scalar or a list, `pluck`, `count`, `sum`, `avg`, `min`, `max`, `exists`, `doesntExist`, `cursor`, `lazy`, `chunk`, `each`, `paginate`, `simplePaginate` |
+| Writes | Single-row and bulk `insert`, `insertOrIgnore`, `insertGetId`, simple `update`, `increment` / `decrement`, `delete` with or without a key, all without write modifiers |
 | Eloquent metadata | Source-declared table and primary key, inherited defaults, selected unambiguous English table conventions, standard authentication model ancestry |
-| Eloquent scopes | Traditional source-declared `scopeX` methods with supported mutations; standard `SoftDeletes` reads, `withTrashed()` and `onlyTrashed()` |
+| Eloquent scopes | Traditional source-declared `scopeX` methods with supported mutations; standard `SoftDeletes` reads, `withTrashed()`, `onlyTrashed()` and `withoutTrashed()` |
+
+Raw fragments with an unknown binding array bind one open value per `?` in the
+fragment. `paginate` lists both the count and the page statement, including the
+subquery Laravel counts through when the query is grouped; the page offset is
+external input, since Laravel reads the page from the request. A `chunk`,
+`each` or `lazy` window is a gap built by the loop. An Eloquent `with` keeps
+the main statement and adds one open statement for the eager load it issues.
+An Eloquent `find` with a list of integer keys writes the keys into the
+statement the way `whereIntegerInRaw` does; a model's `$perPage` and `$keyType`
+declarations are read from the source.
+
+These forms were checked against Illuminate Database 13.33 for the MySQL,
+PostgreSQL and SQLite grammars. Known differences: an Eloquent `find([])`
+issues no query but is reported as `0 = 1`, a negative literal such as
+`limit(-1)` is not folded by the analyzer and stays open, and a `when` or
+`unless` callback is reported with both outcomes since the condition is not
+evaluated.
 
 An explicit `$table` is required when conventional pluralization is not known.
 Local scopes with early returns, replacement builders or boolean regrouping
 remain incomplete. Eloquent updates currently require `$timestamps = false`;
 soft-delete writes and model persistence operations are incomplete.
 
-A nullable or untyped comparison value can change `where('column', $value)`
-from `= ?` to `is null`. If the value cannot be resolved, the SQL remains open
-instead of assuming a placeholder. In contrast, values in a complete `whereIn`
-array can remain unknown while the placeholder structure is known.
-
 ## Incomplete operations
 
-Unknown builder methods and macros, subqueries, unions, conditional builders,
-JSON selectors, pagination, relation queries, eager loading, custom builders,
-global scopes, model boot hooks, timestamped updates and persistence calls such
-as `create`, `save`, `firstOrCreate` and `updateOrCreate` are not yet reconstructed.
-Recognized execution calls remain in the catalog with incomplete evidence.
-An unresolved relation receiver may be reported as an `unmatched` sink rather
-than as a confirmed Laravel statement. Multi-query operations are not expanded
-into their individual SQL statements.
+Unknown builder methods and macros, subqueries, unions, JSON selectors, cursor
+pagination, relation queries, the statements an eager load issues, custom
+builders, global scopes, model boot hooks, timestamped updates, locks and
+persistence calls such as `create`, `save`, `firstOrCreate` and
+`updateOrCreate` are not yet reconstructed. Recognized execution calls remain in
+the catalog with incomplete evidence. An unresolved relation receiver may be
+reported as an `unmatched` sink rather than as a confirmed Laravel statement.
 
 Implicit `$with` / `$withCount` loads, model attributes, unknown traits and
 unresolved or mutable model metadata also keep the result open. Direct mutation

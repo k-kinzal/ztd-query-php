@@ -25,4 +25,9 @@ final class DialectTest extends TestCase
         self::assertSame('', (new \SqlCatalog\Platform\PostgreSql\Dialect())->insertSuffix(false));
         self::assertSame(' on conflict do nothing', (new \SqlCatalog\Platform\PostgreSql\Dialect())->insertSuffix(true));
     }
+
+    public function testReturningSuffixNamesHowTheGeneratedKeyIsRead(): void
+    {
+        self::assertSame(' returning ', (new \SqlCatalog\Platform\PostgreSql\Dialect())->returningSuffix());
+    }
 }

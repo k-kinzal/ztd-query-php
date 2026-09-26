@@ -111,7 +111,7 @@ final class LaravelExtension implements Model\ModelProviderInterface
      */
     public function builderMethods(): array
     {
-        $methods = array_fill_keys(['get', 'first', 'firstOrFail', 'find', 'findOrFail', 'all', 'pluck', 'value', 'count', 'sum', 'avg', 'min', 'max', 'exists', 'doesntExist', 'paginate', 'simplePaginate', 'cursorPaginate', 'chunk', 'each', 'cursor', 'lazy'], StatementKind::Select);
+        $methods = array_fill_keys(['get', 'first', 'firstOrFail', 'find', 'findOrFail', 'sole', 'all', 'pluck', 'value', 'count', 'sum', 'avg', 'min', 'max', 'exists', 'doesntExist', 'paginate', 'simplePaginate', 'cursorPaginate', 'chunk', 'each', 'cursor', 'lazy'], StatementKind::Select);
 
         return $methods + [
             'insert' => StatementKind::Insert,

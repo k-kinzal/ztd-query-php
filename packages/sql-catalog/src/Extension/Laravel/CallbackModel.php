@@ -42,6 +42,9 @@ final class CallbackModel
 
             return $this->nested($callback, $object, $method, $environment, $scope, $expressions);
         }
+        if (in_array($method, ['when', 'unless'], true)) {
+            return $this->conditional($call, $object, $arguments, $environment, $scope, $expressions);
+        }
         $model = QueryState::from($object)->string('model');
         $local = $this->index->findMethod($model, 'scope' . $method);
         if ($local?->node === null) {
@@ -54,6 +57,49 @@ final class CallbackModel
         $result = $this->effects->apply($local->node, array_merge([Domain::of($object)], $arguments), new Environment(['this' => Domain::of(new ObjectTerm($model ?? ModelMetadata::MODEL))]), $inner, $expressions);
 
         return $this->checked($result, $object);
+    }
+
+    /**
+     * Both outcomes of a conditional callback, since the condition is not evaluated.
+     *
+     * @param list<Domain> $arguments
+     */
+    public function conditional(Expr\CallLike $call, ObjectTerm $object, array $arguments, Environment $environment, FunctionScope $scope, ExpressionEvaluator $expressions): Domain
+    {
+        $branches = [];
+        foreach ([1, 2] as $index) {
+            $callback = $call->getArgs()[$index]->value ?? null;
+            if ($callback instanceof Expr\Closure || $callback instanceof Expr\ArrowFunction) {
+                $branches[] = $callback;
+            }
+        }
+        if (count($arguments) < 2 || count($arguments) > 3 || count($branches) !== count($arguments) - 1) {
+            return Domain::of(QueryState::from($object)->reject('Laravel conditional callback is not modelled')->object($object));
+        }
+        $terms = [];
+        foreach ($branches as $branch) {
+            $result = $this->effects->apply($branch, [Domain::of($object), $arguments[0]], $environment, $scope, $expressions);
+            $terms = array_merge($terms, $this->closed($result, $object, 'Laravel conditional callback effects could not be closed')->terms);
+        }
+        if (count($branches) === 1) {
+            $terms[] = $object;
+        }
+
+        return Domain::fromTerms($terms);
+    }
+
+    /**
+     * The callback's states of the same builder, or a visible gap when its effects escaped or widened.
+     */
+    public function closed(Domain $result, ObjectTerm $original, string $reason): Domain
+    {
+        foreach ($result->terms as $term) {
+            if ($result->widened || !$term instanceof ObjectTerm || $term->identity !== $original->identity) {
+                return Domain::of(QueryState::from($original)->reject($reason)->object($original));
+            }
+        }
+
+        return $result;
     }
 
     /**
