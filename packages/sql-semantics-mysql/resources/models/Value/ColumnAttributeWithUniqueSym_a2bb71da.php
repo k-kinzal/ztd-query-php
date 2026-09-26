@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithUniqueSym_a2bb71da $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithUniqueSym_a2bb71da $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnAttributeWithUniqueSym_a2bb71da implements \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm

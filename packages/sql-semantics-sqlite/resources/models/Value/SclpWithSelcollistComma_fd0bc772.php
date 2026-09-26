@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SclpWithSelcollistComma_fd0bc772 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SclpWithSelcollistComma_fd0bc772 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SclpWithSelcollistComma_fd0bc772 implements \SqlSemantics\Statement\Model\Sqlite\Role\SclpForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm $projections,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SclpWithSelcollistComma_fd0bc772 implements \SqlSemantics\Statement\
     {
         $this->projections->write($writer);
         $writer->append(',');
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm $projections): self
+    {
+        return new self($projections);
     }
 }

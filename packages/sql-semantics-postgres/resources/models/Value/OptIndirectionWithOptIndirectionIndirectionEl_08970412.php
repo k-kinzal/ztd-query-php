@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptIndirectionWithOptIndirectionIndirectionEl_08970412 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptIndirectionWithOptIndirectionIndirectionEl_08970412 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIndirectionWithOptIndirectionIndirectionEl_08970412 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptIndirectionWithOptIndirectionIndirectionEl_08970412 implements \S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionElForm $indirectionEl,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optIndirection), 'The optIndirection must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indirectionEl), 'The indirectionEl must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptIndirectionWithOptIndirectionIndirectionEl_08970412 implements \S
     {
         $this->optIndirection->write($writer);
         $this->indirectionEl->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optIndirection, preserving every other field.
+     */
+    public function withOptIndirection(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection): self
+    {
+        return new self($optIndirection, $this->indirectionEl);
+    }
+
+    /**
+     * Returns a copy with a new indirectionEl, preserving every other field.
+     */
+    public function withIndirectionEl(\SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionElForm $indirectionEl): self
+    {
+        return new self($this->optIndirection, $indirectionEl);
     }
 }

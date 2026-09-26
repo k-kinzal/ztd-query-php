@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlNamespaceElWithDefaultBExpr_715a06a1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlNamespaceElWithDefaultBExpr_715a06a1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmlNamespaceElWithDefaultBExpr_715a06a1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlNamespaceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class XmlNamespaceElWithDefaultBExpr_715a06a1 implements \SqlSemantics\Sta
     {
         $writer->append('DEFAULT');
         $this->bExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bExpr, preserving every other field.
+     */
+    public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
+    {
+        return new self($bExpr);
     }
 }

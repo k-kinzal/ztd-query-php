@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ParseGcolExprWithParseGcolExprSymGeneratedColumnFunc_ca424f42 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ParseGcolExprWithParseGcolExprSymGeneratedColumnFunc_ca424f42 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ParseGcolExprWithParseGcolExprSymGeneratedColumnFunc_ca424f42 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ParseGcolExprForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm $generatedColumnFunc,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($generatedColumnFunc), 'The generatedColumnFunc must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class ParseGcolExprWithParseGcolExprSymGeneratedColumnFunc_ca424f42 implem
         $writer->append('(');
         $this->generatedColumnFunc->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new generatedColumnFunc, preserving every other field.
+     */
+    public function withGeneratedColumnFunc(\SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm $generatedColumnFunc): self
+    {
+        return new self($generatedColumnFunc);
     }
 }

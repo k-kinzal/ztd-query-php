@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GcolAttributeWithUniqueSym_24e5e846 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GcolAttributeWithUniqueSym_24e5e846 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GcolAttributeWithUniqueSym_24e5e846 implements \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptGcolAttributeListForm

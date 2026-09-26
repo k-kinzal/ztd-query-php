@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTypeCmdWithDropAttributeIfPExistsColIdOptDropBehavior_2374c102 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTypeCmdWithDropAttributeIfPExistsColIdOptDropBehavior_2374c102 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTypeCmdWithDropAttributeIfPExistsColIdOptDropBehavior_2374c102 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTypeCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTypeCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTypeCmdWithDropAttributeIfPExistsColIdOptDropBehavior_2374c102 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class AlterTypeCmdWithDropAttributeIfPExistsColIdOptDropBehavior_2374c102 
         $writer->append('EXISTS');
         $this->colId->write($writer);
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optDropBehavior, preserving every other field.
+     */
+    public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
+    {
+        return new self($this->colId, $optDropBehavior);
     }
 }

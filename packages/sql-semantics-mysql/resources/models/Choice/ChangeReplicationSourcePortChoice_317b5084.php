@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\ChangeReplicationSourcePortChoice_317b5084 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\ChangeReplicationSourcePortChoice_317b5084 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum ChangeReplicationSourcePortChoice_317b5084: string implements \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourcePortForm

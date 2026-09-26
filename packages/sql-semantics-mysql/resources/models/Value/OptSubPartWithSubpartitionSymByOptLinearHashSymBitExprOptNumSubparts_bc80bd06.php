@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSubPartWithSubpartitionSymByOptLinearHashSymBitExprOptNumSubparts_bc80bd06 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSubPartWithSubpartitionSymByOptLinearHashSymBitExprOptNumSubparts_bc80bd06 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptSubPartWithSubpartitionSymByOptLinearHashSymBitExprOptNumSubparts_bc80bd06 implements \SqlSemantics\Statement\Model\MySql\Role\OptSubPartForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymBitExprOptNumSubparts
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLinear), 'The optLinear must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNumSubparts), 'The optNumSubparts must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +42,29 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymBitExprOptNumSubparts
         $this->bitExpr->write($writer);
         $writer->append(')');
         $this->optNumSubparts->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optLinear, preserving every other field.
+     */
+    public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self
+    {
+        return new self($optLinear, $this->bitExpr, $this->optNumSubparts);
+    }
+
+    /**
+     * Returns a copy with a new bitExpr, preserving every other field.
+     */
+    public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
+    {
+        return new self($this->optLinear, $bitExpr, $this->optNumSubparts);
+    }
+
+    /**
+     * Returns a copy with a new optNumSubparts, preserving every other field.
+     */
+    public function withOptNumSubparts(\SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts): self
+    {
+        return new self($this->optLinear, $this->bitExpr, $optNumSubparts);
     }
 }

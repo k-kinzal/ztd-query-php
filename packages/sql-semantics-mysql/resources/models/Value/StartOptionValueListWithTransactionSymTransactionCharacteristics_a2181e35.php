@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartOptionValueListWithTransactionSymTransactionCharacteristics_a2181e35 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartOptionValueListWithTransactionSymTransactionCharacteristics_a2181e35 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StartOptionValueListWithTransactionSymTransactionCharacteristics_a2181e35 implements \SqlSemantics\Statement\Model\MySql\Role\StartOptionValueListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TransactionCharacteristicsForm $transactionCharacteristics,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($transactionCharacteristics), 'The transactionCharacteristics must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class StartOptionValueListWithTransactionSymTransactionCharacteristics_a21
     {
         $writer->append('TRANSACTION');
         $this->transactionCharacteristics->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new transactionCharacteristics, preserving every other field.
+     */
+    public function withTransactionCharacteristics(\SqlSemantics\Statement\Model\MySql\Role\TransactionCharacteristicsForm $transactionCharacteristics): self
+    {
+        return new self($transactionCharacteristics);
     }
 }

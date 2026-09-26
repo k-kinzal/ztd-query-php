@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NvarcharWithNcharSymVarying_5beb3ae7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\NvarcharWithNcharSymVarying_5beb3ae7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NvarcharWithNcharSymVarying_5beb3ae7 implements \SqlSemantics\Statement\Model\MySql\Role\NvarcharForm

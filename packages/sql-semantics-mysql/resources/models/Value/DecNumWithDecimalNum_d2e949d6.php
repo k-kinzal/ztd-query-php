@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DecNumWithDecimalNum_d2e949d6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DecNumWithDecimalNum_d2e949d6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DecNumWithDecimalNum_d2e949d6 implements \SqlSemantics\Statement\Model\MySql\Role\DecNumForm, \SqlSemantics\Statement\Model\MySql\Role\DecNumErrorForm, \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm, \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm, \SqlSemantics\Statement\Model\MySql\Role\SizeNumberForm, \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListForm, \SqlSemantics\Statement\Model\MySql\Role\ThreadIdListOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\WsLevelNumberForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $decimalNum,
     ) {
+        $this->assertMatchesPattern($decimalNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DECIMAL_NUM'], 'The decimalNum must be a complete DECIMAL_NUM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class DecNumWithDecimalNum_d2e949d6 implements \SqlSemantics\Statement\Mod
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->decimalNum);
+    }
+
+    /**
+     * Returns a copy with a new decimalNum, preserving every other field.
+     */
+    public function withDecimalNum(string $decimalNum): self
+    {
+        return new self($decimalNum);
     }
 }

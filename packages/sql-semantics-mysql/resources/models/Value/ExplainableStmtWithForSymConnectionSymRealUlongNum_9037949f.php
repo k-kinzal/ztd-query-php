@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExplainableStmtWithForSymConnectionSymRealUlongNum_9037949f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExplainableStmtWithForSymConnectionSymRealUlongNum_9037949f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExplainableStmtWithForSymConnectionSymRealUlongNum_9037949f implements \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlongNum), 'The realUlongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class ExplainableStmtWithForSymConnectionSymRealUlongNum_9037949f implemen
         $writer->append('FOR');
         $writer->append('CONNECTION');
         $this->realUlongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new realUlongNum, preserving every other field.
+     */
+    public function withRealUlongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum): self
+    {
+        return new self($realUlongNum);
     }
 }

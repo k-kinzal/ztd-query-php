@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectDerivedWithGetSelectLexDerivedTableList_ab5023c5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectDerivedWithGetSelectLexDerivedTableList_ab5023c5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectDerivedWithGetSelectLexDerivedTableList_ab5023c5 implements \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelectDerivedWithGetSelectLexDerivedTableList_ab5023c5 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GetSelectLexForm $getSelectLex,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm $derivedTableList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($getSelectLex), 'The getSelectLex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($derivedTableList), 'The derivedTableList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SelectDerivedWithGetSelectLexDerivedTableList_ab5023c5 implements \S
     {
         $this->getSelectLex->write($writer);
         $this->derivedTableList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new getSelectLex, preserving every other field.
+     */
+    public function withGetSelectLex(\SqlSemantics\Statement\Model\MySql\Role\GetSelectLexForm $getSelectLex): self
+    {
+        return new self($getSelectLex, $this->derivedTableList);
+    }
+
+    /**
+     * Returns a copy with a new derivedTableList, preserving every other field.
+     */
+    public function withDerivedTableList(\SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm $derivedTableList): self
+    {
+        return new self($this->getSelectLex, $derivedTableList);
     }
 }

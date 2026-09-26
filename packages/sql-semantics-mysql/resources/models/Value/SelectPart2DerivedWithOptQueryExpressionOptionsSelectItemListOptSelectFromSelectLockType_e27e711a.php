@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSelectFromSelectLockType_e27e711a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSelectFromSelectLockType_e27e711a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSelectFromSelectLockType_e27e711a implements \SqlSemantics\Statement\Model\MySql\Role\SelectInit2DerivedForm, \SqlSemantics\Statement\Model\MySql\Role\SelectPart2DerivedForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSele
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm $optSelectFrom,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm $selectLockType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optQueryExpressionOptions), 'The optQueryExpressionOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSelectFrom), 'The optSelectFrom must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectLockType), 'The selectLockType must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class SelectPart2DerivedWithOptQueryExpressionOptionsSelectItemListOptSele
         $this->projections->write($writer);
         $this->optSelectFrom->write($writer);
         $this->selectLockType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optQueryExpressionOptions, preserving every other field.
+     */
+    public function withOptQueryExpressionOptions(\SqlSemantics\Statement\Model\MySql\Role\OptQueryExpressionOptionsForm $optQueryExpressionOptions): self
+    {
+        return new self($optQueryExpressionOptions, $this->projections, $this->optSelectFrom, $this->selectLockType);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
+    {
+        return new self($this->optQueryExpressionOptions, $projections, $this->optSelectFrom, $this->selectLockType);
+    }
+
+    /**
+     * Returns a copy with a new optSelectFrom, preserving every other field.
+     */
+    public function withOptSelectFrom(\SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm $optSelectFrom): self
+    {
+        return new self($this->optQueryExpressionOptions, $this->projections, $optSelectFrom, $this->selectLockType);
+    }
+
+    /**
+     * Returns a copy with a new selectLockType, preserving every other field.
+     */
+    public function withSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm $selectLockType): self
+    {
+        return new self($this->optQueryExpressionOptions, $this->projections, $this->optSelectFrom, $selectLockType);
     }
 }

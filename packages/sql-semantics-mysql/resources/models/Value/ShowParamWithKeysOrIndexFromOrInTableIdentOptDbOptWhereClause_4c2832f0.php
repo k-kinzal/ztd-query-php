@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithKeysOrIndexFromOrInTableIdentOptDbOptWhereClause_4c2832f0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithKeysOrIndexFromOrInTableIdentOptDbOptWhereClause_4c2832f0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithKeysOrIndexFromOrInTableIdentOptDbOptWhereClause_4c2832f0 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class ShowParamWithKeysOrIndexFromOrInTableIdentOptDbOptWhereClause_4c2832
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keysOrIndex), 'The keysOrIndex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fromOrIn), 'The fromOrIn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDb), 'The optDb must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +43,45 @@ final class ShowParamWithKeysOrIndexFromOrInTableIdentOptDbOptWhereClause_4c2832
         $this->tableIdent->write($writer);
         $this->optDb->write($writer);
         $this->where->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keysOrIndex, preserving every other field.
+     */
+    public function withKeysOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeysOrIndexForm $keysOrIndex): self
+    {
+        return new self($keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new fromOrIn, preserving every other field.
+     */
+    public function withFromOrIn(\SqlSemantics\Statement\Model\MySql\Role\FromOrInForm $fromOrIn): self
+    {
+        return new self($this->keysOrIndex, $fromOrIn, $this->tableIdent, $this->optDb, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->keysOrIndex, $this->fromOrIn, $tableIdent, $this->optDb, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new optDb, preserving every other field.
+     */
+    public function withOptDb(\SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb): self
+    {
+        return new self($this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $optDb, $this->where);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
+    {
+        return new self($this->keysOrIndex, $this->fromOrIn, $this->tableIdent, $this->optDb, $where);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithQuarterSym_d1df0b3d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithQuarterSym_d1df0b3d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntervalTimeStampWithQuarterSym_d1df0b3d implements \SqlSemantics\Statement\Model\MySql\Role\IntervalForm, \SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $quarterSym,
     ) {
+        $this->assertMatchesPattern($quarterSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['QUARTER_SYM'], 'The quarterSym must be a complete QUARTER_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IntervalTimeStampWithQuarterSym_d1df0b3d implements \SqlSemantics\St
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->quarterSym);
+    }
+
+    /**
+     * Returns a copy with a new quarterSym, preserving every other field.
+     */
+    public function withQuarterSym(string $quarterSym): self
+    {
+        return new self($quarterSym);
     }
 }

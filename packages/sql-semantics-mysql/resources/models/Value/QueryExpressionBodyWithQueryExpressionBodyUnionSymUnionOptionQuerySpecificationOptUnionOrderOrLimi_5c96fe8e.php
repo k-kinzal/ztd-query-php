@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySpecificationOptUnionOrderOrLimi_5c96fe8e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySpecificationOptUnionOrderOrLimi_5c96fe8e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySpecificationOptUnionOrderOrLimi_5c96fe8e implements \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionBody), 'The queryExpressionBody must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOption), 'The unionOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($query), 'The query must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionOrderOrLimit), 'The optUnionOrderOrLimit must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class QueryExpressionBodyWithQueryExpressionBodyUnionSymUnionOptionQuerySp
         $this->unionOption->write($writer);
         $this->query->write($writer);
         $this->optUnionOrderOrLimit->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new queryExpressionBody, preserving every other field.
+     */
+    public function withQueryExpressionBody(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody): self
+    {
+        return new self($queryExpressionBody, $this->unionOption, $this->query, $this->optUnionOrderOrLimit);
+    }
+
+    /**
+     * Returns a copy with a new unionOption, preserving every other field.
+     */
+    public function withUnionOption(\SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption): self
+    {
+        return new self($this->queryExpressionBody, $unionOption, $this->query, $this->optUnionOrderOrLimit);
+    }
+
+    /**
+     * Returns a copy with a new query, preserving every other field.
+     */
+    public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query): self
+    {
+        return new self($this->queryExpressionBody, $this->unionOption, $query, $this->optUnionOrderOrLimit);
+    }
+
+    /**
+     * Returns a copy with a new optUnionOrderOrLimit, preserving every other field.
+     */
+    public function withOptUnionOrderOrLimit(\SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit): self
+    {
+        return new self($this->queryExpressionBody, $this->unionOption, $this->query, $optUnionOrderOrLimit);
     }
 }

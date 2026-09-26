@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprCommonSubexprWithXmlexistsCExprXmlexistsArgument_0e9bf12f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprCommonSubexprWithXmlexistsCExprXmlexistsArgument_0e9bf12f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncExprCommonSubexprWithXmlexistsCExprXmlexistsArgument_0e9bf12f implements \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprCommonSubexprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncExprCommonSubexprWithXmlexistsCExprXmlexistsArgument_0e9bf12f im
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlexistsArgumentForm $xmlexistsArgument,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cExpr), 'The cExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlexistsArgument), 'The xmlexistsArgument must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class FuncExprCommonSubexprWithXmlexistsCExprXmlexistsArgument_0e9bf12f im
         $this->cExpr->write($writer);
         $this->xmlexistsArgument->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new cExpr, preserving every other field.
+     */
+    public function withCExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr): self
+    {
+        return new self($cExpr, $this->xmlexistsArgument);
+    }
+
+    /**
+     * Returns a copy with a new xmlexistsArgument, preserving every other field.
+     */
+    public function withXmlexistsArgument(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlexistsArgumentForm $xmlexistsArgument): self
+    {
+        return new self($this->cExpr, $xmlexistsArgument);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertValuesWithValueOrValuesValuesList_f4ab378b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertValuesWithValueOrValuesValuesList_f4ab378b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertValuesWithValueOrValuesValuesList_f4ab378b implements \SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm, \SqlSemantics\Statement\Model\MySql\Role\InsertFromConstructorForm, \SqlSemantics\Statement\Model\MySql\Role\InsertValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertValuesWithValueOrValuesValuesList_f4ab378b implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValueOrValuesForm $valueOrValues,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValuesListForm $valuesList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($valueOrValues), 'The valueOrValues must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($valuesList), 'The valuesList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class InsertValuesWithValueOrValuesValuesList_f4ab378b implements \SqlSema
     {
         $this->valueOrValues->write($writer);
         $this->valuesList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new valueOrValues, preserving every other field.
+     */
+    public function withValueOrValues(\SqlSemantics\Statement\Model\MySql\Role\ValueOrValuesForm $valueOrValues): self
+    {
+        return new self($valueOrValues, $this->valuesList);
+    }
+
+    /**
+     * Returns a copy with a new valuesList, preserving every other field.
+     */
+    public function withValuesList(\SqlSemantics\Statement\Model\MySql\Role\ValuesListForm $valuesList): self
+    {
+        return new self($this->valueOrValues, $valuesList);
     }
 }

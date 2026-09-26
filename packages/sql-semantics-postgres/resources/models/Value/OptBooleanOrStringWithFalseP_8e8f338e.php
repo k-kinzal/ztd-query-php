@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptBooleanOrStringWithFalseP_8e8f338e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptBooleanOrStringWithFalseP_8e8f338e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptBooleanOrStringWithFalseP_8e8f338e implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptBooleanOrStringForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm

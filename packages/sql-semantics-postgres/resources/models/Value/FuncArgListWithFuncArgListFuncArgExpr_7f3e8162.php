@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgListWithFuncArgListFuncArgExpr_7f3e8162 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgListWithFuncArgListFuncArgExpr_7f3e8162 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncArgListWithFuncArgListFuncArgExpr_7f3e8162 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncArgListWithFuncArgListFuncArgExpr_7f3e8162 implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm $funcArgList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm $funcArgExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgList), 'The funcArgList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgExpr), 'The funcArgExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FuncArgListWithFuncArgListFuncArgExpr_7f3e8162 implements \SqlSemant
         $this->funcArgList->write($writer);
         $writer->append(',');
         $this->funcArgExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcArgList, preserving every other field.
+     */
+    public function withFuncArgList(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm $funcArgList): self
+    {
+        return new self($funcArgList, $this->funcArgExpr);
+    }
+
+    /**
+     * Returns a copy with a new funcArgExpr, preserving every other field.
+     */
+    public function withFuncArgExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm $funcArgExpr): self
+    {
+        return new self($this->funcArgList, $funcArgExpr);
     }
 }

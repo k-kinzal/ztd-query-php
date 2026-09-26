@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithWeekSym_5886f3a9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithWeekSym_5886f3a9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntervalTimeStampWithWeekSym_5886f3a9 implements \SqlSemantics\Statement\Model\MySql\Role\IntervalForm, \SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $weekSym,
     ) {
+        $this->assertMatchesPattern($weekSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['WEEK_SYM'], 'The weekSym must be a complete WEEK_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IntervalTimeStampWithWeekSym_5886f3a9 implements \SqlSemantics\State
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->weekSym);
+    }
+
+    /**
+     * Returns a copy with a new weekSym, preserving every other field.
+     */
+    public function withWeekSym(string $weekSym): self
+    {
+        return new self($weekSym);
     }
 }

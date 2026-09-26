@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymTableIdentHavePartitionin_5cd7aea3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymTableIdentHavePartitionin_5cd7aea3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymTableIdentHavePartitionin_5cd7aea3 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymT
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($altPartNameItem), 'The altPartNameItem must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($havePartitioning), 'The havePartitioning must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +41,29 @@ final class AlterCommandsWithExchangeSymPartitionSymAltPartNameItemWithTableSymT
         $writer->append('TABLE');
         $this->tableIdent->write($writer);
         $this->havePartitioning->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new altPartNameItem, preserving every other field.
+     */
+    public function withAltPartNameItem(\SqlSemantics\Statement\Model\MySql\Role\AltPartNameItemForm $altPartNameItem): self
+    {
+        return new self($altPartNameItem, $this->tableIdent, $this->havePartitioning);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->altPartNameItem, $tableIdent, $this->havePartitioning);
+    }
+
+    /**
+     * Returns a copy with a new havePartitioning, preserving every other field.
+     */
+    public function withHavePartitioning(\SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning): self
+    {
+        return new self($this->altPartNameItem, $this->tableIdent, $havePartitioning);
     }
 }

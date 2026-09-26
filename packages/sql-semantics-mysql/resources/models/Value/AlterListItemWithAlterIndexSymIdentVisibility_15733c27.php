@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithAlterIndexSymIdentVisibility_15733c27 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithAlterIndexSymIdentVisibility_15733c27 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithAlterIndexSymIdentVisibility_15733c27 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterListItemWithAlterIndexSymIdentVisibility_15733c27 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VisibilityForm $visibility,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($visibility), 'The visibility must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AlterListItemWithAlterIndexSymIdentVisibility_15733c27 implements \S
         $writer->append('INDEX');
         $this->ident->write($writer);
         $this->visibility->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->visibility);
+    }
+
+    /**
+     * Returns a copy with a new visibility, preserving every other field.
+     */
+    public function withVisibility(\SqlSemantics\Statement\Model\MySql\Role\VisibilityForm $visibility): self
+    {
+        return new self($this->ident, $visibility);
     }
 }

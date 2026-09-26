@@ -17,6 +17,8 @@ use SqlSemantics\Statement\Statement;
  */
 final class Analyzer
 {
+    use \SqlSemantics\Statement\Assertion;
+
     private readonly DialectParser $parser;
     private readonly ValueReader $values;
 
@@ -42,6 +44,9 @@ final class Analyzer
             throw new AnalysisException($error->getMessage(), 0, $error);
         }
 
-        return new Statement($this->values->read($tree));
+        $command = $this->values->read($tree);
+        $this->assertCompleteCommand($command);
+
+        return new Statement($command);
     }
 }

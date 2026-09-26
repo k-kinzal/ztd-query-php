@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09b0ed73 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09b0ed73 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09b0ed73 implements \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionForm, \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionForm, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\DefaultEncryptionForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateDatabaseOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDefault), 'The optDefault must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class DefaultEncryptionWithOptDefaultEncryptionSymOptEqualTextStringSys_09
         $writer->append('ENCRYPTION');
         $this->optEqual->write($writer);
         $this->textStringSys->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optDefault, preserving every other field.
+     */
+    public function withOptDefault(\SqlSemantics\Statement\Model\MySql\Role\OptDefaultForm $optDefault): self
+    {
+        return new self($optDefault, $this->optEqual, $this->textStringSys);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($this->optDefault, $optEqual, $this->textStringSys);
+    }
+
+    /**
+     * Returns a copy with a new textStringSys, preserving every other field.
+     */
+    public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
+    {
+        return new self($this->optDefault, $this->optEqual, $textStringSys);
     }
 }

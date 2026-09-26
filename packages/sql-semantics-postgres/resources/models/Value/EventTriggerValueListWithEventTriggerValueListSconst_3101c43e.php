@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\EventTriggerValueListWithEventTriggerValueListSconst_3101c43e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\EventTriggerValueListWithEventTriggerValueListSconst_3101c43e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EventTriggerValueListWithEventTriggerValueListSconst_3101c43e implements \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerValueListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class EventTriggerValueListWithEventTriggerValueListSconst_3101c43e implem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerValueListForm $eventTriggerValueList,
         public readonly string $value,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($eventTriggerValueList), 'The eventTriggerValueList must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['SCONST'], 'The value must be a complete SCONST lexical spelling.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class EventTriggerValueListWithEventTriggerValueListSconst_3101c43e implem
         $this->eventTriggerValueList->write($writer);
         $writer->append(',');
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new eventTriggerValueList, preserving every other field.
+     */
+    public function withEventTriggerValueList(\SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerValueListForm $eventTriggerValueList): self
+    {
+        return new self($eventTriggerValueList, $this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($this->eventTriggerValueList, $value);
     }
 }

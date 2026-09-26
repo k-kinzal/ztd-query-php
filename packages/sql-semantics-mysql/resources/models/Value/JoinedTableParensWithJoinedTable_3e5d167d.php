@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinedTableParensWithJoinedTable_3e5d167d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinedTableParensWithJoinedTable_3e5d167d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinedTableParensWithJoinedTable_3e5d167d implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\JoinedTableParensForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\JoinedTableForm $joinedTable,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($joinedTable), 'The joinedTable must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class JoinedTableParensWithJoinedTable_3e5d167d implements \SqlSemantics\S
         $writer->append('(');
         $this->joinedTable->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new joinedTable, preserving every other field.
+     */
+    public function withJoinedTable(\SqlSemantics\Statement\Model\MySql\Role\JoinedTableForm $joinedTable): self
+    {
+        return new self($joinedTable);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OperatorDefListWithOperatorDefListOperatorDefElem_68d92621 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OperatorDefListWithOperatorDefListOperatorDefElem_68d92621 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OperatorDefListWithOperatorDefListOperatorDefElem_68d92621 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OperatorDefListWithOperatorDefListOperatorDefElem_68d92621 implement
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm $operatorDefList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefElemForm $operatorDefElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorDefList), 'The operatorDefList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorDefElem), 'The operatorDefElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OperatorDefListWithOperatorDefListOperatorDefElem_68d92621 implement
         $this->operatorDefList->write($writer);
         $writer->append(',');
         $this->operatorDefElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new operatorDefList, preserving every other field.
+     */
+    public function withOperatorDefList(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm $operatorDefList): self
+    {
+        return new self($operatorDefList, $this->operatorDefElem);
+    }
+
+    /**
+     * Returns a copy with a new operatorDefElem, preserving every other field.
+     */
+    public function withOperatorDefElem(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefElemForm $operatorDefElem): self
+    {
+        return new self($this->operatorDefList, $operatorDefElem);
     }
 }

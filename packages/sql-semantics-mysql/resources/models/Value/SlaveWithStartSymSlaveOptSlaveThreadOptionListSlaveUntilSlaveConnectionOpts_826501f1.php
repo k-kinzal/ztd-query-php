@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveWithStartSymSlaveOptSlaveThreadOptionListSlaveUntilSlaveConnectionOpts_826501f1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveWithStartSymSlaveOptSlaveThreadOptionListSlaveUntilSlaveConnectionOpts_826501f1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveWithStartSymSlaveOptSlaveThreadOptionListSlaveUntilSlaveConnectionOpts_826501f1 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SlaveForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SlaveWithStartSymSlaveOptSlaveThreadOptionListSlaveUntilSlaveConnect
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveUntilForm $slaveUntil,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveConnectionOptsForm $slaveConnectionOpts,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSlaveThreadOptionList), 'The optSlaveThreadOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveUntil), 'The slaveUntil must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveConnectionOpts), 'The slaveConnectionOpts must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class SlaveWithStartSymSlaveOptSlaveThreadOptionListSlaveUntilSlaveConnect
         $this->optSlaveThreadOptionList->write($writer);
         $this->slaveUntil->write($writer);
         $this->slaveConnectionOpts->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optSlaveThreadOptionList, preserving every other field.
+     */
+    public function withOptSlaveThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\OptSlaveThreadOptionListForm $optSlaveThreadOptionList): self
+    {
+        return new self($optSlaveThreadOptionList, $this->slaveUntil, $this->slaveConnectionOpts);
+    }
+
+    /**
+     * Returns a copy with a new slaveUntil, preserving every other field.
+     */
+    public function withSlaveUntil(\SqlSemantics\Statement\Model\MySql\Role\SlaveUntilForm $slaveUntil): self
+    {
+        return new self($this->optSlaveThreadOptionList, $slaveUntil, $this->slaveConnectionOpts);
+    }
+
+    /**
+     * Returns a copy with a new slaveConnectionOpts, preserving every other field.
+     */
+    public function withSlaveConnectionOpts(\SqlSemantics\Statement\Model\MySql\Role\SlaveConnectionOptsForm $slaveConnectionOpts): self
+    {
+        return new self($this->optSlaveThreadOptionList, $this->slaveUntil, $slaveConnectionOpts);
     }
 }

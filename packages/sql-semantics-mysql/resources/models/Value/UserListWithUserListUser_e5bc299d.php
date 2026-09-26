@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UserListWithUserListUser_e5bc299d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UserListWithUserListUser_e5bc299d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UserListWithUserListUser_e5bc299d implements \SqlSemantics\Statement\Model\MySql\Role\UserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class UserListWithUserListUser_e5bc299d implements \SqlSemantics\Statement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userList), 'The userList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class UserListWithUserListUser_e5bc299d implements \SqlSemantics\Statement
         $this->userList->write($writer);
         $writer->append(',');
         $this->user->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new userList, preserving every other field.
+     */
+    public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
+    {
+        return new self($userList, $this->user);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($this->userList, $user);
     }
 }

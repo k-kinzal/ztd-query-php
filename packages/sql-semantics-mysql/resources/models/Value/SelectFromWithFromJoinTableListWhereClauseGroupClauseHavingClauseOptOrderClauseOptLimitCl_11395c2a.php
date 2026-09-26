@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOptOrderClauseOptLimitCl_11395c2a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOptOrderClauseOptLimitCl_11395c2a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOptOrderClauseOptLimitCl_11395c2a implements \SqlSemantics\Statement\Model\MySql\Role\SelectFromForm, \SqlSemantics\Statement\Model\MySql\Role\SelectIntoForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseClauseForm $procedureAnalyseClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($joinTableList), 'The joinTableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupBy), 'The groupBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($having), 'The having must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($procedureAnalyseClause), 'The procedureAnalyseClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -41,5 +50,61 @@ final class SelectFromWithFromJoinTableListWhereClauseGroupClauseHavingClauseOpt
         $this->orderBy->write($writer);
         $this->optLimitClause->write($writer);
         $this->procedureAnalyseClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new joinTableList, preserving every other field.
+     */
+    public function withJoinTableList(\SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList): self
+    {
+        return new self($joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where): self
+    {
+        return new self($this->joinTableList, $where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause);
+    }
+
+    /**
+     * Returns a copy with a new groupBy, preserving every other field.
+     */
+    public function withGroupBy(\SqlSemantics\Statement\Model\MySql\Role\GroupClauseForm $groupBy): self
+    {
+        return new self($this->joinTableList, $this->where, $groupBy, $this->having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause);
+    }
+
+    /**
+     * Returns a copy with a new having, preserving every other field.
+     */
+    public function withHaving(\SqlSemantics\Statement\Model\MySql\Role\HavingClauseForm $having): self
+    {
+        return new self($this->joinTableList, $this->where, $this->groupBy, $having, $this->orderBy, $this->optLimitClause, $this->procedureAnalyseClause);
+    }
+
+    /**
+     * Returns a copy with a new orderBy, preserving every other field.
+     */
+    public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
+    {
+        return new self($this->joinTableList, $this->where, $this->groupBy, $this->having, $orderBy, $this->optLimitClause, $this->procedureAnalyseClause);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClause, preserving every other field.
+     */
+    public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
+    {
+        return new self($this->joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $optLimitClause, $this->procedureAnalyseClause);
+    }
+
+    /**
+     * Returns a copy with a new procedureAnalyseClause, preserving every other field.
+     */
+    public function withProcedureAnalyseClause(\SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseClauseForm $procedureAnalyseClause): self
+    {
+        return new self($this->joinTableList, $this->where, $this->groupBy, $this->having, $this->orderBy, $this->optLimitClause, $procedureAnalyseClause);
     }
 }

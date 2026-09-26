@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PublicationObjSpecWithCurrentSchema_f09400c6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PublicationObjSpecWithCurrentSchema_f09400c6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PublicationObjSpecWithCurrentSchema_f09400c6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\PublicationObjSpecForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PubObjListForm

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\UnicodeChoice_12e6823c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\UnicodeChoice_12e6823c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum UnicodeChoice_12e6823c: string implements \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm, \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm, \SqlSemantics\Statement\Model\MySql\Role\UnicodeForm

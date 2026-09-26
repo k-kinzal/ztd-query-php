@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyListWithKeyPartOrderDir_f8e23cbd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyListWithKeyPartOrderDir_f8e23cbd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyListWithKeyPartOrderDir_f8e23cbd implements \SqlSemantics\Statement\Model\MySql\Role\KeyListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class KeyListWithKeyPartOrderDir_f8e23cbd implements \SqlSemantics\Stateme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyPartForm $keyPart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyPart), 'The keyPart must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderDir), 'The orderDir must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class KeyListWithKeyPartOrderDir_f8e23cbd implements \SqlSemantics\Stateme
     {
         $this->keyPart->write($writer);
         $this->orderDir->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keyPart, preserving every other field.
+     */
+    public function withKeyPart(\SqlSemantics\Statement\Model\MySql\Role\KeyPartForm $keyPart): self
+    {
+        return new self($keyPart, $this->orderDir);
+    }
+
+    /**
+     * Returns a copy with a new orderDir, preserving every other field.
+     */
+    public function withOrderDir(\SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir): self
+    {
+        return new self($this->keyPart, $orderDir);
     }
 }

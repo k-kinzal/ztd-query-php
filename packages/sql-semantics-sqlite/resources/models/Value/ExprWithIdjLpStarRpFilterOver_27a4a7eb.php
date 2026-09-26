@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithIdjLpStarRpFilterOver_27a4a7eb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithIdjLpStarRpFilterOver_27a4a7eb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithIdjLpStarRpFilterOver_27a4a7eb implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExprWithIdjLpStarRpFilterOver_27a4a7eb implements \SqlSemantics\Stat
         public readonly string $idj,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FilterOverForm $filterOver,
     ) {
+        $this->assertMatchesPattern($idj, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['idj'], 'The idj must be a complete idj lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($filterOver), 'The filterOver must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class ExprWithIdjLpStarRpFilterOver_27a4a7eb implements \SqlSemantics\Stat
         $writer->append('*');
         $writer->append(')');
         $this->filterOver->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new idj, preserving every other field.
+     */
+    public function withIdj(string $idj): self
+    {
+        return new self($idj, $this->filterOver);
+    }
+
+    /**
+     * Returns a copy with a new filterOver, preserving every other field.
+     */
+    public function withFilterOver(\SqlSemantics\Statement\Model\Sqlite\Role\FilterOverForm $filterOver): self
+    {
+        return new self($this->idj, $filterOver);
     }
 }

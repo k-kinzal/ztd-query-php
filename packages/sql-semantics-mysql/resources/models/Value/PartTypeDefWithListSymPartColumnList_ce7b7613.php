@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartTypeDefWithListSymPartColumnList_ce7b7613 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartTypeDefWithListSymPartColumnList_ce7b7613 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartTypeDefWithListSymPartColumnList_ce7b7613 implements \SqlSemantics\Statement\Model\MySql\Role\PartTypeDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartColumnListForm $partColumnList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partColumnList), 'The partColumnList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class PartTypeDefWithListSymPartColumnList_ce7b7613 implements \SqlSemanti
     {
         $writer->append('LIST');
         $this->partColumnList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new partColumnList, preserving every other field.
+     */
+    public function withPartColumnList(\SqlSemantics\Statement\Model\MySql\Role\PartColumnListForm $partColumnList): self
+    {
+        return new self($partColumnList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionModeListWithTransactionModeListTransactionModeItem_6afd9f14 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransactionModeListWithTransactionModeListTransactionModeItem_6afd9f14 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TransactionModeListWithTransactionModeListTransactionModeItem_6afd9f14 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListOrEmptyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TransactionModeListWithTransactionModeListTransactionModeItem_6afd9f
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListForm $transactionModeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeItemForm $transactionModeItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($transactionModeList), 'The transactionModeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($transactionModeItem), 'The transactionModeItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TransactionModeListWithTransactionModeListTransactionModeItem_6afd9f
     {
         $this->transactionModeList->write($writer);
         $this->transactionModeItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new transactionModeList, preserving every other field.
+     */
+    public function withTransactionModeList(\SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeListForm $transactionModeList): self
+    {
+        return new self($transactionModeList, $this->transactionModeItem);
+    }
+
+    /**
+     * Returns a copy with a new transactionModeItem, preserving every other field.
+     */
+    public function withTransactionModeItem(\SqlSemantics\Statement\Model\PostgreSql\Role\TransactionModeItemForm $transactionModeItem): self
+    {
+        return new self($this->transactionModeList, $transactionModeItem);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldLengthWithUlonglongNum_d7d79f00 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldLengthWithUlonglongNum_d7d79f00 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldLengthWithUlonglongNum_d7d79f00 implements \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm, \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm, \SqlSemantics\Statement\Model\MySql\Role\StandardFloatOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $ulonglongNum,
     ) {
+        $this->assertMatchesPattern($ulonglongNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['ULONGLONG_NUM'], 'The ulonglongNum must be a complete ULONGLONG_NUM lexical spelling.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class FieldLengthWithUlonglongNum_d7d79f00 implements \SqlSemantics\Statem
         $writer->append('(');
         $writer->append($this->ulonglongNum);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new ulonglongNum, preserving every other field.
+     */
+    public function withUlonglongNum(string $ulonglongNum): self
+    {
+        return new self($ulonglongNum);
     }
 }

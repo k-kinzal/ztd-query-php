@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReorgPartitionRuleWithReorganizeSymPartitionSymOptNoWriteToBinlogReorgPartsRule_69f90609 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReorgPartitionRuleWithReorganizeSymPartitionSymOptNoWriteToBinlogReorgPartsRule_69f90609 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReorgPartitionRuleWithReorganizeSymPartitionSymOptNoWriteToBinlogReorgPartsRule_69f90609 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\ReorgPartitionRuleForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ReorgPartitionRuleWithReorganizeSymPartitionSymOptNoWriteToBinlogReo
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReorgPartsRuleForm $reorgPartsRule,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($reorgPartsRule), 'The reorgPartsRule must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class ReorgPartitionRuleWithReorganizeSymPartitionSymOptNoWriteToBinlogReo
         $writer->append('PARTITION');
         $this->optNoWriteToBinlog->write($writer);
         $this->reorgPartsRule->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optNoWriteToBinlog, preserving every other field.
+     */
+    public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
+    {
+        return new self($optNoWriteToBinlog, $this->reorgPartsRule);
+    }
+
+    /**
+     * Returns a copy with a new reorgPartsRule, preserving every other field.
+     */
+    public function withReorgPartsRule(\SqlSemantics\Statement\Model\MySql\Role\ReorgPartsRuleForm $reorgPartsRule): self
+    {
+        return new self($this->optNoWriteToBinlog, $reorgPartsRule);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterOperatorStmtWithAlterOperatorOperatorWithArgtypesSetOperatorDefList_e06bbc07 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterOperatorStmtWithAlterOperatorOperatorWithArgtypesSetOperatorDefList_e06bbc07 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterOperatorStmtWithAlterOperatorOperatorWithArgtypesSetOperatorDefList_e06bbc07 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOperatorStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterOperatorStmtWithAlterOperatorOperatorWithArgtypesSetOperatorDefList_e06bbc07 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOperatorStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterOperatorStmtWithAlterOperatorOperatorWithArgtypesSetOperatorDef
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm $operatorDefList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorWithArgtypes), 'The operatorWithArgtypes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorDefList), 'The operatorDefList must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class AlterOperatorStmtWithAlterOperatorOperatorWithArgtypesSetOperatorDef
         $writer->append('(');
         $this->operatorDefList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new operatorWithArgtypes, preserving every other field.
+     */
+    public function withOperatorWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes): self
+    {
+        return new self($operatorWithArgtypes, $this->operatorDefList);
+    }
+
+    /**
+     * Returns a copy with a new operatorDefList, preserving every other field.
+     */
+    public function withOperatorDefList(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm $operatorDefList): self
+    {
+        return new self($this->operatorWithArgtypes, $operatorDefList);
     }
 }

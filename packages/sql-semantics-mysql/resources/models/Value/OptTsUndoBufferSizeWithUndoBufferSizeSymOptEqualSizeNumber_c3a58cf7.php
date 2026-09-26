@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptTsUndoBufferSizeWithUndoBufferSizeSymOptEqualSizeNumber_c3a58cf7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptTsUndoBufferSizeWithUndoBufferSizeSymOptEqualSizeNumber_c3a58cf7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptTsUndoBufferSizeWithUndoBufferSizeSymOptEqualSizeNumber_c3a58cf7 implements \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionForm, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptTsUndoBufferSizeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptTsUndoBufferSizeWithUndoBufferSizeSymOptEqualSizeNumber_c3a58cf7 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SizeNumberForm $sizeNumber,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sizeNumber), 'The sizeNumber must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptTsUndoBufferSizeWithUndoBufferSizeSymOptEqualSizeNumber_c3a58cf7 
         $writer->append('UNDO_BUFFER_SIZE');
         $this->optEqual->write($writer);
         $this->sizeNumber->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->sizeNumber);
+    }
+
+    /**
+     * Returns a copy with a new sizeNumber, preserving every other field.
+     */
+    public function withSizeNumber(\SqlSemantics\Statement\Model\MySql\Role\SizeNumberForm $sizeNumber): self
+    {
+        return new self($this->optEqual, $sizeNumber);
     }
 }

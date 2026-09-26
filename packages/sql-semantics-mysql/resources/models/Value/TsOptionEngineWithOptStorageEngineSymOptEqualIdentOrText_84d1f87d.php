@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TsOptionEngineWithOptStorageEngineSymOptEqualIdentOrText_84d1f87d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TsOptionEngineWithOptStorageEngineSymOptEqualIdentOrText_84d1f87d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TsOptionEngineWithOptStorageEngineSymOptEqualIdentOrText_84d1f87d implements \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionForm, \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionForm, \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsListForm, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionForm, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterLogfileGroupOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptDropTsOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptTablespaceOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptUndoTablespaceOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionForm, \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\TsOptionEngineForm, \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionForm, \SqlSemantics\Statement\Model\MySql\Role\UndoTablespaceOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TsOptionEngineWithOptStorageEngineSymOptEqualIdentOrText_84d1f87d im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optStorage), 'The optStorage must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class TsOptionEngineWithOptStorageEngineSymOptEqualIdentOrText_84d1f87d im
         $writer->append('ENGINE');
         $this->optEqual->write($writer);
         $this->identOrText->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optStorage, preserving every other field.
+     */
+    public function withOptStorage(\SqlSemantics\Statement\Model\MySql\Role\OptStorageForm $optStorage): self
+    {
+        return new self($optStorage, $this->optEqual, $this->identOrText);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($this->optStorage, $optEqual, $this->identOrText);
+    }
+
+    /**
+     * Returns a copy with a new identOrText, preserving every other field.
+     */
+    public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
+    {
+        return new self($this->optStorage, $this->optEqual, $identOrText);
     }
 }

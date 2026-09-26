@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SetlistWithLpIdlistRpEqExpr_1ebc160f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SetlistWithLpIdlistRpEqExpr_1ebc160f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetlistWithLpIdlistRpEqExpr_1ebc160f implements \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SetlistWithLpIdlistRpEqExpr_1ebc160f implements \SqlSemantics\Statem
         public readonly string $eq,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($idlist), 'The idlist must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($eq, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['EQ'], 'The eq must be a complete EQ lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class SetlistWithLpIdlistRpEqExpr_1ebc160f implements \SqlSemantics\Statem
         $writer->append(')');
         $writer->append($this->eq);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new idlist, preserving every other field.
+     */
+    public function withIdlist(\SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist): self
+    {
+        return new self($idlist, $this->eq, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new eq, preserving every other field.
+     */
+    public function withEq(string $eq): self
+    {
+        return new self($this->idlist, $eq, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($this->idlist, $this->eq, $expr);
     }
 }

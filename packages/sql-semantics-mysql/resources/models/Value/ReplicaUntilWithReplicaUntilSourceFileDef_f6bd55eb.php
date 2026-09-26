@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplicaUntilWithReplicaUntilSourceFileDef_f6bd55eb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplicaUntilWithReplicaUntilSourceFileDef_f6bd55eb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReplicaUntilWithReplicaUntilSourceFileDef_f6bd55eb implements \SqlSemantics\Statement\Model\MySql\Role\ReplicaUntilForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ReplicaUntilWithReplicaUntilSourceFileDef_f6bd55eb implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReplicaUntilForm $replicaUntil,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceFileDefForm $sourceFileDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replicaUntil), 'The replicaUntil must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceFileDef), 'The sourceFileDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ReplicaUntilWithReplicaUntilSourceFileDef_f6bd55eb implements \SqlSe
         $this->replicaUntil->write($writer);
         $writer->append(',');
         $this->sourceFileDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new replicaUntil, preserving every other field.
+     */
+    public function withReplicaUntil(\SqlSemantics\Statement\Model\MySql\Role\ReplicaUntilForm $replicaUntil): self
+    {
+        return new self($replicaUntil, $this->sourceFileDef);
+    }
+
+    /**
+     * Returns a copy with a new sourceFileDef, preserving every other field.
+     */
+    public function withSourceFileDef(\SqlSemantics\Statement\Model\MySql\Role\SourceFileDefForm $sourceFileDef): self
+    {
+        return new self($this->replicaUntil, $sourceFileDef);
     }
 }

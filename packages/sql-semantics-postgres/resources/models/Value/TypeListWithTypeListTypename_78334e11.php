@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypeListWithTypeListTypename_78334e11 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypeListWithTypeListTypename_78334e11 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeListWithTypeListTypename_78334e11 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypeListWithTypeListTypename_78334e11 implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm $typeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeList), 'The typeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TypeListWithTypeListTypename_78334e11 implements \SqlSemantics\State
         $this->typeList->write($writer);
         $writer->append(',');
         $this->typename->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new typeList, preserving every other field.
+     */
+    public function withTypeList(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeListForm $typeList): self
+    {
+        return new self($typeList, $this->typename);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->typeList, $typename);
     }
 }

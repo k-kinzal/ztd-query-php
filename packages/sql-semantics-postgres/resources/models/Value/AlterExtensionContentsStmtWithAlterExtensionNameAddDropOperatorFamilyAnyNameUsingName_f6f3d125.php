@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorFamilyAnyNameUsingName_f6f3d125 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorFamilyAnyNameUsingName_f6f3d125 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorFamilyAnyNameUsingName_f6f3d125 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionContentsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorFamilyAnyNameUsingName_f6f3d125 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionContentsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorFamil
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($addDrop), 'The addDrop must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name2), 'The name2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +45,37 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropOperatorFamil
         $this->anyName->write($writer);
         $writer->append('USING');
         $this->name2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->addDrop, $this->anyName, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new addDrop, preserving every other field.
+     */
+    public function withAddDrop(\SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop): self
+    {
+        return new self($this->name, $addDrop, $this->anyName, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($this->name, $this->addDrop, $anyName, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new name2, preserving every other field.
+     */
+    public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
+    {
+        return new self($this->name, $this->addDrop, $this->anyName, $name2);
     }
 }

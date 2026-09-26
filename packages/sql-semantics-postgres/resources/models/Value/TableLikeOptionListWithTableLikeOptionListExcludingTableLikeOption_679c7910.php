@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableLikeOptionListWithTableLikeOptionListExcludingTableLikeOption_679c7910 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableLikeOptionListWithTableLikeOptionListExcludingTableLikeOption_679c7910 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableLikeOptionListWithTableLikeOptionListExcludingTableLikeOption_679c7910 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableLikeOptionListWithTableLikeOptionListExcludingTableLikeOption_6
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeOptionListForm $tableLikeOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeOptionForm $tableLikeOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableLikeOptionList), 'The tableLikeOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableLikeOption), 'The tableLikeOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableLikeOptionListWithTableLikeOptionListExcludingTableLikeOption_6
         $this->tableLikeOptionList->write($writer);
         $writer->append('EXCLUDING');
         $this->tableLikeOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableLikeOptionList, preserving every other field.
+     */
+    public function withTableLikeOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeOptionListForm $tableLikeOptionList): self
+    {
+        return new self($tableLikeOptionList, $this->tableLikeOption);
+    }
+
+    /**
+     * Returns a copy with a new tableLikeOption, preserving every other field.
+     */
+    public function withTableLikeOption(\SqlSemantics\Statement\Model\PostgreSql\Role\TableLikeOptionForm $tableLikeOption): self
+    {
+        return new self($this->tableLikeOptionList, $tableLikeOption);
     }
 }

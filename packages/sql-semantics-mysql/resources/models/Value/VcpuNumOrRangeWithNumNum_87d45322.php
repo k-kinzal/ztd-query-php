@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VcpuNumOrRangeWithNumNum_87d45322 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\VcpuNumOrRangeWithNumNum_87d45322 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VcpuNumOrRangeWithNumNum_87d45322 implements \SqlSemantics\Statement\Model\MySql\Role\VcpuNumOrRangeForm, \SqlSemantics\Statement\Model\MySql\Role\VcpuRangeSpecListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class VcpuNumOrRangeWithNumNum_87d45322 implements \SqlSemantics\Statement
         public readonly string $value,
         public readonly string $value2,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value must be a complete NUM lexical spelling.');
+        $this->assertMatchesPattern($value2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['NUM'], 'The value2 must be a complete NUM lexical spelling.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class VcpuNumOrRangeWithNumNum_87d45322 implements \SqlSemantics\Statement
         $writer->append($this->value);
         $writer->append('-');
         $writer->append($this->value2);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value, $this->value2);
+    }
+
+    /**
+     * Returns a copy with a new value2, preserving every other field.
+     */
+    public function withValue2(string $value2): self
+    {
+        return new self($this->value, $value2);
     }
 }

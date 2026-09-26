@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPassingClauseOptColumnsJ_ed7685d5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPassingClauseOptColumnsJ_ed7685d5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPassingClauseOptColumnsJ_ed7685d5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonOnErrorClauseOptForm $jsonOnErrorClauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTablePathNameOpt), 'The jsonTablePathNameOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonPassingClauseOpt), 'The jsonPassingClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTableColumnDefinitionList), 'The jsonTableColumnDefinitionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonOnErrorClauseOpt), 'The jsonOnErrorClauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -45,5 +53,53 @@ final class JsonTableWithJsonTableJsonValueExprAExprJsonTablePathNameOptJsonPass
         $writer->append(')');
         $this->jsonOnErrorClauseOpt->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new jsonValueExpr, preserving every other field.
+     */
+    public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
+    {
+        return new self($jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->jsonValueExpr, $aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonTablePathNameOpt, preserving every other field.
+     */
+    public function withJsonTablePathNameOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTablePathNameOptForm $jsonTablePathNameOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonPassingClauseOpt, preserving every other field.
+     */
+    public function withJsonPassingClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm $jsonPassingClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonTableColumnDefinitionList, preserving every other field.
+     */
+    public function withJsonTableColumnDefinitionList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm $jsonTableColumnDefinitionList): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $jsonTableColumnDefinitionList, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonOnErrorClauseOpt, preserving every other field.
+     */
+    public function withJsonOnErrorClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonOnErrorClauseOptForm $jsonOnErrorClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonTablePathNameOpt, $this->jsonPassingClauseOpt, $this->jsonTableColumnDefinitionList, $jsonOnErrorClauseOpt);
     }
 }

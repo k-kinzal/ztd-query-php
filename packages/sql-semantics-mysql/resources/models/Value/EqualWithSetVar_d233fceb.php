@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EqualWithSetVar_d233fceb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EqualWithSetVar_d233fceb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EqualWithSetVar_d233fceb implements \SqlSemantics\Statement\Model\MySql\Role\EqualForm, \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $setVar,
     ) {
+        $this->assertMatchesPattern($setVar, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['SET_VAR'], 'The setVar must be a complete SET_VAR lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class EqualWithSetVar_d233fceb implements \SqlSemantics\Statement\Model\My
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->setVar);
+    }
+
+    /**
+     * Returns a copy with a new setVar, preserving every other field.
+     */
+    public function withSetVar(string $setVar): self
+    {
+        return new self($setVar);
     }
 }

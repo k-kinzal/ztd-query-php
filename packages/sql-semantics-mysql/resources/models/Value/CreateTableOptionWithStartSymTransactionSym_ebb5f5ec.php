@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionWithStartSymTransactionSym_ebb5f5ec $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionWithStartSymTransactionSym_ebb5f5ec $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateTableOptionWithStartSymTransactionSym_ebb5f5ec implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm

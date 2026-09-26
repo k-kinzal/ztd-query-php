@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 implements \SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 implement
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($trnm), 'The trnm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($tridxby), 'The tridxby must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scanpt), 'The scanpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 implement
         $this->tridxby->write($writer);
         $this->where->write($writer);
         $this->scanpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new trnm, preserving every other field.
+     */
+    public function withTrnm(\SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm $trnm): self
+    {
+        return new self($trnm, $this->tridxby, $this->where, $this->scanpt);
+    }
+
+    /**
+     * Returns a copy with a new tridxby, preserving every other field.
+     */
+    public function withTridxby(\SqlSemantics\Statement\Model\Sqlite\Role\TridxbyForm $tridxby): self
+    {
+        return new self($this->trnm, $tridxby, $this->where, $this->scanpt);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
+    {
+        return new self($this->trnm, $this->tridxby, $where, $this->scanpt);
+    }
+
+    /**
+     * Returns a copy with a new scanpt, preserving every other field.
+     */
+    public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self
+    {
+        return new self($this->trnm, $this->tridxby, $this->where, $scanpt);
     }
 }

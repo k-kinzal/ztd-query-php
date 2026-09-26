@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FetchArgsWithFromInCursorName_95a6a6c1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FetchArgsWithFromInCursorName_95a6a6c1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FetchArgsWithFromInCursorName_95a6a6c1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FetchArgsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FetchArgsWithFromInCursorName_95a6a6c1 implements \SqlSemantics\Stat
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FromInForm $fromIn,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($fromIn), 'The fromIn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cursorName), 'The cursorName must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FetchArgsWithFromInCursorName_95a6a6c1 implements \SqlSemantics\Stat
     {
         $this->fromIn->write($writer);
         $this->cursorName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fromIn, preserving every other field.
+     */
+    public function withFromIn(\SqlSemantics\Statement\Model\PostgreSql\Role\FromInForm $fromIn): self
+    {
+        return new self($fromIn, $this->cursorName);
+    }
+
+    /**
+     * Returns a copy with a new cursorName, preserving every other field.
+     */
+    public function withCursorName(\SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName): self
+    {
+        return new self($this->fromIn, $cursorName);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceCompressionAlgorithmEqTextStringSys_f8f85925 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceCompressionAlgorithmEqTextStringSys_f8f85925 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithChangeReplicationSourceCompressionAlgorithmEqTextStringSys_f8f85925 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefWithChangeReplicationSourceCompressionAlgorithmEqTextString
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceCompressionAlgorithmForm $changeReplicationSourceCompressionAlgorithm,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceCompressionAlgorithm), 'The changeReplicationSourceCompressionAlgorithm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefWithChangeReplicationSourceCompressionAlgorithmEqTextString
         $this->changeReplicationSourceCompressionAlgorithm->write($writer);
         $writer->append('=');
         $this->textStringSys->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeReplicationSourceCompressionAlgorithm, preserving every other field.
+     */
+    public function withChangeReplicationSourceCompressionAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceCompressionAlgorithmForm $changeReplicationSourceCompressionAlgorithm): self
+    {
+        return new self($changeReplicationSourceCompressionAlgorithm, $this->textStringSys);
+    }
+
+    /**
+     * Returns a copy with a new textStringSys, preserving every other field.
+     */
+    public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
+    {
+        return new self($this->changeReplicationSourceCompressionAlgorithm, $textStringSys);
     }
 }

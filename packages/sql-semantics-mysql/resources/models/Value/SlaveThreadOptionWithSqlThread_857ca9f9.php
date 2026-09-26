@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveThreadOptionWithSqlThread_857ca9f9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveThreadOptionWithSqlThread_857ca9f9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveThreadOptionWithSqlThread_857ca9f9 implements \SqlSemantics\Statement\Model\MySql\Role\OptSlaveThreadOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionForm, \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionListForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AliasClauseWithAsColIdNameList_4903bd3a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AliasClauseWithAsColIdNameList_4903bd3a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AliasClauseWithAsColIdNameList_4903bd3a implements \SqlSemantics\Statement\Model\PostgreSql\Role\AliasClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAliasClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AliasClauseWithAsColIdNameList_4903bd3a implements \SqlSemantics\Sta
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nameList), 'The nameList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class AliasClauseWithAsColIdNameList_4903bd3a implements \SqlSemantics\Sta
         $writer->append('(');
         $this->nameList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->nameList);
+    }
+
+    /**
+     * Returns a copy with a new nameList, preserving every other field.
+     */
+    public function withNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList): self
+    {
+        return new self($this->colId, $nameList);
     }
 }

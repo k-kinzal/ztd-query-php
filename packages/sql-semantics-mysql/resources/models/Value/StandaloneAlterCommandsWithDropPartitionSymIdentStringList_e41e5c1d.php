@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithDropPartitionSymIdentStringList_e41e5c1d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithDropPartitionSymIdentStringList_e41e5c1d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StandaloneAlterCommandsWithDropPartitionSymIdentStringList_e41e5c1d implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentStringListForm $identStringList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identStringList), 'The identStringList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class StandaloneAlterCommandsWithDropPartitionSymIdentStringList_e41e5c1d 
         $writer->append('DROP');
         $writer->append('PARTITION');
         $this->identStringList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identStringList, preserving every other field.
+     */
+    public function withIdentStringList(\SqlSemantics\Statement\Model\MySql\Role\IdentStringListForm $identStringList): self
+    {
+        return new self($identStringList);
     }
 }

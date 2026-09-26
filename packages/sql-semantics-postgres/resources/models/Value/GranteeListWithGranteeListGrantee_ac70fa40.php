@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GranteeListWithGranteeListGrantee_ac70fa40 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GranteeListWithGranteeListGrantee_ac70fa40 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GranteeListWithGranteeListGrantee_ac70fa40 implements \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GranteeListWithGranteeListGrantee_ac70fa40 implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm $granteeList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeForm $grantee,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($granteeList), 'The granteeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($grantee), 'The grantee must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GranteeListWithGranteeListGrantee_ac70fa40 implements \SqlSemantics\
         $this->granteeList->write($writer);
         $writer->append(',');
         $this->grantee->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new granteeList, preserving every other field.
+     */
+    public function withGranteeList(\SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm $granteeList): self
+    {
+        return new self($granteeList, $this->grantee);
+    }
+
+    /**
+     * Returns a copy with a new grantee, preserving every other field.
+     */
+    public function withGrantee(\SqlSemantics\Statement\Model\PostgreSql\Role\GranteeForm $grantee): self
+    {
+        return new self($this->granteeList, $grantee);
     }
 }

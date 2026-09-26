@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncTypeWithTypeFunctionNameAttrsTypeP_268248d7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncTypeWithTypeFunctionNameAttrsTypeP_268248d7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncTypeWithTypeFunctionNameAttrsTypeP_268248d7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgWithDefaultForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsWithDefaultsListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncReturnForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncTypeWithTypeFunctionNameAttrsTypeP_268248d7 implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm $typeFunctionName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeFunctionName), 'The typeFunctionName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($attrs), 'The attrs must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class FuncTypeWithTypeFunctionNameAttrsTypeP_268248d7 implements \SqlSeman
         $this->attrs->write($writer);
         $writer->append('%');
         $writer->append('TYPE');
+    }
+
+    /**
+     * Returns a copy with a new typeFunctionName, preserving every other field.
+     */
+    public function withTypeFunctionName(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm $typeFunctionName): self
+    {
+        return new self($typeFunctionName, $this->attrs);
+    }
+
+    /**
+     * Returns a copy with a new attrs, preserving every other field.
+     */
+    public function withAttrs(\SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs): self
+    {
+        return new self($this->typeFunctionName, $attrs);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartOptionListWithPartOptionListPartOption_1a58106d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartOptionListWithPartOptionListPartOption_1a58106d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartOptionListWithPartOptionListPartOption_1a58106d implements \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\PartOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartOptionListWithPartOptionListPartOption_1a58106d implements \SqlS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartOptionListForm $partOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartOptionForm $partOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partOptionList), 'The partOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partOption), 'The partOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class PartOptionListWithPartOptionListPartOption_1a58106d implements \SqlS
     {
         $this->partOptionList->write($writer);
         $this->partOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new partOptionList, preserving every other field.
+     */
+    public function withPartOptionList(\SqlSemantics\Statement\Model\MySql\Role\PartOptionListForm $partOptionList): self
+    {
+        return new self($partOptionList, $this->partOption);
+    }
+
+    /**
+     * Returns a copy with a new partOption, preserving every other field.
+     */
+    public function withPartOption(\SqlSemantics\Statement\Model\MySql\Role\PartOptionForm $partOption): self
+    {
+        return new self($this->partOptionList, $partOption);
     }
 }

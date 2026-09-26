@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 implements \Sql
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnDefForm $columnDef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm $optPlace,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($addColumn), 'The addColumn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnDef), 'The columnDef must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPlace), 'The optPlace must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class AlterListItemWithAddColumnColumnDefOptPlace_4b1261e2 implements \Sql
         $this->addColumn->write($writer);
         $this->columnDef->write($writer);
         $this->optPlace->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new addColumn, preserving every other field.
+     */
+    public function withAddColumn(\SqlSemantics\Statement\Model\MySql\Role\AddColumnForm $addColumn): self
+    {
+        return new self($addColumn, $this->columnDef, $this->optPlace);
+    }
+
+    /**
+     * Returns a copy with a new columnDef, preserving every other field.
+     */
+    public function withColumnDef(\SqlSemantics\Statement\Model\MySql\Role\ColumnDefForm $columnDef): self
+    {
+        return new self($this->addColumn, $columnDef, $this->optPlace);
+    }
+
+    /**
+     * Returns a copy with a new optPlace, preserving every other field.
+     */
+    public function withOptPlace(\SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm $optPlace): self
+    {
+        return new self($this->addColumn, $this->columnDef, $optPlace);
     }
 }

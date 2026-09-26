@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyUsingAlgWithTypeSymBtreeOrRtree_16fe46ac $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyUsingAlgWithTypeSymBtreeOrRtree_16fe46ac $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyUsingAlgWithTypeSymBtreeOrRtree_16fe46ac implements \SqlSemantics\Statement\Model\MySql\Role\KeyUsingAlgForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BtreeOrRtreeForm $btreeOrRtree,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($btreeOrRtree), 'The btreeOrRtree must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class KeyUsingAlgWithTypeSymBtreeOrRtree_16fe46ac implements \SqlSemantics
     {
         $writer->append('TYPE');
         $this->btreeOrRtree->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new btreeOrRtree, preserving every other field.
+     */
+    public function withBtreeOrRtree(\SqlSemantics\Statement\Model\MySql\Role\BtreeOrRtreeForm $btreeOrRtree): self
+    {
+        return new self($btreeOrRtree);
     }
 }

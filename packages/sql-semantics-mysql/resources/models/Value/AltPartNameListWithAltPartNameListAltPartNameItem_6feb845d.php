@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AltPartNameListWithAltPartNameListAltPartNameItem_6feb845d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AltPartNameListWithAltPartNameListAltPartNameItem_6feb845d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AltPartNameListWithAltPartNameListAltPartNameItem_6feb845d implements \SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm, \SqlSemantics\Statement\Model\MySql\Role\AltPartNameListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AltPartNameListWithAltPartNameListAltPartNameItem_6feb845d implement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AltPartNameListForm $altPartNameList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AltPartNameItemForm $altPartNameItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($altPartNameList), 'The altPartNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($altPartNameItem), 'The altPartNameItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AltPartNameListWithAltPartNameListAltPartNameItem_6feb845d implement
         $this->altPartNameList->write($writer);
         $writer->append(',');
         $this->altPartNameItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new altPartNameList, preserving every other field.
+     */
+    public function withAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AltPartNameListForm $altPartNameList): self
+    {
+        return new self($altPartNameList, $this->altPartNameItem);
+    }
+
+    /**
+     * Returns a copy with a new altPartNameItem, preserving every other field.
+     */
+    public function withAltPartNameItem(\SqlSemantics\Statement\Model\MySql\Role\AltPartNameItemForm $altPartNameItem): self
+    {
+        return new self($this->altPartNameList, $altPartNameItem);
     }
 }

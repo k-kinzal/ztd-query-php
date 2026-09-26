@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OrderListWithOrderListOrderIdentOrderDir_4356e4aa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OrderListWithOrderListOrderIdentOrderDir_4356e4aa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OrderListWithOrderListOrderIdentOrderDir_4356e4aa implements \SqlSemantics\Statement\Model\MySql\Role\OrderListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OrderListWithOrderListOrderIdentOrderDir_4356e4aa implements \SqlSem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm $orderIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderList), 'The orderList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderIdent), 'The orderIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderDir), 'The orderDir must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class OrderListWithOrderListOrderIdentOrderDir_4356e4aa implements \SqlSem
         $writer->append(',');
         $this->orderIdent->write($writer);
         $this->orderDir->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new orderList, preserving every other field.
+     */
+    public function withOrderList(\SqlSemantics\Statement\Model\MySql\Role\OrderListForm $orderList): self
+    {
+        return new self($orderList, $this->orderIdent, $this->orderDir);
+    }
+
+    /**
+     * Returns a copy with a new orderIdent, preserving every other field.
+     */
+    public function withOrderIdent(\SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm $orderIdent): self
+    {
+        return new self($this->orderList, $orderIdent, $this->orderDir);
+    }
+
+    /**
+     * Returns a copy with a new orderDir, preserving every other field.
+     */
+    public function withOrderDir(\SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir): self
+    {
+        return new self($this->orderList, $this->orderIdent, $orderDir);
     }
 }

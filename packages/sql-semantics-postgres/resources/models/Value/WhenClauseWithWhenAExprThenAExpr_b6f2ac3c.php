@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\WhenClauseWithWhenAExprThenAExpr_b6f2ac3c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\WhenClauseWithWhenAExprThenAExpr_b6f2ac3c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WhenClauseWithWhenAExprThenAExpr_b6f2ac3c implements \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WhenClauseWithWhenAExprThenAExpr_b6f2ac3c implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr2), 'The aExpr2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class WhenClauseWithWhenAExprThenAExpr_b6f2ac3c implements \SqlSemantics\S
         $this->aExpr->write($writer);
         $writer->append('THEN');
         $this->aExpr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($aExpr, $this->aExpr2);
+    }
+
+    /**
+     * Returns a copy with a new aExpr2, preserving every other field.
+     */
+    public function withAExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr2): self
+    {
+        return new self($this->aExpr, $aExpr2);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithAddColumnCreateFieldList_2d7e8e00 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithAddColumnCreateFieldList_2d7e8e00 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithAddColumnCreateFieldList_2d7e8e00 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterListItemWithAddColumnCreateFieldList_2d7e8e00 implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AddColumnForm $addColumn,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm $createFieldList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($addColumn), 'The addColumn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createFieldList), 'The createFieldList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AlterListItemWithAddColumnCreateFieldList_2d7e8e00 implements \SqlSe
         $writer->append('(');
         $this->createFieldList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new addColumn, preserving every other field.
+     */
+    public function withAddColumn(\SqlSemantics\Statement\Model\MySql\Role\AddColumnForm $addColumn): self
+    {
+        return new self($addColumn, $this->createFieldList);
+    }
+
+    /**
+     * Returns a copy with a new createFieldList, preserving every other field.
+     */
+    public function withCreateFieldList(\SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm $createFieldList): self
+    {
+        return new self($this->addColumn, $createFieldList);
     }
 }

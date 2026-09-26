@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetClauseListWithSetClauseListSetClause_fdcdf250 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetClauseListWithSetClauseListSetClause_fdcdf250 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetClauseListWithSetClauseListSetClause_fdcdf250 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SetClauseListWithSetClauseListSetClause_fdcdf250 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseForm $setClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setClauseList), 'The setClauseList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setClause), 'The setClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SetClauseListWithSetClauseListSetClause_fdcdf250 implements \SqlSema
         $this->setClauseList->write($writer);
         $writer->append(',');
         $this->setClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setClauseList, preserving every other field.
+     */
+    public function withSetClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList): self
+    {
+        return new self($setClauseList, $this->setClause);
+    }
+
+    /**
+     * Returns a copy with a new setClause, preserving every other field.
+     */
+    public function withSetClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseForm $setClause): self
+    {
+        return new self($this->setClauseList, $setClause);
     }
 }

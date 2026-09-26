@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JoinedTableWithTableRefNaturalJoinTableRef_aad2e35c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JoinedTableWithTableRefNaturalJoinTableRef_aad2e35c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinedTableWithTableRefNaturalJoinTableRef_aad2e35c implements \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JoinedTableForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JoinedTableWithTableRefNaturalJoinTableRef_aad2e35c implements \SqlS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableRef), 'The tableRef must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableRef2), 'The tableRef2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class JoinedTableWithTableRefNaturalJoinTableRef_aad2e35c implements \SqlS
         $writer->append('NATURAL');
         $writer->append('JOIN');
         $this->tableRef2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableRef, preserving every other field.
+     */
+    public function withTableRef(\SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef): self
+    {
+        return new self($tableRef, $this->tableRef2);
+    }
+
+    /**
+     * Returns a copy with a new tableRef2, preserving every other field.
+     */
+    public function withTableRef2(\SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm $tableRef2): self
+    {
+        return new self($this->tableRef, $tableRef2);
     }
 }

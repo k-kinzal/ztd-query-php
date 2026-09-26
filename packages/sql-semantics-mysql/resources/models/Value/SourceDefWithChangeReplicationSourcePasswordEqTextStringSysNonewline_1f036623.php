@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourcePasswordEqTextStringSysNonewline_1f036623 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourcePasswordEqTextStringSysNonewline_1f036623 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithChangeReplicationSourcePasswordEqTextStringSysNonewline_1f036623 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefWithChangeReplicationSourcePasswordEqTextStringSysNonewline
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourcePasswordForm $changeReplicationSourcePassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourcePassword), 'The changeReplicationSourcePassword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefWithChangeReplicationSourcePasswordEqTextStringSysNonewline
         $this->changeReplicationSourcePassword->write($writer);
         $writer->append('=');
         $this->textStringSysNonewline->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeReplicationSourcePassword, preserving every other field.
+     */
+    public function withChangeReplicationSourcePassword(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourcePasswordForm $changeReplicationSourcePassword): self
+    {
+        return new self($changeReplicationSourcePassword, $this->textStringSysNonewline);
+    }
+
+    /**
+     * Returns a copy with a new textStringSysNonewline, preserving every other field.
+     */
+    public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
+    {
+        return new self($this->changeReplicationSourcePassword, $textStringSysNonewline);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpDeclWithDeclareSymSpDeclIdentsTypeOptCollateSpOptDefault_cbb5608b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpDeclWithDeclareSymSpDeclIdentsTypeOptCollateSpOptDefault_cbb5608b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpDeclWithDeclareSymSpDeclIdentsTypeOptCollateSpOptDefault_cbb5608b implements \SqlSemantics\Statement\Model\MySql\Role\SpDeclForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SpDeclWithDeclareSymSpDeclIdentsTypeOptCollateSpOptDefault_cbb5608b 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpOptDefaultForm $spOptDefault,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spDeclIdents), 'The spDeclIdents must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($type), 'The type must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spOptDefault), 'The spOptDefault must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class SpDeclWithDeclareSymSpDeclIdentsTypeOptCollateSpOptDefault_cbb5608b 
         $this->type->write($writer);
         $this->optCollate->write($writer);
         $this->spOptDefault->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spDeclIdents, preserving every other field.
+     */
+    public function withSpDeclIdents(\SqlSemantics\Statement\Model\MySql\Role\SpDeclIdentsForm $spDeclIdents): self
+    {
+        return new self($spDeclIdents, $this->type, $this->optCollate, $this->spOptDefault);
+    }
+
+    /**
+     * Returns a copy with a new type, preserving every other field.
+     */
+    public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
+    {
+        return new self($this->spDeclIdents, $type, $this->optCollate, $this->spOptDefault);
+    }
+
+    /**
+     * Returns a copy with a new optCollate, preserving every other field.
+     */
+    public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
+    {
+        return new self($this->spDeclIdents, $this->type, $optCollate, $this->spOptDefault);
+    }
+
+    /**
+     * Returns a copy with a new spOptDefault, preserving every other field.
+     */
+    public function withSpOptDefault(\SqlSemantics\Statement\Model\MySql\Role\SpOptDefaultForm $spOptDefault): self
+    {
+        return new self($this->spDeclIdents, $this->type, $this->optCollate, $spOptDefault);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptFrameClauseWithRangeFrameExtentOptWindowExclusionClause_43f411df $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptFrameClauseWithRangeFrameExtentOptWindowExclusionClause_43f411df $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptFrameClauseWithRangeFrameExtentOptWindowExclusionClause_43f411df implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptFrameClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptFrameClauseWithRangeFrameExtentOptWindowExclusionClause_43f411df 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FrameExtentForm $frameExtent,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWindowExclusionClauseForm $optWindowExclusionClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($frameExtent), 'The frameExtent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWindowExclusionClause), 'The optWindowExclusionClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptFrameClauseWithRangeFrameExtentOptWindowExclusionClause_43f411df 
         $writer->append('RANGE');
         $this->frameExtent->write($writer);
         $this->optWindowExclusionClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new frameExtent, preserving every other field.
+     */
+    public function withFrameExtent(\SqlSemantics\Statement\Model\PostgreSql\Role\FrameExtentForm $frameExtent): self
+    {
+        return new self($frameExtent, $this->optWindowExclusionClause);
+    }
+
+    /**
+     * Returns a copy with a new optWindowExclusionClause, preserving every other field.
+     */
+    public function withOptWindowExclusionClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWindowExclusionClauseForm $optWindowExclusionClause): self
+    {
+        return new self($this->frameExtent, $optWindowExclusionClause);
     }
 }

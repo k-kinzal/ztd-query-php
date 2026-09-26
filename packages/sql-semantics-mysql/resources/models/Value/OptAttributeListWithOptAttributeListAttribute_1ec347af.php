@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAttributeListWithOptAttributeListAttribute_1ec347af $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAttributeListWithOptAttributeListAttribute_1ec347af $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptAttributeListWithOptAttributeListAttribute_1ec347af implements \SqlSemantics\Statement\Model\MySql\Role\OptAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptAttributeListWithOptAttributeListAttribute_1ec347af implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm $optAttributeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AttributeForm $attribute,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAttributeList), 'The optAttributeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($attribute), 'The attribute must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptAttributeListWithOptAttributeListAttribute_1ec347af implements \S
     {
         $this->optAttributeList->write($writer);
         $this->attribute->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optAttributeList, preserving every other field.
+     */
+    public function withOptAttributeList(\SqlSemantics\Statement\Model\MySql\Role\OptAttributeListForm $optAttributeList): self
+    {
+        return new self($optAttributeList, $this->attribute);
+    }
+
+    /**
+     * Returns a copy with a new attribute, preserving every other field.
+     */
+    public function withAttribute(\SqlSemantics\Statement\Model\MySql\Role\AttributeForm $attribute): self
+    {
+        return new self($this->optAttributeList, $attribute);
     }
 }

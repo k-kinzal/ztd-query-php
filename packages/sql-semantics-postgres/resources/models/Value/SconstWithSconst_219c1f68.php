@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SconstWithSconst_219c1f68 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SconstWithSconst_219c1f68 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SconstWithSconst_219c1f68 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AexprConstForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordOrSconstForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SconstForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DostmtOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DostmtOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\EnumValListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExtractArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FileNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptBooleanOrStringForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptEncodingForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptEnumValListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SecurityLabelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ZoneValueForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $value,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['SCONST'], 'The value must be a complete SCONST lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class SconstWithSconst_219c1f68 implements \SqlSemantics\Statement\Model\P
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value);
     }
 }

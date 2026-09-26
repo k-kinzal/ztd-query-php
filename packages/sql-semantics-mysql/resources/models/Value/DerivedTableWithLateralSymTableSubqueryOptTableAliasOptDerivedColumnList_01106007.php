@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DerivedTableWithLateralSymTableSubqueryOptTableAliasOptDerivedColumnList_01106007 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DerivedTableWithLateralSymTableSubqueryOptTableAliasOptDerivedColumnList_01106007 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DerivedTableWithLateralSymTableSubqueryOptTableAliasOptDerivedColumnList_01106007 implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableForm, \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class DerivedTableWithLateralSymTableSubqueryOptTableAliasOptDerivedColumn
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableSubquery), 'The tableSubquery must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableAlias), 'The optTableAlias must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDerivedColumnList), 'The optDerivedColumnList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class DerivedTableWithLateralSymTableSubqueryOptTableAliasOptDerivedColumn
         $this->tableSubquery->write($writer);
         $this->optTableAlias->write($writer);
         $this->optDerivedColumnList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableSubquery, preserving every other field.
+     */
+    public function withTableSubquery(\SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery): self
+    {
+        return new self($tableSubquery, $this->optTableAlias, $this->optDerivedColumnList);
+    }
+
+    /**
+     * Returns a copy with a new optTableAlias, preserving every other field.
+     */
+    public function withOptTableAlias(\SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias): self
+    {
+        return new self($this->tableSubquery, $optTableAlias, $this->optDerivedColumnList);
+    }
+
+    /**
+     * Returns a copy with a new optDerivedColumnList, preserving every other field.
+     */
+    public function withOptDerivedColumnList(\SqlSemantics\Statement\Model\MySql\Role\OptDerivedColumnListForm $optDerivedColumnList): self
+    {
+        return new self($this->tableSubquery, $this->optTableAlias, $optDerivedColumnList);
     }
 }

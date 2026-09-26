@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldSpecWithFieldIdentFieldDef_0d136d86 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldSpecWithFieldIdentFieldDef_0d136d86 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldSpecWithFieldIdentFieldDef_0d136d86 implements \SqlSemantics\Statement\Model\MySql\Role\FieldSpecForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FieldSpecWithFieldIdentFieldDef_0d136d86 implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldDefForm $fieldDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldIdent), 'The fieldIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldDef), 'The fieldDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FieldSpecWithFieldIdentFieldDef_0d136d86 implements \SqlSemantics\St
     {
         $this->fieldIdent->write($writer);
         $this->fieldDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fieldIdent, preserving every other field.
+     */
+    public function withFieldIdent(\SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent): self
+    {
+        return new self($fieldIdent, $this->fieldDef);
+    }
+
+    /**
+     * Returns a copy with a new fieldDef, preserving every other field.
+     */
+    public function withFieldDef(\SqlSemantics\Statement\Model\MySql\Role\FieldDefForm $fieldDef): self
+    {
+        return new self($this->fieldIdent, $fieldDef);
     }
 }

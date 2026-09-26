@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\XidWithTextStringTextString_966ae52f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\XidWithTextStringTextString_966ae52f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XidWithTextStringTextString_966ae52f implements \SqlSemantics\Statement\Model\MySql\Role\XidForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class XidWithTextStringTextString_966ae52f implements \SqlSemantics\Statem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textString), 'The textString must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textString2), 'The textString2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class XidWithTextStringTextString_966ae52f implements \SqlSemantics\Statem
         $this->textString->write($writer);
         $writer->append(',');
         $this->textString2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textString, preserving every other field.
+     */
+    public function withTextString(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString): self
+    {
+        return new self($textString, $this->textString2);
+    }
+
+    /**
+     * Returns a copy with a new textString2, preserving every other field.
+     */
+    public function withTextString2(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString2): self
+    {
+        return new self($this->textString, $textString2);
     }
 }

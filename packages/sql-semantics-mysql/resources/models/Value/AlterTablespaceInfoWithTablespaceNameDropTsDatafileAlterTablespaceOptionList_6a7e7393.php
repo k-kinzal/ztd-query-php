@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTablespaceInfoWithTablespaceNameDropTsDatafileAlterTablespaceOptionList_6a7e7393 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterTablespaceInfoWithTablespaceNameDropTsDatafileAlterTablespaceOptionList_6a7e7393 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTablespaceInfoWithTablespaceNameDropTsDatafileAlterTablespaceOptionList_6a7e7393 implements \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceInfoForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterTablespaceInfoWithTablespaceNameDropTsDatafileAlterTablespaceOp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionListForm $alterTablespaceOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceName), 'The tablespaceName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tsDatafile), 'The tsDatafile must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterTablespaceOptionList), 'The alterTablespaceOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class AlterTablespaceInfoWithTablespaceNameDropTsDatafileAlterTablespaceOp
         $writer->append('DROP');
         $this->tsDatafile->write($writer);
         $this->alterTablespaceOptionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tablespaceName, preserving every other field.
+     */
+    public function withTablespaceName(\SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm $tablespaceName): self
+    {
+        return new self($tablespaceName, $this->tsDatafile, $this->alterTablespaceOptionList);
+    }
+
+    /**
+     * Returns a copy with a new tsDatafile, preserving every other field.
+     */
+    public function withTsDatafile(\SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile): self
+    {
+        return new self($this->tablespaceName, $tsDatafile, $this->alterTablespaceOptionList);
+    }
+
+    /**
+     * Returns a copy with a new alterTablespaceOptionList, preserving every other field.
+     */
+    public function withAlterTablespaceOptionList(\SqlSemantics\Statement\Model\MySql\Role\AlterTablespaceOptionListForm $alterTablespaceOptionList): self
+    {
+        return new self($this->tablespaceName, $this->tsDatafile, $alterTablespaceOptionList);
     }
 }

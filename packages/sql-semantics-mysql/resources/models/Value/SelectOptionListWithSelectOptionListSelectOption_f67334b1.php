@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectOptionListWithSelectOptionListSelectOption_f67334b1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectOptionListWithSelectOptionListSelectOption_f67334b1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectOptionListWithSelectOptionListSelectOption_f67334b1 implements \SqlSemantics\Statement\Model\MySql\Role\SelectOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelectOptionListWithSelectOptionListSelectOption_f67334b1 implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionListForm $selectOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionForm $selectOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectOptionList), 'The selectOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectOption), 'The selectOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SelectOptionListWithSelectOptionListSelectOption_f67334b1 implements
     {
         $this->selectOptionList->write($writer);
         $this->selectOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectOptionList, preserving every other field.
+     */
+    public function withSelectOptionList(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionListForm $selectOptionList): self
+    {
+        return new self($selectOptionList, $this->selectOption);
+    }
+
+    /**
+     * Returns a copy with a new selectOption, preserving every other field.
+     */
+    public function withSelectOption(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionForm $selectOption): self
+    {
+        return new self($this->selectOptionList, $selectOption);
     }
 }

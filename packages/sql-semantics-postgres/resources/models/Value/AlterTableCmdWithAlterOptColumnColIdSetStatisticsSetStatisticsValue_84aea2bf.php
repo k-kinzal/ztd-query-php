@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_84aea2bf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_84aea2bf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_84aea2bf implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetStatisticsValueForm $setStatisticsValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setStatisticsValue), 'The setStatisticsValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class AlterTableCmdWithAlterOptColumnColIdSetStatisticsSetStatisticsValue_
         $writer->append('SET');
         $writer->append('STATISTICS');
         $this->setStatisticsValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optColumn, preserving every other field.
+     */
+    public function withOptColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn): self
+    {
+        return new self($optColumn, $this->colId, $this->setStatisticsValue);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($this->optColumn, $colId, $this->setStatisticsValue);
+    }
+
+    /**
+     * Returns a copy with a new setStatisticsValue, preserving every other field.
+     */
+    public function withSetStatisticsValue(\SqlSemantics\Statement\Model\PostgreSql\Role\SetStatisticsValueForm $setStatisticsValue): self
+    {
+        return new self($this->optColumn, $this->colId, $setStatisticsValue);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterLogfileGroupOptionListWith_73c5b21f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterLogfileGroupOptionListWith_73c5b21f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterLogfileGroupOptionListWith_73c5b21f implements \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterLogfileGroupOptionsForm

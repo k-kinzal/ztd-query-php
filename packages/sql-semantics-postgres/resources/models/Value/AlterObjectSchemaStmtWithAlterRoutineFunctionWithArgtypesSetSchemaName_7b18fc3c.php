@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterObjectSchemaStmtWithAlterRoutineFunctionWithArgtypesSetSchemaName_7b18fc3c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterObjectSchemaStmtWithAlterRoutineFunctionWithArgtypesSetSchemaName_7b18fc3c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterObjectSchemaStmtWithAlterRoutineFunctionWithArgtypesSetSchemaName_7b18fc3c implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterObjectSchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterObjectSchemaStmtWithAlterRoutineFunctionWithArgtypesSetSchemaName_7b18fc3c implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterObjectSchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterObjectSchemaStmtWithAlterRoutineFunctionWithArgtypesSetSchemaNa
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes), 'The functionWithArgtypes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class AlterObjectSchemaStmtWithAlterRoutineFunctionWithArgtypesSetSchemaNa
         $writer->append('SET');
         $writer->append('SCHEMA');
         $this->name->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new functionWithArgtypes, preserving every other field.
+     */
+    public function withFunctionWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes): self
+    {
+        return new self($functionWithArgtypes, $this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->functionWithArgtypes, $name);
     }
 }

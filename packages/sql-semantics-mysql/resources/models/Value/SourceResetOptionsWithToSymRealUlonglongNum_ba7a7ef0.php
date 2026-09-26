@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceResetOptionsWithToSymRealUlonglongNum_ba7a7ef0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceResetOptionsWithToSymRealUlonglongNum_ba7a7ef0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceResetOptionsWithToSymRealUlonglongNum_ba7a7ef0 implements \SqlSemantics\Statement\Model\MySql\Role\SourceResetOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlonglongNum), 'The realUlonglongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SourceResetOptionsWithToSymRealUlonglongNum_ba7a7ef0 implements \Sql
     {
         $writer->append('TO');
         $this->realUlonglongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new realUlonglongNum, preserving every other field.
+     */
+    public function withRealUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum): self
+    {
+        return new self($realUlonglongNum);
     }
 }

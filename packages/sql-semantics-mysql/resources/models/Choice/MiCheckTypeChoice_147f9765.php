@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\MiCheckTypeChoice_147f9765 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\MiCheckTypeChoice_147f9765 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum MiCheckTypeChoice_147f9765: string implements \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypeForm, \SqlSemantics\Statement\Model\MySql\Role\MiCheckTypesForm, \SqlSemantics\Statement\Model\MySql\Role\OptMiCheckTypeForm, \SqlSemantics\Statement\Model\MySql\Role\OptMiCheckTypesForm

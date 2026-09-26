@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConstraintKeyTypeWithUniqueSymOptKeyOrIndex_3b62040c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConstraintKeyTypeWithUniqueSymOptKeyOrIndex_3b62040c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConstraintKeyTypeWithUniqueSymOptKeyOrIndex_3b62040c implements \SqlSemantics\Statement\Model\MySql\Role\ConstraintKeyTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm $optKeyOrIndex,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyOrIndex), 'The optKeyOrIndex must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ConstraintKeyTypeWithUniqueSymOptKeyOrIndex_3b62040c implements \Sql
     {
         $writer->append('UNIQUE');
         $this->optKeyOrIndex->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optKeyOrIndex, preserving every other field.
+     */
+    public function withOptKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm $optKeyOrIndex): self
+    {
+        return new self($optKeyOrIndex);
     }
 }

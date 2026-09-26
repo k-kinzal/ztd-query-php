@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentification_b7c61ea1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentification_b7c61ea1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentification_b7c61ea1 implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserForm, \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentif
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($factor), 'The factor must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identification), 'The identification must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($factor2), 'The factor2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identification2), 'The identification2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +45,45 @@ final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentif
         $writer->append('MODIFY');
         $this->factor2->write($writer);
         $this->identification2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->factor, $this->identification, $this->factor2, $this->identification2);
+    }
+
+    /**
+     * Returns a copy with a new factor, preserving every other field.
+     */
+    public function withFactor(\SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor): self
+    {
+        return new self($this->user, $factor, $this->identification, $this->factor2, $this->identification2);
+    }
+
+    /**
+     * Returns a copy with a new identification, preserving every other field.
+     */
+    public function withIdentification(\SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification): self
+    {
+        return new self($this->user, $this->factor, $identification, $this->factor2, $this->identification2);
+    }
+
+    /**
+     * Returns a copy with a new factor2, preserving every other field.
+     */
+    public function withFactor2(\SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor2): self
+    {
+        return new self($this->user, $this->factor, $this->identification, $factor2, $this->identification2);
+    }
+
+    /**
+     * Returns a copy with a new identification2, preserving every other field.
+     */
+    public function withIdentification2(\SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification2): self
+    {
+        return new self($this->user, $this->factor, $this->identification, $this->factor2, $identification2);
     }
 }

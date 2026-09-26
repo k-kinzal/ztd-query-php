@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionOptionWithDistinct_59b3ced1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionOptionWithDistinct_59b3ced1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QueryExpressionOptionWithDistinct_59b3ced1 implements \SqlSemantics\Statement\Model\MySql\Role\OptQueryExpressionOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionForm, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionForm, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $distinct,
     ) {
+        $this->assertMatchesPattern($distinct, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DISTINCT'], 'The distinct must be a complete DISTINCT lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class QueryExpressionOptionWithDistinct_59b3ced1 implements \SqlSemantics\
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->distinct);
+    }
+
+    /**
+     * Returns a copy with a new distinct, preserving every other field.
+     */
+    public function withDistinct(string $distinct): self
+    {
+        return new self($distinct);
     }
 }

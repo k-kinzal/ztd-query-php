@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GetDiagnosticsWithGetSymWhichAreaDiagnosticsSymDiagnosticsInformation_146255d5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GetDiagnosticsWithGetSymWhichAreaDiagnosticsSymDiagnosticsInformation_146255d5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class GetDiagnosticsWithGetSymWhichAreaDiagnosticsSymDiagnosticsInformation_146255d5 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\GetDiagnosticsForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class GetDiagnosticsWithGetSymWhichAreaDiagnosticsSymDiagnosticsInformation_146255d5 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\GetDiagnosticsForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GetDiagnosticsWithGetSymWhichAreaDiagnosticsSymDiagnosticsInformatio
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WhichAreaForm $whichArea,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DiagnosticsInformationForm $diagnosticsInformation,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($whichArea), 'The whichArea must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($diagnosticsInformation), 'The diagnosticsInformation must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class GetDiagnosticsWithGetSymWhichAreaDiagnosticsSymDiagnosticsInformatio
         $this->whichArea->write($writer);
         $writer->append('DIAGNOSTICS');
         $this->diagnosticsInformation->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new whichArea, preserving every other field.
+     */
+    public function withWhichArea(\SqlSemantics\Statement\Model\MySql\Role\WhichAreaForm $whichArea): self
+    {
+        return new self($whichArea, $this->diagnosticsInformation);
+    }
+
+    /**
+     * Returns a copy with a new diagnosticsInformation, preserving every other field.
+     */
+    public function withDiagnosticsInformation(\SqlSemantics\Statement\Model\MySql\Role\DiagnosticsInformationForm $diagnosticsInformation): self
+    {
+        return new self($this->whichArea, $diagnosticsInformation);
     }
 }

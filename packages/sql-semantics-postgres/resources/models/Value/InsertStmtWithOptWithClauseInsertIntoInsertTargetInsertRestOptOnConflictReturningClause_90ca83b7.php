@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConflictReturningClause_90ca83b7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConflictReturningClause_90ca83b7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConflictReturningClause_90ca83b7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConflictReturningClause_90ca83b7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\InsertStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionMultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RuleActionStmtOrEmptyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOnConflictForm $optOnConflict,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($insertTarget), 'The insertTarget must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($insertRest), 'The insertRest must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOnConflict), 'The optOnConflict must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($returningClause), 'The returningClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +45,45 @@ final class InsertStmtWithOptWithClauseInsertIntoInsertTargetInsertRestOptOnConf
         $this->insertRest->write($writer);
         $this->optOnConflict->write($writer);
         $this->returningClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new with, preserving every other field.
+     */
+    public function withWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithClauseForm $with): self
+    {
+        return new self($with, $this->insertTarget, $this->insertRest, $this->optOnConflict, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new insertTarget, preserving every other field.
+     */
+    public function withInsertTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertTargetForm $insertTarget): self
+    {
+        return new self($this->with, $insertTarget, $this->insertRest, $this->optOnConflict, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new insertRest, preserving every other field.
+     */
+    public function withInsertRest(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm $insertRest): self
+    {
+        return new self($this->with, $this->insertTarget, $insertRest, $this->optOnConflict, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new optOnConflict, preserving every other field.
+     */
+    public function withOptOnConflict(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOnConflictForm $optOnConflict): self
+    {
+        return new self($this->with, $this->insertTarget, $this->insertRest, $optOnConflict, $this->returningClause);
+    }
+
+    /**
+     * Returns a copy with a new returningClause, preserving every other field.
+     */
+    public function withReturningClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ReturningClauseForm $returningClause): self
+    {
+        return new self($this->with, $this->insertTarget, $this->insertRest, $this->optOnConflict, $returningClause);
     }
 }

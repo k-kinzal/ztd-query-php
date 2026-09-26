@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetRestMoreWithSessionAuthorizationNonReservedWordOrSconst_cf7ab55e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetRestMoreWithSessionAuthorizationNonReservedWordOrSconst_cf7ab55e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetRestMoreWithSessionAuthorizationNonReservedWordOrSconst_cf7ab55e implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestMoreForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordOrSconstForm $nonReservedWordOrSconst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nonReservedWordOrSconst), 'The nonReservedWordOrSconst must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SetRestMoreWithSessionAuthorizationNonReservedWordOrSconst_cf7ab55e 
         $writer->append('SESSION');
         $writer->append('AUTHORIZATION');
         $this->nonReservedWordOrSconst->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nonReservedWordOrSconst, preserving every other field.
+     */
+    public function withNonReservedWordOrSconst(\SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordOrSconstForm $nonReservedWordOrSconst): self
+    {
+        return new self($nonReservedWordOrSconst);
     }
 }

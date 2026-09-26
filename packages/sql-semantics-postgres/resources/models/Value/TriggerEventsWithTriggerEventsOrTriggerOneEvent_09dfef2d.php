@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerEventsWithTriggerEventsOrTriggerOneEvent_09dfef2d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerEventsWithTriggerEventsOrTriggerOneEvent_09dfef2d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerEventsWithTriggerEventsOrTriggerOneEvent_09dfef2d implements \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerEventsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TriggerEventsWithTriggerEventsOrTriggerOneEvent_09dfef2d implements 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerEventsForm $triggerEvents,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerOneEventForm $triggerOneEvent,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerEvents), 'The triggerEvents must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerOneEvent), 'The triggerOneEvent must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TriggerEventsWithTriggerEventsOrTriggerOneEvent_09dfef2d implements 
         $this->triggerEvents->write($writer);
         $writer->append('OR');
         $this->triggerOneEvent->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new triggerEvents, preserving every other field.
+     */
+    public function withTriggerEvents(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerEventsForm $triggerEvents): self
+    {
+        return new self($triggerEvents, $this->triggerOneEvent);
+    }
+
+    /**
+     * Returns a copy with a new triggerOneEvent, preserving every other field.
+     */
+    public function withTriggerOneEvent(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerOneEventForm $triggerOneEvent): self
+    {
+        return new self($this->triggerEvents, $triggerOneEvent);
     }
 }

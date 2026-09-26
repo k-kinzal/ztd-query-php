@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeOpt_4d98dc77 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeOpt_4d98dc77 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeOpt_4d98dc77 implements \SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm, \SqlSemantics\Statement\Model\Sqlite\Role\WindowForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeO
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundEForm $frameBoundE,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameExcludeOptForm $frameExcludeOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($rangeOrRows), 'The rangeOrRows must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($frameBoundS), 'The frameBoundS must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($frameBoundE), 'The frameBoundE must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($frameExcludeOpt), 'The frameExcludeOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeO
         $writer->append('AND');
         $this->frameBoundE->write($writer);
         $this->frameExcludeOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new rangeOrRows, preserving every other field.
+     */
+    public function withRangeOrRows(\SqlSemantics\Statement\Model\Sqlite\Role\RangeOrRowsForm $rangeOrRows): self
+    {
+        return new self($rangeOrRows, $this->frameBoundS, $this->frameBoundE, $this->frameExcludeOpt);
+    }
+
+    /**
+     * Returns a copy with a new frameBoundS, preserving every other field.
+     */
+    public function withFrameBoundS(\SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundSForm $frameBoundS): self
+    {
+        return new self($this->rangeOrRows, $frameBoundS, $this->frameBoundE, $this->frameExcludeOpt);
+    }
+
+    /**
+     * Returns a copy with a new frameBoundE, preserving every other field.
+     */
+    public function withFrameBoundE(\SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundEForm $frameBoundE): self
+    {
+        return new self($this->rangeOrRows, $this->frameBoundS, $frameBoundE, $this->frameExcludeOpt);
+    }
+
+    /**
+     * Returns a copy with a new frameExcludeOpt, preserving every other field.
+     */
+    public function withFrameExcludeOpt(\SqlSemantics\Statement\Model\Sqlite\Role\FrameExcludeOptForm $frameExcludeOpt): self
+    {
+        return new self($this->rangeOrRows, $this->frameBoundS, $this->frameBoundE, $frameExcludeOpt);
     }
 }

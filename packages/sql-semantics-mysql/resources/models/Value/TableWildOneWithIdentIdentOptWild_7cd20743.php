@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableWildOneWithIdentIdentOptWild_7cd20743 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableWildOneWithIdentIdentOptWild_7cd20743 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableWildOneWithIdentIdentOptWild_7cd20743 implements \SqlSemantics\Statement\Model\MySql\Role\TableWildListForm, \SqlSemantics\Statement\Model\MySql\Role\TableWildOneForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TableWildOneWithIdentIdentOptWild_7cd20743 implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildForm $optWild,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident2), 'The ident2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWild), 'The optWild must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class TableWildOneWithIdentIdentOptWild_7cd20743 implements \SqlSemantics\
         $writer->append('.');
         $this->ident2->write($writer);
         $this->optWild->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->ident2, $this->optWild);
+    }
+
+    /**
+     * Returns a copy with a new ident2, preserving every other field.
+     */
+    public function withIdent2(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident2): self
+    {
+        return new self($this->ident, $ident2, $this->optWild);
+    }
+
+    /**
+     * Returns a copy with a new optWild, preserving every other field.
+     */
+    public function withOptWild(\SqlSemantics\Statement\Model\MySql\Role\OptWildForm $optWild): self
+    {
+        return new self($this->ident, $this->ident2, $optWild);
     }
 }

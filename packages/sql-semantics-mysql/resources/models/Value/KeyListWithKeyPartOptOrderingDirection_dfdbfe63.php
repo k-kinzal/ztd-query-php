@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyListWithKeyPartOptOrderingDirection_dfdbfe63 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyListWithKeyPartOptOrderingDirection_dfdbfe63 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyListWithKeyPartOptOrderingDirection_dfdbfe63 implements \SqlSemantics\Statement\Model\MySql\Role\KeyListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class KeyListWithKeyPartOptOrderingDirection_dfdbfe63 implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyPartForm $keyPart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderingDirectionForm $optOrderingDirection,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyPart), 'The keyPart must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOrderingDirection), 'The optOrderingDirection must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class KeyListWithKeyPartOptOrderingDirection_dfdbfe63 implements \SqlSeman
     {
         $this->keyPart->write($writer);
         $this->optOrderingDirection->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keyPart, preserving every other field.
+     */
+    public function withKeyPart(\SqlSemantics\Statement\Model\MySql\Role\KeyPartForm $keyPart): self
+    {
+        return new self($keyPart, $this->optOrderingDirection);
+    }
+
+    /**
+     * Returns a copy with a new optOrderingDirection, preserving every other field.
+     */
+    public function withOptOrderingDirection(\SqlSemantics\Statement\Model\MySql\Role\OptOrderingDirectionForm $optOrderingDirection): self
+    {
+        return new self($this->keyPart, $optOrderingDirection);
     }
 }

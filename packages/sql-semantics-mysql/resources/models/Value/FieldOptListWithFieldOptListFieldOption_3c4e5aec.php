@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldOptListWithFieldOptListFieldOption_3c4e5aec $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldOptListWithFieldOptListFieldOption_3c4e5aec $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldOptListWithFieldOptListFieldOption_3c4e5aec implements \SqlSemantics\Statement\Model\MySql\Role\FieldOptListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FieldOptListWithFieldOptListFieldOption_3c4e5aec implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptListForm $fieldOptList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptionForm $fieldOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOptList), 'The fieldOptList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOption), 'The fieldOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FieldOptListWithFieldOptListFieldOption_3c4e5aec implements \SqlSema
     {
         $this->fieldOptList->write($writer);
         $this->fieldOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fieldOptList, preserving every other field.
+     */
+    public function withFieldOptList(\SqlSemantics\Statement\Model\MySql\Role\FieldOptListForm $fieldOptList): self
+    {
+        return new self($fieldOptList, $this->fieldOption);
+    }
+
+    /**
+     * Returns a copy with a new fieldOption, preserving every other field.
+     */
+    public function withFieldOption(\SqlSemantics\Statement\Model\MySql\Role\FieldOptionForm $fieldOption): self
+    {
+        return new self($this->fieldOptList, $fieldOption);
     }
 }

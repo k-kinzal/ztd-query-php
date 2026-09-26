@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\JoinopWithJoinKwNmJoin_869cddff $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\JoinopWithJoinKwNmJoin_869cddff $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinopWithJoinKwNmJoin_869cddff implements \SqlSemantics\Statement\Model\Sqlite\Role\JoinopForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JoinopWithJoinKwNmJoin_869cddff implements \SqlSemantics\Statement\M
         public readonly string $joinKw,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
     ) {
+        $this->assertMatchesPattern($joinKw, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['JOIN_KW'], 'The joinKw must be a complete JOIN_KW lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class JoinopWithJoinKwNmJoin_869cddff implements \SqlSemantics\Statement\M
         $writer->append($this->joinKw);
         $this->nm->write($writer);
         $writer->append('JOIN');
+    }
+
+    /**
+     * Returns a copy with a new joinKw, preserving every other field.
+     */
+    public function withJoinKw(string $joinKw): self
+    {
+        return new self($joinKw, $this->nm);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->joinKw, $nm);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableNameWithOptUsePartitionWithTableIdentOptUsePartition_28a69737 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableNameWithOptUsePartitionWithTableIdentOptUsePartition_28a69737 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableNameWithOptUsePartitionWithTableIdentOptUsePartition_28a69737 implements \SqlSemantics\Statement\Model\MySql\Role\Insert2Form, \SqlSemantics\Statement\Model\MySql\Role\InsertTableForm, \SqlSemantics\Statement\Model\MySql\Role\TableNameWithOptUsePartitionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableNameWithOptUsePartitionWithTableIdentOptUsePartition_28a69737 i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUsePartition), 'The optUsePartition must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TableNameWithOptUsePartitionWithTableIdentOptUsePartition_28a69737 i
     {
         $this->tableIdent->write($writer);
         $this->optUsePartition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->optUsePartition);
+    }
+
+    /**
+     * Returns a copy with a new optUsePartition, preserving every other field.
+     */
+    public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
+    {
+        return new self($this->tableIdent, $optUsePartition);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateEventTrigStmtWithCreateEventTriggerNameOnColLabelWhenEventTriggerWhenListExecuteFunctionOrPr_77392c81 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateEventTrigStmtWithCreateEventTriggerNameOnColLabelWhenEventTriggerWhenListExecuteFunctionOrPr_77392c81 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateEventTrigStmtWithCreateEventTriggerNameOnColLabelWhenEventTriggerWhenListExecuteFunctionOrPr_77392c81 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateEventTrigStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateEventTrigStmtWithCreateEventTriggerNameOnColLabelWhenEventTriggerWhenListExecuteFunctionOrPr_77392c81 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateEventTrigStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class CreateEventTrigStmtWithCreateEventTriggerNameOnColLabelWhenEventTrig
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionOrProcedureForm $functionOrProcedure,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($eventTriggerWhenList), 'The eventTriggerWhenList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionOrProcedure), 'The functionOrProcedure must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcName), 'The funcName must be a generated immutable SQL value.');
     }
 
     /**
@@ -44,5 +51,45 @@ final class CreateEventTrigStmtWithCreateEventTriggerNameOnColLabelWhenEventTrig
         $this->funcName->write($writer);
         $writer->append('(');
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->colLabel, $this->eventTriggerWhenList, $this->functionOrProcedure, $this->funcName);
+    }
+
+    /**
+     * Returns a copy with a new colLabel, preserving every other field.
+     */
+    public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
+    {
+        return new self($this->name, $colLabel, $this->eventTriggerWhenList, $this->functionOrProcedure, $this->funcName);
+    }
+
+    /**
+     * Returns a copy with a new eventTriggerWhenList, preserving every other field.
+     */
+    public function withEventTriggerWhenList(\SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenListForm $eventTriggerWhenList): self
+    {
+        return new self($this->name, $this->colLabel, $eventTriggerWhenList, $this->functionOrProcedure, $this->funcName);
+    }
+
+    /**
+     * Returns a copy with a new functionOrProcedure, preserving every other field.
+     */
+    public function withFunctionOrProcedure(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionOrProcedureForm $functionOrProcedure): self
+    {
+        return new self($this->name, $this->colLabel, $this->eventTriggerWhenList, $functionOrProcedure, $this->funcName);
+    }
+
+    /**
+     * Returns a copy with a new funcName, preserving every other field.
+     */
+    public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
+    {
+        return new self($this->name, $this->colLabel, $this->eventTriggerWhenList, $this->functionOrProcedure, $funcName);
     }
 }

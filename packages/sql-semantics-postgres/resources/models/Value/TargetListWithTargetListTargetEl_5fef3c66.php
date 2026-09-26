@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TargetListWithTargetListTargetEl_5fef3c66 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TargetListWithTargetListTargetEl_5fef3c66 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TargetListWithTargetListTargetEl_5fef3c66 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TargetListWithTargetListTargetEl_5fef3c66 implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm $projections,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm $targetEl,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($targetEl), 'The targetEl must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TargetListWithTargetListTargetEl_5fef3c66 implements \SqlSemantics\S
         $this->projections->write($writer);
         $writer->append(',');
         $this->targetEl->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm $projections): self
+    {
+        return new self($projections, $this->targetEl);
+    }
+
+    /**
+     * Returns a copy with a new targetEl, preserving every other field.
+     */
+    public function withTargetEl(\SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm $targetEl): self
+    {
+        return new self($this->projections, $targetEl);
     }
 }

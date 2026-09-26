@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceSslEqUlongNum_2d59d3e5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourceSslEqUlongNum_2d59d3e5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithChangeReplicationSourceSslEqUlongNum_2d59d3e5 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefWithChangeReplicationSourceSslEqUlongNum_2d59d3e5 implement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslForm $changeReplicationSourceSsl,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceSsl), 'The changeReplicationSourceSsl must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefWithChangeReplicationSourceSslEqUlongNum_2d59d3e5 implement
         $this->changeReplicationSourceSsl->write($writer);
         $writer->append('=');
         $this->ulongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeReplicationSourceSsl, preserving every other field.
+     */
+    public function withChangeReplicationSourceSsl(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslForm $changeReplicationSourceSsl): self
+    {
+        return new self($changeReplicationSourceSsl, $this->ulongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulongNum, preserving every other field.
+     */
+    public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
+    {
+        return new self($this->changeReplicationSourceSsl, $ulongNum);
     }
 }

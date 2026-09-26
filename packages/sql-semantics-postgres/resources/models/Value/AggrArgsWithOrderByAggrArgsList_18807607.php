@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AggrArgsWithOrderByAggrArgsList_18807607 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AggrArgsWithOrderByAggrArgsList_18807607 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AggrArgsWithOrderByAggrArgsList_18807607 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggrArgsList), 'The aggrArgsList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +35,13 @@ final class AggrArgsWithOrderByAggrArgsList_18807607 implements \SqlSemantics\St
         $writer->append('BY');
         $this->aggrArgsList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new aggrArgsList, preserving every other field.
+     */
+    public function withAggrArgsList(\SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsListForm $aggrArgsList): self
+    {
+        return new self($aggrArgsList);
     }
 }

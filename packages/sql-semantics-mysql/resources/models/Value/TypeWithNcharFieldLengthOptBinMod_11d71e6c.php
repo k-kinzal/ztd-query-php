@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithNcharFieldLengthOptBinMod_11d71e6c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithNcharFieldLengthOptBinMod_11d71e6c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithNcharFieldLengthOptBinMod_11d71e6c implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TypeWithNcharFieldLengthOptBinMod_11d71e6c implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($nchar), 'The nchar must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldLength), 'The fieldLength must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinMod), 'The optBinMod must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TypeWithNcharFieldLengthOptBinMod_11d71e6c implements \SqlSemantics\
         $this->nchar->write($writer);
         $this->fieldLength->write($writer);
         $this->optBinMod->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nchar, preserving every other field.
+     */
+    public function withNchar(\SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar): self
+    {
+        return new self($nchar, $this->fieldLength, $this->optBinMod);
+    }
+
+    /**
+     * Returns a copy with a new fieldLength, preserving every other field.
+     */
+    public function withFieldLength(\SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength): self
+    {
+        return new self($this->nchar, $fieldLength, $this->optBinMod);
+    }
+
+    /**
+     * Returns a copy with a new optBinMod, preserving every other field.
+     */
+    public function withOptBinMod(\SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod): self
+    {
+        return new self($this->nchar, $this->fieldLength, $optBinMod);
     }
 }

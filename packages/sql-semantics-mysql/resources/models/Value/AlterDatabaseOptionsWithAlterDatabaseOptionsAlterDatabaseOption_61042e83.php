@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterDatabaseOptionsWithAlterDatabaseOptionsAlterDatabaseOption_61042e83 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterDatabaseOptionsWithAlterDatabaseOptionsAlterDatabaseOption_61042e83 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterDatabaseOptionsWithAlterDatabaseOptionsAlterDatabaseOption_61042e83 implements \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterDatabaseOptionsWithAlterDatabaseOptionsAlterDatabaseOption_6104
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm $alterDatabaseOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionForm $alterDatabaseOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterDatabaseOptions), 'The alterDatabaseOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterDatabaseOption), 'The alterDatabaseOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AlterDatabaseOptionsWithAlterDatabaseOptionsAlterDatabaseOption_6104
     {
         $this->alterDatabaseOptions->write($writer);
         $this->alterDatabaseOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterDatabaseOptions, preserving every other field.
+     */
+    public function withAlterDatabaseOptions(\SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm $alterDatabaseOptions): self
+    {
+        return new self($alterDatabaseOptions, $this->alterDatabaseOption);
+    }
+
+    /**
+     * Returns a copy with a new alterDatabaseOption, preserving every other field.
+     */
+    public function withAlterDatabaseOption(\SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionForm $alterDatabaseOption): self
+    {
+        return new self($this->alterDatabaseOptions, $alterDatabaseOption);
     }
 }

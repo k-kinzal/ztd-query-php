@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceFileDefWithSourceLogFileEqTextStringSysNonewline_5cdeb6bb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceFileDefWithSourceLogFileEqTextStringSysNonewline_5cdeb6bb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceFileDefWithSourceLogFileEqTextStringSysNonewline_5cdeb6bb implements \SqlSemantics\Statement\Model\MySql\Role\ReplicaUntilForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm, \SqlSemantics\Statement\Model\MySql\Role\SourceFileDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceFileDefWithSourceLogFileEqTextStringSysNonewline_5cdeb6bb impl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceLogFileForm $sourceLogFile,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceLogFile), 'The sourceLogFile must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceFileDefWithSourceLogFileEqTextStringSysNonewline_5cdeb6bb impl
         $this->sourceLogFile->write($writer);
         $writer->append('=');
         $this->textStringSysNonewline->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sourceLogFile, preserving every other field.
+     */
+    public function withSourceLogFile(\SqlSemantics\Statement\Model\MySql\Role\SourceLogFileForm $sourceLogFile): self
+    {
+        return new self($sourceLogFile, $this->textStringSysNonewline);
+    }
+
+    /**
+     * Returns a copy with a new textStringSysNonewline, preserving every other field.
+     */
+    public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
+    {
+        return new self($this->sourceLogFile, $textStringSysNonewline);
     }
 }

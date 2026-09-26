@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameBetweenWithBetweenSymWindowFrameBoundAndSymWindowFrameBound_ae4f992f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameBetweenWithBetweenSymWindowFrameBoundAndSymWindowFrameBound_ae4f992f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowFrameBetweenWithBetweenSymWindowFrameBoundAndSymWindowFrameBound_ae4f992f implements \SqlSemantics\Statement\Model\MySql\Role\WindowFrameBetweenForm, \SqlSemantics\Statement\Model\MySql\Role\WindowFrameExtentForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WindowFrameBetweenWithBetweenSymWindowFrameBoundAndSymWindowFrameBou
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowFrameBoundForm $windowFrameBound,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowFrameBoundForm $windowFrameBound2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowFrameBound), 'The windowFrameBound must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowFrameBound2), 'The windowFrameBound2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class WindowFrameBetweenWithBetweenSymWindowFrameBoundAndSymWindowFrameBou
         $this->windowFrameBound->write($writer);
         $writer->append('AND');
         $this->windowFrameBound2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new windowFrameBound, preserving every other field.
+     */
+    public function withWindowFrameBound(\SqlSemantics\Statement\Model\MySql\Role\WindowFrameBoundForm $windowFrameBound): self
+    {
+        return new self($windowFrameBound, $this->windowFrameBound2);
+    }
+
+    /**
+     * Returns a copy with a new windowFrameBound2, preserving every other field.
+     */
+    public function withWindowFrameBound2(\SqlSemantics\Statement\Model\MySql\Role\WindowFrameBoundForm $windowFrameBound2): self
+    {
+        return new self($this->windowFrameBound, $windowFrameBound2);
     }
 }

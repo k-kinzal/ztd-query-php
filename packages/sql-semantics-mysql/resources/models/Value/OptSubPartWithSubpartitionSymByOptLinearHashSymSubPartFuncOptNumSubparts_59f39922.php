@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubparts_59f39922 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubparts_59f39922 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubparts_59f39922 implements \SqlSemantics\Statement\Model\MySql\Role\OptSubPartForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartFuncForm $subPartFunc,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLinear), 'The optLinear must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subPartFunc), 'The subPartFunc must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNumSubparts), 'The optNumSubparts must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class OptSubPartWithSubpartitionSymByOptLinearHashSymSubPartFuncOptNumSubp
         $writer->append('HASH');
         $this->subPartFunc->write($writer);
         $this->optNumSubparts->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optLinear, preserving every other field.
+     */
+    public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self
+    {
+        return new self($optLinear, $this->subPartFunc, $this->optNumSubparts);
+    }
+
+    /**
+     * Returns a copy with a new subPartFunc, preserving every other field.
+     */
+    public function withSubPartFunc(\SqlSemantics\Statement\Model\MySql\Role\SubPartFuncForm $subPartFunc): self
+    {
+        return new self($this->optLinear, $subPartFunc, $this->optNumSubparts);
+    }
+
+    /**
+     * Returns a copy with a new optNumSubparts, preserving every other field.
+     */
+    public function withOptNumSubparts(\SqlSemantics\Statement\Model\MySql\Role\OptNumSubpartsForm $optNumSubparts): self
+    {
+        return new self($this->optLinear, $this->subPartFunc, $optNumSubparts);
     }
 }

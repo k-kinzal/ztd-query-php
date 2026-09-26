@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertFieldSpecWithInsertValues_8f731bb7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertFieldSpecWithInsertValues_8f731bb7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertFieldSpecWithInsertValues_8f731bb7 implements \SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertValuesForm $insertValues,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertValues), 'The insertValues must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class InsertFieldSpecWithInsertValues_8f731bb7 implements \SqlSemantics\St
         $writer->append('(');
         $writer->append(')');
         $this->insertValues->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new insertValues, preserving every other field.
+     */
+    public function withInsertValues(\SqlSemantics\Statement\Model\MySql\Role\InsertValuesForm $insertValues): self
+    {
+        return new self($insertValues);
     }
 }

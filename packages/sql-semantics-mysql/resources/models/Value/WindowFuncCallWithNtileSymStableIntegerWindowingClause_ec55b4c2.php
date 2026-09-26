@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFuncCallWithNtileSymStableIntegerWindowingClause_ec55b4c2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFuncCallWithNtileSymStableIntegerWindowingClause_ec55b4c2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowFuncCallWithNtileSymStableIntegerWindowingClause_ec55b4c2 implements \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm, \SqlSemantics\Statement\Model\MySql\Role\WindowFuncCallForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WindowFuncCallWithNtileSymStableIntegerWindowingClause_ec55b4c2 impl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StableIntegerForm $stableInteger,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($stableInteger), 'The stableInteger must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowingClause), 'The windowingClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class WindowFuncCallWithNtileSymStableIntegerWindowingClause_ec55b4c2 impl
         $this->stableInteger->write($writer);
         $writer->append(')');
         $this->windowingClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new stableInteger, preserving every other field.
+     */
+    public function withStableInteger(\SqlSemantics\Statement\Model\MySql\Role\StableIntegerForm $stableInteger): self
+    {
+        return new self($stableInteger, $this->windowingClause);
+    }
+
+    /**
+     * Returns a copy with a new windowingClause, preserving every other field.
+     */
+    public function withWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause): self
+    {
+        return new self($this->stableInteger, $windowingClause);
     }
 }

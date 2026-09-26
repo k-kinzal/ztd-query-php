@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptEqualResourceGroupTypesOptResourceG_b3fe291b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptEqualResourceGroupTypesOptResourceG_b3fe291b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptEqualResourceGroupTypesOptResourceG_b3fe291b implements \SqlSemantics\Statement\Model\MySql\Role\CreateResourceGroupStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptEqualResourceGroupTypesOptResourceG_b3fe291b implements \SqlSemantics\Statement\Model\MySql\Role\CreateResourceGroupStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupPriorityForm $optResourceGroupPriority,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupEnableDisableForm $optResourceGroupEnableDisable,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($resourceGroupTypes), 'The resourceGroupTypes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optResourceGroupVcpuList), 'The optResourceGroupVcpuList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optResourceGroupPriority), 'The optResourceGroupPriority must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optResourceGroupEnableDisable), 'The optResourceGroupEnableDisable must be a generated immutable SQL value.');
     }
 
     /**
@@ -42,5 +50,53 @@ final class CreateResourceGroupStmtWithCreateResourceSymGroupSymIdentTypeSymOptE
         $this->optResourceGroupVcpuList->write($writer);
         $this->optResourceGroupPriority->write($writer);
         $this->optResourceGroupEnableDisable->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($this->ident, $optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable);
+    }
+
+    /**
+     * Returns a copy with a new resourceGroupTypes, preserving every other field.
+     */
+    public function withResourceGroupTypes(\SqlSemantics\Statement\Model\MySql\Role\ResourceGroupTypesForm $resourceGroupTypes): self
+    {
+        return new self($this->ident, $this->optEqual, $resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable);
+    }
+
+    /**
+     * Returns a copy with a new optResourceGroupVcpuList, preserving every other field.
+     */
+    public function withOptResourceGroupVcpuList(\SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupVcpuListForm $optResourceGroupVcpuList): self
+    {
+        return new self($this->ident, $this->optEqual, $this->resourceGroupTypes, $optResourceGroupVcpuList, $this->optResourceGroupPriority, $this->optResourceGroupEnableDisable);
+    }
+
+    /**
+     * Returns a copy with a new optResourceGroupPriority, preserving every other field.
+     */
+    public function withOptResourceGroupPriority(\SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupPriorityForm $optResourceGroupPriority): self
+    {
+        return new self($this->ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $optResourceGroupPriority, $this->optResourceGroupEnableDisable);
+    }
+
+    /**
+     * Returns a copy with a new optResourceGroupEnableDisable, preserving every other field.
+     */
+    public function withOptResourceGroupEnableDisable(\SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupEnableDisableForm $optResourceGroupEnableDisable): self
+    {
+        return new self($this->ident, $this->optEqual, $this->resourceGroupTypes, $this->optResourceGroupVcpuList, $this->optResourceGroupPriority, $optResourceGroupEnableDisable);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOptCIncludeOptDefinitionOpt_c6d6ce90 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOptCIncludeOptDefinitionOpt_c6d6ce90 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOptCIncludeOptDefinitionOpt_c6d6ce90 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWhereClauseForm $optWhereClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($accessMethodClause), 'The accessMethodClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exclusionConstraintList), 'The exclusionConstraintList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCInclude), 'The optCInclude must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDefinition), 'The optDefinition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConsTableSpace), 'The optConsTableSpace must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWhereClause), 'The optWhereClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constraintAttributeSpec), 'The constraintAttributeSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -43,5 +52,61 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
         $this->optConsTableSpace->write($writer);
         $this->optWhereClause->write($writer);
         $this->constraintAttributeSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new accessMethodClause, preserving every other field.
+     */
+    public function withAccessMethodClause(\SqlSemantics\Statement\Model\PostgreSql\Role\AccessMethodClauseForm $accessMethodClause): self
+    {
+        return new self($accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec);
+    }
+
+    /**
+     * Returns a copy with a new exclusionConstraintList, preserving every other field.
+     */
+    public function withExclusionConstraintList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm $exclusionConstraintList): self
+    {
+        return new self($this->accessMethodClause, $exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec);
+    }
+
+    /**
+     * Returns a copy with a new optCInclude, preserving every other field.
+     */
+    public function withOptCInclude(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCIncludeForm $optCInclude): self
+    {
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec);
+    }
+
+    /**
+     * Returns a copy with a new optDefinition, preserving every other field.
+     */
+    public function withOptDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition): self
+    {
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec);
+    }
+
+    /**
+     * Returns a copy with a new optConsTableSpace, preserving every other field.
+     */
+    public function withOptConsTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm $optConsTableSpace): self
+    {
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec);
+    }
+
+    /**
+     * Returns a copy with a new optWhereClause, preserving every other field.
+     */
+    public function withOptWhereClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWhereClauseForm $optWhereClause): self
+    {
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $optWhereClause, $this->constraintAttributeSpec);
+    }
+
+    /**
+     * Returns a copy with a new constraintAttributeSpec, preserving every other field.
+     */
+    public function withConstraintAttributeSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec): self
+    {
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $constraintAttributeSpec);
     }
 }

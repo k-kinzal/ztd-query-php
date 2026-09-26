@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AssignToKeycacheWithTableIdentOptCacheKeyList_49e4a0ee $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AssignToKeycacheWithTableIdentOptCacheKeyList_49e4a0ee $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AssignToKeycacheWithTableIdentOptCacheKeyList_49e4a0ee implements \SqlSemantics\Statement\Model\MySql\Role\AssignToKeycacheForm, \SqlSemantics\Statement\Model\MySql\Role\KeycacheListForm, \SqlSemantics\Statement\Model\MySql\Role\KeycacheListOrPartsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AssignToKeycacheWithTableIdentOptCacheKeyList_49e4a0ee implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCacheKeyListForm $optCacheKeyList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCacheKeyList), 'The optCacheKeyList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AssignToKeycacheWithTableIdentOptCacheKeyList_49e4a0ee implements \S
     {
         $this->tableIdent->write($writer);
         $this->optCacheKeyList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->optCacheKeyList);
+    }
+
+    /**
+     * Returns a copy with a new optCacheKeyList, preserving every other field.
+     */
+    public function withOptCacheKeyList(\SqlSemantics\Statement\Model\MySql\Role\OptCacheKeyListForm $optCacheKeyList): self
+    {
+        return new self($this->tableIdent, $optCacheKeyList);
     }
 }

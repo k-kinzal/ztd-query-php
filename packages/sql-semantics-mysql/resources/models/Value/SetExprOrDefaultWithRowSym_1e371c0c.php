@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SetExprOrDefaultWithRowSym_1e371c0c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SetExprOrDefaultWithRowSym_1e371c0c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetExprOrDefaultWithRowSym_1e371c0c implements \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm

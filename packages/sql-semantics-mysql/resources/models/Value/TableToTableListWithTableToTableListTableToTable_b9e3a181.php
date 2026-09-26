@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableToTableListWithTableToTableListTableToTable_b9e3a181 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableToTableListWithTableToTableListTableToTable_b9e3a181 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableToTableListWithTableToTableListTableToTable_b9e3a181 implements \SqlSemantics\Statement\Model\MySql\Role\TableToTableListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableToTableListWithTableToTableListTableToTable_b9e3a181 implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableToTableListForm $tableToTableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableToTableForm $tableToTable,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableToTableList), 'The tableToTableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableToTable), 'The tableToTable must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableToTableListWithTableToTableListTableToTable_b9e3a181 implements
         $this->tableToTableList->write($writer);
         $writer->append(',');
         $this->tableToTable->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableToTableList, preserving every other field.
+     */
+    public function withTableToTableList(\SqlSemantics\Statement\Model\MySql\Role\TableToTableListForm $tableToTableList): self
+    {
+        return new self($tableToTableList, $this->tableToTable);
+    }
+
+    /**
+     * Returns a copy with a new tableToTable, preserving every other field.
+     */
+    public function withTableToTable(\SqlSemantics\Statement\Model\MySql\Role\TableToTableForm $tableToTable): self
+    {
+        return new self($this->tableToTableList, $tableToTable);
     }
 }

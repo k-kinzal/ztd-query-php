@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameBoundWithIntervalSymExprIntervalFollowingSym_3e3315a7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameBoundWithIntervalSymExprIntervalFollowingSym_3e3315a7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowFrameBoundWithIntervalSymExprIntervalFollowingSym_3e3315a7 implements \SqlSemantics\Statement\Model\MySql\Role\WindowFrameBoundForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WindowFrameBoundWithIntervalSymExprIntervalFollowingSym_3e3315a7 imp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IntervalForm $interval,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($interval), 'The interval must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class WindowFrameBoundWithIntervalSymExprIntervalFollowingSym_3e3315a7 imp
         $this->expr->write($writer);
         $this->interval->write($writer);
         $writer->append('FOLLOWING');
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->interval);
+    }
+
+    /**
+     * Returns a copy with a new interval, preserving every other field.
+     */
+    public function withInterval(\SqlSemantics\Statement\Model\MySql\Role\IntervalForm $interval): self
+    {
+        return new self($this->expr, $interval);
     }
 }

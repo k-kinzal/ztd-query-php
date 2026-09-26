@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetResetClauseWithSetSetRest_e8e322e3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetResetClauseWithSetSetRest_e8e322e3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetResetClauseWithSetSetRest_e8e322e3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetResetClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestForm $setRest,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setRest), 'The setRest must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SetResetClauseWithSetSetRest_e8e322e3 implements \SqlSemantics\State
     {
         $writer->append('SET');
         $this->setRest->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setRest, preserving every other field.
+     */
+    public function withSetRest(\SqlSemantics\Statement\Model\PostgreSql\Role\SetRestForm $setRest): self
+    {
+        return new self($setRest);
     }
 }

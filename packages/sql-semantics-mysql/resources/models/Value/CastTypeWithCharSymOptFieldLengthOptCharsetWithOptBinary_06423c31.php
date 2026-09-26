@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithCharSymOptFieldLengthOptCharsetWithOptBinary_06423c31 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithCharSymOptFieldLengthOptCharsetWithOptBinary_06423c31 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CastTypeWithCharSymOptFieldLengthOptCharsetWithOptBinary_06423c31 implements \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CastTypeWithCharSymOptFieldLengthOptCharsetWithOptBinary_06423c31 im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary,
     ) {
+        $this->assertMatchesPattern($charSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['CHAR_SYM'], 'The charSym must be a complete CHAR_SYM lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFieldLength), 'The optFieldLength must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCharsetWithOptBinary), 'The optCharsetWithOptBinary must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class CastTypeWithCharSymOptFieldLengthOptCharsetWithOptBinary_06423c31 im
         $writer->append($this->charSym);
         $this->optFieldLength->write($writer);
         $this->optCharsetWithOptBinary->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new charSym, preserving every other field.
+     */
+    public function withCharSym(string $charSym): self
+    {
+        return new self($charSym, $this->optFieldLength, $this->optCharsetWithOptBinary);
+    }
+
+    /**
+     * Returns a copy with a new optFieldLength, preserving every other field.
+     */
+    public function withOptFieldLength(\SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength): self
+    {
+        return new self($this->charSym, $optFieldLength, $this->optCharsetWithOptBinary);
+    }
+
+    /**
+     * Returns a copy with a new optCharsetWithOptBinary, preserving every other field.
+     */
+    public function withOptCharsetWithOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary): self
+    {
+        return new self($this->charSym, $this->optFieldLength, $optCharsetWithOptBinary);
     }
 }

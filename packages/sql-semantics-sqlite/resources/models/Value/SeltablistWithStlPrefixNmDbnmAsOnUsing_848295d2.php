@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SeltablistWithStlPrefixNmDbnmAsOnUsing_848295d2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SeltablistWithStlPrefixNmDbnmAsOnUsing_848295d2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SeltablistWithStlPrefixNmDbnmAsOnUsing_848295d2 implements \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class SeltablistWithStlPrefixNmDbnmAsOnUsing_848295d2 implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm $onUsing,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($stlPrefix), 'The stlPrefix must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($as), 'The as must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($onUsing), 'The onUsing must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +43,45 @@ final class SeltablistWithStlPrefixNmDbnmAsOnUsing_848295d2 implements \SqlSeman
         $this->dbnm->write($writer);
         $this->as->write($writer);
         $this->onUsing->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new stlPrefix, preserving every other field.
+     */
+    public function withStlPrefix(\SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm $stlPrefix): self
+    {
+        return new self($stlPrefix, $this->nm, $this->dbnm, $this->as, $this->onUsing);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->stlPrefix, $nm, $this->dbnm, $this->as, $this->onUsing);
+    }
+
+    /**
+     * Returns a copy with a new dbnm, preserving every other field.
+     */
+    public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
+    {
+        return new self($this->stlPrefix, $this->nm, $dbnm, $this->as, $this->onUsing);
+    }
+
+    /**
+     * Returns a copy with a new as, preserving every other field.
+     */
+    public function withAs(\SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as): self
+    {
+        return new self($this->stlPrefix, $this->nm, $this->dbnm, $as, $this->onUsing);
+    }
+
+    /**
+     * Returns a copy with a new onUsing, preserving every other field.
+     */
+    public function withOnUsing(\SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm $onUsing): self
+    {
+        return new self($this->stlPrefix, $this->nm, $this->dbnm, $this->as, $onUsing);
     }
 }

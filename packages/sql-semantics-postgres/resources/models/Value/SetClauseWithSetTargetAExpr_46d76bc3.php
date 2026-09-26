@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetClauseWithSetTargetAExpr_46d76bc3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetClauseWithSetTargetAExpr_46d76bc3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetClauseWithSetTargetAExpr_46d76bc3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SetClauseWithSetTargetAExpr_46d76bc3 implements \SqlSemantics\Statem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetForm $setTarget,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setTarget), 'The setTarget must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SetClauseWithSetTargetAExpr_46d76bc3 implements \SqlSemantics\Statem
         $this->setTarget->write($writer);
         $writer->append('=');
         $this->aExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new setTarget, preserving every other field.
+     */
+    public function withSetTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetForm $setTarget): self
+    {
+        return new self($setTarget, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->setTarget, $aExpr);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RenameStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RenameStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 im
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optProcedural), 'The optProcedural must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name2), 'The name2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +41,29 @@ final class RenameStmtWithAlterOptProceduralLanguageNameRenameToName_68d8d2f6 im
         $writer->append('RENAME');
         $writer->append('TO');
         $this->name2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optProcedural, preserving every other field.
+     */
+    public function withOptProcedural(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm $optProcedural): self
+    {
+        return new self($optProcedural, $this->name, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->optProcedural, $name, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new name2, preserving every other field.
+     */
+    public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
+    {
+        return new self($this->optProcedural, $this->name, $name2);
     }
 }

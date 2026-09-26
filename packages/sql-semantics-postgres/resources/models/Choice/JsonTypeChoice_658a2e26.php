@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\JsonTypeChoice_658a2e26 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\JsonTypeChoice_658a2e26 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum JsonTypeChoice_658a2e26: string implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTypeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm

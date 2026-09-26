@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RoleListWithRoleListRoleSpec_3aabdaf7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RoleListWithRoleListRoleSpec_3aabdaf7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RoleListWithRoleListRoleSpec_3aabdaf7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RoleListWithRoleListRoleSpec_3aabdaf7 implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleList), 'The roleList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class RoleListWithRoleListRoleSpec_3aabdaf7 implements \SqlSemantics\State
         $this->roleList->write($writer);
         $writer->append(',');
         $this->roleSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleList, preserving every other field.
+     */
+    public function withRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList): self
+    {
+        return new self($roleList, $this->roleSpec);
+    }
+
+    /**
+     * Returns a copy with a new roleSpec, preserving every other field.
+     */
+    public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
+    {
+        return new self($this->roleList, $roleSpec);
     }
 }

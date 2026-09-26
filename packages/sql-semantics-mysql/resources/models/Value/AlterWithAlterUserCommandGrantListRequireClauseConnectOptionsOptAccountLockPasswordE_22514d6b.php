@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterUserCommandGrantListRequireClauseConnectOptionsOptAccountLockPasswordE_22514d6b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterWithAlterUserCommandGrantListRequireClauseConnectOptionsOptAccountLockPasswordE_22514d6b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterWithAlterUserCommandGrantListRequireClauseConnectOptionsOptAccountLockPasswordE_22514d6b implements \SqlSemantics\Statement\Model\MySql\Role\AlterForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class AlterWithAlterUserCommandGrantListRequireClauseConnectOptionsOptAcco
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm $connectOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm $optAccountLockPasswordExpireOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterUserCommand), 'The alterUserCommand must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantList), 'The grantList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($requireClause), 'The requireClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($connectOptions), 'The connectOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAccountLockPasswordExpireOptions), 'The optAccountLockPasswordExpireOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +43,45 @@ final class AlterWithAlterUserCommandGrantListRequireClauseConnectOptionsOptAcco
         $this->requireClause->write($writer);
         $this->connectOptions->write($writer);
         $this->optAccountLockPasswordExpireOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterUserCommand, preserving every other field.
+     */
+    public function withAlterUserCommand(\SqlSemantics\Statement\Model\MySql\Role\AlterUserCommandForm $alterUserCommand): self
+    {
+        return new self($alterUserCommand, $this->grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions);
+    }
+
+    /**
+     * Returns a copy with a new grantList, preserving every other field.
+     */
+    public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self
+    {
+        return new self($this->alterUserCommand, $grantList, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions);
+    }
+
+    /**
+     * Returns a copy with a new requireClause, preserving every other field.
+     */
+    public function withRequireClause(\SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm $requireClause): self
+    {
+        return new self($this->alterUserCommand, $this->grantList, $requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions);
+    }
+
+    /**
+     * Returns a copy with a new connectOptions, preserving every other field.
+     */
+    public function withConnectOptions(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm $connectOptions): self
+    {
+        return new self($this->alterUserCommand, $this->grantList, $this->requireClause, $connectOptions, $this->optAccountLockPasswordExpireOptions);
+    }
+
+    /**
+     * Returns a copy with a new optAccountLockPasswordExpireOptions, preserving every other field.
+     */
+    public function withOptAccountLockPasswordExpireOptions(\SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm $optAccountLockPasswordExpireOptions): self
+    {
+        return new self($this->alterUserCommand, $this->grantList, $this->requireClause, $this->connectOptions, $optAccountLockPasswordExpireOptions);
     }
 }

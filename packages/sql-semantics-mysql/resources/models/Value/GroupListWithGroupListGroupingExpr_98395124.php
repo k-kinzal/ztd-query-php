@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupListWithGroupListGroupingExpr_98395124 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupListWithGroupListGroupingExpr_98395124 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GroupListWithGroupListGroupingExpr_98395124 implements \SqlSemantics\Statement\Model\MySql\Role\GroupListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GroupListWithGroupListGroupingExpr_98395124 implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupListForm $groupList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm $groupingExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupList), 'The groupList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupingExpr), 'The groupingExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GroupListWithGroupListGroupingExpr_98395124 implements \SqlSemantics
         $this->groupList->write($writer);
         $writer->append(',');
         $this->groupingExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new groupList, preserving every other field.
+     */
+    public function withGroupList(\SqlSemantics\Statement\Model\MySql\Role\GroupListForm $groupList): self
+    {
+        return new self($groupList, $this->groupingExpr);
+    }
+
+    /**
+     * Returns a copy with a new groupingExpr, preserving every other field.
+     */
+    public function withGroupingExpr(\SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm $groupingExpr): self
+    {
+        return new self($this->groupList, $groupingExpr);
     }
 }

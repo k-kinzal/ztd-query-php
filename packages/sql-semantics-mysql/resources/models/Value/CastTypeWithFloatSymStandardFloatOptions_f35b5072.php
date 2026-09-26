@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithFloatSymStandardFloatOptions_f35b5072 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithFloatSymStandardFloatOptions_f35b5072 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CastTypeWithFloatSymStandardFloatOptions_f35b5072 implements \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CastTypeWithFloatSymStandardFloatOptions_f35b5072 implements \SqlSem
         public readonly string $floatSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StandardFloatOptionsForm $standardFloatOptions,
     ) {
+        $this->assertMatchesPattern($floatSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['FLOAT_SYM'], 'The floatSym must be a complete FLOAT_SYM lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($standardFloatOptions), 'The standardFloatOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CastTypeWithFloatSymStandardFloatOptions_f35b5072 implements \SqlSem
     {
         $writer->append($this->floatSym);
         $this->standardFloatOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new floatSym, preserving every other field.
+     */
+    public function withFloatSym(string $floatSym): self
+    {
+        return new self($floatSym, $this->standardFloatOptions);
+    }
+
+    /**
+     * Returns a copy with a new standardFloatOptions, preserving every other field.
+     */
+    public function withStandardFloatOptions(\SqlSemantics\Statement\Model\MySql\Role\StandardFloatOptionsForm $standardFloatOptions): self
+    {
+        return new self($this->floatSym, $standardFloatOptions);
     }
 }

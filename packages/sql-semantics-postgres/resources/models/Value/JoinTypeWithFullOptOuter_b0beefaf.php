@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JoinTypeWithFullOptOuter_b0beefaf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JoinTypeWithFullOptOuter_b0beefaf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinTypeWithFullOptOuter_b0beefaf implements \SqlSemantics\Statement\Model\PostgreSql\Role\JoinTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOuterForm $optOuter,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOuter), 'The optOuter must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class JoinTypeWithFullOptOuter_b0beefaf implements \SqlSemantics\Statement
     {
         $writer->append('FULL');
         $this->optOuter->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optOuter, preserving every other field.
+     */
+    public function withOptOuter(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOuterForm $optOuter): self
+    {
+        return new self($optOuter);
     }
 }

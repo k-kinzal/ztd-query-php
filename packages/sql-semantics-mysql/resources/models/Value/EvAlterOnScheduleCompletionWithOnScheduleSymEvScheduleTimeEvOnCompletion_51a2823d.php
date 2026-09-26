@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EvAlterOnScheduleCompletionWithOnScheduleSymEvScheduleTimeEvOnCompletion_51a2823d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EvAlterOnScheduleCompletionWithOnScheduleSymEvScheduleTimeEvOnCompletion_51a2823d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EvAlterOnScheduleCompletionWithOnScheduleSymEvScheduleTimeEvOnCompletion_51a2823d implements \SqlSemantics\Statement\Model\MySql\Role\EvAlterOnScheduleCompletionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class EvAlterOnScheduleCompletionWithOnScheduleSymEvScheduleTimeEvOnComple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvOnCompletionForm $evOnCompletion,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evScheduleTime), 'The evScheduleTime must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evOnCompletion), 'The evOnCompletion must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class EvAlterOnScheduleCompletionWithOnScheduleSymEvScheduleTimeEvOnComple
         $writer->append('SCHEDULE');
         $this->evScheduleTime->write($writer);
         $this->evOnCompletion->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new evScheduleTime, preserving every other field.
+     */
+    public function withEvScheduleTime(\SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime): self
+    {
+        return new self($evScheduleTime, $this->evOnCompletion);
+    }
+
+    /**
+     * Returns a copy with a new evOnCompletion, preserving every other field.
+     */
+    public function withEvOnCompletion(\SqlSemantics\Statement\Model\MySql\Role\EvOnCompletionForm $evOnCompletion): self
+    {
+        return new self($this->evScheduleTime, $evOnCompletion);
     }
 }

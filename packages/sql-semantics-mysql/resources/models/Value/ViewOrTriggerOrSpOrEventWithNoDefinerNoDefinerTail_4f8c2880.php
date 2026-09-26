@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewOrTriggerOrSpOrEventWithNoDefinerNoDefinerTail_4f8c2880 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewOrTriggerOrSpOrEventWithNoDefinerNoDefinerTail_4f8c2880 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewOrTriggerOrSpOrEventWithNoDefinerNoDefinerTail_4f8c2880 implements \SqlSemantics\Statement\Model\MySql\Role\ViewOrTriggerOrSpOrEventForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerNoDefinerTail_4f8c2880 implemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NoDefinerForm $noDefiner,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm $noDefinerTail,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($noDefiner), 'The noDefiner must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($noDefinerTail), 'The noDefinerTail must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerNoDefinerTail_4f8c2880 implemen
     {
         $this->noDefiner->write($writer);
         $this->noDefinerTail->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new noDefiner, preserving every other field.
+     */
+    public function withNoDefiner(\SqlSemantics\Statement\Model\MySql\Role\NoDefinerForm $noDefiner): self
+    {
+        return new self($noDefiner, $this->noDefinerTail);
+    }
+
+    /**
+     * Returns a copy with a new noDefinerTail, preserving every other field.
+     */
+    public function withNoDefinerTail(\SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm $noDefinerTail): self
+    {
+        return new self($this->noDefiner, $noDefinerTail);
     }
 }

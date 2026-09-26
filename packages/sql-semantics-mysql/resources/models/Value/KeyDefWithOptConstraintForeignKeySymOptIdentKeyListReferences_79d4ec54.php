@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec54 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec54 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec54 implements \SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm, \SqlSemantics\Statement\Model\MySql\Role\KeyDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReferencesForm $references,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optConstraint), 'The optConstraint must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyList), 'The keyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($references), 'The references must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +44,37 @@ final class KeyDefWithOptConstraintForeignKeySymOptIdentKeyListReferences_79d4ec
         $this->keyList->write($writer);
         $writer->append(')');
         $this->references->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optConstraint, preserving every other field.
+     */
+    public function withOptConstraint(\SqlSemantics\Statement\Model\MySql\Role\OptConstraintForm $optConstraint): self
+    {
+        return new self($optConstraint, $this->optIdent, $this->keyList, $this->references);
+    }
+
+    /**
+     * Returns a copy with a new optIdent, preserving every other field.
+     */
+    public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
+    {
+        return new self($this->optConstraint, $optIdent, $this->keyList, $this->references);
+    }
+
+    /**
+     * Returns a copy with a new keyList, preserving every other field.
+     */
+    public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
+    {
+        return new self($this->optConstraint, $this->optIdent, $keyList, $this->references);
+    }
+
+    /**
+     * Returns a copy with a new references, preserving every other field.
+     */
+    public function withReferences(\SqlSemantics\Statement\Model\MySql\Role\ReferencesForm $references): self
+    {
+        return new self($this->optConstraint, $this->optIdent, $this->keyList, $references);
     }
 }

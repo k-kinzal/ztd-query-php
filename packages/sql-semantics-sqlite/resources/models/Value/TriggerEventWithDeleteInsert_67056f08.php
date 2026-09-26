@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerEventWithDeleteInsert_67056f08 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerEventWithDeleteInsert_67056f08 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerEventWithDeleteInsert_67056f08 implements \SqlSemantics\Statement\Model\Sqlite\Role\TriggerEventForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $deleteInsert,
     ) {
+        $this->assertMatchesPattern($deleteInsert, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['DELETE|INSERT'], 'The deleteInsert must be a complete DELETE|INSERT lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TriggerEventWithDeleteInsert_67056f08 implements \SqlSemantics\State
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->deleteInsert);
+    }
+
+    /**
+     * Returns a copy with a new deleteInsert, preserving every other field.
+     */
+    public function withDeleteInsert(string $deleteInsert): self
+    {
+        return new self($deleteInsert);
     }
 }

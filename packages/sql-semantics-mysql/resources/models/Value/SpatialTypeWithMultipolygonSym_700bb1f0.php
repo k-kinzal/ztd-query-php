@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpatialTypeWithMultipolygonSym_700bb1f0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpatialTypeWithMultipolygonSym_700bb1f0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpatialTypeWithMultipolygonSym_700bb1f0 implements \SqlSemantics\Statement\Model\MySql\Role\SpatialTypeForm, \SqlSemantics\Statement\Model\MySql\Role\TypeForm

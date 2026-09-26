@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOptions_7c72f99a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOptions_7c72f99a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOptions_7c72f99a implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOptions_7c72f99a implements \SqlSemantics\Statement\Model\PostgreSql\Role\CopyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm $copyOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($preparableStmt), 'The preparableStmt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optProgram), 'The optProgram must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyFileName), 'The copyFileName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($copyOptions), 'The copyOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +47,45 @@ final class CopyStmtWithCopyPreparableStmtToOptProgramCopyFileNameOptWithCopyOpt
         $this->copyFileName->write($writer);
         $this->optWith->write($writer);
         $this->copyOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new preparableStmt, preserving every other field.
+     */
+    public function withPreparableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm $preparableStmt): self
+    {
+        return new self($preparableStmt, $this->optProgram, $this->copyFileName, $this->optWith, $this->copyOptions);
+    }
+
+    /**
+     * Returns a copy with a new optProgram, preserving every other field.
+     */
+    public function withOptProgram(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProgramForm $optProgram): self
+    {
+        return new self($this->preparableStmt, $optProgram, $this->copyFileName, $this->optWith, $this->copyOptions);
+    }
+
+    /**
+     * Returns a copy with a new copyFileName, preserving every other field.
+     */
+    public function withCopyFileName(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyFileNameForm $copyFileName): self
+    {
+        return new self($this->preparableStmt, $this->optProgram, $copyFileName, $this->optWith, $this->copyOptions);
+    }
+
+    /**
+     * Returns a copy with a new optWith, preserving every other field.
+     */
+    public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
+    {
+        return new self($this->preparableStmt, $this->optProgram, $this->copyFileName, $optWith, $this->copyOptions);
+    }
+
+    /**
+     * Returns a copy with a new copyOptions, preserving every other field.
+     */
+    public function withCopyOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CopyOptionsForm $copyOptions): self
+    {
+        return new self($this->preparableStmt, $this->optProgram, $this->copyFileName, $this->optWith, $copyOptions);
     }
 }

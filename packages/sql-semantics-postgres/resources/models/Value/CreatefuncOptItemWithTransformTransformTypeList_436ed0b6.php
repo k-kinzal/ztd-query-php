@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatefuncOptItemWithTransformTransformTypeList_436ed0b6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatefuncOptItemWithTransformTransformTypeList_436ed0b6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreatefuncOptItemWithTransformTransformTypeList_436ed0b6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransformTypeListForm $transformTypeList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($transformTypeList), 'The transformTypeList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CreatefuncOptItemWithTransformTransformTypeList_436ed0b6 implements 
     {
         $writer->append('TRANSFORM');
         $this->transformTypeList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new transformTypeList, preserving every other field.
+     */
+    public function withTransformTypeList(\SqlSemantics\Statement\Model\PostgreSql\Role\TransformTypeListForm $transformTypeList): self
+    {
+        return new self($transformTypeList);
     }
 }

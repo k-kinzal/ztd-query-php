@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableColumnDefinitionWithColIdTypenameExistsJsonTableColumnPathClauseOptJsonOnErrorClauseOpt_d81d25e2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableColumnDefinitionWithColIdTypenameExistsJsonTableColumnPathClauseOptJsonOnErrorClauseOpt_d81d25e2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonTableColumnDefinitionWithColIdTypenameExistsJsonTableColumnPathClauseOptJsonOnErrorClauseOpt_d81d25e2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class JsonTableColumnDefinitionWithColIdTypenameExistsJsonTableColumnPathC
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnPathClauseOptForm $jsonTableColumnPathClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonOnErrorClauseOptForm $jsonOnErrorClauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonTableColumnPathClauseOpt), 'The jsonTableColumnPathClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonOnErrorClauseOpt), 'The jsonOnErrorClauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class JsonTableColumnDefinitionWithColIdTypenameExistsJsonTableColumnPathC
         $writer->append('EXISTS');
         $this->jsonTableColumnPathClauseOpt->write($writer);
         $this->jsonOnErrorClauseOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->colId, $typename, $this->jsonTableColumnPathClauseOpt, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonTableColumnPathClauseOpt, preserving every other field.
+     */
+    public function withJsonTableColumnPathClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnPathClauseOptForm $jsonTableColumnPathClauseOpt): self
+    {
+        return new self($this->colId, $this->typename, $jsonTableColumnPathClauseOpt, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonOnErrorClauseOpt, preserving every other field.
+     */
+    public function withJsonOnErrorClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonOnErrorClauseOptForm $jsonOnErrorClauseOpt): self
+    {
+        return new self($this->colId, $this->typename, $this->jsonTableColumnPathClauseOpt, $jsonOnErrorClauseOpt);
     }
 }

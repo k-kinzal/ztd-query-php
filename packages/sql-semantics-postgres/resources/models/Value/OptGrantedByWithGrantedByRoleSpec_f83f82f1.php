@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptGrantedByWithGrantedByRoleSpec_f83f82f1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptGrantedByWithGrantedByRoleSpec_f83f82f1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptGrantedByWithGrantedByRoleSpec_f83f82f1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptGrantedByWithGrantedByRoleSpec_f83f82f1 implements \SqlSemantics\
         $writer->append('GRANTED');
         $writer->append('BY');
         $this->roleSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleSpec, preserving every other field.
+     */
+    public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
+    {
+        return new self($roleSpec);
     }
 }

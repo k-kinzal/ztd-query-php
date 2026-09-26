@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowSpecWithWindowSpecDetails_f95bb1be $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowSpecWithWindowSpecDetails_f95bb1be $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowSpecWithWindowSpecDetails_f95bb1be implements \SqlSemantics\Statement\Model\MySql\Role\WindowNameOrSpecForm, \SqlSemantics\Statement\Model\MySql\Role\WindowSpecForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowSpecDetailsForm $windowSpecDetails,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowSpecDetails), 'The windowSpecDetails must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class WindowSpecWithWindowSpecDetails_f95bb1be implements \SqlSemantics\St
         $writer->append('(');
         $this->windowSpecDetails->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new windowSpecDetails, preserving every other field.
+     */
+    public function withWindowSpecDetails(\SqlSemantics\Statement\Model\MySql\Role\WindowSpecDetailsForm $windowSpecDetails): self
+    {
+        return new self($windowSpecDetails);
     }
 }

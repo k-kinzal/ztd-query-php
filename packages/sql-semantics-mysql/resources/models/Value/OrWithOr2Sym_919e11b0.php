@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OrWithOr2Sym_919e11b0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OrWithOr2Sym_919e11b0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OrWithOr2Sym_919e11b0 implements \SqlSemantics\Statement\Model\MySql\Role\OrForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $or2Sym,
     ) {
+        $this->assertMatchesPattern($or2Sym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['OR2_SYM'], 'The or2Sym must be a complete OR2_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class OrWithOr2Sym_919e11b0 implements \SqlSemantics\Statement\Model\MySql
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->or2Sym);
+    }
+
+    /**
+     * Returns a copy with a new or2Sym, preserving every other field.
+     */
+    public function withOr2Sym(string $or2Sym): self
+    {
+        return new self($or2Sym);
     }
 }

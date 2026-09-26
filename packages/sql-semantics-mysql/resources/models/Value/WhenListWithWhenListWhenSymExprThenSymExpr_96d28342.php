@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 implements \SqlSemantics\Statement\Model\MySql\Role\WhenListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($whenList), 'The whenList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 implements \SqlS
         $this->expr->write($writer);
         $writer->append('THEN');
         $this->expr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new whenList, preserving every other field.
+     */
+    public function withWhenList(\SqlSemantics\Statement\Model\MySql\Role\WhenListForm $whenList): self
+    {
+        return new self($whenList, $this->expr, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->whenList, $expr, $this->expr2);
+    }
+
+    /**
+     * Returns a copy with a new expr2, preserving every other field.
+     */
+    public function withExpr2(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2): self
+    {
+        return new self($this->whenList, $this->expr, $expr2);
     }
 }

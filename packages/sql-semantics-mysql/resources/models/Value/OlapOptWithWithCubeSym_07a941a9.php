@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OlapOptWithWithCubeSym_07a941a9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OlapOptWithWithCubeSym_07a941a9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OlapOptWithWithCubeSym_07a941a9 implements \SqlSemantics\Statement\Model\MySql\Role\OlapOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $withCubeSym,
     ) {
+        $this->assertMatchesPattern($withCubeSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['WITH_CUBE_SYM'], 'The withCubeSym must be a complete WITH_CUBE_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class OlapOptWithWithCubeSym_07a941a9 implements \SqlSemantics\Statement\M
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->withCubeSym);
+    }
+
+    /**
+     * Returns a copy with a new withCubeSym, preserving every other field.
+     */
+    public function withWithCubeSym(string $withCubeSym): self
+    {
+        return new self($withCubeSym);
     }
 }

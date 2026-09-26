@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefListWithDefListDefElem_7ca52b20 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefListWithDefListDefElem_7ca52b20 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DefListWithDefListDefElem_7ca52b20 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DefListWithDefListDefElem_7ca52b20 implements \SqlSemantics\Statemen
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm $defList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefElemForm $defElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defList), 'The defList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defElem), 'The defElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class DefListWithDefListDefElem_7ca52b20 implements \SqlSemantics\Statemen
         $this->defList->write($writer);
         $writer->append(',');
         $this->defElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new defList, preserving every other field.
+     */
+    public function withDefList(\SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm $defList): self
+    {
+        return new self($defList, $this->defElem);
+    }
+
+    /**
+     * Returns a copy with a new defElem, preserving every other field.
+     */
+    public function withDefElem(\SqlSemantics\Statement\Model\PostgreSql\Role\DefElemForm $defElem): self
+    {
+        return new self($this->defList, $defElem);
     }
 }

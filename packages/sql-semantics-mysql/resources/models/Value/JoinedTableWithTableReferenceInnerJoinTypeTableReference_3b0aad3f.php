@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f implements \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinedTableForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm $innerJoinType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($innerJoinType), 'The innerJoinType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference2), 'The tableReference2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f im
         $this->tableReference->write($writer);
         $this->innerJoinType->write($writer);
         $this->tableReference2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableReference, preserving every other field.
+     */
+    public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
+    {
+        return new self($tableReference, $this->innerJoinType, $this->tableReference2);
+    }
+
+    /**
+     * Returns a copy with a new innerJoinType, preserving every other field.
+     */
+    public function withInnerJoinType(\SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm $innerJoinType): self
+    {
+        return new self($this->tableReference, $innerJoinType, $this->tableReference2);
+    }
+
+    /**
+     * Returns a copy with a new tableReference2, preserving every other field.
+     */
+    public function withTableReference2(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2): self
+    {
+        return new self($this->tableReference, $this->innerJoinType, $tableReference2);
     }
 }

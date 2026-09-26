@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropTableStmtWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_61d8e19f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropTableStmtWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_61d8e19f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DropTableStmtWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_61d8e19f implements \SqlSemantics\Statement\Model\MySql\Role\DropTableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class DropTableStmtWithDropOptTemporaryTableOrTablesIfExistsTableListOptRestrict_61d8e19f implements \SqlSemantics\Statement\Model\MySql\Role\DropTableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class DropTableStmtWithDropOptTemporaryTableOrTablesIfExistsTableListOptRe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm $optRestrict,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTemporary), 'The optTemporary must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOrTables), 'The tableOrTables must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableList), 'The tableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRestrict), 'The optRestrict must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +44,45 @@ final class DropTableStmtWithDropOptTemporaryTableOrTablesIfExistsTableListOptRe
         $this->ifExists->write($writer);
         $this->tableList->write($writer);
         $this->optRestrict->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTemporary, preserving every other field.
+     */
+    public function withOptTemporary(\SqlSemantics\Statement\Model\MySql\Role\OptTemporaryForm $optTemporary): self
+    {
+        return new self($optTemporary, $this->tableOrTables, $this->ifExists, $this->tableList, $this->optRestrict);
+    }
+
+    /**
+     * Returns a copy with a new tableOrTables, preserving every other field.
+     */
+    public function withTableOrTables(\SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables): self
+    {
+        return new self($this->optTemporary, $tableOrTables, $this->ifExists, $this->tableList, $this->optRestrict);
+    }
+
+    /**
+     * Returns a copy with a new ifExists, preserving every other field.
+     */
+    public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
+    {
+        return new self($this->optTemporary, $this->tableOrTables, $ifExists, $this->tableList, $this->optRestrict);
+    }
+
+    /**
+     * Returns a copy with a new tableList, preserving every other field.
+     */
+    public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
+    {
+        return new self($this->optTemporary, $this->tableOrTables, $this->ifExists, $tableList, $this->optRestrict);
+    }
+
+    /**
+     * Returns a copy with a new optRestrict, preserving every other field.
+     */
+    public function withOptRestrict(\SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm $optRestrict): self
+    {
+        return new self($this->optTemporary, $this->tableOrTables, $this->ifExists, $this->tableList, $optRestrict);
     }
 }

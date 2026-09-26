@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SelcollistWithSclpScanptExprScanptAs_62f68771 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SelcollistWithSclpScanptExprScanptAs_62f68771 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt2,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sclp), 'The sclp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scanpt), 'The scanpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scanpt2), 'The scanpt2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($as), 'The as must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +43,45 @@ final class SelcollistWithSclpScanptExprScanptAs_62f68771 implements \SqlSemanti
         $this->expr->write($writer);
         $this->scanpt2->write($writer);
         $this->as->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sclp, preserving every other field.
+     */
+    public function withSclp(\SqlSemantics\Statement\Model\Sqlite\Role\SclpForm $sclp): self
+    {
+        return new self($sclp, $this->scanpt, $this->expr, $this->scanpt2, $this->as);
+    }
+
+    /**
+     * Returns a copy with a new scanpt, preserving every other field.
+     */
+    public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self
+    {
+        return new self($this->sclp, $scanpt, $this->expr, $this->scanpt2, $this->as);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($this->sclp, $this->scanpt, $expr, $this->scanpt2, $this->as);
+    }
+
+    /**
+     * Returns a copy with a new scanpt2, preserving every other field.
+     */
+    public function withScanpt2(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt2): self
+    {
+        return new self($this->sclp, $this->scanpt, $this->expr, $scanpt2, $this->as);
+    }
+
+    /**
+     * Returns a copy with a new as, preserving every other field.
+     */
+    public function withAs(\SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as): self
+    {
+        return new self($this->sclp, $this->scanpt, $this->expr, $this->scanpt2, $as);
     }
 }

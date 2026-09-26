@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectParenDerivedWithSelectParenDerived_68230fc8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectParenDerivedWithSelectParenDerived_68230fc8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectParenDerivedWithSelectParenDerived_68230fc8 implements \SqlSemantics\Statement\Model\MySql\Role\SelectParenDerivedForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectParenDerivedForm $selectParenDerived,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectParenDerived), 'The selectParenDerived must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SelectParenDerivedWithSelectParenDerived_68230fc8 implements \SqlSem
         $writer->append('(');
         $this->selectParenDerived->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new selectParenDerived, preserving every other field.
+     */
+    public function withSelectParenDerived(\SqlSemantics\Statement\Model\MySql\Role\SelectParenDerivedForm $selectParenDerived): self
+    {
+        return new self($selectParenDerived);
     }
 }

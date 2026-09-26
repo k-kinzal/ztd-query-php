@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithDetachDatabaseKwOptExpr_f7c66c8d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithDetachDatabaseKwOptExpr_f7c66c8d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithDetachDatabaseKwOptExpr_f7c66c8d implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithDetachDatabaseKwOptExpr_f7c66c8d implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CmdWithDetachDatabaseKwOptExpr_f7c66c8d implements \SqlSemantics\Sta
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DatabaseKwOptForm $databaseKwOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($databaseKwOpt), 'The databaseKwOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CmdWithDetachDatabaseKwOptExpr_f7c66c8d implements \SqlSemantics\Sta
         $writer->append('DETACH');
         $this->databaseKwOpt->write($writer);
         $this->expr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new databaseKwOpt, preserving every other field.
+     */
+    public function withDatabaseKwOpt(\SqlSemantics\Statement\Model\Sqlite\Role\DatabaseKwOptForm $databaseKwOpt): self
+    {
+        return new self($databaseKwOpt, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($this->databaseKwOpt, $expr);
     }
 }

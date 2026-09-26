@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PlassignEqualsWithColonEquals_f5dbb12a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PlassignEqualsWithColonEquals_f5dbb12a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PlassignEqualsWithColonEquals_f5dbb12a implements \SqlSemantics\Statement\Model\PostgreSql\Role\PlassignEqualsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $colonEquals,
     ) {
+        $this->assertMatchesPattern($colonEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['COLON_EQUALS'], 'The colonEquals must be a complete COLON_EQUALS lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class PlassignEqualsWithColonEquals_f5dbb12a implements \SqlSemantics\Stat
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->colonEquals);
+    }
+
+    /**
+     * Returns a copy with a new colonEquals, preserving every other field.
+     */
+    public function withColonEquals(string $colonEquals): self
+    {
+        return new self($colonEquals);
     }
 }

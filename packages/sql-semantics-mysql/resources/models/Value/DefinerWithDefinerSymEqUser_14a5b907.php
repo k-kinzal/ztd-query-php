@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DefinerWithDefinerSymEqUser_14a5b907 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DefinerWithDefinerSymEqUser_14a5b907 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DefinerWithDefinerSymEqUser_14a5b907 implements \SqlSemantics\Statement\Model\MySql\Role\DefinerForm, \SqlSemantics\Statement\Model\MySql\Role\DefinerOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class DefinerWithDefinerSymEqUser_14a5b907 implements \SqlSemantics\Statem
         $writer->append('DEFINER');
         $writer->append('=');
         $this->user->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user);
     }
 }

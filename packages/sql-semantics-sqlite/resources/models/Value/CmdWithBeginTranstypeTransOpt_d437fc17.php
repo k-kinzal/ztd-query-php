@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithBeginTranstypeTransOpt_d437fc17 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithBeginTranstypeTransOpt_d437fc17 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithBeginTranstypeTransOpt_d437fc17 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithBeginTranstypeTransOpt_d437fc17 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CmdWithBeginTranstypeTransOpt_d437fc17 implements \SqlSemantics\Stat
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TranstypeForm $transtype,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($transtype), 'The transtype must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($transOpt), 'The transOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CmdWithBeginTranstypeTransOpt_d437fc17 implements \SqlSemantics\Stat
         $writer->append('BEGIN');
         $this->transtype->write($writer);
         $this->transOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new transtype, preserving every other field.
+     */
+    public function withTranstype(\SqlSemantics\Statement\Model\Sqlite\Role\TranstypeForm $transtype): self
+    {
+        return new self($transtype, $this->transOpt);
+    }
+
+    /**
+     * Returns a copy with a new transOpt, preserving every other field.
+     */
+    public function withTransOpt(\SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt): self
+    {
+        return new self($this->transtype, $transOpt);
     }
 }

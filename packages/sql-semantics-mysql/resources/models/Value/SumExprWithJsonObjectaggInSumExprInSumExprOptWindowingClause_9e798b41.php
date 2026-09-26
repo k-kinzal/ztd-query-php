@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SumExprWithJsonObjectaggInSumExprInSumExprOptWindowingClause_9e798b41 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SumExprWithJsonObjectaggInSumExprInSumExprOptWindowingClause_9e798b41 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SumExprWithJsonObjectaggInSumExprInSumExprOptWindowingClause_9e798b41 implements \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SetFunctionSpecificationForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\SumExprForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SumExprWithJsonObjectaggInSumExprInSumExprOptWindowingClause_9e798b4
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm $optWindowingClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($inSumExpr), 'The inSumExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($inSumExpr2), 'The inSumExpr2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWindowingClause), 'The optWindowingClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +41,29 @@ final class SumExprWithJsonObjectaggInSumExprInSumExprOptWindowingClause_9e798b4
         $this->inSumExpr2->write($writer);
         $writer->append(')');
         $this->optWindowingClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new inSumExpr, preserving every other field.
+     */
+    public function withInSumExpr(\SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr): self
+    {
+        return new self($inSumExpr, $this->inSumExpr2, $this->optWindowingClause);
+    }
+
+    /**
+     * Returns a copy with a new inSumExpr2, preserving every other field.
+     */
+    public function withInSumExpr2(\SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr2): self
+    {
+        return new self($this->inSumExpr, $inSumExpr2, $this->optWindowingClause);
+    }
+
+    /**
+     * Returns a copy with a new optWindowingClause, preserving every other field.
+     */
+    public function withOptWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm $optWindowingClause): self
+    {
+        return new self($this->inSumExpr, $this->inSumExpr2, $optWindowingClause);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntTypeWithSmallint_0a5fba5a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntTypeWithSmallint_0a5fba5a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntTypeWithSmallint_0a5fba5a implements \SqlSemantics\Statement\Model\MySql\Role\IntTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $smallint,
     ) {
+        $this->assertMatchesPattern($smallint, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['SMALLINT'], 'The smallint must be a complete SMALLINT lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IntTypeWithSmallint_0a5fba5a implements \SqlSemantics\Statement\Mode
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->smallint);
+    }
+
+    /**
+     * Returns a copy with a new smallint, preserving every other field.
+     */
+    public function withSmallint(string $smallint): self
+    {
+        return new self($smallint);
     }
 }

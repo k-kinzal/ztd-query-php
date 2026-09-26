@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithOptVarTypeVariablesOptWildOrWhereForShow_cae7073b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithOptVarTypeVariablesOptWildOrWhereForShow_cae7073b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithOptVarTypeVariablesOptWildOrWhereForShow_cae7073b implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ShowParamWithOptVarTypeVariablesOptWildOrWhereForShow_cae7073b imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptVarTypeForm $optVarType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForShowForm $optWildOrWhereForShow,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optVarType), 'The optVarType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWildOrWhereForShow), 'The optWildOrWhereForShow must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ShowParamWithOptVarTypeVariablesOptWildOrWhereForShow_cae7073b imple
         $this->optVarType->write($writer);
         $writer->append('VARIABLES');
         $this->optWildOrWhereForShow->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optVarType, preserving every other field.
+     */
+    public function withOptVarType(\SqlSemantics\Statement\Model\MySql\Role\OptVarTypeForm $optVarType): self
+    {
+        return new self($optVarType, $this->optWildOrWhereForShow);
+    }
+
+    /**
+     * Returns a copy with a new optWildOrWhereForShow, preserving every other field.
+     */
+    public function withOptWildOrWhereForShow(\SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForShowForm $optWildOrWhereForShow): self
+    {
+        return new self($this->optVarType, $optWildOrWhereForShow);
     }
 }

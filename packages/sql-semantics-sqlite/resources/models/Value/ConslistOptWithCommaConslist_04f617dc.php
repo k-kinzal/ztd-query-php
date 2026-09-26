@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ConslistOptWithCommaConslist_04f617dc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ConslistOptWithCommaConslist_04f617dc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConslistOptWithCommaConslist_04f617dc implements \SqlSemantics\Statement\Model\Sqlite\Role\ConslistOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ConslistForm $conslist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($conslist), 'The conslist must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ConslistOptWithCommaConslist_04f617dc implements \SqlSemantics\State
     {
         $writer->append(',');
         $this->conslist->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new conslist, preserving every other field.
+     */
+    public function withConslist(\SqlSemantics\Statement\Model\Sqlite\Role\ConslistForm $conslist): self
+    {
+        return new self($conslist);
     }
 }

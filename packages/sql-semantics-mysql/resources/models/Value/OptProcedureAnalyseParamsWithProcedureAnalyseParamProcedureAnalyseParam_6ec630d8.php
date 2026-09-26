@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptProcedureAnalyseParamsWithProcedureAnalyseParamProcedureAnalyseParam_6ec630d8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptProcedureAnalyseParamsWithProcedureAnalyseParamProcedureAnalyseParam_6ec630d8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptProcedureAnalyseParamsWithProcedureAnalyseParamProcedureAnalyseParam_6ec630d8 implements \SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseParamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptProcedureAnalyseParamsWithProcedureAnalyseParamProcedureAnalysePa
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseParamForm $procedureAnalyseParam,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseParamForm $procedureAnalyseParam2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($procedureAnalyseParam), 'The procedureAnalyseParam must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($procedureAnalyseParam2), 'The procedureAnalyseParam2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptProcedureAnalyseParamsWithProcedureAnalyseParamProcedureAnalysePa
         $this->procedureAnalyseParam->write($writer);
         $writer->append(',');
         $this->procedureAnalyseParam2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new procedureAnalyseParam, preserving every other field.
+     */
+    public function withProcedureAnalyseParam(\SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseParamForm $procedureAnalyseParam): self
+    {
+        return new self($procedureAnalyseParam, $this->procedureAnalyseParam2);
+    }
+
+    /**
+     * Returns a copy with a new procedureAnalyseParam2, preserving every other field.
+     */
+    public function withProcedureAnalyseParam2(\SqlSemantics\Statement\Model\MySql\Role\ProcedureAnalyseParamForm $procedureAnalyseParam2): self
+    {
+        return new self($this->procedureAnalyseParam, $procedureAnalyseParam2);
     }
 }

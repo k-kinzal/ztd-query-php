@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIgnoreUnknownUserWithIgnoreSymUnknownSymUser_7983907d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIgnoreUnknownUserWithIgnoreSymUnknownSymUser_7983907d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIgnoreUnknownUserWithIgnoreSymUnknownSymUser_7983907d implements \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreUnknownUserForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $user,
     ) {
+        $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptIgnoreUnknownUserWithIgnoreSymUnknownSymUser_7983907d implements 
         $writer->append('IGNORE');
         $writer->append('UNKNOWN');
         $writer->append($this->user);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(string $user): self
+    {
+        return new self($user);
     }
 }

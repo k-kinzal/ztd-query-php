@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUpsert_b3d7f7ee $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUpsert_b3d7f7ee $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUpsert_b3d7f7ee implements \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where2,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm $upsert,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortlist), 'The sortlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($setlist), 'The setlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($where2), 'The where2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($upsert), 'The upsert must be a generated immutable SQL value.');
     }
 
     /**
@@ -43,5 +50,45 @@ final class UpsertWithOnConflictLpSortlistRpWhereOptDoUpdateSetSetlistWhereOptUp
         $this->setlist->write($writer);
         $this->where2->write($writer);
         $this->upsert->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new sortlist, preserving every other field.
+     */
+    public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
+    {
+        return new self($sortlist, $this->where, $this->setlist, $this->where2, $this->upsert);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
+    {
+        return new self($this->sortlist, $where, $this->setlist, $this->where2, $this->upsert);
+    }
+
+    /**
+     * Returns a copy with a new setlist, preserving every other field.
+     */
+    public function withSetlist(\SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist): self
+    {
+        return new self($this->sortlist, $this->where, $setlist, $this->where2, $this->upsert);
+    }
+
+    /**
+     * Returns a copy with a new where2, preserving every other field.
+     */
+    public function withWhere2(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where2): self
+    {
+        return new self($this->sortlist, $this->where, $this->setlist, $where2, $this->upsert);
+    }
+
+    /**
+     * Returns a copy with a new upsert, preserving every other field.
+     */
+    public function withUpsert(\SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm $upsert): self
+    {
+        return new self($this->sortlist, $this->where, $this->setlist, $this->where2, $upsert);
     }
 }

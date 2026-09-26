@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\VtabargWithVtabargVtabargtoken_627d8ccd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\VtabargWithVtabargVtabargtoken_627d8ccd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VtabargWithVtabargVtabargtoken_627d8ccd implements \SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm, \SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class VtabargWithVtabargVtabargtoken_627d8ccd implements \SqlSemantics\Sta
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm $vtabarg,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VtabargtokenForm $vtabargtoken,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vtabarg), 'The vtabarg must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vtabargtoken), 'The vtabargtoken must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class VtabargWithVtabargVtabargtoken_627d8ccd implements \SqlSemantics\Sta
     {
         $this->vtabarg->write($writer);
         $this->vtabargtoken->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new vtabarg, preserving every other field.
+     */
+    public function withVtabarg(\SqlSemantics\Statement\Model\Sqlite\Role\VtabargForm $vtabarg): self
+    {
+        return new self($vtabarg, $this->vtabargtoken);
+    }
+
+    /**
+     * Returns a copy with a new vtabargtoken, preserving every other field.
+     */
+    public function withVtabargtoken(\SqlSemantics\Statement\Model\Sqlite\Role\VtabargtokenForm $vtabargtoken): self
+    {
+        return new self($this->vtabarg, $vtabargtoken);
     }
 }

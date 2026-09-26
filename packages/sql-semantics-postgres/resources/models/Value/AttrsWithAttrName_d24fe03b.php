@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AttrsWithAttrName_d24fe03b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AttrsWithAttrName_d24fe03b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AttrsWithAttrName_d24fe03b implements \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AttrNameForm $attrName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($attrName), 'The attrName must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AttrsWithAttrName_d24fe03b implements \SqlSemantics\Statement\Model\
     {
         $writer->append('.');
         $this->attrName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new attrName, preserving every other field.
+     */
+    public function withAttrName(\SqlSemantics\Statement\Model\PostgreSql\Role\AttrNameForm $attrName): self
+    {
+        return new self($attrName);
     }
 }

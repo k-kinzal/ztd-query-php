@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartEntryWithGrammarSelectorPartPartitionClauseEndOfInput_e5b5ad55 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartEntryWithGrammarSelectorPartPartitionClauseEndOfInput_e5b5ad55 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StartEntryWithGrammarSelectorPartPartitionClauseEndOfInput_e5b5ad55 implements \SqlSemantics\Statement\Model\MySql\Role\StartEntryForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StartEntryWithGrammarSelectorPartPartitionClauseEndOfInput_e5b5ad55 
         public readonly string $grammarSelectorPart,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm $partitionClause,
     ) {
+        $this->assertMatchesPattern($grammarSelectorPart, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GRAMMAR_SELECTOR_PART'], 'The grammarSelectorPart must be a complete GRAMMAR_SELECTOR_PART lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partitionClause), 'The partitionClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class StartEntryWithGrammarSelectorPartPartitionClauseEndOfInput_e5b5ad55 
     {
         $writer->append($this->grammarSelectorPart);
         $this->partitionClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new grammarSelectorPart, preserving every other field.
+     */
+    public function withGrammarSelectorPart(string $grammarSelectorPart): self
+    {
+        return new self($grammarSelectorPart, $this->partitionClause);
+    }
+
+    /**
+     * Returns a copy with a new partitionClause, preserving every other field.
+     */
+    public function withPartitionClause(\SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm $partitionClause): self
+    {
+        return new self($this->grammarSelectorPart, $partitionClause);
     }
 }

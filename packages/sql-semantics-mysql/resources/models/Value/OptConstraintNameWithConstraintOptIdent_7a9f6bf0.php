@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptConstraintNameWithConstraintOptIdent_7a9f6bf0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptConstraintNameWithConstraintOptIdent_7a9f6bf0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptConstraintNameWithConstraintOptIdent_7a9f6bf0 implements \SqlSemantics\Statement\Model\MySql\Role\OptConstraintNameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptConstraintNameWithConstraintOptIdent_7a9f6bf0 implements \SqlSema
     {
         $writer->append('CONSTRAINT');
         $this->optIdent->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optIdent, preserving every other field.
+     */
+    public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
+    {
+        return new self($optIdent);
     }
 }

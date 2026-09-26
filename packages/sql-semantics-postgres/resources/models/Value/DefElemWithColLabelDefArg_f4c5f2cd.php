@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefElemWithColLabelDefArg_f4c5f2cd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefElemWithColLabelDefArg_f4c5f2cd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DefElemWithColLabelDefArg_f4c5f2cd implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DefElemWithColLabelDefArg_f4c5f2cd implements \SqlSemantics\Statemen
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm $defArg,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defArg), 'The defArg must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class DefElemWithColLabelDefArg_f4c5f2cd implements \SqlSemantics\Statemen
         $this->colLabel->write($writer);
         $writer->append('=');
         $this->defArg->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colLabel, preserving every other field.
+     */
+    public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
+    {
+        return new self($colLabel, $this->defArg);
+    }
+
+    /**
+     * Returns a copy with a new defArg, preserving every other field.
+     */
+    public function withDefArg(\SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm $defArg): self
+    {
+        return new self($this->colLabel, $defArg);
     }
 }

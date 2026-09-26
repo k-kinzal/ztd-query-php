@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeycacheWithCacheSymIndexSymKeycacheListOrPartsInSymKeyCacheName_6d2e6db7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeycacheWithCacheSymIndexSymKeycacheListOrPartsInSymKeyCacheName_6d2e6db7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeycacheWithCacheSymIndexSymKeycacheListOrPartsInSymKeyCacheName_6d2e6db7 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\KeycacheForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class KeycacheWithCacheSymIndexSymKeycacheListOrPartsInSymKeyCacheName_6d2
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeycacheListOrPartsForm $keycacheListOrParts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyCacheNameForm $keyCacheName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keycacheListOrParts), 'The keycacheListOrParts must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyCacheName), 'The keyCacheName must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class KeycacheWithCacheSymIndexSymKeycacheListOrPartsInSymKeyCacheName_6d2
         $this->keycacheListOrParts->write($writer);
         $writer->append('IN');
         $this->keyCacheName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keycacheListOrParts, preserving every other field.
+     */
+    public function withKeycacheListOrParts(\SqlSemantics\Statement\Model\MySql\Role\KeycacheListOrPartsForm $keycacheListOrParts): self
+    {
+        return new self($keycacheListOrParts, $this->keyCacheName);
+    }
+
+    /**
+     * Returns a copy with a new keyCacheName, preserving every other field.
+     */
+    public function withKeyCacheName(\SqlSemantics\Statement\Model\MySql\Role\KeyCacheNameForm $keyCacheName): self
+    {
+        return new self($this->keycacheListOrParts, $keyCacheName);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AnalyzeWithAnalyzeSymOptNoWriteToBinlogTableOrTablesTableList_890f4849 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AnalyzeWithAnalyzeSymOptNoWriteToBinlogTableOrTablesTableList_890f4849 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AnalyzeWithAnalyzeSymOptNoWriteToBinlogTableOrTablesTableList_890f4849 implements \SqlSemantics\Statement\Model\MySql\Role\AnalyzeForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AnalyzeWithAnalyzeSymOptNoWriteToBinlogTableOrTablesTableList_890f48
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOrTables), 'The tableOrTables must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableList), 'The tableList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class AnalyzeWithAnalyzeSymOptNoWriteToBinlogTableOrTablesTableList_890f48
         $this->optNoWriteToBinlog->write($writer);
         $this->tableOrTables->write($writer);
         $this->tableList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optNoWriteToBinlog, preserving every other field.
+     */
+    public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
+    {
+        return new self($optNoWriteToBinlog, $this->tableOrTables, $this->tableList);
+    }
+
+    /**
+     * Returns a copy with a new tableOrTables, preserving every other field.
+     */
+    public function withTableOrTables(\SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables): self
+    {
+        return new self($this->optNoWriteToBinlog, $tableOrTables, $this->tableList);
+    }
+
+    /**
+     * Returns a copy with a new tableList, preserving every other field.
+     */
+    public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
+    {
+        return new self($this->optNoWriteToBinlog, $this->tableOrTables, $tableList);
     }
 }

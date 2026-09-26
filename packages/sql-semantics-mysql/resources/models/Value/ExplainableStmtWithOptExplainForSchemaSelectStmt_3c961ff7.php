@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExplainableStmtWithOptExplainForSchemaSelectStmt_3c961ff7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExplainableStmtWithOptExplainForSchemaSelectStmt_3c961ff7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExplainableStmtWithOptExplainForSchemaSelectStmt_3c961ff7 implements \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExplainableStmtWithOptExplainForSchemaSelectStmt_3c961ff7 implements
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExplainForSchemaForm $optExplainForSchema,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectStmtForm $selectStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExplainForSchema), 'The optExplainForSchema must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectStmt), 'The selectStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ExplainableStmtWithOptExplainForSchemaSelectStmt_3c961ff7 implements
     {
         $this->optExplainForSchema->write($writer);
         $this->selectStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optExplainForSchema, preserving every other field.
+     */
+    public function withOptExplainForSchema(\SqlSemantics\Statement\Model\MySql\Role\OptExplainForSchemaForm $optExplainForSchema): self
+    {
+        return new self($optExplainForSchema, $this->selectStmt);
+    }
+
+    /**
+     * Returns a copy with a new selectStmt, preserving every other field.
+     */
+    public function withSelectStmt(\SqlSemantics\Statement\Model\MySql\Role\SelectStmtForm $selectStmt): self
+    {
+        return new self($this->optExplainForSchema, $selectStmt);
     }
 }

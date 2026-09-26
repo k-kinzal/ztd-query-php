@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GenericSetWithVarNameVarList_1fa57b1f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\GenericSetWithVarNameVarList_1fa57b1f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GenericSetWithVarNameVarList_1fa57b1f implements \SqlSemantics\Statement\Model\PostgreSql\Role\GenericSetForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestMoreForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GenericSetWithVarNameVarList_1fa57b1f implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VarNameForm $varName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm $varList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($varName), 'The varName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($varList), 'The varList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GenericSetWithVarNameVarList_1fa57b1f implements \SqlSemantics\State
         $this->varName->write($writer);
         $writer->append('=');
         $this->varList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new varName, preserving every other field.
+     */
+    public function withVarName(\SqlSemantics\Statement\Model\PostgreSql\Role\VarNameForm $varName): self
+    {
+        return new self($varName, $this->varList);
+    }
+
+    /**
+     * Returns a copy with a new varList, preserving every other field.
+     */
+    public function withVarList(\SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm $varList): self
+    {
+        return new self($this->varName, $varList);
     }
 }

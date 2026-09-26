@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupReplicationStartOptionsWithGroupReplicationStartOptionsGroupReplicationStartOption_77c998f1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GroupReplicationStartOptionsWithGroupReplicationStartOptionsGroupReplicationStartOption_77c998f1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GroupReplicationStartOptionsWithGroupReplicationStartOptionsGroupReplicationStartOption_77c998f1 implements \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptGroupReplicationStartOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GroupReplicationStartOptionsWithGroupReplicationStartOptionsGroupRep
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionsForm $groupReplicationStartOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionForm $groupReplicationStartOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupReplicationStartOptions), 'The groupReplicationStartOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupReplicationStartOption), 'The groupReplicationStartOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GroupReplicationStartOptionsWithGroupReplicationStartOptionsGroupRep
         $this->groupReplicationStartOptions->write($writer);
         $writer->append(',');
         $this->groupReplicationStartOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new groupReplicationStartOptions, preserving every other field.
+     */
+    public function withGroupReplicationStartOptions(\SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionsForm $groupReplicationStartOptions): self
+    {
+        return new self($groupReplicationStartOptions, $this->groupReplicationStartOption);
+    }
+
+    /**
+     * Returns a copy with a new groupReplicationStartOption, preserving every other field.
+     */
+    public function withGroupReplicationStartOption(\SqlSemantics\Statement\Model\MySql\Role\GroupReplicationStartOptionForm $groupReplicationStartOption): self
+    {
+        return new self($this->groupReplicationStartOptions, $groupReplicationStartOption);
     }
 }

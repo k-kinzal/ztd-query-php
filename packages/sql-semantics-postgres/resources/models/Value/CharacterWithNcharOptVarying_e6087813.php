@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CharacterWithNcharOptVarying_e6087813 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CharacterWithNcharOptVarying_e6087813 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CharacterWithNcharOptVarying_e6087813 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CharacterForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CharacterWithoutLengthForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstCharacterForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVaryingForm $optVarying,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVarying), 'The optVarying must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CharacterWithNcharOptVarying_e6087813 implements \SqlSemantics\State
     {
         $writer->append('NCHAR');
         $this->optVarying->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optVarying, preserving every other field.
+     */
+    public function withOptVarying(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVaryingForm $optVarying): self
+    {
+        return new self($optVarying);
     }
 }

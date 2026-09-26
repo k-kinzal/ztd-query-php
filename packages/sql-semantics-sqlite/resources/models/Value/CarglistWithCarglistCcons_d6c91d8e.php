@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CarglistWithCarglistCcons_d6c91d8e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CarglistWithCarglistCcons_d6c91d8e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CarglistWithCarglistCcons_d6c91d8e implements \SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CarglistWithCarglistCcons_d6c91d8e implements \SqlSemantics\Statemen
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm $carglist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CconsForm $ccons,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($carglist), 'The carglist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ccons), 'The ccons must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class CarglistWithCarglistCcons_d6c91d8e implements \SqlSemantics\Statemen
     {
         $this->carglist->write($writer);
         $this->ccons->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new carglist, preserving every other field.
+     */
+    public function withCarglist(\SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm $carglist): self
+    {
+        return new self($carglist, $this->ccons);
+    }
+
+    /**
+     * Returns a copy with a new ccons, preserving every other field.
+     */
+    public function withCcons(\SqlSemantics\Statement\Model\Sqlite\Role\CconsForm $ccons): self
+    {
+        return new self($this->carglist, $ccons);
     }
 }

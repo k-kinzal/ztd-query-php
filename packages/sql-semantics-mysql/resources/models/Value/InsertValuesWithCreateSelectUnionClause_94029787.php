@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertValuesWithCreateSelectUnionClause_94029787 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertValuesWithCreateSelectUnionClause_94029787 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertValuesWithCreateSelectUnionClause_94029787 implements \SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm, \SqlSemantics\Statement\Model\MySql\Role\InsertFromConstructorForm, \SqlSemantics\Statement\Model\MySql\Role\InsertValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertValuesWithCreateSelectUnionClause_94029787 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createSelect), 'The createSelect must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionClause), 'The unionClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class InsertValuesWithCreateSelectUnionClause_94029787 implements \SqlSema
     {
         $this->createSelect->write($writer);
         $this->unionClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createSelect, preserving every other field.
+     */
+    public function withCreateSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect): self
+    {
+        return new self($createSelect, $this->unionClause);
+    }
+
+    /**
+     * Returns a copy with a new unionClause, preserving every other field.
+     */
+    public function withUnionClause(\SqlSemantics\Statement\Model\MySql\Role\UnionClauseForm $unionClause): self
+    {
+        return new self($this->createSelect, $unionClause);
     }
 }

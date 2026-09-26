@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateSrsStmtWithCreateOrSymReplaceSymSpatialSymReferenceSymSystemSymRealUlonglongNumSrsAttr_566de541 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateSrsStmtWithCreateOrSymReplaceSymSpatialSymReferenceSymSystemSymRealUlonglongNumSrsAttr_566de541 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateSrsStmtWithCreateOrSymReplaceSymSpatialSymReferenceSymSystemSymRealUlonglongNumSrsAttr_566de541 implements \SqlSemantics\Statement\Model\MySql\Role\CreateSrsStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class CreateSrsStmtWithCreateOrSymReplaceSymSpatialSymReferenceSymSystemSymRealUlonglongNumSrsAttr_566de541 implements \SqlSemantics\Statement\Model\MySql\Role\CreateSrsStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreateSrsStmtWithCreateOrSymReplaceSymSpatialSymReferenceSymSystemSy
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlonglongNum), 'The realUlonglongNum must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($srsAttributes), 'The srsAttributes must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +40,21 @@ final class CreateSrsStmtWithCreateOrSymReplaceSymSpatialSymReferenceSymSystemSy
         $writer->append('SYSTEM');
         $this->realUlonglongNum->write($writer);
         $this->srsAttributes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new realUlonglongNum, preserving every other field.
+     */
+    public function withRealUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum): self
+    {
+        return new self($realUlonglongNum, $this->srsAttributes);
+    }
+
+    /**
+     * Returns a copy with a new srsAttributes, preserving every other field.
+     */
+    public function withSrsAttributes(\SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes): self
+    {
+        return new self($this->realUlonglongNum, $srsAttributes);
     }
 }

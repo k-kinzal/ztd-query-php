@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TextStringWithBinNum_a8d4b26c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TextStringWithBinNum_a8d4b26c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TextStringWithBinNum_a8d4b26c implements \SqlSemantics\Statement\Model\MySql\Role\OptDescribeColumnForm, \SqlSemantics\Statement\Model\MySql\Role\StringListForm, \SqlSemantics\Statement\Model\MySql\Role\TextStringForm, \SqlSemantics\Statement\Model\MySql\Role\XidForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $binNum,
     ) {
+        $this->assertMatchesPattern($binNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['BIN_NUM'], 'The binNum must be a complete BIN_NUM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TextStringWithBinNum_a8d4b26c implements \SqlSemantics\Statement\Mod
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->binNum);
+    }
+
+    /**
+     * Returns a copy with a new binNum, preserving every other field.
+     */
+    public function withBinNum(string $binNum): self
+    {
+        return new self($binNum);
     }
 }

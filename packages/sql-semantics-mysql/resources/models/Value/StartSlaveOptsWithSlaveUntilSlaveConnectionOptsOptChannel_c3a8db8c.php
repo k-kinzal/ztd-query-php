@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c implements \SqlSemantics\Statement\Model\MySql\Role\StartSlaveOptsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveConnectionOptsForm $slaveConnectionOpts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveUntil), 'The slaveUntil must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveConnectionOpts), 'The slaveConnectionOpts must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c i
         $this->slaveUntil->write($writer);
         $this->slaveConnectionOpts->write($writer);
         $this->optChannel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new slaveUntil, preserving every other field.
+     */
+    public function withSlaveUntil(\SqlSemantics\Statement\Model\MySql\Role\SlaveUntilForm $slaveUntil): self
+    {
+        return new self($slaveUntil, $this->slaveConnectionOpts, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new slaveConnectionOpts, preserving every other field.
+     */
+    public function withSlaveConnectionOpts(\SqlSemantics\Statement\Model\MySql\Role\SlaveConnectionOptsForm $slaveConnectionOpts): self
+    {
+        return new self($this->slaveUntil, $slaveConnectionOpts, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optChannel, preserving every other field.
+     */
+    public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
+    {
+        return new self($this->slaveUntil, $this->slaveConnectionOpts, $optChannel);
     }
 }

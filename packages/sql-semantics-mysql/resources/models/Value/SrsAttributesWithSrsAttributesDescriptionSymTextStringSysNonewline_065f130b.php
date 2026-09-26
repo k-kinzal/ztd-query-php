@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SrsAttributesWithSrsAttributesDescriptionSymTextStringSysNonewline_065f130b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SrsAttributesWithSrsAttributesDescriptionSymTextStringSysNonewline_065f130b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SrsAttributesWithSrsAttributesDescriptionSymTextStringSysNonewline_065f130b implements \SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SrsAttributesWithSrsAttributesDescriptionSymTextStringSysNonewline_0
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($srsAttributes), 'The srsAttributes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SrsAttributesWithSrsAttributesDescriptionSymTextStringSysNonewline_0
         $this->srsAttributes->write($writer);
         $writer->append('DESCRIPTION');
         $this->textStringSysNonewline->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new srsAttributes, preserving every other field.
+     */
+    public function withSrsAttributes(\SqlSemantics\Statement\Model\MySql\Role\SrsAttributesForm $srsAttributes): self
+    {
+        return new self($srsAttributes, $this->textStringSysNonewline);
+    }
+
+    /**
+     * Returns a copy with a new textStringSysNonewline, preserving every other field.
+     */
+    public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
+    {
+        return new self($this->srsAttributes, $textStringSysNonewline);
     }
 }

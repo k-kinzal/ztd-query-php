@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldLengthWithLongNum_3e52d4e9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldLengthWithLongNum_3e52d4e9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldLengthWithLongNum_3e52d4e9 implements \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm, \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm, \SqlSemantics\Statement\Model\MySql\Role\StandardFloatOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $longNum,
     ) {
+        $this->assertMatchesPattern($longNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['LONG_NUM'], 'The longNum must be a complete LONG_NUM lexical spelling.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class FieldLengthWithLongNum_3e52d4e9 implements \SqlSemantics\Statement\M
         $writer->append('(');
         $writer->append($this->longNum);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new longNum, preserving every other field.
+     */
+    public function withLongNum(string $longNum): self
+    {
+        return new self($longNum);
     }
 }

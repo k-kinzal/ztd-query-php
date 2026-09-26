@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptTableSpaceOwnerWithOwnerRoleSpec_ea1e60f9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptTableSpaceOwnerWithOwnerRoleSpec_ea1e60f9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptTableSpaceOwnerWithOwnerRoleSpec_ea1e60f9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceOwnerForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptTableSpaceOwnerWithOwnerRoleSpec_ea1e60f9 implements \SqlSemantic
     {
         $writer->append('OWNER');
         $this->roleSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleSpec, preserving every other field.
+     */
+    public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
+    {
+        return new self($roleSpec);
     }
 }

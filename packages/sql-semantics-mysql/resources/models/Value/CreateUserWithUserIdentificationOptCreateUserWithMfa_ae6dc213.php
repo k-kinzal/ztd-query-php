@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 implements \SqlSemantics\Statement\Model\MySql\Role\CreateUserForm, \SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreateUserWithMfaForm $optCreateUserWithMfa,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identification), 'The identification must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCreateUserWithMfa), 'The optCreateUserWithMfa must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class CreateUserWithUserIdentificationOptCreateUserWithMfa_ae6dc213 implem
         $this->user->write($writer);
         $this->identification->write($writer);
         $this->optCreateUserWithMfa->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->identification, $this->optCreateUserWithMfa);
+    }
+
+    /**
+     * Returns a copy with a new identification, preserving every other field.
+     */
+    public function withIdentification(\SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification): self
+    {
+        return new self($this->user, $identification, $this->optCreateUserWithMfa);
+    }
+
+    /**
+     * Returns a copy with a new optCreateUserWithMfa, preserving every other field.
+     */
+    public function withOptCreateUserWithMfa(\SqlSemantics\Statement\Model\MySql\Role\OptCreateUserWithMfaForm $optCreateUserWithMfa): self
+    {
+        return new self($this->user, $this->identification, $optCreateUserWithMfa);
     }
 }

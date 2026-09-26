@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SelectWithWithWqlistSelectnowith_dc3f10ec $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SelectWithWithWqlistSelectnowith_dc3f10ec $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SelectWithWithWqlistSelectnowith_dc3f10ec implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm
+final class SelectWithWithWqlistSelectnowith_dc3f10ec implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelectWithWithWqlistSelectnowith_dc3f10ec implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm $wqlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm $selectnowith,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($wqlist), 'The wqlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($selectnowith), 'The selectnowith must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SelectWithWithWqlistSelectnowith_dc3f10ec implements \SqlSemantics\S
         $writer->append('WITH');
         $this->wqlist->write($writer);
         $this->selectnowith->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new wqlist, preserving every other field.
+     */
+    public function withWqlist(\SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm $wqlist): self
+    {
+        return new self($wqlist, $this->selectnowith);
+    }
+
+    /**
+     * Returns a copy with a new selectnowith, preserving every other field.
+     */
+    public function withSelectnowith(\SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm $selectnowith): self
+    {
+        return new self($this->wqlist, $selectnowith);
     }
 }

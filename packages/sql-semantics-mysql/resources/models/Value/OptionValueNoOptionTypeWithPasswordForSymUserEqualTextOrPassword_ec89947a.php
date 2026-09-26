@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec89947a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec89947a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec89947a implements \SqlSemantics\Statement\Model\MySql\Role\OptionValueForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueNoOptionTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec8
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextOrPasswordForm $textOrPassword,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textOrPassword), 'The textOrPassword must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class OptionValueNoOptionTypeWithPasswordForSymUserEqualTextOrPassword_ec8
         $this->user->write($writer);
         $this->equal->write($writer);
         $this->textOrPassword->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->equal, $this->textOrPassword);
+    }
+
+    /**
+     * Returns a copy with a new equal, preserving every other field.
+     */
+    public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
+    {
+        return new self($this->user, $equal, $this->textOrPassword);
+    }
+
+    /**
+     * Returns a copy with a new textOrPassword, preserving every other field.
+     */
+    public function withTextOrPassword(\SqlSemantics\Statement\Model\MySql\Role\TextOrPasswordForm $textOrPassword): self
+    {
+        return new self($this->user, $this->equal, $textOrPassword);
     }
 }

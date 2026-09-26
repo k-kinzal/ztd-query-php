@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableFactorWithSelectDerivedUnionOptTableAlias_804f1e0c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableFactorWithSelectDerivedUnionOptTableAlias_804f1e0c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableFactorWithSelectDerivedUnionOptTableAlias_804f1e0c implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableFactorWithSelectDerivedUnionOptTableAlias_804f1e0c implements \
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm $selectDerivedUnion,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectDerivedUnion), 'The selectDerivedUnion must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableAlias), 'The optTableAlias must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class TableFactorWithSelectDerivedUnionOptTableAlias_804f1e0c implements \
         $this->selectDerivedUnion->write($writer);
         $writer->append(')');
         $this->optTableAlias->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectDerivedUnion, preserving every other field.
+     */
+    public function withSelectDerivedUnion(\SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm $selectDerivedUnion): self
+    {
+        return new self($selectDerivedUnion, $this->optTableAlias);
+    }
+
+    /**
+     * Returns a copy with a new optTableAlias, preserving every other field.
+     */
+    public function withOptTableAlias(\SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias): self
+    {
+        return new self($this->selectDerivedUnion, $optTableAlias);
     }
 }

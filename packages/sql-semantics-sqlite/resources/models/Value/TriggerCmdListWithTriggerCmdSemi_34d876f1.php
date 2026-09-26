@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerCmdListWithTriggerCmdSemi_34d876f1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TriggerCmdListWithTriggerCmdSemi_34d876f1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerCmdListWithTriggerCmdSemi_34d876f1 implements \SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TriggerCmdListWithTriggerCmdSemi_34d876f1 implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdForm $triggerCmd,
         public readonly string $semi,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($triggerCmd), 'The triggerCmd must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($semi, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['SEMI'], 'The semi must be a complete SEMI lexical spelling.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TriggerCmdListWithTriggerCmdSemi_34d876f1 implements \SqlSemantics\S
     {
         $this->triggerCmd->write($writer);
         $writer->append($this->semi);
+    }
+
+    /**
+     * Returns a copy with a new triggerCmd, preserving every other field.
+     */
+    public function withTriggerCmd(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdForm $triggerCmd): self
+    {
+        return new self($triggerCmd, $this->semi);
+    }
+
+    /**
+     * Returns a copy with a new semi, preserving every other field.
+     */
+    public function withSemi(string $semi): self
+    {
+        return new self($this->triggerCmd, $semi);
     }
 }

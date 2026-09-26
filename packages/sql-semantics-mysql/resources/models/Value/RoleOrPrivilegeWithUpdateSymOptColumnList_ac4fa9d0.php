@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleOrPrivilegeWithUpdateSymOptColumnList_ac4fa9d0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleOrPrivilegeWithUpdateSymOptColumnList_ac4fa9d0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RoleOrPrivilegeWithUpdateSymOptColumnList_ac4fa9d0 implements \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeForm, \SqlSemantics\Statement\Model\MySql\Role\RoleOrPrivilegeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptColumnListForm $optColumnList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optColumnList), 'The optColumnList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class RoleOrPrivilegeWithUpdateSymOptColumnList_ac4fa9d0 implements \SqlSe
     {
         $writer->append('UPDATE');
         $this->optColumnList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optColumnList, preserving every other field.
+     */
+    public function withOptColumnList(\SqlSemantics\Statement\Model\MySql\Role\OptColumnListForm $optColumnList): self
+    {
+        return new self($optColumnList);
     }
 }

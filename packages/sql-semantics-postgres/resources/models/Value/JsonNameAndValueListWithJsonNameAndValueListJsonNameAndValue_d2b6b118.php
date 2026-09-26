@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonNameAndValueListWithJsonNameAndValueListJsonNameAndValue_d2b6b118 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonNameAndValueListWithJsonNameAndValueListJsonNameAndValue_d2b6b118 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonNameAndValueListWithJsonNameAndValueListJsonNameAndValue_d2b6b118 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JsonNameAndValueListWithJsonNameAndValueListJsonNameAndValue_d2b6b11
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueListForm $jsonNameAndValueList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueForm $jsonNameAndValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonNameAndValueList), 'The jsonNameAndValueList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonNameAndValue), 'The jsonNameAndValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class JsonNameAndValueListWithJsonNameAndValueListJsonNameAndValue_d2b6b11
         $this->jsonNameAndValueList->write($writer);
         $writer->append(',');
         $this->jsonNameAndValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new jsonNameAndValueList, preserving every other field.
+     */
+    public function withJsonNameAndValueList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueListForm $jsonNameAndValueList): self
+    {
+        return new self($jsonNameAndValueList, $this->jsonNameAndValue);
+    }
+
+    /**
+     * Returns a copy with a new jsonNameAndValue, preserving every other field.
+     */
+    public function withJsonNameAndValue(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueForm $jsonNameAndValue): self
+    {
+        return new self($this->jsonNameAndValueList, $jsonNameAndValue);
     }
 }

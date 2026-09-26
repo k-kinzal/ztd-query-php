@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantListWithGrantListGrantUser_53bd58f5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantListWithGrantListGrantUser_53bd58f5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantListWithGrantListGrantUser_53bd58f5 implements \SqlSemantics\Statement\Model\MySql\Role\GrantListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GrantListWithGrantListGrantUser_53bd58f5 implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantUserForm $grantUser,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantList), 'The grantList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantUser), 'The grantUser must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GrantListWithGrantListGrantUser_53bd58f5 implements \SqlSemantics\St
         $this->grantList->write($writer);
         $writer->append(',');
         $this->grantUser->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new grantList, preserving every other field.
+     */
+    public function withGrantList(\SqlSemantics\Statement\Model\MySql\Role\GrantListForm $grantList): self
+    {
+        return new self($grantList, $this->grantUser);
+    }
+
+    /**
+     * Returns a copy with a new grantUser, preserving every other field.
+     */
+    public function withGrantUser(\SqlSemantics\Statement\Model\MySql\Role\GrantUserForm $grantUser): self
+    {
+        return new self($this->grantList, $grantUser);
     }
 }

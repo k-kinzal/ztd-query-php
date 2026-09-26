@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleIdentQWithIdentIdentIdent_134a470f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleIdentQWithIdentIdentIdent_134a470f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SimpleIdentQWithIdentIdentIdent_134a470f implements \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ConditionNumberForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\FieldOrVarForm, \SqlSemantics\Statement\Model\MySql\Role\FieldsForm, \SqlSemantics\Statement\Model\MySql\Role\FieldsOrVarsForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\IdentListForm, \SqlSemantics\Statement\Model\MySql\Role\IdentListArgForm, \SqlSemantics\Statement\Model\MySql\Role\InsertColumnForm, \SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm, \SqlSemantics\Statement\Model\MySql\Role\InsertIdentForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentQForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SimpleIdentQWithIdentIdentIdent_134a470f implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident3,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident2), 'The ident2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident3), 'The ident3 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class SimpleIdentQWithIdentIdentIdent_134a470f implements \SqlSemantics\St
         $this->ident2->write($writer);
         $writer->append('.');
         $this->ident3->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident, $this->ident2, $this->ident3);
+    }
+
+    /**
+     * Returns a copy with a new ident2, preserving every other field.
+     */
+    public function withIdent2(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident2): self
+    {
+        return new self($this->ident, $ident2, $this->ident3);
+    }
+
+    /**
+     * Returns a copy with a new ident3, preserving every other field.
+     */
+    public function withIdent3(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident3): self
+    {
+        return new self($this->ident, $this->ident2, $ident3);
     }
 }

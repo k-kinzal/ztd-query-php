@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CacheKeyListOrEmptyWith_2afdcc8e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CacheKeyListOrEmptyWith_2afdcc8e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CacheKeyListOrEmptyWith_2afdcc8e implements \SqlSemantics\Statement\Model\MySql\Role\CacheKeyListOrEmptyForm, \SqlSemantics\Statement\Model\MySql\Role\CacheKeysSpecForm

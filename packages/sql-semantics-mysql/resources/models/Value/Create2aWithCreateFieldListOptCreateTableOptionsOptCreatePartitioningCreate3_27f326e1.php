@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitioningCreate3_27f326e1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitioningCreate3_27f326e1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitioningCreate3_27f326e1 implements \SqlSemantics\Statement\Model\MySql\Role\Create2aForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitionin
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm $optCreatePartitioning,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\Create3Form $create3,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createFieldList), 'The createFieldList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCreateTableOptions), 'The optCreateTableOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCreatePartitioning), 'The optCreatePartitioning must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($create3), 'The create3 must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class Create2aWithCreateFieldListOptCreateTableOptionsOptCreatePartitionin
         $this->optCreateTableOptions->write($writer);
         $this->optCreatePartitioning->write($writer);
         $this->create3->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createFieldList, preserving every other field.
+     */
+    public function withCreateFieldList(\SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm $createFieldList): self
+    {
+        return new self($createFieldList, $this->optCreateTableOptions, $this->optCreatePartitioning, $this->create3);
+    }
+
+    /**
+     * Returns a copy with a new optCreateTableOptions, preserving every other field.
+     */
+    public function withOptCreateTableOptions(\SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm $optCreateTableOptions): self
+    {
+        return new self($this->createFieldList, $optCreateTableOptions, $this->optCreatePartitioning, $this->create3);
+    }
+
+    /**
+     * Returns a copy with a new optCreatePartitioning, preserving every other field.
+     */
+    public function withOptCreatePartitioning(\SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm $optCreatePartitioning): self
+    {
+        return new self($this->createFieldList, $this->optCreateTableOptions, $optCreatePartitioning, $this->create3);
+    }
+
+    /**
+     * Returns a copy with a new create3, preserving every other field.
+     */
+    public function withCreate3(\SqlSemantics\Statement\Model\MySql\Role\Create3Form $create3): self
+    {
+        return new self($this->createFieldList, $this->optCreateTableOptions, $this->optCreatePartitioning, $create3);
     }
 }

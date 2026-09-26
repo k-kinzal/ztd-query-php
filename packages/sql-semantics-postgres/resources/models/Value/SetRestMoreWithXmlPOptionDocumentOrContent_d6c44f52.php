@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetRestMoreWithXmlPOptionDocumentOrContent_d6c44f52 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SetRestMoreWithXmlPOptionDocumentOrContent_d6c44f52 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SetRestMoreWithXmlPOptionDocumentOrContent_d6c44f52 implements \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SetRestMoreForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DocumentOrContentForm $documentOrContent,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($documentOrContent), 'The documentOrContent must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SetRestMoreWithXmlPOptionDocumentOrContent_d6c44f52 implements \SqlS
         $writer->append('XML');
         $writer->append('OPTION');
         $this->documentOrContent->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new documentOrContent, preserving every other field.
+     */
+    public function withDocumentOrContent(\SqlSemantics\Statement\Model\PostgreSql\Role\DocumentOrContentForm $documentOrContent): self
+    {
+        return new self($documentOrContent);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithAddPartitionSymOptNoWriteToBinlogPartDefList_41ca164f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StandaloneAlterCommandsWithAddPartitionSymOptNoWriteToBinlogPartDefList_41ca164f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StandaloneAlterCommandsWithAddPartitionSymOptNoWriteToBinlogPartDefList_41ca164f implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StandaloneAlterCommandsWithAddPartitionSymOptNoWriteToBinlogPartDefL
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partDefList), 'The partDefList must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class StandaloneAlterCommandsWithAddPartitionSymOptNoWriteToBinlogPartDefL
         $writer->append('(');
         $this->partDefList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new optNoWriteToBinlog, preserving every other field.
+     */
+    public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
+    {
+        return new self($optNoWriteToBinlog, $this->partDefList);
+    }
+
+    /**
+     * Returns a copy with a new partDefList, preserving every other field.
+     */
+    public function withPartDefList(\SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList): self
+    {
+        return new self($this->optNoWriteToBinlog, $partDefList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRelationList_595d9b80 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRelationList_595d9b80 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRelationList_595d9b80 implements \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRelationList_595d9b80 implements \SqlSemantics\Statement\Model\PostgreSql\Role\VacuumStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAnalyzeForm $optAnalyze,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFull), 'The optFull must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFreeze), 'The optFreeze must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVerbose), 'The optVerbose must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAnalyze), 'The optAnalyze must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVacuumRelationList), 'The optVacuumRelationList must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +44,45 @@ final class VacuumStmtWithVacuumOptFullOptFreezeOptVerboseOptAnalyzeOptVacuumRel
         $this->optVerbose->write($writer);
         $this->optAnalyze->write($writer);
         $this->optVacuumRelationList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optFull, preserving every other field.
+     */
+    public function withOptFull(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFullForm $optFull): self
+    {
+        return new self($optFull, $this->optFreeze, $this->optVerbose, $this->optAnalyze, $this->optVacuumRelationList);
+    }
+
+    /**
+     * Returns a copy with a new optFreeze, preserving every other field.
+     */
+    public function withOptFreeze(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFreezeForm $optFreeze): self
+    {
+        return new self($this->optFull, $optFreeze, $this->optVerbose, $this->optAnalyze, $this->optVacuumRelationList);
+    }
+
+    /**
+     * Returns a copy with a new optVerbose, preserving every other field.
+     */
+    public function withOptVerbose(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose): self
+    {
+        return new self($this->optFull, $this->optFreeze, $optVerbose, $this->optAnalyze, $this->optVacuumRelationList);
+    }
+
+    /**
+     * Returns a copy with a new optAnalyze, preserving every other field.
+     */
+    public function withOptAnalyze(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAnalyzeForm $optAnalyze): self
+    {
+        return new self($this->optFull, $this->optFreeze, $this->optVerbose, $optAnalyze, $this->optVacuumRelationList);
+    }
+
+    /**
+     * Returns a copy with a new optVacuumRelationList, preserving every other field.
+     */
+    public function withOptVacuumRelationList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVacuumRelationListForm $optVacuumRelationList): self
+    {
+        return new self($this->optFull, $this->optFreeze, $this->optVerbose, $this->optAnalyze, $optVacuumRelationList);
     }
 }

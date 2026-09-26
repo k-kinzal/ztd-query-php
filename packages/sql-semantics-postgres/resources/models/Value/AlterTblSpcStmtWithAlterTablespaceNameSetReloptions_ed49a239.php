@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTblSpcStmtWithAlterTablespaceNameSetReloptions_ed49a239 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTblSpcStmtWithAlterTablespaceNameSetReloptions_ed49a239 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTblSpcStmtWithAlterTablespaceNameSetReloptions_ed49a239 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTblSpcStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterTblSpcStmtWithAlterTablespaceNameSetReloptions_ed49a239 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTblSpcStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTblSpcStmtWithAlterTablespaceNameSetReloptions_ed49a239 impleme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionsForm $reloptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($reloptions), 'The reloptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class AlterTblSpcStmtWithAlterTablespaceNameSetReloptions_ed49a239 impleme
         $this->name->write($writer);
         $writer->append('SET');
         $this->reloptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->reloptions);
+    }
+
+    /**
+     * Returns a copy with a new reloptions, preserving every other field.
+     */
+    public function withReloptions(\SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionsForm $reloptions): self
+    {
+        return new self($this->name, $reloptions);
     }
 }

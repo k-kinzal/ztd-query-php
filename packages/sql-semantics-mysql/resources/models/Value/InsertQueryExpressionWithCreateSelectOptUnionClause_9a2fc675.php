@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertQueryExpressionWithCreateSelectOptUnionClause_9a2fc675 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertQueryExpressionWithCreateSelectOptUnionClause_9a2fc675 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertQueryExpressionWithCreateSelectOptUnionClause_9a2fc675 implements \SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm, \SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertQueryExpressionWithCreateSelectOptUnionClause_9a2fc675 impleme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createSelect), 'The createSelect must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionClause), 'The optUnionClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class InsertQueryExpressionWithCreateSelectOptUnionClause_9a2fc675 impleme
     {
         $this->createSelect->write($writer);
         $this->optUnionClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createSelect, preserving every other field.
+     */
+    public function withCreateSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect): self
+    {
+        return new self($createSelect, $this->optUnionClause);
+    }
+
+    /**
+     * Returns a copy with a new optUnionClause, preserving every other field.
+     */
+    public function withOptUnionClause(\SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause): self
+    {
+        return new self($this->createSelect, $optUnionClause);
     }
 }

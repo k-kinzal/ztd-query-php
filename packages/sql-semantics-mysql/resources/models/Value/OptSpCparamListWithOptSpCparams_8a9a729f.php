@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSpCparamListWithOptSpCparams_8a9a729f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptSpCparamListWithOptSpCparams_8a9a729f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptSpCparamListWithOptSpCparams_8a9a729f implements \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm $optSpCparams,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSpCparams), 'The optSpCparams must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptSpCparamListWithOptSpCparams_8a9a729f implements \SqlSemantics\St
         $writer->append('(');
         $this->optSpCparams->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new optSpCparams, preserving every other field.
+     */
+    public function withOptSpCparams(\SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm $optSpCparams): self
+    {
+        return new self($optSpCparams);
     }
 }

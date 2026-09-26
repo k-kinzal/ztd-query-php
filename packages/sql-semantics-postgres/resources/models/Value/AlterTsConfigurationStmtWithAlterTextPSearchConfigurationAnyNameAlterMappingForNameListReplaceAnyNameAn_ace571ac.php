@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlterMappingForNameListReplaceAnyNameAn_ace571ac $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlterMappingForNameListReplaceAnyNameAn_ace571ac $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlterMappingForNameListReplaceAnyNameAn_ace571ac implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTsConfigurationStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlterMappingForNameListReplaceAnyNameAn_ace571ac implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTsConfigurationStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlte
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyWithForm $anyWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName3,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nameList), 'The nameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName2), 'The anyName2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyWith), 'The anyWith must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName3), 'The anyName3 must be a generated immutable SQL value.');
     }
 
     /**
@@ -44,5 +51,45 @@ final class AlterTsConfigurationStmtWithAlterTextPSearchConfigurationAnyNameAlte
         $this->anyName2->write($writer);
         $this->anyWith->write($writer);
         $this->anyName3->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->nameList, $this->anyName2, $this->anyWith, $this->anyName3);
+    }
+
+    /**
+     * Returns a copy with a new nameList, preserving every other field.
+     */
+    public function withNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\NameListForm $nameList): self
+    {
+        return new self($this->anyName, $nameList, $this->anyName2, $this->anyWith, $this->anyName3);
+    }
+
+    /**
+     * Returns a copy with a new anyName2, preserving every other field.
+     */
+    public function withAnyName2(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName2): self
+    {
+        return new self($this->anyName, $this->nameList, $anyName2, $this->anyWith, $this->anyName3);
+    }
+
+    /**
+     * Returns a copy with a new anyWith, preserving every other field.
+     */
+    public function withAnyWith(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyWithForm $anyWith): self
+    {
+        return new self($this->anyName, $this->nameList, $this->anyName2, $anyWith, $this->anyName3);
+    }
+
+    /**
+     * Returns a copy with a new anyName3, preserving every other field.
+     */
+    public function withAnyName3(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName3): self
+    {
+        return new self($this->anyName, $this->nameList, $this->anyName2, $this->anyWith, $anyName3);
     }
 }

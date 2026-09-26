@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptTypedTableElementListWithTypedTableElementList_f540556b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptTypedTableElementListWithTypedTableElementList_f540556b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptTypedTableElementListWithTypedTableElementList_f540556b implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementListForm $typedTableElementList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typedTableElementList), 'The typedTableElementList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptTypedTableElementListWithTypedTableElementList_f540556b implement
         $writer->append('(');
         $this->typedTableElementList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new typedTableElementList, preserving every other field.
+     */
+    public function withTypedTableElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementListForm $typedTableElementList): self
+    {
+        return new self($typedTableElementList);
     }
 }

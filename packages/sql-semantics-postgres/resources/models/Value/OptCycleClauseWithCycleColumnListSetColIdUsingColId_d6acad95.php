@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptCycleClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 impleme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId2), 'The colId2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 impleme
         $this->colId->write($writer);
         $writer->append('USING');
         $this->colId2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new columnList, preserving every other field.
+     */
+    public function withColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList): self
+    {
+        return new self($columnList, $this->colId, $this->colId2);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($this->columnList, $colId, $this->colId2);
+    }
+
+    /**
+     * Returns a copy with a new colId2, preserving every other field.
+     */
+    public function withColId2(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId2): self
+    {
+        return new self($this->columnList, $this->colId, $colId2);
     }
 }

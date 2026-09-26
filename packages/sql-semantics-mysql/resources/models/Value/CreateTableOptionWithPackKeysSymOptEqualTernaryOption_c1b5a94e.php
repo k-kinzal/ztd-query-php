@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionWithPackKeysSymOptEqualTernaryOption_c1b5a94e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateTableOptionWithPackKeysSymOptEqualTernaryOption_c1b5a94e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateTableOptionWithPackKeysSymOptEqualTernaryOption_c1b5a94e implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreateTableOptionWithPackKeysSymOptEqualTernaryOption_c1b5a94e imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TernaryOptionForm $ternaryOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ternaryOption), 'The ternaryOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CreateTableOptionWithPackKeysSymOptEqualTernaryOption_c1b5a94e imple
         $writer->append('PACK_KEYS');
         $this->optEqual->write($writer);
         $this->ternaryOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->ternaryOption);
+    }
+
+    /**
+     * Returns a copy with a new ternaryOption, preserving every other field.
+     */
+    public function withTernaryOption(\SqlSemantics\Statement\Model\MySql\Role\TernaryOptionForm $ternaryOption): self
+    {
+        return new self($this->optEqual, $ternaryOption);
     }
 }

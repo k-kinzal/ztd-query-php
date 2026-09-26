@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptGorderClauseWithOrderSymByGorderList_d22a02f9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptGorderClauseWithOrderSymByGorderList_d22a02f9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptGorderClauseWithOrderSymByGorderList_d22a02f9 implements \SqlSemantics\Statement\Model\MySql\Role\OptGorderClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GorderListForm $gorderList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($gorderList), 'The gorderList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptGorderClauseWithOrderSymByGorderList_d22a02f9 implements \SqlSema
         $writer->append('ORDER');
         $writer->append('BY');
         $this->gorderList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new gorderList, preserving every other field.
+     */
+    public function withGorderList(\SqlSemantics\Statement\Model\MySql\Role\GorderListForm $gorderList): self
+    {
+        return new self($gorderList);
     }
 }

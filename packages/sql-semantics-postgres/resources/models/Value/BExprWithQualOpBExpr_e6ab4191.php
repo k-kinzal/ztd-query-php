@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BExprWithQualOpBExpr_e6ab4191 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BExprWithQualOpBExpr_e6ab4191 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BExprWithQualOpBExpr_e6ab4191 implements \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,9 @@ final class BExprWithQualOpBExpr_e6ab4191 implements \SqlSemantics\Statement\Mod
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualOpForm $qualOp,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualOp), 'The qualOp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 13,));
     }
 
     /**
@@ -30,5 +35,21 @@ final class BExprWithQualOpBExpr_e6ab4191 implements \SqlSemantics\Statement\Mod
     {
         $this->qualOp->write($writer);
         $this->bExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualOp, preserving every other field.
+     */
+    public function withQualOp(\SqlSemantics\Statement\Model\PostgreSql\Role\QualOpForm $qualOp): self
+    {
+        return new self($qualOp, $this->bExpr);
+    }
+
+    /**
+     * Returns a copy with a new bExpr, preserving every other field.
+     */
+    public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
+    {
+        return new self($this->qualOp, $bExpr);
     }
 }

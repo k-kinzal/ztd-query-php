@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstraintElemWithCheckAExprConstraintAttributeSpec_e3a178fb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstraintElemWithCheckAExprConstraintAttributeSpec_e3a178fb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConstraintElemWithCheckAExprConstraintAttributeSpec_e3a178fb implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypedTableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ConstraintElemWithCheckAExprConstraintAttributeSpec_e3a178fb impleme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constraintAttributeSpec), 'The constraintAttributeSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class ConstraintElemWithCheckAExprConstraintAttributeSpec_e3a178fb impleme
         $this->aExpr->write($writer);
         $writer->append(')');
         $this->constraintAttributeSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($aExpr, $this->constraintAttributeSpec);
+    }
+
+    /**
+     * Returns a copy with a new constraintAttributeSpec, preserving every other field.
+     */
+    public function withConstraintAttributeSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec): self
+    {
+        return new self($this->aExpr, $constraintAttributeSpec);
     }
 }

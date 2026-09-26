@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FrameExtentWithBetweenFrameBoundAndFrameBound_949859d9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FrameExtentWithBetweenFrameBoundAndFrameBound_949859d9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FrameExtentWithBetweenFrameBoundAndFrameBound_949859d9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FrameExtentForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FrameExtentWithBetweenFrameBoundAndFrameBound_949859d9 implements \S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FrameBoundForm $frameBound,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FrameBoundForm $frameBound2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($frameBound), 'The frameBound must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($frameBound2), 'The frameBound2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class FrameExtentWithBetweenFrameBoundAndFrameBound_949859d9 implements \S
         $this->frameBound->write($writer);
         $writer->append('AND');
         $this->frameBound2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new frameBound, preserving every other field.
+     */
+    public function withFrameBound(\SqlSemantics\Statement\Model\PostgreSql\Role\FrameBoundForm $frameBound): self
+    {
+        return new self($frameBound, $this->frameBound2);
+    }
+
+    /**
+     * Returns a copy with a new frameBound2, preserving every other field.
+     */
+    public function withFrameBound2(\SqlSemantics\Statement\Model\PostgreSql\Role\FrameBoundForm $frameBound2): self
+    {
+        return new self($this->frameBound, $frameBound2);
     }
 }

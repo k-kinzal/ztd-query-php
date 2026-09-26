@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithCheckAExprOptNoInherit_8d0a7f6c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithCheckAExprOptNoInherit_8d0a7f6c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColConstraintElemWithCheckAExprOptNoInherit_8d0a7f6c implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintElemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColConstraintElemWithCheckAExprOptNoInherit_8d0a7f6c implements \Sql
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNoInheritForm $optNoInherit,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNoInherit), 'The optNoInherit must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class ColConstraintElemWithCheckAExprOptNoInherit_8d0a7f6c implements \Sql
         $this->aExpr->write($writer);
         $writer->append(')');
         $this->optNoInherit->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($aExpr, $this->optNoInherit);
+    }
+
+    /**
+     * Returns a copy with a new optNoInherit, preserving every other field.
+     */
+    public function withOptNoInherit(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNoInheritForm $optNoInherit): self
+    {
+        return new self($this->aExpr, $optNoInherit);
     }
 }

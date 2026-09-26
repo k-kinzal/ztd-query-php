@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefineStmtWithCreateTypePAnyNameAsOptTableFuncElementList_89a4e1bf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefineStmtWithCreateTypePAnyNameAsOptTableFuncElementList_89a4e1bf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DefineStmtWithCreateTypePAnyNameAsOptTableFuncElementList_89a4e1bf implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefineStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class DefineStmtWithCreateTypePAnyNameAsOptTableFuncElementList_89a4e1bf implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefineStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DefineStmtWithCreateTypePAnyNameAsOptTableFuncElementList_89a4e1bf i
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableFuncElementListForm $optTableFuncElementList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTableFuncElementList), 'The optTableFuncElementList must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class DefineStmtWithCreateTypePAnyNameAsOptTableFuncElementList_89a4e1bf i
         $writer->append('(');
         $this->optTableFuncElementList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->optTableFuncElementList);
+    }
+
+    /**
+     * Returns a copy with a new optTableFuncElementList, preserving every other field.
+     */
+    public function withOptTableFuncElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableFuncElementListForm $optTableFuncElementList): self
+    {
+        return new self($this->anyName, $optTableFuncElementList);
     }
 }

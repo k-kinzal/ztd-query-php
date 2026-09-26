@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FetchArgsWithPriorOptFromInCursorName_4203217e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FetchArgsWithPriorOptFromInCursorName_4203217e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FetchArgsWithPriorOptFromInCursorName_4203217e implements \SqlSemantics\Statement\Model\PostgreSql\Role\FetchArgsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FetchArgsWithPriorOptFromInCursorName_4203217e implements \SqlSemant
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptFromInForm $optFromIn,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFromIn), 'The optFromIn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cursorName), 'The cursorName must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FetchArgsWithPriorOptFromInCursorName_4203217e implements \SqlSemant
         $writer->append('PRIOR');
         $this->optFromIn->write($writer);
         $this->cursorName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optFromIn, preserving every other field.
+     */
+    public function withOptFromIn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFromInForm $optFromIn): self
+    {
+        return new self($optFromIn, $this->cursorName);
+    }
+
+    /**
+     * Returns a copy with a new cursorName, preserving every other field.
+     */
+    public function withCursorName(\SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName): self
+    {
+        return new self($this->optFromIn, $cursorName);
     }
 }

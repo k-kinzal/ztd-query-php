@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonArgumentWithJsonValueExprAsColLabel_fb72418e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonArgumentWithJsonValueExprAsColLabel_fb72418e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonArgumentWithJsonValueExprAsColLabel_fb72418e implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArgumentsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JsonArgumentWithJsonValueExprAsColLabel_fb72418e implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class JsonArgumentWithJsonValueExprAsColLabel_fb72418e implements \SqlSema
         $this->jsonValueExpr->write($writer);
         $writer->append('AS');
         $this->colLabel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new jsonValueExpr, preserving every other field.
+     */
+    public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
+    {
+        return new self($jsonValueExpr, $this->colLabel);
+    }
+
+    /**
+     * Returns a copy with a new colLabel, preserving every other field.
+     */
+    public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
+    {
+        return new self($this->jsonValueExpr, $colLabel);
     }
 }

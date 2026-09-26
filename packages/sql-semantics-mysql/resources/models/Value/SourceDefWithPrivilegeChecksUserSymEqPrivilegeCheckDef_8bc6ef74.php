@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithPrivilegeChecksUserSymEqPrivilegeCheckDef_8bc6ef74 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithPrivilegeChecksUserSymEqPrivilegeCheckDef_8bc6ef74 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithPrivilegeChecksUserSymEqPrivilegeCheckDef_8bc6ef74 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PrivilegeCheckDefForm $privilegeCheckDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($privilegeCheckDef), 'The privilegeCheckDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SourceDefWithPrivilegeChecksUserSymEqPrivilegeCheckDef_8bc6ef74 impl
         $writer->append('PRIVILEGE_CHECKS_USER');
         $writer->append('=');
         $this->privilegeCheckDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new privilegeCheckDef, preserving every other field.
+     */
+    public function withPrivilegeCheckDef(\SqlSemantics\Statement\Model\MySql\Role\PrivilegeCheckDefForm $privilegeCheckDef): self
+    {
+        return new self($privilegeCheckDef);
     }
 }

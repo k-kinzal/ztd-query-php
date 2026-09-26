@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithDatabasesOptWildOrWhere_94eead22 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithDatabasesOptWildOrWhere_94eead22 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithDatabasesOptWildOrWhere_94eead22 implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ShowParamWithDatabasesOptWildOrWhere_94eead22 implements \SqlSemanti
         public readonly string $databases,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere,
     ) {
+        $this->assertMatchesPattern($databases, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASES'], 'The databases must be a complete DATABASES lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWildOrWhere), 'The optWildOrWhere must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ShowParamWithDatabasesOptWildOrWhere_94eead22 implements \SqlSemanti
     {
         $writer->append($this->databases);
         $this->optWildOrWhere->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new databases, preserving every other field.
+     */
+    public function withDatabases(string $databases): self
+    {
+        return new self($databases, $this->optWildOrWhere);
+    }
+
+    /**
+     * Returns a copy with a new optWildOrWhere, preserving every other field.
+     */
+    public function withOptWildOrWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere): self
+    {
+        return new self($this->databases, $optWildOrWhere);
     }
 }

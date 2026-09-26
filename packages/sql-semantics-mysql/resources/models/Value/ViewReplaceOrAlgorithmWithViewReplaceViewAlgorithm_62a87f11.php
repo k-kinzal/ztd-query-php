@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewReplaceOrAlgorithmWithViewReplaceViewAlgorithm_62a87f11 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewReplaceOrAlgorithmWithViewReplaceViewAlgorithm_62a87f11 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewReplaceOrAlgorithmWithViewReplaceViewAlgorithm_62a87f11 implements \SqlSemantics\Statement\Model\MySql\Role\ViewReplaceOrAlgorithmForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ViewReplaceOrAlgorithmWithViewReplaceViewAlgorithm_62a87f11 implemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewReplaceForm $viewReplace,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewAlgorithmForm $viewAlgorithm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewReplace), 'The viewReplace must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewAlgorithm), 'The viewAlgorithm must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ViewReplaceOrAlgorithmWithViewReplaceViewAlgorithm_62a87f11 implemen
     {
         $this->viewReplace->write($writer);
         $this->viewAlgorithm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new viewReplace, preserving every other field.
+     */
+    public function withViewReplace(\SqlSemantics\Statement\Model\MySql\Role\ViewReplaceForm $viewReplace): self
+    {
+        return new self($viewReplace, $this->viewAlgorithm);
+    }
+
+    /**
+     * Returns a copy with a new viewAlgorithm, preserving every other field.
+     */
+    public function withViewAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\ViewAlgorithmForm $viewAlgorithm): self
+    {
+        return new self($this->viewReplace, $viewAlgorithm);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CconsWithDefaultScantokId_263f0ac8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CconsWithDefaultScantokId_263f0ac8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CconsWithDefaultScantokId_263f0ac8 implements \SqlSemantics\Statement\Model\Sqlite\Role\CconsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CconsWithDefaultScantokId_263f0ac8 implements \SqlSemantics\Statemen
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScantokForm $scantok,
         public readonly string $id,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scantok), 'The scantok must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($id, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['id'], 'The id must be a complete id lexical spelling.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CconsWithDefaultScantokId_263f0ac8 implements \SqlSemantics\Statemen
         $writer->append('DEFAULT');
         $this->scantok->write($writer);
         $writer->append($this->id);
+    }
+
+    /**
+     * Returns a copy with a new scantok, preserving every other field.
+     */
+    public function withScantok(\SqlSemantics\Statement\Model\Sqlite\Role\ScantokForm $scantok): self
+    {
+        return new self($scantok, $this->id);
+    }
+
+    /**
+     * Returns a copy with a new id, preserving every other field.
+     */
+    public function withId(string $id): self
+    {
+        return new self($this->scantok, $id);
     }
 }

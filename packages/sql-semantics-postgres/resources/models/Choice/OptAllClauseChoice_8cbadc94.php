@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\OptAllClauseChoice_8cbadc94 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Choice\OptAllClauseChoice_8cbadc94 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum OptAllClauseChoice_8cbadc94: string implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptAllClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptDistinctClauseForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithConvertSymToSymCharacterSetDefaultSymOptCollate_06ae9dec $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithConvertSymToSymCharacterSetDefaultSymOptCollate_06ae9dec $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithConvertSymToSymCharacterSetDefaultSymOptCollate_06ae9dec implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterListItemWithConvertSymToSymCharacterSetDefaultSymOptCollate_06a
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($characterSet), 'The characterSet must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class AlterListItemWithConvertSymToSymCharacterSetDefaultSymOptCollate_06a
         $this->characterSet->write($writer);
         $writer->append('DEFAULT');
         $this->optCollate->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new characterSet, preserving every other field.
+     */
+    public function withCharacterSet(\SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet): self
+    {
+        return new self($characterSet, $this->optCollate);
+    }
+
+    /**
+     * Returns a copy with a new optCollate, preserving every other field.
+     */
+    public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
+    {
+        return new self($this->characterSet, $optCollate);
     }
 }

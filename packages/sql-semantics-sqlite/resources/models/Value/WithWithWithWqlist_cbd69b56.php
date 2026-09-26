@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WithWithWithWqlist_cbd69b56 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WithWithWithWqlist_cbd69b56 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WithWithWithWqlist_cbd69b56 implements \SqlSemantics\Statement\Model\Sqlite\Role\WithForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm $wqlist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($wqlist), 'The wqlist must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class WithWithWithWqlist_cbd69b56 implements \SqlSemantics\Statement\Model
     {
         $writer->append('WITH');
         $this->wqlist->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new wqlist, preserving every other field.
+     */
+    public function withWqlist(\SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm $wqlist): self
+    {
+        return new self($wqlist);
     }
 }

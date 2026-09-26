@@ -9,17 +9,21 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BExprWithBExpr_4bb217fb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BExprWithBExpr_4bb217fb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BExprWithBExpr_4bb217fb implements \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 18,));
     }
 
     /**
@@ -29,5 +33,13 @@ final class BExprWithBExpr_4bb217fb implements \SqlSemantics\Statement\Model\Pos
     {
         $writer->append('+');
         $this->bExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bExpr, preserving every other field.
+     */
+    public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
+    {
+        return new self($bExpr);
     }
 }

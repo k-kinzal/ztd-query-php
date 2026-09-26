@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropWithDropLogfileSymGroupSymLogfileGroupNameDropTsOptionsList_fcfa6281 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropWithDropLogfileSymGroupSymLogfileGroupNameDropTsOptionsList_fcfa6281 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DropWithDropLogfileSymGroupSymLogfileGroupNameDropTsOptionsList_fcfa6281 implements \SqlSemantics\Statement\Model\MySql\Role\DropForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DropWithDropLogfileSymGroupSymLogfileGroupNameDropTsOptionsList_fcfa
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupNameForm $logfileGroupName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsListForm $dropTsOptionsList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($logfileGroupName), 'The logfileGroupName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($dropTsOptionsList), 'The dropTsOptionsList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class DropWithDropLogfileSymGroupSymLogfileGroupNameDropTsOptionsList_fcfa
         $writer->append('GROUP');
         $this->logfileGroupName->write($writer);
         $this->dropTsOptionsList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new logfileGroupName, preserving every other field.
+     */
+    public function withLogfileGroupName(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupNameForm $logfileGroupName): self
+    {
+        return new self($logfileGroupName, $this->dropTsOptionsList);
+    }
+
+    /**
+     * Returns a copy with a new dropTsOptionsList, preserving every other field.
+     */
+    public function withDropTsOptionsList(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsListForm $dropTsOptionsList): self
+    {
+        return new self($this->logfileGroupName, $dropTsOptionsList);
     }
 }

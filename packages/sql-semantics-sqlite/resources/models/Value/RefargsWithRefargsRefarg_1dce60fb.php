@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\RefargsWithRefargsRefarg_1dce60fb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\RefargsWithRefargsRefarg_1dce60fb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RefargsWithRefargsRefarg_1dce60fb implements \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RefargsWithRefargsRefarg_1dce60fb implements \SqlSemantics\Statement
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RefargForm $refarg,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($refargs), 'The refargs must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($refarg), 'The refarg must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class RefargsWithRefargsRefarg_1dce60fb implements \SqlSemantics\Statement
     {
         $this->refargs->write($writer);
         $this->refarg->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new refargs, preserving every other field.
+     */
+    public function withRefargs(\SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs): self
+    {
+        return new self($refargs, $this->refarg);
+    }
+
+    /**
+     * Returns a copy with a new refarg, preserving every other field.
+     */
+    public function withRefarg(\SqlSemantics\Statement\Model\Sqlite\Role\RefargForm $refarg): self
+    {
+        return new self($this->refargs, $refarg);
     }
 }

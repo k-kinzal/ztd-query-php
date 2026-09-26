@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartFuncMaxWithMaxValueSym_df2108bd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartFuncMaxWithMaxValueSym_df2108bd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartFuncMaxWithMaxValueSym_df2108bd implements \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm

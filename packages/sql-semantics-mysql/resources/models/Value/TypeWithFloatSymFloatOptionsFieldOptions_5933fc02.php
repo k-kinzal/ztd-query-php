@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithFloatSymFloatOptionsFieldOptions_5933fc02 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithFloatSymFloatOptionsFieldOptions_5933fc02 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithFloatSymFloatOptionsFieldOptions_5933fc02 implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TypeWithFloatSymFloatOptionsFieldOptions_5933fc02 implements \SqlSem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions,
     ) {
+        $this->assertMatchesPattern($floatSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['FLOAT_SYM'], 'The floatSym must be a complete FLOAT_SYM lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($floatOptions), 'The floatOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOptions), 'The fieldOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TypeWithFloatSymFloatOptionsFieldOptions_5933fc02 implements \SqlSem
         $writer->append($this->floatSym);
         $this->floatOptions->write($writer);
         $this->fieldOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new floatSym, preserving every other field.
+     */
+    public function withFloatSym(string $floatSym): self
+    {
+        return new self($floatSym, $this->floatOptions, $this->fieldOptions);
+    }
+
+    /**
+     * Returns a copy with a new floatOptions, preserving every other field.
+     */
+    public function withFloatOptions(\SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions): self
+    {
+        return new self($this->floatSym, $floatOptions, $this->fieldOptions);
+    }
+
+    /**
+     * Returns a copy with a new fieldOptions, preserving every other field.
+     */
+    public function withFieldOptions(\SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions): self
+    {
+        return new self($this->floatSym, $this->floatOptions, $fieldOptions);
     }
 }

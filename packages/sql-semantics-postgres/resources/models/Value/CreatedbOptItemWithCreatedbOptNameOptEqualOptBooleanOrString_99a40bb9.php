@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatedbOptItemWithCreatedbOptNameOptEqualOptBooleanOrString_99a40bb9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatedbOptItemWithCreatedbOptNameOptEqualOptBooleanOrString_99a40bb9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreatedbOptItemWithCreatedbOptNameOptEqualOptBooleanOrString_99a40bb9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptItemsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreatedbOptItemWithCreatedbOptNameOptEqualOptBooleanOrString_99a40bb
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptBooleanOrStringForm $optBooleanOrString,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createdbOptName), 'The createdbOptName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optBooleanOrString), 'The optBooleanOrString must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class CreatedbOptItemWithCreatedbOptNameOptEqualOptBooleanOrString_99a40bb
         $this->createdbOptName->write($writer);
         $this->optEqual->write($writer);
         $this->optBooleanOrString->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createdbOptName, preserving every other field.
+     */
+    public function withCreatedbOptName(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptNameForm $createdbOptName): self
+    {
+        return new self($createdbOptName, $this->optEqual, $this->optBooleanOrString);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\PostgreSql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($this->createdbOptName, $optEqual, $this->optBooleanOrString);
+    }
+
+    /**
+     * Returns a copy with a new optBooleanOrString, preserving every other field.
+     */
+    public function withOptBooleanOrString(\SqlSemantics\Statement\Model\PostgreSql\Role\OptBooleanOrStringForm $optBooleanOrString): self
+    {
+        return new self($this->createdbOptName, $this->optEqual, $optBooleanOrString);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAlterTablespaceOptionsWith_c8c39871 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptAlterTablespaceOptionsWith_c8c39871 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptAlterTablespaceOptionsWith_c8c39871 implements \SqlSemantics\Statement\Model\MySql\Role\OptAlterTablespaceOptionsForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SubPartListWithSubPartListSubPartDefinition_ade00b2c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SubPartListWithSubPartListSubPartDefinition_ade00b2c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SubPartListWithSubPartListSubPartDefinition_ade00b2c implements \SqlSemantics\Statement\Model\MySql\Role\SubPartListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SubPartListWithSubPartListSubPartDefinition_ade00b2c implements \Sql
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartListForm $subPartList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartDefinitionForm $subPartDefinition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subPartList), 'The subPartList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subPartDefinition), 'The subPartDefinition must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SubPartListWithSubPartListSubPartDefinition_ade00b2c implements \Sql
         $this->subPartList->write($writer);
         $writer->append(',');
         $this->subPartDefinition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new subPartList, preserving every other field.
+     */
+    public function withSubPartList(\SqlSemantics\Statement\Model\MySql\Role\SubPartListForm $subPartList): self
+    {
+        return new self($subPartList, $this->subPartDefinition);
+    }
+
+    /**
+     * Returns a copy with a new subPartDefinition, preserving every other field.
+     */
+    public function withSubPartDefinition(\SqlSemantics\Statement\Model\MySql\Role\SubPartDefinitionForm $subPartDefinition): self
+    {
+        return new self($this->subPartList, $subPartDefinition);
     }
 }

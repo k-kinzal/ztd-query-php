@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropSrsStmtWithDropSpatialSymReferenceSymSystemSymIfExistsRealUlonglongNum_75bc399b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DropSrsStmtWithDropSpatialSymReferenceSymSystemSymIfExistsRealUlonglongNum_75bc399b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DropSrsStmtWithDropSpatialSymReferenceSymSystemSymIfExistsRealUlonglongNum_75bc399b implements \SqlSemantics\Statement\Model\MySql\Role\DropSrsStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class DropSrsStmtWithDropSpatialSymReferenceSymSystemSymIfExistsRealUlonglongNum_75bc399b implements \SqlSemantics\Statement\Model\MySql\Role\DropSrsStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DropSrsStmtWithDropSpatialSymReferenceSymSystemSymIfExistsRealUlongl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlonglongNum), 'The realUlonglongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class DropSrsStmtWithDropSpatialSymReferenceSymSystemSymIfExistsRealUlongl
         $writer->append('SYSTEM');
         $this->ifExists->write($writer);
         $this->realUlonglongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new ifExists, preserving every other field.
+     */
+    public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
+    {
+        return new self($ifExists, $this->realUlonglongNum);
+    }
+
+    /**
+     * Returns a copy with a new realUlonglongNum, preserving every other field.
+     */
+    public function withRealUlonglongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlonglongNumForm $realUlonglongNum): self
+    {
+        return new self($this->ifExists, $realUlonglongNum);
     }
 }

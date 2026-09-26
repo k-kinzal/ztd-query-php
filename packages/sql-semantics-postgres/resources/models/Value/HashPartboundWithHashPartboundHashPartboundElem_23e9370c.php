@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\HashPartboundWithHashPartboundHashPartboundElem_23e9370c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\HashPartboundWithHashPartboundHashPartboundElem_23e9370c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class HashPartboundWithHashPartboundHashPartboundElem_23e9370c implements \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class HashPartboundWithHashPartboundHashPartboundElem_23e9370c implements 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundForm $hashPartbound,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundElemForm $hashPartboundElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($hashPartbound), 'The hashPartbound must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($hashPartboundElem), 'The hashPartboundElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class HashPartboundWithHashPartboundHashPartboundElem_23e9370c implements 
         $this->hashPartbound->write($writer);
         $writer->append(',');
         $this->hashPartboundElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new hashPartbound, preserving every other field.
+     */
+    public function withHashPartbound(\SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundForm $hashPartbound): self
+    {
+        return new self($hashPartbound, $this->hashPartboundElem);
+    }
+
+    /**
+     * Returns a copy with a new hashPartboundElem, preserving every other field.
+     */
+    public function withHashPartboundElem(\SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundElemForm $hashPartboundElem): self
+    {
+        return new self($this->hashPartbound, $hashPartboundElem);
     }
 }

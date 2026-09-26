@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePartitionInsertQueryExpre_e4d59508 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePartitionInsertQueryExpre_e4d59508 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePartitionInsertQueryExpre_e4d59508 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\ReplaceStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePartitionInsertQueryExpre_e4d59508 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\ReplaceStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePar
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm $insertQueryExpression,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replaceLockOption), 'The replaceLockOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optInto), 'The optInto must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUsePartition), 'The optUsePartition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertQueryExpression), 'The insertQueryExpression must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +44,45 @@ final class ReplaceStmtWithReplaceSymReplaceLockOptionOptIntoTableIdentOptUsePar
         $this->tableIdent->write($writer);
         $this->optUsePartition->write($writer);
         $this->insertQueryExpression->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new replaceLockOption, preserving every other field.
+     */
+    public function withReplaceLockOption(\SqlSemantics\Statement\Model\MySql\Role\ReplaceLockOptionForm $replaceLockOption): self
+    {
+        return new self($replaceLockOption, $this->optInto, $this->tableIdent, $this->optUsePartition, $this->insertQueryExpression);
+    }
+
+    /**
+     * Returns a copy with a new optInto, preserving every other field.
+     */
+    public function withOptInto(\SqlSemantics\Statement\Model\MySql\Role\OptIntoForm $optInto): self
+    {
+        return new self($this->replaceLockOption, $optInto, $this->tableIdent, $this->optUsePartition, $this->insertQueryExpression);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($this->replaceLockOption, $this->optInto, $tableIdent, $this->optUsePartition, $this->insertQueryExpression);
+    }
+
+    /**
+     * Returns a copy with a new optUsePartition, preserving every other field.
+     */
+    public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
+    {
+        return new self($this->replaceLockOption, $this->optInto, $this->tableIdent, $optUsePartition, $this->insertQueryExpression);
+    }
+
+    /**
+     * Returns a copy with a new insertQueryExpression, preserving every other field.
+     */
+    public function withInsertQueryExpression(\SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm $insertQueryExpression): self
+    {
+        return new self($this->replaceLockOption, $this->optInto, $this->tableIdent, $this->optUsePartition, $insertQueryExpression);
     }
 }

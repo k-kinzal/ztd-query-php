@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguageNameHandlerHandlerNameOptI_8ae70d23 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguageNameHandlerHandlerNameOptI_8ae70d23 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguageNameHandlerHandlerNameOptI_8ae70d23 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreatePLangStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguageNameHandlerHandlerNameOptI_8ae70d23 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreatePLangStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptInlineHandlerForm $optInlineHandler,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptValidatorForm $optValidator,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrReplace), 'The optOrReplace must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTrusted), 'The optTrusted must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optProcedural), 'The optProcedural must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($handlerName), 'The handlerName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optInlineHandler), 'The optInlineHandler must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optValidator), 'The optValidator must be a generated immutable SQL value.');
     }
 
     /**
@@ -43,5 +52,61 @@ final class CreatePLangStmtWithCreateOptOrReplaceOptTrustedOptProceduralLanguage
         $this->handlerName->write($writer);
         $this->optInlineHandler->write($writer);
         $this->optValidator->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optOrReplace, preserving every other field.
+     */
+    public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self
+    {
+        return new self($optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator);
+    }
+
+    /**
+     * Returns a copy with a new optTrusted, preserving every other field.
+     */
+    public function withOptTrusted(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTrustedForm $optTrusted): self
+    {
+        return new self($this->optOrReplace, $optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator);
+    }
+
+    /**
+     * Returns a copy with a new optProcedural, preserving every other field.
+     */
+    public function withOptProcedural(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm $optProcedural): self
+    {
+        return new self($this->optOrReplace, $this->optTrusted, $optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $this->optValidator);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $name, $this->handlerName, $this->optInlineHandler, $this->optValidator);
+    }
+
+    /**
+     * Returns a copy with a new handlerName, preserving every other field.
+     */
+    public function withHandlerName(\SqlSemantics\Statement\Model\PostgreSql\Role\HandlerNameForm $handlerName): self
+    {
+        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $handlerName, $this->optInlineHandler, $this->optValidator);
+    }
+
+    /**
+     * Returns a copy with a new optInlineHandler, preserving every other field.
+     */
+    public function withOptInlineHandler(\SqlSemantics\Statement\Model\PostgreSql\Role\OptInlineHandlerForm $optInlineHandler): self
+    {
+        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $optInlineHandler, $this->optValidator);
+    }
+
+    /**
+     * Returns a copy with a new optValidator, preserving every other field.
+     */
+    public function withOptValidator(\SqlSemantics\Statement\Model\PostgreSql\Role\OptValidatorForm $optValidator): self
+    {
+        return new self($this->optOrReplace, $this->optTrusted, $this->optProcedural, $this->name, $this->handlerName, $this->optInlineHandler, $optValidator);
     }
 }

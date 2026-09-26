@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BareLabelKeywordWithConstraints_b95e4ccd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BareLabelKeywordWithConstraints_b95e4ccd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BareLabelKeywordWithConstraints_b95e4ccd implements \SqlSemantics\Statement\Model\PostgreSql\Role\BareColLabelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BareLabelKeywordForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $name,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['CONSTRAINTS'], 'The name must be a complete CONSTRAINTS lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class BareLabelKeywordWithConstraints_b95e4ccd implements \SqlSemantics\St
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name);
     }
 }

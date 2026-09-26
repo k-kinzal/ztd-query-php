@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowClauseWithWindowWindowdefnList_0b8faffc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowClauseWithWindowWindowdefnList_0b8faffc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowClauseWithWindowWindowdefnList_0b8faffc implements \SqlSemantics\Statement\Model\Sqlite\Role\WindowClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm $windowdefnList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($windowdefnList), 'The windowdefnList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class WindowClauseWithWindowWindowdefnList_0b8faffc implements \SqlSemanti
     {
         $writer->append('WINDOW');
         $this->windowdefnList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new windowdefnList, preserving every other field.
+     */
+    public function withWindowdefnList(\SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm $windowdefnList): self
+    {
+        return new self($windowdefnList);
     }
 }

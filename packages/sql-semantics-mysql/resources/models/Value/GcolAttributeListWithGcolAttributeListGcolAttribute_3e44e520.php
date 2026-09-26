@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GcolAttributeListWithGcolAttributeListGcolAttribute_3e44e520 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GcolAttributeListWithGcolAttributeListGcolAttribute_3e44e520 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GcolAttributeListWithGcolAttributeListGcolAttribute_3e44e520 implements \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptGcolAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GcolAttributeListWithGcolAttributeListGcolAttribute_3e44e520 impleme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeListForm $gcolAttributeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GcolAttributeForm $gcolAttribute,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($gcolAttributeList), 'The gcolAttributeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($gcolAttribute), 'The gcolAttribute must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class GcolAttributeListWithGcolAttributeListGcolAttribute_3e44e520 impleme
     {
         $this->gcolAttributeList->write($writer);
         $this->gcolAttribute->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new gcolAttributeList, preserving every other field.
+     */
+    public function withGcolAttributeList(\SqlSemantics\Statement\Model\MySql\Role\GcolAttributeListForm $gcolAttributeList): self
+    {
+        return new self($gcolAttributeList, $this->gcolAttribute);
+    }
+
+    /**
+     * Returns a copy with a new gcolAttribute, preserving every other field.
+     */
+    public function withGcolAttribute(\SqlSemantics\Statement\Model\MySql\Role\GcolAttributeForm $gcolAttribute): self
+    {
+        return new self($this->gcolAttributeList, $gcolAttribute);
     }
 }

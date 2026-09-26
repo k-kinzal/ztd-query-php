@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptHistogramUpdateParamWith_ac8f5c85 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptHistogramUpdateParamWith_ac8f5c85 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptHistogramUpdateParamWith_ac8f5c85 implements \SqlSemantics\Statement\Model\MySql\Role\OptHistogramUpdateParamForm

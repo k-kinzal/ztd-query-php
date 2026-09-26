@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintWithConstraintNameColConstraintElem_81846dd5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintWithConstraintNameColConstraintElem_81846dd5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColConstraintWithConstraintNameColConstraintElem_81846dd5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColConstraintWithConstraintNameColConstraintElem_81846dd5 implements
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintElemForm $colConstraintElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colConstraintElem), 'The colConstraintElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ColConstraintWithConstraintNameColConstraintElem_81846dd5 implements
         $writer->append('CONSTRAINT');
         $this->name->write($writer);
         $this->colConstraintElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->colConstraintElem);
+    }
+
+    /**
+     * Returns a copy with a new colConstraintElem, preserving every other field.
+     */
+    public function withColConstraintElem(\SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintElemForm $colConstraintElem): self
+    {
+        return new self($this->name, $colConstraintElem);
     }
 }

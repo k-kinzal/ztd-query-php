@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\HashPartboundElemWithNonReservedWordIconst_0a70ae96 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\HashPartboundElemWithNonReservedWordIconst_0a70ae96 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class HashPartboundElemWithNonReservedWordIconst_0a70ae96 implements \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundElemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class HashPartboundElemWithNonReservedWordIconst_0a70ae96 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordForm $nonReservedWord,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nonReservedWord), 'The nonReservedWord must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class HashPartboundElemWithNonReservedWordIconst_0a70ae96 implements \SqlS
     {
         $this->nonReservedWord->write($writer);
         $this->iconst->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nonReservedWord, preserving every other field.
+     */
+    public function withNonReservedWord(\SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordForm $nonReservedWord): self
+    {
+        return new self($nonReservedWord, $this->iconst);
+    }
+
+    /**
+     * Returns a copy with a new iconst, preserving every other field.
+     */
+    public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
+    {
+        return new self($this->nonReservedWord, $iconst);
     }
 }

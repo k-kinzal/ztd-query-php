@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveThreadOptionListWithSlaveThreadOptionListSlaveThreadOption_c9ea6dee $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SlaveThreadOptionListWithSlaveThreadOptionListSlaveThreadOption_c9ea6dee $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SlaveThreadOptionListWithSlaveThreadOptionListSlaveThreadOption_c9ea6dee implements \SqlSemantics\Statement\Model\MySql\Role\OptSlaveThreadOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SlaveThreadOptionListWithSlaveThreadOptionListSlaveThreadOption_c9ea
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionListForm $slaveThreadOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionForm $slaveThreadOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveThreadOptionList), 'The slaveThreadOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveThreadOption), 'The slaveThreadOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SlaveThreadOptionListWithSlaveThreadOptionListSlaveThreadOption_c9ea
         $this->slaveThreadOptionList->write($writer);
         $writer->append(',');
         $this->slaveThreadOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new slaveThreadOptionList, preserving every other field.
+     */
+    public function withSlaveThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionListForm $slaveThreadOptionList): self
+    {
+        return new self($slaveThreadOptionList, $this->slaveThreadOption);
+    }
+
+    /**
+     * Returns a copy with a new slaveThreadOption, preserving every other field.
+     */
+    public function withSlaveThreadOption(\SqlSemantics\Statement\Model\MySql\Role\SlaveThreadOptionForm $slaveThreadOption): self
+    {
+        return new self($this->slaveThreadOptionList, $slaveThreadOption);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptNumPartsWithPartitionsSymRealUlongNum_c08cd852 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptNumPartsWithPartitionsSymRealUlongNum_c08cd852 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptNumPartsWithPartitionsSymRealUlongNum_c08cd852 implements \SqlSemantics\Statement\Model\MySql\Role\OptNumPartsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlongNum), 'The realUlongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptNumPartsWithPartitionsSymRealUlongNum_c08cd852 implements \SqlSem
     {
         $writer->append('PARTITIONS');
         $this->realUlongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new realUlongNum, preserving every other field.
+     */
+    public function withRealUlongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum): self
+    {
+        return new self($realUlongNum);
     }
 }

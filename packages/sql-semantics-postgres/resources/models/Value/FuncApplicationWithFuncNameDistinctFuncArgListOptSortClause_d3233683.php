@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncApplicationWithFuncNameDistinctFuncArgListOptSortClause_d3233683 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncApplicationWithFuncNameDistinctFuncArgListOptSortClause_d3233683 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncApplicationWithFuncNameDistinctFuncArgListOptSortClause_d3233683 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncApplicationForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class FuncApplicationWithFuncNameDistinctFuncArgListOptSortClause_d3233683
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm $funcArgList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcName), 'The funcName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgList), 'The funcArgList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSortClause), 'The optSortClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class FuncApplicationWithFuncNameDistinctFuncArgListOptSortClause_d3233683
         $this->funcArgList->write($writer);
         $this->optSortClause->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new funcName, preserving every other field.
+     */
+    public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
+    {
+        return new self($funcName, $this->funcArgList, $this->optSortClause);
+    }
+
+    /**
+     * Returns a copy with a new funcArgList, preserving every other field.
+     */
+    public function withFuncArgList(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm $funcArgList): self
+    {
+        return new self($this->funcName, $funcArgList, $this->optSortClause);
+    }
+
+    /**
+     * Returns a copy with a new optSortClause, preserving every other field.
+     */
+    public function withOptSortClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSortClauseForm $optSortClause): self
+    {
+        return new self($this->funcName, $this->funcArgList, $optSortClause);
     }
 }

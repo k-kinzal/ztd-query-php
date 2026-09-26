@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericWithDecOptTypeModifiers_2055760b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericWithDecOptTypeModifiers_2055760b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NumericWithDecOptTypeModifiers_2055760b implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NumericForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTypeModifiersForm $optTypeModifiers,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTypeModifiers), 'The optTypeModifiers must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class NumericWithDecOptTypeModifiers_2055760b implements \SqlSemantics\Sta
     {
         $writer->append('DEC');
         $this->optTypeModifiers->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTypeModifiers, preserving every other field.
+     */
+    public function withOptTypeModifiers(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTypeModifiersForm $optTypeModifiers): self
+    {
+        return new self($optTypeModifiers);
     }
 }

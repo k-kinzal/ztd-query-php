@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptCreateUserWithMfaWithAndSymIdentification_06115c9b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptCreateUserWithMfaWithAndSymIdentification_06115c9b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptCreateUserWithMfaWithAndSymIdentification_06115c9b implements \SqlSemantics\Statement\Model\MySql\Role\OptCreateUserWithMfaForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identification), 'The identification must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptCreateUserWithMfaWithAndSymIdentification_06115c9b implements \Sq
     {
         $writer->append('AND');
         $this->identification->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identification, preserving every other field.
+     */
+    public function withIdentification(\SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification): self
+    {
+        return new self($identification);
     }
 }

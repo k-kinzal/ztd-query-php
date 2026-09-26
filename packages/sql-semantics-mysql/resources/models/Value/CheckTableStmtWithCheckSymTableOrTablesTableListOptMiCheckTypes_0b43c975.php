@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CheckTableStmtWithCheckSymTableOrTablesTableListOptMiCheckTypes_0b43c975 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CheckTableStmtWithCheckSymTableOrTablesTableListOptMiCheckTypes_0b43c975 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CheckTableStmtWithCheckSymTableOrTablesTableListOptMiCheckTypes_0b43c975 implements \SqlSemantics\Statement\Model\MySql\Role\CheckTableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class CheckTableStmtWithCheckSymTableOrTablesTableListOptMiCheckTypes_0b43c975 implements \SqlSemantics\Statement\Model\MySql\Role\CheckTableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CheckTableStmtWithCheckSymTableOrTablesTableListOptMiCheckTypes_0b43
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptMiCheckTypesForm $optMiCheckTypes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOrTables), 'The tableOrTables must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableList), 'The tableList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optMiCheckTypes), 'The optMiCheckTypes must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class CheckTableStmtWithCheckSymTableOrTablesTableListOptMiCheckTypes_0b43
         $this->tableOrTables->write($writer);
         $this->tableList->write($writer);
         $this->optMiCheckTypes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableOrTables, preserving every other field.
+     */
+    public function withTableOrTables(\SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables): self
+    {
+        return new self($tableOrTables, $this->tableList, $this->optMiCheckTypes);
+    }
+
+    /**
+     * Returns a copy with a new tableList, preserving every other field.
+     */
+    public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
+    {
+        return new self($this->tableOrTables, $tableList, $this->optMiCheckTypes);
+    }
+
+    /**
+     * Returns a copy with a new optMiCheckTypes, preserving every other field.
+     */
+    public function withOptMiCheckTypes(\SqlSemantics\Statement\Model\MySql\Role\OptMiCheckTypesForm $optMiCheckTypes): self
+    {
+        return new self($this->tableOrTables, $this->tableList, $optMiCheckTypes);
     }
 }

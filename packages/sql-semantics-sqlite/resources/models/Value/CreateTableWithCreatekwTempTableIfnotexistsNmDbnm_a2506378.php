@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CreateTableWithCreatekwTempTableIfnotexistsNmDbnm_a2506378 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CreateTableWithCreatekwTempTableIfnotexistsNmDbnm_a2506378 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateTableWithCreatekwTempTableIfnotexistsNmDbnm_a2506378 implements \SqlSemantics\Statement\Model\Sqlite\Role\CreateTableForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class CreateTableWithCreatekwTempTableIfnotexistsNmDbnm_a2506378 implement
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createkw), 'The createkw must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($temp), 'The temp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ifnotexists), 'The ifnotexists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +44,45 @@ final class CreateTableWithCreatekwTempTableIfnotexistsNmDbnm_a2506378 implement
         $this->ifnotexists->write($writer);
         $this->nm->write($writer);
         $this->dbnm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createkw, preserving every other field.
+     */
+    public function withCreatekw(\SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw): self
+    {
+        return new self($createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm);
+    }
+
+    /**
+     * Returns a copy with a new temp, preserving every other field.
+     */
+    public function withTemp(\SqlSemantics\Statement\Model\Sqlite\Role\TempForm $temp): self
+    {
+        return new self($this->createkw, $temp, $this->ifnotexists, $this->nm, $this->dbnm);
+    }
+
+    /**
+     * Returns a copy with a new ifnotexists, preserving every other field.
+     */
+    public function withIfnotexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm $ifnotexists): self
+    {
+        return new self($this->createkw, $this->temp, $ifnotexists, $this->nm, $this->dbnm);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $nm, $this->dbnm);
+    }
+
+    /**
+     * Returns a copy with a new dbnm, preserving every other field.
+     */
+    public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
+    {
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $dbnm);
     }
 }

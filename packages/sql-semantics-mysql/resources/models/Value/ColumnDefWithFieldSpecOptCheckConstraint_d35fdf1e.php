@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnDefWithFieldSpecOptCheckConstraint_d35fdf1e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnDefWithFieldSpecOptCheckConstraint_d35fdf1e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnDefWithFieldSpecOptCheckConstraint_d35fdf1e implements \SqlSemantics\Statement\Model\MySql\Role\ColumnDefForm, \SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm, \SqlSemantics\Statement\Model\MySql\Role\TableElementForm, \SqlSemantics\Statement\Model\MySql\Role\TableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColumnDefWithFieldSpecOptCheckConstraint_d35fdf1e implements \SqlSem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldSpecForm $fieldSpec,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCheckConstraintForm $optCheckConstraint,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldSpec), 'The fieldSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCheckConstraint), 'The optCheckConstraint must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ColumnDefWithFieldSpecOptCheckConstraint_d35fdf1e implements \SqlSem
     {
         $this->fieldSpec->write($writer);
         $this->optCheckConstraint->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fieldSpec, preserving every other field.
+     */
+    public function withFieldSpec(\SqlSemantics\Statement\Model\MySql\Role\FieldSpecForm $fieldSpec): self
+    {
+        return new self($fieldSpec, $this->optCheckConstraint);
+    }
+
+    /**
+     * Returns a copy with a new optCheckConstraint, preserving every other field.
+     */
+    public function withOptCheckConstraint(\SqlSemantics\Statement\Model\MySql\Role\OptCheckConstraintForm $optCheckConstraint): self
+    {
+        return new self($this->fieldSpec, $optCheckConstraint);
     }
 }

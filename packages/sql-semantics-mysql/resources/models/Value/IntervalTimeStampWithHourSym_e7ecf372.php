@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithHourSym_e7ecf372 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IntervalTimeStampWithHourSym_e7ecf372 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IntervalTimeStampWithHourSym_e7ecf372 implements \SqlSemantics\Statement\Model\MySql\Role\IntervalForm, \SqlSemantics\Statement\Model\MySql\Role\IntervalTimeStampForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $hourSym,
     ) {
+        $this->assertMatchesPattern($hourSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['HOUR_SYM'], 'The hourSym must be a complete HOUR_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class IntervalTimeStampWithHourSym_e7ecf372 implements \SqlSemantics\State
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->hourSym);
+    }
+
+    /**
+     * Returns a copy with a new hourSym, preserving every other field.
+     */
+    public function withHourSym(string $hourSym): self
+    {
+        return new self($hourSym);
     }
 }

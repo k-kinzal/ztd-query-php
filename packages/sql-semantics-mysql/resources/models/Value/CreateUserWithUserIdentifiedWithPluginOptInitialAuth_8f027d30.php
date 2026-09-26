@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateUserWithUserIdentifiedWithPluginOptInitialAuth_8f027d30 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateUserWithUserIdentifiedWithPluginOptInitialAuth_8f027d30 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateUserWithUserIdentifiedWithPluginOptInitialAuth_8f027d30 implements \SqlSemantics\Statement\Model\MySql\Role\CreateUserForm, \SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateUserWithUserIdentifiedWithPluginOptInitialAuth_8f027d30 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginForm $identifiedWithPlugin,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptInitialAuthForm $optInitialAuth,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identifiedWithPlugin), 'The identifiedWithPlugin must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optInitialAuth), 'The optInitialAuth must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class CreateUserWithUserIdentifiedWithPluginOptInitialAuth_8f027d30 implem
         $this->user->write($writer);
         $this->identifiedWithPlugin->write($writer);
         $this->optInitialAuth->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->identifiedWithPlugin, $this->optInitialAuth);
+    }
+
+    /**
+     * Returns a copy with a new identifiedWithPlugin, preserving every other field.
+     */
+    public function withIdentifiedWithPlugin(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginForm $identifiedWithPlugin): self
+    {
+        return new self($this->user, $identifiedWithPlugin, $this->optInitialAuth);
+    }
+
+    /**
+     * Returns a copy with a new optInitialAuth, preserving every other field.
+     */
+    public function withOptInitialAuth(\SqlSemantics\Statement\Model\MySql\Role\OptInitialAuthForm $optInitialAuth): self
+    {
+        return new self($this->user, $this->identifiedWithPlugin, $optInitialAuth);
     }
 }

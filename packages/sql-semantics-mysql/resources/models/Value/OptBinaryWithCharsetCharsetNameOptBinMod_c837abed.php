@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptBinaryWithCharsetCharsetNameOptBinMod_c837abed $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptBinaryWithCharsetCharsetNameOptBinMod_c837abed $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptBinaryWithCharsetCharsetNameOptBinMod_c837abed implements \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptBinaryWithCharsetCharsetNameOptBinMod_c837abed implements \SqlSem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charset), 'The charset must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetName), 'The charsetName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinMod), 'The optBinMod must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class OptBinaryWithCharsetCharsetNameOptBinMod_c837abed implements \SqlSem
         $this->charset->write($writer);
         $this->charsetName->write($writer);
         $this->optBinMod->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new charset, preserving every other field.
+     */
+    public function withCharset(\SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset): self
+    {
+        return new self($charset, $this->charsetName, $this->optBinMod);
+    }
+
+    /**
+     * Returns a copy with a new charsetName, preserving every other field.
+     */
+    public function withCharsetName(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName): self
+    {
+        return new self($this->charset, $charsetName, $this->optBinMod);
+    }
+
+    /**
+     * Returns a copy with a new optBinMod, preserving every other field.
+     */
+    public function withOptBinMod(\SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod): self
+    {
+        return new self($this->charset, $this->charsetName, $optBinMod);
     }
 }

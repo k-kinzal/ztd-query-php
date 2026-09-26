@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SelcollistWithSclpScanptStar_bae6710f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SelcollistWithSclpScanptStar_bae6710f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelcollistWithSclpScanptStar_bae6710f implements \SqlSemantics\Statement\Model\Sqlite\Role\SelcollistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelcollistWithSclpScanptStar_bae6710f implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SclpForm $sclp,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sclp), 'The sclp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scanpt), 'The scanpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SelcollistWithSclpScanptStar_bae6710f implements \SqlSemantics\State
         $this->sclp->write($writer);
         $this->scanpt->write($writer);
         $writer->append('*');
+    }
+
+    /**
+     * Returns a copy with a new sclp, preserving every other field.
+     */
+    public function withSclp(\SqlSemantics\Statement\Model\Sqlite\Role\SclpForm $sclp): self
+    {
+        return new self($sclp, $this->scanpt);
+    }
+
+    /**
+     * Returns a copy with a new scanpt, preserving every other field.
+     */
+    public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self
+    {
+        return new self($this->sclp, $scanpt);
     }
 }

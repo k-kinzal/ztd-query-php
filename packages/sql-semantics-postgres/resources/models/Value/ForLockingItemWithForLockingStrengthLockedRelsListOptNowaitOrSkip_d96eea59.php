@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d96eea59 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d96eea59 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d96eea59 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingItemsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptForLockingClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d9
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\LockedRelsListForm $lockedRelsList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitOrSkipForm $optNowaitOrSkip,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($forLockingStrength), 'The forLockingStrength must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($lockedRelsList), 'The lockedRelsList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNowaitOrSkip), 'The optNowaitOrSkip must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class ForLockingItemWithForLockingStrengthLockedRelsListOptNowaitOrSkip_d9
         $this->forLockingStrength->write($writer);
         $this->lockedRelsList->write($writer);
         $this->optNowaitOrSkip->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new forLockingStrength, preserving every other field.
+     */
+    public function withForLockingStrength(\SqlSemantics\Statement\Model\PostgreSql\Role\ForLockingStrengthForm $forLockingStrength): self
+    {
+        return new self($forLockingStrength, $this->lockedRelsList, $this->optNowaitOrSkip);
+    }
+
+    /**
+     * Returns a copy with a new lockedRelsList, preserving every other field.
+     */
+    public function withLockedRelsList(\SqlSemantics\Statement\Model\PostgreSql\Role\LockedRelsListForm $lockedRelsList): self
+    {
+        return new self($this->forLockingStrength, $lockedRelsList, $this->optNowaitOrSkip);
+    }
+
+    /**
+     * Returns a copy with a new optNowaitOrSkip, preserving every other field.
+     */
+    public function withOptNowaitOrSkip(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNowaitOrSkipForm $optNowaitOrSkip): self
+    {
+        return new self($this->forLockingStrength, $this->lockedRelsList, $optNowaitOrSkip);
     }
 }

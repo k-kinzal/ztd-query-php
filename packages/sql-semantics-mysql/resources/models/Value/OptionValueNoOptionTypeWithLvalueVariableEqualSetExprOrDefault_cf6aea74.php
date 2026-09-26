@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithLvalueVariableEqualSetExprOrDefault_cf6aea74 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptionValueNoOptionTypeWithLvalueVariableEqualSetExprOrDefault_cf6aea74 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptionValueNoOptionTypeWithLvalueVariableEqualSetExprOrDefault_cf6aea74 implements \SqlSemantics\Statement\Model\MySql\Role\OptionValueForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueListForm, \SqlSemantics\Statement\Model\MySql\Role\OptionValueNoOptionTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class OptionValueNoOptionTypeWithLvalueVariableEqualSetExprOrDefault_cf6ae
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm $setExprOrDefault,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lvalueVariable), 'The lvalueVariable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($setExprOrDefault), 'The setExprOrDefault must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class OptionValueNoOptionTypeWithLvalueVariableEqualSetExprOrDefault_cf6ae
         $this->lvalueVariable->write($writer);
         $this->equal->write($writer);
         $this->setExprOrDefault->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new lvalueVariable, preserving every other field.
+     */
+    public function withLvalueVariable(\SqlSemantics\Statement\Model\MySql\Role\LvalueVariableForm $lvalueVariable): self
+    {
+        return new self($lvalueVariable, $this->equal, $this->setExprOrDefault);
+    }
+
+    /**
+     * Returns a copy with a new equal, preserving every other field.
+     */
+    public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
+    {
+        return new self($this->lvalueVariable, $equal, $this->setExprOrDefault);
+    }
+
+    /**
+     * Returns a copy with a new setExprOrDefault, preserving every other field.
+     */
+    public function withSetExprOrDefault(\SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm $setExprOrDefault): self
+    {
+        return new self($this->lvalueVariable, $this->equal, $setExprOrDefault);
     }
 }

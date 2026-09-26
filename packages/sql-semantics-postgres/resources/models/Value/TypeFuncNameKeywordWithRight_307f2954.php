@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypeFuncNameKeywordWithRight_307f2954 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypeFuncNameKeywordWithRight_307f2954 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeFuncNameKeywordWithRight_307f2954 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordOrSconstForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AttrNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AuthIdentForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgListItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GenericOptionNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptBooleanOrStringForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFuncNameKeywordForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $name,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['RIGHT'], 'The name must be a complete RIGHT lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TypeFuncNameKeywordWithRight_307f2954 implements \SqlSemantics\State
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name);
     }
 }

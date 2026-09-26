@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LogfileGroupInfoWithLogfileGroupNameAddLogFileLogfileGroupOptionList_7f46fa64 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LogfileGroupInfoWithLogfileGroupNameAddLogFileLogfileGroupOptionList_7f46fa64 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LogfileGroupInfoWithLogfileGroupNameAddLogFileLogfileGroupOptionList_7f46fa64 implements \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupInfoForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class LogfileGroupInfoWithLogfileGroupNameAddLogFileLogfileGroupOptionList
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AddLogFileForm $addLogFile,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm $logfileGroupOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($logfileGroupName), 'The logfileGroupName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($addLogFile), 'The addLogFile must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($logfileGroupOptionList), 'The logfileGroupOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class LogfileGroupInfoWithLogfileGroupNameAddLogFileLogfileGroupOptionList
         $this->logfileGroupName->write($writer);
         $this->addLogFile->write($writer);
         $this->logfileGroupOptionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new logfileGroupName, preserving every other field.
+     */
+    public function withLogfileGroupName(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupNameForm $logfileGroupName): self
+    {
+        return new self($logfileGroupName, $this->addLogFile, $this->logfileGroupOptionList);
+    }
+
+    /**
+     * Returns a copy with a new addLogFile, preserving every other field.
+     */
+    public function withAddLogFile(\SqlSemantics\Statement\Model\MySql\Role\AddLogFileForm $addLogFile): self
+    {
+        return new self($this->logfileGroupName, $addLogFile, $this->logfileGroupOptionList);
+    }
+
+    /**
+     * Returns a copy with a new logfileGroupOptionList, preserving every other field.
+     */
+    public function withLogfileGroupOptionList(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionListForm $logfileGroupOptionList): self
+    {
+        return new self($this->logfileGroupName, $this->addLogFile, $logfileGroupOptionList);
     }
 }

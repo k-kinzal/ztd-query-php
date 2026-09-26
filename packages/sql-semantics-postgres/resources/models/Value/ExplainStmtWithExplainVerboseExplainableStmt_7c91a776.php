@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExplainStmtWithExplainVerboseExplainableStmt_7c91a776 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExplainStmtWithExplainVerboseExplainableStmt_7c91a776 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ExplainStmtWithExplainVerboseExplainableStmt_7c91a776 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ExplainStmtWithExplainVerboseExplainableStmt_7c91a776 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($explainableStmt), 'The explainableStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class ExplainStmtWithExplainVerboseExplainableStmt_7c91a776 implements \Sq
         $writer->append('EXPLAIN');
         $writer->append('VERBOSE');
         $this->explainableStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new explainableStmt, preserving every other field.
+     */
+    public function withExplainableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt): self
+    {
+        return new self($explainableStmt);
     }
 }

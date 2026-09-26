@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CollationNameOrDefaultWithDefault_8754324f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CollationNameOrDefaultWithDefault_8754324f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CollationNameOrDefaultWithDefault_8754324f implements \SqlSemantics\Statement\Model\MySql\Role\CollationNameOrDefaultForm

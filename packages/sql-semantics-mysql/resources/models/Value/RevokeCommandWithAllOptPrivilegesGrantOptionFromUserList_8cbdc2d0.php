@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RevokeCommandWithAllOptPrivilegesGrantOptionFromUserList_8cbdc2d0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RevokeCommandWithAllOptPrivilegesGrantOptionFromUserList_8cbdc2d0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RevokeCommandWithAllOptPrivilegesGrantOptionFromUserList_8cbdc2d0 implements \SqlSemantics\Statement\Model\MySql\Role\RevokeCommandForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromUserList_8cbdc2d0 im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPrivileges), 'The optPrivileges must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userList), 'The userList must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromUserList_8cbdc2d0 im
         $writer->append('OPTION');
         $writer->append('FROM');
         $this->userList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optPrivileges, preserving every other field.
+     */
+    public function withOptPrivileges(\SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges): self
+    {
+        return new self($optPrivileges, $this->userList);
+    }
+
+    /**
+     * Returns a copy with a new userList, preserving every other field.
+     */
+    public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
+    {
+        return new self($this->optPrivileges, $userList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTsDictionaryStmtWithAlterTextPSearchDictionaryAnyNameDefinition_c2188f5e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTsDictionaryStmtWithAlterTextPSearchDictionaryAnyNameDefinition_c2188f5e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTsDictionaryStmtWithAlterTextPSearchDictionaryAnyNameDefinition_c2188f5e implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTsDictionaryStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterTsDictionaryStmtWithAlterTextPSearchDictionaryAnyNameDefinition_c2188f5e implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTsDictionaryStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTsDictionaryStmtWithAlterTextPSearchDictionaryAnyNameDefinition
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($definition), 'The definition must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class AlterTsDictionaryStmtWithAlterTextPSearchDictionaryAnyNameDefinition
         $writer->append('DICTIONARY');
         $this->anyName->write($writer);
         $this->definition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->definition);
+    }
+
+    /**
+     * Returns a copy with a new definition, preserving every other field.
+     */
+    public function withDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition): self
+    {
+        return new self($this->anyName, $definition);
     }
 }

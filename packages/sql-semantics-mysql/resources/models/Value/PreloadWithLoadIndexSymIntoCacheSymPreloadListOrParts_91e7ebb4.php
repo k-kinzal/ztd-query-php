@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadWithLoadIndexSymIntoCacheSymPreloadListOrParts_91e7ebb4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PreloadWithLoadIndexSymIntoCacheSymPreloadListOrParts_91e7ebb4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PreloadWithLoadIndexSymIntoCacheSymPreloadListOrParts_91e7ebb4 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\PreloadForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PreloadListOrPartsForm $preloadListOrParts,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($preloadListOrParts), 'The preloadListOrParts must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +35,13 @@ final class PreloadWithLoadIndexSymIntoCacheSymPreloadListOrParts_91e7ebb4 imple
         $writer->append('INTO');
         $writer->append('CACHE');
         $this->preloadListOrParts->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new preloadListOrParts, preserving every other field.
+     */
+    public function withPreloadListOrParts(\SqlSemantics\Statement\Model\MySql\Role\PreloadListOrPartsForm $preloadListOrParts): self
+    {
+        return new self($preloadListOrParts);
     }
 }

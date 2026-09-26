@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateRoleStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateRoleStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 implem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptRoleListForm $optRoleList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleId), 'The roleId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optRoleList), 'The optRoleList must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class CreateRoleStmtWithCreateRoleRoleIdOptWithOptRoleList_a90ce170 implem
         $this->roleId->write($writer);
         $this->optWith->write($writer);
         $this->optRoleList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleId, preserving every other field.
+     */
+    public function withRoleId(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId): self
+    {
+        return new self($roleId, $this->optWith, $this->optRoleList);
+    }
+
+    /**
+     * Returns a copy with a new optWith, preserving every other field.
+     */
+    public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
+    {
+        return new self($this->roleId, $optWith, $this->optRoleList);
+    }
+
+    /**
+     * Returns a copy with a new optRoleList, preserving every other field.
+     */
+    public function withOptRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptRoleListForm $optRoleList): self
+    {
+        return new self($this->roleId, $this->optWith, $optRoleList);
     }
 }

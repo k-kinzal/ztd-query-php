@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 implements \SqlSemantics\Statement\Model\MySql\Role\FieldSpecForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeForm $type,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAttributeForm $optAttribute,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldIdent), 'The fieldIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($type), 'The type must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAttribute), 'The optAttribute must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class FieldSpecWithFieldIdentTypeOptAttribute_85f031c2 implements \SqlSema
         $this->fieldIdent->write($writer);
         $this->type->write($writer);
         $this->optAttribute->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fieldIdent, preserving every other field.
+     */
+    public function withFieldIdent(\SqlSemantics\Statement\Model\MySql\Role\FieldIdentForm $fieldIdent): self
+    {
+        return new self($fieldIdent, $this->type, $this->optAttribute);
+    }
+
+    /**
+     * Returns a copy with a new type, preserving every other field.
+     */
+    public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
+    {
+        return new self($this->fieldIdent, $type, $this->optAttribute);
+    }
+
+    /**
+     * Returns a copy with a new optAttribute, preserving every other field.
+     */
+    public function withOptAttribute(\SqlSemantics\Statement\Model\MySql\Role\OptAttributeForm $optAttribute): self
+    {
+        return new self($this->fieldIdent, $this->type, $optAttribute);
     }
 }

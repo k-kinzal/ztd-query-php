@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericOnlyWithFconst_23604c9b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericOnlyWithFconst_23604c9b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NumericOnlyWithFconst_23604c9b implements \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CopyGenericOptArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ZoneValueForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $value,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['FCONST'], 'The value must be a complete FCONST lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class NumericOnlyWithFconst_23604c9b implements \SqlSemantics\Statement\Mo
     {
         $writer->append('-');
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value);
     }
 }

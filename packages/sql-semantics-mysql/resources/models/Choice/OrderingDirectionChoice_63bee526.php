@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OrderingDirectionChoice_63bee526 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\OrderingDirectionChoice_63bee526 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum OrderingDirectionChoice_63bee526: string implements \SqlSemantics\Statement\Model\MySql\Role\OptOrderingDirectionForm, \SqlSemantics\Statement\Model\MySql\Role\OrderingDirectionForm

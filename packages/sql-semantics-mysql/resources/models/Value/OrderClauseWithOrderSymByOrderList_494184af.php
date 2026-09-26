@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OrderClauseWithOrderSymByOrderList_494184af $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OrderClauseWithOrderSymByOrderList_494184af $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OrderClauseWithOrderSymByOrderList_494184af implements \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm, \SqlSemantics\Statement\Model\MySql\Role\OrderClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderListForm $orderList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderList), 'The orderList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OrderClauseWithOrderSymByOrderList_494184af implements \SqlSemantics
         $writer->append('ORDER');
         $writer->append('BY');
         $this->orderList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new orderList, preserving every other field.
+     */
+    public function withOrderList(\SqlSemantics\Statement\Model\MySql\Role\OrderListForm $orderList): self
+    {
+        return new self($orderList);
     }
 }

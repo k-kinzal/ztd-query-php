@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableFuncElementListWithTableFuncElementListTableFuncElement_5971173f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableFuncElementListWithTableFuncElementListTableFuncElement_5971173f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableFuncElementListWithTableFuncElementListTableFuncElement_5971173f implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableFuncElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableFuncElementListWithTableFuncElementListTableFuncElement_5971173
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm $tableFuncElementList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementForm $tableFuncElement,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncElementList), 'The tableFuncElementList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncElement), 'The tableFuncElement must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableFuncElementListWithTableFuncElementListTableFuncElement_5971173
         $this->tableFuncElementList->write($writer);
         $writer->append(',');
         $this->tableFuncElement->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableFuncElementList, preserving every other field.
+     */
+    public function withTableFuncElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm $tableFuncElementList): self
+    {
+        return new self($tableFuncElementList, $this->tableFuncElement);
+    }
+
+    /**
+     * Returns a copy with a new tableFuncElement, preserving every other field.
+     */
+    public function withTableFuncElement(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementForm $tableFuncElement): self
+    {
+        return new self($this->tableFuncElementList, $tableFuncElement);
     }
 }

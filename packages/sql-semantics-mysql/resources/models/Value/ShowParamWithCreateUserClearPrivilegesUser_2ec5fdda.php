@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithCreateUserClearPrivilegesUser_2ec5fdda $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithCreateUserClearPrivilegesUser_2ec5fdda $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithCreateUserClearPrivilegesUser_2ec5fdda implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ShowParamWithCreateUserClearPrivilegesUser_2ec5fdda implements \SqlS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user2,
     ) {
+        $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($clearPrivileges), 'The clearPrivileges must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user2), 'The user2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class ShowParamWithCreateUserClearPrivilegesUser_2ec5fdda implements \SqlS
         $writer->append($this->user);
         $this->clearPrivileges->write($writer);
         $this->user2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(string $user): self
+    {
+        return new self($user, $this->clearPrivileges, $this->user2);
+    }
+
+    /**
+     * Returns a copy with a new clearPrivileges, preserving every other field.
+     */
+    public function withClearPrivileges(\SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges): self
+    {
+        return new self($this->user, $clearPrivileges, $this->user2);
+    }
+
+    /**
+     * Returns a copy with a new user2, preserving every other field.
+     */
+    public function withUser2(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user2): self
+    {
+        return new self($this->user, $this->clearPrivileges, $user2);
     }
 }

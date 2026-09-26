@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefineStmtWithCreateCollationIfPNotExistsAnyNameFromAnyName_02c35cfb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefineStmtWithCreateCollationIfPNotExistsAnyNameFromAnyName_02c35cfb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DefineStmtWithCreateCollationIfPNotExistsAnyNameFromAnyName_02c35cfb implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefineStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class DefineStmtWithCreateCollationIfPNotExistsAnyNameFromAnyName_02c35cfb implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefineStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DefineStmtWithCreateCollationIfPNotExistsAnyNameFromAnyName_02c35cfb
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName2), 'The anyName2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +40,21 @@ final class DefineStmtWithCreateCollationIfPNotExistsAnyNameFromAnyName_02c35cfb
         $this->anyName->write($writer);
         $writer->append('FROM');
         $this->anyName2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->anyName2);
+    }
+
+    /**
+     * Returns a copy with a new anyName2, preserving every other field.
+     */
+    public function withAnyName2(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName2): self
+    {
+        return new self($this->anyName, $anyName2);
     }
 }

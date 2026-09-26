@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ResetOptionWithSlaveSlaveResetOptionsOptChannel_41803046 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ResetOptionWithSlaveSlaveResetOptionsOptChannel_41803046 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ResetOptionWithSlaveSlaveResetOptionsOptChannel_41803046 implements \SqlSemantics\Statement\Model\MySql\Role\ResetOptionForm, \SqlSemantics\Statement\Model\MySql\Role\ResetOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ResetOptionWithSlaveSlaveResetOptionsOptChannel_41803046 implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveResetOptionsForm $slaveResetOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveResetOptions), 'The slaveResetOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ResetOptionWithSlaveSlaveResetOptionsOptChannel_41803046 implements 
         $writer->append('SLAVE');
         $this->slaveResetOptions->write($writer);
         $this->optChannel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new slaveResetOptions, preserving every other field.
+     */
+    public function withSlaveResetOptions(\SqlSemantics\Statement\Model\MySql\Role\SlaveResetOptionsForm $slaveResetOptions): self
+    {
+        return new self($slaveResetOptions, $this->optChannel);
+    }
+
+    /**
+     * Returns a copy with a new optChannel, preserving every other field.
+     */
+    public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
+    {
+        return new self($this->slaveResetOptions, $optChannel);
     }
 }

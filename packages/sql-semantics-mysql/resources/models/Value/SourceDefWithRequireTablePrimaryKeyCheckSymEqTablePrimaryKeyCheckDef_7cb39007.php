@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithRequireTablePrimaryKeyCheckSymEqTablePrimaryKeyCheckDef_7cb39007 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithRequireTablePrimaryKeyCheckSymEqTablePrimaryKeyCheckDef_7cb39007 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithRequireTablePrimaryKeyCheckSymEqTablePrimaryKeyCheckDef_7cb39007 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablePrimaryKeyCheckDefForm $tablePrimaryKeyCheckDef,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablePrimaryKeyCheckDef), 'The tablePrimaryKeyCheckDef must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SourceDefWithRequireTablePrimaryKeyCheckSymEqTablePrimaryKeyCheckDef
         $writer->append('REQUIRE_TABLE_PRIMARY_KEY_CHECK');
         $writer->append('=');
         $this->tablePrimaryKeyCheckDef->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tablePrimaryKeyCheckDef, preserving every other field.
+     */
+    public function withTablePrimaryKeyCheckDef(\SqlSemantics\Statement\Model\MySql\Role\TablePrimaryKeyCheckDefForm $tablePrimaryKeyCheckDef): self
+    {
+        return new self($tablePrimaryKeyCheckDef);
     }
 }

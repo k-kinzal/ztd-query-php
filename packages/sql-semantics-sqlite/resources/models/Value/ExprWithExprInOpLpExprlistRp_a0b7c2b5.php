@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprInOpLpExprlistRp_a0b7c2b5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprInOpLpExprlistRp_a0b7c2b5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithExprInOpLpExprlistRp_a0b7c2b5 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,10 @@ final class ExprWithExprInOpLpExprlistRp_a0b7c2b5 implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\InOpForm $inOp,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,));
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($inOp), 'The inOp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($exprlist), 'The exprlist must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,29 @@ final class ExprWithExprInOpLpExprlistRp_a0b7c2b5 implements \SqlSemantics\State
         $writer->append('(');
         $this->exprlist->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->inOp, $this->exprlist);
+    }
+
+    /**
+     * Returns a copy with a new inOp, preserving every other field.
+     */
+    public function withInOp(\SqlSemantics\Statement\Model\Sqlite\Role\InOpForm $inOp): self
+    {
+        return new self($this->expr, $inOp, $this->exprlist);
+    }
+
+    /**
+     * Returns a copy with a new exprlist, preserving every other field.
+     */
+    public function withExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist): self
+    {
+        return new self($this->expr, $this->inOp, $exprlist);
     }
 }

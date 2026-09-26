@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpLabeledBlockForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpBlockContentForm $spBlockContent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpOptLabelForm $spOptLabel,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($labelIdent), 'The labelIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spBlockContent), 'The spBlockContent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spOptLabel), 'The spOptLabel must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class SpLabeledBlockWithLabelIdentSpBlockContentSpOptLabel_20e5e072 implem
         $writer->append(':');
         $this->spBlockContent->write($writer);
         $this->spOptLabel->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new labelIdent, preserving every other field.
+     */
+    public function withLabelIdent(\SqlSemantics\Statement\Model\MySql\Role\LabelIdentForm $labelIdent): self
+    {
+        return new self($labelIdent, $this->spBlockContent, $this->spOptLabel);
+    }
+
+    /**
+     * Returns a copy with a new spBlockContent, preserving every other field.
+     */
+    public function withSpBlockContent(\SqlSemantics\Statement\Model\MySql\Role\SpBlockContentForm $spBlockContent): self
+    {
+        return new self($this->labelIdent, $spBlockContent, $this->spOptLabel);
+    }
+
+    /**
+     * Returns a copy with a new spOptLabel, preserving every other field.
+     */
+    public function withSpOptLabel(\SqlSemantics\Statement\Model\MySql\Role\SpOptLabelForm $spOptLabel): self
+    {
+        return new self($this->labelIdent, $this->spBlockContent, $spOptLabel);
     }
 }

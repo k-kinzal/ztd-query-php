@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectInitWithSelectSymSelectInit2_efd5dbce $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectInitWithSelectSymSelectInit2_efd5dbce $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectInitWithSelectSymSelectInit2_efd5dbce implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\ExplanableCommandForm, \SqlSemantics\Statement\Model\MySql\Role\SelectForm, \SqlSemantics\Statement\Model\MySql\Role\SelectInitForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectInit2Form $selectInit2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectInit2), 'The selectInit2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SelectInitWithSelectSymSelectInit2_efd5dbce implements \SqlSemantics
     {
         $writer->append('SELECT');
         $this->selectInit2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectInit2, preserving every other field.
+     */
+    public function withSelectInit2(\SqlSemantics\Statement\Model\MySql\Role\SelectInit2Form $selectInit2): self
+    {
+        return new self($selectInit2);
     }
 }

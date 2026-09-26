@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\InsertRestWithInsertColumnListSelectStmt_a320fd9d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\InsertRestWithInsertColumnListSelectStmt_a320fd9d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertRestWithInsertColumnListSelectStmt_a320fd9d implements \SqlSemantics\Statement\Model\PostgreSql\Role\InsertRestForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertRestWithInsertColumnListSelectStmt_a320fd9d implements \SqlSem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm $insertColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($insertColumnList), 'The insertColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectStmt), 'The selectStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class InsertRestWithInsertColumnListSelectStmt_a320fd9d implements \SqlSem
         $this->insertColumnList->write($writer);
         $writer->append(')');
         $this->selectStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new insertColumnList, preserving every other field.
+     */
+    public function withInsertColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\InsertColumnListForm $insertColumnList): self
+    {
+        return new self($insertColumnList, $this->selectStmt);
+    }
+
+    /**
+     * Returns a copy with a new selectStmt, preserving every other field.
+     */
+    public function withSelectStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt): self
+    {
+        return new self($this->insertColumnList, $selectStmt);
     }
 }

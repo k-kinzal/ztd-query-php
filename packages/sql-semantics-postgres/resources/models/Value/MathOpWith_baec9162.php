@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MathOpWith_baec9162 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MathOpWith_baec9162 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MathOpWith_baec9162 implements \SqlSemantics\Statement\Model\PostgreSql\Role\MathOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AllOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\QualAllOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm

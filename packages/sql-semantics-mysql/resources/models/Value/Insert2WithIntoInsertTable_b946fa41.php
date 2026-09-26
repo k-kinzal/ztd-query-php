@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\Insert2WithIntoInsertTable_b946fa41 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\Insert2WithIntoInsertTable_b946fa41 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class Insert2WithIntoInsertTable_b946fa41 implements \SqlSemantics\Statement\Model\MySql\Role\Insert2Form
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertTableForm $insertTable,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertTable), 'The insertTable must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class Insert2WithIntoInsertTable_b946fa41 implements \SqlSemantics\Stateme
     {
         $writer->append('INTO');
         $this->insertTable->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new insertTable, preserving every other field.
+     */
+    public function withInsertTable(\SqlSemantics\Statement\Model\MySql\Role\InsertTableForm $insertTable): self
+    {
+        return new self($insertTable);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createkw), 'The createkw must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($temp), 'The temp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ifnotexists), 'The ifnotexists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($eidlistOpt), 'The eidlistOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($select), 'The select must be a generated immutable SQL value.');
     }
 
     /**
@@ -42,5 +51,61 @@ final class CmdWithCreatekwTempViewIfnotexistsNmDbnmEidlistOptAsSelect_982c3d9a 
         $this->eidlistOpt->write($writer);
         $writer->append('AS');
         $this->select->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createkw, preserving every other field.
+     */
+    public function withCreatekw(\SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw): self
+    {
+        return new self($createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $this->select);
+    }
+
+    /**
+     * Returns a copy with a new temp, preserving every other field.
+     */
+    public function withTemp(\SqlSemantics\Statement\Model\Sqlite\Role\TempForm $temp): self
+    {
+        return new self($this->createkw, $temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $this->select);
+    }
+
+    /**
+     * Returns a copy with a new ifnotexists, preserving every other field.
+     */
+    public function withIfnotexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm $ifnotexists): self
+    {
+        return new self($this->createkw, $this->temp, $ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $this->select);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $nm, $this->dbnm, $this->eidlistOpt, $this->select);
+    }
+
+    /**
+     * Returns a copy with a new dbnm, preserving every other field.
+     */
+    public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
+    {
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $dbnm, $this->eidlistOpt, $this->select);
+    }
+
+    /**
+     * Returns a copy with a new eidlistOpt, preserving every other field.
+     */
+    public function withEidlistOpt(\SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt): self
+    {
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $eidlistOpt, $this->select);
+    }
+
+    /**
+     * Returns a copy with a new select, preserving every other field.
+     */
+    public function withSelect(\SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select): self
+    {
+        return new self($this->createkw, $this->temp, $this->ifnotexists, $this->nm, $this->dbnm, $this->eidlistOpt, $select);
     }
 }

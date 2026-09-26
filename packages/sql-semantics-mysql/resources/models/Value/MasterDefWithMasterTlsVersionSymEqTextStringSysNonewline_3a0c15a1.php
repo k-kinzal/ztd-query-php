@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\MasterDefWithMasterTlsVersionSymEqTextStringSysNonewline_3a0c15a1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\MasterDefWithMasterTlsVersionSymEqTextStringSysNonewline_3a0c15a1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MasterDefWithMasterTlsVersionSymEqTextStringSysNonewline_3a0c15a1 implements \SqlSemantics\Statement\Model\MySql\Role\MasterDefForm, \SqlSemantics\Statement\Model\MySql\Role\MasterDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysNonewline), 'The textStringSysNonewline must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class MasterDefWithMasterTlsVersionSymEqTextStringSysNonewline_3a0c15a1 im
         $writer->append('MASTER_TLS_VERSION');
         $writer->append('=');
         $this->textStringSysNonewline->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textStringSysNonewline, preserving every other field.
+     */
+    public function withTextStringSysNonewline(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysNonewlineForm $textStringSysNonewline): self
+    {
+        return new self($textStringSysNonewline);
     }
 }

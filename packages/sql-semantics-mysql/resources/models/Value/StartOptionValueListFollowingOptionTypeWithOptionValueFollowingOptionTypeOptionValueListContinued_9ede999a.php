@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartOptionValueListFollowingOptionTypeWithOptionValueFollowingOptionTypeOptionValueListContinued_9ede999a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartOptionValueListFollowingOptionTypeWithOptionValueFollowingOptionTypeOptionValueListContinued_9ede999a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StartOptionValueListFollowingOptionTypeWithOptionValueFollowingOptionTypeOptionValueListContinued_9ede999a implements \SqlSemantics\Statement\Model\MySql\Role\StartOptionValueListFollowingOptionTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StartOptionValueListFollowingOptionTypeWithOptionValueFollowingOptio
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionValueFollowingOptionTypeForm $optionValueFollowingOptionType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionValueListContinuedForm $optionValueListContinued,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionValueFollowingOptionType), 'The optionValueFollowingOptionType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionValueListContinued), 'The optionValueListContinued must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class StartOptionValueListFollowingOptionTypeWithOptionValueFollowingOptio
     {
         $this->optionValueFollowingOptionType->write($writer);
         $this->optionValueListContinued->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optionValueFollowingOptionType, preserving every other field.
+     */
+    public function withOptionValueFollowingOptionType(\SqlSemantics\Statement\Model\MySql\Role\OptionValueFollowingOptionTypeForm $optionValueFollowingOptionType): self
+    {
+        return new self($optionValueFollowingOptionType, $this->optionValueListContinued);
+    }
+
+    /**
+     * Returns a copy with a new optionValueListContinued, preserving every other field.
+     */
+    public function withOptionValueListContinued(\SqlSemantics\Statement\Model\MySql\Role\OptionValueListContinuedForm $optionValueListContinued): self
+    {
+        return new self($this->optionValueFollowingOptionType, $optionValueListContinued);
     }
 }

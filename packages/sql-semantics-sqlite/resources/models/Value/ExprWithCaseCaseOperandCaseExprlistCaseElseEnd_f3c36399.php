@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithCaseCaseOperandCaseExprlistCaseElseEnd_f3c36399 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithCaseCaseOperandCaseExprlistCaseElseEnd_f3c36399 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithCaseCaseOperandCaseExprlistCaseElseEnd_f3c36399 implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ExprWithCaseCaseOperandCaseExprlistCaseElseEnd_f3c36399 implements \
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CaseExprlistForm $caseExprlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CaseElseForm $caseElse,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($caseOperand), 'The caseOperand must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($caseExprlist), 'The caseExprlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($caseElse), 'The caseElse must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class ExprWithCaseCaseOperandCaseExprlistCaseElseEnd_f3c36399 implements \
         $this->caseExprlist->write($writer);
         $this->caseElse->write($writer);
         $writer->append('END');
+    }
+
+    /**
+     * Returns a copy with a new caseOperand, preserving every other field.
+     */
+    public function withCaseOperand(\SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm $caseOperand): self
+    {
+        return new self($caseOperand, $this->caseExprlist, $this->caseElse);
+    }
+
+    /**
+     * Returns a copy with a new caseExprlist, preserving every other field.
+     */
+    public function withCaseExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\CaseExprlistForm $caseExprlist): self
+    {
+        return new self($this->caseOperand, $caseExprlist, $this->caseElse);
+    }
+
+    /**
+     * Returns a copy with a new caseElse, preserving every other field.
+     */
+    public function withCaseElse(\SqlSemantics\Statement\Model\Sqlite\Role\CaseElseForm $caseElse): self
+    {
+        return new self($this->caseOperand, $this->caseExprlist, $caseElse);
     }
 }

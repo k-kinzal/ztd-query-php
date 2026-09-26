@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\TransactionAccessModeTypesChoice_c78eb422 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\TransactionAccessModeTypesChoice_c78eb422 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum TransactionAccessModeTypesChoice_c78eb422: string implements \SqlSemantics\Statement\Model\MySql\Role\TransactionAccessModeForm, \SqlSemantics\Statement\Model\MySql\Role\TransactionAccessModeTypesForm, \SqlSemantics\Statement\Model\MySql\Role\TransactionCharacteristicsForm

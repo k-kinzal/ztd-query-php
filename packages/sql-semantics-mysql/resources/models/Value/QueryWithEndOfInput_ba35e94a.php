@@ -9,10 +9,10 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryWithEndOfInput_ba35e94a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryWithEndOfInput_ba35e94a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class QueryWithEndOfInput_ba35e94a implements \SqlSemantics\Statement\Model\MySql\Role\QueryForm
+final class QueryWithEndOfInput_ba35e94a implements \SqlSemantics\Statement\Model\MySql\Role\QueryForm, \SqlSemantics\Statement\Command
 {
     /**
      * Writes SQL entirely from this value's fields.

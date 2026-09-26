@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe implements \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm $subPartFieldList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartFieldItemForm $subPartFieldItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subPartFieldList), 'The subPartFieldList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subPartFieldItem), 'The subPartFieldItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SubPartFieldListWithSubPartFieldListSubPartFieldItem_f02497fe implem
         $this->subPartFieldList->write($writer);
         $writer->append(',');
         $this->subPartFieldItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new subPartFieldList, preserving every other field.
+     */
+    public function withSubPartFieldList(\SqlSemantics\Statement\Model\MySql\Role\SubPartFieldListForm $subPartFieldList): self
+    {
+        return new self($subPartFieldList, $this->subPartFieldItem);
+    }
+
+    /**
+     * Returns a copy with a new subPartFieldItem, preserving every other field.
+     */
+    public function withSubPartFieldItem(\SqlSemantics\Statement\Model\MySql\Role\SubPartFieldItemForm $subPartFieldItem): self
+    {
+        return new self($this->subPartFieldList, $subPartFieldItem);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\QualOpWithOperatorAnyOperator_947a79dc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\QualOpWithOperatorAnyOperator_947a79dc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QualOpWithOperatorAnyOperator_947a79dc implements \SqlSemantics\Statement\Model\PostgreSql\Role\QualOpForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm $anyOperator,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyOperator), 'The anyOperator must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class QualOpWithOperatorAnyOperator_947a79dc implements \SqlSemantics\Stat
         $writer->append('(');
         $this->anyOperator->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new anyOperator, preserving every other field.
+     */
+    public function withAnyOperator(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm $anyOperator): self
+    {
+        return new self($anyOperator);
     }
 }

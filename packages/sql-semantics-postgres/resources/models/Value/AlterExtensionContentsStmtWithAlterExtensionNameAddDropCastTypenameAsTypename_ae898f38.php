@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionContentsStmtWithAlterExtensionNameAddDropCastTypenameAsTypename_ae898f38 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterExtensionContentsStmtWithAlterExtensionNameAddDropCastTypenameAsTypename_ae898f38 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropCastTypenameAsTypename_ae898f38 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionContentsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropCastTypenameAsTypename_ae898f38 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterExtensionContentsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropCastTypenameA
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($addDrop), 'The addDrop must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename2), 'The typename2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +46,37 @@ final class AlterExtensionContentsStmtWithAlterExtensionNameAddDropCastTypenameA
         $writer->append('AS');
         $this->typename2->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->addDrop, $this->typename, $this->typename2);
+    }
+
+    /**
+     * Returns a copy with a new addDrop, preserving every other field.
+     */
+    public function withAddDrop(\SqlSemantics\Statement\Model\PostgreSql\Role\AddDropForm $addDrop): self
+    {
+        return new self($this->name, $addDrop, $this->typename, $this->typename2);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->name, $this->addDrop, $typename, $this->typename2);
+    }
+
+    /**
+     * Returns a copy with a new typename2, preserving every other field.
+     */
+    public function withTypename2(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename2): self
+    {
+        return new self($this->name, $this->addDrop, $this->typename, $typename2);
     }
 }

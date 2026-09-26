@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithDefaultSymNowOrSignedLiteral_734821ff $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnAttributeWithDefaultSymNowOrSignedLiteral_734821ff $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnAttributeWithDefaultSymNowOrSignedLiteral_734821ff implements \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeForm, \SqlSemantics\Statement\Model\MySql\Role\ColumnAttributeListForm, \SqlSemantics\Statement\Model\MySql\Role\OptColumnAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NowOrSignedLiteralForm $nowOrSignedLiteral,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($nowOrSignedLiteral), 'The nowOrSignedLiteral must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ColumnAttributeWithDefaultSymNowOrSignedLiteral_734821ff implements 
     {
         $writer->append('DEFAULT');
         $this->nowOrSignedLiteral->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nowOrSignedLiteral, preserving every other field.
+     */
+    public function withNowOrSignedLiteral(\SqlSemantics\Statement\Model\MySql\Role\NowOrSignedLiteralForm $nowOrSignedLiteral): self
+    {
+        return new self($nowOrSignedLiteral);
     }
 }

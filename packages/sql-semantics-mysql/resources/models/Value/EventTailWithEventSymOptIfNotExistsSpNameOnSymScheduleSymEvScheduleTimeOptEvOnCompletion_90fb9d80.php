@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleTimeOptEvOnCompletion_90fb9d80 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleTimeOptEvOnCompletion_90fb9d80 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleTimeOptEvOnCompletion_90fb9d80 implements \SqlSemantics\Statement\Model\MySql\Role\DefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\EventTailForm, \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -26,6 +28,13 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm $optEvComment,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm $evSqlStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evScheduleTime), 'The evScheduleTime must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEvOnCompletion), 'The optEvOnCompletion must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEvStatus), 'The optEvStatus must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEvComment), 'The optEvComment must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evSqlStmt), 'The evSqlStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -44,5 +53,61 @@ final class EventTailWithEventSymOptIfNotExistsSpNameOnSymScheduleSymEvScheduleT
         $this->optEvComment->write($writer);
         $writer->append('DO');
         $this->evSqlStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optIfNotExists, preserving every other field.
+     */
+    public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
+    {
+        return new self($optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt);
+    }
+
+    /**
+     * Returns a copy with a new spName, preserving every other field.
+     */
+    public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
+    {
+        return new self($this->optIfNotExists, $spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt);
+    }
+
+    /**
+     * Returns a copy with a new evScheduleTime, preserving every other field.
+     */
+    public function withEvScheduleTime(\SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm $evScheduleTime): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt);
+    }
+
+    /**
+     * Returns a copy with a new optEvOnCompletion, preserving every other field.
+     */
+    public function withOptEvOnCompletion(\SqlSemantics\Statement\Model\MySql\Role\OptEvOnCompletionForm $optEvOnCompletion): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $this->evSqlStmt);
+    }
+
+    /**
+     * Returns a copy with a new optEvStatus, preserving every other field.
+     */
+    public function withOptEvStatus(\SqlSemantics\Statement\Model\MySql\Role\OptEvStatusForm $optEvStatus): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $optEvStatus, $this->optEvComment, $this->evSqlStmt);
+    }
+
+    /**
+     * Returns a copy with a new optEvComment, preserving every other field.
+     */
+    public function withOptEvComment(\SqlSemantics\Statement\Model\MySql\Role\OptEvCommentForm $optEvComment): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $optEvComment, $this->evSqlStmt);
+    }
+
+    /**
+     * Returns a copy with a new evSqlStmt, preserving every other field.
+     */
+    public function withEvSqlStmt(\SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm $evSqlStmt): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->evScheduleTime, $this->optEvOnCompletion, $this->optEvStatus, $this->optEvComment, $evSqlStmt);
     }
 }

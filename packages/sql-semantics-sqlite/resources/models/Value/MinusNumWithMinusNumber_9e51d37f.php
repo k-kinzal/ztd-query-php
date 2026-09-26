@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\MinusNumWithMinusNumber_9e51d37f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\MinusNumWithMinusNumber_9e51d37f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MinusNumWithMinusNumber_9e51d37f implements \SqlSemantics\Statement\Model\Sqlite\Role\MinusNumForm, \SqlSemantics\Statement\Model\Sqlite\Role\SignedForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $number,
     ) {
+        $this->assertMatchesPattern($number, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['number'], 'The number must be a complete number lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class MinusNumWithMinusNumber_9e51d37f implements \SqlSemantics\Statement\
     {
         $writer->append('-');
         $writer->append($this->number);
+    }
+
+    /**
+     * Returns a copy with a new number, preserving every other field.
+     */
+    public function withNumber(string $number): self
+    {
+        return new self($number);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\ChangeReplicationSourceCompressionAlgorithmChoice_e81e4221 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\ChangeReplicationSourceCompressionAlgorithmChoice_e81e4221 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum ChangeReplicationSourceCompressionAlgorithmChoice_e81e4221: string implements \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceCompressionAlgorithmForm

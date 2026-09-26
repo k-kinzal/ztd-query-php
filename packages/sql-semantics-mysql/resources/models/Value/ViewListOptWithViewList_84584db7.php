@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewListOptWithViewList_84584db7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewListOptWithViewList_84584db7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewListOptWithViewList_84584db7 implements \SqlSemantics\Statement\Model\MySql\Role\ViewListOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ViewListForm $viewList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($viewList), 'The viewList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class ViewListOptWithViewList_84584db7 implements \SqlSemantics\Statement\
         $writer->append('(');
         $this->viewList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new viewList, preserving every other field.
+     */
+    public function withViewList(\SqlSemantics\Statement\Model\MySql\Role\ViewListForm $viewList): self
+    {
+        return new self($viewList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterLogfileGroupOptionsWithAlterLogfileGroupOptionsAlterLogfileGroupOption_5a6bd6dc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterLogfileGroupOptionsWithAlterLogfileGroupOptionsAlterLogfileGroupOption_5a6bd6dc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterLogfileGroupOptionsWithAlterLogfileGroupOptionsAlterLogfileGroupOption_5a6bd6dc implements \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterLogfileGroupOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterLogfileGroupOptionsWithAlterLogfileGroupOptionsAlterLogfileGrou
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionsForm $alterLogfileGroupOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionForm $alterLogfileGroupOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterLogfileGroupOptions), 'The alterLogfileGroupOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterLogfileGroupOption), 'The alterLogfileGroupOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AlterLogfileGroupOptionsWithAlterLogfileGroupOptionsAlterLogfileGrou
     {
         $this->alterLogfileGroupOptions->write($writer);
         $this->alterLogfileGroupOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterLogfileGroupOptions, preserving every other field.
+     */
+    public function withAlterLogfileGroupOptions(\SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionsForm $alterLogfileGroupOptions): self
+    {
+        return new self($alterLogfileGroupOptions, $this->alterLogfileGroupOption);
+    }
+
+    /**
+     * Returns a copy with a new alterLogfileGroupOption, preserving every other field.
+     */
+    public function withAlterLogfileGroupOption(\SqlSemantics\Statement\Model\MySql\Role\AlterLogfileGroupOptionForm $alterLogfileGroupOption): self
+    {
+        return new self($this->alterLogfileGroupOptions, $alterLogfileGroupOption);
     }
 }

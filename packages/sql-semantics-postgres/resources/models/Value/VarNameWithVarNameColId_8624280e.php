@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VarNameWithVarNameColId_8624280e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\VarNameWithVarNameColId_8624280e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VarNameWithVarNameColId_8624280e implements \SqlSemantics\Statement\Model\PostgreSql\Role\GenericResetForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ResetRestForm, \SqlSemantics\Statement\Model\PostgreSql\Role\VarNameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class VarNameWithVarNameColId_8624280e implements \SqlSemantics\Statement\
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VarNameForm $varName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($varName), 'The varName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class VarNameWithVarNameColId_8624280e implements \SqlSemantics\Statement\
         $this->varName->write($writer);
         $writer->append('.');
         $this->colId->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new varName, preserving every other field.
+     */
+    public function withVarName(\SqlSemantics\Statement\Model\PostgreSql\Role\VarNameForm $varName): self
+    {
+        return new self($varName, $this->colId);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($this->varName, $colId);
     }
 }

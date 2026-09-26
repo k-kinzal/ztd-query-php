@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatefuncOptItemWithAsFuncAs_27d3bce3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreatefuncOptItemWithAsFuncAs_27d3bce3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreatefuncOptItemWithAsFuncAs_27d3bce3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CreatefuncOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptCreatefuncOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncAsForm $funcAs,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcAs), 'The funcAs must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class CreatefuncOptItemWithAsFuncAs_27d3bce3 implements \SqlSemantics\Stat
     {
         $writer->append('AS');
         $this->funcAs->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcAs, preserving every other field.
+     */
+    public function withFuncAs(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncAsForm $funcAs): self
+    {
+        return new self($funcAs);
     }
 }

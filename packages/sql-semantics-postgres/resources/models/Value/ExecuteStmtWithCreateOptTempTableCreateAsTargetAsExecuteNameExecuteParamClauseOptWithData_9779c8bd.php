@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExecuteStmtWithCreateOptTempTableCreateAsTargetAsExecuteNameExecuteParamClauseOptWithData_9779c8bd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExecuteStmtWithCreateOptTempTableCreateAsTargetAsExecuteNameExecuteParamClauseOptWithData_9779c8bd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ExecuteStmtWithCreateOptTempTableCreateAsTargetAsExecuteNameExecuteParamClauseOptWithData_9779c8bd implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ExecuteStmtWithCreateOptTempTableCreateAsTargetAsExecuteNameExecuteParamClauseOptWithData_9779c8bd implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class ExecuteStmtWithCreateOptTempTableCreateAsTargetAsExecuteNameExecuteP
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteParamClauseForm $executeParamClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createAsTarget), 'The createAsTarget must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($executeParamClause), 'The executeParamClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWithData), 'The optWithData must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +47,45 @@ final class ExecuteStmtWithCreateOptTempTableCreateAsTargetAsExecuteNameExecuteP
         $this->name->write($writer);
         $this->executeParamClause->write($writer);
         $this->optWithData->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTemp, preserving every other field.
+     */
+    public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
+    {
+        return new self($optTemp, $this->createAsTarget, $this->name, $this->executeParamClause, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new createAsTarget, preserving every other field.
+     */
+    public function withCreateAsTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateAsTargetForm $createAsTarget): self
+    {
+        return new self($this->optTemp, $createAsTarget, $this->name, $this->executeParamClause, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->optTemp, $this->createAsTarget, $name, $this->executeParamClause, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new executeParamClause, preserving every other field.
+     */
+    public function withExecuteParamClause(\SqlSemantics\Statement\Model\PostgreSql\Role\ExecuteParamClauseForm $executeParamClause): self
+    {
+        return new self($this->optTemp, $this->createAsTarget, $this->name, $executeParamClause, $this->optWithData);
+    }
+
+    /**
+     * Returns a copy with a new optWithData, preserving every other field.
+     */
+    public function withOptWithData(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData): self
+    {
+        return new self($this->optTemp, $this->createAsTarget, $this->name, $this->executeParamClause, $optWithData);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameBoundWithCurrentRow_9e076822 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameBoundWithCurrentRow_9e076822 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FrameBoundWithCurrentRow_9e076822 implements \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundForm, \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundEForm, \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundSForm

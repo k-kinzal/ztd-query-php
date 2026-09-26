@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateUserListWithCreateUserListCreateUser_9d8f4b00 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateUserListWithCreateUserListCreateUser_9d8f4b00 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CreateUserListWithCreateUserListCreateUser_9d8f4b00 implements \SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CreateUserListWithCreateUserListCreateUser_9d8f4b00 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm $createUserList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateUserForm $createUser,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createUserList), 'The createUserList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createUser), 'The createUser must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CreateUserListWithCreateUserListCreateUser_9d8f4b00 implements \SqlS
         $this->createUserList->write($writer);
         $writer->append(',');
         $this->createUser->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createUserList, preserving every other field.
+     */
+    public function withCreateUserList(\SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm $createUserList): self
+    {
+        return new self($createUserList, $this->createUser);
+    }
+
+    /**
+     * Returns a copy with a new createUser, preserving every other field.
+     */
+    public function withCreateUser(\SqlSemantics\Statement\Model\MySql\Role\CreateUserForm $createUser): self
+    {
+        return new self($this->createUserList, $createUser);
     }
 }

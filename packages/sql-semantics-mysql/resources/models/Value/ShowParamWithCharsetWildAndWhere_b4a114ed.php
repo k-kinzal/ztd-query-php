@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithCharsetWildAndWhere_b4a114ed $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowParamWithCharsetWildAndWhere_b4a114ed $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ShowParamWithCharsetWildAndWhere_b4a114ed implements \SqlSemantics\Statement\Model\MySql\Role\ShowParamForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ShowParamWithCharsetWildAndWhere_b4a114ed implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charset), 'The charset must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wildAndWhere), 'The wildAndWhere must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ShowParamWithCharsetWildAndWhere_b4a114ed implements \SqlSemantics\S
     {
         $this->charset->write($writer);
         $this->wildAndWhere->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new charset, preserving every other field.
+     */
+    public function withCharset(\SqlSemantics\Statement\Model\MySql\Role\CharsetForm $charset): self
+    {
+        return new self($charset, $this->wildAndWhere);
+    }
+
+    /**
+     * Returns a copy with a new wildAndWhere, preserving every other field.
+     */
+    public function withWildAndWhere(\SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere): self
+    {
+        return new self($this->charset, $wildAndWhere);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserWithUserIdentifiedByRandomPasswordOptRetainCurrentPassword_a707714a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterUserWithUserIdentifiedByRandomPasswordOptRetainCurrentPassword_a707714a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterUserWithUserIdentifiedByRandomPasswordOptRetainCurrentPassword_a707714a implements \SqlSemantics\Statement\Model\MySql\Role\AlterUserForm, \SqlSemantics\Statement\Model\MySql\Role\AlterUserListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterUserWithUserIdentifiedByRandomPasswordOptRetainCurrentPassword_
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentifiedByRandomPasswordForm $identifiedByRandomPassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identifiedByRandomPassword), 'The identifiedByRandomPassword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRetainCurrentPassword), 'The optRetainCurrentPassword must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class AlterUserWithUserIdentifiedByRandomPasswordOptRetainCurrentPassword_
         $this->user->write($writer);
         $this->identifiedByRandomPassword->write($writer);
         $this->optRetainCurrentPassword->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
+    {
+        return new self($user, $this->identifiedByRandomPassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new identifiedByRandomPassword, preserving every other field.
+     */
+    public function withIdentifiedByRandomPassword(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedByRandomPasswordForm $identifiedByRandomPassword): self
+    {
+        return new self($this->user, $identifiedByRandomPassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new optRetainCurrentPassword, preserving every other field.
+     */
+    public function withOptRetainCurrentPassword(\SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword): self
+    {
+        return new self($this->user, $this->identifiedByRandomPassword, $optRetainCurrentPassword);
     }
 }

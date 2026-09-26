@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectItemListWithSelectItemListSelectItem_06beb76a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectItemListWithSelectItemListSelectItem_06beb76a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectItemListWithSelectItemListSelectItem_06beb76a implements \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelectItemListWithSelectItemListSelectItem_06beb76a implements \SqlS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemForm $selectItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectItem), 'The selectItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SelectItemListWithSelectItemListSelectItem_06beb76a implements \SqlS
         $this->projections->write($writer);
         $writer->append(',');
         $this->selectItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
+    {
+        return new self($projections, $this->selectItem);
+    }
+
+    /**
+     * Returns a copy with a new selectItem, preserving every other field.
+     */
+    public function withSelectItem(\SqlSemantics\Statement\Model\MySql\Role\SelectItemForm $selectItem): self
+    {
+        return new self($this->projections, $selectItem);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpHcondWithNotFoundSym_4287b49a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpHcondWithNotFoundSym_4287b49a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpHcondWithNotFoundSym_4287b49a implements \SqlSemantics\Statement\Model\MySql\Role\SpHcondForm, \SqlSemantics\Statement\Model\MySql\Role\SpHcondElementForm, \SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NotForm $not,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($not), 'The not must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SpHcondWithNotFoundSym_4287b49a implements \SqlSemantics\Statement\M
     {
         $this->not->write($writer);
         $writer->append('FOUND');
+    }
+
+    /**
+     * Returns a copy with a new not, preserving every other field.
+     */
+    public function withNot(\SqlSemantics\Statement\Model\MySql\Role\NotForm $not): self
+    {
+        return new self($not);
     }
 }

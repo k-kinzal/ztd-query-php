@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithLateralPSelectWithParensOptAliasClause_163b5e99 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithLateralPSelectWithParensOptAliasClause_163b5e99 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableRefWithLateralPSelectWithParensOptAliasClause_163b5e99 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableRefWithLateralPSelectWithParensOptAliasClause_163b5e99 implemen
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectWithParensForm $selectWithParens,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectWithParens), 'The selectWithParens must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAliasClause), 'The optAliasClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableRefWithLateralPSelectWithParensOptAliasClause_163b5e99 implemen
         $writer->append('LATERAL');
         $this->selectWithParens->write($writer);
         $this->optAliasClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectWithParens, preserving every other field.
+     */
+    public function withSelectWithParens(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectWithParensForm $selectWithParens): self
+    {
+        return new self($selectWithParens, $this->optAliasClause);
+    }
+
+    /**
+     * Returns a copy with a new optAliasClause, preserving every other field.
+     */
+    public function withOptAliasClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause): self
+    {
+        return new self($this->selectWithParens, $optAliasClause);
     }
 }

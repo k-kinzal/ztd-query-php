@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateStmtWithCreateOptTempTableQualifiedNameOptTableElementListOptInheritOptPartitionSpe_1026d012 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateStmtWithCreateOptTempTableQualifiedNameOptTableElementListOptInheritOptPartitionSpe_1026d012 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateStmtWithCreateOptTempTableQualifiedNameOptTableElementListOptInheritOptPartitionSpe_1026d012 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateStmtWithCreateOptTempTableQualifiedNameOptTableElementListOptInheritOptPartitionSpe_1026d012 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SchemaStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -28,6 +30,15 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOptTableElementListOptI
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm $onCommitOption,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTableElementList), 'The optTableElementList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optInherit), 'The optInherit must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optPartitionSpec), 'The optPartitionSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableAccessMethodClause), 'The tableAccessMethodClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($onCommitOption), 'The onCommitOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTableSpace), 'The optTableSpace must be a generated immutable SQL value.');
     }
 
     /**
@@ -48,5 +59,77 @@ final class CreateStmtWithCreateOptTempTableQualifiedNameOptTableElementListOptI
         $this->optWith->write($writer);
         $this->onCommitOption->write($writer);
         $this->optTableSpace->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTemp, preserving every other field.
+     */
+    public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
+    {
+        return new self($optTemp, $this->qualifiedName, $this->optTableElementList, $this->optInherit, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->optTemp, $qualifiedName, $this->optTableElementList, $this->optInherit, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optTableElementList, preserving every other field.
+     */
+    public function withOptTableElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableElementListForm $optTableElementList): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $optTableElementList, $this->optInherit, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optInherit, preserving every other field.
+     */
+    public function withOptInherit(\SqlSemantics\Statement\Model\PostgreSql\Role\OptInheritForm $optInherit): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->optTableElementList, $optInherit, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optPartitionSpec, preserving every other field.
+     */
+    public function withOptPartitionSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\OptPartitionSpecForm $optPartitionSpec): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->optTableElementList, $this->optInherit, $optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new tableAccessMethodClause, preserving every other field.
+     */
+    public function withTableAccessMethodClause(\SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm $tableAccessMethodClause): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->optTableElementList, $this->optInherit, $this->optPartitionSpec, $tableAccessMethodClause, $this->optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optWith, preserving every other field.
+     */
+    public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->optTableElementList, $this->optInherit, $this->optPartitionSpec, $this->tableAccessMethodClause, $optWith, $this->onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new onCommitOption, preserving every other field.
+     */
+    public function withOnCommitOption(\SqlSemantics\Statement\Model\PostgreSql\Role\OnCommitOptionForm $onCommitOption): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->optTableElementList, $this->optInherit, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $onCommitOption, $this->optTableSpace);
+    }
+
+    /**
+     * Returns a copy with a new optTableSpace, preserving every other field.
+     */
+    public function withOptTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->optTableElementList, $this->optInherit, $this->optPartitionSpec, $this->tableAccessMethodClause, $this->optWith, $this->onCommitOption, $optTableSpace);
     }
 }

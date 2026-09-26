@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EvScheduleTimeWithEverySymExprIntervalEvStartsEvEnds_b360a351 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\EvScheduleTimeWithEverySymExprIntervalEvStartsEvEnds_b360a351 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EvScheduleTimeWithEverySymExprIntervalEvStartsEvEnds_b360a351 implements \SqlSemantics\Statement\Model\MySql\Role\EvScheduleTimeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class EvScheduleTimeWithEverySymExprIntervalEvStartsEvEnds_b360a351 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvStartsForm $evStarts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EvEndsForm $evEnds,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($interval), 'The interval must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evStarts), 'The evStarts must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($evEnds), 'The evEnds must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class EvScheduleTimeWithEverySymExprIntervalEvStartsEvEnds_b360a351 implem
         $this->interval->write($writer);
         $this->evStarts->write($writer);
         $this->evEnds->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->interval, $this->evStarts, $this->evEnds);
+    }
+
+    /**
+     * Returns a copy with a new interval, preserving every other field.
+     */
+    public function withInterval(\SqlSemantics\Statement\Model\MySql\Role\IntervalForm $interval): self
+    {
+        return new self($this->expr, $interval, $this->evStarts, $this->evEnds);
+    }
+
+    /**
+     * Returns a copy with a new evStarts, preserving every other field.
+     */
+    public function withEvStarts(\SqlSemantics\Statement\Model\MySql\Role\EvStartsForm $evStarts): self
+    {
+        return new self($this->expr, $this->interval, $evStarts, $this->evEnds);
+    }
+
+    /**
+     * Returns a copy with a new evEnds, preserving every other field.
+     */
+    public function withEvEnds(\SqlSemantics\Statement\Model\MySql\Role\EvEndsForm $evEnds): self
+    {
+        return new self($this->expr, $this->interval, $this->evStarts, $evEnds);
     }
 }

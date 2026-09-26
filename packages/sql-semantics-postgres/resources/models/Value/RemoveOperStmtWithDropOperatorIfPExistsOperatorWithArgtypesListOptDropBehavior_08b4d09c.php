@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RemoveOperStmtWithDropOperatorIfPExistsOperatorWithArgtypesListOptDropBehavior_08b4d09c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RemoveOperStmtWithDropOperatorIfPExistsOperatorWithArgtypesListOptDropBehavior_08b4d09c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RemoveOperStmtWithDropOperatorIfPExistsOperatorWithArgtypesListOptDropBehavior_08b4d09c implements \SqlSemantics\Statement\Model\PostgreSql\Role\RemoveOperStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class RemoveOperStmtWithDropOperatorIfPExistsOperatorWithArgtypesListOptDropBehavior_08b4d09c implements \SqlSemantics\Statement\Model\PostgreSql\Role\RemoveOperStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RemoveOperStmtWithDropOperatorIfPExistsOperatorWithArgtypesListOptDr
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesListForm $operatorWithArgtypesList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorWithArgtypesList), 'The operatorWithArgtypesList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class RemoveOperStmtWithDropOperatorIfPExistsOperatorWithArgtypesListOptDr
         $writer->append('EXISTS');
         $this->operatorWithArgtypesList->write($writer);
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new operatorWithArgtypesList, preserving every other field.
+     */
+    public function withOperatorWithArgtypesList(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesListForm $operatorWithArgtypesList): self
+    {
+        return new self($operatorWithArgtypesList, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optDropBehavior, preserving every other field.
+     */
+    public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
+    {
+        return new self($this->operatorWithArgtypesList, $optDropBehavior);
     }
 }

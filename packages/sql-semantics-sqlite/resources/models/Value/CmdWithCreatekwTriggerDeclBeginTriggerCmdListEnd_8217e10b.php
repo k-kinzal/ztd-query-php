@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b implements
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TriggerDeclForm $triggerDecl,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdListForm $triggerCmdList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createkw), 'The createkw must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($triggerDecl), 'The triggerDecl must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($triggerCmdList), 'The triggerCmdList must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class CmdWithCreatekwTriggerDeclBeginTriggerCmdListEnd_8217e10b implements
         $writer->append('BEGIN');
         $this->triggerCmdList->write($writer);
         $writer->append('END');
+    }
+
+    /**
+     * Returns a copy with a new createkw, preserving every other field.
+     */
+    public function withCreatekw(\SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw): self
+    {
+        return new self($createkw, $this->triggerDecl, $this->triggerCmdList);
+    }
+
+    /**
+     * Returns a copy with a new triggerDecl, preserving every other field.
+     */
+    public function withTriggerDecl(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerDeclForm $triggerDecl): self
+    {
+        return new self($this->createkw, $triggerDecl, $this->triggerCmdList);
+    }
+
+    /**
+     * Returns a copy with a new triggerCmdList, preserving every other field.
+     */
+    public function withTriggerCmdList(\SqlSemantics\Statement\Model\Sqlite\Role\TriggerCmdListForm $triggerCmdList): self
+    {
+        return new self($this->createkw, $this->triggerDecl, $triggerCmdList);
     }
 }

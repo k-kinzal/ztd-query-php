@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartTypeDefWithListSymColumnsNameList_3a719ffb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartTypeDefWithListSymColumnsNameList_3a719ffb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartTypeDefWithListSymColumnsNameList_3a719ffb implements \SqlSemantics\Statement\Model\MySql\Role\PartTypeDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class PartTypeDefWithListSymColumnsNameList_3a719ffb implements \SqlSemant
         public readonly string $columns,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NameListForm $nameList,
     ) {
+        $this->assertMatchesPattern($columns, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['COLUMNS'], 'The columns must be a complete COLUMNS lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($nameList), 'The nameList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class PartTypeDefWithListSymColumnsNameList_3a719ffb implements \SqlSemant
         $writer->append('(');
         $this->nameList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new columns, preserving every other field.
+     */
+    public function withColumns(string $columns): self
+    {
+        return new self($columns, $this->nameList);
+    }
+
+    /**
+     * Returns a copy with a new nameList, preserving every other field.
+     */
+    public function withNameList(\SqlSemantics\Statement\Model\MySql\Role\NameListForm $nameList): self
+    {
+        return new self($this->columns, $nameList);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\DeferSubclauseWithNotDeferrableInitDeferredPredOpt_60b33c1f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\DeferSubclauseWithNotDeferrableInitDeferredPredOpt_60b33c1f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DeferSubclauseWithNotDeferrableInitDeferredPredOpt_60b33c1f implements \SqlSemantics\Statement\Model\Sqlite\Role\CconsForm, \SqlSemantics\Statement\Model\Sqlite\Role\DeferSubclauseForm, \SqlSemantics\Statement\Model\Sqlite\Role\DeferSubclauseOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\InitDeferredPredOptForm $initDeferredPredOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($initDeferredPredOpt), 'The initDeferredPredOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class DeferSubclauseWithNotDeferrableInitDeferredPredOpt_60b33c1f implemen
         $writer->append('NOT');
         $writer->append('DEFERRABLE');
         $this->initDeferredPredOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new initDeferredPredOpt, preserving every other field.
+     */
+    public function withInitDeferredPredOpt(\SqlSemantics\Statement\Model\Sqlite\Role\InitDeferredPredOptForm $initDeferredPredOpt): self
+    {
+        return new self($initDeferredPredOpt);
     }
 }

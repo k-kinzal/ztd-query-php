@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptResourceGroupVcpuListWithVcpuSymOptEqualVcpuRangeSpecList_2441036d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptResourceGroupVcpuListWithVcpuSymOptEqualVcpuRangeSpecList_2441036d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptResourceGroupVcpuListWithVcpuSymOptEqualVcpuRangeSpecList_2441036d implements \SqlSemantics\Statement\Model\MySql\Role\OptResourceGroupVcpuListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptResourceGroupVcpuListWithVcpuSymOptEqualVcpuRangeSpecList_2441036
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VcpuRangeSpecListForm $vcpuRangeSpecList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($vcpuRangeSpecList), 'The vcpuRangeSpecList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptResourceGroupVcpuListWithVcpuSymOptEqualVcpuRangeSpecList_2441036
         $writer->append('VCPU');
         $this->optEqual->write($writer);
         $this->vcpuRangeSpecList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->vcpuRangeSpecList);
+    }
+
+    /**
+     * Returns a copy with a new vcpuRangeSpecList, preserving every other field.
+     */
+    public function withVcpuRangeSpecList(\SqlSemantics\Statement\Model\MySql\Role\VcpuRangeSpecListForm $vcpuRangeSpecList): self
+    {
+        return new self($this->optEqual, $vcpuRangeSpecList);
     }
 }

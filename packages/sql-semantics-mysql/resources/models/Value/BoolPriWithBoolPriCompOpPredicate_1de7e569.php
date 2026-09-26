@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BoolPriWithBoolPriCompOpPredicate_1de7e569 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BoolPriWithBoolPriCompOpPredicate_1de7e569 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BoolPriWithBoolPriCompOpPredicate_1de7e569 implements \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,11 @@ final class BoolPriWithBoolPriCompOpPredicate_1de7e569 implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CompOpForm $compOp,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PredicateForm $predicate,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($boolPri), 'The boolPri must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($boolPri, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,));
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($compOp), 'The compOp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($predicate), 'The predicate must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($predicate, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 9,  'mysql-5.7.44' => 10,));
     }
 
     /**
@@ -32,5 +39,29 @@ final class BoolPriWithBoolPriCompOpPredicate_1de7e569 implements \SqlSemantics\
         $this->boolPri->write($writer);
         $this->compOp->write($writer);
         $this->predicate->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new boolPri, preserving every other field.
+     */
+    public function withBoolPri(\SqlSemantics\Statement\Model\MySql\Role\BoolPriForm $boolPri): self
+    {
+        return new self($boolPri, $this->compOp, $this->predicate);
+    }
+
+    /**
+     * Returns a copy with a new compOp, preserving every other field.
+     */
+    public function withCompOp(\SqlSemantics\Statement\Model\MySql\Role\CompOpForm $compOp): self
+    {
+        return new self($this->boolPri, $compOp, $this->predicate);
+    }
+
+    /**
+     * Returns a copy with a new predicate, preserving every other field.
+     */
+    public function withPredicate(\SqlSemantics\Statement\Model\MySql\Role\PredicateForm $predicate): self
+    {
+        return new self($this->boolPri, $this->compOp, $predicate);
     }
 }

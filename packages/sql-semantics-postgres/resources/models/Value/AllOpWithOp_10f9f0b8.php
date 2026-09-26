@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AllOpWithOp_10f9f0b8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AllOpWithOp_10f9f0b8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AllOpWithOp_10f9f0b8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AllOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\QualAllOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $op,
     ) {
+        $this->assertMatchesPattern($op, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['Op'], 'The op must be a complete Op lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class AllOpWithOp_10f9f0b8 implements \SqlSemantics\Statement\Model\Postgr
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->op);
+    }
+
+    /**
+     * Returns a copy with a new op, preserving every other field.
+     */
+    public function withOp(string $op): self
+    {
+        return new self($op);
     }
 }

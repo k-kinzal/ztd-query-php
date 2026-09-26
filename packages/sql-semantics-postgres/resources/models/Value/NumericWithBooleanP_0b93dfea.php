@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericWithBooleanP_0b93dfea $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericWithBooleanP_0b93dfea $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NumericWithBooleanP_0b93dfea implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NumericForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm

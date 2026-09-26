@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertQueryExpressionWithInsertColumnsQueryExpressionWithOptLockingClauses_89ec416f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertQueryExpressionWithInsertColumnsQueryExpressionWithOptLockingClauses_89ec416f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertQueryExpressionWithInsertColumnsQueryExpressionWithOptLockingClauses_89ec416f implements \SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm, \SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertQueryExpressionWithInsertColumnsQueryExpressionWithOptLockingC
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm $insertColumns,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm $queryExpressionWithOptLockingClauses,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertColumns), 'The insertColumns must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionWithOptLockingClauses), 'The queryExpressionWithOptLockingClauses must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class InsertQueryExpressionWithInsertColumnsQueryExpressionWithOptLockingC
         $this->insertColumns->write($writer);
         $writer->append(')');
         $this->queryExpressionWithOptLockingClauses->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new insertColumns, preserving every other field.
+     */
+    public function withInsertColumns(\SqlSemantics\Statement\Model\MySql\Role\InsertColumnsForm $insertColumns): self
+    {
+        return new self($insertColumns, $this->queryExpressionWithOptLockingClauses);
+    }
+
+    /**
+     * Returns a copy with a new queryExpressionWithOptLockingClauses, preserving every other field.
+     */
+    public function withQueryExpressionWithOptLockingClauses(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm $queryExpressionWithOptLockingClauses): self
+    {
+        return new self($this->insertColumns, $queryExpressionWithOptLockingClauses);
     }
 }

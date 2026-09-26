@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ValuesWithValuesExprOrDefault_1c75d8ad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ValuesWithValuesExprOrDefault_1c75d8ad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ValuesWithValuesExprOrDefault_1c75d8ad implements \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ValuesWithValuesExprOrDefault_1c75d8ad implements \SqlSemantics\Stat
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValuesForm $values,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm $exprOrDefault,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($values), 'The values must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($exprOrDefault), 'The exprOrDefault must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ValuesWithValuesExprOrDefault_1c75d8ad implements \SqlSemantics\Stat
         $this->values->write($writer);
         $writer->append(',');
         $this->exprOrDefault->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new values, preserving every other field.
+     */
+    public function withValues(\SqlSemantics\Statement\Model\MySql\Role\ValuesForm $values): self
+    {
+        return new self($values, $this->exprOrDefault);
+    }
+
+    /**
+     * Returns a copy with a new exprOrDefault, preserving every other field.
+     */
+    public function withExprOrDefault(\SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm $exprOrDefault): self
+    {
+        return new self($this->values, $exprOrDefault);
     }
 }

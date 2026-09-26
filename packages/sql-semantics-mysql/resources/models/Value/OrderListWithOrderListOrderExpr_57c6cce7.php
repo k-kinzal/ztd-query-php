@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OrderListWithOrderListOrderExpr_57c6cce7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OrderListWithOrderListOrderExpr_57c6cce7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OrderListWithOrderListOrderExpr_57c6cce7 implements \SqlSemantics\Statement\Model\MySql\Role\OrderListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OrderListWithOrderListOrderExpr_57c6cce7 implements \SqlSemantics\St
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderListForm $orderList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderExprForm $orderExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderList), 'The orderList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderExpr), 'The orderExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OrderListWithOrderListOrderExpr_57c6cce7 implements \SqlSemantics\St
         $this->orderList->write($writer);
         $writer->append(',');
         $this->orderExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new orderList, preserving every other field.
+     */
+    public function withOrderList(\SqlSemantics\Statement\Model\MySql\Role\OrderListForm $orderList): self
+    {
+        return new self($orderList, $this->orderExpr);
+    }
+
+    /**
+     * Returns a copy with a new orderExpr, preserving every other field.
+     */
+    public function withOrderExpr(\SqlSemantics\Statement\Model\MySql\Role\OrderExprForm $orderExpr): self
+    {
+        return new self($this->orderList, $orderExpr);
     }
 }

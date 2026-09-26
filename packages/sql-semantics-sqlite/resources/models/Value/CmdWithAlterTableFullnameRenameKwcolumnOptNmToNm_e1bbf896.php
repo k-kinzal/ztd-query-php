@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithAlterTableFullnameRenameKwcolumnOptNmToNm_e1bbf896 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithAlterTableFullnameRenameKwcolumnOptNmToNm_e1bbf896 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithAlterTableFullnameRenameKwcolumnOptNmToNm_e1bbf896 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithAlterTableFullnameRenameKwcolumnOptNmToNm_e1bbf896 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CmdWithAlterTableFullnameRenameKwcolumnOptNmToNm_e1bbf896 implements
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($fullname), 'The fullname must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($kwcolumnOpt), 'The kwcolumnOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm2), 'The nm2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +44,37 @@ final class CmdWithAlterTableFullnameRenameKwcolumnOptNmToNm_e1bbf896 implements
         $this->nm->write($writer);
         $writer->append('TO');
         $this->nm2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fullname, preserving every other field.
+     */
+    public function withFullname(\SqlSemantics\Statement\Model\Sqlite\Role\FullnameForm $fullname): self
+    {
+        return new self($fullname, $this->kwcolumnOpt, $this->nm, $this->nm2);
+    }
+
+    /**
+     * Returns a copy with a new kwcolumnOpt, preserving every other field.
+     */
+    public function withKwcolumnOpt(\SqlSemantics\Statement\Model\Sqlite\Role\KwcolumnOptForm $kwcolumnOpt): self
+    {
+        return new self($this->fullname, $kwcolumnOpt, $this->nm, $this->nm2);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->fullname, $this->kwcolumnOpt, $nm, $this->nm2);
+    }
+
+    /**
+     * Returns a copy with a new nm2, preserving every other field.
+     */
+    public function withNm2(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2): self
+    {
+        return new self($this->fullname, $this->kwcolumnOpt, $this->nm, $nm2);
     }
 }

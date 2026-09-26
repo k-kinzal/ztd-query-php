@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithAttachDatabaseKwOptExprAsExprKeyOpt_87608024 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithAttachDatabaseKwOptExprAsExprKeyOpt_87608024 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithAttachDatabaseKwOptExprAsExprKeyOpt_87608024 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithAttachDatabaseKwOptExprAsExprKeyOpt_87608024 implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CmdWithAttachDatabaseKwOptExprAsExprKeyOpt_87608024 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\KeyOptForm $keyOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($databaseKwOpt), 'The databaseKwOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr2), 'The expr2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($keyOpt), 'The keyOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class CmdWithAttachDatabaseKwOptExprAsExprKeyOpt_87608024 implements \SqlS
         $writer->append('AS');
         $this->expr2->write($writer);
         $this->keyOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new databaseKwOpt, preserving every other field.
+     */
+    public function withDatabaseKwOpt(\SqlSemantics\Statement\Model\Sqlite\Role\DatabaseKwOptForm $databaseKwOpt): self
+    {
+        return new self($databaseKwOpt, $this->expr, $this->expr2, $this->keyOpt);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($this->databaseKwOpt, $expr, $this->expr2, $this->keyOpt);
+    }
+
+    /**
+     * Returns a copy with a new expr2, preserving every other field.
+     */
+    public function withExpr2(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2): self
+    {
+        return new self($this->databaseKwOpt, $this->expr, $expr2, $this->keyOpt);
+    }
+
+    /**
+     * Returns a copy with a new keyOpt, preserving every other field.
+     */
+    public function withKeyOpt(\SqlSemantics\Statement\Model\Sqlite\Role\KeyOptForm $keyOpt): self
+    {
+        return new self($this->databaseKwOpt, $this->expr, $this->expr2, $keyOpt);
     }
 }

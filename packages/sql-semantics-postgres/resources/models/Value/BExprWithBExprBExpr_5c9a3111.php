@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BExprWithBExprBExpr_5c9a3111 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\BExprWithBExprBExpr_5c9a3111 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BExprWithBExprBExpr_5c9a3111 implements \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,10 @@ final class BExprWithBExprBExpr_5c9a3111 implements \SqlSemantics\Statement\Mode
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bExpr, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 13,));
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr2), 'The bExpr2 must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bExpr2, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::BINDING_POWERS, array (  'pg-17.2' => 14,));
     }
 
     /**
@@ -31,5 +37,21 @@ final class BExprWithBExprBExpr_5c9a3111 implements \SqlSemantics\Statement\Mode
         $this->bExpr->write($writer);
         $writer->append('-');
         $this->bExpr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bExpr, preserving every other field.
+     */
+    public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
+    {
+        return new self($bExpr, $this->bExpr2);
+    }
+
+    /**
+     * Returns a copy with a new bExpr2, preserving every other field.
+     */
+    public function withBExpr2(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr2): self
+    {
+        return new self($this->bExpr, $bExpr2);
     }
 }

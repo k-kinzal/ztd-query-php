@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithXmltableOptAliasClause_980a8c2e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableRefWithXmltableOptAliasClause_980a8c2e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableRefWithXmltableOptAliasClause_980a8c2e implements \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableRefWithXmltableOptAliasClause_980a8c2e implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableForm $xmltable,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmltable), 'The xmltable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAliasClause), 'The optAliasClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TableRefWithXmltableOptAliasClause_980a8c2e implements \SqlSemantics
     {
         $this->xmltable->write($writer);
         $this->optAliasClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new xmltable, preserving every other field.
+     */
+    public function withXmltable(\SqlSemantics\Statement\Model\PostgreSql\Role\XmltableForm $xmltable): self
+    {
+        return new self($xmltable, $this->optAliasClause);
+    }
+
+    /**
+     * Returns a copy with a new optAliasClause, preserving every other field.
+     */
+    public function withOptAliasClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAliasClauseForm $optAliasClause): self
+    {
+        return new self($this->xmltable, $optAliasClause);
     }
 }

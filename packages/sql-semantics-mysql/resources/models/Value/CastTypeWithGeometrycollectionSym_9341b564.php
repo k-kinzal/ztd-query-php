@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithGeometrycollectionSym_9341b564 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CastTypeWithGeometrycollectionSym_9341b564 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CastTypeWithGeometrycollectionSym_9341b564 implements \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $geometrycollectionSym,
     ) {
+        $this->assertMatchesPattern($geometrycollectionSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GEOMETRYCOLLECTION_SYM'], 'The geometrycollectionSym must be a complete GEOMETRYCOLLECTION_SYM lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class CastTypeWithGeometrycollectionSym_9341b564 implements \SqlSemantics\
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->geometrycollectionSym);
+    }
+
+    /**
+     * Returns a copy with a new geometrycollectionSym, preserving every other field.
+     */
+    public function withGeometrycollectionSym(string $geometrycollectionSym): self
+    {
+        return new self($geometrycollectionSym);
     }
 }

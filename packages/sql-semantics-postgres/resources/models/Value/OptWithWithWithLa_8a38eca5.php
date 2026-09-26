@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptWithWithWithLa_8a38eca5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptWithWithWithLa_8a38eca5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptWithWithWithLa_8a38eca5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $withLa,
     ) {
+        $this->assertMatchesPattern($withLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['WITH_LA'], 'The withLa must be a complete WITH_LA lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class OptWithWithWithLa_8a38eca5 implements \SqlSemantics\Statement\Model\
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->withLa);
+    }
+
+    /**
+     * Returns a copy with a new withLa, preserving every other field.
+     */
+    public function withWithLa(string $withLa): self
+    {
+        return new self($withLa);
     }
 }

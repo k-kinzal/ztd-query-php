@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowingClauseWithOverSymWindowNameOrSpec_3ecf488b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowingClauseWithOverSymWindowNameOrSpec_3ecf488b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowingClauseWithOverSymWindowNameOrSpec_3ecf488b implements \SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm, \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowNameOrSpecForm $windowNameOrSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowNameOrSpec), 'The windowNameOrSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class WindowingClauseWithOverSymWindowNameOrSpec_3ecf488b implements \SqlS
     {
         $writer->append('OVER');
         $this->windowNameOrSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new windowNameOrSpec, preserving every other field.
+     */
+    public function withWindowNameOrSpec(\SqlSemantics\Statement\Model\MySql\Role\WindowNameOrSpecForm $windowNameOrSpec): self
+    {
+        return new self($windowNameOrSpec);
     }
 }

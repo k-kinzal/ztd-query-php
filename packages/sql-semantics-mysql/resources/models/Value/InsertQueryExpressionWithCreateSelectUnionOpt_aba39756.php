@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertQueryExpressionWithCreateSelectUnionOpt_aba39756 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InsertQueryExpressionWithCreateSelectUnionOpt_aba39756 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class InsertQueryExpressionWithCreateSelectUnionOpt_aba39756 implements \SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm, \SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InsertQueryExpressionWithCreateSelectUnionOpt_aba39756 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createSelect), 'The createSelect must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOpt), 'The unionOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class InsertQueryExpressionWithCreateSelectUnionOpt_aba39756 implements \S
         $this->createSelect->write($writer);
         $writer->append(')');
         $this->unionOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createSelect, preserving every other field.
+     */
+    public function withCreateSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect): self
+    {
+        return new self($createSelect, $this->unionOpt);
+    }
+
+    /**
+     * Returns a copy with a new unionOpt, preserving every other field.
+     */
+    public function withUnionOpt(\SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt): self
+    {
+        return new self($this->createSelect, $unionOpt);
     }
 }

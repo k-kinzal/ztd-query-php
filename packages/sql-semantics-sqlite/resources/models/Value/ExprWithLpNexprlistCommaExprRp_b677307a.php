@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithLpNexprlistCommaExprRp_b677307a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ExprWithLpNexprlistCommaExprRp_b677307a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExprWithLpNexprlistCommaExprRp_b677307a implements \SqlSemantics\Statement\Model\Sqlite\Role\CaseOperandForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm, \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm, \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExprWithLpNexprlistCommaExprRp_b677307a implements \SqlSemantics\Sta
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nexprlist), 'The nexprlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class ExprWithLpNexprlistCommaExprRp_b677307a implements \SqlSemantics\Sta
         $writer->append(',');
         $this->expr->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new nexprlist, preserving every other field.
+     */
+    public function withNexprlist(\SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist): self
+    {
+        return new self($nexprlist, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($this->nexprlist, $expr);
     }
 }

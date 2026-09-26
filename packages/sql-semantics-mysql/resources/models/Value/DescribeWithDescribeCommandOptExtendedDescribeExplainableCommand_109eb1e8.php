@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DescribeWithDescribeCommandOptExtendedDescribeExplainableCommand_109eb1e8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DescribeWithDescribeCommandOptExtendedDescribeExplainableCommand_109eb1e8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DescribeWithDescribeCommandOptExtendedDescribeExplainableCommand_109eb1e8 implements \SqlSemantics\Statement\Model\MySql\Role\DescribeForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class DescribeWithDescribeCommandOptExtendedDescribeExplainableCommand_109
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExtendedDescribeForm $optExtendedDescribe,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm $explainableCommand,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($describeCommand), 'The describeCommand must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExtendedDescribe), 'The optExtendedDescribe must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($explainableCommand), 'The explainableCommand must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class DescribeWithDescribeCommandOptExtendedDescribeExplainableCommand_109
         $this->describeCommand->write($writer);
         $this->optExtendedDescribe->write($writer);
         $this->explainableCommand->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new describeCommand, preserving every other field.
+     */
+    public function withDescribeCommand(\SqlSemantics\Statement\Model\MySql\Role\DescribeCommandForm $describeCommand): self
+    {
+        return new self($describeCommand, $this->optExtendedDescribe, $this->explainableCommand);
+    }
+
+    /**
+     * Returns a copy with a new optExtendedDescribe, preserving every other field.
+     */
+    public function withOptExtendedDescribe(\SqlSemantics\Statement\Model\MySql\Role\OptExtendedDescribeForm $optExtendedDescribe): self
+    {
+        return new self($this->describeCommand, $optExtendedDescribe, $this->explainableCommand);
+    }
+
+    /**
+     * Returns a copy with a new explainableCommand, preserving every other field.
+     */
+    public function withExplainableCommand(\SqlSemantics\Statement\Model\MySql\Role\ExplainableCommandForm $explainableCommand): self
+    {
+        return new self($this->describeCommand, $this->optExtendedDescribe, $explainableCommand);
     }
 }

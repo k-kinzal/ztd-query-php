@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlexistsArgumentWithPassingCExprXmlPassingMech_ab5cb264 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlexistsArgumentWithPassingCExprXmlPassingMech_ab5cb264 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmlexistsArgumentWithPassingCExprXmlPassingMech_ab5cb264 implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmlexistsArgumentForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class XmlexistsArgumentWithPassingCExprXmlPassingMech_ab5cb264 implements 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm $xmlPassingMech,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cExpr), 'The cExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlPassingMech), 'The xmlPassingMech must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class XmlexistsArgumentWithPassingCExprXmlPassingMech_ab5cb264 implements 
         $writer->append('PASSING');
         $this->cExpr->write($writer);
         $this->xmlPassingMech->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new cExpr, preserving every other field.
+     */
+    public function withCExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr): self
+    {
+        return new self($cExpr, $this->xmlPassingMech);
+    }
+
+    /**
+     * Returns a copy with a new xmlPassingMech, preserving every other field.
+     */
+    public function withXmlPassingMech(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlPassingMechForm $xmlPassingMech): self
+    {
+        return new self($this->cExpr, $xmlPassingMech);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptRefListWithReferenceList_93f45fe9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptRefListWithReferenceList_93f45fe9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptRefListWithReferenceList_93f45fe9 implements \SqlSemantics\Statement\Model\MySql\Role\OptRefListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReferenceListForm $referenceList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($referenceList), 'The referenceList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptRefListWithReferenceList_93f45fe9 implements \SqlSemantics\Statem
         $writer->append('(');
         $this->referenceList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new referenceList, preserving every other field.
+     */
+    public function withReferenceList(\SqlSemantics\Statement\Model\MySql\Role\ReferenceListForm $referenceList): self
+    {
+        return new self($referenceList);
     }
 }

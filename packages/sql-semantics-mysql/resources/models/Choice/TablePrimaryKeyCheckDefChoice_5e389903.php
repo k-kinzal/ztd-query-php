@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\TablePrimaryKeyCheckDefChoice_5e389903 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\TablePrimaryKeyCheckDefChoice_5e389903 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum TablePrimaryKeyCheckDefChoice_5e389903: string implements \SqlSemantics\Statement\Model\MySql\Role\TablePrimaryKeyCheckDefForm

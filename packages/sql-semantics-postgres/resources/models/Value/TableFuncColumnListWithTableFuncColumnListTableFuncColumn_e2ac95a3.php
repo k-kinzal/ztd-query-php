@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableFuncColumnListWithTableFuncColumnListTableFuncColumn_e2ac95a3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableFuncColumnListWithTableFuncColumnListTableFuncColumn_e2ac95a3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableFuncColumnListWithTableFuncColumnListTableFuncColumn_e2ac95a3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableFuncColumnListWithTableFuncColumnListTableFuncColumn_e2ac95a3 i
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm $tableFuncColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnForm $tableFuncColumn,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncColumnList), 'The tableFuncColumnList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncColumn), 'The tableFuncColumn must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableFuncColumnListWithTableFuncColumnListTableFuncColumn_e2ac95a3 i
         $this->tableFuncColumnList->write($writer);
         $writer->append(',');
         $this->tableFuncColumn->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableFuncColumnList, preserving every other field.
+     */
+    public function withTableFuncColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm $tableFuncColumnList): self
+    {
+        return new self($tableFuncColumnList, $this->tableFuncColumn);
+    }
+
+    /**
+     * Returns a copy with a new tableFuncColumn, preserving every other field.
+     */
+    public function withTableFuncColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnForm $tableFuncColumn): self
+    {
+        return new self($this->tableFuncColumnList, $tableFuncColumn);
     }
 }

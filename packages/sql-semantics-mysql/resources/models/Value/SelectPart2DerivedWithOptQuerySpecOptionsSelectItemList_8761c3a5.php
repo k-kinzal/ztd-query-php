@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectPart2DerivedWithOptQuerySpecOptionsSelectItemList_8761c3a5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectPart2DerivedWithOptQuerySpecOptionsSelectItemList_8761c3a5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectPart2DerivedWithOptQuerySpecOptionsSelectItemList_8761c3a5 implements \SqlSemantics\Statement\Model\MySql\Role\SelectInit2DerivedForm, \SqlSemantics\Statement\Model\MySql\Role\SelectPart2DerivedForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SelectPart2DerivedWithOptQuerySpecOptionsSelectItemList_8761c3a5 imp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptQuerySpecOptionsForm $optQuerySpecOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optQuerySpecOptions), 'The optQuerySpecOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class SelectPart2DerivedWithOptQuerySpecOptionsSelectItemList_8761c3a5 imp
     {
         $this->optQuerySpecOptions->write($writer);
         $this->projections->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optQuerySpecOptions, preserving every other field.
+     */
+    public function withOptQuerySpecOptions(\SqlSemantics\Statement\Model\MySql\Role\OptQuerySpecOptionsForm $optQuerySpecOptions): self
+    {
+        return new self($optQuerySpecOptions, $this->projections);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
+    {
+        return new self($this->optQuerySpecOptions, $projections);
     }
 }

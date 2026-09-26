@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReferenceListWithReferenceListIdent_53d13dba $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ReferenceListWithReferenceListIdent_53d13dba $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ReferenceListWithReferenceListIdent_53d13dba implements \SqlSemantics\Statement\Model\MySql\Role\ReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ReferenceListWithReferenceListIdent_53d13dba implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReferenceListForm $referenceList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($referenceList), 'The referenceList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ReferenceListWithReferenceListIdent_53d13dba implements \SqlSemantic
         $this->referenceList->write($writer);
         $writer->append(',');
         $this->ident->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new referenceList, preserving every other field.
+     */
+    public function withReferenceList(\SqlSemantics\Statement\Model\MySql\Role\ReferenceListForm $referenceList): self
+    {
+        return new self($referenceList, $this->ident);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->referenceList, $ident);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableStmtWithAlterTableRelationExprPartitionCmd_8e587fbe $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableStmtWithAlterTableRelationExprPartitionCmd_8e587fbe $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTableStmtWithAlterTableRelationExprPartitionCmd_8e587fbe implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterTableStmtWithAlterTableRelationExprPartitionCmd_8e587fbe implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTableStmtWithAlterTableRelationExprPartitionCmd_8e587fbe implem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionCmdForm $partitionCmd,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($partitionCmd), 'The partitionCmd must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AlterTableStmtWithAlterTableRelationExprPartitionCmd_8e587fbe implem
         $writer->append('TABLE');
         $this->relationExpr->write($writer);
         $this->partitionCmd->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new relationExpr, preserving every other field.
+     */
+    public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
+    {
+        return new self($relationExpr, $this->partitionCmd);
+    }
+
+    /**
+     * Returns a copy with a new partitionCmd, preserving every other field.
+     */
+    public function withPartitionCmd(\SqlSemantics\Statement\Model\PostgreSql\Role\PartitionCmdForm $partitionCmd): self
+    {
+        return new self($this->relationExpr, $partitionCmd);
     }
 }

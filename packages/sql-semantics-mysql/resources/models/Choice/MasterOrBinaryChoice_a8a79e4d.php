@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\MasterOrBinaryChoice_a8a79e4d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\MasterOrBinaryChoice_a8a79e4d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum MasterOrBinaryChoice_a8a79e4d: string implements \SqlSemantics\Statement\Model\MySql\Role\MasterOrBinaryForm

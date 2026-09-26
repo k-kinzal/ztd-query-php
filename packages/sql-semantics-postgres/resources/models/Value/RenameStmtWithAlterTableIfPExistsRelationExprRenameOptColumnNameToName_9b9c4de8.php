@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RenameStmtWithAlterTableIfPExistsRelationExprRenameOptColumnNameToName_9b9c4de8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RenameStmtWithAlterTableIfPExistsRelationExprRenameOptColumnNameToName_9b9c4de8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RenameStmtWithAlterTableIfPExistsRelationExprRenameOptColumnNameToName_9b9c4de8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RenameStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class RenameStmtWithAlterTableIfPExistsRelationExprRenameOptColumnNameToName_9b9c4de8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RenameStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class RenameStmtWithAlterTableIfPExistsRelationExprRenameOptColumnNameToNa
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name2), 'The name2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +46,37 @@ final class RenameStmtWithAlterTableIfPExistsRelationExprRenameOptColumnNameToNa
         $this->name->write($writer);
         $writer->append('TO');
         $this->name2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new relationExpr, preserving every other field.
+     */
+    public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
+    {
+        return new self($relationExpr, $this->optColumn, $this->name, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new optColumn, preserving every other field.
+     */
+    public function withOptColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn): self
+    {
+        return new self($this->relationExpr, $optColumn, $this->name, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->relationExpr, $this->optColumn, $name, $this->name2);
+    }
+
+    /**
+     * Returns a copy with a new name2, preserving every other field.
+     */
+    public function withName2(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name2): self
+    {
+        return new self($this->relationExpr, $this->optColumn, $this->name, $name2);
     }
 }

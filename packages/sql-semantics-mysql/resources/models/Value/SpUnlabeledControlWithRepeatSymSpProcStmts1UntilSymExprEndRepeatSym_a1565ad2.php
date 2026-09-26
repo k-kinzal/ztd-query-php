@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpUnlabeledControlWithRepeatSymSpProcStmts1UntilSymExprEndRepeatSym_a1565ad2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpUnlabeledControlWithRepeatSymSpProcStmts1UntilSymExprEndRepeatSym_a1565ad2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpUnlabeledControlWithRepeatSymSpProcStmts1UntilSymExprEndRepeatSym_a1565ad2 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtUnlabeledForm, \SqlSemantics\Statement\Model\MySql\Role\SpUnlabeledControlForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SpUnlabeledControlWithRepeatSymSpProcStmts1UntilSymExprEndRepeatSym_
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form $spProcStmts1,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmts1), 'The spProcStmts1 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class SpUnlabeledControlWithRepeatSymSpProcStmts1UntilSymExprEndRepeatSym_
         $this->expr->write($writer);
         $writer->append('END');
         $writer->append('REPEAT');
+    }
+
+    /**
+     * Returns a copy with a new spProcStmts1, preserving every other field.
+     */
+    public function withSpProcStmts1(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form $spProcStmts1): self
+    {
+        return new self($spProcStmts1, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->spProcStmts1, $expr);
     }
 }

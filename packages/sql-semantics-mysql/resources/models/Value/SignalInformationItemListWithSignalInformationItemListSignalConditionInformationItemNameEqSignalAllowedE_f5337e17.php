@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SignalInformationItemListWithSignalInformationItemListSignalConditionInformationItemNameEqSignalAllowedE_f5337e17 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SignalInformationItemListWithSignalInformationItemListSignalConditionInformationItemNameEqSignalAllowedE_f5337e17 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SignalInformationItemListWithSignalInformationItemListSignalConditionInformationItemNameEqSignalAllowedE_f5337e17 implements \SqlSemantics\Statement\Model\MySql\Role\SignalInformationItemListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SignalInformationItemListWithSignalInformationItemListSignalConditio
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm $signalConditionInformationItemName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm $signalAllowedExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signalInformationItemList), 'The signalInformationItemList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signalConditionInformationItemName), 'The signalConditionInformationItemName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signalAllowedExpr), 'The signalAllowedExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class SignalInformationItemListWithSignalInformationItemListSignalConditio
         $this->signalConditionInformationItemName->write($writer);
         $writer->append('=');
         $this->signalAllowedExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new signalInformationItemList, preserving every other field.
+     */
+    public function withSignalInformationItemList(\SqlSemantics\Statement\Model\MySql\Role\SignalInformationItemListForm $signalInformationItemList): self
+    {
+        return new self($signalInformationItemList, $this->signalConditionInformationItemName, $this->signalAllowedExpr);
+    }
+
+    /**
+     * Returns a copy with a new signalConditionInformationItemName, preserving every other field.
+     */
+    public function withSignalConditionInformationItemName(\SqlSemantics\Statement\Model\MySql\Role\SignalConditionInformationItemNameForm $signalConditionInformationItemName): self
+    {
+        return new self($this->signalInformationItemList, $signalConditionInformationItemName, $this->signalAllowedExpr);
+    }
+
+    /**
+     * Returns a copy with a new signalAllowedExpr, preserving every other field.
+     */
+    public function withSignalAllowedExpr(\SqlSemantics\Statement\Model\MySql\Role\SignalAllowedExprForm $signalAllowedExpr): self
+    {
+        return new self($this->signalInformationItemList, $this->signalConditionInformationItemName, $signalAllowedExpr);
     }
 }

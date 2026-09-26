@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerReferencingWithReferencingTriggerTransitions_7180c721 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerReferencingWithReferencingTriggerTransitions_7180c721 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerReferencingWithReferencingTriggerTransitions_7180c721 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerReferencingForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionsForm $triggerTransitions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerTransitions), 'The triggerTransitions must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class TriggerReferencingWithReferencingTriggerTransitions_7180c721 impleme
     {
         $writer->append('REFERENCING');
         $this->triggerTransitions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new triggerTransitions, preserving every other field.
+     */
+    public function withTriggerTransitions(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionsForm $triggerTransitions): self
+    {
+        return new self($triggerTransitions);
     }
 }

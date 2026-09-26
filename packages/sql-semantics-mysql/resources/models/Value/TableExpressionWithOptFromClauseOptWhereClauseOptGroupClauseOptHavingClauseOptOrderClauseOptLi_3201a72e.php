@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavingClauseOptOrderClauseOptLi_3201a72e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavingClauseOptOrderClauseOptLi_3201a72e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavingClauseOptOrderClauseOptLi_3201a72e implements \SqlSemantics\Statement\Model\MySql\Role\TableExpressionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -27,6 +29,14 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseClauseForm $optProcedureAnalyseClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($from), 'The from must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optGroupClause), 'The optGroupClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optHavingClause), 'The optHavingClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optProcedureAnalyseClause), 'The optProcedureAnalyseClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSelectLockType), 'The optSelectLockType must be a generated immutable SQL value.');
     }
 
     /**
@@ -42,5 +52,69 @@ final class TableExpressionWithOptFromClauseOptWhereClauseOptGroupClauseOptHavin
         $this->optLimitClause->write($writer);
         $this->optProcedureAnalyseClause->write($writer);
         $this->optSelectLockType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new from, preserving every other field.
+     */
+    public function withFrom(\SqlSemantics\Statement\Model\MySql\Role\OptFromClauseForm $from): self
+    {
+        return new self($from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
+    {
+        return new self($this->from, $where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new optGroupClause, preserving every other field.
+     */
+    public function withOptGroupClause(\SqlSemantics\Statement\Model\MySql\Role\OptGroupClauseForm $optGroupClause): self
+    {
+        return new self($this->from, $this->where, $optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new optHavingClause, preserving every other field.
+     */
+    public function withOptHavingClause(\SqlSemantics\Statement\Model\MySql\Role\OptHavingClauseForm $optHavingClause): self
+    {
+        return new self($this->from, $this->where, $this->optGroupClause, $optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new orderBy, preserving every other field.
+     */
+    public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
+    {
+        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClause, preserving every other field.
+     */
+    public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
+    {
+        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $optLimitClause, $this->optProcedureAnalyseClause, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new optProcedureAnalyseClause, preserving every other field.
+     */
+    public function withOptProcedureAnalyseClause(\SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseClauseForm $optProcedureAnalyseClause): self
+    {
+        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $optProcedureAnalyseClause, $this->optSelectLockType);
+    }
+
+    /**
+     * Returns a copy with a new optSelectLockType, preserving every other field.
+     */
+    public function withOptSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType): self
+    {
+        return new self($this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $optSelectLockType);
     }
 }

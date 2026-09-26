@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableWildWithIdent_ce4934bd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableWildWithIdent_ce4934bd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableWildWithIdent_ce4934bd implements \SqlSemantics\Statement\Model\MySql\Role\FieldsForm, \SqlSemantics\Statement\Model\MySql\Role\InsertIdentForm, \SqlSemantics\Statement\Model\MySql\Role\SelectItemForm, \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm, \SqlSemantics\Statement\Model\MySql\Role\TableWildForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class TableWildWithIdent_ce4934bd implements \SqlSemantics\Statement\Model
         $this->ident->write($writer);
         $writer->append('.');
         $writer->append('*');
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableFactorWithTableIdentOptUsePartitionOptTableAliasOptKeyDefinition_878cf1f5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableFactorWithTableIdentOptUsePartitionOptTableAliasOptKeyDefinition_878cf1f5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableFactorWithTableIdentOptUsePartitionOptTableAliasOptKeyDefinition_878cf1f5 implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class TableFactorWithTableIdentOptUsePartitionOptTableAliasOptKeyDefinitio
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptKeyDefinitionForm $optKeyDefinition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUsePartition), 'The optUsePartition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableAlias), 'The optTableAlias must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyDefinition), 'The optKeyDefinition must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class TableFactorWithTableIdentOptUsePartitionOptTableAliasOptKeyDefinitio
         $this->optUsePartition->write($writer);
         $this->optTableAlias->write($writer);
         $this->optKeyDefinition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdent, preserving every other field.
+     */
+    public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
+    {
+        return new self($tableIdent, $this->optUsePartition, $this->optTableAlias, $this->optKeyDefinition);
+    }
+
+    /**
+     * Returns a copy with a new optUsePartition, preserving every other field.
+     */
+    public function withOptUsePartition(\SqlSemantics\Statement\Model\MySql\Role\OptUsePartitionForm $optUsePartition): self
+    {
+        return new self($this->tableIdent, $optUsePartition, $this->optTableAlias, $this->optKeyDefinition);
+    }
+
+    /**
+     * Returns a copy with a new optTableAlias, preserving every other field.
+     */
+    public function withOptTableAlias(\SqlSemantics\Statement\Model\MySql\Role\OptTableAliasForm $optTableAlias): self
+    {
+        return new self($this->tableIdent, $this->optUsePartition, $optTableAlias, $this->optKeyDefinition);
+    }
+
+    /**
+     * Returns a copy with a new optKeyDefinition, preserving every other field.
+     */
+    public function withOptKeyDefinition(\SqlSemantics\Statement\Model\MySql\Role\OptKeyDefinitionForm $optKeyDefinition): self
+    {
+        return new self($this->tableIdent, $this->optUsePartition, $this->optTableAlias, $optKeyDefinition);
     }
 }

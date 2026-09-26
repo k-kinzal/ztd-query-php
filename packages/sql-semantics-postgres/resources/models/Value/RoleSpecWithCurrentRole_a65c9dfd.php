@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RoleSpecWithCurrentRole_a65c9dfd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RoleSpecWithCurrentRole_a65c9dfd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RoleSpecWithCurrentRole_a65c9dfd implements \SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AuthIdentForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GranteeListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm

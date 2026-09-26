@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ImportQualificationWithImportQualificationTypeRelationExprList_decb6cb4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ImportQualificationWithImportQualificationTypeRelationExprList_decb6cb4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ImportQualificationWithImportQualificationTypeRelationExprList_decb6cb4 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ImportQualificationForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ImportQualificationWithImportQualificationTypeRelationExprList_decb6
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ImportQualificationTypeForm $importQualificationType,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($importQualificationType), 'The importQualificationType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprList), 'The relationExprList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class ImportQualificationWithImportQualificationTypeRelationExprList_decb6
         $writer->append('(');
         $this->relationExprList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new importQualificationType, preserving every other field.
+     */
+    public function withImportQualificationType(\SqlSemantics\Statement\Model\PostgreSql\Role\ImportQualificationTypeForm $importQualificationType): self
+    {
+        return new self($importQualificationType, $this->relationExprList);
+    }
+
+    /**
+     * Returns a copy with a new relationExprList, preserving every other field.
+     */
+    public function withRelationExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList): self
+    {
+        return new self($this->importQualificationType, $relationExprList);
     }
 }

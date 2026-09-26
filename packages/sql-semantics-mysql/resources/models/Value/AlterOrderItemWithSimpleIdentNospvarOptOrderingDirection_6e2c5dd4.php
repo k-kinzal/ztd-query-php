@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterOrderItemWithSimpleIdentNospvarOptOrderingDirection_6e2c5dd4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterOrderItemWithSimpleIdentNospvarOptOrderingDirection_6e2c5dd4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterOrderItemWithSimpleIdentNospvarOptOrderingDirection_6e2c5dd4 implements \SqlSemantics\Statement\Model\MySql\Role\AlterOrderItemForm, \SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterOrderItemWithSimpleIdentNospvarOptOrderingDirection_6e2c5dd4 im
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderingDirectionForm $optOrderingDirection,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleIdentNospvar), 'The simpleIdentNospvar must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optOrderingDirection), 'The optOrderingDirection must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AlterOrderItemWithSimpleIdentNospvarOptOrderingDirection_6e2c5dd4 im
     {
         $this->simpleIdentNospvar->write($writer);
         $this->optOrderingDirection->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleIdentNospvar, preserving every other field.
+     */
+    public function withSimpleIdentNospvar(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar): self
+    {
+        return new self($simpleIdentNospvar, $this->optOrderingDirection);
+    }
+
+    /**
+     * Returns a copy with a new optOrderingDirection, preserving every other field.
+     */
+    public function withOptOrderingDirection(\SqlSemantics\Statement\Model\MySql\Role\OptOrderingDirectionForm $optOrderingDirection): self
+    {
+        return new self($this->simpleIdentNospvar, $optOrderingDirection);
     }
 }

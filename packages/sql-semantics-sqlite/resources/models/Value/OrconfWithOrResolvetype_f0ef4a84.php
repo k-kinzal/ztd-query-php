@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OrconfWithOrResolvetype_f0ef4a84 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OrconfWithOrResolvetype_f0ef4a84 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OrconfWithOrResolvetype_f0ef4a84 implements \SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ResolvetypeForm $resolvetype,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($resolvetype), 'The resolvetype must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OrconfWithOrResolvetype_f0ef4a84 implements \SqlSemantics\Statement\
     {
         $writer->append('OR');
         $this->resolvetype->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new resolvetype, preserving every other field.
+     */
+    public function withResolvetype(\SqlSemantics\Statement\Model\Sqlite\Role\ResolvetypeForm $resolvetype): self
+    {
+        return new self($resolvetype);
     }
 }

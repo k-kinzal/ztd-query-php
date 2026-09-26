@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmltableColumnElWithColIdForOrdinality_9ba7ba84 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmltableColumnElWithColIdForOrdinality_9ba7ba84 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmltableColumnElWithColIdForOrdinality_9ba7ba84 implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class XmltableColumnElWithColIdForOrdinality_9ba7ba84 implements \SqlSeman
         $this->colId->write($writer);
         $writer->append('FOR');
         $writer->append('ORDINALITY');
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstraintsSetStmtWithSetConstraintsConstraintsSetListConstraintsSetMode_ac97ae31 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ConstraintsSetStmtWithSetConstraintsConstraintsSetListConstraintsSetMode_ac97ae31 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ConstraintsSetStmtWithSetConstraintsConstraintsSetListConstraintsSetMode_ac97ae31 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintsSetStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ConstraintsSetStmtWithSetConstraintsConstraintsSetListConstraintsSetMode_ac97ae31 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintsSetStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ConstraintsSetStmtWithSetConstraintsConstraintsSetListConstraintsSet
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintsSetListForm $constraintsSetList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintsSetModeForm $constraintsSetMode,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constraintsSetList), 'The constraintsSetList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constraintsSetMode), 'The constraintsSetMode must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class ConstraintsSetStmtWithSetConstraintsConstraintsSetListConstraintsSet
         $writer->append('CONSTRAINTS');
         $this->constraintsSetList->write($writer);
         $this->constraintsSetMode->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new constraintsSetList, preserving every other field.
+     */
+    public function withConstraintsSetList(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintsSetListForm $constraintsSetList): self
+    {
+        return new self($constraintsSetList, $this->constraintsSetMode);
+    }
+
+    /**
+     * Returns a copy with a new constraintsSetMode, preserving every other field.
+     */
+    public function withConstraintsSetMode(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintsSetModeForm $constraintsSetMode): self
+    {
+        return new self($this->constraintsSetList, $constraintsSetMode);
     }
 }

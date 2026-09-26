@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptTimezoneWithWithoutLaTimeZone_df097534 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptTimezoneWithWithoutLaTimeZone_df097534 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptTimezoneWithWithoutLaTimeZone_df097534 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTimezoneForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $withoutLa,
     ) {
+        $this->assertMatchesPattern($withoutLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['WITHOUT_LA'], 'The withoutLa must be a complete WITHOUT_LA lexical spelling.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptTimezoneWithWithoutLaTimeZone_df097534 implements \SqlSemantics\S
         $writer->append($this->withoutLa);
         $writer->append('TIME');
         $writer->append('ZONE');
+    }
+
+    /**
+     * Returns a copy with a new withoutLa, preserving every other field.
+     */
+    public function withWithoutLa(string $withoutLa): self
+    {
+        return new self($withoutLa);
     }
 }

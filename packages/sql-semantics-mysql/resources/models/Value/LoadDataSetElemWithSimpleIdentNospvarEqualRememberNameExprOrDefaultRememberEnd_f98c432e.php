@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultRememberEnd_f98c432e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultRememberEnd_f98c432e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultRememberEnd_f98c432e implements \SqlSemantics\Statement\Model\MySql\Role\LoadDataSetElemForm, \SqlSemantics\Statement\Model\MySql\Role\LoadDataSetListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm $exprOrDefault,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleIdentNospvar), 'The simpleIdentNospvar must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName), 'The rememberName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($exprOrDefault), 'The exprOrDefault must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberEnd), 'The rememberEnd must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +43,45 @@ final class LoadDataSetElemWithSimpleIdentNospvarEqualRememberNameExprOrDefaultR
         $this->rememberName->write($writer);
         $this->exprOrDefault->write($writer);
         $this->rememberEnd->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleIdentNospvar, preserving every other field.
+     */
+    public function withSimpleIdentNospvar(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar): self
+    {
+        return new self($simpleIdentNospvar, $this->equal, $this->rememberName, $this->exprOrDefault, $this->rememberEnd);
+    }
+
+    /**
+     * Returns a copy with a new equal, preserving every other field.
+     */
+    public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
+    {
+        return new self($this->simpleIdentNospvar, $equal, $this->rememberName, $this->exprOrDefault, $this->rememberEnd);
+    }
+
+    /**
+     * Returns a copy with a new rememberName, preserving every other field.
+     */
+    public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self
+    {
+        return new self($this->simpleIdentNospvar, $this->equal, $rememberName, $this->exprOrDefault, $this->rememberEnd);
+    }
+
+    /**
+     * Returns a copy with a new exprOrDefault, preserving every other field.
+     */
+    public function withExprOrDefault(\SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm $exprOrDefault): self
+    {
+        return new self($this->simpleIdentNospvar, $this->equal, $this->rememberName, $exprOrDefault, $this->rememberEnd);
+    }
+
+    /**
+     * Returns a copy with a new rememberEnd, preserving every other field.
+     */
+    public function withRememberEnd(\SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd): self
+    {
+        return new self($this->simpleIdentNospvar, $this->equal, $this->rememberName, $this->exprOrDefault, $rememberEnd);
     }
 }

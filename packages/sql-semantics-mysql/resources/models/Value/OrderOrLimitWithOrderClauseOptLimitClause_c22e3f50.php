@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OrderOrLimitWithOrderClauseOptLimitClause_c22e3f50 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OrderOrLimitWithOrderClauseOptLimitClause_c22e3f50 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OrderOrLimitWithOrderClauseOptLimitClause_c22e3f50 implements \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm, \SqlSemantics\Statement\Model\MySql\Role\OrderOrLimitForm, \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm, \SqlSemantics\Statement\Model\MySql\Role\UnionOrderOrLimitForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OrderOrLimitWithOrderClauseOptLimitClause_c22e3f50 implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OrderOrLimitWithOrderClauseOptLimitClause_c22e3f50 implements \SqlSe
     {
         $this->orderBy->write($writer);
         $this->optLimitClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new orderBy, preserving every other field.
+     */
+    public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OrderClauseForm $orderBy): self
+    {
+        return new self($orderBy, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClause, preserving every other field.
+     */
+    public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
+    {
+        return new self($this->orderBy, $optLimitClause);
     }
 }

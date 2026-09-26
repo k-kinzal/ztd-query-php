@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentEqValueWithSimpleIdentNospvarEqualExprOrDefault_c3cc7949 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentEqValueWithSimpleIdentNospvarEqualExprOrDefault_c3cc7949 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IdentEqValueWithSimpleIdentNospvarEqualExprOrDefault_c3cc7949 implements \SqlSemantics\Statement\Model\MySql\Role\IdentEqListForm, \SqlSemantics\Statement\Model\MySql\Role\IdentEqValueForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class IdentEqValueWithSimpleIdentNospvarEqualExprOrDefault_c3cc7949 implem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm $exprOrDefault,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleIdentNospvar), 'The simpleIdentNospvar must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($exprOrDefault), 'The exprOrDefault must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class IdentEqValueWithSimpleIdentNospvarEqualExprOrDefault_c3cc7949 implem
         $this->simpleIdentNospvar->write($writer);
         $this->equal->write($writer);
         $this->exprOrDefault->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleIdentNospvar, preserving every other field.
+     */
+    public function withSimpleIdentNospvar(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar): self
+    {
+        return new self($simpleIdentNospvar, $this->equal, $this->exprOrDefault);
+    }
+
+    /**
+     * Returns a copy with a new equal, preserving every other field.
+     */
+    public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
+    {
+        return new self($this->simpleIdentNospvar, $equal, $this->exprOrDefault);
+    }
+
+    /**
+     * Returns a copy with a new exprOrDefault, preserving every other field.
+     */
+    public function withExprOrDefault(\SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm $exprOrDefault): self
+    {
+        return new self($this->simpleIdentNospvar, $this->equal, $exprOrDefault);
     }
 }

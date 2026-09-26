@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JoinedTableWithJoinedTable_49114d90 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JoinedTableWithJoinedTable_49114d90 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JoinedTableWithJoinedTable_49114d90 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JoinedTableForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableRefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JoinedTableForm $joinedTable,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($joinedTable), 'The joinedTable must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class JoinedTableWithJoinedTable_49114d90 implements \SqlSemantics\Stateme
         $writer->append('(');
         $this->joinedTable->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new joinedTable, preserving every other field.
+     */
+    public function withJoinedTable(\SqlSemantics\Statement\Model\PostgreSql\Role\JoinedTableForm $joinedTable): self
+    {
+        return new self($joinedTable);
     }
 }

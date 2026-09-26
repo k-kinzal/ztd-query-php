@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\UtilityOptionNameWithFormatLa_ea3d4370 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\UtilityOptionNameWithFormatLa_ea3d4370 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UtilityOptionNameWithFormatLa_ea3d4370 implements \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionNameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $formatLa,
     ) {
+        $this->assertMatchesPattern($formatLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['FORMAT_LA'], 'The formatLa must be a complete FORMAT_LA lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class UtilityOptionNameWithFormatLa_ea3d4370 implements \SqlSemantics\Stat
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->formatLa);
+    }
+
+    /**
+     * Returns a copy with a new formatLa, preserving every other field.
+     */
+    public function withFormatLa(string $formatLa): self
+    {
+        return new self($formatLa);
     }
 }

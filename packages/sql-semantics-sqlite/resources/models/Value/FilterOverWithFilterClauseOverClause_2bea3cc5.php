@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FilterOverWithFilterClauseOverClause_2bea3cc5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FilterOverWithFilterClauseOverClause_2bea3cc5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FilterOverWithFilterClauseOverClause_2bea3cc5 implements \SqlSemantics\Statement\Model\Sqlite\Role\FilterOverForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FilterOverWithFilterClauseOverClause_2bea3cc5 implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FilterClauseForm $filterClause,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OverClauseForm $overClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($filterClause), 'The filterClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($overClause), 'The overClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class FilterOverWithFilterClauseOverClause_2bea3cc5 implements \SqlSemanti
     {
         $this->filterClause->write($writer);
         $this->overClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new filterClause, preserving every other field.
+     */
+    public function withFilterClause(\SqlSemantics\Statement\Model\Sqlite\Role\FilterClauseForm $filterClause): self
+    {
+        return new self($filterClause, $this->overClause);
+    }
+
+    /**
+     * Returns a copy with a new overClause, preserving every other field.
+     */
+    public function withOverClause(\SqlSemantics\Statement\Model\Sqlite\Role\OverClauseForm $overClause): self
+    {
+        return new self($this->filterClause, $overClause);
     }
 }

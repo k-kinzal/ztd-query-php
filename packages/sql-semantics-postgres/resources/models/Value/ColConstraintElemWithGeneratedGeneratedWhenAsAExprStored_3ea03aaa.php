@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithGeneratedGeneratedWhenAsAExprStored_3ea03aaa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColConstraintElemWithGeneratedGeneratedWhenAsAExprStored_3ea03aaa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColConstraintElemWithGeneratedGeneratedWhenAsAExprStored_3ea03aaa implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintElemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColConstraintElemWithGeneratedGeneratedWhenAsAExprStored_3ea03aaa im
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GeneratedWhenForm $generatedWhen,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($generatedWhen), 'The generatedWhen must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class ColConstraintElemWithGeneratedGeneratedWhenAsAExprStored_3ea03aaa im
         $this->aExpr->write($writer);
         $writer->append(')');
         $writer->append('STORED');
+    }
+
+    /**
+     * Returns a copy with a new generatedWhen, preserving every other field.
+     */
+    public function withGeneratedWhen(\SqlSemantics\Statement\Model\PostgreSql\Role\GeneratedWhenForm $generatedWhen): self
+    {
+        return new self($generatedWhen, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->generatedWhen, $aExpr);
     }
 }

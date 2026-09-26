@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\XfullnameWithNmDotNmAsNm_16c38d68 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\XfullnameWithNmDotNmAsNm_16c38d68 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XfullnameWithNmDotNmAsNm_16c38d68 implements \SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class XfullnameWithNmDotNmAsNm_16c38d68 implements \SqlSemantics\Statement
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm3,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm2), 'The nm2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm3), 'The nm3 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class XfullnameWithNmDotNmAsNm_16c38d68 implements \SqlSemantics\Statement
         $this->nm2->write($writer);
         $writer->append('AS');
         $this->nm3->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm, $this->nm2, $this->nm3);
+    }
+
+    /**
+     * Returns a copy with a new nm2, preserving every other field.
+     */
+    public function withNm2(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2): self
+    {
+        return new self($this->nm, $nm2, $this->nm3);
+    }
+
+    /**
+     * Returns a copy with a new nm3, preserving every other field.
+     */
+    public function withNm3(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm3): self
+    {
+        return new self($this->nm, $this->nm2, $nm3);
     }
 }

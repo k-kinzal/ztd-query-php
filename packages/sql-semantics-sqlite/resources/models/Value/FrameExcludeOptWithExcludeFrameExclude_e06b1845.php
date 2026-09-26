@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameExcludeOptWithExcludeFrameExclude_e06b1845 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\FrameExcludeOptWithExcludeFrameExclude_e06b1845 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FrameExcludeOptWithExcludeFrameExclude_e06b1845 implements \SqlSemantics\Statement\Model\Sqlite\Role\FrameExcludeOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameExcludeForm $frameExclude,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($frameExclude), 'The frameExclude must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class FrameExcludeOptWithExcludeFrameExclude_e06b1845 implements \SqlSeman
     {
         $writer->append('EXCLUDE');
         $this->frameExclude->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new frameExclude, preserving every other field.
+     */
+    public function withFrameExclude(\SqlSemantics\Statement\Model\Sqlite\Role\FrameExcludeForm $frameExclude): self
+    {
+        return new self($frameExclude);
     }
 }

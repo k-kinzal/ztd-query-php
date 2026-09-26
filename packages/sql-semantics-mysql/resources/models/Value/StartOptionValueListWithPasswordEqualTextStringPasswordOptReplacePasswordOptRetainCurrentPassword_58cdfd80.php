@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePasswordOptRetainCurrentPassword_58cdfd80 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePasswordOptRetainCurrentPassword_58cdfd80 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePasswordOptRetainCurrentPassword_58cdfd80 implements \SqlSemantics\Statement\Model\MySql\Role\StartOptionValueListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePas
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm $optReplacePassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringPassword), 'The textStringPassword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optReplacePassword), 'The optReplacePassword must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRetainCurrentPassword), 'The optRetainCurrentPassword must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +41,37 @@ final class StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePas
         $this->textStringPassword->write($writer);
         $this->optReplacePassword->write($writer);
         $this->optRetainCurrentPassword->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new equal, preserving every other field.
+     */
+    public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
+    {
+        return new self($equal, $this->textStringPassword, $this->optReplacePassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new textStringPassword, preserving every other field.
+     */
+    public function withTextStringPassword(\SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword): self
+    {
+        return new self($this->equal, $textStringPassword, $this->optReplacePassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new optReplacePassword, preserving every other field.
+     */
+    public function withOptReplacePassword(\SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm $optReplacePassword): self
+    {
+        return new self($this->equal, $this->textStringPassword, $optReplacePassword, $this->optRetainCurrentPassword);
+    }
+
+    /**
+     * Returns a copy with a new optRetainCurrentPassword, preserving every other field.
+     */
+    public function withOptRetainCurrentPassword(\SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword): self
+    {
+        return new self($this->equal, $this->textStringPassword, $this->optReplacePassword, $optRetainCurrentPassword);
     }
 }

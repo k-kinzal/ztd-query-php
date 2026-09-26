@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourcePortEqUlongNum_acc7cd2f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithChangeReplicationSourcePortEqUlongNum_acc7cd2f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithChangeReplicationSourcePortEqUlongNum_acc7cd2f implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SourceDefWithChangeReplicationSourcePortEqUlongNum_acc7cd2f implemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourcePortForm $changeReplicationSourcePort,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourcePort), 'The changeReplicationSourcePort must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SourceDefWithChangeReplicationSourcePortEqUlongNum_acc7cd2f implemen
         $this->changeReplicationSourcePort->write($writer);
         $writer->append('=');
         $this->ulongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new changeReplicationSourcePort, preserving every other field.
+     */
+    public function withChangeReplicationSourcePort(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourcePortForm $changeReplicationSourcePort): self
+    {
+        return new self($changeReplicationSourcePort, $this->ulongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulongNum, preserving every other field.
+     */
+    public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
+    {
+        return new self($this->changeReplicationSourcePort, $ulongNum);
     }
 }

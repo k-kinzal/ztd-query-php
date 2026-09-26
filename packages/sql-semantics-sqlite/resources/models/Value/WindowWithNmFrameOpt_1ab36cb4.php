@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowWithNmFrameOpt_1ab36cb4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowWithNmFrameOpt_1ab36cb4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowWithNmFrameOpt_1ab36cb4 implements \SqlSemantics\Statement\Model\Sqlite\Role\WindowForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WindowWithNmFrameOpt_1ab36cb4 implements \SqlSemantics\Statement\Mod
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm $frameOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($frameOpt), 'The frameOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class WindowWithNmFrameOpt_1ab36cb4 implements \SqlSemantics\Statement\Mod
     {
         $this->nm->write($writer);
         $this->frameOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm, $this->frameOpt);
+    }
+
+    /**
+     * Returns a copy with a new frameOpt, preserving every other field.
+     */
+    public function withFrameOpt(\SqlSemantics\Statement\Model\Sqlite\Role\FrameOptForm $frameOpt): self
+    {
+        return new self($this->nm, $frameOpt);
     }
 }

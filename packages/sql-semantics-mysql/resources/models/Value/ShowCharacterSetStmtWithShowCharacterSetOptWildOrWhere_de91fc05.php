@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowCharacterSetStmtWithShowCharacterSetOptWildOrWhere_de91fc05 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ShowCharacterSetStmtWithShowCharacterSetOptWildOrWhere_de91fc05 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ShowCharacterSetStmtWithShowCharacterSetOptWildOrWhere_de91fc05 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ShowCharacterSetStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class ShowCharacterSetStmtWithShowCharacterSetOptWildOrWhere_de91fc05 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ShowCharacterSetStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ShowCharacterSetStmtWithShowCharacterSetOptWildOrWhere_de91fc05 impl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($characterSet), 'The characterSet must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWildOrWhere), 'The optWildOrWhere must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ShowCharacterSetStmtWithShowCharacterSetOptWildOrWhere_de91fc05 impl
         $writer->append('SHOW');
         $this->characterSet->write($writer);
         $this->optWildOrWhere->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new characterSet, preserving every other field.
+     */
+    public function withCharacterSet(\SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet): self
+    {
+        return new self($characterSet, $this->optWildOrWhere);
+    }
+
+    /**
+     * Returns a copy with a new optWildOrWhere, preserving every other field.
+     */
+    public function withOptWildOrWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForm $optWildOrWhere): self
+    {
+        return new self($this->characterSet, $optWildOrWhere);
     }
 }

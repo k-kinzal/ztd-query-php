@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateCastStmtWithCreateCastTypenameAsTypenameWithoutFunctionCastContext_9f18a564 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateCastStmtWithCreateCastTypenameAsTypenameWithoutFunctionCastContext_9f18a564 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateCastStmtWithCreateCastTypenameAsTypenameWithoutFunctionCastContext_9f18a564 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateCastStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateCastStmtWithCreateCastTypenameAsTypenameWithoutFunctionCastContext_9f18a564 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateCastStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CreateCastStmtWithCreateCastTypenameAsTypenameWithoutFunctionCastCon
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CastContextForm $castContext,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename2), 'The typename2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($castContext), 'The castContext must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +44,29 @@ final class CreateCastStmtWithCreateCastTypenameAsTypenameWithoutFunctionCastCon
         $writer->append('WITHOUT');
         $writer->append('FUNCTION');
         $this->castContext->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($typename, $this->typename2, $this->castContext);
+    }
+
+    /**
+     * Returns a copy with a new typename2, preserving every other field.
+     */
+    public function withTypename2(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename2): self
+    {
+        return new self($this->typename, $typename2, $this->castContext);
+    }
+
+    /**
+     * Returns a copy with a new castContext, preserving every other field.
+     */
+    public function withCastContext(\SqlSemantics\Statement\Model\PostgreSql\Role\CastContextForm $castContext): self
+    {
+        return new self($this->typename, $this->typename2, $castContext);
     }
 }

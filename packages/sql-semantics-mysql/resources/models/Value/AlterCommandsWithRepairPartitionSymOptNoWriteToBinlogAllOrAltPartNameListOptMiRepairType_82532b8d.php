@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsWithRepairPartitionSymOptNoWriteToBinlogAllOrAltPartNameListOptMiRepairType_82532b8d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsWithRepairPartitionSymOptNoWriteToBinlogAllOrAltPartNameListOptMiRepairType_82532b8d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterCommandsWithRepairPartitionSymOptNoWriteToBinlogAllOrAltPartNameListOptMiRepairType_82532b8d implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class AlterCommandsWithRepairPartitionSymOptNoWriteToBinlogAllOrAltPartNam
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptMiRepairTypeForm $optMiRepairType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($allOrAltPartNameList), 'The allOrAltPartNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optMiRepairType), 'The optMiRepairType must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class AlterCommandsWithRepairPartitionSymOptNoWriteToBinlogAllOrAltPartNam
         $this->optNoWriteToBinlog->write($writer);
         $this->allOrAltPartNameList->write($writer);
         $this->optMiRepairType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optNoWriteToBinlog, preserving every other field.
+     */
+    public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
+    {
+        return new self($optNoWriteToBinlog, $this->allOrAltPartNameList, $this->optMiRepairType);
+    }
+
+    /**
+     * Returns a copy with a new allOrAltPartNameList, preserving every other field.
+     */
+    public function withAllOrAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList): self
+    {
+        return new self($this->optNoWriteToBinlog, $allOrAltPartNameList, $this->optMiRepairType);
+    }
+
+    /**
+     * Returns a copy with a new optMiRepairType, preserving every other field.
+     */
+    public function withOptMiRepairType(\SqlSemantics\Statement\Model\MySql\Role\OptMiRepairTypeForm $optMiRepairType): self
+    {
+        return new self($this->optNoWriteToBinlog, $this->allOrAltPartNameList, $optMiRepairType);
     }
 }

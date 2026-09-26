@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithSetStringListOptBinary_6e800127 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithSetStringListOptBinary_6e800127 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithSetStringListOptBinary_6e800127 implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypeWithSetStringListOptBinary_6e800127 implements \SqlSemantics\Sta
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StringListForm $stringList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($stringList), 'The stringList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinary), 'The optBinary must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class TypeWithSetStringListOptBinary_6e800127 implements \SqlSemantics\Sta
         $this->stringList->write($writer);
         $writer->append(')');
         $this->optBinary->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new stringList, preserving every other field.
+     */
+    public function withStringList(\SqlSemantics\Statement\Model\MySql\Role\StringListForm $stringList): self
+    {
+        return new self($stringList, $this->optBinary);
+    }
+
+    /**
+     * Returns a copy with a new optBinary, preserving every other field.
+     */
+    public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self
+    {
+        return new self($this->stringList, $optBinary);
     }
 }

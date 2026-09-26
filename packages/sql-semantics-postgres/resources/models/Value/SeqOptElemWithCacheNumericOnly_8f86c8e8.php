@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SeqOptElemWithCacheNumericOnly_8f86c8e8 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SeqOptElemWithCacheNumericOnly_8f86c8e8 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SeqOptElemWithCacheNumericOnly_8f86c8e8 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptSeqOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($numericOnly), 'The numericOnly must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SeqOptElemWithCacheNumericOnly_8f86c8e8 implements \SqlSemantics\Sta
     {
         $writer->append('CACHE');
         $this->numericOnly->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new numericOnly, preserving every other field.
+     */
+    public function withNumericOnly(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly): self
+    {
+        return new self($numericOnly);
     }
 }

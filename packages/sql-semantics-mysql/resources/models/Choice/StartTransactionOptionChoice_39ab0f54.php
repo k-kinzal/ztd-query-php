@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\StartTransactionOptionChoice_39ab0f54 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\StartTransactionOptionChoice_39ab0f54 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum StartTransactionOptionChoice_39ab0f54: string implements \SqlSemantics\Statement\Model\MySql\Role\OptStartTransactionOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionForm, \SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionListForm

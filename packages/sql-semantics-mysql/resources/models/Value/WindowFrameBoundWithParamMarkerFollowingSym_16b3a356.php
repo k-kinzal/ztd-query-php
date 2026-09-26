@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameBoundWithParamMarkerFollowingSym_16b3a356 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WindowFrameBoundWithParamMarkerFollowingSym_16b3a356 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowFrameBoundWithParamMarkerFollowingSym_16b3a356 implements \SqlSemantics\Statement\Model\MySql\Role\WindowFrameBoundForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ParamMarkerForm $paramMarker,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($paramMarker), 'The paramMarker must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class WindowFrameBoundWithParamMarkerFollowingSym_16b3a356 implements \Sql
     {
         $this->paramMarker->write($writer);
         $writer->append('FOLLOWING');
+    }
+
+    /**
+     * Returns a copy with a new paramMarker, preserving every other field.
+     */
+    public function withParamMarker(\SqlSemantics\Statement\Model\MySql\Role\ParamMarkerForm $paramMarker): self
+    {
+        return new self($paramMarker);
     }
 }

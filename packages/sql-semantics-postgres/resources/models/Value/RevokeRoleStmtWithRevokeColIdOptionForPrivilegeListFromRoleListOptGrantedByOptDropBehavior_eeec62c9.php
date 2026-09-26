@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGrantedByOptDropBehavior_eeec62c9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGrantedByOptDropBehavior_eeec62c9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGrantedByOptDropBehavior_eeec62c9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RevokeRoleStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGrantedByOptDropBehavior_eeec62c9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RevokeRoleStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm $optGrantedBy,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($privilegeList), 'The privilegeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleList), 'The roleList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optGrantedBy), 'The optGrantedBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
     }
 
     /**
@@ -40,5 +47,45 @@ final class RevokeRoleStmtWithRevokeColIdOptionForPrivilegeListFromRoleListOptGr
         $this->roleList->write($writer);
         $this->optGrantedBy->write($writer);
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->privilegeList, $this->roleList, $this->optGrantedBy, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new privilegeList, preserving every other field.
+     */
+    public function withPrivilegeList(\SqlSemantics\Statement\Model\PostgreSql\Role\PrivilegeListForm $privilegeList): self
+    {
+        return new self($this->colId, $privilegeList, $this->roleList, $this->optGrantedBy, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new roleList, preserving every other field.
+     */
+    public function withRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList): self
+    {
+        return new self($this->colId, $this->privilegeList, $roleList, $this->optGrantedBy, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optGrantedBy, preserving every other field.
+     */
+    public function withOptGrantedBy(\SqlSemantics\Statement\Model\PostgreSql\Role\OptGrantedByForm $optGrantedBy): self
+    {
+        return new self($this->colId, $this->privilegeList, $this->roleList, $optGrantedBy, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optDropBehavior, preserving every other field.
+     */
+    public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
+    {
+        return new self($this->colId, $this->privilegeList, $this->roleList, $this->optGrantedBy, $optDropBehavior);
     }
 }

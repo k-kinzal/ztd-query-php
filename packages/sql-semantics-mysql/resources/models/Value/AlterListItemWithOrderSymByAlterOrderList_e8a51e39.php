@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithOrderSymByAlterOrderList_e8a51e39 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterListItemWithOrderSymByAlterOrderList_e8a51e39 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterListItemWithOrderSymByAlterOrderList_e8a51e39 implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm $alterOrderList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterOrderList), 'The alterOrderList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class AlterListItemWithOrderSymByAlterOrderList_e8a51e39 implements \SqlSe
         $writer->append('ORDER');
         $writer->append('BY');
         $this->alterOrderList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterOrderList, preserving every other field.
+     */
+    public function withAlterOrderList(\SqlSemantics\Statement\Model\MySql\Role\AlterOrderListForm $alterOrderList): self
+    {
+        return new self($alterOrderList);
     }
 }

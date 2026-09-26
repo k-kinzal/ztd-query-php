@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CommonIndexOptionWithKeyBlockSizeOptEqualUlongNum_f571ef5c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CommonIndexOptionWithKeyBlockSizeOptEqualUlongNum_f571ef5c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CommonIndexOptionWithKeyBlockSizeOptEqualUlongNum_f571ef5c implements \SqlSemantics\Statement\Model\MySql\Role\CommonIndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\IndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptFulltextIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpatialIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialIndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialIndexOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CommonIndexOptionWithKeyBlockSizeOptEqualUlongNum_f571ef5c implement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CommonIndexOptionWithKeyBlockSizeOptEqualUlongNum_f571ef5c implement
         $writer->append('KEY_BLOCK_SIZE');
         $this->optEqual->write($writer);
         $this->ulongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->ulongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulongNum, preserving every other field.
+     */
+    public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
+    {
+        return new self($this->optEqual, $ulongNum);
     }
 }

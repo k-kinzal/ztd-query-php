@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228328 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228328 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228328 implements \SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbPairList), 'The filterDbPairList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbIdent), 'The filterDbIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbIdent2), 'The filterDbIdent2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +41,29 @@ final class FilterDbPairListWithFilterDbPairListFilterDbIdentFilterDbIdent_a1228
         $writer->append(',');
         $this->filterDbIdent2->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new filterDbPairList, preserving every other field.
+     */
+    public function withFilterDbPairList(\SqlSemantics\Statement\Model\MySql\Role\FilterDbPairListForm $filterDbPairList): self
+    {
+        return new self($filterDbPairList, $this->filterDbIdent, $this->filterDbIdent2);
+    }
+
+    /**
+     * Returns a copy with a new filterDbIdent, preserving every other field.
+     */
+    public function withFilterDbIdent(\SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent): self
+    {
+        return new self($this->filterDbPairList, $filterDbIdent, $this->filterDbIdent2);
+    }
+
+    /**
+     * Returns a copy with a new filterDbIdent2, preserving every other field.
+     */
+    public function withFilterDbIdent2(\SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent2): self
+    {
+        return new self($this->filterDbPairList, $this->filterDbIdent, $filterDbIdent2);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmltableColumnOptionElWithDefaultBExpr_aca2ad6d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmltableColumnOptionElWithDefaultBExpr_aca2ad6d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmltableColumnOptionElWithDefaultBExpr_aca2ad6d implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnOptionElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmltableColumnOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($bExpr), 'The bExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class XmltableColumnOptionElWithDefaultBExpr_aca2ad6d implements \SqlSeman
     {
         $writer->append('DEFAULT');
         $this->bExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bExpr, preserving every other field.
+     */
+    public function withBExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm $bExpr): self
+    {
+        return new self($bExpr);
     }
 }

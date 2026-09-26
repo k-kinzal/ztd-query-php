@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterIdentityColumnOptionWithSetSeqOptElem_b30ebb80 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterIdentityColumnOptionWithSetSeqOptElem_b30ebb80 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterIdentityColumnOptionWithSetSeqOptElem_b30ebb80 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm $seqOptElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($seqOptElem), 'The seqOptElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AlterIdentityColumnOptionWithSetSeqOptElem_b30ebb80 implements \SqlS
     {
         $writer->append('SET');
         $this->seqOptElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new seqOptElem, preserving every other field.
+     */
+    public function withSeqOptElem(\SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm $seqOptElem): self
+    {
+        return new self($seqOptElem);
     }
 }

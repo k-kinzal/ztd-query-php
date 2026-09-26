@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IndexTypeClauseWithTypeSymIndexType_d6e76b16 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IndexTypeClauseWithTypeSymIndexType_d6e76b16 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IndexTypeClauseWithTypeSymIndexType_d6e76b16 implements \SqlSemantics\Statement\Model\MySql\Role\IndexOptionForm, \SqlSemantics\Statement\Model\MySql\Role\IndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\IndexTypeClauseForm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptIndexTypeClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexType), 'The indexType must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class IndexTypeClauseWithTypeSymIndexType_d6e76b16 implements \SqlSemantic
     {
         $writer->append('TYPE');
         $this->indexType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new indexType, preserving every other field.
+     */
+    public function withIndexType(\SqlSemantics\Statement\Model\MySql\Role\IndexTypeForm $indexType): self
+    {
+        return new self($indexType);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericWithFloatPOptFloat_ab0f4805 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\NumericWithFloatPOptFloat_ab0f4805 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class NumericWithFloatPOptFloat_ab0f4805 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\NumericForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptFloatForm $optFloat,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFloat), 'The optFloat must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class NumericWithFloatPOptFloat_ab0f4805 implements \SqlSemantics\Statemen
     {
         $writer->append('FLOAT');
         $this->optFloat->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optFloat, preserving every other field.
+     */
+    public function withOptFloat(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFloatForm $optFloat): self
+    {
+        return new self($optFloat);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\EventTriggerValueListWithSconst_ba63c324 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\EventTriggerValueListWithSconst_ba63c324 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EventTriggerValueListWithSconst_ba63c324 implements \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerValueListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $value,
     ) {
+        $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['SCONST'], 'The value must be a complete SCONST lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class EventTriggerValueListWithSconst_ba63c324 implements \SqlSemantics\St
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->value);
+    }
+
+    /**
+     * Returns a copy with a new value, preserving every other field.
+     */
+    public function withValue(string $value): self
+    {
+        return new self($value);
     }
 }

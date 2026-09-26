@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithFixedSymFloatOptionsFieldOptions_d061231f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithFixedSymFloatOptionsFieldOptions_d061231f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithFixedSymFloatOptionsFieldOptions_d061231f implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypeWithFixedSymFloatOptionsFieldOptions_d061231f implements \SqlSem
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($floatOptions), 'The floatOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOptions), 'The fieldOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TypeWithFixedSymFloatOptionsFieldOptions_d061231f implements \SqlSem
         $writer->append('FIXED');
         $this->floatOptions->write($writer);
         $this->fieldOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new floatOptions, preserving every other field.
+     */
+    public function withFloatOptions(\SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions): self
+    {
+        return new self($floatOptions, $this->fieldOptions);
+    }
+
+    /**
+     * Returns a copy with a new fieldOptions, preserving every other field.
+     */
+    public function withFieldOptions(\SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions): self
+    {
+        return new self($this->floatOptions, $fieldOptions);
     }
 }

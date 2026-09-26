@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OnUsingWithUsingLpIdlistRp_691e2367 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\OnUsingWithUsingLpIdlistRp_691e2367 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OnUsingWithUsingLpIdlistRp_691e2367 implements \SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($idlist), 'The idlist must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class OnUsingWithUsingLpIdlistRp_691e2367 implements \SqlSemantics\Stateme
         $writer->append('(');
         $this->idlist->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new idlist, preserving every other field.
+     */
+    public function withIdlist(\SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist): self
+    {
+        return new self($idlist);
     }
 }

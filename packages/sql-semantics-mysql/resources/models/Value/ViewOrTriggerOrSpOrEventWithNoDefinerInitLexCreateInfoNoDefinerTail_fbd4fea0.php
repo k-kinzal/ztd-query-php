@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewOrTriggerOrSpOrEventWithNoDefinerInitLexCreateInfoNoDefinerTail_fbd4fea0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ViewOrTriggerOrSpOrEventWithNoDefinerInitLexCreateInfoNoDefinerTail_fbd4fea0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ViewOrTriggerOrSpOrEventWithNoDefinerInitLexCreateInfoNoDefinerTail_fbd4fea0 implements \SqlSemantics\Statement\Model\MySql\Role\ViewOrTriggerOrSpOrEventForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerInitLexCreateInfoNoDefinerTail_
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm $initLexCreateInfo,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm $noDefinerTail,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($noDefiner), 'The noDefiner must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($initLexCreateInfo), 'The initLexCreateInfo must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($noDefinerTail), 'The noDefinerTail must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerInitLexCreateInfoNoDefinerTail_
         $this->noDefiner->write($writer);
         $this->initLexCreateInfo->write($writer);
         $this->noDefinerTail->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new noDefiner, preserving every other field.
+     */
+    public function withNoDefiner(\SqlSemantics\Statement\Model\MySql\Role\NoDefinerForm $noDefiner): self
+    {
+        return new self($noDefiner, $this->initLexCreateInfo, $this->noDefinerTail);
+    }
+
+    /**
+     * Returns a copy with a new initLexCreateInfo, preserving every other field.
+     */
+    public function withInitLexCreateInfo(\SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm $initLexCreateInfo): self
+    {
+        return new self($this->noDefiner, $initLexCreateInfo, $this->noDefinerTail);
+    }
+
+    /**
+     * Returns a copy with a new noDefinerTail, preserving every other field.
+     */
+    public function withNoDefinerTail(\SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm $noDefinerTail): self
+    {
+        return new self($this->noDefiner, $this->initLexCreateInfo, $noDefinerTail);
     }
 }

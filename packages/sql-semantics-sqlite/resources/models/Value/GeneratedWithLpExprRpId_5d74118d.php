@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\GeneratedWithLpExprRpId_5d74118d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\GeneratedWithLpExprRpId_5d74118d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GeneratedWithLpExprRpId_5d74118d implements \SqlSemantics\Statement\Model\Sqlite\Role\GeneratedForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GeneratedWithLpExprRpId_5d74118d implements \SqlSemantics\Statement\
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly string $name,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['ID'], 'The name must be a complete ID lexical spelling.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class GeneratedWithLpExprRpId_5d74118d implements \SqlSemantics\Statement\
         $this->expr->write($writer);
         $writer->append(')');
         $writer->append($this->name, true);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
+    {
+        return new self($expr, $this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($this->expr, $name);
     }
 }

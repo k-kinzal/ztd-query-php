@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MathOpWithLessEquals_175807e5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MathOpWithLessEquals_175807e5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MathOpWithLessEquals_175807e5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\MathOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AllOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm, \SqlSemantics\Statement\Model\PostgreSql\Role\DefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\QualAllOpForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $lessEquals,
     ) {
+        $this->assertMatchesPattern($lessEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['LESS_EQUALS'], 'The lessEquals must be a complete LESS_EQUALS lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class MathOpWithLessEquals_175807e5 implements \SqlSemantics\Statement\Mod
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->lessEquals);
+    }
+
+    /**
+     * Returns a copy with a new lessEquals, preserving every other field.
+     */
+    public function withLessEquals(string $lessEquals): self
+    {
+        return new self($lessEquals);
     }
 }

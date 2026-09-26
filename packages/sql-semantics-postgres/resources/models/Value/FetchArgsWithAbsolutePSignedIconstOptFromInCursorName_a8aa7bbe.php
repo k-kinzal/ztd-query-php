@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FetchArgsWithAbsolutePSignedIconstOptFromInCursorName_a8aa7bbe $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FetchArgsWithAbsolutePSignedIconstOptFromInCursorName_a8aa7bbe $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FetchArgsWithAbsolutePSignedIconstOptFromInCursorName_a8aa7bbe implements \SqlSemantics\Statement\Model\PostgreSql\Role\FetchArgsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class FetchArgsWithAbsolutePSignedIconstOptFromInCursorName_a8aa7bbe imple
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptFromInForm $optFromIn,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($signedIconst), 'The signedIconst must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFromIn), 'The optFromIn must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cursorName), 'The cursorName must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class FetchArgsWithAbsolutePSignedIconstOptFromInCursorName_a8aa7bbe imple
         $this->signedIconst->write($writer);
         $this->optFromIn->write($writer);
         $this->cursorName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new signedIconst, preserving every other field.
+     */
+    public function withSignedIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\SignedIconstForm $signedIconst): self
+    {
+        return new self($signedIconst, $this->optFromIn, $this->cursorName);
+    }
+
+    /**
+     * Returns a copy with a new optFromIn, preserving every other field.
+     */
+    public function withOptFromIn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFromInForm $optFromIn): self
+    {
+        return new self($this->signedIconst, $optFromIn, $this->cursorName);
+    }
+
+    /**
+     * Returns a copy with a new cursorName, preserving every other field.
+     */
+    public function withCursorName(\SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName): self
+    {
+        return new self($this->signedIconst, $this->optFromIn, $cursorName);
     }
 }

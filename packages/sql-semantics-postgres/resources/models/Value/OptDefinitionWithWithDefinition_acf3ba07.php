@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptDefinitionWithWithDefinition_acf3ba07 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptDefinitionWithWithDefinition_acf3ba07 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptDefinitionWithWithDefinition_acf3ba07 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($definition), 'The definition must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptDefinitionWithWithDefinition_acf3ba07 implements \SqlSemantics\St
     {
         $writer->append('WITH');
         $this->definition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new definition, preserving every other field.
+     */
+    public function withDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition): self
+    {
+        return new self($definition);
     }
 }

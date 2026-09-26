@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InstallStmtWithInstallSymComponentSymTextStringSysListOptInstallSetValueList_74eb12bf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\InstallStmtWithInstallSymComponentSymTextStringSysListOptInstallSetValueList_74eb12bf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class InstallStmtWithInstallSymComponentSymTextStringSysListOptInstallSetValueList_74eb12bf implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\InstallStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class InstallStmtWithInstallSymComponentSymTextStringSysListOptInstallSetValueList_74eb12bf implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\InstallStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class InstallStmtWithInstallSymComponentSymTextStringSysListOptInstallSetV
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysListForm $textStringSysList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptInstallSetValueListForm $optInstallSetValueList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSysList), 'The textStringSysList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optInstallSetValueList), 'The optInstallSetValueList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class InstallStmtWithInstallSymComponentSymTextStringSysListOptInstallSetV
         $writer->append('COMPONENT');
         $this->textStringSysList->write($writer);
         $this->optInstallSetValueList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textStringSysList, preserving every other field.
+     */
+    public function withTextStringSysList(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysListForm $textStringSysList): self
+    {
+        return new self($textStringSysList, $this->optInstallSetValueList);
+    }
+
+    /**
+     * Returns a copy with a new optInstallSetValueList, preserving every other field.
+     */
+    public function withOptInstallSetValueList(\SqlSemantics\Statement\Model\MySql\Role\OptInstallSetValueListForm $optInstallSetValueList): self
+    {
+        return new self($this->textStringSysList, $optInstallSetValueList);
     }
 }

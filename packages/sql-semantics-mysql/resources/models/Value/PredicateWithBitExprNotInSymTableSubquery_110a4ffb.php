@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PredicateWithBitExprNotInSymTableSubquery_110a4ffb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PredicateWithBitExprNotInSymTableSubquery_110a4ffb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PredicateWithBitExprNotInSymTableSubquery_110a4ffb implements \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,10 @@ final class PredicateWithBitExprNotInSymTableSubquery_110a4ffb implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NotForm $not,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-8.0.44' => 14,  'mysql-8.1.0' => 14,  'mysql-8.2.0' => 14,  'mysql-8.3.0' => 14,  'mysql-8.4.7' => 14,  'mysql-9.0.1' => 14,  'mysql-9.1.0' => 14,));
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($not), 'The not must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableSubquery), 'The tableSubquery must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +39,29 @@ final class PredicateWithBitExprNotInSymTableSubquery_110a4ffb implements \SqlSe
         $this->not->write($writer);
         $writer->append('IN');
         $this->tableSubquery->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bitExpr, preserving every other field.
+     */
+    public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
+    {
+        return new self($bitExpr, $this->not, $this->tableSubquery);
+    }
+
+    /**
+     * Returns a copy with a new not, preserving every other field.
+     */
+    public function withNot(\SqlSemantics\Statement\Model\MySql\Role\NotForm $not): self
+    {
+        return new self($this->bitExpr, $not, $this->tableSubquery);
+    }
+
+    /**
+     * Returns a copy with a new tableSubquery, preserving every other field.
+     */
+    public function withTableSubquery(\SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery): self
+    {
+        return new self($this->bitExpr, $this->not, $tableSubquery);
     }
 }

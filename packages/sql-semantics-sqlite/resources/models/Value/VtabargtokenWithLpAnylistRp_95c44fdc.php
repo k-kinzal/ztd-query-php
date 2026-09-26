@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\VtabargtokenWithLpAnylistRp_95c44fdc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\VtabargtokenWithLpAnylistRp_95c44fdc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VtabargtokenWithLpAnylistRp_95c44fdc implements \SqlSemantics\Statement\Model\Sqlite\Role\VtabargtokenForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class VtabargtokenWithLpAnylistRp_95c44fdc implements \SqlSemantics\Statem
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\LpForm $lp,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($lp), 'The lp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($anylist), 'The anylist must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class VtabargtokenWithLpAnylistRp_95c44fdc implements \SqlSemantics\Statem
         $this->lp->write($writer);
         $this->anylist->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new lp, preserving every other field.
+     */
+    public function withLp(\SqlSemantics\Statement\Model\Sqlite\Role\LpForm $lp): self
+    {
+        return new self($lp, $this->anylist);
+    }
+
+    /**
+     * Returns a copy with a new anylist, preserving every other field.
+     */
+    public function withAnylist(\SqlSemantics\Statement\Model\Sqlite\Role\AnylistForm $anylist): self
+    {
+        return new self($this->lp, $anylist);
     }
 }

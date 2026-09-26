@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterOwnerStmtWithAlterOperatorOperatorWithArgtypesOwnerToRoleSpec_3d67cc0e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterOwnerStmtWithAlterOperatorOperatorWithArgtypesOwnerToRoleSpec_3d67cc0e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterOwnerStmtWithAlterOperatorOperatorWithArgtypesOwnerToRoleSpec_3d67cc0e implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOwnerStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterOwnerStmtWithAlterOperatorOperatorWithArgtypesOwnerToRoleSpec_3d67cc0e implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOwnerStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterOwnerStmtWithAlterOperatorOperatorWithArgtypesOwnerToRoleSpec_3
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorWithArgtypes), 'The operatorWithArgtypes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class AlterOwnerStmtWithAlterOperatorOperatorWithArgtypesOwnerToRoleSpec_3
         $writer->append('OWNER');
         $writer->append('TO');
         $this->roleSpec->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new operatorWithArgtypes, preserving every other field.
+     */
+    public function withOperatorWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes): self
+    {
+        return new self($operatorWithArgtypes, $this->roleSpec);
+    }
+
+    /**
+     * Returns a copy with a new roleSpec, preserving every other field.
+     */
+    public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
+    {
+        return new self($this->operatorWithArgtypes, $roleSpec);
     }
 }

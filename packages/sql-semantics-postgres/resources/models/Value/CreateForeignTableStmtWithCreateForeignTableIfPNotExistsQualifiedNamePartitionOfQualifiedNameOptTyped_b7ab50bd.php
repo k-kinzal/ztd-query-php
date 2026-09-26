@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNamePartitionOfQualifiedNameOptTyped_b7ab50bd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNamePartitionOfQualifiedNameOptTyped_b7ab50bd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNamePartitionOfQualifiedNameOptTyped_b7ab50bd implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateForeignTableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNamePartitionOfQualifiedNameOptTyped_b7ab50bd implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateForeignTableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNam
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName2), 'The qualifiedName2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTypedTableElementList), 'The optTypedTableElementList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($partitionBoundSpec), 'The partitionBoundSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createGenericOptions), 'The createGenericOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -47,5 +55,53 @@ final class CreateForeignTableStmtWithCreateForeignTableIfPNotExistsQualifiedNam
         $writer->append('SERVER');
         $this->name->write($writer);
         $this->createGenericOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->name, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName2, preserving every other field.
+     */
+    public function withQualifiedName2(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName2): self
+    {
+        return new self($this->qualifiedName, $qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->name, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new optTypedTableElementList, preserving every other field.
+     */
+    public function withOptTypedTableElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm $optTypedTableElementList): self
+    {
+        return new self($this->qualifiedName, $this->qualifiedName2, $optTypedTableElementList, $this->partitionBoundSpec, $this->name, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new partitionBoundSpec, preserving every other field.
+     */
+    public function withPartitionBoundSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm $partitionBoundSpec): self
+    {
+        return new self($this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $partitionBoundSpec, $this->name, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $name, $this->createGenericOptions);
+    }
+
+    /**
+     * Returns a copy with a new createGenericOptions, preserving every other field.
+     */
+    public function withCreateGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions): self
+    {
+        return new self($this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->name, $createGenericOptions);
     }
 }

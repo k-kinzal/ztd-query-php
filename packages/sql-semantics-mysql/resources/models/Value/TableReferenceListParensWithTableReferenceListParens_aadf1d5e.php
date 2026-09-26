@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableReferenceListParensWithTableReferenceListParens_aadf1d5e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableReferenceListParensWithTableReferenceListParens_aadf1d5e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableReferenceListParensWithTableReferenceListParens_aadf1d5e implements \SqlSemantics\Statement\Model\MySql\Role\DerivedTableListForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableRefForm, \SqlSemantics\Statement\Model\MySql\Role\EscTableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm, \SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm, \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedForm, \SqlSemantics\Statement\Model\MySql\Role\TableFactorForm, \SqlSemantics\Statement\Model\MySql\Role\TableRefForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm, \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListParensForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListParensForm $tableReferenceListParens,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReferenceListParens), 'The tableReferenceListParens must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class TableReferenceListParensWithTableReferenceListParens_aadf1d5e implem
         $writer->append('(');
         $this->tableReferenceListParens->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new tableReferenceListParens, preserving every other field.
+     */
+    public function withTableReferenceListParens(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceListParensForm $tableReferenceListParens): self
+    {
+        return new self($tableReferenceListParens);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptCreatePartitioningEtcWithPartitionClauseOptDuplicateAsQe_58c41092 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptCreatePartitioningEtcWithPartitionClauseOptDuplicateAsQe_58c41092 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptCreatePartitioningEtcWithPartitionClauseOptDuplicateAsQe_58c41092 implements \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsEtcForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptCreatePartitioningEtcWithPartitionClauseOptDuplicateAsQe_58c41092
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm $partitionClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm $optDuplicateAsQe,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partitionClause), 'The partitionClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDuplicateAsQe), 'The optDuplicateAsQe must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptCreatePartitioningEtcWithPartitionClauseOptDuplicateAsQe_58c41092
     {
         $this->partitionClause->write($writer);
         $this->optDuplicateAsQe->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new partitionClause, preserving every other field.
+     */
+    public function withPartitionClause(\SqlSemantics\Statement\Model\MySql\Role\PartitionClauseForm $partitionClause): self
+    {
+        return new self($partitionClause, $this->optDuplicateAsQe);
+    }
+
+    /**
+     * Returns a copy with a new optDuplicateAsQe, preserving every other field.
+     */
+    public function withOptDuplicateAsQe(\SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm $optDuplicateAsQe): self
+    {
+        return new self($this->partitionClause, $optDuplicateAsQe);
     }
 }

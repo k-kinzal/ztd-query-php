@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WsLevelListWithWsLevelListWsLevelListItem_637627eb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\WsLevelListWithWsLevelListWsLevelListItem_637627eb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WsLevelListWithWsLevelListWsLevelListItem_637627eb implements \SqlSemantics\Statement\Model\MySql\Role\WsLevelListForm, \SqlSemantics\Statement\Model\MySql\Role\WsLevelListOrRangeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WsLevelListWithWsLevelListWsLevelListItem_637627eb implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelListForm $wsLevelList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelListItemForm $wsLevelListItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelList), 'The wsLevelList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelListItem), 'The wsLevelListItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class WsLevelListWithWsLevelListWsLevelListItem_637627eb implements \SqlSe
         $this->wsLevelList->write($writer);
         $writer->append(',');
         $this->wsLevelListItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new wsLevelList, preserving every other field.
+     */
+    public function withWsLevelList(\SqlSemantics\Statement\Model\MySql\Role\WsLevelListForm $wsLevelList): self
+    {
+        return new self($wsLevelList, $this->wsLevelListItem);
+    }
+
+    /**
+     * Returns a copy with a new wsLevelListItem, preserving every other field.
+     */
+    public function withWsLevelListItem(\SqlSemantics\Statement\Model\MySql\Role\WsLevelListItemForm $wsLevelListItem): self
+    {
+        return new self($this->wsLevelList, $wsLevelListItem);
     }
 }

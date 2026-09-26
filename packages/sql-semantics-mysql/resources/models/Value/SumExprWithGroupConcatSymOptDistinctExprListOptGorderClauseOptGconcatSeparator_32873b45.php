@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconcatSeparator_32873b45 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconcatSeparator_32873b45 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconcatSeparator_32873b45 implements \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SetFunctionSpecificationForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\SumExprForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconca
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGorderClauseForm $optGorderClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGconcatSeparatorForm $optGconcatSeparator,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDistinct), 'The optDistinct must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optGorderClause), 'The optGorderClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optGconcatSeparator), 'The optGconcatSeparator must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconca
         $this->optGorderClause->write($writer);
         $this->optGconcatSeparator->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new optDistinct, preserving every other field.
+     */
+    public function withOptDistinct(\SqlSemantics\Statement\Model\MySql\Role\OptDistinctForm $optDistinct): self
+    {
+        return new self($optDistinct, $this->exprList, $this->optGorderClause, $this->optGconcatSeparator);
+    }
+
+    /**
+     * Returns a copy with a new exprList, preserving every other field.
+     */
+    public function withExprList(\SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList): self
+    {
+        return new self($this->optDistinct, $exprList, $this->optGorderClause, $this->optGconcatSeparator);
+    }
+
+    /**
+     * Returns a copy with a new optGorderClause, preserving every other field.
+     */
+    public function withOptGorderClause(\SqlSemantics\Statement\Model\MySql\Role\OptGorderClauseForm $optGorderClause): self
+    {
+        return new self($this->optDistinct, $this->exprList, $optGorderClause, $this->optGconcatSeparator);
+    }
+
+    /**
+     * Returns a copy with a new optGconcatSeparator, preserving every other field.
+     */
+    public function withOptGconcatSeparator(\SqlSemantics\Statement\Model\MySql\Role\OptGconcatSeparatorForm $optGconcatSeparator): self
+    {
+        return new self($this->optDistinct, $this->exprList, $this->optGorderClause, $optGconcatSeparator);
     }
 }

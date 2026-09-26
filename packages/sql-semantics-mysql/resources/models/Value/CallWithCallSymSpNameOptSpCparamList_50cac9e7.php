@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CallWithCallSymSpNameOptSpCparamList_50cac9e7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CallWithCallSymSpNameOptSpCparamList_50cac9e7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CallWithCallSymSpNameOptSpCparamList_50cac9e7 implements \SqlSemantics\Statement\Model\MySql\Role\CallForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CallWithCallSymSpNameOptSpCparamList_50cac9e7 implements \SqlSemanti
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamListForm $optSpCparamList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSpCparamList), 'The optSpCparamList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class CallWithCallSymSpNameOptSpCparamList_50cac9e7 implements \SqlSemanti
         $writer->append('CALL');
         $this->spName->write($writer);
         $this->optSpCparamList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spName, preserving every other field.
+     */
+    public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
+    {
+        return new self($spName, $this->optSpCparamList);
+    }
+
+    /**
+     * Returns a copy with a new optSpCparamList, preserving every other field.
+     */
+    public function withOptSpCparamList(\SqlSemantics\Statement\Model\MySql\Role\OptSpCparamListForm $optSpCparamList): self
+    {
+        return new self($this->spName, $optSpCparamList);
     }
 }

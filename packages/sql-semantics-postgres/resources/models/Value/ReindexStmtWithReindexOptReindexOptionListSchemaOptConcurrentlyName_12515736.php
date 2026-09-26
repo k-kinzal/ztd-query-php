@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReindexStmtWithReindexOptReindexOptionListSchemaOptConcurrentlyName_12515736 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ReindexStmtWithReindexOptReindexOptionListSchemaOptConcurrentlyName_12515736 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ReindexStmtWithReindexOptReindexOptionListSchemaOptConcurrentlyName_12515736 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ReindexStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ReindexStmtWithReindexOptReindexOptionListSchemaOptConcurrentlyName_12515736 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ReindexStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ReindexStmtWithReindexOptReindexOptionListSchemaOptConcurrentlyName_
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optReindexOptionList), 'The optReindexOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConcurrently), 'The optConcurrently must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class ReindexStmtWithReindexOptReindexOptionListSchemaOptConcurrentlyName_
         $writer->append('SCHEMA');
         $this->optConcurrently->write($writer);
         $this->name->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optReindexOptionList, preserving every other field.
+     */
+    public function withOptReindexOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptReindexOptionListForm $optReindexOptionList): self
+    {
+        return new self($optReindexOptionList, $this->optConcurrently, $this->name);
+    }
+
+    /**
+     * Returns a copy with a new optConcurrently, preserving every other field.
+     */
+    public function withOptConcurrently(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently): self
+    {
+        return new self($this->optReindexOptionList, $optConcurrently, $this->name);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($this->optReindexOptionList, $this->optConcurrently, $name);
     }
 }

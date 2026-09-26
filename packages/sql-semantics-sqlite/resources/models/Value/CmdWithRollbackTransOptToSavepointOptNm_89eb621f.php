@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithRollbackTransOptToSavepointOptNm_89eb621f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithRollbackTransOptToSavepointOptNm_89eb621f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithRollbackTransOptToSavepointOptNm_89eb621f implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithRollbackTransOptToSavepointOptNm_89eb621f implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class CmdWithRollbackTransOptToSavepointOptNm_89eb621f implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SavepointOptForm $savepointOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($transOpt), 'The transOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($savepointOpt), 'The savepointOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +39,29 @@ final class CmdWithRollbackTransOptToSavepointOptNm_89eb621f implements \SqlSema
         $writer->append('TO');
         $this->savepointOpt->write($writer);
         $this->nm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new transOpt, preserving every other field.
+     */
+    public function withTransOpt(\SqlSemantics\Statement\Model\Sqlite\Role\TransOptForm $transOpt): self
+    {
+        return new self($transOpt, $this->savepointOpt, $this->nm);
+    }
+
+    /**
+     * Returns a copy with a new savepointOpt, preserving every other field.
+     */
+    public function withSavepointOpt(\SqlSemantics\Statement\Model\Sqlite\Role\SavepointOptForm $savepointOpt): self
+    {
+        return new self($this->transOpt, $savepointOpt, $this->nm);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->transOpt, $this->savepointOpt, $nm);
     }
 }

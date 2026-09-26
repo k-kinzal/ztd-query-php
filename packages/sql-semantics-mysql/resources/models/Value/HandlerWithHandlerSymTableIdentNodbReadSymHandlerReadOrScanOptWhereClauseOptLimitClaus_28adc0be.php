@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereClauseOptLimitClaus_28adc0be $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereClauseOptLimitClaus_28adc0be $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereClauseOptLimitClaus_28adc0be implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\HandlerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereC
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdentNodb), 'The tableIdentNodb must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($handlerReadOrScan), 'The handlerReadOrScan must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class HandlerWithHandlerSymTableIdentNodbReadSymHandlerReadOrScanOptWhereC
         $this->handlerReadOrScan->write($writer);
         $this->where->write($writer);
         $this->optLimitClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableIdentNodb, preserving every other field.
+     */
+    public function withTableIdentNodb(\SqlSemantics\Statement\Model\MySql\Role\TableIdentNodbForm $tableIdentNodb): self
+    {
+        return new self($tableIdentNodb, $this->handlerReadOrScan, $this->where, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new handlerReadOrScan, preserving every other field.
+     */
+    public function withHandlerReadOrScan(\SqlSemantics\Statement\Model\MySql\Role\HandlerReadOrScanForm $handlerReadOrScan): self
+    {
+        return new self($this->tableIdentNodb, $handlerReadOrScan, $this->where, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new where, preserving every other field.
+     */
+    public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
+    {
+        return new self($this->tableIdentNodb, $this->handlerReadOrScan, $where, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClause, preserving every other field.
+     */
+    public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
+    {
+        return new self($this->tableIdentNodb, $this->handlerReadOrScan, $this->where, $optLimitClause);
     }
 }

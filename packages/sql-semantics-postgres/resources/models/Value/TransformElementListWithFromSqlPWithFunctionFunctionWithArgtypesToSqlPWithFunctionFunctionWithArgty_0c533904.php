@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypesToSqlPWithFunctionFunctionWithArgty_0c533904 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypesToSqlPWithFunctionFunctionWithArgty_0c533904 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypesToSqlPWithFunctionFunctionWithArgty_0c533904 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TransformElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypesToSq
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes), 'The functionWithArgtypes must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes2), 'The functionWithArgtypes2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +43,21 @@ final class TransformElementListWithFromSqlPWithFunctionFunctionWithArgtypesToSq
         $writer->append('WITH');
         $writer->append('FUNCTION');
         $this->functionWithArgtypes2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new functionWithArgtypes, preserving every other field.
+     */
+    public function withFunctionWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes): self
+    {
+        return new self($functionWithArgtypes, $this->functionWithArgtypes2);
+    }
+
+    /**
+     * Returns a copy with a new functionWithArgtypes2, preserving every other field.
+     */
+    public function withFunctionWithArgtypes2(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes2): self
+    {
+        return new self($this->functionWithArgtypes, $functionWithArgtypes2);
     }
 }

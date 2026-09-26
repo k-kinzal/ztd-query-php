@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExtractListWithExtractArgFromAExpr_26c41b07 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ExtractListWithExtractArgFromAExpr_26c41b07 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExtractListWithExtractArgFromAExpr_26c41b07 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ExtractListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ExtractListWithExtractArgFromAExpr_26c41b07 implements \SqlSemantics
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExtractArgForm $extractArg,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($extractArg), 'The extractArg must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ExtractListWithExtractArgFromAExpr_26c41b07 implements \SqlSemantics
         $this->extractArg->write($writer);
         $writer->append('FROM');
         $this->aExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new extractArg, preserving every other field.
+     */
+    public function withExtractArg(\SqlSemantics\Statement\Model\PostgreSql\Role\ExtractArgForm $extractArg): self
+    {
+        return new self($extractArg, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->extractArg, $aExpr);
     }
 }

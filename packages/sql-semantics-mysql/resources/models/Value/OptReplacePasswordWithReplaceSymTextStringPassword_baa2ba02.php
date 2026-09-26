@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptReplacePasswordWithReplaceSymTextStringPassword_baa2ba02 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptReplacePasswordWithReplaceSymTextStringPassword_baa2ba02 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptReplacePasswordWithReplaceSymTextStringPassword_baa2ba02 implements \SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringPassword), 'The textStringPassword must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptReplacePasswordWithReplaceSymTextStringPassword_baa2ba02 implemen
     {
         $writer->append('REPLACE');
         $this->textStringPassword->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textStringPassword, preserving every other field.
+     */
+    public function withTextStringPassword(\SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword): self
+    {
+        return new self($textStringPassword);
     }
 }

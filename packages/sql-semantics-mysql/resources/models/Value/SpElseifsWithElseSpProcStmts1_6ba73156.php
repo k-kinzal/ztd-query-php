@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpElseifsWithElseSpProcStmts1_6ba73156 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpElseifsWithElseSpProcStmts1_6ba73156 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpElseifsWithElseSpProcStmts1_6ba73156 implements \SqlSemantics\Statement\Model\MySql\Role\SpElseifsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form $spProcStmts1,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmts1), 'The spProcStmts1 must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SpElseifsWithElseSpProcStmts1_6ba73156 implements \SqlSemantics\Stat
     {
         $writer->append('ELSE');
         $this->spProcStmts1->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spProcStmts1, preserving every other field.
+     */
+    public function withSpProcStmts1(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form $spProcStmts1): self
+    {
+        return new self($spProcStmts1);
     }
 }

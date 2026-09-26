@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableValueConstructorWithValuesValuesRowList_51394bf1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableValueConstructorWithValuesValuesRowList_51394bf1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableValueConstructorWithValuesValuesRowList_51394bf1 implements \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm, \SqlSemantics\Statement\Model\MySql\Role\QueryPrimaryForm, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm, \SqlSemantics\Statement\Model\MySql\Role\TableValueConstructorForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValuesRowListForm $valuesRowList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($valuesRowList), 'The valuesRowList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class TableValueConstructorWithValuesValuesRowList_51394bf1 implements \Sq
     {
         $writer->append('VALUES');
         $this->valuesRowList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new valuesRowList, preserving every other field.
+     */
+    public function withValuesRowList(\SqlSemantics\Statement\Model\MySql\Role\ValuesRowListForm $valuesRowList): self
+    {
+        return new self($valuesRowList);
     }
 }

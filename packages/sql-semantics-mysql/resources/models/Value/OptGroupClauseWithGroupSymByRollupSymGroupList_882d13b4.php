@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptGroupClauseWithGroupSymByRollupSymGroupList_882d13b4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptGroupClauseWithGroupSymByRollupSymGroupList_882d13b4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptGroupClauseWithGroupSymByRollupSymGroupList_882d13b4 implements \SqlSemantics\Statement\Model\MySql\Role\OptGroupClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GroupListForm $groupList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($groupList), 'The groupList must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +36,13 @@ final class OptGroupClauseWithGroupSymByRollupSymGroupList_882d13b4 implements \
         $writer->append('(');
         $this->groupList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new groupList, preserving every other field.
+     */
+    public function withGroupList(\SqlSemantics\Statement\Model\MySql\Role\GroupListForm $groupList): self
+    {
+        return new self($groupList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgsListWithFuncArgsListFuncArg_2e0ce0fd $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgsListWithFuncArgsListFuncArg_2e0ce0fd $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncArgsListWithFuncArgsListFuncArg_2e0ce0fd implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class FuncArgsListWithFuncArgsListFuncArg_2e0ce0fd implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsListForm $funcArgsList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgForm $funcArg,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArgsList), 'The funcArgsList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcArg), 'The funcArg must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class FuncArgsListWithFuncArgsListFuncArg_2e0ce0fd implements \SqlSemantic
         $this->funcArgsList->write($writer);
         $writer->append(',');
         $this->funcArg->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcArgsList, preserving every other field.
+     */
+    public function withFuncArgsList(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgsListForm $funcArgsList): self
+    {
+        return new self($funcArgsList, $this->funcArg);
+    }
+
+    /**
+     * Returns a copy with a new funcArg, preserving every other field.
+     */
+    public function withFuncArg(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgForm $funcArg): self
+    {
+        return new self($this->funcArgsList, $funcArg);
     }
 }

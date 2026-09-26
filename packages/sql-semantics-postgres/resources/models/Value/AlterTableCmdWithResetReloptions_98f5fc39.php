@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithResetReloptions_98f5fc39 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdWithResetReloptions_98f5fc39 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdWithResetReloptions_98f5fc39 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm, \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionsForm $reloptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($reloptions), 'The reloptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class AlterTableCmdWithResetReloptions_98f5fc39 implements \SqlSemantics\S
     {
         $writer->append('RESET');
         $this->reloptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new reloptions, preserving every other field.
+     */
+    public function withReloptions(\SqlSemantics\Statement\Model\PostgreSql\Role\ReloptionsForm $reloptions): self
+    {
+        return new self($reloptions);
     }
 }

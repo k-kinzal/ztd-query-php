@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableStmtWithAlterViewIfPExistsQualifiedNameAlterTableCmds_c6f8cbf9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableStmtWithAlterViewIfPExistsQualifiedNameAlterTableCmds_c6f8cbf9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTableStmtWithAlterViewIfPExistsQualifiedNameAlterTableCmds_c6f8cbf9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterTableStmtWithAlterViewIfPExistsQualifiedNameAlterTableCmds_c6f8cbf9 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTableStmtWithAlterViewIfPExistsQualifiedNameAlterTableCmds_c6f8
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm $alterTableCmds,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterTableCmds), 'The alterTableCmds must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class AlterTableStmtWithAlterViewIfPExistsQualifiedNameAlterTableCmds_c6f8
         $writer->append('EXISTS');
         $this->qualifiedName->write($writer);
         $this->alterTableCmds->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($qualifiedName, $this->alterTableCmds);
+    }
+
+    /**
+     * Returns a copy with a new alterTableCmds, preserving every other field.
+     */
+    public function withAlterTableCmds(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm $alterTableCmds): self
+    {
+        return new self($this->qualifiedName, $alterTableCmds);
     }
 }

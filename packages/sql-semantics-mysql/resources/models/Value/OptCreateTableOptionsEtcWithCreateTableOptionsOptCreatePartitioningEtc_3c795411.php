@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptCreateTableOptionsEtcWithCreateTableOptionsOptCreatePartitioningEtc_3c795411 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptCreateTableOptionsEtcWithCreateTableOptionsOptCreatePartitioningEtc_3c795411 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptCreateTableOptionsEtcWithCreateTableOptionsOptCreatePartitioningEtc_3c795411 implements \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsEtcForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptCreateTableOptionsEtcWithCreateTableOptionsOptCreatePartitioningE
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm $createTableOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningEtcForm $optCreatePartitioningEtc,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOptions), 'The createTableOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCreatePartitioningEtc), 'The optCreatePartitioningEtc must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptCreateTableOptionsEtcWithCreateTableOptionsOptCreatePartitioningE
     {
         $this->createTableOptions->write($writer);
         $this->optCreatePartitioningEtc->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new createTableOptions, preserving every other field.
+     */
+    public function withCreateTableOptions(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm $createTableOptions): self
+    {
+        return new self($createTableOptions, $this->optCreatePartitioningEtc);
+    }
+
+    /**
+     * Returns a copy with a new optCreatePartitioningEtc, preserving every other field.
+     */
+    public function withOptCreatePartitioningEtc(\SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningEtcForm $optCreatePartitioningEtc): self
+    {
+        return new self($this->createTableOptions, $optCreatePartitioningEtc);
     }
 }

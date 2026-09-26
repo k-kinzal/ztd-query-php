@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableFuncElementWithColIdTypenameOptCollateClause_55881986 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TableFuncElementWithColIdTypenameOptCollateClause_55881986 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableFuncElementWithColIdTypenameOptCollateClause_55881986 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableFuncElementListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TableFuncElementWithColIdTypenameOptCollateClause_55881986 implement
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateClauseForm $optCollateClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCollateClause), 'The optCollateClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TableFuncElementWithColIdTypenameOptCollateClause_55881986 implement
         $this->colId->write($writer);
         $this->typename->write($writer);
         $this->optCollateClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId, $this->typename, $this->optCollateClause);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->colId, $typename, $this->optCollateClause);
+    }
+
+    /**
+     * Returns a copy with a new optCollateClause, preserving every other field.
+     */
+    public function withOptCollateClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateClauseForm $optCollateClause): self
+    {
+        return new self($this->colId, $this->typename, $optCollateClause);
     }
 }

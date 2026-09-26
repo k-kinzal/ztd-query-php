@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionWithWithClauseQueryExpressionBodyOptOrderClauseOptLimitClause_f3d9f9a0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryExpressionWithWithClauseQueryExpressionBodyOptOrderClauseOptLimitClause_f3d9f9a0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class QueryExpressionWithWithClauseQueryExpressionBodyOptOrderClauseOptLimitClause_f3d9f9a0 implements \SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm, \SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionForm, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm, \SqlSemantics\Statement\Model\MySql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class QueryExpressionWithWithClauseQueryExpressionBodyOptOrderClauseOptLimitClause_f3d9f9a0 implements \SqlSemantics\Statement\Model\MySql\Role\AsCreateQueryExpressionForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\MySql\Role\InsertFromSubqueryForm, \SqlSemantics\Statement\Model\MySql\Role\InsertQueryExpressionForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsEtcForm, \SqlSemantics\Statement\Model\MySql\Role\OptDuplicateAsQeForm, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionForm, \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionWithOptLockingClausesForm, \SqlSemantics\Statement\Model\MySql\Role\SelectStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class QueryExpressionWithWithClauseQueryExpressionBodyOptOrderClauseOptLim
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionBody), 'The queryExpressionBody must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class QueryExpressionWithWithClauseQueryExpressionBodyOptOrderClauseOptLim
         $this->queryExpressionBody->write($writer);
         $this->orderBy->write($writer);
         $this->optLimitClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new with, preserving every other field.
+     */
+    public function withWith(\SqlSemantics\Statement\Model\MySql\Role\WithClauseForm $with): self
+    {
+        return new self($with, $this->queryExpressionBody, $this->orderBy, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new queryExpressionBody, preserving every other field.
+     */
+    public function withQueryExpressionBody(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm $queryExpressionBody): self
+    {
+        return new self($this->with, $queryExpressionBody, $this->orderBy, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new orderBy, preserving every other field.
+     */
+    public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
+    {
+        return new self($this->with, $this->queryExpressionBody, $orderBy, $this->optLimitClause);
+    }
+
+    /**
+     * Returns a copy with a new optLimitClause, preserving every other field.
+     */
+    public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
+    {
+        return new self($this->with, $this->queryExpressionBody, $this->orderBy, $optLimitClause);
     }
 }

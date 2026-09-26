@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ObjectPrivilegeListWithObjectPrivilegeListObjectPrivilege_aa95a989 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ObjectPrivilegeListWithObjectPrivilegeListObjectPrivilege_aa95a989 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ObjectPrivilegeListWithObjectPrivilegeListObjectPrivilege_aa95a989 implements \SqlSemantics\Statement\Model\MySql\Role\GrantPrivilegesForm, \SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ObjectPrivilegeListWithObjectPrivilegeListObjectPrivilege_aa95a989 i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeListForm $objectPrivilegeList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeForm $objectPrivilege,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($objectPrivilegeList), 'The objectPrivilegeList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($objectPrivilege), 'The objectPrivilege must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ObjectPrivilegeListWithObjectPrivilegeListObjectPrivilege_aa95a989 i
         $this->objectPrivilegeList->write($writer);
         $writer->append(',');
         $this->objectPrivilege->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new objectPrivilegeList, preserving every other field.
+     */
+    public function withObjectPrivilegeList(\SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeListForm $objectPrivilegeList): self
+    {
+        return new self($objectPrivilegeList, $this->objectPrivilege);
+    }
+
+    /**
+     * Returns a copy with a new objectPrivilege, preserving every other field.
+     */
+    public function withObjectPrivilege(\SqlSemantics\Statement\Model\MySql\Role\ObjectPrivilegeForm $objectPrivilege): self
+    {
+        return new self($this->objectPrivilegeList, $objectPrivilege);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableColumnDefinitionWithColIdForOrdinality_3682a866 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonTableColumnDefinitionWithColIdForOrdinality_3682a866 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonTableColumnDefinitionWithColIdForOrdinality_3682a866 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonTableColumnDefinitionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class JsonTableColumnDefinitionWithColIdForOrdinality_3682a866 implements 
         $this->colId->write($writer);
         $writer->append('FOR');
         $writer->append('ORDINALITY');
+    }
+
+    /**
+     * Returns a copy with a new colId, preserving every other field.
+     */
+    public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
+    {
+        return new self($colId);
     }
 }

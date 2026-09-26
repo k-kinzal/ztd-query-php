@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionListDefAclAction_0e07c0f2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionListDefAclAction_0e07c0f2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionListDefAclAction_0e07c0f2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterDefaultPrivilegesStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionListDefAclAction_0e07c0f2 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterDefaultPrivilegesStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionList
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionListForm $defAclOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclActionForm $defAclAction,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defAclOptionList), 'The defAclOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defAclAction), 'The defAclAction must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class AlterDefaultPrivilegesStmtWithAlterDefaultPrivilegesDefAclOptionList
         $writer->append('PRIVILEGES');
         $this->defAclOptionList->write($writer);
         $this->defAclAction->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new defAclOptionList, preserving every other field.
+     */
+    public function withDefAclOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionListForm $defAclOptionList): self
+    {
+        return new self($defAclOptionList, $this->defAclAction);
+    }
+
+    /**
+     * Returns a copy with a new defAclAction, preserving every other field.
+     */
+    public function withDefAclAction(\SqlSemantics\Statement\Model\PostgreSql\Role\DefAclActionForm $defAclAction): self
+    {
+        return new self($this->defAclOptionList, $defAclAction);
     }
 }

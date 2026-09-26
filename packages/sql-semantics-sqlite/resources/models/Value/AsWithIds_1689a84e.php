@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\AsWithIds_1689a84e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\AsWithIds_1689a84e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AsWithIds_1689a84e implements \SqlSemantics\Statement\Model\Sqlite\Role\AsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $ids,
     ) {
+        $this->assertMatchesPattern($ids, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['ids'], 'The ids must be a complete ids lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class AsWithIds_1689a84e implements \SqlSemantics\Statement\Model\Sqlite\R
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->ids);
+    }
+
+    /**
+     * Returns a copy with a new ids, preserving every other field.
+     */
+    public function withIds(string $ids): self
+    {
+        return new self($ids);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnsClauseWithColumnsColumnsList_8226384e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnsClauseWithColumnsColumnsList_8226384e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnsClauseWithColumnsColumnsList_8226384e implements \SqlSemantics\Statement\Model\MySql\Role\ColumnsClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColumnsClauseWithColumnsColumnsList_8226384e implements \SqlSemantic
         public readonly string $columns,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm $columnsList,
     ) {
+        $this->assertMatchesPattern($columns, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['COLUMNS'], 'The columns must be a complete COLUMNS lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($columnsList), 'The columnsList must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class ColumnsClauseWithColumnsColumnsList_8226384e implements \SqlSemantic
         $writer->append('(');
         $this->columnsList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new columns, preserving every other field.
+     */
+    public function withColumns(string $columns): self
+    {
+        return new self($columns, $this->columnsList);
+    }
+
+    /**
+     * Returns a copy with a new columnsList, preserving every other field.
+     */
+    public function withColumnsList(\SqlSemantics\Statement\Model\MySql\Role\ColumnsListForm $columnsList): self
+    {
+        return new self($this->columns, $columnsList);
     }
 }

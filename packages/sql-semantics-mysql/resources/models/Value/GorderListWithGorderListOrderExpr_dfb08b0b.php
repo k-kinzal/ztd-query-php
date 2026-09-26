@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GorderListWithGorderListOrderExpr_dfb08b0b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GorderListWithGorderListOrderExpr_dfb08b0b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GorderListWithGorderListOrderExpr_dfb08b0b implements \SqlSemantics\Statement\Model\MySql\Role\GorderListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class GorderListWithGorderListOrderExpr_dfb08b0b implements \SqlSemantics\
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GorderListForm $gorderList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderExprForm $orderExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($gorderList), 'The gorderList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderExpr), 'The orderExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class GorderListWithGorderListOrderExpr_dfb08b0b implements \SqlSemantics\
         $this->gorderList->write($writer);
         $writer->append(',');
         $this->orderExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new gorderList, preserving every other field.
+     */
+    public function withGorderList(\SqlSemantics\Statement\Model\MySql\Role\GorderListForm $gorderList): self
+    {
+        return new self($gorderList, $this->orderExpr);
+    }
+
+    /**
+     * Returns a copy with a new orderExpr, preserving every other field.
+     */
+    public function withOrderExpr(\SqlSemantics\Statement\Model\MySql\Role\OrderExprForm $orderExpr): self
+    {
+        return new self($this->gorderList, $orderExpr);
     }
 }

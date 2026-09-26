@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\EventTriggerWhenListWithEventTriggerWhenListAndEventTriggerWhenItem_e1ab0bf5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\EventTriggerWhenListWithEventTriggerWhenListAndEventTriggerWhenItem_e1ab0bf5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EventTriggerWhenListWithEventTriggerWhenListAndEventTriggerWhenItem_e1ab0bf5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class EventTriggerWhenListWithEventTriggerWhenListAndEventTriggerWhenItem_
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenListForm $eventTriggerWhenList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenItemForm $eventTriggerWhenItem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($eventTriggerWhenList), 'The eventTriggerWhenList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($eventTriggerWhenItem), 'The eventTriggerWhenItem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class EventTriggerWhenListWithEventTriggerWhenListAndEventTriggerWhenItem_
         $this->eventTriggerWhenList->write($writer);
         $writer->append('AND');
         $this->eventTriggerWhenItem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new eventTriggerWhenList, preserving every other field.
+     */
+    public function withEventTriggerWhenList(\SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenListForm $eventTriggerWhenList): self
+    {
+        return new self($eventTriggerWhenList, $this->eventTriggerWhenItem);
+    }
+
+    /**
+     * Returns a copy with a new eventTriggerWhenItem, preserving every other field.
+     */
+    public function withEventTriggerWhenItem(\SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerWhenItemForm $eventTriggerWhenItem): self
+    {
+        return new self($this->eventTriggerWhenList, $eventTriggerWhenItem);
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushOptionWithOptimizerCostsSym_f6c9b69e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushOptionWithOptimizerCostsSym_f6c9b69e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FlushOptionWithOptimizerCostsSym_f6c9b69e implements \SqlSemantics\Statement\Model\MySql\Role\FlushOptionForm, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm

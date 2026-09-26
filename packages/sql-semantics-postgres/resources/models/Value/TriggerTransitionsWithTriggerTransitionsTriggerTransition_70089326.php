@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerTransitionsWithTriggerTransitionsTriggerTransition_70089326 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TriggerTransitionsWithTriggerTransitionsTriggerTransition_70089326 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TriggerTransitionsWithTriggerTransitionsTriggerTransition_70089326 implements \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TriggerTransitionsWithTriggerTransitionsTriggerTransition_70089326 i
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionsForm $triggerTransitions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionForm $triggerTransition,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerTransitions), 'The triggerTransitions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerTransition), 'The triggerTransition must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TriggerTransitionsWithTriggerTransitionsTriggerTransition_70089326 i
     {
         $this->triggerTransitions->write($writer);
         $this->triggerTransition->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new triggerTransitions, preserving every other field.
+     */
+    public function withTriggerTransitions(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionsForm $triggerTransitions): self
+    {
+        return new self($triggerTransitions, $this->triggerTransition);
+    }
+
+    /**
+     * Returns a copy with a new triggerTransition, preserving every other field.
+     */
+    public function withTriggerTransition(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerTransitionForm $triggerTransition): self
+    {
+        return new self($this->triggerTransitions, $triggerTransition);
     }
 }

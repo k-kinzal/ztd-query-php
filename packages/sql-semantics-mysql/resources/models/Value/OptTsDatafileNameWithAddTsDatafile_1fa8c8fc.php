@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptTsDatafileNameWithAddTsDatafile_1fa8c8fc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptTsDatafileNameWithAddTsDatafile_1fa8c8fc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptTsDatafileNameWithAddTsDatafile_1fa8c8fc implements \SqlSemantics\Statement\Model\MySql\Role\OptTsDatafileNameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tsDatafile), 'The tsDatafile must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class OptTsDatafileNameWithAddTsDatafile_1fa8c8fc implements \SqlSemantics
     {
         $writer->append('ADD');
         $this->tsDatafile->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tsDatafile, preserving every other field.
+     */
+    public function withTsDatafile(\SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile): self
+    {
+        return new self($tsDatafile);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateTablespaceTablespaceInfo_af9ac0ac $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateTablespaceTablespaceInfo_af9ac0ac $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateWithCreateTablespaceTablespaceInfo_af9ac0ac implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class CreateWithCreateTablespaceTablespaceInfo_af9ac0ac implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceInfoForm $tablespaceInfo,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceInfo), 'The tablespaceInfo must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class CreateWithCreateTablespaceTablespaceInfo_af9ac0ac implements \SqlSem
         $writer->append('CREATE');
         $writer->append('TABLESPACE');
         $this->tablespaceInfo->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tablespaceInfo, preserving every other field.
+     */
+    public function withTablespaceInfo(\SqlSemantics\Statement\Model\MySql\Role\TablespaceInfoForm $tablespaceInfo): self
+    {
+        return new self($tablespaceInfo);
     }
 }

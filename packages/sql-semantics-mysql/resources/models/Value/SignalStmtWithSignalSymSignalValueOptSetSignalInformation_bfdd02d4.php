@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SignalStmtWithSignalSymSignalValueOptSetSignalInformation_bfdd02d4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SignalStmtWithSignalSymSignalValueOptSetSignalInformation_bfdd02d4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SignalStmtWithSignalSymSignalValueOptSetSignalInformation_bfdd02d4 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SignalStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class SignalStmtWithSignalSymSignalValueOptSetSignalInformation_bfdd02d4 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SignalStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SignalStmtWithSignalSymSignalValueOptSetSignalInformation_bfdd02d4 i
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignalValueForm $signalValue,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSetSignalInformationForm $optSetSignalInformation,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signalValue), 'The signalValue must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSetSignalInformation), 'The optSetSignalInformation must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SignalStmtWithSignalSymSignalValueOptSetSignalInformation_bfdd02d4 i
         $writer->append('SIGNAL');
         $this->signalValue->write($writer);
         $this->optSetSignalInformation->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new signalValue, preserving every other field.
+     */
+    public function withSignalValue(\SqlSemantics\Statement\Model\MySql\Role\SignalValueForm $signalValue): self
+    {
+        return new self($signalValue, $this->optSetSignalInformation);
+    }
+
+    /**
+     * Returns a copy with a new optSetSignalInformation, preserving every other field.
+     */
+    public function withOptSetSignalInformation(\SqlSemantics\Statement\Model\MySql\Role\OptSetSignalInformationForm $optSetSignalInformation): self
+    {
+        return new self($this->signalValue, $optSetSignalInformation);
     }
 }

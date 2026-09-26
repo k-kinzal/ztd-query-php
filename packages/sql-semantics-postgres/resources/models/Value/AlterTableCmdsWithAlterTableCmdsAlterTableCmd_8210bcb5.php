@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdsWithAlterTableCmdsAlterTableCmd_8210bcb5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTableCmdsWithAlterTableCmdsAlterTableCmd_8210bcb5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterTableCmdsWithAlterTableCmdsAlterTableCmd_8210bcb5 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTableCmdsWithAlterTableCmdsAlterTableCmd_8210bcb5 implements \S
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm $alterTableCmds,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm $alterTableCmd,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterTableCmds), 'The alterTableCmds must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterTableCmd), 'The alterTableCmd must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterTableCmdsWithAlterTableCmdsAlterTableCmd_8210bcb5 implements \S
         $this->alterTableCmds->write($writer);
         $writer->append(',');
         $this->alterTableCmd->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterTableCmds, preserving every other field.
+     */
+    public function withAlterTableCmds(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdsForm $alterTableCmds): self
+    {
+        return new self($alterTableCmds, $this->alterTableCmd);
+    }
+
+    /**
+     * Returns a copy with a new alterTableCmd, preserving every other field.
+     */
+    public function withAlterTableCmd(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterTableCmdForm $alterTableCmd): self
+    {
+        return new self($this->alterTableCmds, $alterTableCmd);
     }
 }

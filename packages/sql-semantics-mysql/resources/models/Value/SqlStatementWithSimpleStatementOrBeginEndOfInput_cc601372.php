@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SqlStatementWithSimpleStatementOrBeginEndOfInput_cc601372 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SqlStatementWithSimpleStatementOrBeginEndOfInput_cc601372 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SqlStatementWithSimpleStatementOrBeginEndOfInput_cc601372 implements \SqlSemantics\Statement\Model\MySql\Role\SqlStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StartEntryForm
+final class SqlStatementWithSimpleStatementOrBeginEndOfInput_cc601372 implements \SqlSemantics\Statement\Model\MySql\Role\SqlStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StartEntryForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm $simpleStatementOrBegin,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleStatementOrBegin), 'The simpleStatementOrBegin must be a generated immutable SQL value.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class SqlStatementWithSimpleStatementOrBeginEndOfInput_cc601372 implements
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $this->simpleStatementOrBegin->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleStatementOrBegin, preserving every other field.
+     */
+    public function withSimpleStatementOrBegin(\SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm $simpleStatementOrBegin): self
+    {
+        return new self($simpleStatementOrBegin);
     }
 }

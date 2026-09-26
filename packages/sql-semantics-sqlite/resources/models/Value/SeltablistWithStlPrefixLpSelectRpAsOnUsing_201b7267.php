@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SeltablistWithStlPrefixLpSelectRpAsOnUsing_201b7267 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SeltablistWithStlPrefixLpSelectRpAsOnUsing_201b7267 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SeltablistWithStlPrefixLpSelectRpAsOnUsing_201b7267 implements \SqlSemantics\Statement\Model\Sqlite\Role\SeltablistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SeltablistWithStlPrefixLpSelectRpAsOnUsing_201b7267 implements \SqlS
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm $onUsing,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($stlPrefix), 'The stlPrefix must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($select), 'The select must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($as), 'The as must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($onUsing), 'The onUsing must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +42,37 @@ final class SeltablistWithStlPrefixLpSelectRpAsOnUsing_201b7267 implements \SqlS
         $writer->append(')');
         $this->as->write($writer);
         $this->onUsing->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new stlPrefix, preserving every other field.
+     */
+    public function withStlPrefix(\SqlSemantics\Statement\Model\Sqlite\Role\StlPrefixForm $stlPrefix): self
+    {
+        return new self($stlPrefix, $this->select, $this->as, $this->onUsing);
+    }
+
+    /**
+     * Returns a copy with a new select, preserving every other field.
+     */
+    public function withSelect(\SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select): self
+    {
+        return new self($this->stlPrefix, $select, $this->as, $this->onUsing);
+    }
+
+    /**
+     * Returns a copy with a new as, preserving every other field.
+     */
+    public function withAs(\SqlSemantics\Statement\Model\Sqlite\Role\AsForm $as): self
+    {
+        return new self($this->stlPrefix, $this->select, $as, $this->onUsing);
+    }
+
+    /**
+     * Returns a copy with a new onUsing, preserving every other field.
+     */
+    public function withOnUsing(\SqlSemantics\Statement\Model\Sqlite\Role\OnUsingForm $onUsing): self
+    {
+        return new self($this->stlPrefix, $this->select, $this->as, $onUsing);
     }
 }

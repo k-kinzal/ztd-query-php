@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb1fd0c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb1fd0c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb1fd0c implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb1fd0c implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -24,6 +26,11 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IdlistOptForm $idlistOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($insertCmd), 'The insertCmd must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($xfullname), 'The xfullname must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($idlistOpt), 'The idlistOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($returning), 'The returning must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +46,45 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb
         $writer->append('DEFAULT');
         $writer->append('VALUES');
         $this->returning->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new with, preserving every other field.
+     */
+    public function withWith(\SqlSemantics\Statement\Model\Sqlite\Role\WithForm $with): self
+    {
+        return new self($with, $this->insertCmd, $this->xfullname, $this->idlistOpt, $this->returning);
+    }
+
+    /**
+     * Returns a copy with a new insertCmd, preserving every other field.
+     */
+    public function withInsertCmd(\SqlSemantics\Statement\Model\Sqlite\Role\InsertCmdForm $insertCmd): self
+    {
+        return new self($this->with, $insertCmd, $this->xfullname, $this->idlistOpt, $this->returning);
+    }
+
+    /**
+     * Returns a copy with a new xfullname, preserving every other field.
+     */
+    public function withXfullname(\SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm $xfullname): self
+    {
+        return new self($this->with, $this->insertCmd, $xfullname, $this->idlistOpt, $this->returning);
+    }
+
+    /**
+     * Returns a copy with a new idlistOpt, preserving every other field.
+     */
+    public function withIdlistOpt(\SqlSemantics\Statement\Model\Sqlite\Role\IdlistOptForm $idlistOpt): self
+    {
+        return new self($this->with, $this->insertCmd, $this->xfullname, $idlistOpt, $this->returning);
+    }
+
+    /**
+     * Returns a copy with a new returning, preserving every other field.
+     */
+    public function withReturning(\SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning): self
+    {
+        return new self($this->with, $this->insertCmd, $this->xfullname, $this->idlistOpt, $returning);
     }
 }

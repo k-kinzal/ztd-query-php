@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AdmPartitionWithPartitionSymAllOrAltPartNameList_9985e82c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AdmPartitionWithPartitionSymAllOrAltPartNameList_9985e82c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AdmPartitionWithPartitionSymAllOrAltPartNameList_9985e82c implements \SqlSemantics\Statement\Model\MySql\Role\AdmPartitionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($allOrAltPartNameList), 'The allOrAltPartNameList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class AdmPartitionWithPartitionSymAllOrAltPartNameList_9985e82c implements
         $writer->append('(');
         $this->allOrAltPartNameList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new allOrAltPartNameList, preserving every other field.
+     */
+    public function withAllOrAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList): self
+    {
+        return new self($allOrAltPartNameList);
     }
 }

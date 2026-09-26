@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushOptionWithPrivileges_6dea5816 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FlushOptionWithPrivileges_6dea5816 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FlushOptionWithPrivileges_6dea5816 implements \SqlSemantics\Statement\Model\MySql\Role\FlushOptionForm, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm

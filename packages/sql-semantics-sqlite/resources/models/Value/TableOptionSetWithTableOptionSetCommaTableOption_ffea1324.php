@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TableOptionSetWithTableOptionSetCommaTableOption_ffea1324 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TableOptionSetWithTableOptionSetCommaTableOption_ffea1324 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableOptionSetWithTableOptionSetCommaTableOption_ffea1324 implements \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableOptionSetWithTableOptionSetCommaTableOption_ffea1324 implements
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm $tableOptionSet,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TableOptionForm $tableOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($tableOptionSet), 'The tableOptionSet must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($tableOption), 'The tableOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class TableOptionSetWithTableOptionSetCommaTableOption_ffea1324 implements
         $this->tableOptionSet->write($writer);
         $writer->append(',');
         $this->tableOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableOptionSet, preserving every other field.
+     */
+    public function withTableOptionSet(\SqlSemantics\Statement\Model\Sqlite\Role\TableOptionSetForm $tableOptionSet): self
+    {
+        return new self($tableOptionSet, $this->tableOption);
+    }
+
+    /**
+     * Returns a copy with a new tableOption, preserving every other field.
+     */
+    public function withTableOption(\SqlSemantics\Statement\Model\Sqlite\Role\TableOptionForm $tableOption): self
+    {
+        return new self($this->tableOptionSet, $tableOption);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConnectOptionsWithWithConnectOptionList_c99c8af1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConnectOptionsWithWithConnectOptionList_c99c8af1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConnectOptionsWithWithConnectOptionList_c99c8af1 implements \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionListForm $connectOptionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($connectOptionList), 'The connectOptionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ConnectOptionsWithWithConnectOptionList_c99c8af1 implements \SqlSema
     {
         $writer->append('WITH');
         $this->connectOptionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new connectOptionList, preserving every other field.
+     */
+    public function withConnectOptionList(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionListForm $connectOptionList): self
+    {
+        return new self($connectOptionList);
     }
 }

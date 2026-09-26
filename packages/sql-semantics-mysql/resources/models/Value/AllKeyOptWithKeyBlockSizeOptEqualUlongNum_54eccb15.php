@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AllKeyOptWithKeyBlockSizeOptEqualUlongNum_54eccb15 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AllKeyOptWithKeyBlockSizeOptEqualUlongNum_54eccb15 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AllKeyOptWithKeyBlockSizeOptEqualUlongNum_54eccb15 implements \SqlSemantics\Statement\Model\MySql\Role\AllKeyOptForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\FulltextKeyOptsForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\NormalKeyOptsForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AllKeyOptWithKeyBlockSizeOptEqualUlongNum_54eccb15 implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AllKeyOptWithKeyBlockSizeOptEqualUlongNum_54eccb15 implements \SqlSe
         $writer->append('KEY_BLOCK_SIZE');
         $this->optEqual->write($writer);
         $this->ulongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($optEqual, $this->ulongNum);
+    }
+
+    /**
+     * Returns a copy with a new ulongNum, preserving every other field.
+     */
+    public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
+    {
+        return new self($this->optEqual, $ulongNum);
     }
 }

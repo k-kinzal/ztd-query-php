@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCreateVtabLpVtabarglistRp_f47fc34c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCreateVtabLpVtabarglistRp_f47fc34c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CmdWithCreateVtabLpVtabarglistRp_f47fc34c implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm
+final class CmdWithCreateVtabLpVtabarglistRp_f47fc34c implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CmdWithCreateVtabLpVtabarglistRp_f47fc34c implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CreateVtabForm $createVtab,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm $vtabarglist,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createVtab), 'The createVtab must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vtabarglist), 'The vtabarglist must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class CmdWithCreateVtabLpVtabarglistRp_f47fc34c implements \SqlSemantics\S
         $writer->append('(');
         $this->vtabarglist->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new createVtab, preserving every other field.
+     */
+    public function withCreateVtab(\SqlSemantics\Statement\Model\Sqlite\Role\CreateVtabForm $createVtab): self
+    {
+        return new self($createVtab, $this->vtabarglist);
+    }
+
+    /**
+     * Returns a copy with a new vtabarglist, preserving every other field.
+     */
+    public function withVtabarglist(\SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm $vtabarglist): self
+    {
+        return new self($this->createVtab, $vtabarglist);
     }
 }

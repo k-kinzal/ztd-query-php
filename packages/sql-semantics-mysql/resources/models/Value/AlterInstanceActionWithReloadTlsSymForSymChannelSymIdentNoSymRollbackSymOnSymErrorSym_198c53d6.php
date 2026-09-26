@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterInstanceActionWithReloadTlsSymForSymChannelSymIdentNoSymRollbackSymOnSymErrorSym_198c53d6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterInstanceActionWithReloadTlsSymForSymChannelSymIdentNoSymRollbackSymOnSymErrorSym_198c53d6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterInstanceActionWithReloadTlsSymForSymChannelSymIdentNoSymRollbackSymOnSymErrorSym_198c53d6 implements \SqlSemantics\Statement\Model\MySql\Role\AlterInstanceActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +39,13 @@ final class AlterInstanceActionWithReloadTlsSymForSymChannelSymIdentNoSymRollbac
         $writer->append('ROLLBACK');
         $writer->append('ON');
         $writer->append('ERROR');
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($ident);
     }
 }

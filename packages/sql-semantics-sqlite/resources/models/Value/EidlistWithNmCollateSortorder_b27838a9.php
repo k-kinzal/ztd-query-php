@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\EidlistWithNmCollateSortorder_b27838a9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\EidlistWithNmCollateSortorder_b27838a9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class EidlistWithNmCollateSortorder_b27838a9 implements \SqlSemantics\Statement\Model\Sqlite\Role\EidlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class EidlistWithNmCollateSortorder_b27838a9 implements \SqlSemantics\Stat
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CollateForm $collate,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm $sortorder,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($collate), 'The collate must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($sortorder), 'The sortorder must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class EidlistWithNmCollateSortorder_b27838a9 implements \SqlSemantics\Stat
         $this->nm->write($writer);
         $this->collate->write($writer);
         $this->sortorder->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm, $this->collate, $this->sortorder);
+    }
+
+    /**
+     * Returns a copy with a new collate, preserving every other field.
+     */
+    public function withCollate(\SqlSemantics\Statement\Model\Sqlite\Role\CollateForm $collate): self
+    {
+        return new self($this->nm, $collate, $this->sortorder);
+    }
+
+    /**
+     * Returns a copy with a new sortorder, preserving every other field.
+     */
+    public function withSortorder(\SqlSemantics\Statement\Model\Sqlite\Role\SortorderForm $sortorder): self
+    {
+        return new self($this->nm, $this->collate, $sortorder);
     }
 }

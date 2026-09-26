@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyListWithKeyListKeyPart_24a96f9f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\KeyListWithKeyListKeyPart_24a96f9f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class KeyListWithKeyListKeyPart_24a96f9f implements \SqlSemantics\Statement\Model\MySql\Role\KeyListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class KeyListWithKeyListKeyPart_24a96f9f implements \SqlSemantics\Statemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyPartForm $keyPart,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyList), 'The keyList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyPart), 'The keyPart must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class KeyListWithKeyListKeyPart_24a96f9f implements \SqlSemantics\Statemen
         $this->keyList->write($writer);
         $writer->append(',');
         $this->keyPart->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new keyList, preserving every other field.
+     */
+    public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
+    {
+        return new self($keyList, $this->keyPart);
+    }
+
+    /**
+     * Returns a copy with a new keyPart, preserving every other field.
+     */
+    public function withKeyPart(\SqlSemantics\Statement\Model\MySql\Role\KeyPartForm $keyPart): self
+    {
+        return new self($this->keyList, $keyPart);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonValueExprWithAExprJsonFormatClauseOpt_30d990d0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\JsonValueExprWithAExprJsonFormatClauseOpt_30d990d0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class JsonValueExprWithAExprJsonFormatClauseOpt_30d990d0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class JsonValueExprWithAExprJsonFormatClauseOpt_30d990d0 implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseOptForm $jsonFormatClauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonFormatClauseOpt), 'The jsonFormatClauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class JsonValueExprWithAExprJsonFormatClauseOpt_30d990d0 implements \SqlSe
     {
         $this->aExpr->write($writer);
         $this->jsonFormatClauseOpt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($aExpr, $this->jsonFormatClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonFormatClauseOpt, preserving every other field.
+     */
+    public function withJsonFormatClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonFormatClauseOptForm $jsonFormatClauseOpt): self
+    {
+        return new self($this->aExpr, $jsonFormatClauseOpt);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExpr_24b1361f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExpr_24b1361f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExpr_24b1361f implements \SqlSemantics\Statement\Model\PostgreSql\Role\PlAssignStmtForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PlassignEqualsForm $plassignEquals,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm $pLpgSqlExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($plassignTarget), 'The plassignTarget must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optIndirection), 'The optIndirection must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($plassignEquals), 'The plassignEquals must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($pLpgSqlExpr), 'The pLpgSqlExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class PlAssignStmtWithPlassignTargetOptIndirectionPlassignEqualsPLpgSqlExp
         $this->optIndirection->write($writer);
         $this->plassignEquals->write($writer);
         $this->pLpgSqlExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new plassignTarget, preserving every other field.
+     */
+    public function withPlassignTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\PlassignTargetForm $plassignTarget): self
+    {
+        return new self($plassignTarget, $this->optIndirection, $this->plassignEquals, $this->pLpgSqlExpr);
+    }
+
+    /**
+     * Returns a copy with a new optIndirection, preserving every other field.
+     */
+    public function withOptIndirection(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection): self
+    {
+        return new self($this->plassignTarget, $optIndirection, $this->plassignEquals, $this->pLpgSqlExpr);
+    }
+
+    /**
+     * Returns a copy with a new plassignEquals, preserving every other field.
+     */
+    public function withPlassignEquals(\SqlSemantics\Statement\Model\PostgreSql\Role\PlassignEqualsForm $plassignEquals): self
+    {
+        return new self($this->plassignTarget, $this->optIndirection, $plassignEquals, $this->pLpgSqlExpr);
+    }
+
+    /**
+     * Returns a copy with a new pLpgSqlExpr, preserving every other field.
+     */
+    public function withPLpgSqlExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\PLpgSqlExprForm $pLpgSqlExpr): self
+    {
+        return new self($this->plassignTarget, $this->optIndirection, $this->plassignEquals, $pLpgSqlExpr);
     }
 }

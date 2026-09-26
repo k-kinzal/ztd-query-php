@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithNumericTypeFloatOptionsFieldOptions_504c7d9c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TypeWithNumericTypeFloatOptionsFieldOptions_504c7d9c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeWithNumericTypeFloatOptionsFieldOptions_504c7d9c implements \SqlSemantics\Statement\Model\MySql\Role\TypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class TypeWithNumericTypeFloatOptionsFieldOptions_504c7d9c implements \Sql
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($numericType), 'The numericType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($floatOptions), 'The floatOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOptions), 'The fieldOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class TypeWithNumericTypeFloatOptionsFieldOptions_504c7d9c implements \Sql
         $this->numericType->write($writer);
         $this->floatOptions->write($writer);
         $this->fieldOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new numericType, preserving every other field.
+     */
+    public function withNumericType(\SqlSemantics\Statement\Model\MySql\Role\NumericTypeForm $numericType): self
+    {
+        return new self($numericType, $this->floatOptions, $this->fieldOptions);
+    }
+
+    /**
+     * Returns a copy with a new floatOptions, preserving every other field.
+     */
+    public function withFloatOptions(\SqlSemantics\Statement\Model\MySql\Role\FloatOptionsForm $floatOptions): self
+    {
+        return new self($this->numericType, $floatOptions, $this->fieldOptions);
+    }
+
+    /**
+     * Returns a copy with a new fieldOptions, preserving every other field.
+     */
+    public function withFieldOptions(\SqlSemantics\Statement\Model\MySql\Role\FieldOptionsForm $fieldOptions): self
+    {
+        return new self($this->numericType, $this->floatOptions, $fieldOptions);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptArrayBoundsWithOptArrayBounds_b73de0c0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptArrayBoundsWithOptArrayBounds_b73de0c0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptArrayBoundsWithOptArrayBounds_b73de0c0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptArrayBoundsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptArrayBoundsForm $optArrayBounds,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optArrayBounds), 'The optArrayBounds must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class OptArrayBoundsWithOptArrayBounds_b73de0c0 implements \SqlSemantics\S
         $this->optArrayBounds->write($writer);
         $writer->append('[');
         $writer->append(']');
+    }
+
+    /**
+     * Returns a copy with a new optArrayBounds, preserving every other field.
+     */
+    public function withOptArrayBounds(\SqlSemantics\Statement\Model\PostgreSql\Role\OptArrayBoundsForm $optArrayBounds): self
+    {
+        return new self($optArrayBounds);
     }
 }

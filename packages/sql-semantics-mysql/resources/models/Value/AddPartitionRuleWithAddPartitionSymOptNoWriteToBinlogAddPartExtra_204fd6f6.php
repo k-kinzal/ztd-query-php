@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AddPartitionRuleWithAddPartitionSymOptNoWriteToBinlogAddPartExtra_204fd6f6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AddPartitionRuleWithAddPartitionSymOptNoWriteToBinlogAddPartExtra_204fd6f6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AddPartitionRuleWithAddPartitionSymOptNoWriteToBinlogAddPartExtra_204fd6f6 implements \SqlSemantics\Statement\Model\MySql\Role\AddPartitionRuleForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\StandaloneAlterTableActionForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AddPartitionRuleWithAddPartitionSymOptNoWriteToBinlogAddPartExtra_20
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AddPartExtraForm $addPartExtra,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($addPartExtra), 'The addPartExtra must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class AddPartitionRuleWithAddPartitionSymOptNoWriteToBinlogAddPartExtra_20
         $writer->append('PARTITION');
         $this->optNoWriteToBinlog->write($writer);
         $this->addPartExtra->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optNoWriteToBinlog, preserving every other field.
+     */
+    public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
+    {
+        return new self($optNoWriteToBinlog, $this->addPartExtra);
+    }
+
+    /**
+     * Returns a copy with a new addPartExtra, preserving every other field.
+     */
+    public function withAddPartExtra(\SqlSemantics\Statement\Model\MySql\Role\AddPartExtraForm $addPartExtra): self
+    {
+        return new self($this->optNoWriteToBinlog, $addPartExtra);
     }
 }

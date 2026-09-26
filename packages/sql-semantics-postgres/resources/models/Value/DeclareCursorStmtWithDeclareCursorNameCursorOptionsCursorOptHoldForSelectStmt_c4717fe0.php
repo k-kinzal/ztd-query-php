@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DeclareCursorStmtWithDeclareCursorNameCursorOptionsCursorOptHoldForSelectStmt_c4717fe0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DeclareCursorStmtWithDeclareCursorNameCursorOptionsCursorOptHoldForSelectStmt_c4717fe0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DeclareCursorStmtWithDeclareCursorNameCursorOptionsCursorOptHoldForSelectStmt_c4717fe0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DeclareCursorStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class DeclareCursorStmtWithDeclareCursorNameCursorOptionsCursorOptHoldForSelectStmt_c4717fe0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DeclareCursorStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class DeclareCursorStmtWithDeclareCursorNameCursorOptionsCursorOptHoldForS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptHoldForm $optHold,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cursorName), 'The cursorName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cursorOptions), 'The cursorOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optHold), 'The optHold must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($selectStmt), 'The selectStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class DeclareCursorStmtWithDeclareCursorNameCursorOptionsCursorOptHoldForS
         $this->optHold->write($writer);
         $writer->append('FOR');
         $this->selectStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new cursorName, preserving every other field.
+     */
+    public function withCursorName(\SqlSemantics\Statement\Model\PostgreSql\Role\CursorNameForm $cursorName): self
+    {
+        return new self($cursorName, $this->cursorOptions, $this->optHold, $this->selectStmt);
+    }
+
+    /**
+     * Returns a copy with a new cursorOptions, preserving every other field.
+     */
+    public function withCursorOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CursorOptionsForm $cursorOptions): self
+    {
+        return new self($this->cursorName, $cursorOptions, $this->optHold, $this->selectStmt);
+    }
+
+    /**
+     * Returns a copy with a new optHold, preserving every other field.
+     */
+    public function withOptHold(\SqlSemantics\Statement\Model\PostgreSql\Role\OptHoldForm $optHold): self
+    {
+        return new self($this->cursorName, $this->cursorOptions, $optHold, $this->selectStmt);
+    }
+
+    /**
+     * Returns a copy with a new selectStmt, preserving every other field.
+     */
+    public function withSelectStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt): self
+    {
+        return new self($this->cursorName, $this->cursorOptions, $this->optHold, $selectStmt);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTypeStmtWithAlterTypePAnyNameSetOperatorDefList_2009c26c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterTypeStmtWithAlterTypePAnyNameSetOperatorDefList_2009c26c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class AlterTypeStmtWithAlterTypePAnyNameSetOperatorDefList_2009c26c implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTypeStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class AlterTypeStmtWithAlterTypePAnyNameSetOperatorDefList_2009c26c implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTypeStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterTypeStmtWithAlterTypePAnyNameSetOperatorDefList_2009c26c implem
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm $operatorDefList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorDefList), 'The operatorDefList must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +39,21 @@ final class AlterTypeStmtWithAlterTypePAnyNameSetOperatorDefList_2009c26c implem
         $writer->append('(');
         $this->operatorDefList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->operatorDefList);
+    }
+
+    /**
+     * Returns a copy with a new operatorDefList, preserving every other field.
+     */
+    public function withOperatorDefList(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefListForm $operatorDefList): self
+    {
+        return new self($this->anyName, $operatorDefList);
     }
 }

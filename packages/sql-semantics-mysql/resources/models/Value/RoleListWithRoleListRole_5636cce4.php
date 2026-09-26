@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleListWithRoleListRole_5636cce4 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RoleListWithRoleListRole_5636cce4 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RoleListWithRoleListRole_5636cce4 implements \SqlSemantics\Statement\Model\MySql\Role\RoleListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RoleListWithRoleListRole_5636cce4 implements \SqlSemantics\Statement
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleListForm $roleList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleForm $role,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleList), 'The roleList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($role), 'The role must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class RoleListWithRoleListRole_5636cce4 implements \SqlSemantics\Statement
         $this->roleList->write($writer);
         $writer->append(',');
         $this->role->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleList, preserving every other field.
+     */
+    public function withRoleList(\SqlSemantics\Statement\Model\MySql\Role\RoleListForm $roleList): self
+    {
+        return new self($roleList, $this->role);
+    }
+
+    /**
+     * Returns a copy with a new role, preserving every other field.
+     */
+    public function withRole(\SqlSemantics\Statement\Model\MySql\Role\RoleForm $role): self
+    {
+        return new self($this->roleList, $role);
     }
 }

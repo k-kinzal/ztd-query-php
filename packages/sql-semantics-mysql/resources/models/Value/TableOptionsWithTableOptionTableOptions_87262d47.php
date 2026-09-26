@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableOptionsWithTableOptionTableOptions_87262d47 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableOptionsWithTableOptionTableOptions_87262d47 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableOptionsWithTableOptionTableOptions_87262d47 implements \SqlSemantics\Statement\Model\MySql\Role\OptTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\TableOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TableOptionsWithTableOptionTableOptions_87262d47 implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableOptionForm $tableOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableOptionsForm $tableOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOption), 'The tableOption must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOptions), 'The tableOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TableOptionsWithTableOptionTableOptions_87262d47 implements \SqlSema
     {
         $this->tableOption->write($writer);
         $this->tableOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new tableOption, preserving every other field.
+     */
+    public function withTableOption(\SqlSemantics\Statement\Model\MySql\Role\TableOptionForm $tableOption): self
+    {
+        return new self($tableOption, $this->tableOptions);
+    }
+
+    /**
+     * Returns a copy with a new tableOptions, preserving every other field.
+     */
+    public function withTableOptions(\SqlSemantics\Statement\Model\MySql\Role\TableOptionsForm $tableOptions): self
+    {
+        return new self($this->tableOption, $tableOptions);
     }
 }

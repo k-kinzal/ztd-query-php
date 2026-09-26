@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartTypeDefWithOptLinearKeySymOptKeyAlgoPartFieldList_f9de8824 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\PartTypeDefWithOptLinearKeySymOptKeyAlgoPartFieldList_f9de8824 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class PartTypeDefWithOptLinearKeySymOptKeyAlgoPartFieldList_f9de8824 implements \SqlSemantics\Statement\Model\MySql\Role\PartTypeDefForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class PartTypeDefWithOptLinearKeySymOptKeyAlgoPartFieldList_f9de8824 imple
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptKeyAlgoForm $optKeyAlgo,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartFieldListForm $partFieldList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLinear), 'The optLinear must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyAlgo), 'The optKeyAlgo must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partFieldList), 'The partFieldList must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class PartTypeDefWithOptLinearKeySymOptKeyAlgoPartFieldList_f9de8824 imple
         $writer->append('(');
         $this->partFieldList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new optLinear, preserving every other field.
+     */
+    public function withOptLinear(\SqlSemantics\Statement\Model\MySql\Role\OptLinearForm $optLinear): self
+    {
+        return new self($optLinear, $this->optKeyAlgo, $this->partFieldList);
+    }
+
+    /**
+     * Returns a copy with a new optKeyAlgo, preserving every other field.
+     */
+    public function withOptKeyAlgo(\SqlSemantics\Statement\Model\MySql\Role\OptKeyAlgoForm $optKeyAlgo): self
+    {
+        return new self($this->optLinear, $optKeyAlgo, $this->partFieldList);
+    }
+
+    /**
+     * Returns a copy with a new partFieldList, preserving every other field.
+     */
+    public function withPartFieldList(\SqlSemantics\Statement\Model\MySql\Role\PartFieldListForm $partFieldList): self
+    {
+        return new self($this->optLinear, $this->optKeyAlgo, $partFieldList);
     }
 }

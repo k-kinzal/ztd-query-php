@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RowsfromItemWithFuncExprWindowlessOptColDefList_c600f142 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RowsfromItemWithFuncExprWindowlessOptColDefList_c600f142 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RowsfromItemWithFuncExprWindowlessOptColDefList_c600f142 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RowsfromListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RowsfromItemWithFuncExprWindowlessOptColDefList_c600f142 implements 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptColDefListForm $optColDefList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcExprWindowless), 'The funcExprWindowless must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColDefList), 'The optColDefList must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class RowsfromItemWithFuncExprWindowlessOptColDefList_c600f142 implements 
     {
         $this->funcExprWindowless->write($writer);
         $this->optColDefList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new funcExprWindowless, preserving every other field.
+     */
+    public function withFuncExprWindowless(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm $funcExprWindowless): self
+    {
+        return new self($funcExprWindowless, $this->optColDefList);
+    }
+
+    /**
+     * Returns a copy with a new optColDefList, preserving every other field.
+     */
+    public function withOptColDefList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColDefListForm $optColDefList): self
+    {
+        return new self($this->funcExprWindowless, $optColDefList);
     }
 }

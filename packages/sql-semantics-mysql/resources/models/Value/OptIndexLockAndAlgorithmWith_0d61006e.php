@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIndexLockAndAlgorithmWith_0d61006e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptIndexLockAndAlgorithmWith_0d61006e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptIndexLockAndAlgorithmWith_0d61006e implements \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAndAlgorithmForm

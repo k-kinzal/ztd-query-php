@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprCommonSubexprWithXmlserializeDocumentOrContentAExprAsSimpleTypenameXmlIndentOption_104389a6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprCommonSubexprWithXmlserializeDocumentOrContentAExprAsSimpleTypenameXmlIndentOption_104389a6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncExprCommonSubexprWithXmlserializeDocumentOrContentAExprAsSimpleTypenameXmlIndentOption_104389a6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprCommonSubexprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class FuncExprCommonSubexprWithXmlserializeDocumentOrContentAExprAsSimpleT
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm $simpleTypename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlIndentOptionForm $xmlIndentOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($documentOrContent), 'The documentOrContent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($simpleTypename), 'The simpleTypename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlIndentOption), 'The xmlIndentOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +44,37 @@ final class FuncExprCommonSubexprWithXmlserializeDocumentOrContentAExprAsSimpleT
         $this->simpleTypename->write($writer);
         $this->xmlIndentOption->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new documentOrContent, preserving every other field.
+     */
+    public function withDocumentOrContent(\SqlSemantics\Statement\Model\PostgreSql\Role\DocumentOrContentForm $documentOrContent): self
+    {
+        return new self($documentOrContent, $this->aExpr, $this->simpleTypename, $this->xmlIndentOption);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->documentOrContent, $aExpr, $this->simpleTypename, $this->xmlIndentOption);
+    }
+
+    /**
+     * Returns a copy with a new simpleTypename, preserving every other field.
+     */
+    public function withSimpleTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm $simpleTypename): self
+    {
+        return new self($this->documentOrContent, $this->aExpr, $simpleTypename, $this->xmlIndentOption);
+    }
+
+    /**
+     * Returns a copy with a new xmlIndentOption, preserving every other field.
+     */
+    public function withXmlIndentOption(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlIndentOptionForm $xmlIndentOption): self
+    {
+        return new self($this->documentOrContent, $this->aExpr, $this->simpleTypename, $xmlIndentOption);
     }
 }

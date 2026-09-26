@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BoolPriWithBoolPriCompOpAllOrAnySubselect_ff3558ec $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BoolPriWithBoolPriCompOpAllOrAnySubselect_ff3558ec $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BoolPriWithBoolPriCompOpAllOrAnySubselect_ff3558ec implements \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,11 @@ final class BoolPriWithBoolPriCompOpAllOrAnySubselect_ff3558ec implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AllOrAnyForm $allOrAny,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubselectForm $subselect,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($boolPri), 'The boolPri must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($boolPri, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,));
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($compOp), 'The compOp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($allOrAny), 'The allOrAny must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subselect), 'The subselect must be a generated immutable SQL value.');
     }
 
     /**
@@ -36,5 +43,37 @@ final class BoolPriWithBoolPriCompOpAllOrAnySubselect_ff3558ec implements \SqlSe
         $writer->append('(');
         $this->subselect->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new boolPri, preserving every other field.
+     */
+    public function withBoolPri(\SqlSemantics\Statement\Model\MySql\Role\BoolPriForm $boolPri): self
+    {
+        return new self($boolPri, $this->compOp, $this->allOrAny, $this->subselect);
+    }
+
+    /**
+     * Returns a copy with a new compOp, preserving every other field.
+     */
+    public function withCompOp(\SqlSemantics\Statement\Model\MySql\Role\CompOpForm $compOp): self
+    {
+        return new self($this->boolPri, $compOp, $this->allOrAny, $this->subselect);
+    }
+
+    /**
+     * Returns a copy with a new allOrAny, preserving every other field.
+     */
+    public function withAllOrAny(\SqlSemantics\Statement\Model\MySql\Role\AllOrAnyForm $allOrAny): self
+    {
+        return new self($this->boolPri, $this->compOp, $allOrAny, $this->subselect);
+    }
+
+    /**
+     * Returns a copy with a new subselect, preserving every other field.
+     */
+    public function withSubselect(\SqlSemantics\Statement\Model\MySql\Role\SubselectForm $subselect): self
+    {
+        return new self($this->boolPri, $this->compOp, $this->allOrAny, $subselect);
     }
 }

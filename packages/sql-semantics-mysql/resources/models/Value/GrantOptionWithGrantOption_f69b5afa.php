@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantOptionWithGrantOption_f69b5afa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\GrantOptionWithGrantOption_f69b5afa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class GrantOptionWithGrantOption_f69b5afa implements \SqlSemantics\Statement\Model\MySql\Role\GrantOptionForm, \SqlSemantics\Statement\Model\MySql\Role\GrantOptionListForm

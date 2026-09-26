@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithSourceConnectionAutoFailoverSymEqRealUlongNum_02e2ade5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SourceDefWithSourceConnectionAutoFailoverSymEqRealUlongNum_02e2ade5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SourceDefWithSourceConnectionAutoFailoverSymEqRealUlongNum_02e2ade5 implements \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm, \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlongNum), 'The realUlongNum must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class SourceDefWithSourceConnectionAutoFailoverSymEqRealUlongNum_02e2ade5 
         $writer->append('SOURCE_CONNECTION_AUTO_FAILOVER');
         $writer->append('=');
         $this->realUlongNum->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new realUlongNum, preserving every other field.
+     */
+    public function withRealUlongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum): self
+    {
+        return new self($realUlongNum);
     }
 }

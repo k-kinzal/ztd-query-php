@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefAclOptionListWithDefAclOptionListDefAclOption_801c52bb $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DefAclOptionListWithDefAclOptionListDefAclOption_801c52bb $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DefAclOptionListWithDefAclOptionListDefAclOption_801c52bb implements \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DefAclOptionListWithDefAclOptionListDefAclOption_801c52bb implements
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionListForm $defAclOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionForm $defAclOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defAclOptionList), 'The defAclOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defAclOption), 'The defAclOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class DefAclOptionListWithDefAclOptionListDefAclOption_801c52bb implements
     {
         $this->defAclOptionList->write($writer);
         $this->defAclOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new defAclOptionList, preserving every other field.
+     */
+    public function withDefAclOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionListForm $defAclOptionList): self
+    {
+        return new self($defAclOptionList, $this->defAclOption);
+    }
+
+    /**
+     * Returns a copy with a new defAclOption, preserving every other field.
+     */
+    public function withDefAclOption(\SqlSemantics\Statement\Model\PostgreSql\Role\DefAclOptionForm $defAclOption): self
+    {
+        return new self($this->defAclOptionList, $defAclOption);
     }
 }

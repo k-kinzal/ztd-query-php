@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsModifierListWithAlterCommandsModifierListAlterCommandsModifier_8d9186ab $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\AlterCommandsModifierListWithAlterCommandsModifierListAlterCommandsModifier_8d9186ab $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterCommandsModifierListWithAlterCommandsModifierListAlterCommandsModifier_8d9186ab implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterCommandsModifierListWithAlterCommandsModifierListAlterCommandsM
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierListForm $alterCommandsModifierList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierForm $alterCommandsModifier,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterCommandsModifierList), 'The alterCommandsModifierList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($alterCommandsModifier), 'The alterCommandsModifier must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AlterCommandsModifierListWithAlterCommandsModifierListAlterCommandsM
         $this->alterCommandsModifierList->write($writer);
         $writer->append(',');
         $this->alterCommandsModifier->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterCommandsModifierList, preserving every other field.
+     */
+    public function withAlterCommandsModifierList(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierListForm $alterCommandsModifierList): self
+    {
+        return new self($alterCommandsModifierList, $this->alterCommandsModifier);
+    }
+
+    /**
+     * Returns a copy with a new alterCommandsModifier, preserving every other field.
+     */
+    public function withAlterCommandsModifier(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandsModifierForm $alterCommandsModifier): self
+    {
+        return new self($this->alterCommandsModifierList, $alterCommandsModifier);
     }
 }

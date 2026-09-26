@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgExprWithParamNameColonEqualsAExpr_16937048 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncArgExprWithParamNameColonEqualsAExpr_16937048 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncArgExprWithParamNameColonEqualsAExpr_16937048 implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class FuncArgExprWithParamNameColonEqualsAExpr_16937048 implements \SqlSem
         public readonly string $colonEquals,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($paramName), 'The paramName must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($colonEquals, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['COLON_EQUALS'], 'The colonEquals must be a complete COLON_EQUALS lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class FuncArgExprWithParamNameColonEqualsAExpr_16937048 implements \SqlSem
         $this->paramName->write($writer);
         $writer->append($this->colonEquals);
         $this->aExpr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new paramName, preserving every other field.
+     */
+    public function withParamName(\SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm $paramName): self
+    {
+        return new self($paramName, $this->colonEquals, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new colonEquals, preserving every other field.
+     */
+    public function withColonEquals(string $colonEquals): self
+    {
+        return new self($this->paramName, $colonEquals, $this->aExpr);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->paramName, $this->colonEquals, $aExpr);
     }
 }

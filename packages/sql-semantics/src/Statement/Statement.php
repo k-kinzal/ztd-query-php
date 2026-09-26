@@ -18,11 +18,22 @@ namespace SqlSemantics\Statement;
  */
 final class Statement
 {
+    use Assertion;
+
     /**
      * Supplies the complete command value, independently of how it was built.
      */
-    public function __construct(public readonly Element $command)
+    public function __construct(public readonly Command $command)
     {
+        $this->assertImmutableValueGraph($command);
+    }
+
+    /**
+     * Returns a statement containing the replacement command, preserving this statement.
+     */
+    public function withCommand(Command $command): self
+    {
+        return new self($command);
     }
 
     /**
@@ -30,9 +41,6 @@ final class Statement
      */
     public function toString(): string
     {
-        $writer = new Writer();
-        $this->command->write($writer);
-
-        return $writer->toString();
+        return Writer::render($this->command);
     }
 }

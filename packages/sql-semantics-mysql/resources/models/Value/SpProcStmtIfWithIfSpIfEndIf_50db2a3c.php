@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpProcStmtIfWithIfSpIfEndIf_50db2a3c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpProcStmtIfWithIfSpIfEndIf_50db2a3c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpProcStmtIfWithIfSpIfEndIf_50db2a3c implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtIfForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpIfForm $spIf,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spIf), 'The spIf must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class SpProcStmtIfWithIfSpIfEndIf_50db2a3c implements \SqlSemantics\Statem
         $this->spIf->write($writer);
         $writer->append('END');
         $writer->append('IF');
+    }
+
+    /**
+     * Returns a copy with a new spIf, preserving every other field.
+     */
+    public function withSpIf(\SqlSemantics\Statement\Model\MySql\Role\SpIfForm $spIf): self
+    {
+        return new self($spIf);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IndexIncludingParamsWithIndexIncludingParamsIndexElem_64b353b7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\IndexIncludingParamsWithIndexIncludingParamsIndexElem_64b353b7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IndexIncludingParamsWithIndexIncludingParamsIndexElem_64b353b7 implements \SqlSemantics\Statement\Model\PostgreSql\Role\IndexIncludingParamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class IndexIncludingParamsWithIndexIncludingParamsIndexElem_64b353b7 imple
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexIncludingParamsForm $indexIncludingParams,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemForm $indexElem,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexIncludingParams), 'The indexIncludingParams must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexElem), 'The indexElem must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class IndexIncludingParamsWithIndexIncludingParamsIndexElem_64b353b7 imple
         $this->indexIncludingParams->write($writer);
         $writer->append(',');
         $this->indexElem->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new indexIncludingParams, preserving every other field.
+     */
+    public function withIndexIncludingParams(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexIncludingParamsForm $indexIncludingParams): self
+    {
+        return new self($indexIncludingParams, $this->indexElem);
+    }
+
+    /**
+     * Returns a copy with a new indexElem, preserving every other field.
+     */
+    public function withIndexElem(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemForm $indexElem): self
+    {
+        return new self($this->indexIncludingParams, $indexElem);
     }
 }

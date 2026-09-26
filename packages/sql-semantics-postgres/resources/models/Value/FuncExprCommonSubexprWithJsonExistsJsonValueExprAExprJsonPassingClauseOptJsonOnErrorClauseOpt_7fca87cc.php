@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprCommonSubexprWithJsonExistsJsonValueExprAExprJsonPassingClauseOptJsonOnErrorClauseOpt_7fca87cc $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprCommonSubexprWithJsonExistsJsonValueExprAExprJsonPassingClauseOptJsonOnErrorClauseOpt_7fca87cc $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncExprCommonSubexprWithJsonExistsJsonValueExprAExprJsonPassingClauseOptJsonOnErrorClauseOpt_7fca87cc implements \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprCommonSubexprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprWindowlessForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class FuncExprCommonSubexprWithJsonExistsJsonValueExprAExprJsonPassingClau
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm $jsonPassingClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonOnErrorClauseOptForm $jsonOnErrorClauseOpt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExpr), 'The jsonValueExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonPassingClauseOpt), 'The jsonPassingClauseOpt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonOnErrorClauseOpt), 'The jsonOnErrorClauseOpt must be a generated immutable SQL value.');
     }
 
     /**
@@ -38,5 +44,37 @@ final class FuncExprCommonSubexprWithJsonExistsJsonValueExprAExprJsonPassingClau
         $this->jsonPassingClauseOpt->write($writer);
         $this->jsonOnErrorClauseOpt->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new jsonValueExpr, preserving every other field.
+     */
+    public function withJsonValueExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprForm $jsonValueExpr): self
+    {
+        return new self($jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new aExpr, preserving every other field.
+     */
+    public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
+    {
+        return new self($this->jsonValueExpr, $aExpr, $this->jsonPassingClauseOpt, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonPassingClauseOpt, preserving every other field.
+     */
+    public function withJsonPassingClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonPassingClauseOptForm $jsonPassingClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $jsonPassingClauseOpt, $this->jsonOnErrorClauseOpt);
+    }
+
+    /**
+     * Returns a copy with a new jsonOnErrorClauseOpt, preserving every other field.
+     */
+    public function withJsonOnErrorClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonOnErrorClauseOptForm $jsonOnErrorClauseOpt): self
+    {
+        return new self($this->jsonValueExpr, $this->aExpr, $this->jsonPassingClauseOpt, $jsonOnErrorClauseOpt);
     }
 }

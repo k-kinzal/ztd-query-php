@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartTransactionOptionListWithStartTransactionOptionListStartTransactionOption_4e3f8832 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\StartTransactionOptionListWithStartTransactionOptionListStartTransactionOption_4e3f8832 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class StartTransactionOptionListWithStartTransactionOptionListStartTransactionOption_4e3f8832 implements \SqlSemantics\Statement\Model\MySql\Role\OptStartTransactionOptionListForm, \SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class StartTransactionOptionListWithStartTransactionOptionListStartTransac
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionListForm $startTransactionOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionForm $startTransactionOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($startTransactionOptionList), 'The startTransactionOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($startTransactionOption), 'The startTransactionOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class StartTransactionOptionListWithStartTransactionOptionListStartTransac
         $this->startTransactionOptionList->write($writer);
         $writer->append(',');
         $this->startTransactionOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new startTransactionOptionList, preserving every other field.
+     */
+    public function withStartTransactionOptionList(\SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionListForm $startTransactionOptionList): self
+    {
+        return new self($startTransactionOptionList, $this->startTransactionOption);
+    }
+
+    /**
+     * Returns a copy with a new startTransactionOption, preserving every other field.
+     */
+    public function withStartTransactionOption(\SqlSemantics\Statement\Model\MySql\Role\StartTransactionOptionForm $startTransactionOption): self
+    {
+        return new self($this->startTransactionOptionList, $startTransactionOption);
     }
 }

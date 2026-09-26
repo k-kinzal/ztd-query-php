@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FromClauseWithFromFromTables_b932a58c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FromClauseWithFromFromTables_b932a58c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FromClauseWithFromFromTables_b932a58c implements \SqlSemantics\Statement\Model\MySql\Role\FromClauseForm, \SqlSemantics\Statement\Model\MySql\Role\OptFromClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FromTablesForm $fromTables,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fromTables), 'The fromTables must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class FromClauseWithFromFromTables_b932a58c implements \SqlSemantics\State
     {
         $writer->append('FROM');
         $this->fromTables->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fromTables, preserving every other field.
+     */
+    public function withFromTables(\SqlSemantics\Statement\Model\MySql\Role\FromTablesForm $fromTables): self
+    {
+        return new self($fromTables);
     }
 }

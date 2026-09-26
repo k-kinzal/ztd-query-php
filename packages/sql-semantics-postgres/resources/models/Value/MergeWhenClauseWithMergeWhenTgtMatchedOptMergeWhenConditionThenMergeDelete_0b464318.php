@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMergeDelete_0b464318 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMergeDelete_0b464318 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMergeDelete_0b464318 implements \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenClauseForm, \SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMerge
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptMergeWhenConditionForm $optMergeWhenCondition,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\MergeDeleteForm $mergeDelete,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($mergeWhenTgtMatched), 'The mergeWhenTgtMatched must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optMergeWhenCondition), 'The optMergeWhenCondition must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($mergeDelete), 'The mergeDelete must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +38,29 @@ final class MergeWhenClauseWithMergeWhenTgtMatchedOptMergeWhenConditionThenMerge
         $this->optMergeWhenCondition->write($writer);
         $writer->append('THEN');
         $this->mergeDelete->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new mergeWhenTgtMatched, preserving every other field.
+     */
+    public function withMergeWhenTgtMatched(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeWhenTgtMatchedForm $mergeWhenTgtMatched): self
+    {
+        return new self($mergeWhenTgtMatched, $this->optMergeWhenCondition, $this->mergeDelete);
+    }
+
+    /**
+     * Returns a copy with a new optMergeWhenCondition, preserving every other field.
+     */
+    public function withOptMergeWhenCondition(\SqlSemantics\Statement\Model\PostgreSql\Role\OptMergeWhenConditionForm $optMergeWhenCondition): self
+    {
+        return new self($this->mergeWhenTgtMatched, $optMergeWhenCondition, $this->mergeDelete);
+    }
+
+    /**
+     * Returns a copy with a new mergeDelete, preserving every other field.
+     */
+    public function withMergeDelete(\SqlSemantics\Statement\Model\PostgreSql\Role\MergeDeleteForm $mergeDelete): self
+    {
+        return new self($this->mergeWhenTgtMatched, $this->optMergeWhenCondition, $mergeDelete);
     }
 }

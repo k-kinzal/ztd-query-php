@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SetRoleStmtWithSetSymDefaultSymRoleSymRoleListToSymRoleList_6df06ab1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SetRoleStmtWithSetSymDefaultSymRoleSymRoleListToSymRoleList_6df06ab1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SetRoleStmtWithSetSymDefaultSymRoleSymRoleListToSymRoleList_6df06ab1 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SetRoleStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class SetRoleStmtWithSetSymDefaultSymRoleSymRoleListToSymRoleList_6df06ab1 implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SetRoleStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SetRoleStmtWithSetSymDefaultSymRoleSymRoleListToSymRoleList_6df06ab1
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleListForm $roleList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleListForm $roleList2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleList), 'The roleList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleList2), 'The roleList2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +38,21 @@ final class SetRoleStmtWithSetSymDefaultSymRoleSymRoleListToSymRoleList_6df06ab1
         $this->roleList->write($writer);
         $writer->append('TO');
         $this->roleList2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new roleList, preserving every other field.
+     */
+    public function withRoleList(\SqlSemantics\Statement\Model\MySql\Role\RoleListForm $roleList): self
+    {
+        return new self($roleList, $this->roleList2);
+    }
+
+    /**
+     * Returns a copy with a new roleList2, preserving every other field.
+     */
+    public function withRoleList2(\SqlSemantics\Statement\Model\MySql\Role\RoleListForm $roleList2): self
+    {
+        return new self($this->roleList, $roleList2);
     }
 }

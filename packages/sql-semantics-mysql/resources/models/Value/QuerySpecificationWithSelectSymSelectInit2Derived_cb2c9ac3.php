@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QuerySpecificationWithSelectSymSelectInit2Derived_cb2c9ac3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QuerySpecificationWithSelectSymSelectInit2Derived_cb2c9ac3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class QuerySpecificationWithSelectSymSelectInit2Derived_cb2c9ac3 implements \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionBodyForm, \SqlSemantics\Statement\Model\MySql\Role\QueryPrimaryForm, \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm, \SqlSemantics\Statement\Model\MySql\Role\SubselectForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectInit2DerivedForm $selectInit2Derived,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectInit2Derived), 'The selectInit2Derived must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class QuerySpecificationWithSelectSymSelectInit2Derived_cb2c9ac3 implement
     {
         $writer->append('SELECT');
         $this->selectInit2Derived->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectInit2Derived, preserving every other field.
+     */
+    public function withSelectInit2Derived(\SqlSemantics\Statement\Model\MySql\Role\SelectInit2DerivedForm $selectInit2Derived): self
+    {
+        return new self($selectInit2Derived);
     }
 }

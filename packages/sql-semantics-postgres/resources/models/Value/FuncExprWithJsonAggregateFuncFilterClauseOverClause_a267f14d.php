@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d implements \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\BExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectFetchFirstValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d impleme
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FilterClauseForm $filterClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OverClauseForm $overClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonAggregateFunc), 'The jsonAggregateFunc must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($filterClause), 'The filterClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($overClause), 'The overClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class FuncExprWithJsonAggregateFuncFilterClauseOverClause_a267f14d impleme
         $this->jsonAggregateFunc->write($writer);
         $this->filterClause->write($writer);
         $this->overClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new jsonAggregateFunc, preserving every other field.
+     */
+    public function withJsonAggregateFunc(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonAggregateFuncForm $jsonAggregateFunc): self
+    {
+        return new self($jsonAggregateFunc, $this->filterClause, $this->overClause);
+    }
+
+    /**
+     * Returns a copy with a new filterClause, preserving every other field.
+     */
+    public function withFilterClause(\SqlSemantics\Statement\Model\PostgreSql\Role\FilterClauseForm $filterClause): self
+    {
+        return new self($this->jsonAggregateFunc, $filterClause, $this->overClause);
+    }
+
+    /**
+     * Returns a copy with a new overClause, preserving every other field.
+     */
+    public function withOverClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OverClauseForm $overClause): self
+    {
+        return new self($this->jsonAggregateFunc, $this->filterClause, $overClause);
     }
 }

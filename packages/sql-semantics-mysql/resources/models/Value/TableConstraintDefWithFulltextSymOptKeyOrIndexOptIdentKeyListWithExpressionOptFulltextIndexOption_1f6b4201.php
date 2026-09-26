@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExpressionOptFulltextIndexOption_1f6b4201 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExpressionOptFulltextIndexOption_1f6b4201 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExpressionOptFulltextIndexOption_1f6b4201 implements \SqlSemantics\Statement\Model\MySql\Role\TableConstraintDefForm, \SqlSemantics\Statement\Model\MySql\Role\TableElementForm, \SqlSemantics\Statement\Model\MySql\Role\TableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExp
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFulltextIndexOptionsForm $optFulltextIndexOptions,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optKeyOrIndex), 'The optKeyOrIndex must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyListWithExpression), 'The keyListWithExpression must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFulltextIndexOptions), 'The optFulltextIndexOptions must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class TableConstraintDefWithFulltextSymOptKeyOrIndexOptIdentKeyListWithExp
         $this->keyListWithExpression->write($writer);
         $writer->append(')');
         $this->optFulltextIndexOptions->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optKeyOrIndex, preserving every other field.
+     */
+    public function withOptKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\OptKeyOrIndexForm $optKeyOrIndex): self
+    {
+        return new self($optKeyOrIndex, $this->optIdent, $this->keyListWithExpression, $this->optFulltextIndexOptions);
+    }
+
+    /**
+     * Returns a copy with a new optIdent, preserving every other field.
+     */
+    public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
+    {
+        return new self($this->optKeyOrIndex, $optIdent, $this->keyListWithExpression, $this->optFulltextIndexOptions);
+    }
+
+    /**
+     * Returns a copy with a new keyListWithExpression, preserving every other field.
+     */
+    public function withKeyListWithExpression(\SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression): self
+    {
+        return new self($this->optKeyOrIndex, $this->optIdent, $keyListWithExpression, $this->optFulltextIndexOptions);
+    }
+
+    /**
+     * Returns a copy with a new optFulltextIndexOptions, preserving every other field.
+     */
+    public function withOptFulltextIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\OptFulltextIndexOptionsForm $optFulltextIndexOptions): self
+    {
+        return new self($this->optKeyOrIndex, $this->optIdent, $this->keyListWithExpression, $optFulltextIndexOptions);
     }
 }

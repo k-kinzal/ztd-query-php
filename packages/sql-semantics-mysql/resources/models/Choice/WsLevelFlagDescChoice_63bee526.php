@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\WsLevelFlagDescChoice_63bee526 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\WsLevelFlagDescChoice_63bee526 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum WsLevelFlagDescChoice_63bee526: string implements \SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagDescForm, \SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagsForm

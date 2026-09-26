@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptTempTableNameWithGlobalTemporaryOptTableQualifiedName_98533b8f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OptTempTableNameWithGlobalTemporaryOptTableQualifiedName_98533b8f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptTempTableNameWithGlobalTemporaryOptTableQualifiedName_98533b8f implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempTableNameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptTempTableNameWithGlobalTemporaryOptTableQualifiedName_98533b8f im
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableForm $optTable,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTable), 'The optTable must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class OptTempTableNameWithGlobalTemporaryOptTableQualifiedName_98533b8f im
         $writer->append('TEMPORARY');
         $this->optTable->write($writer);
         $this->qualifiedName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optTable, preserving every other field.
+     */
+    public function withOptTable(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableForm $optTable): self
+    {
+        return new self($optTable, $this->qualifiedName);
+    }
+
+    /**
+     * Returns a copy with a new qualifiedName, preserving every other field.
+     */
+    public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
+    {
+        return new self($this->optTable, $qualifiedName);
     }
 }

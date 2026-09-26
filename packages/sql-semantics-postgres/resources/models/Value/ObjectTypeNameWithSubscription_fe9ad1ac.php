@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ObjectTypeNameWithSubscription_fe9ad1ac $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ObjectTypeNameWithSubscription_fe9ad1ac $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ObjectTypeNameWithSubscription_fe9ad1ac implements \SqlSemantics\Statement\Model\PostgreSql\Role\ObjectTypeNameForm

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm
+final class SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a implements \SqlSemantics\Statement\Model\Sqlite\Role\CmdForm, \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm, \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a implemen
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\MultiselectOpForm $multiselectOp,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm $oneselect,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($selectnowith), 'The selectnowith must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($multiselectOp), 'The multiselectOp must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($oneselect), 'The oneselect must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class SelectnowithWithSelectnowithMultiselectOpOneselect_7000656a implemen
         $this->selectnowith->write($writer);
         $this->multiselectOp->write($writer);
         $this->oneselect->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new selectnowith, preserving every other field.
+     */
+    public function withSelectnowith(\SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm $selectnowith): self
+    {
+        return new self($selectnowith, $this->multiselectOp, $this->oneselect);
+    }
+
+    /**
+     * Returns a copy with a new multiselectOp, preserving every other field.
+     */
+    public function withMultiselectOp(\SqlSemantics\Statement\Model\Sqlite\Role\MultiselectOpForm $multiselectOp): self
+    {
+        return new self($this->selectnowith, $multiselectOp, $this->oneselect);
+    }
+
+    /**
+     * Returns a copy with a new oneselect, preserving every other field.
+     */
+    public function withOneselect(\SqlSemantics\Statement\Model\Sqlite\Role\OneselectForm $oneselect): self
+    {
+        return new self($this->selectnowith, $this->multiselectOp, $oneselect);
     }
 }

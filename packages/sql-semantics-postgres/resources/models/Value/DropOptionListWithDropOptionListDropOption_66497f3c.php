@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropOptionListWithDropOptionListDropOption_66497f3c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropOptionListWithDropOptionListDropOption_66497f3c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DropOptionListWithDropOptionListDropOption_66497f3c implements \SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class DropOptionListWithDropOptionListDropOption_66497f3c implements \SqlS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionListForm $dropOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionForm $dropOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($dropOptionList), 'The dropOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($dropOption), 'The dropOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class DropOptionListWithDropOptionListDropOption_66497f3c implements \SqlS
         $this->dropOptionList->write($writer);
         $writer->append(',');
         $this->dropOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new dropOptionList, preserving every other field.
+     */
+    public function withDropOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionListForm $dropOptionList): self
+    {
+        return new self($dropOptionList, $this->dropOption);
+    }
+
+    /**
+     * Returns a copy with a new dropOption, preserving every other field.
+     */
+    public function withDropOption(\SqlSemantics\Statement\Model\PostgreSql\Role\DropOptionForm $dropOption): self
+    {
+        return new self($this->dropOptionList, $dropOption);
     }
 }

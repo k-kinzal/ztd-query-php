@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ClusterStmtWithClusterOptVerbose_50c2ba15 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ClusterStmtWithClusterOptVerbose_50c2ba15 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class ClusterStmtWithClusterOptVerbose_50c2ba15 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ClusterStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class ClusterStmtWithClusterOptVerbose_50c2ba15 implements \SqlSemantics\Statement\Model\PostgreSql\Role\ClusterStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVerbose), 'The optVerbose must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ClusterStmtWithClusterOptVerbose_50c2ba15 implements \SqlSemantics\S
     {
         $writer->append('CLUSTER');
         $this->optVerbose->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optVerbose, preserving every other field.
+     */
+    public function withOptVerbose(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose): self
+    {
+        return new self($optVerbose);
     }
 }

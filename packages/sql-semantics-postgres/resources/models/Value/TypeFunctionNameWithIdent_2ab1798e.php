@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypeFunctionNameWithIdent_2ab1798e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\TypeFunctionNameWithIdent_2ab1798e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypeFunctionNameWithIdent_2ab1798e implements \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $name,
     ) {
+        $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['IDENT'], 'The name must be a complete IDENT lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class TypeFunctionNameWithIdent_2ab1798e implements \SqlSemantics\Statemen
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->name, true);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(string $name): self
+    {
+        return new self($name);
     }
 }

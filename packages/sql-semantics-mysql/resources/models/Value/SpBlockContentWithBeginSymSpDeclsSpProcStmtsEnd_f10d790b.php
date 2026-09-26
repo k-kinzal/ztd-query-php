@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpBlockContentWithBeginSymSpDeclsSpProcStmtsEnd_f10d790b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpBlockContentWithBeginSymSpDeclsSpProcStmtsEnd_f10d790b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpBlockContentWithBeginSymSpDeclsSpProcStmtsEnd_f10d790b implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SpBlockContentForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpUnlabeledBlockForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SpBlockContentWithBeginSymSpDeclsSpProcStmtsEnd_f10d790b implements 
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpDeclsForm $spDecls,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtsForm $spProcStmts,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spDecls), 'The spDecls must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmts), 'The spProcStmts must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class SpBlockContentWithBeginSymSpDeclsSpProcStmtsEnd_f10d790b implements 
         $this->spDecls->write($writer);
         $this->spProcStmts->write($writer);
         $writer->append('END');
+    }
+
+    /**
+     * Returns a copy with a new spDecls, preserving every other field.
+     */
+    public function withSpDecls(\SqlSemantics\Statement\Model\MySql\Role\SpDeclsForm $spDecls): self
+    {
+        return new self($spDecls, $this->spProcStmts);
+    }
+
+    /**
+     * Returns a copy with a new spProcStmts, preserving every other field.
+     */
+    public function withSpProcStmts(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtsForm $spProcStmts): self
+    {
+        return new self($this->spDecls, $spProcStmts);
     }
 }

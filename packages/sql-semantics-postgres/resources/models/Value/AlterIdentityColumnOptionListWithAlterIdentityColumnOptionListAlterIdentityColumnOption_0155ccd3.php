@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterIdentityColumnOptionListWithAlterIdentityColumnOptionListAlterIdentityColumnOption_0155ccd3 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AlterIdentityColumnOptionListWithAlterIdentityColumnOptionListAlterIdentityColumnOption_0155ccd3 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AlterIdentityColumnOptionListWithAlterIdentityColumnOptionListAlterIdentityColumnOption_0155ccd3 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AlterIdentityColumnOptionListWithAlterIdentityColumnOptionListAlterI
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm $alterIdentityColumnOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionForm $alterIdentityColumnOption,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterIdentityColumnOptionList), 'The alterIdentityColumnOptionList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterIdentityColumnOption), 'The alterIdentityColumnOption must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class AlterIdentityColumnOptionListWithAlterIdentityColumnOptionListAlterI
     {
         $this->alterIdentityColumnOptionList->write($writer);
         $this->alterIdentityColumnOption->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new alterIdentityColumnOptionList, preserving every other field.
+     */
+    public function withAlterIdentityColumnOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionListForm $alterIdentityColumnOptionList): self
+    {
+        return new self($alterIdentityColumnOptionList, $this->alterIdentityColumnOption);
+    }
+
+    /**
+     * Returns a copy with a new alterIdentityColumnOption, preserving every other field.
+     */
+    public function withAlterIdentityColumnOption(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterIdentityColumnOptionForm $alterIdentityColumnOption): self
+    {
+        return new self($this->alterIdentityColumnOptionList, $alterIdentityColumnOption);
     }
 }

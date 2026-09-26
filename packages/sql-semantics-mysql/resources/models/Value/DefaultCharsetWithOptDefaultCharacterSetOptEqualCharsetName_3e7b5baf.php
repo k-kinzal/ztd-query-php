@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DefaultCharsetWithOptDefaultCharacterSetOptEqualCharsetName_3e7b5baf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\DefaultCharsetWithOptDefaultCharacterSetOptEqualCharsetName_3e7b5baf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class DefaultCharsetWithOptDefaultCharacterSetOptEqualCharsetName_3e7b5baf implements \SqlSemantics\Statement\Model\MySql\Role\AlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionForm, \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListForm, \SqlSemantics\Statement\Model\MySql\Role\AlterListItemForm, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionForm, \SqlSemantics\Statement\Model\MySql\Role\CreateDatabaseOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsSpaceSeparatedForm, \SqlSemantics\Statement\Model\MySql\Role\DefaultCharsetForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterCommandListForm, \SqlSemantics\Statement\Model\MySql\Role\OptAlterTableActionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateDatabaseOptionsForm, \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class DefaultCharsetWithOptDefaultCharacterSetOptEqualCharsetName_3e7b5baf
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDefault), 'The optDefault must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($characterSet), 'The characterSet must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetName), 'The charsetName must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class DefaultCharsetWithOptDefaultCharacterSetOptEqualCharsetName_3e7b5baf
         $this->characterSet->write($writer);
         $this->optEqual->write($writer);
         $this->charsetName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optDefault, preserving every other field.
+     */
+    public function withOptDefault(\SqlSemantics\Statement\Model\MySql\Role\OptDefaultForm $optDefault): self
+    {
+        return new self($optDefault, $this->characterSet, $this->optEqual, $this->charsetName);
+    }
+
+    /**
+     * Returns a copy with a new characterSet, preserving every other field.
+     */
+    public function withCharacterSet(\SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet): self
+    {
+        return new self($this->optDefault, $characterSet, $this->optEqual, $this->charsetName);
+    }
+
+    /**
+     * Returns a copy with a new optEqual, preserving every other field.
+     */
+    public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
+    {
+        return new self($this->optDefault, $this->characterSet, $optEqual, $this->charsetName);
+    }
+
+    /**
+     * Returns a copy with a new charsetName, preserving every other field.
+     */
+    public function withCharsetName(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName): self
+    {
+        return new self($this->optDefault, $this->characterSet, $this->optEqual, $charsetName);
     }
 }

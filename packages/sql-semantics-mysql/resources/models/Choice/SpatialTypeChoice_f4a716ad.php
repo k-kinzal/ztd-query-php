@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Choice;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\SpatialTypeChoice_f4a716ad $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Choice\SpatialTypeChoice_f4a716ad $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 enum SpatialTypeChoice_f4a716ad: string implements \SqlSemantics\Statement\Model\MySql\Role\SpatialTypeForm, \SqlSemantics\Statement\Model\MySql\Role\TypeForm

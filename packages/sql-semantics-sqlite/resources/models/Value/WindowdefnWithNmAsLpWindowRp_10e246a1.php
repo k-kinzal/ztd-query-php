@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowdefnWithNmAsLpWindowRp_10e246a1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\WindowdefnWithNmAsLpWindowRp_10e246a1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowdefnWithNmAsLpWindowRp_10e246a1 implements \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnForm, \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class WindowdefnWithNmAsLpWindowRp_10e246a1 implements \SqlSemantics\State
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WindowForm $window,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($window), 'The window must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class WindowdefnWithNmAsLpWindowRp_10e246a1 implements \SqlSemantics\State
         $writer->append('(');
         $this->window->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($nm, $this->window);
+    }
+
+    /**
+     * Returns a copy with a new window, preserving every other field.
+     */
+    public function withWindow(\SqlSemantics\Statement\Model\Sqlite\Role\WindowForm $window): self
+    {
+        return new self($this->nm, $window);
     }
 }

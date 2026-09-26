@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleExprWithSimpleExprOrOrSymSimpleExpr_5df05b72 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SimpleExprWithSimpleExprOrOrSymSimpleExpr_5df05b72 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SimpleExprWithSimpleExprOrOrSymSimpleExpr_5df05b72 implements \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,10 @@ final class SimpleExprWithSimpleExprOrOrSymSimpleExpr_5df05b72 implements \SqlSe
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr), 'The simpleExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($simpleExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 4,  'mysql-5.7.44' => 5,  'mysql-8.0.44' => 21,  'mysql-8.1.0' => 21,  'mysql-8.2.0' => 21,  'mysql-8.3.0' => 21,  'mysql-8.4.7' => 21,  'mysql-9.0.1' => 21,  'mysql-9.1.0' => 21,));
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleExpr2), 'The simpleExpr2 must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($simpleExpr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 5,  'mysql-5.7.44' => 6,  'mysql-8.0.44' => 22,  'mysql-8.1.0' => 22,  'mysql-8.2.0' => 22,  'mysql-8.3.0' => 22,  'mysql-8.4.7' => 22,  'mysql-9.0.1' => 22,  'mysql-9.1.0' => 22,));
     }
 
     /**
@@ -31,5 +37,21 @@ final class SimpleExprWithSimpleExprOrOrSymSimpleExpr_5df05b72 implements \SqlSe
         $this->simpleExpr->write($writer);
         $writer->append('||');
         $this->simpleExpr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleExpr, preserving every other field.
+     */
+    public function withSimpleExpr(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr): self
+    {
+        return new self($simpleExpr, $this->simpleExpr2);
+    }
+
+    /**
+     * Returns a copy with a new simpleExpr2, preserving every other field.
+     */
+    public function withSimpleExpr2(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr2): self
+    {
+        return new self($this->simpleExpr, $simpleExpr2);
     }
 }

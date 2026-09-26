@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryWithVerbClauseOptEndOfInput_d35b69bf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\QueryWithVerbClauseOptEndOfInput_d35b69bf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class QueryWithVerbClauseOptEndOfInput_d35b69bf implements \SqlSemantics\Statement\Model\MySql\Role\QueryForm
+final class QueryWithVerbClauseOptEndOfInput_d35b69bf implements \SqlSemantics\Statement\Model\MySql\Role\QueryForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class QueryWithVerbClauseOptEndOfInput_d35b69bf implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm $verbClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEndOfInputForm $optEndOfInput,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($verbClause), 'The verbClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEndOfInput), 'The optEndOfInput must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class QueryWithVerbClauseOptEndOfInput_d35b69bf implements \SqlSemantics\S
         $this->verbClause->write($writer);
         $writer->append(';');
         $this->optEndOfInput->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new verbClause, preserving every other field.
+     */
+    public function withVerbClause(\SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm $verbClause): self
+    {
+        return new self($verbClause, $this->optEndOfInput);
+    }
+
+    /**
+     * Returns a copy with a new optEndOfInput, preserving every other field.
+     */
+    public function withOptEndOfInput(\SqlSemantics\Statement\Model\MySql\Role\OptEndOfInputForm $optEndOfInput): self
+    {
+        return new self($this->verbClause, $optEndOfInput);
     }
 }

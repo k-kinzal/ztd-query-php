@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BitExprWithBitExprBitExpr_b9da6182 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\BitExprWithBitExprBitExpr_b9da6182 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class BitExprWithBitExprBitExpr_b9da6182 implements \SqlSemantics\Statement\Model\MySql\Role\BitExprForm, \SqlSemantics\Statement\Model\MySql\Role\BoolPriForm, \SqlSemantics\Statement\Model\MySql\Role\ExprForm, \SqlSemantics\Statement\Model\MySql\Role\ExprListForm, \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\GeneratedColumnFuncForm, \SqlSemantics\Statement\Model\MySql\Role\GroupListForm, \SqlSemantics\Statement\Model\MySql\Role\GroupingExprForm, \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprForm, \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm, \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\OptValuesForm, \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm, \SqlSemantics\Statement\Model\MySql\Role\PartFuncMaxForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueExprItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueItemListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValueListForm, \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm, \SqlSemantics\Statement\Model\MySql\Role\PredicateForm, \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\ValuesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,10 @@ final class BitExprWithBitExprBitExpr_b9da6182 implements \SqlSemantics\Statemen
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 13,  'mysql-5.7.44' => 14,  'mysql-8.0.44' => 19,  'mysql-8.1.0' => 19,  'mysql-8.2.0' => 19,  'mysql-8.3.0' => 19,  'mysql-8.4.7' => 19,  'mysql-9.0.1' => 19,  'mysql-9.1.0' => 19,));
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr2), 'The bitExpr2 must be a generated immutable SQL value.');
+        $this->assertOperandBindingStrength($bitExpr2, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 14,  'mysql-5.7.44' => 15,  'mysql-8.0.44' => 20,  'mysql-8.1.0' => 20,  'mysql-8.2.0' => 20,  'mysql-8.3.0' => 20,  'mysql-8.4.7' => 20,  'mysql-9.0.1' => 20,  'mysql-9.1.0' => 20,));
     }
 
     /**
@@ -31,5 +37,21 @@ final class BitExprWithBitExprBitExpr_b9da6182 implements \SqlSemantics\Statemen
         $this->bitExpr->write($writer);
         $writer->append('*');
         $this->bitExpr2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new bitExpr, preserving every other field.
+     */
+    public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
+    {
+        return new self($bitExpr, $this->bitExpr2);
+    }
+
+    /**
+     * Returns a copy with a new bitExpr2, preserving every other field.
+     */
+    public function withBitExpr2(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr2): self
+    {
+        return new self($this->bitExpr, $bitExpr2);
     }
 }

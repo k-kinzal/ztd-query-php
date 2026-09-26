@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptTablesampleClauseWithTablesampleSymSamplingMethodSamplingPercentage_1f57f24b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptTablesampleClauseWithTablesampleSymSamplingMethodSamplingPercentage_1f57f24b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptTablesampleClauseWithTablesampleSymSamplingMethodSamplingPercentage_1f57f24b implements \SqlSemantics\Statement\Model\MySql\Role\OptTablesampleClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptTablesampleClauseWithTablesampleSymSamplingMethodSamplingPercenta
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SamplingMethodForm $samplingMethod,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SamplingPercentageForm $samplingPercentage,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($samplingMethod), 'The samplingMethod must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($samplingPercentage), 'The samplingPercentage must be a generated immutable SQL value.');
     }
 
     /**
@@ -33,5 +37,21 @@ final class OptTablesampleClauseWithTablesampleSymSamplingMethodSamplingPercenta
         $writer->append('(');
         $this->samplingPercentage->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new samplingMethod, preserving every other field.
+     */
+    public function withSamplingMethod(\SqlSemantics\Statement\Model\MySql\Role\SamplingMethodForm $samplingMethod): self
+    {
+        return new self($samplingMethod, $this->samplingPercentage);
+    }
+
+    /**
+     * Returns a copy with a new samplingPercentage, preserving every other field.
+     */
+    public function withSamplingPercentage(\SqlSemantics\Statement\Model\MySql\Role\SamplingPercentageForm $samplingPercentage): self
+    {
+        return new self($this->samplingMethod, $samplingPercentage);
     }
 }

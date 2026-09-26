@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CommonTableExprWithNameOptNameListAsOptMaterializedPreparableStmtOptSearchClauseOptCycleClause_f300dca6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CommonTableExprWithNameOptNameListAsOptMaterializedPreparableStmtOptSearchClauseOptCycleClause_f300dca6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CommonTableExprWithNameOptNameListAsOptMaterializedPreparableStmtOptSearchClauseOptCycleClause_f300dca6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CommonTableExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CteListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -25,6 +27,12 @@ final class CommonTableExprWithNameOptNameListAsOptMaterializedPreparableStmtOpt
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSearchClauseForm $optSearchClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCycleClauseForm $optCycleClause,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNameList), 'The optNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optMaterialized), 'The optMaterialized must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($preparableStmt), 'The preparableStmt must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSearchClause), 'The optSearchClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCycleClause), 'The optCycleClause must be a generated immutable SQL value.');
     }
 
     /**
@@ -41,5 +49,53 @@ final class CommonTableExprWithNameOptNameListAsOptMaterializedPreparableStmtOpt
         $writer->append(')');
         $this->optSearchClause->write($writer);
         $this->optCycleClause->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new name, preserving every other field.
+     */
+    public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
+    {
+        return new self($name, $this->optNameList, $this->optMaterialized, $this->preparableStmt, $this->optSearchClause, $this->optCycleClause);
+    }
+
+    /**
+     * Returns a copy with a new optNameList, preserving every other field.
+     */
+    public function withOptNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm $optNameList): self
+    {
+        return new self($this->name, $optNameList, $this->optMaterialized, $this->preparableStmt, $this->optSearchClause, $this->optCycleClause);
+    }
+
+    /**
+     * Returns a copy with a new optMaterialized, preserving every other field.
+     */
+    public function withOptMaterialized(\SqlSemantics\Statement\Model\PostgreSql\Role\OptMaterializedForm $optMaterialized): self
+    {
+        return new self($this->name, $this->optNameList, $optMaterialized, $this->preparableStmt, $this->optSearchClause, $this->optCycleClause);
+    }
+
+    /**
+     * Returns a copy with a new preparableStmt, preserving every other field.
+     */
+    public function withPreparableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm $preparableStmt): self
+    {
+        return new self($this->name, $this->optNameList, $this->optMaterialized, $preparableStmt, $this->optSearchClause, $this->optCycleClause);
+    }
+
+    /**
+     * Returns a copy with a new optSearchClause, preserving every other field.
+     */
+    public function withOptSearchClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSearchClauseForm $optSearchClause): self
+    {
+        return new self($this->name, $this->optNameList, $this->optMaterialized, $this->preparableStmt, $optSearchClause, $this->optCycleClause);
+    }
+
+    /**
+     * Returns a copy with a new optCycleClause, preserving every other field.
+     */
+    public function withOptCycleClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCycleClauseForm $optCycleClause): self
+    {
+        return new self($this->name, $this->optNameList, $this->optMaterialized, $this->preparableStmt, $this->optSearchClause, $optCycleClause);
     }
 }

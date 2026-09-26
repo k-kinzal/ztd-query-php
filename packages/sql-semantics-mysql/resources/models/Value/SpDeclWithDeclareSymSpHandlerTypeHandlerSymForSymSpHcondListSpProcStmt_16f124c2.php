@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpDeclWithDeclareSymSpHandlerTypeHandlerSymForSymSpHcondListSpProcStmt_16f124c2 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpDeclWithDeclareSymSpHandlerTypeHandlerSymForSymSpHcondListSpProcStmt_16f124c2 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpDeclWithDeclareSymSpHandlerTypeHandlerSymForSymSpHcondListSpProcStmt_16f124c2 implements \SqlSemantics\Statement\Model\MySql\Role\SpDeclForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class SpDeclWithDeclareSymSpHandlerTypeHandlerSymForSymSpHcondListSpProcSt
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm $spHcondList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spHandlerType), 'The spHandlerType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spHcondList), 'The spHcondList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmt), 'The spProcStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -35,5 +40,29 @@ final class SpDeclWithDeclareSymSpHandlerTypeHandlerSymForSymSpHcondListSpProcSt
         $writer->append('FOR');
         $this->spHcondList->write($writer);
         $this->spProcStmt->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spHandlerType, preserving every other field.
+     */
+    public function withSpHandlerType(\SqlSemantics\Statement\Model\MySql\Role\SpHandlerTypeForm $spHandlerType): self
+    {
+        return new self($spHandlerType, $this->spHcondList, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spHcondList, preserving every other field.
+     */
+    public function withSpHcondList(\SqlSemantics\Statement\Model\MySql\Role\SpHcondListForm $spHcondList): self
+    {
+        return new self($this->spHandlerType, $spHcondList, $this->spProcStmt);
+    }
+
+    /**
+     * Returns a copy with a new spProcStmt, preserving every other field.
+     */
+    public function withSpProcStmt(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm $spProcStmt): self
+    {
+        return new self($this->spHandlerType, $this->spHcondList, $spProcStmt);
     }
 }

@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldTermWithEscapedByTextString_e321c03d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\FieldTermWithEscapedByTextString_e321c03d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class FieldTermWithEscapedByTextString_e321c03d implements \SqlSemantics\Statement\Model\MySql\Role\FieldTermForm, \SqlSemantics\Statement\Model\MySql\Role\FieldTermListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textString), 'The textString must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +33,13 @@ final class FieldTermWithEscapedByTextString_e321c03d implements \SqlSemantics\S
         $writer->append('ESCAPED');
         $writer->append('BY');
         $this->textString->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new textString, preserving every other field.
+     */
+    public function withTextString(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString): self
+    {
+        return new self($textString);
     }
 }

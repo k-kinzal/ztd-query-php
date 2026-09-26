@@ -23,6 +23,24 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class WriterTest extends TestCase
 {
+    public function testRenderPreservesOperandGroupingAfterAnImmutableUpdate(): void
+    {
+        $one = new \SqlSemantics\Statement\Model\Sqlite\Value\TermWithInteger_298801b2('1');
+        $two = new \SqlSemantics\Statement\Model\Sqlite\Value\TermWithInteger_298801b2('2');
+        $three = new \SqlSemantics\Statement\Model\Sqlite\Value\TermWithInteger_298801b2('3');
+        $sum = new \SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprPlusMinusExpr_82e360dc($one, '+', $two);
+        $original = new \SqlSemantics\Statement\Model\Sqlite\Value\ExprWithExprStarSlashRemExpr_6ca99fe8($one, '*', $three);
+        $updated = $original->withExpr(new \SqlSemantics\Statement\Model\Sqlite\Value\ExprWithLpExprRp_ad646753($sum));
+        self::assertSame('1 * 3', \SqlSemantics\Statement\Writer::render($original));
+        self::assertSame('( 1 + 2 ) * 3', \SqlSemantics\Statement\Writer::render($updated));
+    }
+
+    public function testRenderWritesAFragmentWithoutTreatingItAsACompleteCommand(): void
+    {
+        $value = new \SqlSemantics\Statement\Model\Sqlite\Value\TermWithInteger_298801b2('42');
+        self::assertSame('42', \SqlSemantics\Statement\Writer::render($value));
+    }
+
     public function testAppendKeepsIdentifierAndKeywordDotBoundaries(): void
     {
         $identifier = new \SqlSemantics\Statement\Writer();

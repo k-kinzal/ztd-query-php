@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior_0ae8f1be $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior_0ae8f1be $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior_0ae8f1be implements \SqlSemantics\Statement\Model\PostgreSql\Role\DropCastStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior_0ae8f1be implements \SqlSemantics\Statement\Model\PostgreSql\Role\DropCastStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename2,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optIfExists), 'The optIfExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename2), 'The typename2 must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
     }
 
     /**
@@ -39,5 +45,37 @@ final class DropCastStmtWithDropCastOptIfExistsTypenameAsTypenameOptDropBehavior
         $this->typename2->write($writer);
         $writer->append(')');
         $this->optDropBehavior->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optIfExists, preserving every other field.
+     */
+    public function withOptIfExists(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIfExistsForm $optIfExists): self
+    {
+        return new self($optIfExists, $this->typename, $this->typename2, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
+    {
+        return new self($this->optIfExists, $typename, $this->typename2, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new typename2, preserving every other field.
+     */
+    public function withTypename2(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename2): self
+    {
+        return new self($this->optIfExists, $this->typename, $typename2, $this->optDropBehavior);
+    }
+
+    /**
+     * Returns a copy with a new optDropBehavior, preserving every other field.
+     */
+    public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
+    {
+        return new self($this->optIfExists, $this->typename, $this->typename2, $optDropBehavior);
     }
 }

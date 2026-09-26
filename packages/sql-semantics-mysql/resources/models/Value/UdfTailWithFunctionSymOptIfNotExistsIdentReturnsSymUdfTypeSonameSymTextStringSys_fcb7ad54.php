@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UdfTailWithFunctionSymOptIfNotExistsIdentReturnsSymUdfTypeSonameSymTextStringSys_fcb7ad54 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\UdfTailWithFunctionSymOptIfNotExistsIdentReturnsSymUdfTypeSonameSymTextStringSys_fcb7ad54 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class UdfTailWithFunctionSymOptIfNotExistsIdentReturnsSymUdfTypeSonameSymTextStringSys_fcb7ad54 implements \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm, \SqlSemantics\Statement\Model\MySql\Role\UdfTailForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class UdfTailWithFunctionSymOptIfNotExistsIdentReturnsSymUdfTypeSonameSymT
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UdfTypeForm $udfType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($udfType), 'The udfType must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringSys), 'The textStringSys must be a generated immutable SQL value.');
     }
 
     /**
@@ -37,5 +43,37 @@ final class UdfTailWithFunctionSymOptIfNotExistsIdentReturnsSymUdfTypeSonameSymT
         $this->udfType->write($writer);
         $writer->append('SONAME');
         $this->textStringSys->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optIfNotExists, preserving every other field.
+     */
+    public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
+    {
+        return new self($optIfNotExists, $this->ident, $this->udfType, $this->textStringSys);
+    }
+
+    /**
+     * Returns a copy with a new ident, preserving every other field.
+     */
+    public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
+    {
+        return new self($this->optIfNotExists, $ident, $this->udfType, $this->textStringSys);
+    }
+
+    /**
+     * Returns a copy with a new udfType, preserving every other field.
+     */
+    public function withUdfType(\SqlSemantics\Statement\Model\MySql\Role\UdfTypeForm $udfType): self
+    {
+        return new self($this->optIfNotExists, $this->ident, $udfType, $this->textStringSys);
+    }
+
+    /**
+     * Returns a copy with a new textStringSys, preserving every other field.
+     */
+    public function withTextStringSys(\SqlSemantics\Statement\Model\MySql\Role\TextStringSysForm $textStringSys): self
+    {
+        return new self($this->optIfNotExists, $this->ident, $this->udfType, $textStringSys);
     }
 }

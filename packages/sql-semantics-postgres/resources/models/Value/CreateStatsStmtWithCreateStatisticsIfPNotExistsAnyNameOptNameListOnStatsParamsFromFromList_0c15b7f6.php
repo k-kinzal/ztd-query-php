@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnStatsParamsFromFromList_0c15b7f6 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnStatsParamsFromFromList_0c15b7f6 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnStatsParamsFromFromList_0c15b7f6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateStatsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnStatsParamsFromFromList_0c15b7f6 implements \SqlSemantics\Statement\Model\PostgreSql\Role\CreateStatsStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnS
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNameList), 'The optNameList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($statsParams), 'The statsParams must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($fromList), 'The fromList must be a generated immutable SQL value.');
     }
 
     /**
@@ -41,5 +47,37 @@ final class CreateStatsStmtWithCreateStatisticsIfPNotExistsAnyNameOptNameListOnS
         $this->statsParams->write($writer);
         $writer->append('FROM');
         $this->fromList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyName, preserving every other field.
+     */
+    public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
+    {
+        return new self($anyName, $this->optNameList, $this->statsParams, $this->fromList);
+    }
+
+    /**
+     * Returns a copy with a new optNameList, preserving every other field.
+     */
+    public function withOptNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm $optNameList): self
+    {
+        return new self($this->anyName, $optNameList, $this->statsParams, $this->fromList);
+    }
+
+    /**
+     * Returns a copy with a new statsParams, preserving every other field.
+     */
+    public function withStatsParams(\SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams): self
+    {
+        return new self($this->anyName, $this->optNameList, $statsParams, $this->fromList);
+    }
+
+    /**
+     * Returns a copy with a new fromList, preserving every other field.
+     */
+    public function withFromList(\SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList): self
+    {
+        return new self($this->anyName, $this->optNameList, $this->statsParams, $fromList);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColQualListWithColQualListColConstraint_1519c75f $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\ColQualListWithColQualListColConstraint_1519c75f $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColQualListWithColQualListColConstraint_1519c75f implements \SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColQualListWithColQualListColConstraint_1519c75f implements \SqlSema
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm $colConstraint,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colQualList), 'The colQualList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colConstraint), 'The colConstraint must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ColQualListWithColQualListColConstraint_1519c75f implements \SqlSema
     {
         $this->colQualList->write($writer);
         $this->colConstraint->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new colQualList, preserving every other field.
+     */
+    public function withColQualList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList): self
+    {
+        return new self($colQualList, $this->colConstraint);
+    }
+
+    /**
+     * Returns a copy with a new colConstraint, preserving every other field.
+     */
+    public function withColConstraint(\SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm $colConstraint): self
+    {
+        return new self($this->colQualList, $colConstraint);
     }
 }

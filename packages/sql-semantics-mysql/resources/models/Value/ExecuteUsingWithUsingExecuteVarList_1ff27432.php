@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExecuteUsingWithUsingExecuteVarList_1ff27432 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ExecuteUsingWithUsingExecuteVarList_1ff27432 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ExecuteUsingWithUsingExecuteVarList_1ff27432 implements \SqlSemantics\Statement\Model\MySql\Role\ExecuteUsingForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExecuteVarListForm $executeVarList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($executeVarList), 'The executeVarList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class ExecuteUsingWithUsingExecuteVarList_1ff27432 implements \SqlSemantic
     {
         $writer->append('USING');
         $this->executeVarList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new executeVarList, preserving every other field.
+     */
+    public function withExecuteVarList(\SqlSemantics\Statement\Model\MySql\Role\ExecuteVarListForm $executeVarList): self
+    {
+        return new self($executeVarList);
     }
 }

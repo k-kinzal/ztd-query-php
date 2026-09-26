@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ConslistWithConslistTconscommaTcons_c4260c11 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\ConslistWithConslistTconscommaTcons_c4260c11 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConslistWithConslistTconscommaTcons_c4260c11 implements \SqlSemantics\Statement\Model\Sqlite\Role\ConslistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -22,6 +24,9 @@ final class ConslistWithConslistTconscommaTcons_c4260c11 implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TconscommaForm $tconscomma,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TconsForm $tcons,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($conslist), 'The conslist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($tconscomma), 'The tconscomma must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($tcons), 'The tcons must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +37,29 @@ final class ConslistWithConslistTconscommaTcons_c4260c11 implements \SqlSemantic
         $this->conslist->write($writer);
         $this->tconscomma->write($writer);
         $this->tcons->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new conslist, preserving every other field.
+     */
+    public function withConslist(\SqlSemantics\Statement\Model\Sqlite\Role\ConslistForm $conslist): self
+    {
+        return new self($conslist, $this->tconscomma, $this->tcons);
+    }
+
+    /**
+     * Returns a copy with a new tconscomma, preserving every other field.
+     */
+    public function withTconscomma(\SqlSemantics\Statement\Model\Sqlite\Role\TconscommaForm $tconscomma): self
+    {
+        return new self($this->conslist, $tconscomma, $this->tcons);
+    }
+
+    /**
+     * Returns a copy with a new tcons, preserving every other field.
+     */
+    public function withTcons(\SqlSemantics\Statement\Model\Sqlite\Role\TconsForm $tcons): self
+    {
+        return new self($this->conslist, $this->tconscomma, $tcons);
     }
 }

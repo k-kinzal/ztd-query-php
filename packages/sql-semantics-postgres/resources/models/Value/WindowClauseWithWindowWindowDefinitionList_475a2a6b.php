@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\WindowClauseWithWindowWindowDefinitionList_475a2a6b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\WindowClauseWithWindowWindowDefinitionList_475a2a6b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class WindowClauseWithWindowWindowDefinitionList_475a2a6b implements \SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WindowDefinitionListForm $windowDefinitionList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($windowDefinitionList), 'The windowDefinitionList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class WindowClauseWithWindowWindowDefinitionList_475a2a6b implements \SqlS
     {
         $writer->append('WINDOW');
         $this->windowDefinitionList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new windowDefinitionList, preserving every other field.
+     */
+    public function withWindowDefinitionList(\SqlSemantics\Statement\Model\PostgreSql\Role\WindowDefinitionListForm $windowDefinitionList): self
+    {
+        return new self($windowDefinitionList);
     }
 }

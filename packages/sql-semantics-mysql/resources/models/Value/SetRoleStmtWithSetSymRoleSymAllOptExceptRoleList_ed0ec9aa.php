@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SetRoleStmtWithSetSymRoleSymAllOptExceptRoleList_ed0ec9aa $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SetRoleStmtWithSetSymRoleSymAllOptExceptRoleList_ed0ec9aa $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class SetRoleStmtWithSetSymRoleSymAllOptExceptRoleList_ed0ec9aa implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SetRoleStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm
+final class SetRoleStmtWithSetSymRoleSymAllOptExceptRoleList_ed0ec9aa implements \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SetRoleStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExceptRoleListForm $optExceptRoleList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExceptRoleList), 'The optExceptRoleList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class SetRoleStmtWithSetSymRoleSymAllOptExceptRoleList_ed0ec9aa implements
         $writer->append('ROLE');
         $writer->append('ALL');
         $this->optExceptRoleList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new optExceptRoleList, preserving every other field.
+     */
+    public function withOptExceptRoleList(\SqlSemantics\Statement\Model\MySql\Role\OptExceptRoleListForm $optExceptRoleList): self
+    {
+        return new self($optExceptRoleList);
     }
 }

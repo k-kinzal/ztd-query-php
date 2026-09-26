@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLoadDataCharsetWithCharacterSetCharsetName_29ece866 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLoadDataCharsetWithCharacterSetCharsetName_29ece866 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptLoadDataCharsetWithCharacterSetCharsetName_29ece866 implements \SqlSemantics\Statement\Model\MySql\Role\OptLoadDataCharsetForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptLoadDataCharsetWithCharacterSetCharsetName_29ece866 implements \S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($characterSet), 'The characterSet must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetName), 'The charsetName must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OptLoadDataCharsetWithCharacterSetCharsetName_29ece866 implements \S
     {
         $this->characterSet->write($writer);
         $this->charsetName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new characterSet, preserving every other field.
+     */
+    public function withCharacterSet(\SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet): self
+    {
+        return new self($characterSet, $this->charsetName);
+    }
+
+    /**
+     * Returns a copy with a new charsetName, preserving every other field.
+     */
+    public function withCharsetName(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName): self
+    {
+        return new self($this->characterSet, $charsetName);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OperatorWithArgtypesWithAnyOperatorOperArgtypes_b9fc8c49 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\OperatorWithArgtypesWithAnyOperatorOperArgtypes_b9fc8c49 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OperatorWithArgtypesWithAnyOperatorOperArgtypes_b9fc8c49 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OperatorWithArgtypesWithAnyOperatorOperArgtypes_b9fc8c49 implements 
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm $anyOperator,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperArgtypesForm $operArgtypes,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyOperator), 'The anyOperator must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operArgtypes), 'The operArgtypes must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class OperatorWithArgtypesWithAnyOperatorOperArgtypes_b9fc8c49 implements 
     {
         $this->anyOperator->write($writer);
         $this->operArgtypes->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new anyOperator, preserving every other field.
+     */
+    public function withAnyOperator(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm $anyOperator): self
+    {
+        return new self($anyOperator, $this->operArgtypes);
+    }
+
+    /**
+     * Returns a copy with a new operArgtypes, preserving every other field.
+     */
+    public function withOperArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\OperArgtypesForm $operArgtypes): self
+    {
+        return new self($this->anyOperator, $operArgtypes);
     }
 }

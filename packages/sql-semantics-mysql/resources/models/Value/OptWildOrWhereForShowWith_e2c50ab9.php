@@ -9,7 +9,7 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptWildOrWhereForShowWith_e2c50ab9 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptWildOrWhereForShowWith_e2c50ab9 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptWildOrWhereForShowWith_e2c50ab9 implements \SqlSemantics\Statement\Model\MySql\Role\OptWildOrWhereForShowForm

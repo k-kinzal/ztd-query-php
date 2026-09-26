@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DoStmtWithDoDostmtOptList_0ef707e0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\DoStmtWithDoDostmtOptList_0ef707e0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class DoStmtWithDoDostmtOptList_0ef707e0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DoStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm
+final class DoStmtWithDoDostmtOptList_0ef707e0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\DoStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ParseToplevelForm, \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtForm, \SqlSemantics\Statement\Model\PostgreSql\Role\StmtmultiForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ToplevelStmtForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DostmtOptListForm $dostmtOptList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($dostmtOptList), 'The dostmtOptList must be a generated immutable SQL value.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class DoStmtWithDoDostmtOptList_0ef707e0 implements \SqlSemantics\Statemen
     {
         $writer->append('DO');
         $this->dostmtOptList->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new dostmtOptList, preserving every other field.
+     */
+    public function withDostmtOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\DostmtOptListForm $dostmtOptList): self
+    {
+        return new self($dostmtOptList);
     }
 }

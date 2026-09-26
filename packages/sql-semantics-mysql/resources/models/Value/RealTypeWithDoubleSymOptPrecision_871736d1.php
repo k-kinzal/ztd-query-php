@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RealTypeWithDoubleSymOptPrecision_871736d1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\RealTypeWithDoubleSymOptPrecision_871736d1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RealTypeWithDoubleSymOptPrecision_871736d1 implements \SqlSemantics\Statement\Model\MySql\Role\CastTypeForm, \SqlSemantics\Statement\Model\MySql\Role\RealTypeForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RealTypeWithDoubleSymOptPrecision_871736d1 implements \SqlSemantics\
         public readonly string $doubleSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPrecisionForm $optPrecision,
     ) {
+        $this->assertMatchesPattern($doubleSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DOUBLE_SYM'], 'The doubleSym must be a complete DOUBLE_SYM lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPrecision), 'The optPrecision must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class RealTypeWithDoubleSymOptPrecision_871736d1 implements \SqlSemantics\
     {
         $writer->append($this->doubleSym);
         $this->optPrecision->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new doubleSym, preserving every other field.
+     */
+    public function withDoubleSym(string $doubleSym): self
+    {
+        return new self($doubleSym, $this->optPrecision);
+    }
+
+    /**
+     * Returns a copy with a new optPrecision, preserving every other field.
+     */
+    public function withOptPrecision(\SqlSemantics\Statement\Model\MySql\Role\OptPrecisionForm $optPrecision): self
+    {
+        return new self($this->doubleSym, $optPrecision);
     }
 }

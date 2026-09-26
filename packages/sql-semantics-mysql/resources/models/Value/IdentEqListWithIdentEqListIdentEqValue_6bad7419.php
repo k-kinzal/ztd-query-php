@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentEqListWithIdentEqListIdentEqValue_6bad7419 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\IdentEqListWithIdentEqListIdentEqValue_6bad7419 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IdentEqListWithIdentEqListIdentEqValue_6bad7419 implements \SqlSemantics\Statement\Model\MySql\Role\IdentEqListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class IdentEqListWithIdentEqListIdentEqValue_6bad7419 implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentEqListForm $identEqList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentEqValueForm $identEqValue,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identEqList), 'The identEqList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identEqValue), 'The identEqValue must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class IdentEqListWithIdentEqListIdentEqValue_6bad7419 implements \SqlSeman
         $this->identEqList->write($writer);
         $writer->append(',');
         $this->identEqValue->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new identEqList, preserving every other field.
+     */
+    public function withIdentEqList(\SqlSemantics\Statement\Model\MySql\Role\IdentEqListForm $identEqList): self
+    {
+        return new self($identEqList, $this->identEqValue);
+    }
+
+    /**
+     * Returns a copy with a new identEqValue, preserving every other field.
+     */
+    public function withIdentEqValue(\SqlSemantics\Statement\Model\MySql\Role\IdentEqValueForm $identEqValue): self
+    {
+        return new self($this->identEqList, $identEqValue);
     }
 }

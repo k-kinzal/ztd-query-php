@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\VtabargtokenWithAny_4183ebc7 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\VtabargtokenWithAny_4183ebc7 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class VtabargtokenWithAny_4183ebc7 implements \SqlSemantics\Statement\Model\Sqlite\Role\VtabargtokenForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $any,
     ) {
+        $this->assertMatchesPattern($any, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['ANY'], 'The any must be a complete ANY lexical spelling.');
     }
 
     /**
@@ -28,5 +31,13 @@ final class VtabargtokenWithAny_4183ebc7 implements \SqlSemantics\Statement\Mode
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
         $writer->append($this->any);
+    }
+
+    /**
+     * Returns a copy with a new any, preserving every other field.
+     */
+    public function withAny(string $any): self
+    {
+        return new self($any);
     }
 }

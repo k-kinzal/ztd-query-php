@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RoutineBodyStmtListWithRoutineBodyStmtListRoutineBodyStmt_7bb6d4f0 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\RoutineBodyStmtListWithRoutineBodyStmtListRoutineBodyStmt_7bb6d4f0 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class RoutineBodyStmtListWithRoutineBodyStmtListRoutineBodyStmt_7bb6d4f0 implements \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class RoutineBodyStmtListWithRoutineBodyStmtListRoutineBodyStmt_7bb6d4f0 i
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtListForm $routineBodyStmtList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm $routineBodyStmt,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($routineBodyStmtList), 'The routineBodyStmtList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($routineBodyStmt), 'The routineBodyStmt must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class RoutineBodyStmtListWithRoutineBodyStmtListRoutineBodyStmt_7bb6d4f0 i
         $this->routineBodyStmtList->write($writer);
         $this->routineBodyStmt->write($writer);
         $writer->append(';');
+    }
+
+    /**
+     * Returns a copy with a new routineBodyStmtList, preserving every other field.
+     */
+    public function withRoutineBodyStmtList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtListForm $routineBodyStmtList): self
+    {
+        return new self($routineBodyStmtList, $this->routineBodyStmt);
+    }
+
+    /**
+     * Returns a copy with a new routineBodyStmt, preserving every other field.
+     */
+    public function withRoutineBodyStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\RoutineBodyStmtForm $routineBodyStmt): self
+    {
+        return new self($this->routineBodyStmtList, $routineBodyStmt);
     }
 }

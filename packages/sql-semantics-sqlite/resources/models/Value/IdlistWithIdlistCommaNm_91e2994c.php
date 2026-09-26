@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\IdlistWithIdlistCommaNm_91e2994c $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\IdlistWithIdlistCommaNm_91e2994c $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class IdlistWithIdlistCommaNm_91e2994c implements \SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class IdlistWithIdlistCommaNm_91e2994c implements \SqlSemantics\Statement\
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($idlist), 'The idlist must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class IdlistWithIdlistCommaNm_91e2994c implements \SqlSemantics\Statement\
         $this->idlist->write($writer);
         $writer->append(',');
         $this->nm->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new idlist, preserving every other field.
+     */
+    public function withIdlist(\SqlSemantics\Statement\Model\Sqlite\Role\IdlistForm $idlist): self
+    {
+        return new self($idlist, $this->nm);
+    }
+
+    /**
+     * Returns a copy with a new nm, preserving every other field.
+     */
+    public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
+    {
+        return new self($this->idlist, $nm);
     }
 }

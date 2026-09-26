@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLeadLagInfoWithStableIntegerOptLlDefault_e83cba7b $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\OptLeadLagInfoWithStableIntegerOptLlDefault_e83cba7b $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class OptLeadLagInfoWithStableIntegerOptLlDefault_e83cba7b implements \SqlSemantics\Statement\Model\MySql\Role\OptLeadLagInfoForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class OptLeadLagInfoWithStableIntegerOptLlDefault_e83cba7b implements \Sql
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StableIntegerForm $stableInteger,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLlDefaultForm $optLlDefault,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($stableInteger), 'The stableInteger must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLlDefault), 'The optLlDefault must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class OptLeadLagInfoWithStableIntegerOptLlDefault_e83cba7b implements \Sql
         $writer->append(',');
         $this->stableInteger->write($writer);
         $this->optLlDefault->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new stableInteger, preserving every other field.
+     */
+    public function withStableInteger(\SqlSemantics\Statement\Model\MySql\Role\StableIntegerForm $stableInteger): self
+    {
+        return new self($stableInteger, $this->optLlDefault);
+    }
+
+    /**
+     * Returns a copy with a new optLlDefault, preserving every other field.
+     */
+    public function withOptLlDefault(\SqlSemantics\Statement\Model\MySql\Role\OptLlDefaultForm $optLlDefault): self
+    {
+        return new self($this->stableInteger, $optLlDefault);
     }
 }

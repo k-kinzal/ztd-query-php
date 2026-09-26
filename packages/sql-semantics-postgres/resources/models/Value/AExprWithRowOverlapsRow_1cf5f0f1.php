@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AExprWithRowOverlapsRow_1cf5f0f1 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\AExprWithRowOverlapsRow_1cf5f0f1 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class AExprWithRowOverlapsRow_1cf5f0f1 implements \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ExprListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgExprForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\FuncArgListOptForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByItemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\GroupByListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptSliceBoundForm, \SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectLimitValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SelectOffsetValueForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TargetListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeElForm, \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class AExprWithRowOverlapsRow_1cf5f0f1 implements \SqlSemantics\Statement\
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowForm $row,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RowForm $row2,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($row), 'The row must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($row2), 'The row2 must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class AExprWithRowOverlapsRow_1cf5f0f1 implements \SqlSemantics\Statement\
         $this->row->write($writer);
         $writer->append('OVERLAPS');
         $this->row2->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new row, preserving every other field.
+     */
+    public function withRow(\SqlSemantics\Statement\Model\PostgreSql\Role\RowForm $row): self
+    {
+        return new self($row, $this->row2);
+    }
+
+    /**
+     * Returns a copy with a new row2, preserving every other field.
+     */
+    public function withRow2(\SqlSemantics\Statement\Model\PostgreSql\Role\RowForm $row2): self
+    {
+        return new self($this->row, $row2);
     }
 }

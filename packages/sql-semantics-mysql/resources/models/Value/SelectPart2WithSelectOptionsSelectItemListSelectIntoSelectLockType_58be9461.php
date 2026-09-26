@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_58be9461 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_58be9461 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_58be9461 implements \SqlSemantics\Statement\Model\MySql\Role\SelectPart2Form
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -23,6 +25,10 @@ final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_5
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectIntoForm $selectInto,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm $selectLockType,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($options), 'The options must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectInto), 'The selectInto must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectLockType), 'The selectLockType must be a generated immutable SQL value.');
     }
 
     /**
@@ -34,5 +40,37 @@ final class SelectPart2WithSelectOptionsSelectItemListSelectIntoSelectLockType_5
         $this->projections->write($writer);
         $this->selectInto->write($writer);
         $this->selectLockType->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new options, preserving every other field.
+     */
+    public function withOptions(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options): self
+    {
+        return new self($options, $this->projections, $this->selectInto, $this->selectLockType);
+    }
+
+    /**
+     * Returns a copy with a new projections, preserving every other field.
+     */
+    public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
+    {
+        return new self($this->options, $projections, $this->selectInto, $this->selectLockType);
+    }
+
+    /**
+     * Returns a copy with a new selectInto, preserving every other field.
+     */
+    public function withSelectInto(\SqlSemantics\Statement\Model\MySql\Role\SelectIntoForm $selectInto): self
+    {
+        return new self($this->options, $this->projections, $selectInto, $this->selectLockType);
+    }
+
+    /**
+     * Returns a copy with a new selectLockType, preserving every other field.
+     */
+    public function withSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\SelectLockTypeForm $selectLockType): self
+    {
+        return new self($this->options, $this->projections, $this->selectInto, $selectLockType);
     }
 }

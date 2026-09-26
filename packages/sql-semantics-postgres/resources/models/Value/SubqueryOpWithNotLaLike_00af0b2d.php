@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SubqueryOpWithNotLaLike_00af0b2d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\SubqueryOpWithNotLaLike_00af0b2d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SubqueryOpWithNotLaLike_00af0b2d implements \SqlSemantics\Statement\Model\PostgreSql\Role\SubqueryOpForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly string $notLa,
     ) {
+        $this->assertMatchesPattern($notLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['NOT_LA'], 'The notLa must be a complete NOT_LA lexical spelling.');
     }
 
     /**
@@ -29,5 +32,13 @@ final class SubqueryOpWithNotLaLike_00af0b2d implements \SqlSemantics\Statement\
     {
         $writer->append($this->notLa);
         $writer->append('LIKE');
+    }
+
+    /**
+     * Returns a copy with a new notLa, preserving every other field.
+     */
+    public function withNotLa(string $notLa): self
+    {
+        return new self($notLa);
     }
 }

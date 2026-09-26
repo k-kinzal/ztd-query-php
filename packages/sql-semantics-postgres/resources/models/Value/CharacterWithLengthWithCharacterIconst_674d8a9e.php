@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CharacterWithLengthWithCharacterIconst_674d8a9e $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\CharacterWithLengthWithCharacterIconst_674d8a9e $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class CharacterWithLengthWithCharacterIconst_674d8a9e implements \SqlSemantics\Statement\Model\PostgreSql\Role\CharacterForm, \SqlSemantics\Statement\Model\PostgreSql\Role\CharacterWithLengthForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstCharacterForm, \SqlSemantics\Statement\Model\PostgreSql\Role\ConstTypenameForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class CharacterWithLengthWithCharacterIconst_674d8a9e implements \SqlSeman
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CharacterForm $character,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($character), 'The character must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
     }
 
     /**
@@ -32,5 +36,21 @@ final class CharacterWithLengthWithCharacterIconst_674d8a9e implements \SqlSeman
         $writer->append('(');
         $this->iconst->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new character, preserving every other field.
+     */
+    public function withCharacter(\SqlSemantics\Statement\Model\PostgreSql\Role\CharacterForm $character): self
+    {
+        return new self($character, $this->iconst);
+    }
+
+    /**
+     * Returns a copy with a new iconst, preserving every other field.
+     */
+    public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
+    {
+        return new self($this->character, $iconst);
     }
 }

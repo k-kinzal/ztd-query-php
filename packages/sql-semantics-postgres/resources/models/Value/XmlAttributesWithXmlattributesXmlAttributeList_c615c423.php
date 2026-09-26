@@ -9,17 +9,20 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlAttributesWithXmlattributesXmlAttributeList_c615c423 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\PostgreSql\Value\XmlAttributesWithXmlattributesXmlAttributeList_c615c423 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class XmlAttributesWithXmlattributesXmlAttributeList_c615c423 implements \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributesForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm $xmlAttributeList,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlAttributeList), 'The xmlAttributeList must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +34,13 @@ final class XmlAttributesWithXmlattributesXmlAttributeList_c615c423 implements \
         $writer->append('(');
         $this->xmlAttributeList->write($writer);
         $writer->append(')');
+    }
+
+    /**
+     * Returns a copy with a new xmlAttributeList, preserving every other field.
+     */
+    public function withXmlAttributeList(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlAttributeListForm $xmlAttributeList): self
+    {
+        return new self($xmlAttributeList);
     }
 }

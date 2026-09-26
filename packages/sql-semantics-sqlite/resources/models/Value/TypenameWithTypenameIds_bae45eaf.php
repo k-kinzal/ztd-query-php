@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\Sqlite\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TypenameWithTypenameIds_bae45eaf $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\Sqlite\Value\TypenameWithTypenameIds_bae45eaf $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class TypenameWithTypenameIds_bae45eaf implements \SqlSemantics\Statement\Model\Sqlite\Role\TypenameForm, \SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class TypenameWithTypenameIds_bae45eaf implements \SqlSemantics\Statement\
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TypenameForm $typename,
         public readonly string $ids,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
+        $this->assertMatchesPattern($ids, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['ids'], 'The ids must be a complete ids lexical spelling.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class TypenameWithTypenameIds_bae45eaf implements \SqlSemantics\Statement\
     {
         $this->typename->write($writer);
         $writer->append($this->ids);
+    }
+
+    /**
+     * Returns a copy with a new typename, preserving every other field.
+     */
+    public function withTypename(\SqlSemantics\Statement\Model\Sqlite\Role\TypenameForm $typename): self
+    {
+        return new self($typename, $this->ids);
+    }
+
+    /**
+     * Returns a copy with a new ids, preserving every other field.
+     */
+    public function withIds(string $ids): self
+    {
+        return new self($this->typename, $ids);
     }
 }

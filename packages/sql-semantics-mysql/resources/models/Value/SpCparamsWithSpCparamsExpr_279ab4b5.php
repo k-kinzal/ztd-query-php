@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpCparamsWithSpCparamsExpr_279ab4b5 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\SpCparamsWithSpCparamsExpr_279ab4b5 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class SpCparamsWithSpCparamsExpr_279ab4b5 implements \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamsForm, \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class SpCparamsWithSpCparamsExpr_279ab4b5 implements \SqlSemantics\Stateme
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm $spCparams,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spCparams), 'The spCparams must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class SpCparamsWithSpCparamsExpr_279ab4b5 implements \SqlSemantics\Stateme
         $this->spCparams->write($writer);
         $writer->append(',');
         $this->expr->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new spCparams, preserving every other field.
+     */
+    public function withSpCparams(\SqlSemantics\Statement\Model\MySql\Role\SpCparamsForm $spCparams): self
+    {
+        return new self($spCparams, $this->expr);
+    }
+
+    /**
+     * Returns a copy with a new expr, preserving every other field.
+     */
+    public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
+    {
+        return new self($this->spCparams, $expr);
     }
 }

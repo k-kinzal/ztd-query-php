@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnDefWithFieldSpecReferences_ac30ccce $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ColumnDefWithFieldSpecReferences_ac30ccce $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ColumnDefWithFieldSpecReferences_ac30ccce implements \SqlSemantics\Statement\Model\MySql\Role\ColumnDefForm, \SqlSemantics\Statement\Model\MySql\Role\CreateFieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListForm, \SqlSemantics\Statement\Model\MySql\Role\FieldListItemForm, \SqlSemantics\Statement\Model\MySql\Role\TableElementForm, \SqlSemantics\Statement\Model\MySql\Role\TableElementListForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ColumnDefWithFieldSpecReferences_ac30ccce implements \SqlSemantics\S
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldSpecForm $fieldSpec,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReferencesForm $references,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldSpec), 'The fieldSpec must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($references), 'The references must be a generated immutable SQL value.');
     }
 
     /**
@@ -30,5 +34,21 @@ final class ColumnDefWithFieldSpecReferences_ac30ccce implements \SqlSemantics\S
     {
         $this->fieldSpec->write($writer);
         $this->references->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new fieldSpec, preserving every other field.
+     */
+    public function withFieldSpec(\SqlSemantics\Statement\Model\MySql\Role\FieldSpecForm $fieldSpec): self
+    {
+        return new self($fieldSpec, $this->references);
+    }
+
+    /**
+     * Returns a copy with a new references, preserving every other field.
+     */
+    public function withReferences(\SqlSemantics\Statement\Model\MySql\Role\ReferencesForm $references): self
+    {
+        return new self($this->fieldSpec, $references);
     }
 }

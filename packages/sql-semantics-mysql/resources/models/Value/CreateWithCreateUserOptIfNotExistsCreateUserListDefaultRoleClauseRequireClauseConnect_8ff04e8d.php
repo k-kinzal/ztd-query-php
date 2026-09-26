@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseRequireClauseConnect_8ff04e8d $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseRequireClauseConnect_8ff04e8d $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
-final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseRequireClauseConnect_8ff04e8d implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm
+final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseRequireClauseConnect_8ff04e8d implements \SqlSemantics\Statement\Model\MySql\Role\CreateForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtForm, \SqlSemantics\Statement\Model\MySql\Role\EvSqlStmtInnerForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementForm, \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtForm, \SqlSemantics\Statement\Model\MySql\Role\SpProcStmtStatementForm, \SqlSemantics\Statement\Model\MySql\Role\StatementForm, \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm, \SqlSemantics\Statement\Model\MySql\Role\VerbClauseForm, \SqlSemantics\Statement\Command
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -27,6 +29,14 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm $optAccountLockPasswordExpireOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUserAttributeForm $optUserAttribute,
     ) {
+        $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createUserList), 'The createUserList must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($defaultRoleClause), 'The defaultRoleClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($requireClause), 'The requireClause must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($connectOptions), 'The connectOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAccountLockPasswordExpireOptions), 'The optAccountLockPasswordExpireOptions must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUserAttribute), 'The optUserAttribute must be a generated immutable SQL value.');
     }
 
     /**
@@ -43,5 +53,69 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
         $this->connectOptions->write($writer);
         $this->optAccountLockPasswordExpireOptions->write($writer);
         $this->optUserAttribute->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new user, preserving every other field.
+     */
+    public function withUser(string $user): self
+    {
+        return new self($user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+    }
+
+    /**
+     * Returns a copy with a new optIfNotExists, preserving every other field.
+     */
+    public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
+    {
+        return new self($this->user, $optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+    }
+
+    /**
+     * Returns a copy with a new createUserList, preserving every other field.
+     */
+    public function withCreateUserList(\SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm $createUserList): self
+    {
+        return new self($this->user, $this->optIfNotExists, $createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+    }
+
+    /**
+     * Returns a copy with a new defaultRoleClause, preserving every other field.
+     */
+    public function withDefaultRoleClause(\SqlSemantics\Statement\Model\MySql\Role\DefaultRoleClauseForm $defaultRoleClause): self
+    {
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+    }
+
+    /**
+     * Returns a copy with a new requireClause, preserving every other field.
+     */
+    public function withRequireClause(\SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm $requireClause): self
+    {
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+    }
+
+    /**
+     * Returns a copy with a new connectOptions, preserving every other field.
+     */
+    public function withConnectOptions(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm $connectOptions): self
+    {
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+    }
+
+    /**
+     * Returns a copy with a new optAccountLockPasswordExpireOptions, preserving every other field.
+     */
+    public function withOptAccountLockPasswordExpireOptions(\SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm $optAccountLockPasswordExpireOptions): self
+    {
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+    }
+
+    /**
+     * Returns a copy with a new optUserAttribute, preserving every other field.
+     */
+    public function withOptUserAttribute(\SqlSemantics\Statement\Model\MySql\Role\OptUserAttributeForm $optUserAttribute): self
+    {
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $optUserAttribute);
     }
 }

@@ -9,11 +9,13 @@ namespace SqlSemantics\Statement\Model\MySql\Value;
  *
  * @visibility public
  * @example Accept a structured SQL value
- *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConditionInformationItemWithSimpleTargetSpecificationEqConditionInformationItemName_eaab7442 $value): string => (new \SqlSemantics\Statement\Statement($value))->toString();
+ *     $write = static fn (\SqlSemantics\Statement\Model\MySql\Value\ConditionInformationItemWithSimpleTargetSpecificationEqConditionInformationItemName_eaab7442 $value): string => \SqlSemantics\Statement\Writer::render($value);
  *     $write instanceof \Closure // => true
  */
 final class ConditionInformationItemWithSimpleTargetSpecificationEqConditionInformationItemName_eaab7442 implements \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationForm, \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemForm
 {
+    use \SqlSemantics\Statement\Assertion;
+
     /**
      * Supplies the SQL values of this form.
      */
@@ -21,6 +23,8 @@ final class ConditionInformationItemWithSimpleTargetSpecificationEqConditionInfo
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleTargetSpecificationForm $simpleTargetSpecification,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemNameForm $conditionInformationItemName,
     ) {
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleTargetSpecification), 'The simpleTargetSpecification must be a generated immutable SQL value.');
+        $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($conditionInformationItemName), 'The conditionInformationItemName must be a generated immutable SQL value.');
     }
 
     /**
@@ -31,5 +35,21 @@ final class ConditionInformationItemWithSimpleTargetSpecificationEqConditionInfo
         $this->simpleTargetSpecification->write($writer);
         $writer->append('=');
         $this->conditionInformationItemName->write($writer);
+    }
+
+    /**
+     * Returns a copy with a new simpleTargetSpecification, preserving every other field.
+     */
+    public function withSimpleTargetSpecification(\SqlSemantics\Statement\Model\MySql\Role\SimpleTargetSpecificationForm $simpleTargetSpecification): self
+    {
+        return new self($simpleTargetSpecification, $this->conditionInformationItemName);
+    }
+
+    /**
+     * Returns a copy with a new conditionInformationItemName, preserving every other field.
+     */
+    public function withConditionInformationItemName(\SqlSemantics\Statement\Model\MySql\Role\ConditionInformationItemNameForm $conditionInformationItemName): self
+    {
+        return new self($this->simpleTargetSpecification, $conditionInformationItemName);
     }
 }
