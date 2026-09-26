@@ -10,6 +10,7 @@ SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kin
 ## Requirements
 
 - PHP 8.1+ with the zlib extension
+- SQLite 3.x
 
 ## Support Syntax
 

@@ -10,6 +10,7 @@ SQL Fixture is a [FakerPHP](https://fakerphp.org/) provider that generates fixtu
 ## Requirements
 
 - PHP 8.1+
+- MySQL 5.6–9.1, PostgreSQL 16–17, or SQLite 3.x
 - [fakerphp/faker](https://github.com/FakerPHP/Faker) ^1.23
 
 ## Support Syntax

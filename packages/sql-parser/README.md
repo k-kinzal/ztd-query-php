@@ -10,6 +10,7 @@ SQL Parser is a set of LALR(1) parsers for MySQL, PostgreSQL, and SQLite written
 ## Requirements
 
 - PHP 8.1+ with the zlib extension
+- MySQL 5.6–9.1, PostgreSQL 16–17, or SQLite 3.x
 
 ## Support Syntax
 

@@ -10,6 +10,7 @@ SQL Semantics for PostgreSQL adds PostgreSQL to [SQL Semantics](https://github.c
 ## Requirements
 
 - PHP 8.1+ with the zlib extension
+- PostgreSQL 16–17
 
 ## Support Syntax
 

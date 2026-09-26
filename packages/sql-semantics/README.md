@@ -10,6 +10,7 @@ SQL Semantics is the semantic phase of a database front end for MySQL, PostgreSQ
 ## Requirements
 
 - PHP 8.1+ with the zlib extension
+- MySQL 5.6–9.1, PostgreSQL 16–17, or SQLite 3.x
 
 ## Support Syntax
 
