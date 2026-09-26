@@ -42,10 +42,10 @@ jobs:
         working-directory: packages/ztd-query-core
     steps:
       - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: '8.5'
           extensions: ${{ matrix.target.extensions }}
@@ -55,7 +55,7 @@ jobs:
         run: composer validate --strict --no-check-publish
 
       - name: Install dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
         with:
           working-directory: packages/ztd-query-core
           dependency-versions: locked
@@ -90,7 +90,7 @@ jobs:
             "--max-runs=$FUZZ_MAX_RUNS" --timeout=15 2>&1 | tee "build/fuzz/$FUZZ_TARGET.log"
 
       - name: Open an issue for a finding
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
           FUZZ_TARGET: ${{ matrix.target.name }}
           FUZZ_SCRIPT: ${{ matrix.target.script }}
@@ -134,7 +134,7 @@ jobs:
 
       - name: Upload PHP-Fuzzer inputs and output
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ztd-query-core-fuzz-${{ matrix.target.name }}
           path: |
