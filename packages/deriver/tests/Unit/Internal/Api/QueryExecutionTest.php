@@ -39,6 +39,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Api\QueryValidation::class)]
 #[UsesClass(\Deriver\Internal\Api\ResultAssessment::class)]
 #[UsesClass(\Deriver\Internal\Api\Session::class)]
+#[UsesClass(\Deriver\Internal\Constraint\Constraints::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\AggregateLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\AssignmentLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\GraphTemplate::class)]
@@ -47,11 +49,13 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableCompiler::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Control\ConditionalLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ExpressionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\GraphBuilder::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Lowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\ProjectIndex::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Source\ConstantSignatures::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\LineMap::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\MagicContext::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
@@ -60,6 +64,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
 #[UsesClass(\Deriver\Internal\IR\CallableIR::class)]
+#[UsesClass(\Deriver\Internal\IR\ClassDeclaration::class)]
 #[UsesClass(\Deriver\Internal\IR\Instruction::class)]
 #[UsesClass(\Deriver\Internal\IR\Parameter::class)]
 #[UsesClass(\Deriver\Internal\IR\Terminator::class)]
@@ -106,7 +111,10 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
+#[UsesClass(\Deriver\Internal\Value\Arrays::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
+#[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
+#[UsesClass(\Deriver\Model\State\StateSlot::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
@@ -153,4 +161,124 @@ final class QueryExecutionTest extends TestCase
         $this->expectException(\Deriver\Api\InvalidInputException::class);
         $execution->owner(new \Deriver\Api\Query\ValueQuery(new \Deriver\Api\Reference\ExpressionRef(new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1), 'target', 'fabricated')));
     }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testDeriveRetainsEveryDeclaredEntrypointAndItsArguments(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(int $a,int $b=2){return [$a,$b];}');
+        $query = new \Deriver\Api\Query\ReturnQuery('target', \Deriver\Api\Query\QueryScope::fromEntrypoints([
+            new \Deriver\Api\Project\EntryPoint('target', [\Deriver\Value\Term::constant(1)]),
+            new \Deriver\Api\Project\EntryPoint('target', ['b' => \Deriver\Value\Term::constant(4),'a' => \Deriver\Value\Term::constant(3)]),
+        ]));
+        $result = $session->derive($query);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(2, $result->normalOutcomes);
+        self::assertSame([1,2], $result->normalOutcomes[0]->values['return']->native());
+        self::assertSame([3,4], $result->normalOutcomes[1]->values['return']->native());
+        self::assertSame('may-reach', $result->reachability);
+        self::assertSame($query, $result->query);
+        self::assertSame($session->snapshot()->id, $result->snapshotId);
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testDeriveDistinguishesAnUnreachedCallableFromAnIncompleteEntry(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return 1;}function entry(){return 2;}');
+        $result = $session->derive(new \Deriver\Api\Query\ReturnQuery('target', \Deriver\Api\Query\QueryScope::fromEntrypoints([new \Deriver\Api\Project\EntryPoint('entry')])));
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->normalOutcomes);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame('unreachable', $result->reachability);
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testDeriveAddsAResidualWhenEntrySourceIsMissing(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return 1;}');
+        $result = $session->derive(new \Deriver\Api\Query\ReturnQuery('missing'));
+        self::assertCount(1, $result->frontiers);
+        self::assertSame('INCOMPLETE_SOURCE', $result->frontiers[0]->code);
+        self::assertSame('INCOMPLETE_DERIVATION', $result->normalOutcomes[0]->values['residual']->literal);
+        self::assertSame('open', $result->assessment->closure);
+        self::assertSame('may-reach', $result->reachability);
+        self::assertSame(0, $result->statistics->transfers);
+        self::assertSame([], $result->exceptionalOutcomes);
+    }
+    /**
+     * @param array<int|string,\Deriver\Value\Term> $arguments Explicit entry inputs
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidEntryArguments')]
+    public function testEntryReportsBindingErrorsWithoutRunningTheBody(array $arguments, string $exception): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(int $a){return 99;}');
+        $result = $session->derive(new \Deriver\Api\Query\ReturnQuery('target', \Deriver\Api\Query\QueryScope::fromEntrypoints([new \Deriver\Api\Project\EntryPoint('target', $arguments)])));
+        self::assertSame([], $result->normalOutcomes);
+        self::assertSame([], $result->frontiers);
+        self::assertCount(1, $result->exceptionalOutcomes);
+        self::assertSame($exception, $result->exceptionalOutcomes[0]->exception->literal);
+        self::assertSame('may-reach', $result->reachability);
+        self::assertSame(0, $result->statistics->transfers);
+    }
+    /**
+     * @return iterable<string,array{array<int|string,\Deriver\Value\Term>,string}>
+     */
+    public static function providerInvalidEntryArguments(): iterable
+    {
+        yield 'missing' => [[],'ArgumentCountError'];
+        yield 'invalid type' => [[\Deriver\Value\Term::array([])],'TypeError'];
+        yield 'unknown name' => [['unknown' => \Deriver\Value\Term::constant(1)],'Error'];
+        yield 'duplicate' => [[\Deriver\Value\Term::constant(1),'a' => \Deriver\Value\Term::constant(2)],'Error'];
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testEntryUsesTheSuppliedInstanceReceiverAndIgnoresItForStaticMethods(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php class B{function instance(){return $this;}static function target(){return isset($this);}}');
+        $receiver = new \Deriver\Value\Term('object', 'provided', attributes:['class' => 'B']);
+        $instance = $session->derive(new \Deriver\Api\Query\ReturnQuery('B::instance', \Deriver\Api\Query\QueryScope::fromEntrypoints([new \Deriver\Api\Project\EntryPoint('B::instance', receiver:$receiver)])));
+        $static = $session->derive(new \Deriver\Api\Query\ReturnQuery('B::target', \Deriver\Api\Query\QueryScope::fromEntrypoints([new \Deriver\Api\Project\EntryPoint('B::target', receiver:$receiver)])));
+        self::assertSame($receiver, $instance->normalOutcomes[0]->values['return']);
+        self::assertSame([], $instance->frontiers);
+        self::assertSame([], $static->frontiers);
+        self::assertFalse($static->normalOutcomes[0]->values['return']->native());
+    }
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerUnregisteredSlotQuery')]
+    public function testOwnerRejectsUnregisteredStateSlotsBeforeReferenceLookup(\Deriver\Api\Query\Query $query): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $snapshot = new \Deriver\Api\Project\ProjectSnapshot('test', [], [], $context->configuration->target, false, 'none');
+        $execution = new \Deriver\Internal\Api\QueryExecution($context->program, $context->configuration, $context->models, $snapshot);
+        $this->expectException(\Deriver\Api\InvalidInputException::class);
+        $this->expectExceptionMessage('Projection requires a registered state slot: example.missing');
+        $execution->owner($query);
+    }
+    /**
+     * @return iterable<string,array{\Deriver\Api\Query\Query}>
+     */
+    public static function providerUnregisteredSlotQuery(): iterable
+    {
+        $source = new \Deriver\Api\Reference\SourceRef('test', 'fixture.php', 0, 1);
+        yield 'value' => [new \Deriver\Api\Query\ValueQuery(new \Deriver\Api\Reference\ExpressionRef($source, 'target', 'r'), \Deriver\Value\Projection::stateSlot('example.missing'))];
+        yield 'state' => [new \Deriver\Api\Query\StateQuery(new \Deriver\Api\Reference\PointRef($source, 'target', 'i', 'after'), 'value', \Deriver\Value\Projection::stateSlot('example.missing'))];
+    }
+    public function testOwnerAllowsARegisteredStateSlotOnAValidValueReference(): void
+    {
+        $configuration = new \Deriver\Api\Project\Configuration(stateSlots:[new \Deriver\Model\State\StateSlot('example.state')]);
+        $context = \Tests\Fake\SolverFixture::context(configuration:$configuration);
+        $body = $context->program->callable('target');
+        self::assertNotNull($body);
+        $instruction = $body->blocks[0]->instructions[0];
+        $snapshot = new \Deriver\Api\Project\ProjectSnapshot('test', [], [], $configuration->target, false, 'none');
+        $execution = new \Deriver\Internal\Api\QueryExecution($context->program, $configuration, $context->models, $snapshot);
+        $query = new \Deriver\Api\Query\ValueQuery(new \Deriver\Api\Reference\ExpressionRef($instruction->source, 'target', $instruction->result), \Deriver\Value\Projection::stateSlot('example.state'));
+        self::assertSame('target', $execution->owner($query));
+    }
+
 }

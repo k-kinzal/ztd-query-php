@@ -81,9 +81,16 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Model\StateRegistry::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\ArgumentOrder::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallExecutor::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallResolution::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\CallableCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\Dispatch::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Resolution::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Target::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\Preparation\Transfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Internal\Solver\Call\TypeCheck::class)]
+#[UsesClass(\Deriver\Internal\Solver\Call\UnknownCall::class)]
 #[UsesClass(\Deriver\Internal\Solver\Completion::class)]
 #[UsesClass(\Deriver\Internal\Solver\Context::class)]
 #[UsesClass(\Deriver\Internal\Solver\Control\ObservationLimit::class)]
@@ -112,6 +119,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ReferenceAssignment::class)]
 #[UsesClass(\Deriver\Internal\Value\Identity::class)]
+#[UsesClass(\Deriver\Internal\Value\SecretFingerprint::class)]
 #[UsesClass(\Deriver\Model\Provider\DeclarationProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchProvider::class)]
 #[UsesClass(\Deriver\Model\Provider\EntryPointProvider::class)]
@@ -120,6 +128,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
+#[UsesClass(\Deriver\Standard\Library::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
 final class SessionTest extends TestCase
@@ -240,4 +249,134 @@ final class SessionTest extends TestCase
         self::assertNotSame($a->snapshot()->id, $b->snapshot()->id);
         self::assertSame(['example/library' => '2'], $b->snapshot()->dependencyVersions);
     }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerSemanticConfiguration')]
+    public function testSnapshotSeparatesEveryCapturedSemanticAssumption(\Deriver\Api\Project\Configuration $configuration): void
+    {
+        $input = new \Deriver\Api\Project\ProjectInput([new \Deriver\Api\Project\SourceFile('a.php', '<?php function target(){return 1;}')]);
+        $baseline = new \Deriver\Internal\Api\Session($input, new \Deriver\Api\Project\Configuration());
+        $changed = new \Deriver\Internal\Api\Session($input, $configuration);
+        self::assertNotSame($baseline->snapshot()->id, $changed->snapshot()->id);
+        self::assertSame($configuration->closedWorld, $changed->snapshot()->closedWorld);
+        self::assertSame($configuration->environmentVersion, $changed->snapshot()->environmentVersion);
+        self::assertSame($configuration->dependencyVersions, $changed->snapshot()->dependencyVersions);
+    }
+    /**
+     * @return iterable<string,array{\Deriver\Api\Project\Configuration}>
+     */
+    public static function providerSemanticConfiguration(): iterable
+    {
+        yield 'closed world' => [new \Deriver\Api\Project\Configuration(closedWorld:true)];
+        yield 'environment version' => [new \Deriver\Api\Project\Configuration(environmentVersion:'revision-2')];
+        yield 'environment value' => [new \Deriver\Api\Project\Configuration(environment:['constant:EXAMPLE' => \Deriver\Value\Term::constant(2)])];
+        yield 'secret environment' => [new \Deriver\Api\Project\Configuration(environment:['constant:EXAMPLE' => \Deriver\Value\Term::constant(2, true)])];
+        yield 'dependency version' => [new \Deriver\Api\Project\Configuration(dependencyVersions:['vendor/library' => '2'])];
+        yield 'standard models' => [new \Deriver\Api\Project\Configuration(standardModels:false)];
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testSnapshotNormalizesSourceAndAssumptionOrder(): void
+    {
+        $a = new \Deriver\Api\Project\SourceFile('a.php', '<?php function a(){return 1;}');
+        $b = new \Deriver\Api\Project\SourceFile('b.php', '<?php function b(){return 2;}');
+        $first = new \Deriver\Internal\Api\Session(new \Deriver\Api\Project\ProjectInput([$b,$a]), new \Deriver\Api\Project\Configuration(environment:['b' => \Deriver\Value\Term::constant(2),'a' => \Deriver\Value\Term::constant(1)], dependencyVersions:['b' => '2','a' => '1']));
+        $second = new \Deriver\Internal\Api\Session(new \Deriver\Api\Project\ProjectInput([$a,$b]), new \Deriver\Api\Project\Configuration(environment:['a' => \Deriver\Value\Term::constant(1),'b' => \Deriver\Value\Term::constant(2)], dependencyVersions:['a' => '1','b' => '2']));
+        self::assertSame($first->snapshot()->id, $second->snapshot()->id);
+        self::assertSame(['a.php' => hash('sha256', $a->contents),'b.php' => hash('sha256', $b->contents)], $first->snapshot()->sources);
+        self::assertSame(['a' => '1','b' => '2'], $first->snapshot()->dependencyVersions);
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testSnapshotDistinguishesDeclarationsOnlyFromExecutableSources(): void
+    {
+        $source = '<?php function target(){return 1;}';
+        $executable = new \Deriver\Internal\Api\Session(new \Deriver\Api\Project\ProjectInput([new \Deriver\Api\Project\SourceFile('a.php', $source)]), new \Deriver\Api\Project\Configuration());
+        $declarations = new \Deriver\Internal\Api\Session(new \Deriver\Api\Project\ProjectInput([new \Deriver\Api\Project\SourceFile('a.php', $source, true)]), new \Deriver\Api\Project\Configuration());
+        self::assertNotSame($executable->snapshot()->id, $declarations->snapshot()->id);
+        self::assertSame([], $executable->snapshot()->sourceModes);
+        self::assertSame(['a.php' => 'declarations'], $declarations->snapshot()->sourceModes);
+        self::assertSame($executable->snapshot()->sources, $declarations->snapshot()->sources);
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testSnapshotIncludesConfidentialityInEnvironmentIdentity(): void
+    {
+        $source = '<?php function target(){return 1;}';
+        $public = \Tests\Fake\Analysis::session($source, new \Deriver\Api\Project\Configuration(environment:['example' => \Deriver\Value\Term::constant('same')]));
+        $secret = \Tests\Fake\Analysis::session($source, new \Deriver\Api\Project\Configuration(environment:['example' => \Deriver\Value\Term::constant('same', true)]));
+        self::assertNotSame($public->snapshot()->id, $secret->snapshot()->id);
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testDeriveReusesOnlyTheSameNormalizedQuery(): void
+    {
+        $session = new \Deriver\Internal\Api\Session(new \Deriver\Api\Project\ProjectInput([new \Deriver\Api\Project\SourceFile('a.php', '<?php function target(){return 1;}')]), new \Deriver\Api\Project\Configuration());
+        $query = new \Deriver\Api\Query\ReturnQuery('target');
+        $first = $session->derive($query);
+        $again = $session->derive(new \Deriver\Api\Query\ReturnQuery('target'));
+        $different = $session->derive(new \Deriver\Api\Query\ReturnQuery('target', budget:new \Deriver\Api\Query\Budget(transfers:5000)));
+        self::assertSame($first, $again);
+        self::assertNotSame($first, $different);
+        self::assertNotSame($first->reference->id, $different->reference->id);
+        self::assertCount(2, $session->cache);
+        self::assertSame([$first->reference->id => $first,$different->reference->id => $different], $session->results);
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testExplainPreservesFrontiersAndAssumptionsAlongsideEvidence(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return external_call();}');
+        $result = $session->derive(new \Deriver\Api\Query\ReturnQuery('target'));
+        $explanation = $session->explain($result->reference);
+        self::assertNotEmpty($result->frontiers);
+        self::assertNotEmpty($result->evidence);
+        self::assertSame($result->frontiers, $explanation->frontiers);
+        self::assertSame($result->evidence, $explanation->nodes);
+        self::assertSame($result->assumptions, $explanation->assumptions);
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testObservationsSortsContributionsAndIgnoresProvidersWithoutQueries(): void
+    {
+        $queries = self::createStub(\Deriver\Model\Provider\ObservationProvider::class);
+        $queries->method('id')->willReturn('example.queries');
+        $queries->method('version')->willReturn('1');
+        $a = new \Deriver\Api\Query\ReturnQuery('a');
+        $b = new \Deriver\Api\Query\ReturnQuery('b');
+        $queries->method('queries')->willReturn(['z' => $b,'a' => $a]);
+        $ordinary = self::createStub(\Deriver\Model\Provider\Provider::class);
+        $ordinary->method('id')->willReturn('example.ordinary');
+        $ordinary->method('version')->willReturn('1');
+        $session = \Tests\Fake\Analysis::session('<?php function a(){}function b(){}', new \Deriver\Api\Project\Configuration(providers:[$ordinary,$queries]));
+        self::assertSame(['a' => $a,'z' => $b], $session->observations());
+        self::assertSame([], $session->entrypoints());
+    }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testObservationsRejectsConflictingNamesAcrossProviders(): void
+    {
+        $first = self::createStub(\Deriver\Model\Provider\ObservationProvider::class);
+        $first->method('id')->willReturn('example.first');
+        $first->method('version')->willReturn('1');
+        $first->method('queries')->willReturn(['same' => new \Deriver\Api\Query\ReturnQuery('a')]);
+        $second = self::createStub(\Deriver\Model\Provider\ObservationProvider::class);
+        $second->method('id')->willReturn('example.second');
+        $second->method('version')->willReturn('1');
+        $second->method('queries')->willReturn(['same' => new \Deriver\Api\Query\ReturnQuery('b')]);
+        $session = \Tests\Fake\Analysis::session('<?php function a(){}function b(){}', new \Deriver\Api\Project\Configuration(providers:[$first,$second]));
+        $this->expectException(\Deriver\Api\InvalidInputException::class);
+        $this->expectExceptionMessage('MODEL_CONFLICT: repeated observation name same');
+        $session->observations();
+    }
+
 }
