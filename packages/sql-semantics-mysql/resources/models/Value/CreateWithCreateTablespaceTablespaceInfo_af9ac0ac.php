@@ -17,10 +17,11 @@ final class CreateWithCreateTablespaceTablespaceInfo_af9ac0ac implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceInfoForm $tablespaceInfo,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceInfo), 'The tablespaceInfo must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class CreateWithCreateTablespaceTablespaceInfo_af9ac0ac implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('TABLESPACE');
+        $writer->comments($this->comments, 2);
         $this->tablespaceInfo->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class CreateWithCreateTablespaceTablespaceInfo_af9ac0ac implements \SqlSem
      */
     public function withTablespaceInfo(\SqlSemantics\Statement\Model\MySql\Role\TablespaceInfoForm $tablespaceInfo): self
     {
-        return new self($tablespaceInfo);
+        return new self($tablespaceInfo, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tablespaceInfo, $comments);
     }
 }

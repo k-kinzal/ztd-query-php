@@ -17,11 +17,12 @@ final class FunctionCallKeywordWithMinuteSymExpr_da407496 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $minuteSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($minuteSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['MINUTE_SYM'], 'The minuteSym must be a complete MINUTE_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class FunctionCallKeywordWithMinuteSymExpr_da407496 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->minuteSym);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class FunctionCallKeywordWithMinuteSymExpr_da407496 implements \SqlSemanti
      */
     public function withMinuteSym(string $minuteSym): self
     {
-        return new self($minuteSym, $this->expr);
+        return new self($minuteSym, $this->expr, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class FunctionCallKeywordWithMinuteSymExpr_da407496 implements \SqlSemanti
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->minuteSym, $expr);
+        return new self($this->minuteSym, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->minuteSym, $this->expr, $comments);
     }
 }

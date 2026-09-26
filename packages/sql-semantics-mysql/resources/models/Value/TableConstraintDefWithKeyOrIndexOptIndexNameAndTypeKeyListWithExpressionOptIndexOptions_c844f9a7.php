@@ -17,13 +17,14 @@ final class TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpres
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexNameAndTypeForm $optIndexNameAndType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm $optIndexOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyOrIndex), 'The keyOrIndex must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIndexNameAndType), 'The optIndexNameAndType must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpres
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->keyOrIndex->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optIndexNameAndType->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->keyListWithExpression->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $this->optIndexOptions->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpres
      */
     public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self
     {
-        return new self($keyOrIndex, $this->optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions);
+        return new self($keyOrIndex, $this->optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpres
      */
     public function withOptIndexNameAndType(\SqlSemantics\Statement\Model\MySql\Role\OptIndexNameAndTypeForm $optIndexNameAndType): self
     {
-        return new self($this->keyOrIndex, $optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions);
+        return new self($this->keyOrIndex, $optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpres
      */
     public function withKeyListWithExpression(\SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression): self
     {
-        return new self($this->keyOrIndex, $this->optIndexNameAndType, $keyListWithExpression, $this->optIndexOptions);
+        return new self($this->keyOrIndex, $this->optIndexNameAndType, $keyListWithExpression, $this->optIndexOptions, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class TableConstraintDefWithKeyOrIndexOptIndexNameAndTypeKeyListWithExpres
      */
     public function withOptIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm $optIndexOptions): self
     {
-        return new self($this->keyOrIndex, $this->optIndexNameAndType, $this->keyListWithExpression, $optIndexOptions);
+        return new self($this->keyOrIndex, $this->optIndexNameAndType, $this->keyListWithExpression, $optIndexOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->keyOrIndex, $this->optIndexNameAndType, $this->keyListWithExpression, $this->optIndexOptions, $comments);
     }
 }

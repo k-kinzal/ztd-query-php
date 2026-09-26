@@ -17,7 +17,7 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptAllClauseForm $optAllClause,
@@ -28,6 +28,7 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm $groupBy,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm $having,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm $windowClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optAllClause), 'The optAllClause must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -44,14 +45,23 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SELECT');
+        $writer->comments($this->comments, 1);
         $this->optAllClause->write($writer);
+        $writer->comments($this->comments, 2);
         $this->projections->write($writer);
+        $writer->comments($this->comments, 3);
         $this->intoClause->write($writer);
+        $writer->comments($this->comments, 4);
         $this->from->write($writer);
+        $writer->comments($this->comments, 5);
         $this->where->write($writer);
+        $writer->comments($this->comments, 6);
         $this->groupBy->write($writer);
+        $writer->comments($this->comments, 7);
         $this->having->write($writer);
+        $writer->comments($this->comments, 8);
         $this->windowClause->write($writer);
     }
 
@@ -60,7 +70,7 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
      */
     public function withOptAllClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptAllClauseForm $optAllClause): self
     {
-        return new self($optAllClause, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+        return new self($optAllClause, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -68,7 +78,7 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
      */
     public function withProjections(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTargetListForm $projections): self
     {
-        return new self($this->optAllClause, $projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+        return new self($this->optAllClause, $projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -76,7 +86,7 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
      */
     public function withIntoClause(\SqlSemantics\Statement\Model\PostgreSql\Role\IntoClauseForm $intoClause): self
     {
-        return new self($this->optAllClause, $this->projections, $intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+        return new self($this->optAllClause, $this->projections, $intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -84,7 +94,7 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
      */
     public function withFrom(\SqlSemantics\Statement\Model\PostgreSql\Role\FromClauseForm $from): self
     {
-        return new self($this->optAllClause, $this->projections, $this->intoClause, $from, $this->where, $this->groupBy, $this->having, $this->windowClause);
+        return new self($this->optAllClause, $this->projections, $this->intoClause, $from, $this->where, $this->groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -92,7 +102,7 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
      */
     public function withWhere(\SqlSemantics\Statement\Model\PostgreSql\Role\WhereClauseForm $where): self
     {
-        return new self($this->optAllClause, $this->projections, $this->intoClause, $this->from, $where, $this->groupBy, $this->having, $this->windowClause);
+        return new self($this->optAllClause, $this->projections, $this->intoClause, $this->from, $where, $this->groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -100,7 +110,7 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
      */
     public function withGroupBy(\SqlSemantics\Statement\Model\PostgreSql\Role\GroupClauseForm $groupBy): self
     {
-        return new self($this->optAllClause, $this->projections, $this->intoClause, $this->from, $this->where, $groupBy, $this->having, $this->windowClause);
+        return new self($this->optAllClause, $this->projections, $this->intoClause, $this->from, $this->where, $groupBy, $this->having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -108,7 +118,7 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
      */
     public function withHaving(\SqlSemantics\Statement\Model\PostgreSql\Role\HavingClauseForm $having): self
     {
-        return new self($this->optAllClause, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $having, $this->windowClause);
+        return new self($this->optAllClause, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $having, $this->windowClause, $this->comments);
     }
 
     /**
@@ -116,6 +126,14 @@ final class SimpleSelectWithSelectOptAllClauseOptTargetListIntoClauseFromClauseW
      */
     public function withWindowClause(\SqlSemantics\Statement\Model\PostgreSql\Role\WindowClauseForm $windowClause): self
     {
-        return new self($this->optAllClause, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $windowClause);
+        return new self($this->optAllClause, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $windowClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optAllClause, $this->projections, $this->intoClause, $this->from, $this->where, $this->groupBy, $this->having, $this->windowClause, $comments);
     }
 }

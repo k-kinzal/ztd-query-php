@@ -17,13 +17,14 @@ final class AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldDefForm $fieldDef,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm $optPlace,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('MODIFY');
+        $writer->comments($this->comments, 1);
         $this->optColumn->write($writer);
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 3);
         $this->fieldDef->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optPlace->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 im
      */
     public function withOptColumn(\SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn): self
     {
-        return new self($optColumn, $this->ident, $this->fieldDef, $this->optPlace);
+        return new self($optColumn, $this->ident, $this->fieldDef, $this->optPlace, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 im
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->optColumn, $ident, $this->fieldDef, $this->optPlace);
+        return new self($this->optColumn, $ident, $this->fieldDef, $this->optPlace, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 im
      */
     public function withFieldDef(\SqlSemantics\Statement\Model\MySql\Role\FieldDefForm $fieldDef): self
     {
-        return new self($this->optColumn, $this->ident, $fieldDef, $this->optPlace);
+        return new self($this->optColumn, $this->ident, $fieldDef, $this->optPlace, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class AlterListItemWithModifySymOptColumnIdentFieldDefOptPlace_06526116 im
      */
     public function withOptPlace(\SqlSemantics\Statement\Model\MySql\Role\OptPlaceForm $optPlace): self
     {
-        return new self($this->optColumn, $this->ident, $this->fieldDef, $optPlace);
+        return new self($this->optColumn, $this->ident, $this->fieldDef, $optPlace, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optColumn, $this->ident, $this->fieldDef, $this->optPlace, $comments);
     }
 }

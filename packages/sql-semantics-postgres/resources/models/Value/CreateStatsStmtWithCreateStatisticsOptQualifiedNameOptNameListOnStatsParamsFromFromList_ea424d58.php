@@ -17,13 +17,14 @@ final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm $optNameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optQualifiedName), 'The optQualifiedName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optNameList), 'The optNameList must be a generated immutable SQL value.');
@@ -36,13 +37,21 @@ final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('STATISTICS');
+        $writer->comments($this->comments, 2);
         $this->optQualifiedName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optNameList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('ON');
+        $writer->comments($this->comments, 5);
         $this->statsParams->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('FROM');
+        $writer->comments($this->comments, 7);
         $this->fromList->write($writer);
     }
 
@@ -51,7 +60,7 @@ final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStat
      */
     public function withOptQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName): self
     {
-        return new self($optQualifiedName, $this->optNameList, $this->statsParams, $this->fromList);
+        return new self($optQualifiedName, $this->optNameList, $this->statsParams, $this->fromList, $this->comments);
     }
 
     /**
@@ -59,7 +68,7 @@ final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStat
      */
     public function withOptNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptNameListForm $optNameList): self
     {
-        return new self($this->optQualifiedName, $optNameList, $this->statsParams, $this->fromList);
+        return new self($this->optQualifiedName, $optNameList, $this->statsParams, $this->fromList, $this->comments);
     }
 
     /**
@@ -67,7 +76,7 @@ final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStat
      */
     public function withStatsParams(\SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams): self
     {
-        return new self($this->optQualifiedName, $this->optNameList, $statsParams, $this->fromList);
+        return new self($this->optQualifiedName, $this->optNameList, $statsParams, $this->fromList, $this->comments);
     }
 
     /**
@@ -75,6 +84,14 @@ final class CreateStatsStmtWithCreateStatisticsOptQualifiedNameOptNameListOnStat
      */
     public function withFromList(\SqlSemantics\Statement\Model\PostgreSql\Role\FromListForm $fromList): self
     {
-        return new self($this->optQualifiedName, $this->optNameList, $this->statsParams, $fromList);
+        return new self($this->optQualifiedName, $this->optNameList, $this->statsParams, $fromList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optQualifiedName, $this->optNameList, $this->statsParams, $this->fromList, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class RoutineStringWithDollarQuotedStringSym_ac3f5bd6 implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $dollarQuotedStringSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($dollarQuotedStringSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DOLLAR_QUOTED_STRING_SYM'], 'The dollarQuotedStringSym must be a complete DOLLAR_QUOTED_STRING_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class RoutineStringWithDollarQuotedStringSym_ac3f5bd6 implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->dollarQuotedStringSym);
     }
 
@@ -38,6 +40,14 @@ final class RoutineStringWithDollarQuotedStringSym_ac3f5bd6 implements \SqlSeman
      */
     public function withDollarQuotedStringSym(string $dollarQuotedStringSym): self
     {
-        return new self($dollarQuotedStringSym);
+        return new self($dollarQuotedStringSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->dollarQuotedStringSym, $comments);
     }
 }

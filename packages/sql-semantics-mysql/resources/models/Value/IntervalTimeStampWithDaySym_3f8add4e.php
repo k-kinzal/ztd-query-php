@@ -17,10 +17,11 @@ final class IntervalTimeStampWithDaySym_3f8add4e implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $daySym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($daySym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DAY_SYM'], 'The daySym must be a complete DAY_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class IntervalTimeStampWithDaySym_3f8add4e implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->daySym);
     }
 
@@ -38,6 +40,14 @@ final class IntervalTimeStampWithDaySym_3f8add4e implements \SqlSemantics\Statem
      */
     public function withDaySym(string $daySym): self
     {
-        return new self($daySym);
+        return new self($daySym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->daySym, $comments);
     }
 }

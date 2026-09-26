@@ -17,11 +17,12 @@ final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm $oldAggrList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrElemForm $oldAggrElem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($oldAggrList), 'The oldAggrList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($oldAggrElem), 'The oldAggrElem must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->oldAggrList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->oldAggrElem->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemant
      */
     public function withOldAggrList(\SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrListForm $oldAggrList): self
     {
-        return new self($oldAggrList, $this->oldAggrElem);
+        return new self($oldAggrList, $this->oldAggrElem, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class OldAggrListWithOldAggrListOldAggrElem_789b6ea5 implements \SqlSemant
      */
     public function withOldAggrElem(\SqlSemantics\Statement\Model\PostgreSql\Role\OldAggrElemForm $oldAggrElem): self
     {
-        return new self($this->oldAggrList, $oldAggrElem);
+        return new self($this->oldAggrList, $oldAggrElem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->oldAggrList, $this->oldAggrElem, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class RvalueSystemOrUserVariableWithOptRvalueSystemVariableTypeRvalueSyste
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRvalueSystemVariableTypeForm $optRvalueSystemVariableType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RvalueSystemVariableForm $rvalueSystemVariable,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optRvalueSystemVariableType), 'The optRvalueSystemVariableType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rvalueSystemVariable), 'The rvalueSystemVariable must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class RvalueSystemOrUserVariableWithOptRvalueSystemVariableTypeRvalueSyste
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
-        $writer->append('@');
-        $writer->append('@');
+        $writer->comments($this->comments, 0);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 1);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 2);
         $this->optRvalueSystemVariableType->write($writer);
+        $writer->comments($this->comments, 3);
         $this->rvalueSystemVariable->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class RvalueSystemOrUserVariableWithOptRvalueSystemVariableTypeRvalueSyste
      */
     public function withOptRvalueSystemVariableType(\SqlSemantics\Statement\Model\MySql\Role\OptRvalueSystemVariableTypeForm $optRvalueSystemVariableType): self
     {
-        return new self($optRvalueSystemVariableType, $this->rvalueSystemVariable);
+        return new self($optRvalueSystemVariableType, $this->rvalueSystemVariable, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class RvalueSystemOrUserVariableWithOptRvalueSystemVariableTypeRvalueSyste
      */
     public function withRvalueSystemVariable(\SqlSemantics\Statement\Model\MySql\Role\RvalueSystemVariableForm $rvalueSystemVariable): self
     {
-        return new self($this->optRvalueSystemVariableType, $rvalueSystemVariable);
+        return new self($this->optRvalueSystemVariableType, $rvalueSystemVariable, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optRvalueSystemVariableType, $this->rvalueSystemVariable, $comments);
     }
 }

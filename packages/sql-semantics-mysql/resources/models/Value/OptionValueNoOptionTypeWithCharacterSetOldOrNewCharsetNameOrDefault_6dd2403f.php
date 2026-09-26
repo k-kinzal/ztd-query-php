@@ -17,11 +17,12 @@ final class OptionValueNoOptionTypeWithCharacterSetOldOrNewCharsetNameOrDefault_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OldOrNewCharsetNameOrDefaultForm $oldOrNewCharsetNameOrDefault,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($characterSet), 'The characterSet must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($oldOrNewCharsetNameOrDefault), 'The oldOrNewCharsetNameOrDefault must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptionValueNoOptionTypeWithCharacterSetOldOrNewCharsetNameOrDefault_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->characterSet->write($writer);
+        $writer->comments($this->comments, 1);
         $this->oldOrNewCharsetNameOrDefault->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptionValueNoOptionTypeWithCharacterSetOldOrNewCharsetNameOrDefault_
      */
     public function withCharacterSet(\SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet): self
     {
-        return new self($characterSet, $this->oldOrNewCharsetNameOrDefault);
+        return new self($characterSet, $this->oldOrNewCharsetNameOrDefault, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptionValueNoOptionTypeWithCharacterSetOldOrNewCharsetNameOrDefault_
      */
     public function withOldOrNewCharsetNameOrDefault(\SqlSemantics\Statement\Model\MySql\Role\OldOrNewCharsetNameOrDefaultForm $oldOrNewCharsetNameOrDefault): self
     {
-        return new self($this->characterSet, $oldOrNewCharsetNameOrDefault);
+        return new self($this->characterSet, $oldOrNewCharsetNameOrDefault, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->characterSet, $this->oldOrNewCharsetNameOrDefault, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class ChecksumWithChecksumSymTableOrTablesTableListOptChecksumType_a3067bb
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChecksumTypeForm $optChecksumType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOrTables), 'The tableOrTables must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableList), 'The tableList must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class ChecksumWithChecksumSymTableOrTablesTableListOptChecksumType_a3067bb
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CHECKSUM');
+        $writer->comments($this->comments, 1);
         $this->tableOrTables->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optChecksumType->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class ChecksumWithChecksumSymTableOrTablesTableListOptChecksumType_a3067bb
      */
     public function withTableOrTables(\SqlSemantics\Statement\Model\MySql\Role\TableOrTablesForm $tableOrTables): self
     {
-        return new self($tableOrTables, $this->tableList, $this->optChecksumType);
+        return new self($tableOrTables, $this->tableList, $this->optChecksumType, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class ChecksumWithChecksumSymTableOrTablesTableListOptChecksumType_a3067bb
      */
     public function withTableList(\SqlSemantics\Statement\Model\MySql\Role\TableListForm $tableList): self
     {
-        return new self($this->tableOrTables, $tableList, $this->optChecksumType);
+        return new self($this->tableOrTables, $tableList, $this->optChecksumType, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class ChecksumWithChecksumSymTableOrTablesTableListOptChecksumType_a3067bb
      */
     public function withOptChecksumType(\SqlSemantics\Statement\Model\MySql\Role\OptChecksumTypeForm $optChecksumType): self
     {
-        return new self($this->tableOrTables, $this->tableList, $optChecksumType);
+        return new self($this->tableOrTables, $this->tableList, $optChecksumType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableOrTables, $this->tableList, $this->optChecksumType, $comments);
     }
 }

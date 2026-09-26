@@ -17,12 +17,13 @@ final class PublicationObjSpecWithTableRelationExprOptColumnListOptWhereClause_f
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWhereClauseForm $optWhereClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumnList), 'The optColumnList must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class PublicationObjSpecWithTableRelationExprOptColumnListOptWhereClause_f
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 1);
         $this->relationExpr->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optColumnList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optWhereClause->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class PublicationObjSpecWithTableRelationExprOptColumnListOptWhereClause_f
      */
     public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
     {
-        return new self($relationExpr, $this->optColumnList, $this->optWhereClause);
+        return new self($relationExpr, $this->optColumnList, $this->optWhereClause, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class PublicationObjSpecWithTableRelationExprOptColumnListOptWhereClause_f
      */
     public function withOptColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList): self
     {
-        return new self($this->relationExpr, $optColumnList, $this->optWhereClause);
+        return new self($this->relationExpr, $optColumnList, $this->optWhereClause, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class PublicationObjSpecWithTableRelationExprOptColumnListOptWhereClause_f
      */
     public function withOptWhereClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWhereClauseForm $optWhereClause): self
     {
-        return new self($this->relationExpr, $this->optColumnList, $optWhereClause);
+        return new self($this->relationExpr, $this->optColumnList, $optWhereClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->relationExpr, $this->optColumnList, $this->optWhereClause, $comments);
     }
 }

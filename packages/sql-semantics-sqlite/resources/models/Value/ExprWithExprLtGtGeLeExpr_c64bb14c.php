@@ -17,12 +17,13 @@ final class ExprWithExprLtGtGeLeExpr_c64bb14c implements \SqlSemantics\Statement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly string $ltGtGeLe,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 5,));
@@ -36,8 +37,11 @@ final class ExprWithExprLtGtGeLeExpr_c64bb14c implements \SqlSemantics\Statement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->ltGtGeLe);
+        $writer->comments($this->comments, 2);
         $this->expr2->write($writer);
     }
 
@@ -46,7 +50,7 @@ final class ExprWithExprLtGtGeLeExpr_c64bb14c implements \SqlSemantics\Statement
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->ltGtGeLe, $this->expr2);
+        return new self($expr, $this->ltGtGeLe, $this->expr2, $this->comments);
     }
 
     /**
@@ -54,7 +58,7 @@ final class ExprWithExprLtGtGeLeExpr_c64bb14c implements \SqlSemantics\Statement
      */
     public function withLtGtGeLe(string $ltGtGeLe): self
     {
-        return new self($this->expr, $ltGtGeLe, $this->expr2);
+        return new self($this->expr, $ltGtGeLe, $this->expr2, $this->comments);
     }
 
     /**
@@ -62,6 +66,14 @@ final class ExprWithExprLtGtGeLeExpr_c64bb14c implements \SqlSemantics\Statement
      */
     public function withExpr2(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr2): self
     {
-        return new self($this->expr, $this->ltGtGeLe, $expr2);
+        return new self($this->expr, $this->ltGtGeLe, $expr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->ltGtGeLe, $this->expr2, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class ShowParamWithDatabasesWildAndWhere_7dde5c68 implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $databases,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($databases, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASES'], 'The databases must be a complete DATABASES lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wildAndWhere), 'The wildAndWhere must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ShowParamWithDatabasesWildAndWhere_7dde5c68 implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->databases);
+        $writer->comments($this->comments, 1);
         $this->wildAndWhere->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ShowParamWithDatabasesWildAndWhere_7dde5c68 implements \SqlSemantics
      */
     public function withDatabases(string $databases): self
     {
-        return new self($databases, $this->wildAndWhere);
+        return new self($databases, $this->wildAndWhere, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ShowParamWithDatabasesWildAndWhere_7dde5c68 implements \SqlSemantics
      */
     public function withWildAndWhere(\SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere): self
     {
-        return new self($this->databases, $wildAndWhere);
+        return new self($this->databases, $wildAndWhere, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->databases, $this->wildAndWhere, $comments);
     }
 }

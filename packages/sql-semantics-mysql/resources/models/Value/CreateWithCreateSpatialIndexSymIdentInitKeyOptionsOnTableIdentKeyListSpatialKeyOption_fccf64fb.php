@@ -17,7 +17,7 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpatialForm $spatial,
@@ -27,6 +27,7 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm $spatialKeyOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm $optIndexLockAlgorithm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spatial), 'The spatial must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -42,17 +43,29 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->spatial->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('INDEX');
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 4);
         $this->initKeyOptions->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('ON');
+        $writer->comments($this->comments, 6);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('(');
+        $writer->comments($this->comments, 8);
         $this->keyList->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append(')');
+        $writer->comments($this->comments, 10);
         $this->spatialKeyOptions->write($writer);
+        $writer->comments($this->comments, 11);
         $this->optIndexLockAlgorithm->write($writer);
     }
 
@@ -61,7 +74,7 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
      */
     public function withSpatial(\SqlSemantics\Statement\Model\MySql\Role\SpatialForm $spatial): self
     {
-        return new self($spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -69,7 +82,7 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->spatial, $ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->spatial, $ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -77,7 +90,7 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
      */
     public function withInitKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\InitKeyOptionsForm $initKeyOptions): self
     {
-        return new self($this->spatial, $this->ident, $initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->spatial, $this->ident, $initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -85,7 +98,7 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->spatial, $this->ident, $this->initKeyOptions, $tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->spatial, $this->ident, $this->initKeyOptions, $tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -93,7 +106,7 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
      */
     public function withKeyList(\SqlSemantics\Statement\Model\MySql\Role\KeyListForm $keyList): self
     {
-        return new self($this->spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -101,7 +114,7 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
      */
     public function withSpatialKeyOptions(\SqlSemantics\Statement\Model\MySql\Role\SpatialKeyOptionsForm $spatialKeyOptions): self
     {
-        return new self($this->spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $spatialKeyOptions, $this->optIndexLockAlgorithm);
+        return new self($this->spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $spatialKeyOptions, $this->optIndexLockAlgorithm, $this->comments);
     }
 
     /**
@@ -109,6 +122,14 @@ final class CreateWithCreateSpatialIndexSymIdentInitKeyOptionsOnTableIdentKeyLis
      */
     public function withOptIndexLockAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAlgorithmForm $optIndexLockAlgorithm): self
     {
-        return new self($this->spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $optIndexLockAlgorithm);
+        return new self($this->spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $optIndexLockAlgorithm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spatial, $this->ident, $this->initKeyOptions, $this->tableIdent, $this->keyList, $this->spatialKeyOptions, $this->optIndexLockAlgorithm, $comments);
     }
 }

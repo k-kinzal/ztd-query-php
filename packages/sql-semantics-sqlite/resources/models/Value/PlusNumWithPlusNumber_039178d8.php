@@ -17,10 +17,11 @@ final class PlusNumWithPlusNumber_039178d8 implements \SqlSemantics\Statement\Mo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $number,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($number, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['number'], 'The number must be a complete number lexical spelling.');
     }
@@ -30,7 +31,9 @@ final class PlusNumWithPlusNumber_039178d8 implements \SqlSemantics\Statement\Mo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('+');
+        $writer->comments($this->comments, 1);
         $writer->append($this->number);
     }
 
@@ -39,6 +42,14 @@ final class PlusNumWithPlusNumber_039178d8 implements \SqlSemantics\Statement\Mo
      */
     public function withNumber(string $number): self
     {
-        return new self($number);
+        return new self($number, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->number, $comments);
     }
 }

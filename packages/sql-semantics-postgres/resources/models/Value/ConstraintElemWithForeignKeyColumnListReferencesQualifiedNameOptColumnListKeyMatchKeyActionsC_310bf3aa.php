@@ -17,7 +17,7 @@ final class ConstraintElemWithForeignKeyColumnListReferencesQualifiedNameOptColu
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList,
@@ -26,6 +26,7 @@ final class ConstraintElemWithForeignKeyColumnListReferencesQualifiedNameOptColu
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\KeyMatchForm $keyMatch,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm $keyActions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
@@ -40,16 +41,27 @@ final class ConstraintElemWithForeignKeyColumnListReferencesQualifiedNameOptColu
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 1);
         $writer->append('KEY');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->columnList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $writer->append('REFERENCES');
+        $writer->comments($this->comments, 6);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optColumnList->write($writer);
+        $writer->comments($this->comments, 8);
         $this->keyMatch->write($writer);
+        $writer->comments($this->comments, 9);
         $this->keyActions->write($writer);
+        $writer->comments($this->comments, 10);
         $this->constraintAttributeSpec->write($writer);
     }
 
@@ -58,7 +70,7 @@ final class ConstraintElemWithForeignKeyColumnListReferencesQualifiedNameOptColu
      */
     public function withColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList): self
     {
-        return new self($columnList, $this->qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions, $this->constraintAttributeSpec);
+        return new self($columnList, $this->qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -66,7 +78,7 @@ final class ConstraintElemWithForeignKeyColumnListReferencesQualifiedNameOptColu
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->columnList, $qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions, $this->constraintAttributeSpec);
+        return new self($this->columnList, $qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -74,7 +86,7 @@ final class ConstraintElemWithForeignKeyColumnListReferencesQualifiedNameOptColu
      */
     public function withOptColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList): self
     {
-        return new self($this->columnList, $this->qualifiedName, $optColumnList, $this->keyMatch, $this->keyActions, $this->constraintAttributeSpec);
+        return new self($this->columnList, $this->qualifiedName, $optColumnList, $this->keyMatch, $this->keyActions, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -82,7 +94,7 @@ final class ConstraintElemWithForeignKeyColumnListReferencesQualifiedNameOptColu
      */
     public function withKeyMatch(\SqlSemantics\Statement\Model\PostgreSql\Role\KeyMatchForm $keyMatch): self
     {
-        return new self($this->columnList, $this->qualifiedName, $this->optColumnList, $keyMatch, $this->keyActions, $this->constraintAttributeSpec);
+        return new self($this->columnList, $this->qualifiedName, $this->optColumnList, $keyMatch, $this->keyActions, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -90,7 +102,7 @@ final class ConstraintElemWithForeignKeyColumnListReferencesQualifiedNameOptColu
      */
     public function withKeyActions(\SqlSemantics\Statement\Model\PostgreSql\Role\KeyActionsForm $keyActions): self
     {
-        return new self($this->columnList, $this->qualifiedName, $this->optColumnList, $this->keyMatch, $keyActions, $this->constraintAttributeSpec);
+        return new self($this->columnList, $this->qualifiedName, $this->optColumnList, $this->keyMatch, $keyActions, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -98,6 +110,14 @@ final class ConstraintElemWithForeignKeyColumnListReferencesQualifiedNameOptColu
      */
     public function withConstraintAttributeSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec): self
     {
-        return new self($this->columnList, $this->qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions, $constraintAttributeSpec);
+        return new self($this->columnList, $this->qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions, $constraintAttributeSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->columnList, $this->qualifiedName, $this->optColumnList, $this->keyMatch, $this->keyActions, $this->constraintAttributeSpec, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class PartitionSpecWithPartitionByColIdPartParams_fccf4441 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PartParamsForm $partParams,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($partParams), 'The partParams must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class PartitionSpecWithPartitionByColIdPartParams_fccf4441 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 1);
         $writer->append('BY');
+        $writer->comments($this->comments, 2);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->partParams->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -45,7 +52,7 @@ final class PartitionSpecWithPartitionByColIdPartParams_fccf4441 implements \Sql
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($colId, $this->partParams);
+        return new self($colId, $this->partParams, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class PartitionSpecWithPartitionByColIdPartParams_fccf4441 implements \Sql
      */
     public function withPartParams(\SqlSemantics\Statement\Model\PostgreSql\Role\PartParamsForm $partParams): self
     {
-        return new self($this->colId, $partParams);
+        return new self($this->colId, $partParams, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colId, $this->partParams, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class ExprWithExprInOpLpSelectRp_a20110e2 implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\InOpForm $inOp,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,));
@@ -35,10 +36,15 @@ final class ExprWithExprInOpLpSelectRp_a20110e2 implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->inOp->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->select->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -47,7 +53,7 @@ final class ExprWithExprInOpLpSelectRp_a20110e2 implements \SqlSemantics\Stateme
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->inOp, $this->select);
+        return new self($expr, $this->inOp, $this->select, $this->comments);
     }
 
     /**
@@ -55,7 +61,7 @@ final class ExprWithExprInOpLpSelectRp_a20110e2 implements \SqlSemantics\Stateme
      */
     public function withInOp(\SqlSemantics\Statement\Model\Sqlite\Role\InOpForm $inOp): self
     {
-        return new self($this->expr, $inOp, $this->select);
+        return new self($this->expr, $inOp, $this->select, $this->comments);
     }
 
     /**
@@ -63,6 +69,14 @@ final class ExprWithExprInOpLpSelectRp_a20110e2 implements \SqlSemantics\Stateme
      */
     public function withSelect(\SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select): self
     {
-        return new self($this->expr, $this->inOp, $select);
+        return new self($this->expr, $this->inOp, $select, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->inOp, $this->select, $comments);
     }
 }

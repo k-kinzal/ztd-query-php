@@ -17,7 +17,7 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ReplicaForm $replica,
@@ -28,6 +28,7 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDefaultAuthOptionForm $optDefaultAuthOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPluginDirOptionForm $optPluginDirOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($replica), 'The replica must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optReplicaThreadOptionList), 'The optReplicaThreadOptionList must be a generated immutable SQL value.');
@@ -44,14 +45,23 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('START');
+        $writer->comments($this->comments, 1);
         $this->replica->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optReplicaThreadOptionList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optReplicaUntil->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optUserOption->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optPasswordOption->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optDefaultAuthOption->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optPluginDirOption->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optChannel->write($writer);
     }
 
@@ -60,7 +70,7 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
      */
     public function withReplica(\SqlSemantics\Statement\Model\MySql\Role\ReplicaForm $replica): self
     {
-        return new self($replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+        return new self($replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel, $this->comments);
     }
 
     /**
@@ -68,7 +78,7 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
      */
     public function withOptReplicaThreadOptionList(\SqlSemantics\Statement\Model\MySql\Role\OptReplicaThreadOptionListForm $optReplicaThreadOptionList): self
     {
-        return new self($this->replica, $optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+        return new self($this->replica, $optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel, $this->comments);
     }
 
     /**
@@ -76,7 +86,7 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
      */
     public function withOptReplicaUntil(\SqlSemantics\Statement\Model\MySql\Role\OptReplicaUntilForm $optReplicaUntil): self
     {
-        return new self($this->replica, $this->optReplicaThreadOptionList, $optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+        return new self($this->replica, $this->optReplicaThreadOptionList, $optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel, $this->comments);
     }
 
     /**
@@ -84,7 +94,7 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
      */
     public function withOptUserOption(\SqlSemantics\Statement\Model\MySql\Role\OptUserOptionForm $optUserOption): self
     {
-        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel, $this->comments);
     }
 
     /**
@@ -92,7 +102,7 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
      */
     public function withOptPasswordOption(\SqlSemantics\Statement\Model\MySql\Role\OptPasswordOptionForm $optPasswordOption): self
     {
-        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel, $this->comments);
     }
 
     /**
@@ -100,7 +110,7 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
      */
     public function withOptDefaultAuthOption(\SqlSemantics\Statement\Model\MySql\Role\OptDefaultAuthOptionForm $optDefaultAuthOption): self
     {
-        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel);
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel, $this->comments);
     }
 
     /**
@@ -108,7 +118,7 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
      */
     public function withOptPluginDirOption(\SqlSemantics\Statement\Model\MySql\Role\OptPluginDirOptionForm $optPluginDirOption): self
     {
-        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $optPluginDirOption, $this->optChannel);
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $optPluginDirOption, $this->optChannel, $this->comments);
     }
 
     /**
@@ -116,6 +126,14 @@ final class StartReplicaStmtWithStartSymReplicaOptReplicaThreadOptionListOptRepl
      */
     public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
     {
-        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $optChannel);
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $optChannel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->replica, $this->optReplicaThreadOptionList, $this->optReplicaUntil, $this->optUserOption, $this->optPasswordOption, $this->optDefaultAuthOption, $this->optPluginDirOption, $this->optChannel, $comments);
     }
 }

@@ -17,7 +17,7 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\EidlistForm $eidlist,
@@ -25,6 +25,7 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DeferSubclauseOptForm $deferSubclauseOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($eidlist), 'The eidlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
@@ -38,15 +39,25 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 1);
         $writer->append('KEY');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->eidlist->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $writer->append('REFERENCES');
+        $writer->comments($this->comments, 6);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 7);
         $this->eidlistOpt->write($writer);
+        $writer->comments($this->comments, 8);
         $this->refargs->write($writer);
+        $writer->comments($this->comments, 9);
         $this->deferSubclauseOpt->write($writer);
     }
 
@@ -55,7 +66,7 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
      */
     public function withEidlist(\SqlSemantics\Statement\Model\Sqlite\Role\EidlistForm $eidlist): self
     {
-        return new self($eidlist, $this->nm, $this->eidlistOpt, $this->refargs, $this->deferSubclauseOpt);
+        return new self($eidlist, $this->nm, $this->eidlistOpt, $this->refargs, $this->deferSubclauseOpt, $this->comments);
     }
 
     /**
@@ -63,7 +74,7 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->eidlist, $nm, $this->eidlistOpt, $this->refargs, $this->deferSubclauseOpt);
+        return new self($this->eidlist, $nm, $this->eidlistOpt, $this->refargs, $this->deferSubclauseOpt, $this->comments);
     }
 
     /**
@@ -71,7 +82,7 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
      */
     public function withEidlistOpt(\SqlSemantics\Statement\Model\Sqlite\Role\EidlistOptForm $eidlistOpt): self
     {
-        return new self($this->eidlist, $this->nm, $eidlistOpt, $this->refargs, $this->deferSubclauseOpt);
+        return new self($this->eidlist, $this->nm, $eidlistOpt, $this->refargs, $this->deferSubclauseOpt, $this->comments);
     }
 
     /**
@@ -79,7 +90,7 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
      */
     public function withRefargs(\SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs): self
     {
-        return new self($this->eidlist, $this->nm, $this->eidlistOpt, $refargs, $this->deferSubclauseOpt);
+        return new self($this->eidlist, $this->nm, $this->eidlistOpt, $refargs, $this->deferSubclauseOpt, $this->comments);
     }
 
     /**
@@ -87,6 +98,14 @@ final class TconsWithForeignKeyLpEidlistRpReferencesNmEidlistOptRefargsDeferSubc
      */
     public function withDeferSubclauseOpt(\SqlSemantics\Statement\Model\Sqlite\Role\DeferSubclauseOptForm $deferSubclauseOpt): self
     {
-        return new self($this->eidlist, $this->nm, $this->eidlistOpt, $this->refargs, $deferSubclauseOpt);
+        return new self($this->eidlist, $this->nm, $this->eidlistOpt, $this->refargs, $deferSubclauseOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->eidlist, $this->nm, $this->eidlistOpt, $this->refargs, $this->deferSubclauseOpt, $comments);
     }
 }

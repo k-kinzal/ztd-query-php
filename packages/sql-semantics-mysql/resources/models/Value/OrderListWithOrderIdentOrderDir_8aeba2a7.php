@@ -17,11 +17,12 @@ final class OrderListWithOrderIdentOrderDir_8aeba2a7 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm $orderIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderIdent), 'The orderIdent must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderDir), 'The orderDir must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OrderListWithOrderIdentOrderDir_8aeba2a7 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->orderIdent->write($writer);
+        $writer->comments($this->comments, 1);
         $this->orderDir->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OrderListWithOrderIdentOrderDir_8aeba2a7 implements \SqlSemantics\St
      */
     public function withOrderIdent(\SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm $orderIdent): self
     {
-        return new self($orderIdent, $this->orderDir);
+        return new self($orderIdent, $this->orderDir, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OrderListWithOrderIdentOrderDir_8aeba2a7 implements \SqlSemantics\St
      */
     public function withOrderDir(\SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir): self
     {
-        return new self($this->orderIdent, $orderDir);
+        return new self($this->orderIdent, $orderDir, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->orderIdent, $this->orderDir, $comments);
     }
 }

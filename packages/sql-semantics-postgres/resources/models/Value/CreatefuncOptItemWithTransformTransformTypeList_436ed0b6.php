@@ -17,10 +17,11 @@ final class CreatefuncOptItemWithTransformTransformTypeList_436ed0b6 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TransformTypeListForm $transformTypeList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($transformTypeList), 'The transformTypeList must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class CreatefuncOptItemWithTransformTransformTypeList_436ed0b6 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TRANSFORM');
+        $writer->comments($this->comments, 1);
         $this->transformTypeList->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class CreatefuncOptItemWithTransformTransformTypeList_436ed0b6 implements 
      */
     public function withTransformTypeList(\SqlSemantics\Statement\Model\PostgreSql\Role\TransformTypeListForm $transformTypeList): self
     {
-        return new self($transformTypeList);
+        return new self($transformTypeList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->transformTypeList, $comments);
     }
 }

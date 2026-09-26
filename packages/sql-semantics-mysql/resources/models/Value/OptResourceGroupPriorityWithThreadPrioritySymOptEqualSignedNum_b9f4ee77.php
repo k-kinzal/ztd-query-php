@@ -17,11 +17,12 @@ final class OptResourceGroupPriorityWithThreadPrioritySymOptEqualSignedNum_b9f4e
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SignedNumForm $signedNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($signedNum), 'The signedNum must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class OptResourceGroupPriorityWithThreadPrioritySymOptEqualSignedNum_b9f4e
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('THREAD_PRIORITY');
+        $writer->comments($this->comments, 1);
         $this->optEqual->write($writer);
+        $writer->comments($this->comments, 2);
         $this->signedNum->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class OptResourceGroupPriorityWithThreadPrioritySymOptEqualSignedNum_b9f4e
      */
     public function withOptEqual(\SqlSemantics\Statement\Model\MySql\Role\OptEqualForm $optEqual): self
     {
-        return new self($optEqual, $this->signedNum);
+        return new self($optEqual, $this->signedNum, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class OptResourceGroupPriorityWithThreadPrioritySymOptEqualSignedNum_b9f4e
      */
     public function withSignedNum(\SqlSemantics\Statement\Model\MySql\Role\SignedNumForm $signedNum): self
     {
-        return new self($this->optEqual, $signedNum);
+        return new self($this->optEqual, $signedNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optEqual, $this->signedNum, $comments);
     }
 }

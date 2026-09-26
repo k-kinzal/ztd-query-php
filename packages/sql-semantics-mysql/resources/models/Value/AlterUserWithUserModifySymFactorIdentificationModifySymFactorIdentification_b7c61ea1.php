@@ -17,7 +17,7 @@ final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentif
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
@@ -25,6 +25,7 @@ final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentif
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($factor), 'The factor must be a generated immutable SQL value.');
@@ -38,12 +39,19 @@ final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentif
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->user->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('MODIFY');
+        $writer->comments($this->comments, 2);
         $this->factor->write($writer);
+        $writer->comments($this->comments, 3);
         $this->identification->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('MODIFY');
+        $writer->comments($this->comments, 5);
         $this->factor2->write($writer);
+        $writer->comments($this->comments, 6);
         $this->identification2->write($writer);
     }
 
@@ -52,7 +60,7 @@ final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentif
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($user, $this->factor, $this->identification, $this->factor2, $this->identification2);
+        return new self($user, $this->factor, $this->identification, $this->factor2, $this->identification2, $this->comments);
     }
 
     /**
@@ -60,7 +68,7 @@ final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentif
      */
     public function withFactor(\SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor): self
     {
-        return new self($this->user, $factor, $this->identification, $this->factor2, $this->identification2);
+        return new self($this->user, $factor, $this->identification, $this->factor2, $this->identification2, $this->comments);
     }
 
     /**
@@ -68,7 +76,7 @@ final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentif
      */
     public function withIdentification(\SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification): self
     {
-        return new self($this->user, $this->factor, $identification, $this->factor2, $this->identification2);
+        return new self($this->user, $this->factor, $identification, $this->factor2, $this->identification2, $this->comments);
     }
 
     /**
@@ -76,7 +84,7 @@ final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentif
      */
     public function withFactor2(\SqlSemantics\Statement\Model\MySql\Role\FactorForm $factor2): self
     {
-        return new self($this->user, $this->factor, $this->identification, $factor2, $this->identification2);
+        return new self($this->user, $this->factor, $this->identification, $factor2, $this->identification2, $this->comments);
     }
 
     /**
@@ -84,6 +92,14 @@ final class AlterUserWithUserModifySymFactorIdentificationModifySymFactorIdentif
      */
     public function withIdentification2(\SqlSemantics\Statement\Model\MySql\Role\IdentificationForm $identification2): self
     {
-        return new self($this->user, $this->factor, $this->identification, $this->factor2, $identification2);
+        return new self($this->user, $this->factor, $this->identification, $this->factor2, $identification2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->factor, $this->identification, $this->factor2, $this->identification2, $comments);
     }
 }

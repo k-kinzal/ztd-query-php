@@ -17,11 +17,12 @@ final class SourceDefWithChangeReplicationSourceHeartbeatPeriodEqNumLiteral_0f59
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceHeartbeatPeriodForm $changeReplicationSourceHeartbeatPeriod,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceHeartbeatPeriod), 'The changeReplicationSourceHeartbeatPeriod must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($numLiteral), 'The numLiteral must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SourceDefWithChangeReplicationSourceHeartbeatPeriodEqNumLiteral_0f59
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->changeReplicationSourceHeartbeatPeriod->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->numLiteral->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SourceDefWithChangeReplicationSourceHeartbeatPeriodEqNumLiteral_0f59
      */
     public function withChangeReplicationSourceHeartbeatPeriod(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceHeartbeatPeriodForm $changeReplicationSourceHeartbeatPeriod): self
     {
-        return new self($changeReplicationSourceHeartbeatPeriod, $this->numLiteral);
+        return new self($changeReplicationSourceHeartbeatPeriod, $this->numLiteral, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SourceDefWithChangeReplicationSourceHeartbeatPeriodEqNumLiteral_0f59
      */
     public function withNumLiteral(\SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral): self
     {
-        return new self($this->changeReplicationSourceHeartbeatPeriod, $numLiteral);
+        return new self($this->changeReplicationSourceHeartbeatPeriod, $numLiteral, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->changeReplicationSourceHeartbeatPeriod, $this->numLiteral, $comments);
     }
 }

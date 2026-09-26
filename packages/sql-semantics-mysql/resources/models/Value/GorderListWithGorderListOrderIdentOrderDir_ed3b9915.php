@@ -17,12 +17,13 @@ final class GorderListWithGorderListOrderIdentOrderDir_ed3b9915 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GorderListForm $gorderList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm $orderIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($gorderList), 'The gorderList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderIdent), 'The orderIdent must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class GorderListWithGorderListOrderIdentOrderDir_ed3b9915 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->gorderList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->orderIdent->write($writer);
+        $writer->comments($this->comments, 3);
         $this->orderDir->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class GorderListWithGorderListOrderIdentOrderDir_ed3b9915 implements \SqlS
      */
     public function withGorderList(\SqlSemantics\Statement\Model\MySql\Role\GorderListForm $gorderList): self
     {
-        return new self($gorderList, $this->orderIdent, $this->orderDir);
+        return new self($gorderList, $this->orderIdent, $this->orderDir, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class GorderListWithGorderListOrderIdentOrderDir_ed3b9915 implements \SqlS
      */
     public function withOrderIdent(\SqlSemantics\Statement\Model\MySql\Role\OrderIdentForm $orderIdent): self
     {
-        return new self($this->gorderList, $orderIdent, $this->orderDir);
+        return new self($this->gorderList, $orderIdent, $this->orderDir, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class GorderListWithGorderListOrderIdentOrderDir_ed3b9915 implements \SqlS
      */
     public function withOrderDir(\SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir): self
     {
-        return new self($this->gorderList, $this->orderIdent, $orderDir);
+        return new self($this->gorderList, $this->orderIdent, $orderDir, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->gorderList, $this->orderIdent, $this->orderDir, $comments);
     }
 }

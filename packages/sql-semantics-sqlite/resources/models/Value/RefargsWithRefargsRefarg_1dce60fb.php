@@ -17,11 +17,12 @@ final class RefargsWithRefargsRefarg_1dce60fb implements \SqlSemantics\Statement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RefargForm $refarg,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($refargs), 'The refargs must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($refarg), 'The refarg must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class RefargsWithRefargsRefarg_1dce60fb implements \SqlSemantics\Statement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->refargs->write($writer);
+        $writer->comments($this->comments, 1);
         $this->refarg->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class RefargsWithRefargsRefarg_1dce60fb implements \SqlSemantics\Statement
      */
     public function withRefargs(\SqlSemantics\Statement\Model\Sqlite\Role\RefargsForm $refargs): self
     {
-        return new self($refargs, $this->refarg);
+        return new self($refargs, $this->refarg, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class RefargsWithRefargsRefarg_1dce60fb implements \SqlSemantics\Statement
      */
     public function withRefarg(\SqlSemantics\Statement\Model\Sqlite\Role\RefargForm $refarg): self
     {
-        return new self($this->refargs, $refarg);
+        return new self($this->refargs, $refarg, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->refargs, $this->refarg, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class AlterCommandsWithOptimizePartitionSymOptNoWriteToBinlogAllOrAltPartN
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optNoWriteToBinlog), 'The optNoWriteToBinlog must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($allOrAltPartNameList), 'The allOrAltPartNameList must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class AlterCommandsWithOptimizePartitionSymOptNoWriteToBinlogAllOrAltPartN
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('OPTIMIZE');
+        $writer->comments($this->comments, 1);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 2);
         $this->optNoWriteToBinlog->write($writer);
+        $writer->comments($this->comments, 3);
         $this->allOrAltPartNameList->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optNoWriteToBinlog2->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class AlterCommandsWithOptimizePartitionSymOptNoWriteToBinlogAllOrAltPartN
      */
     public function withOptNoWriteToBinlog(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog): self
     {
-        return new self($optNoWriteToBinlog, $this->allOrAltPartNameList, $this->optNoWriteToBinlog2);
+        return new self($optNoWriteToBinlog, $this->allOrAltPartNameList, $this->optNoWriteToBinlog2, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class AlterCommandsWithOptimizePartitionSymOptNoWriteToBinlogAllOrAltPartN
      */
     public function withAllOrAltPartNameList(\SqlSemantics\Statement\Model\MySql\Role\AllOrAltPartNameListForm $allOrAltPartNameList): self
     {
-        return new self($this->optNoWriteToBinlog, $allOrAltPartNameList, $this->optNoWriteToBinlog2);
+        return new self($this->optNoWriteToBinlog, $allOrAltPartNameList, $this->optNoWriteToBinlog2, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class AlterCommandsWithOptimizePartitionSymOptNoWriteToBinlogAllOrAltPartN
      */
     public function withOptNoWriteToBinlog2(\SqlSemantics\Statement\Model\MySql\Role\OptNoWriteToBinlogForm $optNoWriteToBinlog2): self
     {
-        return new self($this->optNoWriteToBinlog, $this->allOrAltPartNameList, $optNoWriteToBinlog2);
+        return new self($this->optNoWriteToBinlog, $this->allOrAltPartNameList, $optNoWriteToBinlog2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optNoWriteToBinlog, $this->allOrAltPartNameList, $this->optNoWriteToBinlog2, $comments);
     }
 }

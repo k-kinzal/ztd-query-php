@@ -17,10 +17,11 @@ final class SourceDefWithSourceHeartbeatPeriodSymEqNumLiteral_60bc4a2f implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($numLiteral), 'The numLiteral must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class SourceDefWithSourceHeartbeatPeriodSymEqNumLiteral_60bc4a2f implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SOURCE_HEARTBEAT_PERIOD');
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->numLiteral->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class SourceDefWithSourceHeartbeatPeriodSymEqNumLiteral_60bc4a2f implement
      */
     public function withNumLiteral(\SqlSemantics\Statement\Model\MySql\Role\NumLiteralForm $numLiteral): self
     {
-        return new self($numLiteral);
+        return new self($numLiteral, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->numLiteral, $comments);
     }
 }

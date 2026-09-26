@@ -17,7 +17,7 @@ final class InsertWithInsertInsertLockOptionOptIgnoreInsert2InsertFieldSpecOptIn
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertLockOptionForm $insertLockOption,
@@ -25,6 +25,7 @@ final class InsertWithInsertInsertLockOptionOptIgnoreInsert2InsertFieldSpecOptIn
         public readonly \SqlSemantics\Statement\Model\MySql\Role\Insert2Form $insert2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm $insertFieldSpec,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateForm $optInsertUpdate,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertLockOption), 'The insertLockOption must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnore), 'The optIgnore must be a generated immutable SQL value.');
@@ -38,11 +39,17 @@ final class InsertWithInsertInsertLockOptionOptIgnoreInsert2InsertFieldSpecOptIn
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('INSERT');
+        $writer->comments($this->comments, 1);
         $this->insertLockOption->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optIgnore->write($writer);
+        $writer->comments($this->comments, 3);
         $this->insert2->write($writer);
+        $writer->comments($this->comments, 4);
         $this->insertFieldSpec->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optInsertUpdate->write($writer);
     }
 
@@ -51,7 +58,7 @@ final class InsertWithInsertInsertLockOptionOptIgnoreInsert2InsertFieldSpecOptIn
      */
     public function withInsertLockOption(\SqlSemantics\Statement\Model\MySql\Role\InsertLockOptionForm $insertLockOption): self
     {
-        return new self($insertLockOption, $this->optIgnore, $this->insert2, $this->insertFieldSpec, $this->optInsertUpdate);
+        return new self($insertLockOption, $this->optIgnore, $this->insert2, $this->insertFieldSpec, $this->optInsertUpdate, $this->comments);
     }
 
     /**
@@ -59,7 +66,7 @@ final class InsertWithInsertInsertLockOptionOptIgnoreInsert2InsertFieldSpecOptIn
      */
     public function withOptIgnore(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm $optIgnore): self
     {
-        return new self($this->insertLockOption, $optIgnore, $this->insert2, $this->insertFieldSpec, $this->optInsertUpdate);
+        return new self($this->insertLockOption, $optIgnore, $this->insert2, $this->insertFieldSpec, $this->optInsertUpdate, $this->comments);
     }
 
     /**
@@ -67,7 +74,7 @@ final class InsertWithInsertInsertLockOptionOptIgnoreInsert2InsertFieldSpecOptIn
      */
     public function withInsert2(\SqlSemantics\Statement\Model\MySql\Role\Insert2Form $insert2): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $insert2, $this->insertFieldSpec, $this->optInsertUpdate);
+        return new self($this->insertLockOption, $this->optIgnore, $insert2, $this->insertFieldSpec, $this->optInsertUpdate, $this->comments);
     }
 
     /**
@@ -75,7 +82,7 @@ final class InsertWithInsertInsertLockOptionOptIgnoreInsert2InsertFieldSpecOptIn
      */
     public function withInsertFieldSpec(\SqlSemantics\Statement\Model\MySql\Role\InsertFieldSpecForm $insertFieldSpec): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->insert2, $insertFieldSpec, $this->optInsertUpdate);
+        return new self($this->insertLockOption, $this->optIgnore, $this->insert2, $insertFieldSpec, $this->optInsertUpdate, $this->comments);
     }
 
     /**
@@ -83,6 +90,14 @@ final class InsertWithInsertInsertLockOptionOptIgnoreInsert2InsertFieldSpecOptIn
      */
     public function withOptInsertUpdate(\SqlSemantics\Statement\Model\MySql\Role\OptInsertUpdateForm $optInsertUpdate): self
     {
-        return new self($this->insertLockOption, $this->optIgnore, $this->insert2, $this->insertFieldSpec, $optInsertUpdate);
+        return new self($this->insertLockOption, $this->optIgnore, $this->insert2, $this->insertFieldSpec, $optInsertUpdate, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->insertLockOption, $this->optIgnore, $this->insert2, $this->insertFieldSpec, $this->optInsertUpdate, $comments);
     }
 }

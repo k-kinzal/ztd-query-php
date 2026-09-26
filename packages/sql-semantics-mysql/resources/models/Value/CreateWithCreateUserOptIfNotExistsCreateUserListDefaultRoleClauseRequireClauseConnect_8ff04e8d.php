@@ -17,7 +17,7 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $user,
@@ -28,6 +28,7 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm $connectOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm $optAccountLockPasswordExpireOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUserAttributeForm $optUserAttribute,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
@@ -44,14 +45,23 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append($this->user);
+        $writer->comments($this->comments, 2);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 3);
         $this->createUserList->write($writer);
+        $writer->comments($this->comments, 4);
         $this->defaultRoleClause->write($writer);
+        $writer->comments($this->comments, 5);
         $this->requireClause->write($writer);
+        $writer->comments($this->comments, 6);
         $this->connectOptions->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optAccountLockPasswordExpireOptions->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optUserAttribute->write($writer);
     }
 
@@ -60,7 +70,7 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
      */
     public function withUser(string $user): self
     {
-        return new self($user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -68,7 +78,7 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($this->user, $optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($this->user, $optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -76,7 +86,7 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
      */
     public function withCreateUserList(\SqlSemantics\Statement\Model\MySql\Role\CreateUserListForm $createUserList): self
     {
-        return new self($this->user, $this->optIfNotExists, $createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($this->user, $this->optIfNotExists, $createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -84,7 +94,7 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
      */
     public function withDefaultRoleClause(\SqlSemantics\Statement\Model\MySql\Role\DefaultRoleClauseForm $defaultRoleClause): self
     {
-        return new self($this->user, $this->optIfNotExists, $this->createUserList, $defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -92,7 +102,7 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
      */
     public function withRequireClause(\SqlSemantics\Statement\Model\MySql\Role\RequireClauseForm $requireClause): self
     {
-        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -100,7 +110,7 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
      */
     public function withConnectOptions(\SqlSemantics\Statement\Model\MySql\Role\ConnectOptionsForm $connectOptions): self
     {
-        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -108,7 +118,7 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
      */
     public function withOptAccountLockPasswordExpireOptions(\SqlSemantics\Statement\Model\MySql\Role\OptAccountLockPasswordExpireOptionsForm $optAccountLockPasswordExpireOptions): self
     {
-        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $optAccountLockPasswordExpireOptions, $this->optUserAttribute);
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $optAccountLockPasswordExpireOptions, $this->optUserAttribute, $this->comments);
     }
 
     /**
@@ -116,6 +126,14 @@ final class CreateWithCreateUserOptIfNotExistsCreateUserListDefaultRoleClauseReq
      */
     public function withOptUserAttribute(\SqlSemantics\Statement\Model\MySql\Role\OptUserAttributeForm $optUserAttribute): self
     {
-        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $optUserAttribute);
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $optUserAttribute, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->optIfNotExists, $this->createUserList, $this->defaultRoleClause, $this->requireClause, $this->connectOptions, $this->optAccountLockPasswordExpireOptions, $this->optUserAttribute, $comments);
     }
 }

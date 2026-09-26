@@ -17,11 +17,12 @@ final class OpclassItemWithFunctionIconstFunctionWithArgtypes_465ccc52 implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($functionWithArgtypes), 'The functionWithArgtypes must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class OpclassItemWithFunctionIconstFunctionWithArgtypes_465ccc52 implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FUNCTION');
+        $writer->comments($this->comments, 1);
         $this->iconst->write($writer);
+        $writer->comments($this->comments, 2);
         $this->functionWithArgtypes->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class OpclassItemWithFunctionIconstFunctionWithArgtypes_465ccc52 implement
      */
     public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
     {
-        return new self($iconst, $this->functionWithArgtypes);
+        return new self($iconst, $this->functionWithArgtypes, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class OpclassItemWithFunctionIconstFunctionWithArgtypes_465ccc52 implement
      */
     public function withFunctionWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\FunctionWithArgtypesForm $functionWithArgtypes): self
     {
-        return new self($this->iconst, $functionWithArgtypes);
+        return new self($this->iconst, $functionWithArgtypes, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->iconst, $this->functionWithArgtypes, $comments);
     }
 }

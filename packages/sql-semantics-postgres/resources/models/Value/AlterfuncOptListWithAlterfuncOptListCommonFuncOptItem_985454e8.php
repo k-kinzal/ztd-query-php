@@ -17,11 +17,12 @@ final class AlterfuncOptListWithAlterfuncOptListCommonFuncOptItem_985454e8 imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm $alterfuncOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommonFuncOptItemForm $commonFuncOptItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterfuncOptList), 'The alterfuncOptList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($commonFuncOptItem), 'The commonFuncOptItem must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class AlterfuncOptListWithAlterfuncOptListCommonFuncOptItem_985454e8 imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->alterfuncOptList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->commonFuncOptItem->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class AlterfuncOptListWithAlterfuncOptListCommonFuncOptItem_985454e8 imple
      */
     public function withAlterfuncOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterfuncOptListForm $alterfuncOptList): self
     {
-        return new self($alterfuncOptList, $this->commonFuncOptItem);
+        return new self($alterfuncOptList, $this->commonFuncOptItem, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class AlterfuncOptListWithAlterfuncOptListCommonFuncOptItem_985454e8 imple
      */
     public function withCommonFuncOptItem(\SqlSemantics\Statement\Model\PostgreSql\Role\CommonFuncOptItemForm $commonFuncOptItem): self
     {
-        return new self($this->alterfuncOptList, $commonFuncOptItem);
+        return new self($this->alterfuncOptList, $commonFuncOptItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->alterfuncOptList, $this->commonFuncOptItem, $comments);
     }
 }

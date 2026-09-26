@@ -17,12 +17,13 @@ final class AlterFdwStmtWithAlterForeignDataPWrapperNameOptFdwOptionsAlterGeneri
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptFdwOptionsForm $optFdwOptions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionsForm $alterGenericOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optFdwOptions), 'The optFdwOptions must be a generated immutable SQL value.');
@@ -34,12 +35,19 @@ final class AlterFdwStmtWithAlterForeignDataPWrapperNameOptFdwOptionsAlterGeneri
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 2);
         $writer->append('DATA');
+        $writer->comments($this->comments, 3);
         $writer->append('WRAPPER');
+        $writer->comments($this->comments, 4);
         $this->name->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optFdwOptions->write($writer);
+        $writer->comments($this->comments, 6);
         $this->alterGenericOptions->write($writer);
     }
 
@@ -48,7 +56,7 @@ final class AlterFdwStmtWithAlterForeignDataPWrapperNameOptFdwOptionsAlterGeneri
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->optFdwOptions, $this->alterGenericOptions);
+        return new self($name, $this->optFdwOptions, $this->alterGenericOptions, $this->comments);
     }
 
     /**
@@ -56,7 +64,7 @@ final class AlterFdwStmtWithAlterForeignDataPWrapperNameOptFdwOptionsAlterGeneri
      */
     public function withOptFdwOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\OptFdwOptionsForm $optFdwOptions): self
     {
-        return new self($this->name, $optFdwOptions, $this->alterGenericOptions);
+        return new self($this->name, $optFdwOptions, $this->alterGenericOptions, $this->comments);
     }
 
     /**
@@ -64,6 +72,14 @@ final class AlterFdwStmtWithAlterForeignDataPWrapperNameOptFdwOptionsAlterGeneri
      */
     public function withAlterGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterGenericOptionsForm $alterGenericOptions): self
     {
-        return new self($this->name, $this->optFdwOptions, $alterGenericOptions);
+        return new self($this->name, $this->optFdwOptions, $alterGenericOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->optFdwOptions, $this->alterGenericOptions, $comments);
     }
 }

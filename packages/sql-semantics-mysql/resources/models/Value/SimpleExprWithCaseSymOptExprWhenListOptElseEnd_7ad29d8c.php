@@ -17,12 +17,13 @@ final class SimpleExprWithCaseSymOptExprWhenListOptElseEnd_7ad29d8c implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExprForm $optExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WhenListForm $whenList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptElseForm $optElse,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExpr), 'The optExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($whenList), 'The whenList must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class SimpleExprWithCaseSymOptExprWhenListOptElseEnd_7ad29d8c implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CASE');
+        $writer->comments($this->comments, 1);
         $this->optExpr->write($writer);
+        $writer->comments($this->comments, 2);
         $this->whenList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optElse->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('END');
     }
 
@@ -46,7 +52,7 @@ final class SimpleExprWithCaseSymOptExprWhenListOptElseEnd_7ad29d8c implements \
      */
     public function withOptExpr(\SqlSemantics\Statement\Model\MySql\Role\OptExprForm $optExpr): self
     {
-        return new self($optExpr, $this->whenList, $this->optElse);
+        return new self($optExpr, $this->whenList, $this->optElse, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class SimpleExprWithCaseSymOptExprWhenListOptElseEnd_7ad29d8c implements \
      */
     public function withWhenList(\SqlSemantics\Statement\Model\MySql\Role\WhenListForm $whenList): self
     {
-        return new self($this->optExpr, $whenList, $this->optElse);
+        return new self($this->optExpr, $whenList, $this->optElse, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class SimpleExprWithCaseSymOptExprWhenListOptElseEnd_7ad29d8c implements \
      */
     public function withOptElse(\SqlSemantics\Statement\Model\MySql\Role\OptElseForm $optElse): self
     {
-        return new self($this->optExpr, $this->whenList, $optElse);
+        return new self($this->optExpr, $this->whenList, $optElse, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optExpr, $this->whenList, $this->optElse, $comments);
     }
 }

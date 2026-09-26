@@ -17,11 +17,12 @@ final class TableReferenceListWithTableReferenceListTableReference_37c69dbc impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm $tableReferenceList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReferenceList), 'The tableReferenceList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TableReferenceListWithTableReferenceListTableReference_37c69dbc impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableReferenceList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableReference->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TableReferenceListWithTableReferenceListTableReference_37c69dbc impl
      */
     public function withTableReferenceList(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceListForm $tableReferenceList): self
     {
-        return new self($tableReferenceList, $this->tableReference);
+        return new self($tableReferenceList, $this->tableReference, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TableReferenceListWithTableReferenceListTableReference_37c69dbc impl
      */
     public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
     {
-        return new self($this->tableReferenceList, $tableReference);
+        return new self($this->tableReferenceList, $tableReference, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableReferenceList, $this->tableReference, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class Create2WithOptCreateTableOptionsOptCreatePartitioningCreate3_933517e
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm $optCreateTableOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm $optCreatePartitioning,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\Create3Form $create3,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCreateTableOptions), 'The optCreateTableOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCreatePartitioning), 'The optCreatePartitioning must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class Create2WithOptCreateTableOptionsOptCreatePartitioningCreate3_933517e
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optCreateTableOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optCreatePartitioning->write($writer);
+        $writer->comments($this->comments, 2);
         $this->create3->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class Create2WithOptCreateTableOptionsOptCreatePartitioningCreate3_933517e
      */
     public function withOptCreateTableOptions(\SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsForm $optCreateTableOptions): self
     {
-        return new self($optCreateTableOptions, $this->optCreatePartitioning, $this->create3);
+        return new self($optCreateTableOptions, $this->optCreatePartitioning, $this->create3, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class Create2WithOptCreateTableOptionsOptCreatePartitioningCreate3_933517e
      */
     public function withOptCreatePartitioning(\SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm $optCreatePartitioning): self
     {
-        return new self($this->optCreateTableOptions, $optCreatePartitioning, $this->create3);
+        return new self($this->optCreateTableOptions, $optCreatePartitioning, $this->create3, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class Create2WithOptCreateTableOptionsOptCreatePartitioningCreate3_933517e
      */
     public function withCreate3(\SqlSemantics\Statement\Model\MySql\Role\Create3Form $create3): self
     {
-        return new self($this->optCreateTableOptions, $this->optCreatePartitioning, $create3);
+        return new self($this->optCreateTableOptions, $this->optCreatePartitioning, $create3, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optCreateTableOptions, $this->optCreatePartitioning, $this->create3, $comments);
     }
 }

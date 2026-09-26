@@ -17,11 +17,12 @@ final class OptCreateTableOptionsEtcWithCreateTableOptionsOptCreatePartitioningE
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm $createTableOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningEtcForm $optCreatePartitioningEtc,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOptions), 'The createTableOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCreatePartitioningEtc), 'The optCreatePartitioningEtc must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptCreateTableOptionsEtcWithCreateTableOptionsOptCreatePartitioningE
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createTableOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optCreatePartitioningEtc->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptCreateTableOptionsEtcWithCreateTableOptionsOptCreatePartitioningE
      */
     public function withCreateTableOptions(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm $createTableOptions): self
     {
-        return new self($createTableOptions, $this->optCreatePartitioningEtc);
+        return new self($createTableOptions, $this->optCreatePartitioningEtc, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptCreateTableOptionsEtcWithCreateTableOptionsOptCreatePartitioningE
      */
     public function withOptCreatePartitioningEtc(\SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningEtcForm $optCreatePartitioningEtc): self
     {
-        return new self($this->createTableOptions, $optCreatePartitioningEtc);
+        return new self($this->createTableOptions, $optCreatePartitioningEtc, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createTableOptions, $this->optCreatePartitioningEtc, $comments);
     }
 }

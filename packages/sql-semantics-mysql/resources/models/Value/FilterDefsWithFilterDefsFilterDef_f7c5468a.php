@@ -17,11 +17,12 @@ final class FilterDefsWithFilterDefsFilterDef_f7c5468a implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDefsForm $filterDefs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDefForm $filterDef,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDefs), 'The filterDefs must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDef), 'The filterDef must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class FilterDefsWithFilterDefsFilterDef_f7c5468a implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->filterDefs->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->filterDef->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class FilterDefsWithFilterDefsFilterDef_f7c5468a implements \SqlSemantics\
      */
     public function withFilterDefs(\SqlSemantics\Statement\Model\MySql\Role\FilterDefsForm $filterDefs): self
     {
-        return new self($filterDefs, $this->filterDef);
+        return new self($filterDefs, $this->filterDef, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class FilterDefsWithFilterDefsFilterDef_f7c5468a implements \SqlSemantics\
      */
     public function withFilterDef(\SqlSemantics\Statement\Model\MySql\Role\FilterDefForm $filterDef): self
     {
-        return new self($this->filterDefs, $filterDef);
+        return new self($this->filterDefs, $filterDef, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->filterDefs, $this->filterDef, $comments);
     }
 }

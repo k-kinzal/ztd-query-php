@@ -17,11 +17,12 @@ final class HashPartboundWithHashPartboundHashPartboundElem_23e9370c implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundForm $hashPartbound,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundElemForm $hashPartboundElem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($hashPartbound), 'The hashPartbound must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($hashPartboundElem), 'The hashPartboundElem must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class HashPartboundWithHashPartboundHashPartboundElem_23e9370c implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->hashPartbound->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->hashPartboundElem->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class HashPartboundWithHashPartboundHashPartboundElem_23e9370c implements 
      */
     public function withHashPartbound(\SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundForm $hashPartbound): self
     {
-        return new self($hashPartbound, $this->hashPartboundElem);
+        return new self($hashPartbound, $this->hashPartboundElem, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class HashPartboundWithHashPartboundHashPartboundElem_23e9370c implements 
      */
     public function withHashPartboundElem(\SqlSemantics\Statement\Model\PostgreSql\Role\HashPartboundElemForm $hashPartboundElem): self
     {
-        return new self($this->hashPartbound, $hashPartboundElem);
+        return new self($this->hashPartbound, $hashPartboundElem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->hashPartbound, $this->hashPartboundElem, $comments);
     }
 }

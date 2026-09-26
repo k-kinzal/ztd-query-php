@@ -17,11 +17,12 @@ final class DropTsOptionsWithDropTsOptionsListDropTsOption_43c8652c implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsListForm $dropTsOptionsList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm $dropTsOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($dropTsOptionsList), 'The dropTsOptionsList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($dropTsOption), 'The dropTsOption must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class DropTsOptionsWithDropTsOptionsListDropTsOption_43c8652c implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->dropTsOptionsList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->dropTsOption->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class DropTsOptionsWithDropTsOptionsListDropTsOption_43c8652c implements \
      */
     public function withDropTsOptionsList(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionsListForm $dropTsOptionsList): self
     {
-        return new self($dropTsOptionsList, $this->dropTsOption);
+        return new self($dropTsOptionsList, $this->dropTsOption, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class DropTsOptionsWithDropTsOptionsListDropTsOption_43c8652c implements \
      */
     public function withDropTsOption(\SqlSemantics\Statement\Model\MySql\Role\DropTsOptionForm $dropTsOption): self
     {
-        return new self($this->dropTsOptionsList, $dropTsOption);
+        return new self($this->dropTsOptionsList, $dropTsOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->dropTsOptionsList, $this->dropTsOption, $comments);
     }
 }

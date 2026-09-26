@@ -17,11 +17,12 @@ final class AnyNameListWithAnyNameListAnyName_46f98ef1 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameListForm $anyNameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyNameList), 'The anyNameList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class AnyNameListWithAnyNameListAnyName_46f98ef1 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->anyNameList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->anyName->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class AnyNameListWithAnyNameListAnyName_46f98ef1 implements \SqlSemantics\
      */
     public function withAnyNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameListForm $anyNameList): self
     {
-        return new self($anyNameList, $this->anyName);
+        return new self($anyNameList, $this->anyName, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class AnyNameListWithAnyNameListAnyName_46f98ef1 implements \SqlSemantics\
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($this->anyNameList, $anyName);
+        return new self($this->anyNameList, $anyName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyNameList, $this->anyName, $comments);
     }
 }

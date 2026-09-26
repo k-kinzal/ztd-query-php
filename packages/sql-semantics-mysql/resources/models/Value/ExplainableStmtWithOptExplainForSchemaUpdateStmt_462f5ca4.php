@@ -17,11 +17,12 @@ final class ExplainableStmtWithOptExplainForSchemaUpdateStmt_462f5ca4 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExplainForSchemaForm $optExplainForSchema,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UpdateStmtForm $updateStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExplainForSchema), 'The optExplainForSchema must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($updateStmt), 'The updateStmt must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ExplainableStmtWithOptExplainForSchemaUpdateStmt_462f5ca4 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optExplainForSchema->write($writer);
+        $writer->comments($this->comments, 1);
         $this->updateStmt->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ExplainableStmtWithOptExplainForSchemaUpdateStmt_462f5ca4 implements
      */
     public function withOptExplainForSchema(\SqlSemantics\Statement\Model\MySql\Role\OptExplainForSchemaForm $optExplainForSchema): self
     {
-        return new self($optExplainForSchema, $this->updateStmt);
+        return new self($optExplainForSchema, $this->updateStmt, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ExplainableStmtWithOptExplainForSchemaUpdateStmt_462f5ca4 implements
      */
     public function withUpdateStmt(\SqlSemantics\Statement\Model\MySql\Role\UpdateStmtForm $updateStmt): self
     {
-        return new self($this->optExplainForSchema, $updateStmt);
+        return new self($this->optExplainForSchema, $updateStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optExplainForSchema, $this->updateStmt, $comments);
     }
 }

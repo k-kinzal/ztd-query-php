@@ -17,13 +17,14 @@ final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableOptionsForm $optTableOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\Create2Form $create2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTableOptions), 'The optTableOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optTableOptions->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 4);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 5);
         $this->create2->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreat
      */
     public function withOptTableOptions(\SqlSemantics\Statement\Model\MySql\Role\OptTableOptionsForm $optTableOptions): self
     {
-        return new self($optTableOptions, $this->optIfNotExists, $this->tableIdent, $this->create2);
+        return new self($optTableOptions, $this->optIfNotExists, $this->tableIdent, $this->create2, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreat
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($this->optTableOptions, $optIfNotExists, $this->tableIdent, $this->create2);
+        return new self($this->optTableOptions, $optIfNotExists, $this->tableIdent, $this->create2, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreat
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->optTableOptions, $this->optIfNotExists, $tableIdent, $this->create2);
+        return new self($this->optTableOptions, $this->optIfNotExists, $tableIdent, $this->create2, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class CreateWithCreateOptTableOptionsTableSymOptIfNotExistsTableIdentCreat
      */
     public function withCreate2(\SqlSemantics\Statement\Model\MySql\Role\Create2Form $create2): self
     {
-        return new self($this->optTableOptions, $this->optIfNotExists, $this->tableIdent, $create2);
+        return new self($this->optTableOptions, $this->optIfNotExists, $this->tableIdent, $create2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTableOptions, $this->optIfNotExists, $this->tableIdent, $this->create2, $comments);
     }
 }

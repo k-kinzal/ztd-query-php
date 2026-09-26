@@ -17,12 +17,13 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerInitLexCreateInfoNoDefinerTail_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NoDefinerForm $noDefiner,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm $initLexCreateInfo,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm $noDefinerTail,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($noDefiner), 'The noDefiner must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($initLexCreateInfo), 'The initLexCreateInfo must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerInitLexCreateInfoNoDefinerTail_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->noDefiner->write($writer);
+        $writer->comments($this->comments, 1);
         $this->initLexCreateInfo->write($writer);
+        $writer->comments($this->comments, 2);
         $this->noDefinerTail->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerInitLexCreateInfoNoDefinerTail_
      */
     public function withNoDefiner(\SqlSemantics\Statement\Model\MySql\Role\NoDefinerForm $noDefiner): self
     {
-        return new self($noDefiner, $this->initLexCreateInfo, $this->noDefinerTail);
+        return new self($noDefiner, $this->initLexCreateInfo, $this->noDefinerTail, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerInitLexCreateInfoNoDefinerTail_
      */
     public function withInitLexCreateInfo(\SqlSemantics\Statement\Model\MySql\Role\InitLexCreateInfoForm $initLexCreateInfo): self
     {
-        return new self($this->noDefiner, $initLexCreateInfo, $this->noDefinerTail);
+        return new self($this->noDefiner, $initLexCreateInfo, $this->noDefinerTail, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class ViewOrTriggerOrSpOrEventWithNoDefinerInitLexCreateInfoNoDefinerTail_
      */
     public function withNoDefinerTail(\SqlSemantics\Statement\Model\MySql\Role\NoDefinerTailForm $noDefinerTail): self
     {
-        return new self($this->noDefiner, $this->initLexCreateInfo, $noDefinerTail);
+        return new self($this->noDefiner, $this->initLexCreateInfo, $noDefinerTail, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->noDefiner, $this->initLexCreateInfo, $this->noDefinerTail, $comments);
     }
 }

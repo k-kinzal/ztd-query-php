@@ -17,11 +17,12 @@ final class RelationExprListWithRelationExprListRelationExpr_c059294c implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExprList), 'The relationExprList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($relationExpr), 'The relationExpr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class RelationExprListWithRelationExprListRelationExpr_c059294c implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->relationExprList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->relationExpr->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class RelationExprListWithRelationExprListRelationExpr_c059294c implements
      */
     public function withRelationExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprListForm $relationExprList): self
     {
-        return new self($relationExprList, $this->relationExpr);
+        return new self($relationExprList, $this->relationExpr, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class RelationExprListWithRelationExprListRelationExpr_c059294c implements
      */
     public function withRelationExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\RelationExprForm $relationExpr): self
     {
-        return new self($this->relationExprList, $relationExpr);
+        return new self($this->relationExprList, $relationExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->relationExprList, $this->relationExpr, $comments);
     }
 }

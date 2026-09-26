@@ -17,11 +17,12 @@ final class FlushOptionsListWithFlushOptionsListFlushOption_c5b6f838 implements 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm $flushOptionsList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FlushOptionForm $flushOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($flushOptionsList), 'The flushOptionsList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($flushOption), 'The flushOption must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class FlushOptionsListWithFlushOptionsListFlushOption_c5b6f838 implements 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->flushOptionsList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->flushOption->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class FlushOptionsListWithFlushOptionsListFlushOption_c5b6f838 implements 
      */
     public function withFlushOptionsList(\SqlSemantics\Statement\Model\MySql\Role\FlushOptionsListForm $flushOptionsList): self
     {
-        return new self($flushOptionsList, $this->flushOption);
+        return new self($flushOptionsList, $this->flushOption, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class FlushOptionsListWithFlushOptionsListFlushOption_c5b6f838 implements 
      */
     public function withFlushOption(\SqlSemantics\Statement\Model\MySql\Role\FlushOptionForm $flushOption): self
     {
-        return new self($this->flushOptionsList, $flushOption);
+        return new self($this->flushOptionsList, $flushOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->flushOptionsList, $this->flushOption, $comments);
     }
 }

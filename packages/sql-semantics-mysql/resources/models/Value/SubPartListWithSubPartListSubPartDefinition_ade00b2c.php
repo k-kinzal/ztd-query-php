@@ -17,11 +17,12 @@ final class SubPartListWithSubPartListSubPartDefinition_ade00b2c implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartListForm $subPartList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubPartDefinitionForm $subPartDefinition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subPartList), 'The subPartList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subPartDefinition), 'The subPartDefinition must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SubPartListWithSubPartListSubPartDefinition_ade00b2c implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->subPartList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->subPartDefinition->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SubPartListWithSubPartListSubPartDefinition_ade00b2c implements \Sql
      */
     public function withSubPartList(\SqlSemantics\Statement\Model\MySql\Role\SubPartListForm $subPartList): self
     {
-        return new self($subPartList, $this->subPartDefinition);
+        return new self($subPartList, $this->subPartDefinition, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SubPartListWithSubPartListSubPartDefinition_ade00b2c implements \Sql
      */
     public function withSubPartDefinition(\SqlSemantics\Statement\Model\MySql\Role\SubPartDefinitionForm $subPartDefinition): self
     {
-        return new self($this->subPartList, $subPartDefinition);
+        return new self($this->subPartList, $subPartDefinition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->subPartList, $this->subPartDefinition, $comments);
     }
 }

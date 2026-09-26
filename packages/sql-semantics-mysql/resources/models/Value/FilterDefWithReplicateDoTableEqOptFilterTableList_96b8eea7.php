@@ -17,10 +17,11 @@ final class FilterDefWithReplicateDoTableEqOptFilterTableList_96b8eea7 implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFilterTableListForm $optFilterTableList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFilterTableList), 'The optFilterTableList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class FilterDefWithReplicateDoTableEqOptFilterTableList_96b8eea7 implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REPLICATE_DO_TABLE');
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->optFilterTableList->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class FilterDefWithReplicateDoTableEqOptFilterTableList_96b8eea7 implement
      */
     public function withOptFilterTableList(\SqlSemantics\Statement\Model\MySql\Role\OptFilterTableListForm $optFilterTableList): self
     {
-        return new self($optFilterTableList);
+        return new self($optFilterTableList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optFilterTableList, $comments);
     }
 }

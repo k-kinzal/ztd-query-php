@@ -17,11 +17,12 @@ final class IndexElemWithAExprIndexElemOptions_90349fe6 implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm $indexElemOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexElemOptions), 'The indexElemOptions must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class IndexElemWithAExprIndexElemOptions_90349fe6 implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->aExpr->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $this->indexElemOptions->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class IndexElemWithAExprIndexElemOptions_90349fe6 implements \SqlSemantics
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($aExpr, $this->indexElemOptions);
+        return new self($aExpr, $this->indexElemOptions, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class IndexElemWithAExprIndexElemOptions_90349fe6 implements \SqlSemantics
      */
     public function withIndexElemOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemOptionsForm $indexElemOptions): self
     {
-        return new self($this->aExpr, $indexElemOptions);
+        return new self($this->aExpr, $indexElemOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aExpr, $this->indexElemOptions, $comments);
     }
 }

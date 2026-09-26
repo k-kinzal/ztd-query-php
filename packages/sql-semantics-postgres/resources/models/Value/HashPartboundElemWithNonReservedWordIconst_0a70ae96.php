@@ -17,11 +17,12 @@ final class HashPartboundElemWithNonReservedWordIconst_0a70ae96 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordForm $nonReservedWord,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($nonReservedWord), 'The nonReservedWord must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class HashPartboundElemWithNonReservedWordIconst_0a70ae96 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->nonReservedWord->write($writer);
+        $writer->comments($this->comments, 1);
         $this->iconst->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class HashPartboundElemWithNonReservedWordIconst_0a70ae96 implements \SqlS
      */
     public function withNonReservedWord(\SqlSemantics\Statement\Model\PostgreSql\Role\NonReservedWordForm $nonReservedWord): self
     {
-        return new self($nonReservedWord, $this->iconst);
+        return new self($nonReservedWord, $this->iconst, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class HashPartboundElemWithNonReservedWordIconst_0a70ae96 implements \SqlS
      */
     public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
     {
-        return new self($this->nonReservedWord, $iconst);
+        return new self($this->nonReservedWord, $iconst, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nonReservedWord, $this->iconst, $comments);
     }
 }

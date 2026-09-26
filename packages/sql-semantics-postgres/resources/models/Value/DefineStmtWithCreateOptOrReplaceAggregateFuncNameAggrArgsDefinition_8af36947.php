@@ -17,13 +17,14 @@ final class DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsForm $aggrArgs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optOrReplace), 'The optOrReplace must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcName), 'The funcName must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optOrReplace->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('AGGREGATE');
+        $writer->comments($this->comments, 3);
         $this->funcName->write($writer);
+        $writer->comments($this->comments, 4);
         $this->aggrArgs->write($writer);
+        $writer->comments($this->comments, 5);
         $this->definition->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_
      */
     public function withOptOrReplace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOrReplaceForm $optOrReplace): self
     {
-        return new self($optOrReplace, $this->funcName, $this->aggrArgs, $this->definition);
+        return new self($optOrReplace, $this->funcName, $this->aggrArgs, $this->definition, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_
      */
     public function withFuncName(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncNameForm $funcName): self
     {
-        return new self($this->optOrReplace, $funcName, $this->aggrArgs, $this->definition);
+        return new self($this->optOrReplace, $funcName, $this->aggrArgs, $this->definition, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_
      */
     public function withAggrArgs(\SqlSemantics\Statement\Model\PostgreSql\Role\AggrArgsForm $aggrArgs): self
     {
-        return new self($this->optOrReplace, $this->funcName, $aggrArgs, $this->definition);
+        return new self($this->optOrReplace, $this->funcName, $aggrArgs, $this->definition, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class DefineStmtWithCreateOptOrReplaceAggregateFuncNameAggrArgsDefinition_
      */
     public function withDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\DefinitionForm $definition): self
     {
-        return new self($this->optOrReplace, $this->funcName, $this->aggrArgs, $definition);
+        return new self($this->optOrReplace, $this->funcName, $this->aggrArgs, $definition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optOrReplace, $this->funcName, $this->aggrArgs, $this->definition, $comments);
     }
 }

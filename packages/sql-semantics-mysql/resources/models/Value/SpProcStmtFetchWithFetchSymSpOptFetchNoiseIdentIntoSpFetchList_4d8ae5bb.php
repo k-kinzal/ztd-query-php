@@ -17,12 +17,13 @@ final class SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpOptFetchNoiseForm $spOptFetchNoise,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpFetchListForm $spFetchList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spOptFetchNoise), 'The spOptFetchNoise must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FETCH');
+        $writer->comments($this->comments, 1);
         $this->spOptFetchNoise->write($writer);
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('INTO');
+        $writer->comments($this->comments, 4);
         $this->spFetchList->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae
      */
     public function withSpOptFetchNoise(\SqlSemantics\Statement\Model\MySql\Role\SpOptFetchNoiseForm $spOptFetchNoise): self
     {
-        return new self($spOptFetchNoise, $this->ident, $this->spFetchList);
+        return new self($spOptFetchNoise, $this->ident, $this->spFetchList, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->spOptFetchNoise, $ident, $this->spFetchList);
+        return new self($this->spOptFetchNoise, $ident, $this->spFetchList, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class SpProcStmtFetchWithFetchSymSpOptFetchNoiseIdentIntoSpFetchList_4d8ae
      */
     public function withSpFetchList(\SqlSemantics\Statement\Model\MySql\Role\SpFetchListForm $spFetchList): self
     {
-        return new self($this->spOptFetchNoise, $this->ident, $spFetchList);
+        return new self($this->spOptFetchNoise, $this->ident, $spFetchList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spOptFetchNoise, $this->ident, $this->spFetchList, $comments);
     }
 }

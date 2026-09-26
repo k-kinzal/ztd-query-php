@@ -17,10 +17,11 @@ final class LimitClauseWithLimitLimitOptions_7cedcf7b implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LimitOptionsForm $limitOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($limitOptions), 'The limitOptions must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class LimitClauseWithLimitLimitOptions_7cedcf7b implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('LIMIT');
+        $writer->comments($this->comments, 1);
         $this->limitOptions->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class LimitClauseWithLimitLimitOptions_7cedcf7b implements \SqlSemantics\S
      */
     public function withLimitOptions(\SqlSemantics\Statement\Model\MySql\Role\LimitOptionsForm $limitOptions): self
     {
-        return new self($limitOptions);
+        return new self($limitOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->limitOptions, $comments);
     }
 }

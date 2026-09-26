@@ -17,13 +17,14 @@ final class ShowParamWithRelaylogSymEventsSymBinlogInBinlogFromOptLimitClauseOpt
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BinlogInForm $binlogIn,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm $binlogFrom,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($binlogIn), 'The binlogIn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($binlogFrom), 'The binlogFrom must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class ShowParamWithRelaylogSymEventsSymBinlogInBinlogFromOptLimitClauseOpt
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('RELAYLOG');
+        $writer->comments($this->comments, 1);
         $writer->append('EVENTS');
+        $writer->comments($this->comments, 2);
         $this->binlogIn->write($writer);
+        $writer->comments($this->comments, 3);
         $this->binlogFrom->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optLimitClause->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optChannel->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class ShowParamWithRelaylogSymEventsSymBinlogInBinlogFromOptLimitClauseOpt
      */
     public function withBinlogIn(\SqlSemantics\Statement\Model\MySql\Role\BinlogInForm $binlogIn): self
     {
-        return new self($binlogIn, $this->binlogFrom, $this->optLimitClause, $this->optChannel);
+        return new self($binlogIn, $this->binlogFrom, $this->optLimitClause, $this->optChannel, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class ShowParamWithRelaylogSymEventsSymBinlogInBinlogFromOptLimitClauseOpt
      */
     public function withBinlogFrom(\SqlSemantics\Statement\Model\MySql\Role\BinlogFromForm $binlogFrom): self
     {
-        return new self($this->binlogIn, $binlogFrom, $this->optLimitClause, $this->optChannel);
+        return new self($this->binlogIn, $binlogFrom, $this->optLimitClause, $this->optChannel, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class ShowParamWithRelaylogSymEventsSymBinlogInBinlogFromOptLimitClauseOpt
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($this->binlogIn, $this->binlogFrom, $optLimitClause, $this->optChannel);
+        return new self($this->binlogIn, $this->binlogFrom, $optLimitClause, $this->optChannel, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class ShowParamWithRelaylogSymEventsSymBinlogInBinlogFromOptLimitClauseOpt
      */
     public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
     {
-        return new self($this->binlogIn, $this->binlogFrom, $this->optLimitClause, $optChannel);
+        return new self($this->binlogIn, $this->binlogFrom, $this->optLimitClause, $optChannel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->binlogIn, $this->binlogFrom, $this->optLimitClause, $this->optChannel, $comments);
     }
 }

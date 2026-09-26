@@ -17,10 +17,11 @@ final class TriggerFuncArgWithFconst_f160d9dd implements \SqlSemantics\Statement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $value,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['FCONST'], 'The value must be a complete FCONST lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class TriggerFuncArgWithFconst_f160d9dd implements \SqlSemantics\Statement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->value);
     }
 
@@ -38,6 +40,14 @@ final class TriggerFuncArgWithFconst_f160d9dd implements \SqlSemantics\Statement
      */
     public function withValue(string $value): self
     {
-        return new self($value);
+        return new self($value, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->value, $comments);
     }
 }

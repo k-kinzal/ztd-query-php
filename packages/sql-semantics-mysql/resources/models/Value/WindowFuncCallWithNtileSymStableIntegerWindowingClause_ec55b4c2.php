@@ -17,11 +17,12 @@ final class WindowFuncCallWithNtileSymStableIntegerWindowingClause_ec55b4c2 impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StableIntegerForm $stableInteger,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($stableInteger), 'The stableInteger must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($windowingClause), 'The windowingClause must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class WindowFuncCallWithNtileSymStableIntegerWindowingClause_ec55b4c2 impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NTILE');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->stableInteger->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->windowingClause->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class WindowFuncCallWithNtileSymStableIntegerWindowingClause_ec55b4c2 impl
      */
     public function withStableInteger(\SqlSemantics\Statement\Model\MySql\Role\StableIntegerForm $stableInteger): self
     {
-        return new self($stableInteger, $this->windowingClause);
+        return new self($stableInteger, $this->windowingClause, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class WindowFuncCallWithNtileSymStableIntegerWindowingClause_ec55b4c2 impl
      */
     public function withWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\WindowingClauseForm $windowingClause): self
     {
-        return new self($this->stableInteger, $windowingClause);
+        return new self($this->stableInteger, $windowingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->stableInteger, $this->windowingClause, $comments);
     }
 }

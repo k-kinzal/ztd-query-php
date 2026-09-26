@@ -17,11 +17,12 @@ final class CarglistWithCarglistCcons_d6c91d8e implements \SqlSemantics\Statemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm $carglist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CconsForm $ccons,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($carglist), 'The carglist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($ccons), 'The ccons must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class CarglistWithCarglistCcons_d6c91d8e implements \SqlSemantics\Statemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->carglist->write($writer);
+        $writer->comments($this->comments, 1);
         $this->ccons->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class CarglistWithCarglistCcons_d6c91d8e implements \SqlSemantics\Statemen
      */
     public function withCarglist(\SqlSemantics\Statement\Model\Sqlite\Role\CarglistForm $carglist): self
     {
-        return new self($carglist, $this->ccons);
+        return new self($carglist, $this->ccons, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class CarglistWithCarglistCcons_d6c91d8e implements \SqlSemantics\Statemen
      */
     public function withCcons(\SqlSemantics\Statement\Model\Sqlite\Role\CconsForm $ccons): self
     {
-        return new self($this->carglist, $ccons);
+        return new self($this->carglist, $ccons, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->carglist, $this->ccons, $comments);
     }
 }

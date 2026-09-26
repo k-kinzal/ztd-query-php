@@ -17,7 +17,7 @@ final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseO
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
@@ -25,6 +25,7 @@ final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseO
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm $tableAccessMethodClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumnList), 'The optColumnList must be a generated immutable SQL value.');
@@ -38,10 +39,15 @@ final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseO
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optColumnList->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableAccessMethodClause->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optReloptions->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optTableSpace->write($writer);
     }
 
@@ -50,7 +56,7 @@ final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseO
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($qualifiedName, $this->optColumnList, $this->tableAccessMethodClause, $this->optReloptions, $this->optTableSpace);
+        return new self($qualifiedName, $this->optColumnList, $this->tableAccessMethodClause, $this->optReloptions, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -58,7 +64,7 @@ final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseO
      */
     public function withOptColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnListForm $optColumnList): self
     {
-        return new self($this->qualifiedName, $optColumnList, $this->tableAccessMethodClause, $this->optReloptions, $this->optTableSpace);
+        return new self($this->qualifiedName, $optColumnList, $this->tableAccessMethodClause, $this->optReloptions, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -66,7 +72,7 @@ final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseO
      */
     public function withTableAccessMethodClause(\SqlSemantics\Statement\Model\PostgreSql\Role\TableAccessMethodClauseForm $tableAccessMethodClause): self
     {
-        return new self($this->qualifiedName, $this->optColumnList, $tableAccessMethodClause, $this->optReloptions, $this->optTableSpace);
+        return new self($this->qualifiedName, $this->optColumnList, $tableAccessMethodClause, $this->optReloptions, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -74,7 +80,7 @@ final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseO
      */
     public function withOptReloptions(\SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions): self
     {
-        return new self($this->qualifiedName, $this->optColumnList, $this->tableAccessMethodClause, $optReloptions, $this->optTableSpace);
+        return new self($this->qualifiedName, $this->optColumnList, $this->tableAccessMethodClause, $optReloptions, $this->optTableSpace, $this->comments);
     }
 
     /**
@@ -82,6 +88,14 @@ final class CreateMvTargetWithQualifiedNameOptColumnListTableAccessMethodClauseO
      */
     public function withOptTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTableSpaceForm $optTableSpace): self
     {
-        return new self($this->qualifiedName, $this->optColumnList, $this->tableAccessMethodClause, $this->optReloptions, $optTableSpace);
+        return new self($this->qualifiedName, $this->optColumnList, $this->tableAccessMethodClause, $this->optReloptions, $optTableSpace, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->qualifiedName, $this->optColumnList, $this->tableAccessMethodClause, $this->optReloptions, $this->optTableSpace, $comments);
     }
 }

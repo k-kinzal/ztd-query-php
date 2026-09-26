@@ -17,12 +17,13 @@ final class FunctionCallConflictWithWeekSymExprExpr_460a93d8 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $weekSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($weekSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['WEEK_SYM'], 'The weekSym must be a complete WEEK_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class FunctionCallConflictWithWeekSymExprExpr_460a93d8 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->weekSym);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->expr2->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -47,7 +54,7 @@ final class FunctionCallConflictWithWeekSymExprExpr_460a93d8 implements \SqlSema
      */
     public function withWeekSym(string $weekSym): self
     {
-        return new self($weekSym, $this->expr, $this->expr2);
+        return new self($weekSym, $this->expr, $this->expr2, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class FunctionCallConflictWithWeekSymExprExpr_460a93d8 implements \SqlSema
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->weekSym, $expr, $this->expr2);
+        return new self($this->weekSym, $expr, $this->expr2, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class FunctionCallConflictWithWeekSymExprExpr_460a93d8 implements \SqlSema
      */
     public function withExpr2(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2): self
     {
-        return new self($this->weekSym, $this->expr, $expr2);
+        return new self($this->weekSym, $this->expr, $expr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->weekSym, $this->expr, $this->expr2, $comments);
     }
 }

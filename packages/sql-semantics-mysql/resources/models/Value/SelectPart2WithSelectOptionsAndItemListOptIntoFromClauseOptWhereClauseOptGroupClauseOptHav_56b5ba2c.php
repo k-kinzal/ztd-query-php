@@ -17,7 +17,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsAndItemListForm $selectOptionsAndItemList,
@@ -31,6 +31,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseClauseForm $optProcedureAnalyseClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIntoForm $optInto2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectOptionsAndItemList), 'The selectOptionsAndItemList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optInto), 'The optInto must be a generated immutable SQL value.');
@@ -50,16 +51,27 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectOptionsAndItemList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optInto->write($writer);
+        $writer->comments($this->comments, 2);
         $this->from->write($writer);
+        $writer->comments($this->comments, 3);
         $this->where->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optGroupClause->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optHavingClause->write($writer);
+        $writer->comments($this->comments, 6);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optLimitClause->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optProcedureAnalyseClause->write($writer);
+        $writer->comments($this->comments, 9);
         $this->optInto2->write($writer);
+        $writer->comments($this->comments, 10);
         $this->optSelectLockType->write($writer);
     }
 
@@ -68,7 +80,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withSelectOptionsAndItemList(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsAndItemListForm $selectOptionsAndItemList): self
     {
-        return new self($selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType);
+        return new self($selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -76,7 +88,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withOptInto(\SqlSemantics\Statement\Model\MySql\Role\OptIntoForm $optInto): self
     {
-        return new self($this->selectOptionsAndItemList, $optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -84,7 +96,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withFrom(\SqlSemantics\Statement\Model\MySql\Role\FromClauseForm $from): self
     {
-        return new self($this->selectOptionsAndItemList, $this->optInto, $from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->optInto, $from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -92,7 +104,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\OptWhereClauseForm $where): self
     {
-        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -100,7 +112,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withOptGroupClause(\SqlSemantics\Statement\Model\MySql\Role\OptGroupClauseForm $optGroupClause): self
     {
-        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -108,7 +120,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withOptHavingClause(\SqlSemantics\Statement\Model\MySql\Role\OptHavingClauseForm $optHavingClause): self
     {
-        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -116,7 +128,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
     {
-        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -124,7 +136,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -132,7 +144,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withOptProcedureAnalyseClause(\SqlSemantics\Statement\Model\MySql\Role\OptProcedureAnalyseClauseForm $optProcedureAnalyseClause): self
     {
-        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -140,7 +152,7 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withOptInto2(\SqlSemantics\Statement\Model\MySql\Role\OptIntoForm $optInto2): self
     {
-        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $optInto2, $this->optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $optInto2, $this->optSelectLockType, $this->comments);
     }
 
     /**
@@ -148,6 +160,14 @@ final class SelectPart2WithSelectOptionsAndItemListOptIntoFromClauseOptWhereClau
      */
     public function withOptSelectLockType(\SqlSemantics\Statement\Model\MySql\Role\OptSelectLockTypeForm $optSelectLockType): self
     {
-        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $optSelectLockType);
+        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $optSelectLockType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectOptionsAndItemList, $this->optInto, $this->from, $this->where, $this->optGroupClause, $this->optHavingClause, $this->orderBy, $this->optLimitClause, $this->optProcedureAnalyseClause, $this->optInto2, $this->optSelectLockType, $comments);
     }
 }

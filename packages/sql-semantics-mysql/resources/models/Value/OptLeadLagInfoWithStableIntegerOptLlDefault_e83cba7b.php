@@ -17,11 +17,12 @@ final class OptLeadLagInfoWithStableIntegerOptLlDefault_e83cba7b implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StableIntegerForm $stableInteger,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLlDefaultForm $optLlDefault,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($stableInteger), 'The stableInteger must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLlDefault), 'The optLlDefault must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class OptLeadLagInfoWithStableIntegerOptLlDefault_e83cba7b implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append(',');
+        $writer->comments($this->comments, 1);
         $this->stableInteger->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optLlDefault->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class OptLeadLagInfoWithStableIntegerOptLlDefault_e83cba7b implements \Sql
      */
     public function withStableInteger(\SqlSemantics\Statement\Model\MySql\Role\StableIntegerForm $stableInteger): self
     {
-        return new self($stableInteger, $this->optLlDefault);
+        return new self($stableInteger, $this->optLlDefault, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class OptLeadLagInfoWithStableIntegerOptLlDefault_e83cba7b implements \Sql
      */
     public function withOptLlDefault(\SqlSemantics\Statement\Model\MySql\Role\OptLlDefaultForm $optLlDefault): self
     {
-        return new self($this->stableInteger, $optLlDefault);
+        return new self($this->stableInteger, $optLlDefault, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->stableInteger, $this->optLlDefault, $comments);
     }
 }

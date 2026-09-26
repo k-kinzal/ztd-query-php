@@ -17,10 +17,11 @@ final class IntervalTimeStampWithHourSym_e7ecf372 implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $hourSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($hourSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['HOUR_SYM'], 'The hourSym must be a complete HOUR_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class IntervalTimeStampWithHourSym_e7ecf372 implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->hourSym);
     }
 
@@ -38,6 +40,14 @@ final class IntervalTimeStampWithHourSym_e7ecf372 implements \SqlSemantics\State
      */
     public function withHourSym(string $hourSym): self
     {
-        return new self($hourSym);
+        return new self($hourSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->hourSym, $comments);
     }
 }

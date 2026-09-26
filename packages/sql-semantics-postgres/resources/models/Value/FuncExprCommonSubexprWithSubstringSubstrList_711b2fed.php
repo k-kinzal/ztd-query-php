@@ -17,10 +17,11 @@ final class FuncExprCommonSubexprWithSubstringSubstrList_711b2fed implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SubstrListForm $substrList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($substrList), 'The substrList must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class FuncExprCommonSubexprWithSubstringSubstrList_711b2fed implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SUBSTRING');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->substrList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -41,6 +46,14 @@ final class FuncExprCommonSubexprWithSubstringSubstrList_711b2fed implements \Sq
      */
     public function withSubstrList(\SqlSemantics\Statement\Model\PostgreSql\Role\SubstrListForm $substrList): self
     {
-        return new self($substrList);
+        return new self($substrList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->substrList, $comments);
     }
 }

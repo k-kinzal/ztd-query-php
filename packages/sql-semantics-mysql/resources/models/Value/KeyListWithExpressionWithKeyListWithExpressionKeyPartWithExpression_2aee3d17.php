@@ -17,11 +17,12 @@ final class KeyListWithExpressionWithKeyListWithExpressionKeyPartWithExpression_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyPartWithExpressionForm $keyPartWithExpression,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyListWithExpression), 'The keyListWithExpression must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyPartWithExpression), 'The keyPartWithExpression must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class KeyListWithExpressionWithKeyListWithExpressionKeyPartWithExpression_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->keyListWithExpression->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->keyPartWithExpression->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class KeyListWithExpressionWithKeyListWithExpressionKeyPartWithExpression_
      */
     public function withKeyListWithExpression(\SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression): self
     {
-        return new self($keyListWithExpression, $this->keyPartWithExpression);
+        return new self($keyListWithExpression, $this->keyPartWithExpression, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class KeyListWithExpressionWithKeyListWithExpressionKeyPartWithExpression_
      */
     public function withKeyPartWithExpression(\SqlSemantics\Statement\Model\MySql\Role\KeyPartWithExpressionForm $keyPartWithExpression): self
     {
-        return new self($this->keyListWithExpression, $keyPartWithExpression);
+        return new self($this->keyListWithExpression, $keyPartWithExpression, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->keyListWithExpression, $this->keyPartWithExpression, $comments);
     }
 }

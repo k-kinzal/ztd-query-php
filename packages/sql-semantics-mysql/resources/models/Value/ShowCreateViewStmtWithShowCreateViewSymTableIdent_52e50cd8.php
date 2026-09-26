@@ -17,10 +17,11 @@ final class ShowCreateViewStmtWithShowCreateViewSymTableIdent_52e50cd8 implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class ShowCreateViewStmtWithShowCreateViewSymTableIdent_52e50cd8 implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 2);
         $writer->append('VIEW');
+        $writer->comments($this->comments, 3);
         $this->tableIdent->write($writer);
     }
 
@@ -41,6 +46,14 @@ final class ShowCreateViewStmtWithShowCreateViewSymTableIdent_52e50cd8 implement
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($tableIdent);
+        return new self($tableIdent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableIdent, $comments);
     }
 }

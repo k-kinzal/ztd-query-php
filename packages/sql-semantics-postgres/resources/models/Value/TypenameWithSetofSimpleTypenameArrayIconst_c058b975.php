@@ -17,11 +17,12 @@ final class TypenameWithSetofSimpleTypenameArrayIconst_c058b975 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm $simpleTypename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($simpleTypename), 'The simpleTypename must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($iconst), 'The iconst must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class TypenameWithSetofSimpleTypenameArrayIconst_c058b975 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SETOF');
+        $writer->comments($this->comments, 1);
         $this->simpleTypename->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('ARRAY');
+        $writer->comments($this->comments, 3);
         $writer->append('[');
+        $writer->comments($this->comments, 4);
         $this->iconst->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(']');
     }
 
@@ -45,7 +52,7 @@ final class TypenameWithSetofSimpleTypenameArrayIconst_c058b975 implements \SqlS
      */
     public function withSimpleTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\SimpleTypenameForm $simpleTypename): self
     {
-        return new self($simpleTypename, $this->iconst);
+        return new self($simpleTypename, $this->iconst, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class TypenameWithSetofSimpleTypenameArrayIconst_c058b975 implements \SqlS
      */
     public function withIconst(\SqlSemantics\Statement\Model\PostgreSql\Role\IconstForm $iconst): self
     {
-        return new self($this->simpleTypename, $iconst);
+        return new self($this->simpleTypename, $iconst, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleTypename, $this->iconst, $comments);
     }
 }

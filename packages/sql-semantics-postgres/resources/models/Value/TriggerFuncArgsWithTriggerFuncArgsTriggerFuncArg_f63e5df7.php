@@ -17,11 +17,12 @@ final class TriggerFuncArgsWithTriggerFuncArgsTriggerFuncArg_f63e5df7 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm $triggerFuncArgs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgForm $triggerFuncArg,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerFuncArgs), 'The triggerFuncArgs must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($triggerFuncArg), 'The triggerFuncArg must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TriggerFuncArgsWithTriggerFuncArgsTriggerFuncArg_f63e5df7 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->triggerFuncArgs->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->triggerFuncArg->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TriggerFuncArgsWithTriggerFuncArgsTriggerFuncArg_f63e5df7 implements
      */
     public function withTriggerFuncArgs(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgsForm $triggerFuncArgs): self
     {
-        return new self($triggerFuncArgs, $this->triggerFuncArg);
+        return new self($triggerFuncArgs, $this->triggerFuncArg, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TriggerFuncArgsWithTriggerFuncArgsTriggerFuncArg_f63e5df7 implements
      */
     public function withTriggerFuncArg(\SqlSemantics\Statement\Model\PostgreSql\Role\TriggerFuncArgForm $triggerFuncArg): self
     {
-        return new self($this->triggerFuncArgs, $triggerFuncArg);
+        return new self($this->triggerFuncArgs, $triggerFuncArg, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->triggerFuncArgs, $this->triggerFuncArg, $comments);
     }
 }

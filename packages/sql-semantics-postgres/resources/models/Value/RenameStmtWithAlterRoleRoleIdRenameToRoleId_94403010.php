@@ -17,11 +17,12 @@ final class RenameStmtWithAlterRoleRoleIdRenameToRoleId_94403010 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleId), 'The roleId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleId2), 'The roleId2 must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class RenameStmtWithAlterRoleRoleIdRenameToRoleId_94403010 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('ROLE');
+        $writer->comments($this->comments, 2);
         $this->roleId->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('RENAME');
+        $writer->comments($this->comments, 4);
         $writer->append('TO');
+        $writer->comments($this->comments, 5);
         $this->roleId2->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class RenameStmtWithAlterRoleRoleIdRenameToRoleId_94403010 implements \Sql
      */
     public function withRoleId(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId): self
     {
-        return new self($roleId, $this->roleId2);
+        return new self($roleId, $this->roleId2, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class RenameStmtWithAlterRoleRoleIdRenameToRoleId_94403010 implements \Sql
      */
     public function withRoleId2(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleIdForm $roleId2): self
     {
-        return new self($this->roleId, $roleId2);
+        return new self($this->roleId, $roleId2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleId, $this->roleId2, $comments);
     }
 }

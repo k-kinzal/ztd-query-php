@@ -17,11 +17,12 @@ final class AlterObjectSchemaStmtWithAlterOperatorOperatorWithArgtypesSetSchemaN
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorWithArgtypes), 'The operatorWithArgtypes must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class AlterObjectSchemaStmtWithAlterOperatorOperatorWithArgtypesSetSchemaN
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('OPERATOR');
+        $writer->comments($this->comments, 2);
         $this->operatorWithArgtypes->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('SET');
+        $writer->comments($this->comments, 4);
         $writer->append('SCHEMA');
+        $writer->comments($this->comments, 5);
         $this->name->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class AlterObjectSchemaStmtWithAlterOperatorOperatorWithArgtypesSetSchemaN
      */
     public function withOperatorWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorWithArgtypesForm $operatorWithArgtypes): self
     {
-        return new self($operatorWithArgtypes, $this->name);
+        return new self($operatorWithArgtypes, $this->name, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class AlterObjectSchemaStmtWithAlterOperatorOperatorWithArgtypesSetSchemaN
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->operatorWithArgtypes, $name);
+        return new self($this->operatorWithArgtypes, $name, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->operatorWithArgtypes, $this->name, $comments);
     }
 }

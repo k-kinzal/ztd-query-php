@@ -17,11 +17,12 @@ final class PartDefListWithPartDefListPartDefinition_8715b6fe implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartDefinitionForm $partDefinition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partDefList), 'The partDefList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partDefinition), 'The partDefinition must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class PartDefListWithPartDefListPartDefinition_8715b6fe implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->partDefList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->partDefinition->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class PartDefListWithPartDefListPartDefinition_8715b6fe implements \SqlSem
      */
     public function withPartDefList(\SqlSemantics\Statement\Model\MySql\Role\PartDefListForm $partDefList): self
     {
-        return new self($partDefList, $this->partDefinition);
+        return new self($partDefList, $this->partDefinition, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class PartDefListWithPartDefListPartDefinition_8715b6fe implements \SqlSem
      */
     public function withPartDefinition(\SqlSemantics\Statement\Model\MySql\Role\PartDefinitionForm $partDefinition): self
     {
-        return new self($this->partDefList, $partDefinition);
+        return new self($this->partDefList, $partDefinition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->partDefList, $this->partDefinition, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class TableFuncElementListWithTableFuncElementListTableFuncElement_5971173
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm $tableFuncElementList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementForm $tableFuncElement,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncElementList), 'The tableFuncElementList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncElement), 'The tableFuncElement must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TableFuncElementListWithTableFuncElementListTableFuncElement_5971173
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableFuncElementList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableFuncElement->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TableFuncElementListWithTableFuncElementListTableFuncElement_5971173
      */
     public function withTableFuncElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementListForm $tableFuncElementList): self
     {
-        return new self($tableFuncElementList, $this->tableFuncElement);
+        return new self($tableFuncElementList, $this->tableFuncElement, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TableFuncElementListWithTableFuncElementListTableFuncElement_5971173
      */
     public function withTableFuncElement(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncElementForm $tableFuncElement): self
     {
-        return new self($this->tableFuncElementList, $tableFuncElement);
+        return new self($this->tableFuncElementList, $tableFuncElement, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableFuncElementList, $this->tableFuncElement, $comments);
     }
 }

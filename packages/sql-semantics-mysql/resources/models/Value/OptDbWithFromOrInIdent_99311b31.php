@@ -17,11 +17,12 @@ final class OptDbWithFromOrInIdent_99311b31 implements \SqlSemantics\Statement\M
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FromOrInForm $fromOrIn,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fromOrIn), 'The fromOrIn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptDbWithFromOrInIdent_99311b31 implements \SqlSemantics\Statement\M
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fromOrIn->write($writer);
+        $writer->comments($this->comments, 1);
         $this->ident->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptDbWithFromOrInIdent_99311b31 implements \SqlSemantics\Statement\M
      */
     public function withFromOrIn(\SqlSemantics\Statement\Model\MySql\Role\FromOrInForm $fromOrIn): self
     {
-        return new self($fromOrIn, $this->ident);
+        return new self($fromOrIn, $this->ident, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptDbWithFromOrInIdent_99311b31 implements \SqlSemantics\Statement\M
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->fromOrIn, $ident);
+        return new self($this->fromOrIn, $ident, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fromOrIn, $this->ident, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class SetRestMoreWithXmlPOptionDocumentOrContent_d6c44f52 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DocumentOrContentForm $documentOrContent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($documentOrContent), 'The documentOrContent must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class SetRestMoreWithXmlPOptionDocumentOrContent_d6c44f52 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('XML');
+        $writer->comments($this->comments, 1);
         $writer->append('OPTION');
+        $writer->comments($this->comments, 2);
         $this->documentOrContent->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class SetRestMoreWithXmlPOptionDocumentOrContent_d6c44f52 implements \SqlS
      */
     public function withDocumentOrContent(\SqlSemantics\Statement\Model\PostgreSql\Role\DocumentOrContentForm $documentOrContent): self
     {
-        return new self($documentOrContent);
+        return new self($documentOrContent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->documentOrContent, $comments);
     }
 }

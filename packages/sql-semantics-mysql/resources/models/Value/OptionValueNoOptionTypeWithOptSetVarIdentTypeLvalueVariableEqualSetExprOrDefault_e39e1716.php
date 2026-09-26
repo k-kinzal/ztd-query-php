@@ -17,13 +17,14 @@ final class OptionValueNoOptionTypeWithOptSetVarIdentTypeLvalueVariableEqualSetE
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSetVarIdentTypeForm $optSetVarIdentType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LvalueVariableForm $lvalueVariable,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm $setExprOrDefault,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSetVarIdentType), 'The optSetVarIdentType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lvalueVariable), 'The lvalueVariable must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class OptionValueNoOptionTypeWithOptSetVarIdentTypeLvalueVariableEqualSetE
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
-        $writer->append('@');
-        $writer->append('@');
+        $writer->comments($this->comments, 0);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 1);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 2);
         $this->optSetVarIdentType->write($writer);
+        $writer->comments($this->comments, 3);
         $this->lvalueVariable->write($writer);
+        $writer->comments($this->comments, 4);
         $this->equal->write($writer);
+        $writer->comments($this->comments, 5);
         $this->setExprOrDefault->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class OptionValueNoOptionTypeWithOptSetVarIdentTypeLvalueVariableEqualSetE
      */
     public function withOptSetVarIdentType(\SqlSemantics\Statement\Model\MySql\Role\OptSetVarIdentTypeForm $optSetVarIdentType): self
     {
-        return new self($optSetVarIdentType, $this->lvalueVariable, $this->equal, $this->setExprOrDefault);
+        return new self($optSetVarIdentType, $this->lvalueVariable, $this->equal, $this->setExprOrDefault, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class OptionValueNoOptionTypeWithOptSetVarIdentTypeLvalueVariableEqualSetE
      */
     public function withLvalueVariable(\SqlSemantics\Statement\Model\MySql\Role\LvalueVariableForm $lvalueVariable): self
     {
-        return new self($this->optSetVarIdentType, $lvalueVariable, $this->equal, $this->setExprOrDefault);
+        return new self($this->optSetVarIdentType, $lvalueVariable, $this->equal, $this->setExprOrDefault, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class OptionValueNoOptionTypeWithOptSetVarIdentTypeLvalueVariableEqualSetE
      */
     public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
     {
-        return new self($this->optSetVarIdentType, $this->lvalueVariable, $equal, $this->setExprOrDefault);
+        return new self($this->optSetVarIdentType, $this->lvalueVariable, $equal, $this->setExprOrDefault, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class OptionValueNoOptionTypeWithOptSetVarIdentTypeLvalueVariableEqualSetE
      */
     public function withSetExprOrDefault(\SqlSemantics\Statement\Model\MySql\Role\SetExprOrDefaultForm $setExprOrDefault): self
     {
-        return new self($this->optSetVarIdentType, $this->lvalueVariable, $this->equal, $setExprOrDefault);
+        return new self($this->optSetVarIdentType, $this->lvalueVariable, $this->equal, $setExprOrDefault, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optSetVarIdentType, $this->lvalueVariable, $this->equal, $this->setExprOrDefault, $comments);
     }
 }

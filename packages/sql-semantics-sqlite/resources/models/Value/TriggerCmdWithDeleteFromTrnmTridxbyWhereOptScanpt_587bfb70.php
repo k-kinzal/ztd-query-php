@@ -17,13 +17,14 @@ final class TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm $trnm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TridxbyForm $tridxby,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($trnm), 'The trnm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($tridxby), 'The tridxby must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DELETE');
+        $writer->comments($this->comments, 1);
         $writer->append('FROM');
+        $writer->comments($this->comments, 2);
         $this->trnm->write($writer);
+        $writer->comments($this->comments, 3);
         $this->tridxby->write($writer);
+        $writer->comments($this->comments, 4);
         $this->where->write($writer);
+        $writer->comments($this->comments, 5);
         $this->scanpt->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 implement
      */
     public function withTrnm(\SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm $trnm): self
     {
-        return new self($trnm, $this->tridxby, $this->where, $this->scanpt);
+        return new self($trnm, $this->tridxby, $this->where, $this->scanpt, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 implement
      */
     public function withTridxby(\SqlSemantics\Statement\Model\Sqlite\Role\TridxbyForm $tridxby): self
     {
-        return new self($this->trnm, $tridxby, $this->where, $this->scanpt);
+        return new self($this->trnm, $tridxby, $this->where, $this->scanpt, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 implement
      */
     public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
     {
-        return new self($this->trnm, $this->tridxby, $where, $this->scanpt);
+        return new self($this->trnm, $this->tridxby, $where, $this->scanpt, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class TriggerCmdWithDeleteFromTrnmTridxbyWhereOptScanpt_587bfb70 implement
      */
     public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self
     {
-        return new self($this->trnm, $this->tridxby, $this->where, $scanpt);
+        return new self($this->trnm, $this->tridxby, $this->where, $scanpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->trnm, $this->tridxby, $this->where, $this->scanpt, $comments);
     }
 }

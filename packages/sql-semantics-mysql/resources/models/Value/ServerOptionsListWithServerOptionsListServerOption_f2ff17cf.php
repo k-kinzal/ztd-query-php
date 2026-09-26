@@ -17,11 +17,12 @@ final class ServerOptionsListWithServerOptionsListServerOption_f2ff17cf implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ServerOptionForm $serverOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($serverOptionsList), 'The serverOptionsList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($serverOption), 'The serverOption must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class ServerOptionsListWithServerOptionsListServerOption_f2ff17cf implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->serverOptionsList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->serverOption->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class ServerOptionsListWithServerOptionsListServerOption_f2ff17cf implemen
      */
     public function withServerOptionsList(\SqlSemantics\Statement\Model\MySql\Role\ServerOptionsListForm $serverOptionsList): self
     {
-        return new self($serverOptionsList, $this->serverOption);
+        return new self($serverOptionsList, $this->serverOption, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class ServerOptionsListWithServerOptionsListServerOption_f2ff17cf implemen
      */
     public function withServerOption(\SqlSemantics\Statement\Model\MySql\Role\ServerOptionForm $serverOption): self
     {
-        return new self($this->serverOptionsList, $serverOption);
+        return new self($this->serverOptionsList, $serverOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->serverOptionsList, $this->serverOption, $comments);
     }
 }

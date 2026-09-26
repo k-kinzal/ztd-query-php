@@ -17,11 +17,12 @@ final class AlterObjectSchemaStmtWithAlterAggregateAggregateWithArgtypesSetSchem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesForm $aggregateWithArgtypes,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aggregateWithArgtypes), 'The aggregateWithArgtypes must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class AlterObjectSchemaStmtWithAlterAggregateAggregateWithArgtypesSetSchem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('AGGREGATE');
+        $writer->comments($this->comments, 2);
         $this->aggregateWithArgtypes->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('SET');
+        $writer->comments($this->comments, 4);
         $writer->append('SCHEMA');
+        $writer->comments($this->comments, 5);
         $this->name->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class AlterObjectSchemaStmtWithAlterAggregateAggregateWithArgtypesSetSchem
      */
     public function withAggregateWithArgtypes(\SqlSemantics\Statement\Model\PostgreSql\Role\AggregateWithArgtypesForm $aggregateWithArgtypes): self
     {
-        return new self($aggregateWithArgtypes, $this->name);
+        return new self($aggregateWithArgtypes, $this->name, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class AlterObjectSchemaStmtWithAlterAggregateAggregateWithArgtypesSetSchem
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->aggregateWithArgtypes, $name);
+        return new self($this->aggregateWithArgtypes, $name, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->aggregateWithArgtypes, $this->name, $comments);
     }
 }

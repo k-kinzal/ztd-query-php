@@ -17,11 +17,12 @@ final class AlterOrderItemWithSimpleIdentNospvarOrderDir_75a7153c implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleIdentNospvar), 'The simpleIdentNospvar must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderDir), 'The orderDir must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class AlterOrderItemWithSimpleIdentNospvarOrderDir_75a7153c implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->simpleIdentNospvar->write($writer);
+        $writer->comments($this->comments, 1);
         $this->orderDir->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class AlterOrderItemWithSimpleIdentNospvarOrderDir_75a7153c implements \Sq
      */
     public function withSimpleIdentNospvar(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentNospvarForm $simpleIdentNospvar): self
     {
-        return new self($simpleIdentNospvar, $this->orderDir);
+        return new self($simpleIdentNospvar, $this->orderDir, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class AlterOrderItemWithSimpleIdentNospvarOrderDir_75a7153c implements \Sq
      */
     public function withOrderDir(\SqlSemantics\Statement\Model\MySql\Role\OrderDirForm $orderDir): self
     {
-        return new self($this->simpleIdentNospvar, $orderDir);
+        return new self($this->simpleIdentNospvar, $orderDir, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleIdentNospvar, $this->orderDir, $comments);
     }
 }

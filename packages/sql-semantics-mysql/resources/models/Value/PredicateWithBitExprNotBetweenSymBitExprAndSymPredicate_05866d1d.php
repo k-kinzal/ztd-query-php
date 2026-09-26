@@ -17,13 +17,14 @@ final class PredicateWithBitExprNotBetweenSymBitExprAndSymPredicate_05866d1d imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NotForm $not,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PredicateForm $predicate,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 6,  'mysql-5.7.44' => 7,  'mysql-8.0.44' => 12,  'mysql-8.1.0' => 12,  'mysql-8.2.0' => 12,  'mysql-8.3.0' => 12,  'mysql-8.4.7' => 12,  'mysql-9.0.1' => 12,  'mysql-9.1.0' => 12,));
@@ -38,11 +39,17 @@ final class PredicateWithBitExprNotBetweenSymBitExprAndSymPredicate_05866d1d imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->not->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('BETWEEN');
+        $writer->comments($this->comments, 3);
         $this->bitExpr2->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('AND');
+        $writer->comments($this->comments, 5);
         $this->predicate->write($writer);
     }
 
@@ -51,7 +58,7 @@ final class PredicateWithBitExprNotBetweenSymBitExprAndSymPredicate_05866d1d imp
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($bitExpr, $this->not, $this->bitExpr2, $this->predicate);
+        return new self($bitExpr, $this->not, $this->bitExpr2, $this->predicate, $this->comments);
     }
 
     /**
@@ -59,7 +66,7 @@ final class PredicateWithBitExprNotBetweenSymBitExprAndSymPredicate_05866d1d imp
      */
     public function withNot(\SqlSemantics\Statement\Model\MySql\Role\NotForm $not): self
     {
-        return new self($this->bitExpr, $not, $this->bitExpr2, $this->predicate);
+        return new self($this->bitExpr, $not, $this->bitExpr2, $this->predicate, $this->comments);
     }
 
     /**
@@ -67,7 +74,7 @@ final class PredicateWithBitExprNotBetweenSymBitExprAndSymPredicate_05866d1d imp
      */
     public function withBitExpr2(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr2): self
     {
-        return new self($this->bitExpr, $this->not, $bitExpr2, $this->predicate);
+        return new self($this->bitExpr, $this->not, $bitExpr2, $this->predicate, $this->comments);
     }
 
     /**
@@ -75,6 +82,14 @@ final class PredicateWithBitExprNotBetweenSymBitExprAndSymPredicate_05866d1d imp
      */
     public function withPredicate(\SqlSemantics\Statement\Model\MySql\Role\PredicateForm $predicate): self
     {
-        return new self($this->bitExpr, $this->not, $this->bitExpr2, $predicate);
+        return new self($this->bitExpr, $this->not, $this->bitExpr2, $predicate, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bitExpr, $this->not, $this->bitExpr2, $this->predicate, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class CommentStmtWithCommentOnDomainPTypenameIsCommentText_90c6985f implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($commentText), 'The commentText must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class CommentStmtWithCommentOnDomainPTypenameIsCommentText_90c6985f implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('COMMENT');
+        $writer->comments($this->comments, 1);
         $writer->append('ON');
+        $writer->comments($this->comments, 2);
         $writer->append('DOMAIN');
+        $writer->comments($this->comments, 3);
         $this->typename->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('IS');
+        $writer->comments($this->comments, 5);
         $this->commentText->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class CommentStmtWithCommentOnDomainPTypenameIsCommentText_90c6985f implem
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($typename, $this->commentText);
+        return new self($typename, $this->commentText, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class CommentStmtWithCommentOnDomainPTypenameIsCommentText_90c6985f implem
      */
     public function withCommentText(\SqlSemantics\Statement\Model\PostgreSql\Role\CommentTextForm $commentText): self
     {
-        return new self($this->typename, $commentText);
+        return new self($this->typename, $commentText, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->typename, $this->commentText, $comments);
     }
 }

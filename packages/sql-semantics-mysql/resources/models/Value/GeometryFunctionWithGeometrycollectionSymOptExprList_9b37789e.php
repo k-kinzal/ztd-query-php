@@ -17,11 +17,12 @@ final class GeometryFunctionWithGeometrycollectionSymOptExprList_9b37789e implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $geometrycollectionSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExprListForm $optExprList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($geometrycollectionSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GEOMETRYCOLLECTION_SYM'], 'The geometrycollectionSym must be a complete GEOMETRYCOLLECTION_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExprList), 'The optExprList must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class GeometryFunctionWithGeometrycollectionSymOptExprList_9b37789e implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->geometrycollectionSym);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->optExprList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class GeometryFunctionWithGeometrycollectionSymOptExprList_9b37789e implem
      */
     public function withGeometrycollectionSym(string $geometrycollectionSym): self
     {
-        return new self($geometrycollectionSym, $this->optExprList);
+        return new self($geometrycollectionSym, $this->optExprList, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class GeometryFunctionWithGeometrycollectionSymOptExprList_9b37789e implem
      */
     public function withOptExprList(\SqlSemantics\Statement\Model\MySql\Role\OptExprListForm $optExprList): self
     {
-        return new self($this->geometrycollectionSym, $optExprList);
+        return new self($this->geometrycollectionSym, $optExprList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->geometrycollectionSym, $this->optExprList, $comments);
     }
 }

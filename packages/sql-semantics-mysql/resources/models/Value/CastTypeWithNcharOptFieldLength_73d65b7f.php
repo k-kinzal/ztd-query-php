@@ -17,11 +17,12 @@ final class CastTypeWithNcharOptFieldLength_73d65b7f implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($nchar), 'The nchar must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFieldLength), 'The optFieldLength must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class CastTypeWithNcharOptFieldLength_73d65b7f implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->nchar->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optFieldLength->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class CastTypeWithNcharOptFieldLength_73d65b7f implements \SqlSemantics\St
      */
     public function withNchar(\SqlSemantics\Statement\Model\MySql\Role\NcharForm $nchar): self
     {
-        return new self($nchar, $this->optFieldLength);
+        return new self($nchar, $this->optFieldLength, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class CastTypeWithNcharOptFieldLength_73d65b7f implements \SqlSemantics\St
      */
     public function withOptFieldLength(\SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength): self
     {
-        return new self($this->nchar, $optFieldLength);
+        return new self($this->nchar, $optFieldLength, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nchar, $this->optFieldLength, $comments);
     }
 }

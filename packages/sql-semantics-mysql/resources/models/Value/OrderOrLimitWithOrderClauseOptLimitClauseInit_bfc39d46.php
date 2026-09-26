@@ -17,11 +17,12 @@ final class OrderOrLimitWithOrderClauseOptLimitClauseInit_bfc39d46 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseInitForm $optLimitClauseInit,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($orderBy), 'The orderBy must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClauseInit), 'The optLimitClauseInit must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OrderOrLimitWithOrderClauseOptLimitClauseInit_bfc39d46 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optLimitClauseInit->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OrderOrLimitWithOrderClauseOptLimitClauseInit_bfc39d46 implements \S
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OrderClauseForm $orderBy): self
     {
-        return new self($orderBy, $this->optLimitClauseInit);
+        return new self($orderBy, $this->optLimitClauseInit, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OrderOrLimitWithOrderClauseOptLimitClauseInit_bfc39d46 implements \S
      */
     public function withOptLimitClauseInit(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseInitForm $optLimitClauseInit): self
     {
-        return new self($this->orderBy, $optLimitClauseInit);
+        return new self($this->orderBy, $optLimitClauseInit, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->orderBy, $this->optLimitClauseInit, $comments);
     }
 }

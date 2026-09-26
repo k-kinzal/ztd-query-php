@@ -17,10 +17,11 @@ final class OptTimezoneWithWithoutLaTimeZone_df097534 implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $withoutLa,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($withoutLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['WITHOUT_LA'], 'The withoutLa must be a complete WITHOUT_LA lexical spelling.');
     }
@@ -30,8 +31,11 @@ final class OptTimezoneWithWithoutLaTimeZone_df097534 implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->withoutLa);
+        $writer->comments($this->comments, 1);
         $writer->append('TIME');
+        $writer->comments($this->comments, 2);
         $writer->append('ZONE');
     }
 
@@ -40,6 +44,14 @@ final class OptTimezoneWithWithoutLaTimeZone_df097534 implements \SqlSemantics\S
      */
     public function withWithoutLa(string $withoutLa): self
     {
-        return new self($withoutLa);
+        return new self($withoutLa, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->withoutLa, $comments);
     }
 }

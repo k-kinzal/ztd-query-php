@@ -17,12 +17,13 @@ final class TypeWithCharSymFieldLengthOptCharsetWithOptBinary_be92677f implement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $charSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($charSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['CHAR_SYM'], 'The charSym must be a complete CHAR_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldLength), 'The fieldLength must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class TypeWithCharSymFieldLengthOptCharsetWithOptBinary_be92677f implement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->charSym);
+        $writer->comments($this->comments, 1);
         $this->fieldLength->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optCharsetWithOptBinary->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class TypeWithCharSymFieldLengthOptCharsetWithOptBinary_be92677f implement
      */
     public function withCharSym(string $charSym): self
     {
-        return new self($charSym, $this->fieldLength, $this->optCharsetWithOptBinary);
+        return new self($charSym, $this->fieldLength, $this->optCharsetWithOptBinary, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class TypeWithCharSymFieldLengthOptCharsetWithOptBinary_be92677f implement
      */
     public function withFieldLength(\SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength): self
     {
-        return new self($this->charSym, $fieldLength, $this->optCharsetWithOptBinary);
+        return new self($this->charSym, $fieldLength, $this->optCharsetWithOptBinary, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class TypeWithCharSymFieldLengthOptCharsetWithOptBinary_be92677f implement
      */
     public function withOptCharsetWithOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptCharsetWithOptBinaryForm $optCharsetWithOptBinary): self
     {
-        return new self($this->charSym, $this->fieldLength, $optCharsetWithOptBinary);
+        return new self($this->charSym, $this->fieldLength, $optCharsetWithOptBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->charSym, $this->fieldLength, $this->optCharsetWithOptBinary, $comments);
     }
 }

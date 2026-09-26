@@ -17,11 +17,12 @@ final class TableFuncColumnListWithTableFuncColumnListTableFuncColumn_e2ac95a3 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm $tableFuncColumnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnForm $tableFuncColumn,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncColumnList), 'The tableFuncColumnList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($tableFuncColumn), 'The tableFuncColumn must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TableFuncColumnListWithTableFuncColumnListTableFuncColumn_e2ac95a3 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableFuncColumnList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableFuncColumn->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TableFuncColumnListWithTableFuncColumnListTableFuncColumn_e2ac95a3 i
      */
     public function withTableFuncColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnListForm $tableFuncColumnList): self
     {
-        return new self($tableFuncColumnList, $this->tableFuncColumn);
+        return new self($tableFuncColumnList, $this->tableFuncColumn, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TableFuncColumnListWithTableFuncColumnListTableFuncColumn_e2ac95a3 i
      */
     public function withTableFuncColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\TableFuncColumnForm $tableFuncColumn): self
     {
-        return new self($this->tableFuncColumnList, $tableFuncColumn);
+        return new self($this->tableFuncColumnList, $tableFuncColumn, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableFuncColumnList, $this->tableFuncColumn, $comments);
     }
 }

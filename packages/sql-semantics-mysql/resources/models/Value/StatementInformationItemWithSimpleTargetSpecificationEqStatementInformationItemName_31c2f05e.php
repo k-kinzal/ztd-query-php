@@ -17,11 +17,12 @@ final class StatementInformationItemWithSimpleTargetSpecificationEqStatementInfo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleTargetSpecificationForm $simpleTargetSpecification,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StatementInformationItemNameForm $statementInformationItemName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleTargetSpecification), 'The simpleTargetSpecification must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($statementInformationItemName), 'The statementInformationItemName must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class StatementInformationItemWithSimpleTargetSpecificationEqStatementInfo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->simpleTargetSpecification->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->statementInformationItemName->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class StatementInformationItemWithSimpleTargetSpecificationEqStatementInfo
      */
     public function withSimpleTargetSpecification(\SqlSemantics\Statement\Model\MySql\Role\SimpleTargetSpecificationForm $simpleTargetSpecification): self
     {
-        return new self($simpleTargetSpecification, $this->statementInformationItemName);
+        return new self($simpleTargetSpecification, $this->statementInformationItemName, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class StatementInformationItemWithSimpleTargetSpecificationEqStatementInfo
      */
     public function withStatementInformationItemName(\SqlSemantics\Statement\Model\MySql\Role\StatementInformationItemNameForm $statementInformationItemName): self
     {
-        return new self($this->simpleTargetSpecification, $statementInformationItemName);
+        return new self($this->simpleTargetSpecification, $statementInformationItemName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleTargetSpecification, $this->statementInformationItemName, $comments);
     }
 }

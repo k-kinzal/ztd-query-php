@@ -17,11 +17,12 @@ final class EventTriggerWhenItemWithColIdInPEventTriggerValueList_4dee73fb imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerValueListForm $eventTriggerValueList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($eventTriggerValueList), 'The eventTriggerValueList must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class EventTriggerWhenItemWithColIdInPEventTriggerValueList_4dee73fb imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('IN');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->eventTriggerValueList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class EventTriggerWhenItemWithColIdInPEventTriggerValueList_4dee73fb imple
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($colId, $this->eventTriggerValueList);
+        return new self($colId, $this->eventTriggerValueList, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class EventTriggerWhenItemWithColIdInPEventTriggerValueList_4dee73fb imple
      */
     public function withEventTriggerValueList(\SqlSemantics\Statement\Model\PostgreSql\Role\EventTriggerValueListForm $eventTriggerValueList): self
     {
-        return new self($this->colId, $eventTriggerValueList);
+        return new self($this->colId, $eventTriggerValueList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colId, $this->eventTriggerValueList, $comments);
     }
 }

@@ -17,13 +17,14 @@ final class TablespaceInfoWithTablespaceNameAddTsDatafileOptLogfileGroupNameTabl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm $tablespaceName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupNameForm $optLogfileGroupName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionListForm $tablespaceOptionList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceName), 'The tablespaceName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tsDatafile), 'The tsDatafile must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class TablespaceInfoWithTablespaceNameAddTsDatafileOptLogfileGroupNameTabl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tablespaceName->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('ADD');
+        $writer->comments($this->comments, 2);
         $this->tsDatafile->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optLogfileGroupName->write($writer);
+        $writer->comments($this->comments, 4);
         $this->tablespaceOptionList->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class TablespaceInfoWithTablespaceNameAddTsDatafileOptLogfileGroupNameTabl
      */
     public function withTablespaceName(\SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm $tablespaceName): self
     {
-        return new self($tablespaceName, $this->tsDatafile, $this->optLogfileGroupName, $this->tablespaceOptionList);
+        return new self($tablespaceName, $this->tsDatafile, $this->optLogfileGroupName, $this->tablespaceOptionList, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class TablespaceInfoWithTablespaceNameAddTsDatafileOptLogfileGroupNameTabl
      */
     public function withTsDatafile(\SqlSemantics\Statement\Model\MySql\Role\TsDatafileForm $tsDatafile): self
     {
-        return new self($this->tablespaceName, $tsDatafile, $this->optLogfileGroupName, $this->tablespaceOptionList);
+        return new self($this->tablespaceName, $tsDatafile, $this->optLogfileGroupName, $this->tablespaceOptionList, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class TablespaceInfoWithTablespaceNameAddTsDatafileOptLogfileGroupNameTabl
      */
     public function withOptLogfileGroupName(\SqlSemantics\Statement\Model\MySql\Role\OptLogfileGroupNameForm $optLogfileGroupName): self
     {
-        return new self($this->tablespaceName, $this->tsDatafile, $optLogfileGroupName, $this->tablespaceOptionList);
+        return new self($this->tablespaceName, $this->tsDatafile, $optLogfileGroupName, $this->tablespaceOptionList, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class TablespaceInfoWithTablespaceNameAddTsDatafileOptLogfileGroupNameTabl
      */
     public function withTablespaceOptionList(\SqlSemantics\Statement\Model\MySql\Role\TablespaceOptionListForm $tablespaceOptionList): self
     {
-        return new self($this->tablespaceName, $this->tsDatafile, $this->optLogfileGroupName, $tablespaceOptionList);
+        return new self($this->tablespaceName, $this->tsDatafile, $this->optLogfileGroupName, $tablespaceOptionList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tablespaceName, $this->tsDatafile, $this->optLogfileGroupName, $this->tablespaceOptionList, $comments);
     }
 }

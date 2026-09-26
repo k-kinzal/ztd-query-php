@@ -17,7 +17,7 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WithForm $with,
@@ -25,6 +25,7 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm $xfullname,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\IdlistOptForm $idlistOpt,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($insertCmd), 'The insertCmd must be a generated immutable SQL value.');
@@ -38,13 +39,21 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->with->write($writer);
+        $writer->comments($this->comments, 1);
         $this->insertCmd->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('INTO');
+        $writer->comments($this->comments, 3);
         $this->xfullname->write($writer);
+        $writer->comments($this->comments, 4);
         $this->idlistOpt->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('DEFAULT');
+        $writer->comments($this->comments, 6);
         $writer->append('VALUES');
+        $writer->comments($this->comments, 7);
         $this->returning->write($writer);
     }
 
@@ -53,7 +62,7 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb
      */
     public function withWith(\SqlSemantics\Statement\Model\Sqlite\Role\WithForm $with): self
     {
-        return new self($with, $this->insertCmd, $this->xfullname, $this->idlistOpt, $this->returning);
+        return new self($with, $this->insertCmd, $this->xfullname, $this->idlistOpt, $this->returning, $this->comments);
     }
 
     /**
@@ -61,7 +70,7 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb
      */
     public function withInsertCmd(\SqlSemantics\Statement\Model\Sqlite\Role\InsertCmdForm $insertCmd): self
     {
-        return new self($this->with, $insertCmd, $this->xfullname, $this->idlistOpt, $this->returning);
+        return new self($this->with, $insertCmd, $this->xfullname, $this->idlistOpt, $this->returning, $this->comments);
     }
 
     /**
@@ -69,7 +78,7 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb
      */
     public function withXfullname(\SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm $xfullname): self
     {
-        return new self($this->with, $this->insertCmd, $xfullname, $this->idlistOpt, $this->returning);
+        return new self($this->with, $this->insertCmd, $xfullname, $this->idlistOpt, $this->returning, $this->comments);
     }
 
     /**
@@ -77,7 +86,7 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb
      */
     public function withIdlistOpt(\SqlSemantics\Statement\Model\Sqlite\Role\IdlistOptForm $idlistOpt): self
     {
-        return new self($this->with, $this->insertCmd, $this->xfullname, $idlistOpt, $this->returning);
+        return new self($this->with, $this->insertCmd, $this->xfullname, $idlistOpt, $this->returning, $this->comments);
     }
 
     /**
@@ -85,6 +94,14 @@ final class CmdWithWithInsertCmdIntoXfullnameIdlistOptDefaultValuesReturning_6fb
      */
     public function withReturning(\SqlSemantics\Statement\Model\Sqlite\Role\ReturningForm $returning): self
     {
-        return new self($this->with, $this->insertCmd, $this->xfullname, $this->idlistOpt, $returning);
+        return new self($this->with, $this->insertCmd, $this->xfullname, $this->idlistOpt, $returning, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->with, $this->insertCmd, $this->xfullname, $this->idlistOpt, $this->returning, $comments);
     }
 }

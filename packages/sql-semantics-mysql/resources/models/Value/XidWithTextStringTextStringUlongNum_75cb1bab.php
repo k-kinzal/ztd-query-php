@@ -17,12 +17,13 @@ final class XidWithTextStringTextStringUlongNum_75cb1bab implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString2,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textString), 'The textString must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textString2), 'The textString2 must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class XidWithTextStringTextStringUlongNum_75cb1bab implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->textString->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->textString2->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(',');
+        $writer->comments($this->comments, 4);
         $this->ulongNum->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class XidWithTextStringTextStringUlongNum_75cb1bab implements \SqlSemantic
      */
     public function withTextString(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString): self
     {
-        return new self($textString, $this->textString2, $this->ulongNum);
+        return new self($textString, $this->textString2, $this->ulongNum, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class XidWithTextStringTextStringUlongNum_75cb1bab implements \SqlSemantic
      */
     public function withTextString2(\SqlSemantics\Statement\Model\MySql\Role\TextStringForm $textString2): self
     {
-        return new self($this->textString, $textString2, $this->ulongNum);
+        return new self($this->textString, $textString2, $this->ulongNum, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class XidWithTextStringTextStringUlongNum_75cb1bab implements \SqlSemantic
      */
     public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
     {
-        return new self($this->textString, $this->textString2, $ulongNum);
+        return new self($this->textString, $this->textString2, $ulongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textString, $this->textString2, $this->ulongNum, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class RevokeCommandWithProxySymOnUserFromUserList_e9779a0c implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userList), 'The userList must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class RevokeCommandWithProxySymOnUserFromUserList_e9779a0c implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PROXY');
+        $writer->comments($this->comments, 1);
         $writer->append('ON');
+        $writer->comments($this->comments, 2);
         $this->user->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('FROM');
+        $writer->comments($this->comments, 4);
         $this->userList->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class RevokeCommandWithProxySymOnUserFromUserList_e9779a0c implements \Sql
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($user, $this->userList);
+        return new self($user, $this->userList, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class RevokeCommandWithProxySymOnUserFromUserList_e9779a0c implements \Sql
      */
     public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
     {
-        return new self($this->user, $userList);
+        return new self($this->user, $userList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->userList, $comments);
     }
 }

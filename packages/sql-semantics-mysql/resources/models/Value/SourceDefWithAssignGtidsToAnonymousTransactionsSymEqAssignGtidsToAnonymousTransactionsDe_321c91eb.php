@@ -17,10 +17,11 @@ final class SourceDefWithAssignGtidsToAnonymousTransactionsSymEqAssignGtidsToAno
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AssignGtidsToAnonymousTransactionsDefForm $assignGtidsToAnonymousTransactionsDef,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($assignGtidsToAnonymousTransactionsDef), 'The assignGtidsToAnonymousTransactionsDef must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class SourceDefWithAssignGtidsToAnonymousTransactionsSymEqAssignGtidsToAno
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS');
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->assignGtidsToAnonymousTransactionsDef->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class SourceDefWithAssignGtidsToAnonymousTransactionsSymEqAssignGtidsToAno
      */
     public function withAssignGtidsToAnonymousTransactionsDef(\SqlSemantics\Statement\Model\MySql\Role\AssignGtidsToAnonymousTransactionsDefForm $assignGtidsToAnonymousTransactionsDef): self
     {
-        return new self($assignGtidsToAnonymousTransactionsDef);
+        return new self($assignGtidsToAnonymousTransactionsDef, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->assignGtidsToAnonymousTransactionsDef, $comments);
     }
 }

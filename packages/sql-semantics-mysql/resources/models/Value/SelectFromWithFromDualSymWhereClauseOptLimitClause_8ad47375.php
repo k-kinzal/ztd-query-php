@@ -17,11 +17,12 @@ final class SelectFromWithFromDualSymWhereClauseOptLimitClause_8ad47375 implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($where), 'The where must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLimitClause), 'The optLimitClause must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class SelectFromWithFromDualSymWhereClauseOptLimitClause_8ad47375 implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FROM');
+        $writer->comments($this->comments, 1);
         $writer->append('DUAL');
+        $writer->comments($this->comments, 2);
         $this->where->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optLimitClause->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class SelectFromWithFromDualSymWhereClauseOptLimitClause_8ad47375 implemen
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where): self
     {
-        return new self($where, $this->optLimitClause);
+        return new self($where, $this->optLimitClause, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class SelectFromWithFromDualSymWhereClauseOptLimitClause_8ad47375 implemen
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($this->where, $optLimitClause);
+        return new self($this->where, $optLimitClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->where, $this->optLimitClause, $comments);
     }
 }

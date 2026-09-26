@@ -17,10 +17,11 @@ final class IntervalTimeStampWithQuarterSym_d1df0b3d implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $quarterSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($quarterSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['QUARTER_SYM'], 'The quarterSym must be a complete QUARTER_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class IntervalTimeStampWithQuarterSym_d1df0b3d implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->quarterSym);
     }
 
@@ -38,6 +40,14 @@ final class IntervalTimeStampWithQuarterSym_d1df0b3d implements \SqlSemantics\St
      */
     public function withQuarterSym(string $quarterSym): self
     {
-        return new self($quarterSym);
+        return new self($quarterSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->quarterSym, $comments);
     }
 }

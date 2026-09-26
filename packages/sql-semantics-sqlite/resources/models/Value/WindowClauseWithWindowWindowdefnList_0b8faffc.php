@@ -17,10 +17,11 @@ final class WindowClauseWithWindowWindowdefnList_0b8faffc implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm $windowdefnList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($windowdefnList), 'The windowdefnList must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class WindowClauseWithWindowWindowdefnList_0b8faffc implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('WINDOW');
+        $writer->comments($this->comments, 1);
         $this->windowdefnList->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class WindowClauseWithWindowWindowdefnList_0b8faffc implements \SqlSemanti
      */
     public function withWindowdefnList(\SqlSemantics\Statement\Model\Sqlite\Role\WindowdefnListForm $windowdefnList): self
     {
-        return new self($windowdefnList);
+        return new self($windowdefnList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->windowdefnList, $comments);
     }
 }

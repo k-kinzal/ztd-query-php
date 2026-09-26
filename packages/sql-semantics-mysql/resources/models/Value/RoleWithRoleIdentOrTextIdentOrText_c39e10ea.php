@@ -17,11 +17,12 @@ final class RoleWithRoleIdentOrTextIdentOrText_c39e10ea implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RoleIdentOrTextForm $roleIdentOrText,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($roleIdentOrText), 'The roleIdentOrText must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrText), 'The identOrText must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class RoleWithRoleIdentOrTextIdentOrText_c39e10ea implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->roleIdentOrText->write($writer);
-        $writer->append('@');
+        $writer->comments($this->comments, 1);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 2);
         $this->identOrText->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class RoleWithRoleIdentOrTextIdentOrText_c39e10ea implements \SqlSemantics
      */
     public function withRoleIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\RoleIdentOrTextForm $roleIdentOrText): self
     {
-        return new self($roleIdentOrText, $this->identOrText);
+        return new self($roleIdentOrText, $this->identOrText, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class RoleWithRoleIdentOrTextIdentOrText_c39e10ea implements \SqlSemantics
      */
     public function withIdentOrText(\SqlSemantics\Statement\Model\MySql\Role\IdentOrTextForm $identOrText): self
     {
-        return new self($this->roleIdentOrText, $identOrText);
+        return new self($this->roleIdentOrText, $identOrText, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleIdentOrText, $this->identOrText, $comments);
     }
 }

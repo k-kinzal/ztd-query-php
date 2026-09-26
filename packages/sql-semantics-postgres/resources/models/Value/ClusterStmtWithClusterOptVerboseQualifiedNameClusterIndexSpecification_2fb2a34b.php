@@ -17,12 +17,13 @@ final class ClusterStmtWithClusterOptVerboseQualifiedNameClusterIndexSpecificati
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ClusterIndexSpecificationForm $clusterIndexSpecification,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVerbose), 'The optVerbose must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class ClusterStmtWithClusterOptVerboseQualifiedNameClusterIndexSpecificati
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CLUSTER');
+        $writer->comments($this->comments, 1);
         $this->optVerbose->write($writer);
+        $writer->comments($this->comments, 2);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->clusterIndexSpecification->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class ClusterStmtWithClusterOptVerboseQualifiedNameClusterIndexSpecificati
      */
     public function withOptVerbose(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose): self
     {
-        return new self($optVerbose, $this->qualifiedName, $this->clusterIndexSpecification);
+        return new self($optVerbose, $this->qualifiedName, $this->clusterIndexSpecification, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class ClusterStmtWithClusterOptVerboseQualifiedNameClusterIndexSpecificati
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->optVerbose, $qualifiedName, $this->clusterIndexSpecification);
+        return new self($this->optVerbose, $qualifiedName, $this->clusterIndexSpecification, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class ClusterStmtWithClusterOptVerboseQualifiedNameClusterIndexSpecificati
      */
     public function withClusterIndexSpecification(\SqlSemantics\Statement\Model\PostgreSql\Role\ClusterIndexSpecificationForm $clusterIndexSpecification): self
     {
-        return new self($this->optVerbose, $this->qualifiedName, $clusterIndexSpecification);
+        return new self($this->optVerbose, $this->qualifiedName, $clusterIndexSpecification, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optVerbose, $this->qualifiedName, $this->clusterIndexSpecification, $comments);
     }
 }

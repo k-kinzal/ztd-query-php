@@ -17,10 +17,11 @@ final class CreateTableArgsWithAsSelect_edfabb86 implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($select), 'The select must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class CreateTableArgsWithAsSelect_edfabb86 implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('AS');
+        $writer->comments($this->comments, 1);
         $this->select->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class CreateTableArgsWithAsSelect_edfabb86 implements \SqlSemantics\Statem
      */
     public function withSelect(\SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select): self
     {
-        return new self($select);
+        return new self($select, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->select, $comments);
     }
 }

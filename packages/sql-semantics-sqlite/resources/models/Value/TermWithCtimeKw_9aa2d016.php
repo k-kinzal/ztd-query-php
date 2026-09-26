@@ -17,10 +17,11 @@ final class TermWithCtimeKw_9aa2d016 implements \SqlSemantics\Statement\Model\Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $ctimeKw,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($ctimeKw, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['CTIME_KW'], 'The ctimeKw must be a complete CTIME_KW lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class TermWithCtimeKw_9aa2d016 implements \SqlSemantics\Statement\Model\Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->ctimeKw);
     }
 
@@ -38,6 +40,14 @@ final class TermWithCtimeKw_9aa2d016 implements \SqlSemantics\Statement\Model\Sq
      */
     public function withCtimeKw(string $ctimeKw): self
     {
-        return new self($ctimeKw);
+        return new self($ctimeKw, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ctimeKw, $comments);
     }
 }

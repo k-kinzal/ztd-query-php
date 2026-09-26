@@ -17,11 +17,12 @@ final class TableOptionsWithTableOptionTableOptions_87262d47 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableOptionForm $tableOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableOptionsForm $tableOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOption), 'The tableOption must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableOptions), 'The tableOptions must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class TableOptionsWithTableOptionTableOptions_87262d47 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableOption->write($writer);
+        $writer->comments($this->comments, 1);
         $this->tableOptions->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class TableOptionsWithTableOptionTableOptions_87262d47 implements \SqlSema
      */
     public function withTableOption(\SqlSemantics\Statement\Model\MySql\Role\TableOptionForm $tableOption): self
     {
-        return new self($tableOption, $this->tableOptions);
+        return new self($tableOption, $this->tableOptions, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class TableOptionsWithTableOptionTableOptions_87262d47 implements \SqlSema
      */
     public function withTableOptions(\SqlSemantics\Statement\Model\MySql\Role\TableOptionsForm $tableOptions): self
     {
-        return new self($this->tableOption, $tableOptions);
+        return new self($this->tableOption, $tableOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableOption, $this->tableOptions, $comments);
     }
 }

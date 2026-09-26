@@ -17,12 +17,13 @@ final class CastTypeWithCharSymOptFieldLengthOptBinary_89a7039c implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $charSym,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($charSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['CHAR_SYM'], 'The charSym must be a complete CHAR_SYM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFieldLength), 'The optFieldLength must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class CastTypeWithCharSymOptFieldLengthOptBinary_89a7039c implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->charSym);
+        $writer->comments($this->comments, 1);
         $this->optFieldLength->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optBinary->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class CastTypeWithCharSymOptFieldLengthOptBinary_89a7039c implements \SqlS
      */
     public function withCharSym(string $charSym): self
     {
-        return new self($charSym, $this->optFieldLength, $this->optBinary);
+        return new self($charSym, $this->optFieldLength, $this->optBinary, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class CastTypeWithCharSymOptFieldLengthOptBinary_89a7039c implements \SqlS
      */
     public function withOptFieldLength(\SqlSemantics\Statement\Model\MySql\Role\OptFieldLengthForm $optFieldLength): self
     {
-        return new self($this->charSym, $optFieldLength, $this->optBinary);
+        return new self($this->charSym, $optFieldLength, $this->optBinary, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class CastTypeWithCharSymOptFieldLengthOptBinary_89a7039c implements \SqlS
      */
     public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self
     {
-        return new self($this->charSym, $this->optFieldLength, $optBinary);
+        return new self($this->charSym, $this->optFieldLength, $optBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->charSym, $this->optFieldLength, $this->optBinary, $comments);
     }
 }

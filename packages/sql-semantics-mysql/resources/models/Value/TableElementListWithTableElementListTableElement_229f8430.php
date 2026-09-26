@@ -17,11 +17,12 @@ final class TableElementListWithTableElementListTableElement_229f8430 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableElementListForm $tableElementList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableElementForm $tableElement,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableElementList), 'The tableElementList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableElement), 'The tableElement must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TableElementListWithTableElementListTableElement_229f8430 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableElementList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableElement->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TableElementListWithTableElementListTableElement_229f8430 implements
      */
     public function withTableElementList(\SqlSemantics\Statement\Model\MySql\Role\TableElementListForm $tableElementList): self
     {
-        return new self($tableElementList, $this->tableElement);
+        return new self($tableElementList, $this->tableElement, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TableElementListWithTableElementListTableElement_229f8430 implements
      */
     public function withTableElement(\SqlSemantics\Statement\Model\MySql\Role\TableElementForm $tableElement): self
     {
-        return new self($this->tableElementList, $tableElement);
+        return new self($this->tableElementList, $tableElement, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableElementList, $this->tableElement, $comments);
     }
 }

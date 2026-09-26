@@ -17,12 +17,13 @@ final class WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WhenListForm $whenList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($whenList), 'The whenList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->whenList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('WHEN');
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('THEN');
+        $writer->comments($this->comments, 4);
         $this->expr2->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 implements \SqlS
      */
     public function withWhenList(\SqlSemantics\Statement\Model\MySql\Role\WhenListForm $whenList): self
     {
-        return new self($whenList, $this->expr, $this->expr2);
+        return new self($whenList, $this->expr, $this->expr2, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 implements \SqlS
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->whenList, $expr, $this->expr2);
+        return new self($this->whenList, $expr, $this->expr2, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class WhenListWithWhenListWhenSymExprThenSymExpr_96d28342 implements \SqlS
      */
     public function withExpr2(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2): self
     {
-        return new self($this->whenList, $this->expr, $expr2);
+        return new self($this->whenList, $this->expr, $expr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->whenList, $this->expr, $this->expr2, $comments);
     }
 }

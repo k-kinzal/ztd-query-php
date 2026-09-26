@@ -17,11 +17,12 @@ final class ExprWithExprCollateIds_f6a2b322 implements \SqlSemantics\Statement\M
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
         public readonly string $ids,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 11,));
@@ -33,8 +34,11 @@ final class ExprWithExprCollateIds_f6a2b322 implements \SqlSemantics\Statement\M
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('COLLATE');
+        $writer->comments($this->comments, 2);
         $writer->append($this->ids);
     }
 
@@ -43,7 +47,7 @@ final class ExprWithExprCollateIds_f6a2b322 implements \SqlSemantics\Statement\M
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->ids);
+        return new self($expr, $this->ids, $this->comments);
     }
 
     /**
@@ -51,6 +55,14 @@ final class ExprWithExprCollateIds_f6a2b322 implements \SqlSemantics\Statement\M
      */
     public function withIds(string $ids): self
     {
-        return new self($this->expr, $ids);
+        return new self($this->expr, $ids, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->ids, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class VarcharWithCharVarying_35d3e7d5 implements \SqlSemantics\Statement\M
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharForm $char,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($char), 'The char must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class VarcharWithCharVarying_35d3e7d5 implements \SqlSemantics\Statement\M
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->char->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('VARYING');
     }
 
@@ -39,6 +42,14 @@ final class VarcharWithCharVarying_35d3e7d5 implements \SqlSemantics\Statement\M
      */
     public function withChar(\SqlSemantics\Statement\Model\MySql\Role\CharForm $char): self
     {
-        return new self($char);
+        return new self($char, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->char, $comments);
     }
 }

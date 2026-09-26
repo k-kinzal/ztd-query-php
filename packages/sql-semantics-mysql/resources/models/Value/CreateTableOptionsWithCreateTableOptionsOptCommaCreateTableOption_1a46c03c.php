@@ -17,12 +17,13 @@ final class CreateTableOptionsWithCreateTableOptionsOptCommaCreateTableOption_1a
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm $createTableOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm $createTableOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createTableOptions), 'The createTableOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optComma), 'The optComma must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class CreateTableOptionsWithCreateTableOptionsOptCommaCreateTableOption_1a
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createTableOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optComma->write($writer);
+        $writer->comments($this->comments, 2);
         $this->createTableOption->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class CreateTableOptionsWithCreateTableOptionsOptCommaCreateTableOption_1a
      */
     public function withCreateTableOptions(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionsForm $createTableOptions): self
     {
-        return new self($createTableOptions, $this->optComma, $this->createTableOption);
+        return new self($createTableOptions, $this->optComma, $this->createTableOption, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class CreateTableOptionsWithCreateTableOptionsOptCommaCreateTableOption_1a
      */
     public function withOptComma(\SqlSemantics\Statement\Model\MySql\Role\OptCommaForm $optComma): self
     {
-        return new self($this->createTableOptions, $optComma, $this->createTableOption);
+        return new self($this->createTableOptions, $optComma, $this->createTableOption, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class CreateTableOptionsWithCreateTableOptionsOptCommaCreateTableOption_1a
      */
     public function withCreateTableOption(\SqlSemantics\Statement\Model\MySql\Role\CreateTableOptionForm $createTableOption): self
     {
-        return new self($this->createTableOptions, $this->optComma, $createTableOption);
+        return new self($this->createTableOptions, $this->optComma, $createTableOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createTableOptions, $this->optComma, $this->createTableOption, $comments);
     }
 }

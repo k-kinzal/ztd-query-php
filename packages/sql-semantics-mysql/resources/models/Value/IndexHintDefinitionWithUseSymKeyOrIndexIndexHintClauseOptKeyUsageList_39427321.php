@@ -17,12 +17,13 @@ final class IndexHintDefinitionWithUseSymKeyOrIndexIndexHintClauseOptKeyUsageLis
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexHintClauseForm $indexHintClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptKeyUsageListForm $optKeyUsageList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyOrIndex), 'The keyOrIndex must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexHintClause), 'The indexHintClause must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class IndexHintDefinitionWithUseSymKeyOrIndexIndexHintClauseOptKeyUsageLis
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('USE');
+        $writer->comments($this->comments, 1);
         $this->keyOrIndex->write($writer);
+        $writer->comments($this->comments, 2);
         $this->indexHintClause->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->optKeyUsageList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -47,7 +54,7 @@ final class IndexHintDefinitionWithUseSymKeyOrIndexIndexHintClauseOptKeyUsageLis
      */
     public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self
     {
-        return new self($keyOrIndex, $this->indexHintClause, $this->optKeyUsageList);
+        return new self($keyOrIndex, $this->indexHintClause, $this->optKeyUsageList, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class IndexHintDefinitionWithUseSymKeyOrIndexIndexHintClauseOptKeyUsageLis
      */
     public function withIndexHintClause(\SqlSemantics\Statement\Model\MySql\Role\IndexHintClauseForm $indexHintClause): self
     {
-        return new self($this->keyOrIndex, $indexHintClause, $this->optKeyUsageList);
+        return new self($this->keyOrIndex, $indexHintClause, $this->optKeyUsageList, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class IndexHintDefinitionWithUseSymKeyOrIndexIndexHintClauseOptKeyUsageLis
      */
     public function withOptKeyUsageList(\SqlSemantics\Statement\Model\MySql\Role\OptKeyUsageListForm $optKeyUsageList): self
     {
-        return new self($this->keyOrIndex, $this->indexHintClause, $optKeyUsageList);
+        return new self($this->keyOrIndex, $this->indexHintClause, $optKeyUsageList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->keyOrIndex, $this->indexHintClause, $this->optKeyUsageList, $comments);
     }
 }

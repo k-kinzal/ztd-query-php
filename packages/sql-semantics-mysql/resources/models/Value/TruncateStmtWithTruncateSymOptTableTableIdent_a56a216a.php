@@ -17,11 +17,12 @@ final class TruncateStmtWithTruncateSymOptTableTableIdent_a56a216a implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTableForm $optTable,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTable), 'The optTable must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TruncateStmtWithTruncateSymOptTableTableIdent_a56a216a implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TRUNCATE');
+        $writer->comments($this->comments, 1);
         $this->optTable->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableIdent->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TruncateStmtWithTruncateSymOptTableTableIdent_a56a216a implements \S
      */
     public function withOptTable(\SqlSemantics\Statement\Model\MySql\Role\OptTableForm $optTable): self
     {
-        return new self($optTable, $this->tableIdent);
+        return new self($optTable, $this->tableIdent, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TruncateStmtWithTruncateSymOptTableTableIdent_a56a216a implements \S
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->optTable, $tableIdent);
+        return new self($this->optTable, $tableIdent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTable, $this->tableIdent, $comments);
     }
 }

@@ -17,8 +17,6 @@ use SqlSemantics\Statement\Statement;
  */
 final class Analyzer
 {
-    use \SqlSemantics\Statement\Assertion;
-
     private readonly DialectParser $parser;
     private readonly ValueReader $values;
 
@@ -32,7 +30,7 @@ final class Analyzer
     }
 
     /**
-     * Parses and lowers SQL, retaining only the independent statement data.
+     * Parses and lowers SQL, retaining only the independent statement data and its comments.
      *
      * @throws AnalysisException When SQL is not in the selected language
      */
@@ -44,9 +42,6 @@ final class Analyzer
             throw new AnalysisException($error->getMessage(), 0, $error);
         }
 
-        $command = $this->values->read($tree);
-        $this->assertCompleteCommand($command);
-
-        return new Statement($command);
+        return $this->values->statement($tree);
     }
 }

@@ -17,11 +17,12 @@ final class SqlStatementWithSimpleStatementOrBeginOptEndOfInput_e8dd5b0b impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm $simpleStatementOrBegin,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEndOfInputForm $optEndOfInput,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleStatementOrBegin), 'The simpleStatementOrBegin must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optEndOfInput), 'The optEndOfInput must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SqlStatementWithSimpleStatementOrBeginOptEndOfInput_e8dd5b0b impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->simpleStatementOrBegin->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(';');
+        $writer->comments($this->comments, 2);
         $this->optEndOfInput->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SqlStatementWithSimpleStatementOrBeginOptEndOfInput_e8dd5b0b impleme
      */
     public function withSimpleStatementOrBegin(\SqlSemantics\Statement\Model\MySql\Role\SimpleStatementOrBeginForm $simpleStatementOrBegin): self
     {
-        return new self($simpleStatementOrBegin, $this->optEndOfInput);
+        return new self($simpleStatementOrBegin, $this->optEndOfInput, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SqlStatementWithSimpleStatementOrBeginOptEndOfInput_e8dd5b0b impleme
      */
     public function withOptEndOfInput(\SqlSemantics\Statement\Model\MySql\Role\OptEndOfInputForm $optEndOfInput): self
     {
-        return new self($this->simpleStatementOrBegin, $optEndOfInput);
+        return new self($this->simpleStatementOrBegin, $optEndOfInput, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleStatementOrBegin, $this->optEndOfInput, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class SelectWithWithWqlistSelectnowith_dc3f10ec implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm $wqlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm $selectnowith,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($wqlist), 'The wqlist must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($selectnowith), 'The selectnowith must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SelectWithWithWqlistSelectnowith_dc3f10ec implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('WITH');
+        $writer->comments($this->comments, 1);
         $this->wqlist->write($writer);
+        $writer->comments($this->comments, 2);
         $this->selectnowith->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SelectWithWithWqlistSelectnowith_dc3f10ec implements \SqlSemantics\S
      */
     public function withWqlist(\SqlSemantics\Statement\Model\Sqlite\Role\WqlistForm $wqlist): self
     {
-        return new self($wqlist, $this->selectnowith);
+        return new self($wqlist, $this->selectnowith, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SelectWithWithWqlistSelectnowith_dc3f10ec implements \SqlSemantics\S
      */
     public function withSelectnowith(\SqlSemantics\Statement\Model\Sqlite\Role\SelectnowithForm $selectnowith): self
     {
-        return new self($this->wqlist, $selectnowith);
+        return new self($this->wqlist, $selectnowith, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->wqlist, $this->selectnowith, $comments);
     }
 }

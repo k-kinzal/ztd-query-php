@@ -17,11 +17,12 @@ final class AlterObjectSchemaStmtWithAlterConversionPAnyNameSetSchemaName_4f663f
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class AlterObjectSchemaStmtWithAlterConversionPAnyNameSetSchemaName_4f663f
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('CONVERSION');
+        $writer->comments($this->comments, 2);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('SET');
+        $writer->comments($this->comments, 4);
         $writer->append('SCHEMA');
+        $writer->comments($this->comments, 5);
         $this->name->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class AlterObjectSchemaStmtWithAlterConversionPAnyNameSetSchemaName_4f663f
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->name);
+        return new self($anyName, $this->name, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class AlterObjectSchemaStmtWithAlterConversionPAnyNameSetSchemaName_4f663f
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->anyName, $name);
+        return new self($this->anyName, $name, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->name, $comments);
     }
 }

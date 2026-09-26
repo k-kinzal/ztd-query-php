@@ -17,13 +17,14 @@ final class RevokeWithRevokeIfExistsProxySymOnSymUserFromUserListOptIgnoreUnknow
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreUnknownUserForm $optIgnoreUnknownUser,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
@@ -36,13 +37,21 @@ final class RevokeWithRevokeIfExistsProxySymOnSymUserFromUserListOptIgnoreUnknow
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REVOKE');
+        $writer->comments($this->comments, 1);
         $this->ifExists->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('PROXY');
+        $writer->comments($this->comments, 3);
         $writer->append('ON');
+        $writer->comments($this->comments, 4);
         $this->user->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('FROM');
+        $writer->comments($this->comments, 6);
         $this->userList->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optIgnoreUnknownUser->write($writer);
     }
 
@@ -51,7 +60,7 @@ final class RevokeWithRevokeIfExistsProxySymOnSymUserFromUserListOptIgnoreUnknow
      */
     public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
     {
-        return new self($ifExists, $this->user, $this->userList, $this->optIgnoreUnknownUser);
+        return new self($ifExists, $this->user, $this->userList, $this->optIgnoreUnknownUser, $this->comments);
     }
 
     /**
@@ -59,7 +68,7 @@ final class RevokeWithRevokeIfExistsProxySymOnSymUserFromUserListOptIgnoreUnknow
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($this->ifExists, $user, $this->userList, $this->optIgnoreUnknownUser);
+        return new self($this->ifExists, $user, $this->userList, $this->optIgnoreUnknownUser, $this->comments);
     }
 
     /**
@@ -67,7 +76,7 @@ final class RevokeWithRevokeIfExistsProxySymOnSymUserFromUserListOptIgnoreUnknow
      */
     public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
     {
-        return new self($this->ifExists, $this->user, $userList, $this->optIgnoreUnknownUser);
+        return new self($this->ifExists, $this->user, $userList, $this->optIgnoreUnknownUser, $this->comments);
     }
 
     /**
@@ -75,6 +84,14 @@ final class RevokeWithRevokeIfExistsProxySymOnSymUserFromUserListOptIgnoreUnknow
      */
     public function withOptIgnoreUnknownUser(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreUnknownUserForm $optIgnoreUnknownUser): self
     {
-        return new self($this->ifExists, $this->user, $this->userList, $optIgnoreUnknownUser);
+        return new self($this->ifExists, $this->user, $this->userList, $optIgnoreUnknownUser, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ifExists, $this->user, $this->userList, $this->optIgnoreUnknownUser, $comments);
     }
 }

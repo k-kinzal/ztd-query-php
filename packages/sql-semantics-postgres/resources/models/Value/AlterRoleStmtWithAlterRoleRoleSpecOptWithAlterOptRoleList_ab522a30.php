@@ -17,12 +17,13 @@ final class AlterRoleStmtWithAlterRoleRoleSpecOptWithAlterOptRoleList_ab522a30 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleListForm $alterOptRoleList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optWith), 'The optWith must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class AlterRoleStmtWithAlterRoleRoleSpecOptWithAlterOptRoleList_ab522a30 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('ROLE');
+        $writer->comments($this->comments, 2);
         $this->roleSpec->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optWith->write($writer);
+        $writer->comments($this->comments, 4);
         $this->alterOptRoleList->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class AlterRoleStmtWithAlterRoleRoleSpecOptWithAlterOptRoleList_ab522a30 i
      */
     public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
     {
-        return new self($roleSpec, $this->optWith, $this->alterOptRoleList);
+        return new self($roleSpec, $this->optWith, $this->alterOptRoleList, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class AlterRoleStmtWithAlterRoleRoleSpecOptWithAlterOptRoleList_ab522a30 i
      */
     public function withOptWith(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithForm $optWith): self
     {
-        return new self($this->roleSpec, $optWith, $this->alterOptRoleList);
+        return new self($this->roleSpec, $optWith, $this->alterOptRoleList, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class AlterRoleStmtWithAlterRoleRoleSpecOptWithAlterOptRoleList_ab522a30 i
      */
     public function withAlterOptRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterOptRoleListForm $alterOptRoleList): self
     {
-        return new self($this->roleSpec, $this->optWith, $alterOptRoleList);
+        return new self($this->roleSpec, $this->optWith, $alterOptRoleList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleSpec, $this->optWith, $this->alterOptRoleList, $comments);
     }
 }

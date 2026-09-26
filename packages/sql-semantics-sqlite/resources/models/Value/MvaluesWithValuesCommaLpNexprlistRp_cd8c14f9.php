@@ -17,11 +17,12 @@ final class MvaluesWithValuesCommaLpNexprlistRp_cd8c14f9 implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ValuesForm $values,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($values), 'The values must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nexprlist), 'The nexprlist must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class MvaluesWithValuesCommaLpNexprlistRp_cd8c14f9 implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->values->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->nexprlist->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class MvaluesWithValuesCommaLpNexprlistRp_cd8c14f9 implements \SqlSemantic
      */
     public function withValues(\SqlSemantics\Statement\Model\Sqlite\Role\ValuesForm $values): self
     {
-        return new self($values, $this->nexprlist);
+        return new self($values, $this->nexprlist, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class MvaluesWithValuesCommaLpNexprlistRp_cd8c14f9 implements \SqlSemantic
      */
     public function withNexprlist(\SqlSemantics\Statement\Model\Sqlite\Role\NexprlistForm $nexprlist): self
     {
-        return new self($this->values, $nexprlist);
+        return new self($this->values, $nexprlist, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->values, $this->nexprlist, $comments);
     }
 }

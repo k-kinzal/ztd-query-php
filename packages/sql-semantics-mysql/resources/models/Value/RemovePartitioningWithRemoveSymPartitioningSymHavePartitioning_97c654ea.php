@@ -17,10 +17,11 @@ final class RemovePartitioningWithRemoveSymPartitioningSymHavePartitioning_97c65
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($havePartitioning), 'The havePartitioning must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class RemovePartitioningWithRemoveSymPartitioningSymHavePartitioning_97c65
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REMOVE');
+        $writer->comments($this->comments, 1);
         $writer->append('PARTITIONING');
+        $writer->comments($this->comments, 2);
         $this->havePartitioning->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class RemovePartitioningWithRemoveSymPartitioningSymHavePartitioning_97c65
      */
     public function withHavePartitioning(\SqlSemantics\Statement\Model\MySql\Role\HavePartitioningForm $havePartitioning): self
     {
-        return new self($havePartitioning);
+        return new self($havePartitioning, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->havePartitioning, $comments);
     }
 }

@@ -17,7 +17,7 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists,
@@ -27,6 +27,7 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm $storedRoutineBody,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
@@ -42,16 +43,27 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('FUNCTION');
+        $writer->comments($this->comments, 1);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 2);
         $this->spName->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->spFdparamList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
+        $writer->comments($this->comments, 6);
         $writer->append('RETURNS');
+        $writer->comments($this->comments, 7);
         $this->type->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optCollate->write($writer);
+        $writer->comments($this->comments, 9);
         $this->spCChistics->write($writer);
+        $writer->comments($this->comments, 10);
         $this->storedRoutineBody->write($writer);
     }
 
@@ -60,7 +72,7 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->storedRoutineBody);
+        return new self($optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->storedRoutineBody, $this->comments);
     }
 
     /**
@@ -68,7 +80,7 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
     {
-        return new self($this->optIfNotExists, $spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->storedRoutineBody);
+        return new self($this->optIfNotExists, $spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->storedRoutineBody, $this->comments);
     }
 
     /**
@@ -76,7 +88,7 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
      */
     public function withSpFdparamList(\SqlSemantics\Statement\Model\MySql\Role\SpFdparamListForm $spFdparamList): self
     {
-        return new self($this->optIfNotExists, $this->spName, $spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->storedRoutineBody);
+        return new self($this->optIfNotExists, $this->spName, $spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->storedRoutineBody, $this->comments);
     }
 
     /**
@@ -84,7 +96,7 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
      */
     public function withType(\SqlSemantics\Statement\Model\MySql\Role\TypeForm $type): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $type, $this->optCollate, $this->spCChistics, $this->storedRoutineBody);
+        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $type, $this->optCollate, $this->spCChistics, $this->storedRoutineBody, $this->comments);
     }
 
     /**
@@ -92,7 +104,7 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
      */
     public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $optCollate, $this->spCChistics, $this->storedRoutineBody);
+        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $optCollate, $this->spCChistics, $this->storedRoutineBody, $this->comments);
     }
 
     /**
@@ -100,7 +112,7 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
      */
     public function withSpCChistics(\SqlSemantics\Statement\Model\MySql\Role\SpCChisticsForm $spCChistics): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $spCChistics, $this->storedRoutineBody);
+        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $spCChistics, $this->storedRoutineBody, $this->comments);
     }
 
     /**
@@ -108,6 +120,14 @@ final class SfTailWithFunctionSymOptIfNotExistsSpNameSpFdparamListReturnsSymType
      */
     public function withStoredRoutineBody(\SqlSemantics\Statement\Model\MySql\Role\StoredRoutineBodyForm $storedRoutineBody): self
     {
-        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $storedRoutineBody);
+        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $storedRoutineBody, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optIfNotExists, $this->spName, $this->spFdparamList, $this->type, $this->optCollate, $this->spCChistics, $this->storedRoutineBody, $comments);
     }
 }

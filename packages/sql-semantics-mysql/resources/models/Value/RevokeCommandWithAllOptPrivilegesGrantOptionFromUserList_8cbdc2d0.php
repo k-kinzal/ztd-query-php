@@ -17,11 +17,12 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromUserList_8cbdc2d0 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPrivileges), 'The optPrivileges must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($userList), 'The userList must be a generated immutable SQL value.');
@@ -32,12 +33,19 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromUserList_8cbdc2d0 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALL');
+        $writer->comments($this->comments, 1);
         $this->optPrivileges->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(',');
+        $writer->comments($this->comments, 3);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 4);
         $writer->append('OPTION');
+        $writer->comments($this->comments, 5);
         $writer->append('FROM');
+        $writer->comments($this->comments, 6);
         $this->userList->write($writer);
     }
 
@@ -46,7 +54,7 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromUserList_8cbdc2d0 im
      */
     public function withOptPrivileges(\SqlSemantics\Statement\Model\MySql\Role\OptPrivilegesForm $optPrivileges): self
     {
-        return new self($optPrivileges, $this->userList);
+        return new self($optPrivileges, $this->userList, $this->comments);
     }
 
     /**
@@ -54,6 +62,14 @@ final class RevokeCommandWithAllOptPrivilegesGrantOptionFromUserList_8cbdc2d0 im
      */
     public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
     {
-        return new self($this->optPrivileges, $userList);
+        return new self($this->optPrivileges, $userList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optPrivileges, $this->userList, $comments);
     }
 }

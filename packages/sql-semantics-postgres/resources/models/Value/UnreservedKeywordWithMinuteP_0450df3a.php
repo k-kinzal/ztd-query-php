@@ -17,10 +17,11 @@ final class UnreservedKeywordWithMinuteP_0450df3a implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $name,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($name, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['MINUTE_P'], 'The name must be a complete MINUTE_P lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class UnreservedKeywordWithMinuteP_0450df3a implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->name);
     }
 
@@ -38,6 +40,14 @@ final class UnreservedKeywordWithMinuteP_0450df3a implements \SqlSemantics\State
      */
     public function withName(string $name): self
     {
-        return new self($name);
+        return new self($name, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $comments);
     }
 }

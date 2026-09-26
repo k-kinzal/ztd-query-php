@@ -17,11 +17,12 @@ final class OptSearchClauseWithSearchDepthFirstPByColumnListSetColId_337aed4c im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
@@ -32,12 +33,19 @@ final class OptSearchClauseWithSearchDepthFirstPByColumnListSetColId_337aed4c im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SEARCH');
+        $writer->comments($this->comments, 1);
         $writer->append('DEPTH');
+        $writer->comments($this->comments, 2);
         $writer->append('FIRST');
+        $writer->comments($this->comments, 3);
         $writer->append('BY');
+        $writer->comments($this->comments, 4);
         $this->columnList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('SET');
+        $writer->comments($this->comments, 6);
         $this->colId->write($writer);
     }
 
@@ -46,7 +54,7 @@ final class OptSearchClauseWithSearchDepthFirstPByColumnListSetColId_337aed4c im
      */
     public function withColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList): self
     {
-        return new self($columnList, $this->colId);
+        return new self($columnList, $this->colId, $this->comments);
     }
 
     /**
@@ -54,6 +62,14 @@ final class OptSearchClauseWithSearchDepthFirstPByColumnListSetColId_337aed4c im
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($this->columnList, $colId);
+        return new self($this->columnList, $colId, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->columnList, $this->colId, $comments);
     }
 }

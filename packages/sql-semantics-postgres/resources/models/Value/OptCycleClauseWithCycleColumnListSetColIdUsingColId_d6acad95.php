@@ -17,12 +17,13 @@ final class OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($columnList), 'The columnList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CYCLE');
+        $writer->comments($this->comments, 1);
         $this->columnList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('SET');
+        $writer->comments($this->comments, 3);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('USING');
+        $writer->comments($this->comments, 5);
         $this->colId2->write($writer);
     }
 
@@ -47,7 +54,7 @@ final class OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 impleme
      */
     public function withColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList): self
     {
-        return new self($columnList, $this->colId, $this->colId2);
+        return new self($columnList, $this->colId, $this->colId2, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 impleme
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($this->columnList, $colId, $this->colId2);
+        return new self($this->columnList, $colId, $this->colId2, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class OptCycleClauseWithCycleColumnListSetColIdUsingColId_d6acad95 impleme
      */
     public function withColId2(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId2): self
     {
-        return new self($this->columnList, $this->colId, $colId2);
+        return new self($this->columnList, $this->colId, $colId2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->columnList, $this->colId, $this->colId2, $comments);
     }
 }

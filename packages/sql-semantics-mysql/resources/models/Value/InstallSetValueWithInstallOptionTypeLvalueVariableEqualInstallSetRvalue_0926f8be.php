@@ -17,13 +17,14 @@ final class InstallSetValueWithInstallOptionTypeLvalueVariableEqualInstallSetRva
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InstallOptionTypeForm $installOptionType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LvalueVariableForm $lvalueVariable,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm $installSetRvalue,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($installOptionType), 'The installOptionType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($lvalueVariable), 'The lvalueVariable must be a generated immutable SQL value.');
@@ -36,9 +37,13 @@ final class InstallSetValueWithInstallOptionTypeLvalueVariableEqualInstallSetRva
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->installOptionType->write($writer);
+        $writer->comments($this->comments, 1);
         $this->lvalueVariable->write($writer);
+        $writer->comments($this->comments, 2);
         $this->equal->write($writer);
+        $writer->comments($this->comments, 3);
         $this->installSetRvalue->write($writer);
     }
 
@@ -47,7 +52,7 @@ final class InstallSetValueWithInstallOptionTypeLvalueVariableEqualInstallSetRva
      */
     public function withInstallOptionType(\SqlSemantics\Statement\Model\MySql\Role\InstallOptionTypeForm $installOptionType): self
     {
-        return new self($installOptionType, $this->lvalueVariable, $this->equal, $this->installSetRvalue);
+        return new self($installOptionType, $this->lvalueVariable, $this->equal, $this->installSetRvalue, $this->comments);
     }
 
     /**
@@ -55,7 +60,7 @@ final class InstallSetValueWithInstallOptionTypeLvalueVariableEqualInstallSetRva
      */
     public function withLvalueVariable(\SqlSemantics\Statement\Model\MySql\Role\LvalueVariableForm $lvalueVariable): self
     {
-        return new self($this->installOptionType, $lvalueVariable, $this->equal, $this->installSetRvalue);
+        return new self($this->installOptionType, $lvalueVariable, $this->equal, $this->installSetRvalue, $this->comments);
     }
 
     /**
@@ -63,7 +68,7 @@ final class InstallSetValueWithInstallOptionTypeLvalueVariableEqualInstallSetRva
      */
     public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
     {
-        return new self($this->installOptionType, $this->lvalueVariable, $equal, $this->installSetRvalue);
+        return new self($this->installOptionType, $this->lvalueVariable, $equal, $this->installSetRvalue, $this->comments);
     }
 
     /**
@@ -71,6 +76,14 @@ final class InstallSetValueWithInstallOptionTypeLvalueVariableEqualInstallSetRva
      */
     public function withInstallSetRvalue(\SqlSemantics\Statement\Model\MySql\Role\InstallSetRvalueForm $installSetRvalue): self
     {
-        return new self($this->installOptionType, $this->lvalueVariable, $this->equal, $installSetRvalue);
+        return new self($this->installOptionType, $this->lvalueVariable, $this->equal, $installSetRvalue, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->installOptionType, $this->lvalueVariable, $this->equal, $this->installSetRvalue, $comments);
     }
 }

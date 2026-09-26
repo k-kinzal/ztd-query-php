@@ -17,11 +17,12 @@ final class ConstraintAttributeSpecWithConstraintAttributeSpecConstraintAttribut
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeElemForm $constraintAttributeElem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constraintAttributeSpec), 'The constraintAttributeSpec must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($constraintAttributeElem), 'The constraintAttributeElem must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ConstraintAttributeSpecWithConstraintAttributeSpecConstraintAttribut
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->constraintAttributeSpec->write($writer);
+        $writer->comments($this->comments, 1);
         $this->constraintAttributeElem->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ConstraintAttributeSpecWithConstraintAttributeSpecConstraintAttribut
      */
     public function withConstraintAttributeSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec): self
     {
-        return new self($constraintAttributeSpec, $this->constraintAttributeElem);
+        return new self($constraintAttributeSpec, $this->constraintAttributeElem, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ConstraintAttributeSpecWithConstraintAttributeSpecConstraintAttribut
      */
     public function withConstraintAttributeElem(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeElemForm $constraintAttributeElem): self
     {
-        return new self($this->constraintAttributeSpec, $constraintAttributeElem);
+        return new self($this->constraintAttributeSpec, $constraintAttributeElem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->constraintAttributeSpec, $this->constraintAttributeElem, $comments);
     }
 }

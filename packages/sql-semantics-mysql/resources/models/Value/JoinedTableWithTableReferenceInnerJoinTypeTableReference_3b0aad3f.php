@@ -17,12 +17,13 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm $innerJoinType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableReference), 'The tableReference must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($innerJoinType), 'The innerJoinType must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableReference->write($writer);
+        $writer->comments($this->comments, 1);
         $this->innerJoinType->write($writer);
+        $writer->comments($this->comments, 2);
         $this->tableReference2->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f im
      */
     public function withTableReference(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference): self
     {
-        return new self($tableReference, $this->innerJoinType, $this->tableReference2);
+        return new self($tableReference, $this->innerJoinType, $this->tableReference2, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f im
      */
     public function withInnerJoinType(\SqlSemantics\Statement\Model\MySql\Role\InnerJoinTypeForm $innerJoinType): self
     {
-        return new self($this->tableReference, $innerJoinType, $this->tableReference2);
+        return new self($this->tableReference, $innerJoinType, $this->tableReference2, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class JoinedTableWithTableReferenceInnerJoinTypeTableReference_3b0aad3f im
      */
     public function withTableReference2(\SqlSemantics\Statement\Model\MySql\Role\TableReferenceForm $tableReference2): self
     {
-        return new self($this->tableReference, $this->innerJoinType, $tableReference2);
+        return new self($this->tableReference, $this->innerJoinType, $tableReference2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableReference, $this->innerJoinType, $this->tableReference2, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class StartEntryWithGrammarSelectorCteTableSubqueryEndOfInput_051e7d03 imp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $grammarSelectorCte,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($grammarSelectorCte, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['GRAMMAR_SELECTOR_CTE'], 'The grammarSelectorCte must be a complete GRAMMAR_SELECTOR_CTE lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableSubquery), 'The tableSubquery must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class StartEntryWithGrammarSelectorCteTableSubqueryEndOfInput_051e7d03 imp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->grammarSelectorCte);
+        $writer->comments($this->comments, 1);
         $this->tableSubquery->write($writer);
+        $writer->comments($this->comments, 2);
     }
 
     /**
@@ -41,7 +45,7 @@ final class StartEntryWithGrammarSelectorCteTableSubqueryEndOfInput_051e7d03 imp
      */
     public function withGrammarSelectorCte(string $grammarSelectorCte): self
     {
-        return new self($grammarSelectorCte, $this->tableSubquery);
+        return new self($grammarSelectorCte, $this->tableSubquery, $this->comments);
     }
 
     /**
@@ -49,6 +53,14 @@ final class StartEntryWithGrammarSelectorCteTableSubqueryEndOfInput_051e7d03 imp
      */
     public function withTableSubquery(\SqlSemantics\Statement\Model\MySql\Role\TableSubqueryForm $tableSubquery): self
     {
-        return new self($this->grammarSelectorCte, $tableSubquery);
+        return new self($this->grammarSelectorCte, $tableSubquery, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->grammarSelectorCte, $this->tableSubquery, $comments);
     }
 }

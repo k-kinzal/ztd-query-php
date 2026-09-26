@@ -17,7 +17,7 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
@@ -26,6 +26,7 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptOpfamilyForm $optOpfamily,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm $opclassItemList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDefault), 'The optDefault must be a generated immutable SQL value.');
@@ -40,18 +41,31 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('OPERATOR');
+        $writer->comments($this->comments, 2);
         $writer->append('CLASS');
+        $writer->comments($this->comments, 3);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optDefault->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('FOR');
+        $writer->comments($this->comments, 6);
         $writer->append('TYPE');
+        $writer->comments($this->comments, 7);
         $this->typename->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append('USING');
+        $writer->comments($this->comments, 9);
         $this->name->write($writer);
+        $writer->comments($this->comments, 10);
         $this->optOpfamily->write($writer);
+        $writer->comments($this->comments, 11);
         $writer->append('AS');
+        $writer->comments($this->comments, 12);
         $this->opclassItemList->write($writer);
     }
 
@@ -60,7 +74,7 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->optDefault, $this->typename, $this->name, $this->optOpfamily, $this->opclassItemList);
+        return new self($anyName, $this->optDefault, $this->typename, $this->name, $this->optOpfamily, $this->opclassItemList, $this->comments);
     }
 
     /**
@@ -68,7 +82,7 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
      */
     public function withOptDefault(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefaultForm $optDefault): self
     {
-        return new self($this->anyName, $optDefault, $this->typename, $this->name, $this->optOpfamily, $this->opclassItemList);
+        return new self($this->anyName, $optDefault, $this->typename, $this->name, $this->optOpfamily, $this->opclassItemList, $this->comments);
     }
 
     /**
@@ -76,7 +90,7 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($this->anyName, $this->optDefault, $typename, $this->name, $this->optOpfamily, $this->opclassItemList);
+        return new self($this->anyName, $this->optDefault, $typename, $this->name, $this->optOpfamily, $this->opclassItemList, $this->comments);
     }
 
     /**
@@ -84,7 +98,7 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->anyName, $this->optDefault, $this->typename, $name, $this->optOpfamily, $this->opclassItemList);
+        return new self($this->anyName, $this->optDefault, $this->typename, $name, $this->optOpfamily, $this->opclassItemList, $this->comments);
     }
 
     /**
@@ -92,7 +106,7 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
      */
     public function withOptOpfamily(\SqlSemantics\Statement\Model\PostgreSql\Role\OptOpfamilyForm $optOpfamily): self
     {
-        return new self($this->anyName, $this->optDefault, $this->typename, $this->name, $optOpfamily, $this->opclassItemList);
+        return new self($this->anyName, $this->optDefault, $this->typename, $this->name, $optOpfamily, $this->opclassItemList, $this->comments);
     }
 
     /**
@@ -100,6 +114,14 @@ final class CreateOpClassStmtWithCreateOperatorClassAnyNameOptDefaultForTypePTyp
      */
     public function withOpclassItemList(\SqlSemantics\Statement\Model\PostgreSql\Role\OpclassItemListForm $opclassItemList): self
     {
-        return new self($this->anyName, $this->optDefault, $this->typename, $this->name, $this->optOpfamily, $opclassItemList);
+        return new self($this->anyName, $this->optDefault, $this->typename, $this->name, $this->optOpfamily, $opclassItemList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->optDefault, $this->typename, $this->name, $this->optOpfamily, $this->opclassItemList, $comments);
     }
 }

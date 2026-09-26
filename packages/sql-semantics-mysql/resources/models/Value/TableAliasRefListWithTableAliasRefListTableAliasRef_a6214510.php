@@ -17,11 +17,12 @@ final class TableAliasRefListWithTableAliasRefListTableAliasRef_a6214510 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableAliasRefForm $tableAliasRef,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableAliasRefList), 'The tableAliasRefList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableAliasRef), 'The tableAliasRef must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TableAliasRefListWithTableAliasRefListTableAliasRef_a6214510 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tableAliasRefList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->tableAliasRef->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TableAliasRefListWithTableAliasRefListTableAliasRef_a6214510 impleme
      */
     public function withTableAliasRefList(\SqlSemantics\Statement\Model\MySql\Role\TableAliasRefListForm $tableAliasRefList): self
     {
-        return new self($tableAliasRefList, $this->tableAliasRef);
+        return new self($tableAliasRefList, $this->tableAliasRef, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TableAliasRefListWithTableAliasRefListTableAliasRef_a6214510 impleme
      */
     public function withTableAliasRef(\SqlSemantics\Statement\Model\MySql\Role\TableAliasRefForm $tableAliasRef): self
     {
-        return new self($this->tableAliasRefList, $tableAliasRef);
+        return new self($this->tableAliasRefList, $tableAliasRef, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tableAliasRefList, $this->tableAliasRef, $comments);
     }
 }

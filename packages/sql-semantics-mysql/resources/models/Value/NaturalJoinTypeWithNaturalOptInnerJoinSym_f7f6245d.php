@@ -17,10 +17,11 @@ final class NaturalJoinTypeWithNaturalOptInnerJoinSym_f7f6245d implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptInnerForm $optInner,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optInner), 'The optInner must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class NaturalJoinTypeWithNaturalOptInnerJoinSym_f7f6245d implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NATURAL');
+        $writer->comments($this->comments, 1);
         $this->optInner->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('JOIN');
     }
 
@@ -40,6 +44,14 @@ final class NaturalJoinTypeWithNaturalOptInnerJoinSym_f7f6245d implements \SqlSe
      */
     public function withOptInner(\SqlSemantics\Statement\Model\MySql\Role\OptInnerForm $optInner): self
     {
-        return new self($optInner);
+        return new self($optInner, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optInner, $comments);
     }
 }

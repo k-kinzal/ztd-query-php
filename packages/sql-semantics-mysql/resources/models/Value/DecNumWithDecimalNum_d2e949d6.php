@@ -17,10 +17,11 @@ final class DecNumWithDecimalNum_d2e949d6 implements \SqlSemantics\Statement\Mod
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $decimalNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($decimalNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DECIMAL_NUM'], 'The decimalNum must be a complete DECIMAL_NUM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class DecNumWithDecimalNum_d2e949d6 implements \SqlSemantics\Statement\Mod
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->decimalNum);
     }
 
@@ -38,6 +40,14 @@ final class DecNumWithDecimalNum_d2e949d6 implements \SqlSemantics\Statement\Mod
      */
     public function withDecimalNum(string $decimalNum): self
     {
-        return new self($decimalNum);
+        return new self($decimalNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->decimalNum, $comments);
     }
 }

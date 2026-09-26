@@ -17,11 +17,12 @@ final class SourceDefsWithSourceDefsSourceDef_5e3868a5 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm $sourceDefs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SourceDefForm $sourceDef,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceDefs), 'The sourceDefs must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($sourceDef), 'The sourceDef must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SourceDefsWithSourceDefsSourceDef_5e3868a5 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->sourceDefs->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->sourceDef->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SourceDefsWithSourceDefsSourceDef_5e3868a5 implements \SqlSemantics\
      */
     public function withSourceDefs(\SqlSemantics\Statement\Model\MySql\Role\SourceDefsForm $sourceDefs): self
     {
-        return new self($sourceDefs, $this->sourceDef);
+        return new self($sourceDefs, $this->sourceDef, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SourceDefsWithSourceDefsSourceDef_5e3868a5 implements \SqlSemantics\
      */
     public function withSourceDef(\SqlSemantics\Statement\Model\MySql\Role\SourceDefForm $sourceDef): self
     {
-        return new self($this->sourceDefs, $sourceDef);
+        return new self($this->sourceDefs, $sourceDef, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->sourceDefs, $this->sourceDef, $comments);
     }
 }

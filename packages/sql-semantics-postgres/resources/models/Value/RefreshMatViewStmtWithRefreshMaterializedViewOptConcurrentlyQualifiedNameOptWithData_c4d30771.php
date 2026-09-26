@@ -17,12 +17,13 @@ final class RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifie
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optConcurrently), 'The optConcurrently must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifie
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REFRESH');
+        $writer->comments($this->comments, 1);
         $writer->append('MATERIALIZED');
+        $writer->comments($this->comments, 2);
         $writer->append('VIEW');
+        $writer->comments($this->comments, 3);
         $this->optConcurrently->write($writer);
+        $writer->comments($this->comments, 4);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optWithData->write($writer);
     }
 
@@ -47,7 +54,7 @@ final class RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifie
      */
     public function withOptConcurrently(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConcurrentlyForm $optConcurrently): self
     {
-        return new self($optConcurrently, $this->qualifiedName, $this->optWithData);
+        return new self($optConcurrently, $this->qualifiedName, $this->optWithData, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifie
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->optConcurrently, $qualifiedName, $this->optWithData);
+        return new self($this->optConcurrently, $qualifiedName, $this->optWithData, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class RefreshMatViewStmtWithRefreshMaterializedViewOptConcurrentlyQualifie
      */
     public function withOptWithData(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWithDataForm $optWithData): self
     {
-        return new self($this->optConcurrently, $this->qualifiedName, $optWithData);
+        return new self($this->optConcurrently, $this->qualifiedName, $optWithData, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optConcurrently, $this->qualifiedName, $this->optWithData, $comments);
     }
 }

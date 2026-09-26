@@ -17,10 +17,11 @@ final class RequireClauseWithRequireSymRequireList_7f57c21b implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RequireListForm $requireList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($requireList), 'The requireList must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class RequireClauseWithRequireSymRequireList_7f57c21b implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('REQUIRE');
+        $writer->comments($this->comments, 1);
         $this->requireList->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class RequireClauseWithRequireSymRequireList_7f57c21b implements \SqlSeman
      */
     public function withRequireList(\SqlSemantics\Statement\Model\MySql\Role\RequireListForm $requireList): self
     {
-        return new self($requireList);
+        return new self($requireList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->requireList, $comments);
     }
 }

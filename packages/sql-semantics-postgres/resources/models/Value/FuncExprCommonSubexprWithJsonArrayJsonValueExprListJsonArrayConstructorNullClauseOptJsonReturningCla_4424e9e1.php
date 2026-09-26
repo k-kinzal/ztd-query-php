@@ -17,12 +17,13 @@ final class FuncExprCommonSubexprWithJsonArrayJsonValueExprListJsonArrayConstruc
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprListForm $jsonValueExprList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayConstructorNullClauseOptForm $jsonArrayConstructorNullClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonValueExprList), 'The jsonValueExprList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonArrayConstructorNullClauseOpt), 'The jsonArrayConstructorNullClauseOpt must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class FuncExprCommonSubexprWithJsonArrayJsonValueExprListJsonArrayConstruc
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('JSON_ARRAY');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->jsonValueExprList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->jsonArrayConstructorNullClauseOpt->write($writer);
+        $writer->comments($this->comments, 4);
         $this->jsonReturningClauseOpt->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -47,7 +54,7 @@ final class FuncExprCommonSubexprWithJsonArrayJsonValueExprListJsonArrayConstruc
      */
     public function withJsonValueExprList(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonValueExprListForm $jsonValueExprList): self
     {
-        return new self($jsonValueExprList, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt);
+        return new self($jsonValueExprList, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class FuncExprCommonSubexprWithJsonArrayJsonValueExprListJsonArrayConstruc
      */
     public function withJsonArrayConstructorNullClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonArrayConstructorNullClauseOptForm $jsonArrayConstructorNullClauseOpt): self
     {
-        return new self($this->jsonValueExprList, $jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt);
+        return new self($this->jsonValueExprList, $jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class FuncExprCommonSubexprWithJsonArrayJsonValueExprListJsonArrayConstruc
      */
     public function withJsonReturningClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt): self
     {
-        return new self($this->jsonValueExprList, $this->jsonArrayConstructorNullClauseOpt, $jsonReturningClauseOpt);
+        return new self($this->jsonValueExprList, $this->jsonArrayConstructorNullClauseOpt, $jsonReturningClauseOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonValueExprList, $this->jsonArrayConstructorNullClauseOpt, $this->jsonReturningClauseOpt, $comments);
     }
 }
