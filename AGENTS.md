@@ -70,7 +70,6 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/ztd-query-core/docs/mechanism.md](packages/ztd-query-core/docs/mechanism.md) - The Zero Table Dependency model: what it is, how it works, and its scope
 - [packages/ztd-query-mysql/README.md](packages/ztd-query-mysql/README.md) - MySQL platform support: installation and usage
 - [packages/ztd-query-mysql/docs/spec.md](packages/ztd-query-mysql/docs/spec.md) - How ZTD handles MySQL SQL statements
-- [packages/ztd-query-mysql/docs/support-matrix.md](packages/ztd-query-mysql/docs/support-matrix.md) - Supported MySQL statements and their status
 - [packages/ztd-query-mysqli-adapter/README.md](packages/ztd-query-mysqli-adapter/README.md) - MySQLi adapter: installation and usage
 - [packages/ztd-query-pdo-adapter/README.md](packages/ztd-query-pdo-adapter/README.md) - PDO adapter: installation and usage
 - [packages/ztd-query-postgres/README.md](packages/ztd-query-postgres/README.md) - PostgreSQL platform support: installation and usage
