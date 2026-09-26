@@ -24,6 +24,7 @@ register_shutdown_function(static function (): void {
     }
 });
 
+use Container\Endpoint;
 use Container\PostgreSql17Container;
 use Faker\Factory;
 use Fuzz\Target\PgSyntaxCheck;
@@ -35,12 +36,11 @@ use Testcontainers\Testcontainers;
 
 fwrite(STDERR, "Starting PostgreSQL container...\n");
 
-$instance = Testcontainers::run(PostgreSql17Container::class);
+$endpoint = Testcontainers::run(PostgreSql17Container::class)->getData(Endpoint::class);
+$host = $endpoint->host;
+$port = $endpoint->port;
 
-$port = $instance->getMappedPort(5432);
-$host = str_replace('localhost', '127.0.0.1', $instance->getHost());
-
-$connection = pg_connect("host=$host port=$port dbname=test user=test password=test");
+$connection = pg_connect("host=$host port=$port dbname=$endpoint->database user=$endpoint->username password=$endpoint->password");
 if ($connection === false) {
     fwrite(STDERR, "Cannot connect to PostgreSQL on $host:$port\n");
     exit(2);

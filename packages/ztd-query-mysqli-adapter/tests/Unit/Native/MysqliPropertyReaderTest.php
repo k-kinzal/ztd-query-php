@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Native;
 
+use Container\Endpoint;
 use Container\MySql80Container;
 use Container\MySql84Container;
 use mysqli;
@@ -20,8 +21,9 @@ final class MysqliPropertyReaderTest extends TestCase
     public function testReadReturnsNativePropertiesAndNullForUnknownNames(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $reader = new MysqliPropertyReader();
             self::assertSame($connection->affected_rows, $reader->read($connection, 'affected_rows'));
@@ -52,13 +54,11 @@ final class MysqliPropertyReaderTest extends TestCase
     public function testReadPreservesFailedConnectionDetails(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $host = str_replace('localhost', '127.0.0.1', $container->getHost());
-            $port = $container->getMappedPort(3306);
-            self::assertNotNull($port);
             mysqli_report(MYSQLI_REPORT_OFF);
             try {
-                $connection = new mysqli($host, 'missing_' . bin2hex(random_bytes(8)), 'invalid', 'test', $port);
+                $connection = new mysqli($endpoint->host, 'missing_' . bin2hex(random_bytes(8)), 'invalid', $endpoint->database, $endpoint->port);
                 $reader = new MysqliPropertyReader();
                 $error = $connection->connect_error;
                 self::assertIsString($error);
@@ -77,8 +77,9 @@ final class MysqliPropertyReaderTest extends TestCase
     public function testReadPreservesInformationFromMultipleWrites(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $endpoint = $container->getData(Endpoint::class);
         try {
-            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, $endpoint->database, $endpoint->port);
             $connection->set_charset('utf8mb4');
             $connection->query('CREATE TEMPORARY TABLE info_rows (id INT PRIMARY KEY)');
             $connection->query('INSERT INTO info_rows VALUES (1), (2)');
