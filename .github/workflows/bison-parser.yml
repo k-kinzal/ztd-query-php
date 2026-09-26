@@ -6,9 +6,11 @@ on:
     branches: [main]
   pull_request:
     paths:
-      - 'packages/requirements/**'
       - 'packages/bison-parser/**'
+      - 'packages/requirements/**'
       - '.github/workflows/bison-parser.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read

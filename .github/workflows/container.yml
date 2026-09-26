@@ -8,6 +8,8 @@ on:
     paths:
       - 'packages/container/**'
       - '.github/workflows/container.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read

@@ -6,11 +6,16 @@ on:
     branches: [main]
   pull_request:
     paths:
-      - 'packages/container/**'
-      - 'packages/requirements/**'
       - 'packages/sql-faker/**'
+      - 'packages/bison-parser/**'
+      - 'packages/container/**'
+      - 'packages/lemon-parser/**'
+      - 'packages/requirements/**'
       - '.github/workflows/sql-faker.yml'
       - '.github/workflows/sql-faker-fuzz.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
+      - 'packages/sql-faker/docs/algorithm.md'
 
 permissions:
   contents: read

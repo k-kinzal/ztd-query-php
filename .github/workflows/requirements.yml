@@ -8,6 +8,8 @@ on:
     paths:
       - 'packages/requirements/**'
       - '.github/workflows/requirements.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read

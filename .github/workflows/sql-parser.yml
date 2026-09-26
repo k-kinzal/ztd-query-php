@@ -7,8 +7,13 @@ on:
   pull_request:
     paths:
       - 'packages/sql-parser/**'
+      - 'packages/bison-parser/**'
+      - 'packages/lemon-parser/**'
+      - 'packages/sql-faker/**'
       - '.github/workflows/sql-parser.yml'
       - '.github/workflows/sql-parser-fuzz.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
 
 permissions:
   contents: read
