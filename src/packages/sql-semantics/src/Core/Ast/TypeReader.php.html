@@ -47,7 +47,7 @@
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Core\Type\TypeDescriptor</span>;</span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a></span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> * Interprets a supported built-in type declaration without erasing its modifiers.</span></span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> * Interprets a declared type without erasing its modifiers.</span></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> * @visibility SqlSemantics</span></span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> */</span></span>
@@ -61,11 +61,11 @@
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    }</span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com">     * Reads the declared built-in type and preserves its modifiers.</span></span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com">     * Reads a declared type, including table-dependent storage rules and modifiers.</span></span>
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>): <span class="tok-id">TypeDescriptor</span></span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>, ?<span class="tok-id">Node</span> <span class="tok-var">$table</span> = <span class="tok-id">null</span>): <span class="tok-id">TypeDescriptor</span></span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    {</span>
-<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">dialect</span>-&gt;<span class="tok-id">platform</span>()-&gt;<span class="tok-id">types</span>()-&gt;<span class="tok-id">read</span>(<span class="tok-var">$node</span>);</span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">dialect</span>-&gt;<span class="tok-id">platform</span>()-&gt;<span class="tok-id">types</span>()-&gt;<span class="tok-id">read</span>(<span class="tok-var">$node</span>, <span class="tok-var">$table</span>);</span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a>    }</span>
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a></span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>

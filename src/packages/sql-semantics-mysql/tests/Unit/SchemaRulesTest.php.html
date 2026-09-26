@@ -124,7 +124,7 @@
 <span class="src-line" id="L86"><a class="ln" href="#L86">86</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSchemaNodeRetainsOriginalDeclaration</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L87"><a class="ln" href="#L87">87</a>    {</span>
 <span class="src-line" id="L88"><a class="ln" href="#L88">88</a>        <span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">SchemaBuilder</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)&#039;</span>);</span>
-<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;CREATE TABLE&#039;</span>, <span class="tok-var">$schema</span>-&gt;<span class="tok-id">tables</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">source</span>-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;CREATE TABLE&#039;</span>, <span class="tok-id">\SqlSemantics\Statement\Writer</span>::<span class="tok-id">render</span>(<span class="tok-var">$schema</span>-&gt;<span class="tok-id">tables</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">source</span>));</span>
 <span class="src-line" id="L90"><a class="ln" href="#L90">90</a>    }</span>
 <span class="src-line" id="L91"><a class="ln" href="#L91">91</a></span>
 <span class="src-line" id="L92"><a class="ln" href="#L92">92</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTableKeyDistinguishesNames</span>(): <span class="tok-id">void</span></span>
@@ -138,8 +138,22 @@
 <span class="src-line" id="L100"><a class="ln" href="#L100">100</a>        <span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">SchemaBuilder</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE app.items (id INT)&#039;</span>);</span>
 <span class="src-line" id="L101"><a class="ln" href="#L101">101</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;app&#039;</span>, <span class="tok-var">$schema</span>-&gt;<span class="tok-id">tables</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">schema</span>);</span>
 <span class="src-line" id="L102"><a class="ln" href="#L102">102</a>    }</span>
-<span class="src-line" id="L103"><a class="ln" href="#L103">103</a>}</span>
-<span class="src-line" id="L104"><a class="ln" href="#L104">104</a></span>
+<span class="src-line" id="L103"><a class="ln" href="#L103">103</a></span>
+<span class="src-line" id="L104"><a class="ln" href="#L104">104</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testOptionsRetainsStructuredTableChoices</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L105"><a class="ln" href="#L105">105</a>    {</span>
+<span class="src-line" id="L106"><a class="ln" href="#L106">106</a>        <span class="tok-var">$state</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Schema</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE TABLE t (id INT) ENGINE=InnoDB&#039;</span>);</span>
+<span class="src-line" id="L107"><a class="ln" href="#L107">107</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNotEmpty</span>(<span class="tok-var">$state</span>-&gt;<span class="tok-id">tables</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">options</span>);</span>
+<span class="src-line" id="L108"><a class="ln" href="#L108">108</a>    }</span>
+<span class="src-line" id="L109"><a class="ln" href="#L109">109</a></span>
+<span class="src-line" id="L110"><a class="ln" href="#L110">110</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPrimaryOptionsNotNullAccountsForTablePolicy</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L111"><a class="ln" href="#L111">111</a>    {</span>
+<span class="src-line" id="L112"><a class="ln" href="#L112">112</a>        <span class="tok-var">$dialect</span> = <span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>;</span>
+<span class="src-line" id="L113"><a class="ln" href="#L113">113</a>        <span class="tok-var">$source</span> = <span class="tok-var">$dialect</span>-&gt;<span class="tok-id">platform</span>()-&gt;<span class="tok-id">parser</span>()-&gt;<span class="tok-id">parse</span>(<span class="tok-str">&#039;CREATE TABLE t (id INT) ENGINE=InnoDB&#039;</span>);</span>
+<span class="src-line" id="L114"><a class="ln" href="#L114">114</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">false</span>, <span class="tok-var">$dialect</span>-&gt;<span class="tok-id">platform</span>()-&gt;<span class="tok-id">schema</span>()-&gt;<span class="tok-id">primaryOptionsNotNull</span>(<span class="tok-var">$source</span>));</span>
+<span class="src-line" id="L115"><a class="ln" href="#L115">115</a>    }</span>
+<span class="src-line" id="L116"><a class="ln" href="#L116">116</a></span>
+<span class="src-line" id="L117"><a class="ln" href="#L117">117</a>}</span>
+<span class="src-line" id="L118"><a class="ln" href="#L118">118</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
