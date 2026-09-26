@@ -122,6 +122,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Value\IntegerConversion::class)]
 #[UsesClass(\Deriver\Internal\Value\PhpSemantics::class)]
 #[UsesClass(\Deriver\Model\Contract\DomainLaws::class)]
+#[UsesClass(\Deriver\Model\Domain\AbstractDomain::class)]
 #[UsesClass(\Deriver\Model\Domain\DomainFact::class)]
 #[UsesClass(\Deriver\Model\State\StateSlot::class)]
 #[UsesClass(\Deriver\Report\JsonText::class)]
