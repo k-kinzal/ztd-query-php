@@ -12,6 +12,8 @@ Known source methods use PHP visibility rules and the lexical calling class. A p
 
 The analyzer routes missing or inaccessible methods through a captured `__call` or `__callStatic` implementation. Magic calls receive the original method name and an argument array whose named keys are preserved. Ordinary argument binding, exceptions, and state changes apply to these bodies.
 
+Promoted properties are assigned at the start of the constructor, after every argument has been checked. Reference promotion shares the parameter cell; readonly promotion follows ordinary property initialization restrictions. Repeated constructor calls, inherited and trait constructors, shared argument coercions, and symbolic constructor observations use the same assignment rules. The [promotion corpus](../tests/Differential/PromotedReferenceSemanticsTest.php) compares concrete cases with PHP 8.3, following the [constructor promotion specification](https://wiki.php.net/rfc/constructor_promotion).
+
 Construction checks abstract classes, interfaces, enums, constructor access, and constructor arguments. Known runtime objects can supply the class for `new $object`. Cloning keeps child object identities shared while giving the outer object its own property storage, then applies the captured `__clone` body.
 
 An unresolved class does not become a known empty object. Its allocation retains an explicit boundary, possible state changes, and both normal and exceptional alternatives.

@@ -23,6 +23,9 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Api\Query\Budget::class)]
 #[UsesClass(\Deriver\Api\Query\QueryScope::class)]
 #[UsesClass(\Deriver\Api\Query\ReturnQuery::class)]
+#[UsesClass(\Deriver\Api\Query\ValueQuery::class)]
+#[UsesClass(\Deriver\Api\Reference\ExpressionRef::class)]
+#[UsesClass(\Deriver\Api\Reference\Observation::class)]
 #[UsesClass(\Deriver\Api\Reference\ResultRef::class)]
 #[UsesClass(\Deriver\Api\Reference\SourceRef::class)]
 #[UsesClass(\Deriver\Api\Result\Alternative::class)]
@@ -31,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Api\Result\DerivationResult::class)]
 #[UsesClass(\Deriver\Api\Result\Statistics::class)]
 #[UsesClass(\Deriver\Api\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Internal\Api\CallObservations::class)]
 #[UsesClass(\Deriver\Internal\Api\QueryExecution::class)]
 #[UsesClass(\Deriver\Internal\Api\QueryValidation::class)]
 #[UsesClass(\Deriver\Internal\Api\ResultAssessment::class)]
@@ -43,6 +47,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxCache::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Cache\SyntaxTree::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallLowering::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\CallSiteIndex::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\CallableSource::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Control\ExceptionLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\DeclarationScanner::class)]
@@ -57,6 +62,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Frontend\Php\Source\SyntaxSize::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\StatementLowering::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Composition::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Traits\LexicalConstants::class)]
+#[UsesClass(\Deriver\Internal\Frontend\Php\Traits\Members::class)]
 #[UsesClass(\Deriver\Internal\Frontend\Php\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Internal\IR\Argument::class)]
 #[UsesClass(\Deriver\Internal\IR\BasicBlock::class)]
@@ -133,6 +140,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Solver\Transfer\ObjectAccess::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyAccessCheck::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyLookup::class)]
+#[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyReference::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PropertySlot::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PropertyTransfer::class)]
 #[UsesClass(\Deriver\Internal\Solver\Transfer\PureStep::class)]
@@ -147,6 +155,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Report\JsonText::class)]
 #[UsesClass(\Deriver\Report\QueryEncoding::class)]
 #[UsesClass(\Deriver\Report\ValueGraph::class)]
+#[UsesClass(\Deriver\Value\Projection::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
 final class CallableCompilerTest extends TestCase
@@ -250,5 +259,52 @@ final class CallableCompilerTest extends TestCase
     public static function providerInitializerFiles(): array
     {
         return \Tests\Fake\Programs\InitializerPrograms::fileCases();
+    }
+    /**
+     * @param string $source Trusted promoted-property fixture
+     * @param string $expectedJson PHP 8.3 observation
+     * @throws JsonException If fixture data cannot be decoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerPromotedReferences')]
+    public function testPromotionsPreserveAliasesAndReadonlyErrors(string $source, string $expectedJson): void
+    {
+        $result = \Tests\Fake\Analysis::returns($source);
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertCount(1, $result->normalOutcomes);
+        self::assertSame(json_decode($expectedJson, true, 512, JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
+    }
+
+    /**
+     * @return array<string,array{string,string}>
+     */
+    public static function providerPromotedReferences(): array
+    {
+        return \Tests\Fake\Programs\PromotedReferencePrograms::cases();
+    }
+    /**
+     * @param string $reference Parameter passing syntax
+     * @param string $expectedKind Expected selected value category
+     * @param int|string $expectedLiteral Preserved symbolic identity or updated value
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerSymbolicPromotions')]
+    public function testPromotionsInitializeSymbolicConstructorObservations(string $reference, string $expectedKind, int|string $expectedLiteral): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function sink($v){}class Box{function __construct(public int ' . $reference . '$value){$value=2;sink($this->value);}}');
+        $result = $session->derive(new \Deriver\Api\Query\ValueQuery($session->callsTo('sink')[0]->argument(0)));
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        $values = array_column(array_column($result->normalOutcomes, 'values'), 'value');
+        self::assertSame([$expectedKind], array_values(array_unique(array_column($values, 'kind'))));
+        self::assertSame([$expectedLiteral], array_values(array_unique(array_column($values, 'literal'))));
+    }
+
+    /**
+     * @return array<string,array{string,string,int|string}>
+     */
+    public static function providerSymbolicPromotions(): array
+    {
+        return ['by value' => ['', 'parameter', 'value'], 'by reference' => ['&', 'constant', 2]];
     }
 }

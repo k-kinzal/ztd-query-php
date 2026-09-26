@@ -65,6 +65,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Internal\Memory\Location::class)]
 #[UsesClass(\Deriver\Internal\Memory\Materialization::class)]
 #[UsesClass(\Deriver\Internal\Memory\Memory::class)]
+#[UsesClass(\Deriver\Internal\Memory\ReferenceConstraint::class)]
 #[UsesClass(\Deriver\Internal\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Internal\Model\Extensions::class)]
 #[UsesClass(\Deriver\Internal\Model\ProviderInputs::class)]

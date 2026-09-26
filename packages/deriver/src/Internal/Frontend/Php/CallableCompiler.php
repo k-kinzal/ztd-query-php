@@ -42,12 +42,34 @@ final class CallableCompiler
         } elseif ($node instanceof Expr\ArrowFunction) {
             $g->end(new Terminator('return', $l->expression($node->expr)));
         } elseif ($node instanceof FunctionLike) {
+            $this->promotions($node, $l);
             $l->statements($node->getStmts() ?? []);
         } elseif ($node instanceof Stmt\Namespace_) {
             $l->statements($node->stmts);
         }
         $return = $node instanceof FunctionLike ? $this->type($node->getReturnType()) : 'mixed';
         return new CallableIR($source->symbol, $parameters, $g->finish(), $g->source($node), $return, $node instanceof FunctionLike && $node->returnsByRef(), $source->strict, $source->className, $this->captures($node), $g->regions, visibility: $node instanceof Stmt\ClassMethod ? ($node->isPrivate() ? 'private' : ($node->isProtected() ? 'protected' : 'public')) : 'public', static: $node instanceof Stmt\ClassMethod ? $node->isStatic() : (($node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction) && $node->static), abstract: $node instanceof Stmt\ClassMethod && $node->stmts === null, external: $external);
+    }
+
+    /**
+     * Lowers promoted assignments before the body and after all argument validation.
+     * @param FunctionLike $node Constructor declaration
+     * @param Lowering $lowering Body graph and lexical class
+     */
+    public function promotions(FunctionLike $node, Lowering $lowering): void
+    {
+        $g = $lowering->graph;
+        foreach ($node->getParams() as $parameter) {
+            if ($parameter->flags === 0 || !$parameter->var instanceof Expr\Variable || !is_string($parameter->var->name)) {
+                continue;
+            }
+            $receiver = $g->emit($parameter, 'read', [$g->emit($parameter, 'local', name: 'this')]);
+            $name = $g->emit($parameter, 'constant', constant: \Deriver\Value\Term::constant($parameter->var->name));
+            $property = $g->emit($parameter, 'field-address', [$receiver, $name], name: $lowering->className);
+            $local = $lowering->location($parameter->var);
+            $value = $parameter->byRef ? $local : $g->emit($parameter, 'read', [$local]);
+            $g->emit($parameter, $parameter->byRef ? 'alias' : 'write', [$property, $value]);
+        }
     }
 
     /**

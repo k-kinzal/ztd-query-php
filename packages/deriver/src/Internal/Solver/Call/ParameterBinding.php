@@ -38,7 +38,8 @@ final class ParameterBinding
     public function bind(CallableIR $callable, Parameter $parameter, ?PassedArgument $actual, State $state, bool $symbolic, bool $strict = false): array
     {
         if ($symbolic) {
-            $value = Term::parameter($parameter->name, $parameter->variadic ? 'array' : $parameter->type);
+            $type = (new TypeBinding($this->machine->context))->declared($parameter->type, $callable, $state);
+            $value = Term::parameter($parameter->name, $parameter->variadic ? 'array' : $type);
             $state->memory->write($state->local($parameter->name), $value);
             return [$state];
         }
@@ -72,13 +73,6 @@ final class ParameterBinding
             $state->memory->write($state->locals[$parameter->name], $check->value);
         } else {
             $state->memory->write($state->local($parameter->name), $check->value);
-        }
-        if ($parameter->promotion !== 0 && isset($state->locals['this'])) {
-            $receiver = $state->memory->read($state->locals['this']);
-            if (is_string($receiver->literal)) {
-                $slot = ($parameter->promotion & 4) !== 0 ? $callable->className . '::' . $parameter->name : $parameter->name;
-                $state->memory->write(new Location('object:' . $receiver->literal, [$slot]), $check->value);
-            }
         }
         if ($check->mayFail) {
             return [$state, $exception];
