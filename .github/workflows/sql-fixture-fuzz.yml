@@ -30,8 +30,16 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - { name: create-table, script: fuzz_create_table.php, corpus: create-table, extensions: "mbstring, pcntl" }
-          - { name: insert-select, script: fuzz_insert_select.php, corpus: insert-select, extensions: "mbstring, pcntl, pdo, pdo_mysql" }
+          - { name: create-table-5.6.51, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-5.6.51, extensions: "mbstring, pcntl" }
+          - { name: create-table-5.7.44, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-5.7.44, extensions: "mbstring, pcntl" }
+          - { name: create-table-8.0.44, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-8.0.44, extensions: "mbstring, pcntl" }
+          - { name: create-table-8.1.0, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-8.1.0, extensions: "mbstring, pcntl" }
+          - { name: create-table-8.2.0, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-8.2.0, extensions: "mbstring, pcntl" }
+          - { name: create-table-8.3.0, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-8.3.0, extensions: "mbstring, pcntl" }
+          - { name: create-table-8.4.7, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-8.4.7, extensions: "mbstring, pcntl" }
+          - { name: create-table-9.0.1, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-9.0.1, extensions: "mbstring, pcntl" }
+          - { name: create-table-9.1.0, script: fuzz_create_table.php, corpus: create-table, grammar: mysql-9.1.0, extensions: "mbstring, pcntl" }
+          - { name: insert-select, script: fuzz_insert_select.php, corpus: insert-select, grammar: mysql-8.4.7, extensions: "mbstring, pcntl, pdo, pdo_mysql" }
     defaults:
       run:
         working-directory: packages/sql-fixture
@@ -57,13 +65,15 @@ jobs:
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/sql-fixture/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-sql-fixture-v2-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: fuzz-sql-fixture-v3-${{ matrix.target.name }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            fuzz-sql-fixture-v3-${{ matrix.target.name }}-
             fuzz-sql-fixture-v2-${{ matrix.target.corpus }}-
 
       - name: Run the bounded fuzz campaign
         env:
           MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+          MYSQL_VERSION: ${{ matrix.target.grammar }}
         run: |
           set -euo pipefail
           case "$MAX_RUNS" in
@@ -82,7 +92,7 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/sql-fixture/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-sql-fixture-v2-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: fuzz-sql-fixture-v3-${{ matrix.target.name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - if: ${{ always() && hashFiles('packages/sql-fixture/crash-*', 'packages/sql-fixture/timeout-*', 'packages/sql-fixture/oom-*') != '' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

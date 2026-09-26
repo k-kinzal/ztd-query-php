@@ -55,6 +55,7 @@ jobs:
     env:
       SQL_FIXTURE_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=sql_fixture
       SQL_FIXTURE_PGSQL_DSN: pgsql:host=127.0.0.1;port=5432;dbname=sql_fixture
+      SQL_FIXTURE_MYSQL_VERSION: '8.4.7'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -87,6 +88,61 @@ jobs:
         run: composer check-platform-reqs --no-dev
       - name: Run the tests in parallel
         run: composer test
+
+  server:
+    name: Server (MySQL ${{ matrix.mysql }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        mysql: ['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0']
+    env:
+      SQL_FIXTURE_MYSQL_VERSION: ${{ matrix.mysql }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          coverage: none
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/sql-fixture
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Pull the server image before the timed tests
+        run: |
+          php <<'PHP'
+          <?php
+          require 'vendor/autoload.php';
+          $containers = [
+              Container\MySql56Container::class,
+              Container\MySql57Container::class,
+              Container\MySql80Container::class,
+              Container\MySql81Container::class,
+              Container\MySql82Container::class,
+              Container\MySql83Container::class,
+              Container\MySql84Container::class,
+              Container\MySql90Container::class,
+              Container\MySql91Container::class,
+          ];
+          foreach ($containers as $container) {
+              if ($container::getGrammarVersion() !== 'mysql-' . getenv('SQL_FIXTURE_MYSQL_VERSION')) {
+                  continue;
+              }
+              passthru('docker pull ' . escapeshellarg((new $container())->image()), $status);
+              exit($status);
+          }
+          fwrite(STDERR, "No container is defined for MySQL " . getenv('SQL_FIXTURE_MYSQL_VERSION') . "\n");
+          exit(1);
+          PHP
+      - name: Round-trip the generated rows through the server
+        run: vendor/bin/phpunit --testsuite integration --filter MySqlReleaseRoundTripTest
 
   lint:
     name: Lint

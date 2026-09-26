@@ -173,6 +173,10 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Fixture\Choice\CaseSelection::class)]
 #[UsesClass(\SqlFixture\Plan\RelationChoice::class)]
 #[UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
+#[UsesClass(\SqlFixture\Version\ServerVersion::class)]
+#[UsesClass(\SqlFixture\Version\Releases::class)]
+#[UsesClass(\SqlFixture\Version\ReleaseNumber::class)]
+#[UsesClass(\SqlFixture\Version\UnsupportedVersionException::class)]
 final class FixtureProviderTest extends TestCase
 {
     #[Test]
@@ -837,5 +841,40 @@ final class FixtureProviderTest extends TestCase
         self::assertSame([11, 22], array_column($set->rows('comments'), 'target_id'));
         self::assertSame([['id' => 11]], $set->rows('posts'));
         self::assertSame([['id' => 22]], $set->rows('videos'));
+    }
+
+    public function testGetVersionDefaultsToTheNewestShippedMysql(): void
+    {
+        $faker = Factory::create();
+
+        self::assertSame('mysql-8.4.7', (new FixtureProvider($faker))->getVersion());
+        self::assertSame('pg-17.2', (new FixtureProvider($faker, dialect: PlatformFactory::DRIVER_PGSQL))->getVersion());
+    }
+
+    public function testGetVersionKeepsTheSelectedRelease(): void
+    {
+        $provider = new FixtureProvider(Factory::create(), version: 'mysql-5.7.44');
+
+        self::assertSame('mysql-5.7.44', $provider->getVersion());
+        self::assertArrayHasKey('name', $provider->fixture('CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)'));
+    }
+
+    public function testGetVersionRejectsATagOfAnotherDialect(): void
+    {
+        $this->expectException(\SqlFixture\Version\UnsupportedVersionException::class);
+        $this->expectExceptionMessage('Unsupported mysql version: pg-17.2');
+        new FixtureProvider(Factory::create(), version: 'pg-17.2');
+    }
+
+    public function testFixtureReadsOneStatementForAnotherRelease(): void
+    {
+        $provider = new FixtureProvider(Factory::create());
+
+        $row = $provider->fixture('CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)', version: 'mysql-5.6.51');
+        self::assertArrayHasKey('name', $row);
+        self::assertSame('mysql-8.4.7', $provider->getVersion());
+
+        $this->expectException(\SqlFixture\Version\UnsupportedVersionException::class);
+        $provider->fixture('CREATE TABLE users (id INTEGER PRIMARY KEY)', dialect: PlatformFactory::DRIVER_SQLITE, version: 'mysql-8.4.7');
     }
 }

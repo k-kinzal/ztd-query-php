@@ -41,4 +41,12 @@ final class StructuredGeneratorTest extends TestCase
         self::assertStringEndsWith('}', $value);
         self::assertStringContainsString('"', $value);
     }
+
+    public function testGenerateCidrClearsTheHostBits(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(7);
+
+        self::assertMatchesRegularExpression('/^\d{1,3}\.\d{1,3}\.\d{1,3}\.0\/24$/', (new Subject())->generateCidr($faker));
+    }
 }

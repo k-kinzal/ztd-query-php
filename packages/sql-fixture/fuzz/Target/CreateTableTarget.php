@@ -11,8 +11,8 @@ use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Choice\PlanBuilder;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySql\MySqlProvider;
-use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Provider\FixtureGenerator;
+use SqlFixture\Provider\PlatformFactory;
 use SqlFixture\Schema\SchemaParseException;
 
 /**
@@ -50,7 +50,7 @@ final class CreateTableTarget
         $plan = (new BytePlanCompiler())->compile($input, $this->planner, $this->constraints);
         $sql = $this->sqlProvider->generate($plan);
         try {
-            $schema = (new MySqlSchemaParser())->parse($sql);
+            $schema = PlatformFactory::createSchemaParser(PlatformFactory::DRIVER_MYSQL, $this->grammarVersion)->parse($sql);
         } catch (SchemaParseException) {
             return;
         }
