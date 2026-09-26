@@ -63,7 +63,6 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/sql-faker/README.md](packages/sql-faker/README.md) - Grammar-based SQL generation: installation, providers, and supported versions
 - [packages/sql-faker/docs/algorithm.md](packages/sql-faker/docs/algorithm.md) - How SQL is derived from the official grammars, and its limitations
 - [packages/sql-fixture/README.md](packages/sql-fixture/README.md) - Generating fixture data from CREATE TABLE statements, databases, or DDL files
-- [packages/sql-fixture/fuzz/README.md](packages/sql-fixture/fuzz/README.md) - Fuzz targets and how to run them
 - [packages/sql-formatter/README.md](packages/sql-formatter/README.md) - Formatting SQL with layout presets: installation and usage
 - [packages/sql-formatter/docs/design.md](packages/sql-formatter/docs/design.md) - Formatter design and why it builds on sql-parser
 - [packages/sql-formatter/docs/verification.md](packages/sql-formatter/docs/verification.md) - How formatting output and equivalence are verified
