@@ -81,6 +81,8 @@ final class OptionsTest extends TestCase
         return [
             'spec' => ['spec', [
                 ['no-test', true, 'Display selected records and linked test counts without running tests.'],
+                ['strict', true, 'Fail when no records match or a selected supported specification has no linked tests.'],
+                ['all', true, 'Include manual tests linked to selected supported specifications.'],
                 ['id', false, 'Select an exact item ID.'],
                 ['label', false, 'Select items carrying this label.'],
                 ['category', false, 'Select an exact category.'],

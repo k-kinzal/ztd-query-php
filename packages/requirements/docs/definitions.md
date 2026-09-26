@@ -78,7 +78,7 @@ A snapshot keeps a verified copy of a remote document so that later runs do not 
 | `kind` | `specification` (default) or `requirement`. |
 | `evidence` | Quotations of the source, each `{selector, quote}`. |
 | `requirements` | IDs of the requirements a specification implements. |
-| `tests` | Tests that verify a specification, each `{runner, target}`. |
+| `tests` | Tests that verify a specification, each `{runner, target}`, with optional `run: auto` or `run: manual`. |
 | `status` | `supported` (default) or `unsupported`. |
 | `reason` | Why the item is unsupported or has no source. |
 | `origin` | `sourced` (default), `original` or `undocumented`. See [Items without a source](#items-without-a-source). |
@@ -97,7 +97,20 @@ Requirements are optional. Use them when one passage of the source becomes sever
 
 ### Tests
 
-`target` selects one test for the named runner: `Class::method` for PHPUnit, with all its data sets, and `file.feature:line` for Behat, with all its outline examples. A supported specification without tests fails `spec`. An unsupported specification needs a `reason` and its tests are not run.
+`target` selects one test for the named runner: `Class::method` for PHPUnit, with all its data sets, and `file.feature:line` for Behat, with all its outline examples. A supported specification without tests is reported as `unverified`; it fails `spec` only with `--strict`. You can omit `tests` or use `tests: []` when verification is maintained elsewhere, and describe that verification in `design`. An unsupported specification needs a `reason` and its tests are not run.
+
+Tests run automatically unless marked `run: manual`. This is useful for expensive integration tests or a bounded fuzz target exposed through a [runner extension](extensions.md):
+
+```yaml
+tests:
+  - runner: unit
+    target: Tests\Unit\GeneratorTest::testGenerate
+  - runner: fuzz
+    target: mysql-syntax
+    run: manual
+```
+
+Here `fuzz` must name a configured runner that understands `mysql-syntax`. `requirements spec` runs the unit test and reports the fuzz target as deferred; `requirements spec --all` runs both. An unlinked specification has no target to run, even with `--all`. See [test results](cli.md#test-results) for statuses, strict checks and shared targets.
 
 ### Items without a source
 
@@ -165,8 +178,17 @@ When a name is read, the parser shall require a leading letter.
 | Evidence | A block quotation followed by a `[Source](...)` link to the declared source |
 | `reason` | A **unsupported reason** or **rationale** paragraph |
 | `requirements`, `related` | A bold field name followed by a list of links such as `[REQ-001](other.md#req-001)` |
-| `tests` | A **tests** list of `**runner:** target` entries |
+| `tests` | A **tests** list of `**runner:** target` entries, optionally with a nested `**run:** manual` or `**run:** auto` entry |
 | `design`, `metadata` | A **design** list of links or text, and a **metadata** list of `**key:** value` entries |
+
+For example, a manual test reference is written as:
+
+```markdown
+**tests**
+
+- **fuzz:** mysql-syntax
+  - **run:** manual
+```
 
 The evidence selector comes from the link: `#names` selects the element with that ID, and for HTML a Text Fragment such as `#:~:text=A%20name%20starts%20with%20a%20letter.` selects the one unit whose complete text it spells. Any other selector is written as the first line of the quotation, as `<!-- selector: main > p:first-child -->`.
 

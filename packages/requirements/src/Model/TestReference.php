@@ -15,9 +15,18 @@ final class TestReference
     /**
      * @param string $runner The name of a configured runner
      * @param string $target The test selection passed to that runner
+     * @param string $run Whether the test runs automatically or only with --all
+     *
+     * @throws InvalidInputException When the execution policy is unknown
      */
-    public function __construct(public readonly string $runner, public readonly string $target)
-    {
+    public function __construct(
+        public readonly string $runner,
+        public readonly string $target,
+        public readonly string $run = 'auto',
+    ) {
+        if (!in_array($run, ['auto', 'manual'], true)) {
+            throw new InvalidInputException('Test run must be auto or manual.');
+        }
     }
 
     /**
@@ -32,7 +41,7 @@ final class TestReference
     public static function from(mixed $value): self
     {
         $data = Fields::mapping($value, 'test');
-        Fields::keys($data, ['runner', 'target'], 'test');
-        return new self(Fields::text($data, 'runner'), Fields::text($data, 'target'));
+        Fields::keys($data, ['runner', 'target', 'run'], 'test');
+        return new self(Fields::text($data, 'runner'), Fields::text($data, 'target'), Fields::text($data, 'run', 'auto'));
     }
 }

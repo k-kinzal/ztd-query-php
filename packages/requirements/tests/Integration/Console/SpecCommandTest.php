@@ -15,8 +15,11 @@ use Requirements\Console\CommandLine;
 use Requirements\Console\Executor;
 use Requirements\Console\ItemRecord;
 use Requirements\Console\Reporter;
+use Requirements\Console\SpecificationReport;
 use Requirements\Console\SpecificationTable;
 use Requirements\Input\Fields;
+use Requirements\Verification\TargetResults;
+use Requirements\Verification\TestExecution;
 use Requirements\Verification\Verifier;
 use Tests\Fake\CommandLine as Cli;
 use Tests\Fake\PhpUnitSuite;
@@ -26,10 +29,13 @@ use Tests\Fake\ProjectDirectory;
 #[UsesClass(CommandLine::class)]
 #[UsesClass(CommandHandler::class)]
 #[UsesClass(Executor::class)]
+#[UsesClass(SpecificationReport::class)]
 #[UsesClass(ItemRecord::class)]
 #[UsesClass(Reporter::class)]
 #[UsesClass(SpecificationTable::class)]
 #[UsesClass(Verifier::class)]
+#[UsesClass(TestExecution::class)]
+#[UsesClass(TargetResults::class)]
 #[UsesClass(Fields::class)]
 #[Large]
 final class SpecCommandTest extends TestCase
@@ -129,6 +135,6 @@ final class SpecCommandTest extends TestCase
         self::assertStringNotContainsString('UNSUPPORTED', $table->getOutput());
         self::assertFileDoesNotExist($project->path('executed.txt'));
         $empty = Cli::run(['spec', '--no-test', '--source=missing'], $project->directory);
-        self::assertSame(1, $empty->getExitCode());
+        self::assertSame(0, $empty->getExitCode());
     }
 }

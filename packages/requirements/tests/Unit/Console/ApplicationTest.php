@@ -30,6 +30,7 @@ use Requirements\Console\ItemRecord;
 use Requirements\Console\Options;
 use Requirements\Console\Overview;
 use Requirements\Console\Reporter;
+use Requirements\Console\SpecificationReport;
 use Requirements\Console\SpecificationTable;
 use Requirements\Console\Text;
 use Requirements\Console\Verdict;
@@ -61,6 +62,8 @@ use Requirements\Source\TextFragment;
 use Requirements\Source\TextSource;
 use Requirements\Source\Unit;
 use Requirements\Test\Registry as TestRegistry;
+use Requirements\Verification\TargetResults;
+use Requirements\Verification\TestExecution;
 use Requirements\Verification\VerificationResult;
 use Requirements\Verification\Verifier;
 use Tests\Fake\ProjectDirectory;
@@ -79,6 +82,7 @@ use Tests\Fake\ProjectDirectory;
 #[UsesClass(CommandHandler::class)]
 #[UsesClass(CommandLine::class)]
 #[UsesClass(Executor::class)]
+#[UsesClass(SpecificationReport::class)]
 #[UsesClass(Options::class)]
 #[UsesClass(Overview::class)]
 #[UsesClass(Reporter::class)]
@@ -117,6 +121,8 @@ use Tests\Fake\ProjectDirectory;
 #[UsesClass(SpecificationTable::class)]
 #[UsesClass(VerificationResult::class)]
 #[UsesClass(Verifier::class)]
+#[UsesClass(TestExecution::class)]
+#[UsesClass(TargetResults::class)]
 #[Small]
 final class ApplicationTest extends TestCase
 {
@@ -176,7 +182,8 @@ final class ApplicationTest extends TestCase
             'check' => [['check'], 0],
             'failed coverage gate' => [['coverage', '--min-coverage=100'], 1],
             'invalid percentage' => [['coverage', '--min-coverage=not-a-number'], 2],
-            'unverified spec' => [['spec'], 1],
+            'unverified spec' => [['spec'], 0],
+            'strict unverified spec' => [['spec', '--strict'], 1],
         ];
     }
 }

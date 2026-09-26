@@ -24,6 +24,7 @@ use Requirements\Console\Executor;
 use Requirements\Console\Formatter;
 use Requirements\Console\ItemRecord;
 use Requirements\Console\Options;
+use Requirements\Console\SpecificationReport;
 use Requirements\Ears\ConditionOrder;
 use Requirements\Ears\LiteralMask;
 use Requirements\Ears\SystemResponse;
@@ -57,12 +58,15 @@ use Requirements\Source\Unit;
 use Requirements\Test\Registry as TestRegistry;
 use Requirements\Test\RunnerConfig;
 use Requirements\Test\TestResult;
+use Requirements\Verification\TargetResults;
+use Requirements\Verification\TestExecution;
 use Requirements\Verification\VerificationResult;
 use Requirements\Verification\Verifier;
 use Tests\Fake\CountingRunner;
 use Tests\Fake\ProjectDirectory;
 
 #[CoversClass(Executor::class)]
+#[UsesClass(SpecificationReport::class)]
 #[UsesClass(CoverageThresholds::class)]
 #[UsesClass(DefinitionReader::class)]
 #[UsesClass(Definitions::class)]
@@ -110,6 +114,8 @@ use Tests\Fake\ProjectDirectory;
 #[UsesClass(TestResult::class)]
 #[UsesClass(VerificationResult::class)]
 #[UsesClass(Verifier::class)]
+#[UsesClass(TestExecution::class)]
+#[UsesClass(TargetResults::class)]
 #[Small]
 final class ExecutorTest extends TestCase
 {
@@ -274,7 +280,7 @@ final class ExecutorTest extends TestCase
     {
         $project = new ProjectDirectory();
         $loaded = (new Loader())->load($project->path('requirements.yaml'));
-        self::assertSame(['passed' => true, 'no_test' => true, 'specifications' => ['SPEC-001' => [
+        self::assertSame(['passed' => true, 'no_test' => true, 'strict' => false, 'all' => false, 'specifications' => ['SPEC-001' => [
             'id' => 'SPEC-001',
             'kind' => 'specification',
             'statement' => 'When a name is read, the parser shall require a leading letter.',
@@ -294,17 +300,18 @@ final class ExecutorTest extends TestCase
             'passed_targets' => null,
             'total_targets' => 0,
             'message' => '',
+            'deferred_targets' => 0,
         ]], 'errors' => []], (new Executor())->execute($loaded, new Options('spec', ['no-test' => true])));
     }
 
     /**
      * @throws JsonException
      */
-    public function testExecuteSpecFailsWhenNothingIsSelected(): void
+    public function testExecuteSpecAcceptsEmptySelectionByDefault(): void
     {
         $project = new ProjectDirectory();
         $loaded = (new Loader())->load($project->path('requirements.yaml'));
-        self::assertSame(['passed' => false, 'no_test' => true, 'specifications' => [], 'errors' => ['No specifications or requirements selected.']], (new Executor())->execute($loaded, new Options('spec', ['no-test' => true, 'id' => 'MISSING'])));
+        self::assertSame(['passed' => true, 'no_test' => true, 'strict' => false, 'all' => false, 'specifications' => [], 'errors' => []], (new Executor())->execute($loaded, new Options('spec', ['no-test' => true, 'id' => 'MISSING'])));
     }
 
     /**
@@ -346,7 +353,7 @@ final class ExecutorTest extends TestCase
             'passing, unsupported and not applicable' => [[$passing, $unsupported, $requirement], ['PASSING' => 'passed', 'UNSUPPORTED' => 'unsupported', 'REQ-001' => 'not-applicable'], true],
             'failing first' => [[$failing, $passing], ['FAILING' => 'failed', 'PASSING' => 'passed'], false],
             'failing last' => [[$passing, $failing], ['PASSING' => 'passed', 'FAILING' => 'failed'], false],
-            'unverified' => [[$unverified, $passing], ['UNVERIFIED' => 'unverified', 'PASSING' => 'passed'], false],
+            'unverified' => [[$unverified, $passing], ['UNVERIFIED' => 'unverified', 'PASSING' => 'passed'], true],
         ];
     }
 
@@ -360,5 +367,19 @@ final class ExecutorTest extends TestCase
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('Unknown command: unknown');
         (new Executor())->execute($loaded, new Options('unknown', []));
+    }
+    /**
+     * @throws JsonException
+     */
+    public function testStrictSpecRequiresLinksEvenWithoutTestExecution(): void
+    {
+        $project = new ProjectDirectory();
+        $loaded = (new Loader())->load($project->path('requirements.yaml'));
+        $report = (new Executor())->execute($loaded, new Options('spec', ['no-test' => true, 'strict' => true]));
+        self::assertFalse($report['passed']);
+        self::assertSame(['SPEC-001: No tests linked.'], $report['errors']);
+        $empty = (new Executor())->execute($loaded, new Options('spec', ['id' => 'MISSING', 'strict' => true]));
+        self::assertFalse($empty['passed']);
+        self::assertSame(['No specifications or requirements selected.'], $empty['errors']);
     }
 }
