@@ -110,41 +110,82 @@
 <span class="src-line" id="L72"><a class="ln" href="#L72">72</a>    }</span>
 <span class="src-line" id="L73"><a class="ln" href="#L73">73</a></span>
 <span class="src-line" id="L74"><a class="ln" href="#L74">74</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L75"><a class="ln" href="#L75">75</a><span class="tok-com">     * An array never resolves to text, so it becomes a gap.</span></span>
+<span class="src-line" id="L75"><a class="ln" href="#L75">75</a><span class="tok-com">     * The element stored under a key, or null when the array does not hold one.</span></span>
 <span class="src-line" id="L76"><a class="ln" href="#L76">76</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">toPattern</span>(): <span class="tok-id">TextPattern</span></span>
-<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>    {</span>
-<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>        <span class="tok-kw">return</span> <span class="tok-id">TextPattern</span>::<span class="tok-id">fromHole</span>(<span class="tok-kw">new</span> <span class="tok-id">TextHole</span>(<span class="tok-id">Origin</span>::<span class="tok-id">Unresolved</span>, <span class="tok-id">TypeShape</span>::<span class="tok-id">of</span>([<span class="tok-str">&#039;array&#039;</span>])));</span>
-<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>    }</span>
-<span class="src-line" id="L82"><a class="ln" href="#L82">82</a></span>
-<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L84"><a class="ln" href="#L84">84</a><span class="tok-com">     * Always `array`.</span></span>
-<span class="src-line" id="L85"><a class="ln" href="#L85">85</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">type</span>(): <span class="tok-id">TypeShape</span></span>
-<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>    {</span>
-<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>        <span class="tok-kw">return</span> <span class="tok-id">TypeShape</span>::<span class="tok-id">of</span>([<span class="tok-str">&#039;array&#039;</span>]);</span>
-<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>    }</span>
-<span class="src-line" id="L91"><a class="ln" href="#L91">91</a></span>
-<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L93"><a class="ln" href="#L93">93</a><span class="tok-com">     * The elements, in order, tagged as complete or partial.</span></span>
-<span class="src-line" id="L94"><a class="ln" href="#L94">94</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">signature</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>    {</span>
-<span class="src-line" id="L98"><a class="ln" href="#L98">98</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">signature</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L99"><a class="ln" href="#L99">99</a>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">signature</span>;</span>
-<span class="src-line" id="L100"><a class="ln" href="#L100">100</a>        }</span>
-<span class="src-line" id="L101"><a class="ln" href="#L101">101</a>        <span class="tok-var">$parts</span> = [];</span>
-<span class="src-line" id="L102"><a class="ln" href="#L102">102</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">entries</span> <span class="tok-kw">as</span> <span class="tok-var">$entry</span>) {</span>
-<span class="src-line" id="L103"><a class="ln" href="#L103">103</a>            <span class="tok-var">$parts</span>[] = <span class="tok-var">$entry</span>-&gt;<span class="tok-id">signature</span>();</span>
-<span class="src-line" id="L104"><a class="ln" href="#L104">104</a>        }</span>
-<span class="src-line" id="L105"><a class="ln" href="#L105">105</a></span>
-<span class="src-line" id="L106"><a class="ln" href="#L106">106</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">signature</span> = <span class="tok-str">&#039;array:&#039;</span> . (<span class="tok-var">$this</span>-&gt;<span class="tok-id">complete</span> ? <span class="tok-str">&#039;all&#039;</span> : <span class="tok-str">&#039;some&#039;</span>) . <span class="tok-str">&#039;:&#039;</span> . <span class="tok-id">implode</span>(<span class="tok-str">&#039;,&#039;</span>, <span class="tok-var">$parts</span>);</span>
-<span class="src-line" id="L107"><a class="ln" href="#L107">107</a>    }</span>
-<span class="src-line" id="L108"><a class="ln" href="#L108">108</a>}</span>
-<span class="src-line" id="L109"><a class="ln" href="#L109">109</a></span>
+<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">element</span>(<span class="tok-id">string</span>|<span class="tok-id">int</span>|<span class="tok-id">float</span>|<span class="tok-id">bool</span>|<span class="tok-id">null</span> <span class="tok-var">$key</span>): ?<span class="tok-id">Domain</span></span>
+<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>    {</span>
+<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>        <span class="tok-kw">if</span> (<span class="tok-id">is_bool</span>(<span class="tok-var">$key</span>) || <span class="tok-var">$key</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>        }</span>
+<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>        <span class="tok-var">$wanted</span> = (string) <span class="tok-var">$key</span>;</span>
+<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>        <span class="tok-var">$position</span> = <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">entries</span> <span class="tok-kw">as</span> <span class="tok-var">$entry</span>) {</span>
+<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>            <span class="tok-var">$entryKey</span> = <span class="tok-var">$entry</span>-&gt;<span class="tok-id">key</span> === <span class="tok-id">null</span> ? <span class="tok-var">$position</span>++ : <span class="tok-var">$entry</span>-&gt;<span class="tok-id">scalarKey</span>();</span>
+<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>            <span class="tok-kw">if</span> (<span class="tok-var">$entryKey</span> !== <span class="tok-id">null</span> &amp;&amp; (string) <span class="tok-var">$entryKey</span> === <span class="tok-var">$wanted</span>) {</span>
+<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>                <span class="tok-kw">return</span> <span class="tok-var">$entry</span>-&gt;<span class="tok-id">value</span>;</span>
+<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>            }</span>
+<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>        }</span>
+<span class="src-line" id="L90"><a class="ln" href="#L90">90</a></span>
+<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>        <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>    }</span>
+<span class="src-line" id="L93"><a class="ln" href="#L93">93</a></span>
+<span class="src-line" id="L94"><a class="ln" href="#L94">94</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L95"><a class="ln" href="#L95">95</a><span class="tok-com">     * Whatever one element can be, or null when the array holds none.</span></span>
+<span class="src-line" id="L96"><a class="ln" href="#L96">96</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L97"><a class="ln" href="#L97">97</a><span class="tok-com">     * The union of every element covers the value whichever key selects it,</span></span>
+<span class="src-line" id="L98"><a class="ln" href="#L98">98</a><span class="tok-com">     * which is what turns `self::TABLES[$kind]` with an unknown `$kind` into</span></span>
+<span class="src-line" id="L99"><a class="ln" href="#L99">99</a><span class="tok-com">     * one statement per table instead of a gap. An array known only in part</span></span>
+<span class="src-line" id="L100"><a class="ln" href="#L100">100</a><span class="tok-com">     * may hold elements the walk never saw, so the union keeps a gap for them.</span></span>
+<span class="src-line" id="L101"><a class="ln" href="#L101">101</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L102"><a class="ln" href="#L102">102</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">anyValue</span>(<span class="tok-id">Origin</span> <span class="tok-var">$origin</span>, ?<span class="tok-id">string</span> <span class="tok-var">$expression</span> = <span class="tok-id">null</span>): ?<span class="tok-id">Domain</span></span>
+<span class="src-line" id="L103"><a class="ln" href="#L103">103</a>    {</span>
+<span class="src-line" id="L104"><a class="ln" href="#L104">104</a>        <span class="tok-var">$values</span> = <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L105"><a class="ln" href="#L105">105</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">entries</span> <span class="tok-kw">as</span> <span class="tok-var">$entry</span>) {</span>
+<span class="src-line" id="L106"><a class="ln" href="#L106">106</a>            <span class="tok-var">$values</span> = <span class="tok-var">$values</span> === <span class="tok-id">null</span> ? <span class="tok-var">$entry</span>-&gt;<span class="tok-id">value</span> : <span class="tok-var">$values</span>-&gt;<span class="tok-id">union</span>(<span class="tok-var">$entry</span>-&gt;<span class="tok-id">value</span>);</span>
+<span class="src-line" id="L107"><a class="ln" href="#L107">107</a>        }</span>
+<span class="src-line" id="L108"><a class="ln" href="#L108">108</a>        <span class="tok-kw">if</span> (<span class="tok-var">$values</span> === <span class="tok-id">null</span> || <span class="tok-var">$this</span>-&gt;<span class="tok-id">complete</span>) {</span>
+<span class="src-line" id="L109"><a class="ln" href="#L109">109</a>            <span class="tok-kw">return</span> <span class="tok-var">$values</span>;</span>
+<span class="src-line" id="L110"><a class="ln" href="#L110">110</a>        }</span>
+<span class="src-line" id="L111"><a class="ln" href="#L111">111</a></span>
+<span class="src-line" id="L112"><a class="ln" href="#L112">112</a>        <span class="tok-kw">return</span> <span class="tok-var">$values</span>-&gt;<span class="tok-id">union</span>(<span class="tok-id">Domain</span>::<span class="tok-id">opaque</span>(<span class="tok-id">TypeShape</span>::<span class="tok-id">unknown</span>(), <span class="tok-var">$origin</span>, <span class="tok-var">$expression</span>));</span>
+<span class="src-line" id="L113"><a class="ln" href="#L113">113</a>    }</span>
+<span class="src-line" id="L114"><a class="ln" href="#L114">114</a></span>
+<span class="src-line" id="L115"><a class="ln" href="#L115">115</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L116"><a class="ln" href="#L116">116</a><span class="tok-com">     * An array never resolves to text, so it becomes a gap.</span></span>
+<span class="src-line" id="L117"><a class="ln" href="#L117">117</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L118"><a class="ln" href="#L118">118</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L119"><a class="ln" href="#L119">119</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">toPattern</span>(): <span class="tok-id">TextPattern</span></span>
+<span class="src-line" id="L120"><a class="ln" href="#L120">120</a>    {</span>
+<span class="src-line" id="L121"><a class="ln" href="#L121">121</a>        <span class="tok-kw">return</span> <span class="tok-id">TextPattern</span>::<span class="tok-id">fromHole</span>(<span class="tok-kw">new</span> <span class="tok-id">TextHole</span>(<span class="tok-id">Origin</span>::<span class="tok-id">Unresolved</span>, <span class="tok-id">TypeShape</span>::<span class="tok-id">of</span>([<span class="tok-str">&#039;array&#039;</span>])));</span>
+<span class="src-line" id="L122"><a class="ln" href="#L122">122</a>    }</span>
+<span class="src-line" id="L123"><a class="ln" href="#L123">123</a></span>
+<span class="src-line" id="L124"><a class="ln" href="#L124">124</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L125"><a class="ln" href="#L125">125</a><span class="tok-com">     * Always `array`.</span></span>
+<span class="src-line" id="L126"><a class="ln" href="#L126">126</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L127"><a class="ln" href="#L127">127</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L128"><a class="ln" href="#L128">128</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">type</span>(): <span class="tok-id">TypeShape</span></span>
+<span class="src-line" id="L129"><a class="ln" href="#L129">129</a>    {</span>
+<span class="src-line" id="L130"><a class="ln" href="#L130">130</a>        <span class="tok-kw">return</span> <span class="tok-id">TypeShape</span>::<span class="tok-id">of</span>([<span class="tok-str">&#039;array&#039;</span>]);</span>
+<span class="src-line" id="L131"><a class="ln" href="#L131">131</a>    }</span>
+<span class="src-line" id="L132"><a class="ln" href="#L132">132</a></span>
+<span class="src-line" id="L133"><a class="ln" href="#L133">133</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L134"><a class="ln" href="#L134">134</a><span class="tok-com">     * The elements, in order, tagged as complete or partial.</span></span>
+<span class="src-line" id="L135"><a class="ln" href="#L135">135</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L136"><a class="ln" href="#L136">136</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L137"><a class="ln" href="#L137">137</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">signature</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L138"><a class="ln" href="#L138">138</a>    {</span>
+<span class="src-line" id="L139"><a class="ln" href="#L139">139</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">signature</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L140"><a class="ln" href="#L140">140</a>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">signature</span>;</span>
+<span class="src-line" id="L141"><a class="ln" href="#L141">141</a>        }</span>
+<span class="src-line" id="L142"><a class="ln" href="#L142">142</a>        <span class="tok-var">$parts</span> = [];</span>
+<span class="src-line" id="L143"><a class="ln" href="#L143">143</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">entries</span> <span class="tok-kw">as</span> <span class="tok-var">$entry</span>) {</span>
+<span class="src-line" id="L144"><a class="ln" href="#L144">144</a>            <span class="tok-var">$parts</span>[] = <span class="tok-var">$entry</span>-&gt;<span class="tok-id">signature</span>();</span>
+<span class="src-line" id="L145"><a class="ln" href="#L145">145</a>        }</span>
+<span class="src-line" id="L146"><a class="ln" href="#L146">146</a></span>
+<span class="src-line" id="L147"><a class="ln" href="#L147">147</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">signature</span> = <span class="tok-str">&#039;array:&#039;</span> . (<span class="tok-var">$this</span>-&gt;<span class="tok-id">complete</span> ? <span class="tok-str">&#039;all&#039;</span> : <span class="tok-str">&#039;some&#039;</span>) . <span class="tok-str">&#039;:&#039;</span> . <span class="tok-id">implode</span>(<span class="tok-str">&#039;,&#039;</span>, <span class="tok-var">$parts</span>);</span>
+<span class="src-line" id="L148"><a class="ln" href="#L148">148</a>    }</span>
+<span class="src-line" id="L149"><a class="ln" href="#L149">149</a>}</span>
+<span class="src-line" id="L150"><a class="ln" href="#L150">150</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
