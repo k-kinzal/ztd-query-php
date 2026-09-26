@@ -22,11 +22,11 @@ final class DefaultExpression
 
         $value = trim($matches[1]);
 
-        if (preg_match("/^['\"](.*)['\"]\s*$/s", $value, $stringMatches) === 1) {
+        if (preg_match("/^['\"](.*)['\"](?:::[A-Za-z_][\\w\\s\\[\\]]*)?\\s*$/s", $value, $stringMatches) === 1) {
             return $stringMatches[1];
         }
 
-        if (strtoupper($value) === 'NULL') {
+        if (preg_match('/^NULL(?:::[A-Za-z_][\\w\\s\\[\\]]*)?$/i', $value) === 1) {
             return null;
         }
 

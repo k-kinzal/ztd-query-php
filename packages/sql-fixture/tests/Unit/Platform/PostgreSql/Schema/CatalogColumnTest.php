@@ -23,7 +23,7 @@ final class CatalogColumnTest extends TestCase
     public function testResolveTypeNormalizesArrayElements(): void
     {
         $column = ['data_type' => 'ARRAY', 'character_maximum_length' => null, 'numeric_precision' => null, 'numeric_scale' => null, 'udt_name' => '_int4'];
-        self::assertSame('INT4_ARRAY', (new Subject())->resolveType($column));
+        self::assertSame('INTEGER_ARRAY', (new Subject())->resolveType($column));
     }
 
     public function testParseDefaultRemovesCastsAndRecognizesSequences(): void
@@ -57,7 +57,8 @@ final class CatalogColumnTest extends TestCase
             ['numeric', null, '8', null, 'numeric', 'NUMERIC(8)', 'NUMERIC'],
             ['numeric', null, '8', '0', 'numeric', 'NUMERIC(8)', 'NUMERIC'],
             ['numeric', null, '8', '2', 'numeric', 'NUMERIC(8, 2)', 'NUMERIC'],
-            ['array', null, null, null, '_int4', '_INT4', 'INT4_ARRAY'],
+            ['array', null, null, null, '_int4', 'INTEGER[]', 'INTEGER_ARRAY'],
+            ['array', null, null, null, '_text', 'TEXT[]', 'TEXT_ARRAY'],
             ['user-defined', null, null, null, 'mood', 'MOOD', 'MOOD'],
             ['integer', null, '32', '0', 'int4', 'INTEGER', 'INTEGER'],
         ];
@@ -89,5 +90,14 @@ final class CatalogColumnTest extends TestCase
             ['-0.25', -0.25],
             ['CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP'],
         ];
+    }
+
+    public function testElementTypeNamesTheDeclaredType(): void
+    {
+        $column = new Subject();
+        self::assertSame('INTEGER', $column->elementType('_int4'));
+        self::assertSame('BIGINT', $column->elementType('_int8'));
+        self::assertSame('TEXT', $column->elementType('_text'));
+        self::assertSame('UUID', $column->elementType('_uuid'));
     }
 }

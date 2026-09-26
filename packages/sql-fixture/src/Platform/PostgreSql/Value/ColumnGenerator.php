@@ -45,7 +45,7 @@ final class ColumnGenerator
             'UUID' => $faker->uuid(),
 
             'INET' => $faker->ipv4(),
-            'CIDR' => $faker->ipv4() . '/24',
+            'CIDR' => (new StructuredGenerator())->generateCidr($faker),
             'MACADDR' => $faker->macAddress(),
 
             'INTEGER_ARRAY', 'INT_ARRAY' => (new StructuredGenerator())->generateIntArray($faker),

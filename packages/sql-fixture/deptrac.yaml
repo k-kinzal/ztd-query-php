@@ -40,6 +40,10 @@ deptrac:
       collectors:
         - type: classLike
           value: '^SqlFixture\\Provider\\.*'
+    - name: Version
+      collectors:
+        - type: classLike
+          value: '^SqlFixture\\Version\\.*'
     - name: Faker
       collectors:
         - type: classLike
@@ -57,6 +61,7 @@ deptrac:
     MySql: [Schema, TypeMapping, Faker, SqlParser]
     PostgreSql: [Schema, TypeMapping, Faker]
     Sqlite: [Schema, TypeMapping, Faker]
-    Provider: [Schema, TypeMapping, Hydration, Plan, Generation, MySql, PostgreSql, Sqlite, Faker]
+    Provider: [Schema, TypeMapping, Hydration, Plan, Generation, MySql, PostgreSql, Sqlite, Faker, Version]
+    Version: []
     Faker: []
     SqlParser: []

@@ -214,7 +214,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = "CREATE TABLE test (data JSONB DEFAULT '{}'::jsonb)";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame("'{}'::jsonb", $schema->columns['data']->default);
+        self::assertSame('{}', $schema->columns['data']->default);
     }
 
     #[Test]
@@ -941,7 +941,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         self::assertSame(42, $schema->columns['col_int']->default);
         self::assertSame(9.99, $schema->columns['col_float']->default);
         self::assertSame('gen_random_uuid()', $schema->columns['col_func']->default);
-        self::assertSame("'{}'::jsonb", $schema->columns['col_cast']->default);
+        self::assertSame('{}', $schema->columns['col_cast']->default);
         self::assertSame('(1+2)', $schema->columns['col_expr']->default);
         self::assertSame('current_timestamp', $schema->columns['col_ts']->default);
         self::assertSame('now()', $schema->columns['col_now']->default);
@@ -1085,12 +1085,12 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function testParseDefaultTypeCastIsPreserved(): void
+    public function testParseDefaultTypeCastIsStripped(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'hello'::text)";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame("'hello'::text", $schema->columns['val']->default);
+        self::assertSame('hello', $schema->columns['val']->default);
     }
 
     #[Test]
