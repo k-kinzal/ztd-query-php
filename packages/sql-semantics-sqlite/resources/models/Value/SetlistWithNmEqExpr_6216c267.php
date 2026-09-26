@@ -17,12 +17,13 @@ final class SetlistWithNmEqExpr_6216c267 implements \SqlSemantics\Statement\Mode
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly string $eq,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
         $this->assertMatchesPattern($eq, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['EQ'], 'The eq must be a complete EQ lexical spelling.');
@@ -34,8 +35,11 @@ final class SetlistWithNmEqExpr_6216c267 implements \SqlSemantics\Statement\Mode
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append($this->eq);
+        $writer->comments($this->comments, 2);
         $this->expr->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class SetlistWithNmEqExpr_6216c267 implements \SqlSemantics\Statement\Mode
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($nm, $this->eq, $this->expr);
+        return new self($nm, $this->eq, $this->expr, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class SetlistWithNmEqExpr_6216c267 implements \SqlSemantics\Statement\Mode
      */
     public function withEq(string $eq): self
     {
-        return new self($this->nm, $eq, $this->expr);
+        return new self($this->nm, $eq, $this->expr, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class SetlistWithNmEqExpr_6216c267 implements \SqlSemantics\Statement\Mode
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($this->nm, $this->eq, $expr);
+        return new self($this->nm, $this->eq, $expr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nm, $this->eq, $this->expr, $comments);
     }
 }

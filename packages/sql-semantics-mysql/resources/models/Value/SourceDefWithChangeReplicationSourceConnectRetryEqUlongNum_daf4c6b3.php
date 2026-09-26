@@ -17,11 +17,12 @@ final class SourceDefWithChangeReplicationSourceConnectRetryEqUlongNum_daf4c6b3 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceConnectRetryForm $changeReplicationSourceConnectRetry,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceConnectRetry), 'The changeReplicationSourceConnectRetry must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SourceDefWithChangeReplicationSourceConnectRetryEqUlongNum_daf4c6b3 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->changeReplicationSourceConnectRetry->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->ulongNum->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SourceDefWithChangeReplicationSourceConnectRetryEqUlongNum_daf4c6b3 
      */
     public function withChangeReplicationSourceConnectRetry(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceConnectRetryForm $changeReplicationSourceConnectRetry): self
     {
-        return new self($changeReplicationSourceConnectRetry, $this->ulongNum);
+        return new self($changeReplicationSourceConnectRetry, $this->ulongNum, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SourceDefWithChangeReplicationSourceConnectRetryEqUlongNum_daf4c6b3 
      */
     public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
     {
-        return new self($this->changeReplicationSourceConnectRetry, $ulongNum);
+        return new self($this->changeReplicationSourceConnectRetry, $ulongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->changeReplicationSourceConnectRetry, $this->ulongNum, $comments);
     }
 }

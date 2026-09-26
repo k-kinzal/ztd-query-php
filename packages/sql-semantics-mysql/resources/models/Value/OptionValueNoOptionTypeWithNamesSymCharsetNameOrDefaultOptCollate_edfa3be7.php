@@ -17,11 +17,12 @@ final class OptionValueNoOptionTypeWithNamesSymCharsetNameOrDefaultOptCollate_ed
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameOrDefaultForm $charsetNameOrDefault,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetNameOrDefault), 'The charsetNameOrDefault must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class OptionValueNoOptionTypeWithNamesSymCharsetNameOrDefaultOptCollate_ed
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NAMES');
+        $writer->comments($this->comments, 1);
         $this->charsetNameOrDefault->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optCollate->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class OptionValueNoOptionTypeWithNamesSymCharsetNameOrDefaultOptCollate_ed
      */
     public function withCharsetNameOrDefault(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameOrDefaultForm $charsetNameOrDefault): self
     {
-        return new self($charsetNameOrDefault, $this->optCollate);
+        return new self($charsetNameOrDefault, $this->optCollate, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class OptionValueNoOptionTypeWithNamesSymCharsetNameOrDefaultOptCollate_ed
      */
     public function withOptCollate(\SqlSemantics\Statement\Model\MySql\Role\OptCollateForm $optCollate): self
     {
-        return new self($this->charsetNameOrDefault, $optCollate);
+        return new self($this->charsetNameOrDefault, $optCollate, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->charsetNameOrDefault, $this->optCollate, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class CmdWithCreateVtabLpVtabarglistRp_f47fc34c implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CreateVtabForm $createVtab,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm $vtabarglist,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createVtab), 'The createVtab must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($vtabarglist), 'The vtabarglist must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class CmdWithCreateVtabLpVtabarglistRp_f47fc34c implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createVtab->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->vtabarglist->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class CmdWithCreateVtabLpVtabarglistRp_f47fc34c implements \SqlSemantics\S
      */
     public function withCreateVtab(\SqlSemantics\Statement\Model\Sqlite\Role\CreateVtabForm $createVtab): self
     {
-        return new self($createVtab, $this->vtabarglist);
+        return new self($createVtab, $this->vtabarglist, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class CmdWithCreateVtabLpVtabarglistRp_f47fc34c implements \SqlSemantics\S
      */
     public function withVtabarglist(\SqlSemantics\Statement\Model\Sqlite\Role\VtabarglistForm $vtabarglist): self
     {
-        return new self($this->createVtab, $vtabarglist);
+        return new self($this->createVtab, $vtabarglist, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createVtab, $this->vtabarglist, $comments);
     }
 }

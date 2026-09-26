@@ -17,12 +17,13 @@ final class GenericTypeWithTypeFunctionNameAttrsOptTypeModifiers_27fad6a0 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm $typeFunctionName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTypeModifiersForm $optTypeModifiers,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeFunctionName), 'The typeFunctionName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($attrs), 'The attrs must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class GenericTypeWithTypeFunctionNameAttrsOptTypeModifiers_27fad6a0 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->typeFunctionName->write($writer);
+        $writer->comments($this->comments, 1);
         $this->attrs->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optTypeModifiers->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class GenericTypeWithTypeFunctionNameAttrsOptTypeModifiers_27fad6a0 implem
      */
     public function withTypeFunctionName(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeFunctionNameForm $typeFunctionName): self
     {
-        return new self($typeFunctionName, $this->attrs, $this->optTypeModifiers);
+        return new self($typeFunctionName, $this->attrs, $this->optTypeModifiers, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class GenericTypeWithTypeFunctionNameAttrsOptTypeModifiers_27fad6a0 implem
      */
     public function withAttrs(\SqlSemantics\Statement\Model\PostgreSql\Role\AttrsForm $attrs): self
     {
-        return new self($this->typeFunctionName, $attrs, $this->optTypeModifiers);
+        return new self($this->typeFunctionName, $attrs, $this->optTypeModifiers, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class GenericTypeWithTypeFunctionNameAttrsOptTypeModifiers_27fad6a0 implem
      */
     public function withOptTypeModifiers(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTypeModifiersForm $optTypeModifiers): self
     {
-        return new self($this->typeFunctionName, $this->attrs, $optTypeModifiers);
+        return new self($this->typeFunctionName, $this->attrs, $optTypeModifiers, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->typeFunctionName, $this->attrs, $this->optTypeModifiers, $comments);
     }
 }

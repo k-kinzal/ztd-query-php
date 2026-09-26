@@ -17,12 +17,13 @@ final class ExprWithExprOrExpr_f24995de implements \SqlSemantics\Statement\Model
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OrForm $or,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 4,  'mysql-5.7.44' => 5,  'mysql-8.0.44' => 10,  'mysql-8.1.0' => 10,  'mysql-8.2.0' => 10,  'mysql-8.3.0' => 10,  'mysql-8.4.7' => 10,  'mysql-9.0.1' => 10,  'mysql-9.1.0' => 10,));
@@ -36,8 +37,11 @@ final class ExprWithExprOrExpr_f24995de implements \SqlSemantics\Statement\Model
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->or->write($writer);
+        $writer->comments($this->comments, 2);
         $this->expr2->write($writer);
     }
 
@@ -46,7 +50,7 @@ final class ExprWithExprOrExpr_f24995de implements \SqlSemantics\Statement\Model
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->or, $this->expr2);
+        return new self($expr, $this->or, $this->expr2, $this->comments);
     }
 
     /**
@@ -54,7 +58,7 @@ final class ExprWithExprOrExpr_f24995de implements \SqlSemantics\Statement\Model
      */
     public function withOr(\SqlSemantics\Statement\Model\MySql\Role\OrForm $or): self
     {
-        return new self($this->expr, $or, $this->expr2);
+        return new self($this->expr, $or, $this->expr2, $this->comments);
     }
 
     /**
@@ -62,6 +66,14 @@ final class ExprWithExprOrExpr_f24995de implements \SqlSemantics\Statement\Model
      */
     public function withExpr2(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr2): self
     {
-        return new self($this->expr, $this->or, $expr2);
+        return new self($this->expr, $this->or, $expr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->or, $this->expr2, $comments);
     }
 }

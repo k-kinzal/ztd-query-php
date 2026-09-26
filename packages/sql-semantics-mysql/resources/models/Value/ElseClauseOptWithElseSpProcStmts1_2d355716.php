@@ -17,10 +17,11 @@ final class ElseClauseOptWithElseSpProcStmts1_2d355716 implements \SqlSemantics\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form $spProcStmts1,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spProcStmts1), 'The spProcStmts1 must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class ElseClauseOptWithElseSpProcStmts1_2d355716 implements \SqlSemantics\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ELSE');
+        $writer->comments($this->comments, 1);
         $this->spProcStmts1->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class ElseClauseOptWithElseSpProcStmts1_2d355716 implements \SqlSemantics\
      */
     public function withSpProcStmts1(\SqlSemantics\Statement\Model\MySql\Role\SpProcStmts1Form $spProcStmts1): self
     {
-        return new self($spProcStmts1);
+        return new self($spProcStmts1, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spProcStmts1, $comments);
     }
 }

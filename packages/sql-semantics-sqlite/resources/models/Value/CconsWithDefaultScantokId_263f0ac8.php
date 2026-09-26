@@ -17,11 +17,12 @@ final class CconsWithDefaultScantokId_263f0ac8 implements \SqlSemantics\Statemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScantokForm $scantok,
         public readonly string $id,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scantok), 'The scantok must be a generated immutable SQL value.');
         $this->assertMatchesPattern($id, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['id'], 'The id must be a complete id lexical spelling.');
@@ -32,8 +33,11 @@ final class CconsWithDefaultScantokId_263f0ac8 implements \SqlSemantics\Statemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DEFAULT');
+        $writer->comments($this->comments, 1);
         $this->scantok->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append($this->id);
     }
 
@@ -42,7 +46,7 @@ final class CconsWithDefaultScantokId_263f0ac8 implements \SqlSemantics\Statemen
      */
     public function withScantok(\SqlSemantics\Statement\Model\Sqlite\Role\ScantokForm $scantok): self
     {
-        return new self($scantok, $this->id);
+        return new self($scantok, $this->id, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class CconsWithDefaultScantokId_263f0ac8 implements \SqlSemantics\Statemen
      */
     public function withId(string $id): self
     {
-        return new self($this->scantok, $id);
+        return new self($this->scantok, $id, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->scantok, $this->id, $comments);
     }
 }

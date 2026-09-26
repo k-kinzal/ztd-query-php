@@ -17,12 +17,13 @@ final class EcmdWithExplainCmdxSemi_177c493a implements \SqlSemantics\Statement\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExplainForm $explain,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm $cmdx,
         public readonly string $semi,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($explain), 'The explain must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($cmdx), 'The cmdx must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class EcmdWithExplainCmdxSemi_177c493a implements \SqlSemantics\Statement\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->explain->write($writer);
+        $writer->comments($this->comments, 1);
         $this->cmdx->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append($this->semi);
     }
 
@@ -44,7 +48,7 @@ final class EcmdWithExplainCmdxSemi_177c493a implements \SqlSemantics\Statement\
      */
     public function withExplain(\SqlSemantics\Statement\Model\Sqlite\Role\ExplainForm $explain): self
     {
-        return new self($explain, $this->cmdx, $this->semi);
+        return new self($explain, $this->cmdx, $this->semi, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class EcmdWithExplainCmdxSemi_177c493a implements \SqlSemantics\Statement\
      */
     public function withCmdx(\SqlSemantics\Statement\Model\Sqlite\Role\CmdxForm $cmdx): self
     {
-        return new self($this->explain, $cmdx, $this->semi);
+        return new self($this->explain, $cmdx, $this->semi, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class EcmdWithExplainCmdxSemi_177c493a implements \SqlSemantics\Statement\
      */
     public function withSemi(string $semi): self
     {
-        return new self($this->explain, $this->cmdx, $semi);
+        return new self($this->explain, $this->cmdx, $semi, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->explain, $this->cmdx, $this->semi, $comments);
     }
 }

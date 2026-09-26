@@ -17,10 +17,11 @@ final class TermWithNullFloatBlob_0bfe6b30 implements \SqlSemantics\Statement\Mo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $nullFloatBlob,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($nullFloatBlob, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['NULL|FLOAT|BLOB'], 'The nullFloatBlob must be a complete NULL|FLOAT|BLOB lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class TermWithNullFloatBlob_0bfe6b30 implements \SqlSemantics\Statement\Mo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->nullFloatBlob);
     }
 
@@ -38,6 +40,14 @@ final class TermWithNullFloatBlob_0bfe6b30 implements \SqlSemantics\Statement\Mo
      */
     public function withNullFloatBlob(string $nullFloatBlob): self
     {
-        return new self($nullFloatBlob);
+        return new self($nullFloatBlob, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nullFloatBlob, $comments);
     }
 }

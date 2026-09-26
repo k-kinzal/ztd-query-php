@@ -17,13 +17,14 @@ final class PartDefinitionWithPartitionSymIdentOptPartValuesOptPartOptionsOptSub
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPartValuesForm $optPartValues,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm $optPartOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSubPartitionForm $optSubPartition,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPartValues), 'The optPartValues must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class PartDefinitionWithPartitionSymIdentOptPartValuesOptPartOptionsOptSub
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 1);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optPartValues->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optPartOptions->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optSubPartition->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class PartDefinitionWithPartitionSymIdentOptPartValuesOptPartOptionsOptSub
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($ident, $this->optPartValues, $this->optPartOptions, $this->optSubPartition);
+        return new self($ident, $this->optPartValues, $this->optPartOptions, $this->optSubPartition, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class PartDefinitionWithPartitionSymIdentOptPartValuesOptPartOptionsOptSub
      */
     public function withOptPartValues(\SqlSemantics\Statement\Model\MySql\Role\OptPartValuesForm $optPartValues): self
     {
-        return new self($this->ident, $optPartValues, $this->optPartOptions, $this->optSubPartition);
+        return new self($this->ident, $optPartValues, $this->optPartOptions, $this->optSubPartition, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class PartDefinitionWithPartitionSymIdentOptPartValuesOptPartOptionsOptSub
      */
     public function withOptPartOptions(\SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm $optPartOptions): self
     {
-        return new self($this->ident, $this->optPartValues, $optPartOptions, $this->optSubPartition);
+        return new self($this->ident, $this->optPartValues, $optPartOptions, $this->optSubPartition, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class PartDefinitionWithPartitionSymIdentOptPartValuesOptPartOptionsOptSub
      */
     public function withOptSubPartition(\SqlSemantics\Statement\Model\MySql\Role\OptSubPartitionForm $optSubPartition): self
     {
-        return new self($this->ident, $this->optPartValues, $this->optPartOptions, $optSubPartition);
+        return new self($this->ident, $this->optPartValues, $this->optPartOptions, $optSubPartition, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->ident, $this->optPartValues, $this->optPartOptions, $this->optSubPartition, $comments);
     }
 }

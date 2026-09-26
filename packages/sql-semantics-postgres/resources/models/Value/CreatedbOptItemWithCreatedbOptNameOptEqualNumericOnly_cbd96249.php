@@ -17,12 +17,13 @@ final class CreatedbOptItemWithCreatedbOptNameOptEqualNumericOnly_cbd96249 imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptNameForm $createdbOptName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptEqualForm $optEqual,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($createdbOptName), 'The createdbOptName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optEqual), 'The optEqual must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class CreatedbOptItemWithCreatedbOptNameOptEqualNumericOnly_cbd96249 imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createdbOptName->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optEqual->write($writer);
+        $writer->comments($this->comments, 2);
         $this->numericOnly->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class CreatedbOptItemWithCreatedbOptNameOptEqualNumericOnly_cbd96249 imple
      */
     public function withCreatedbOptName(\SqlSemantics\Statement\Model\PostgreSql\Role\CreatedbOptNameForm $createdbOptName): self
     {
-        return new self($createdbOptName, $this->optEqual, $this->numericOnly);
+        return new self($createdbOptName, $this->optEqual, $this->numericOnly, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class CreatedbOptItemWithCreatedbOptNameOptEqualNumericOnly_cbd96249 imple
      */
     public function withOptEqual(\SqlSemantics\Statement\Model\PostgreSql\Role\OptEqualForm $optEqual): self
     {
-        return new self($this->createdbOptName, $optEqual, $this->numericOnly);
+        return new self($this->createdbOptName, $optEqual, $this->numericOnly, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class CreatedbOptItemWithCreatedbOptNameOptEqualNumericOnly_cbd96249 imple
      */
     public function withNumericOnly(\SqlSemantics\Statement\Model\PostgreSql\Role\NumericOnlyForm $numericOnly): self
     {
-        return new self($this->createdbOptName, $this->optEqual, $numericOnly);
+        return new self($this->createdbOptName, $this->optEqual, $numericOnly, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createdbOptName, $this->optEqual, $this->numericOnly, $comments);
     }
 }

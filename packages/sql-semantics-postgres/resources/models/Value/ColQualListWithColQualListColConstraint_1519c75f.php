@@ -17,11 +17,12 @@ final class ColQualListWithColQualListColConstraint_1519c75f implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm $colConstraint,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colQualList), 'The colQualList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colConstraint), 'The colConstraint must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ColQualListWithColQualListColConstraint_1519c75f implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->colQualList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->colConstraint->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ColQualListWithColQualListColConstraint_1519c75f implements \SqlSema
      */
     public function withColQualList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColQualListForm $colQualList): self
     {
-        return new self($colQualList, $this->colConstraint);
+        return new self($colQualList, $this->colConstraint, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ColQualListWithColQualListColConstraint_1519c75f implements \SqlSema
      */
     public function withColConstraint(\SqlSemantics\Statement\Model\PostgreSql\Role\ColConstraintForm $colConstraint): self
     {
-        return new self($this->colQualList, $colConstraint);
+        return new self($this->colQualList, $colConstraint, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colQualList, $this->colConstraint, $comments);
     }
 }

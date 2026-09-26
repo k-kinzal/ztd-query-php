@@ -17,10 +17,11 @@ final class TypeWithBitSymFieldLength_a425befb implements \SqlSemantics\Statemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldLength), 'The fieldLength must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class TypeWithBitSymFieldLength_a425befb implements \SqlSemantics\Statemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('BIT');
+        $writer->comments($this->comments, 1);
         $this->fieldLength->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class TypeWithBitSymFieldLength_a425befb implements \SqlSemantics\Statemen
      */
     public function withFieldLength(\SqlSemantics\Statement\Model\MySql\Role\FieldLengthForm $fieldLength): self
     {
-        return new self($fieldLength);
+        return new self($fieldLength, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fieldLength, $comments);
     }
 }

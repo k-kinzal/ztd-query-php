@@ -17,11 +17,12 @@ final class SetClauseWithSetTargetAExpr_46d76bc3 implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetForm $setTarget,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setTarget), 'The setTarget must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($aExpr), 'The aExpr must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SetClauseWithSetTargetAExpr_46d76bc3 implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->setTarget->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->aExpr->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SetClauseWithSetTargetAExpr_46d76bc3 implements \SqlSemantics\Statem
      */
     public function withSetTarget(\SqlSemantics\Statement\Model\PostgreSql\Role\SetTargetForm $setTarget): self
     {
-        return new self($setTarget, $this->aExpr);
+        return new self($setTarget, $this->aExpr, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SetClauseWithSetTargetAExpr_46d76bc3 implements \SqlSemantics\Statem
      */
     public function withAExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\AExprForm $aExpr): self
     {
-        return new self($this->setTarget, $aExpr);
+        return new self($this->setTarget, $aExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->setTarget, $this->aExpr, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class RefargWithMatchNm_8834e4f9 implements \SqlSemantics\Statement\Model\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class RefargWithMatchNm_8834e4f9 implements \SqlSemantics\Statement\Model\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('MATCH');
+        $writer->comments($this->comments, 1);
         $this->nm->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class RefargWithMatchNm_8834e4f9 implements \SqlSemantics\Statement\Model\
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($nm);
+        return new self($nm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nm, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class ShowEnginesStmtWithShowOptStorageEnginesSym_da5d6655 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptStorageForm $optStorage,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optStorage), 'The optStorage must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class ShowEnginesStmtWithShowOptStorageEnginesSym_da5d6655 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $this->optStorage->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('ENGINES');
     }
 
@@ -40,6 +44,14 @@ final class ShowEnginesStmtWithShowOptStorageEnginesSym_da5d6655 implements \Sql
      */
     public function withOptStorage(\SqlSemantics\Statement\Model\MySql\Role\OptStorageForm $optStorage): self
     {
-        return new self($optStorage);
+        return new self($optStorage, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optStorage, $comments);
     }
 }

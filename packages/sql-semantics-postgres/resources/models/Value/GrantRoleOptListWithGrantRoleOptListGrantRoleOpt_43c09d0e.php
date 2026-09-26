@@ -17,11 +17,12 @@ final class GrantRoleOptListWithGrantRoleOptListGrantRoleOpt_43c09d0e implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptListForm $grantRoleOptList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptForm $grantRoleOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($grantRoleOptList), 'The grantRoleOptList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($grantRoleOpt), 'The grantRoleOpt must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class GrantRoleOptListWithGrantRoleOptListGrantRoleOpt_43c09d0e implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->grantRoleOptList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->grantRoleOpt->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class GrantRoleOptListWithGrantRoleOptListGrantRoleOpt_43c09d0e implements
      */
     public function withGrantRoleOptList(\SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptListForm $grantRoleOptList): self
     {
-        return new self($grantRoleOptList, $this->grantRoleOpt);
+        return new self($grantRoleOptList, $this->grantRoleOpt, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class GrantRoleOptListWithGrantRoleOptListGrantRoleOpt_43c09d0e implements
      */
     public function withGrantRoleOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\GrantRoleOptForm $grantRoleOpt): self
     {
-        return new self($this->grantRoleOptList, $grantRoleOpt);
+        return new self($this->grantRoleOptList, $grantRoleOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->grantRoleOptList, $this->grantRoleOpt, $comments);
     }
 }

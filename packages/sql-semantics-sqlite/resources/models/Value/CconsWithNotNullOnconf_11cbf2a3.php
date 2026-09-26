@@ -17,10 +17,11 @@ final class CconsWithNotNullOnconf_11cbf2a3 implements \SqlSemantics\Statement\M
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm $onconf,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($onconf), 'The onconf must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class CconsWithNotNullOnconf_11cbf2a3 implements \SqlSemantics\Statement\M
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('NOT');
+        $writer->comments($this->comments, 1);
         $writer->append('NULL');
+        $writer->comments($this->comments, 2);
         $this->onconf->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class CconsWithNotNullOnconf_11cbf2a3 implements \SqlSemantics\Statement\M
      */
     public function withOnconf(\SqlSemantics\Statement\Model\Sqlite\Role\OnconfForm $onconf): self
     {
-        return new self($onconf);
+        return new self($onconf, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->onconf, $comments);
     }
 }

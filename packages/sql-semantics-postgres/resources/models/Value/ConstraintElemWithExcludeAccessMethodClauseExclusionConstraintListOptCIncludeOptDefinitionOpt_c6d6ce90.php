@@ -17,7 +17,7 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AccessMethodClauseForm $accessMethodClause,
@@ -27,6 +27,7 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm $optConsTableSpace,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptWhereClauseForm $optWhereClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($accessMethodClause), 'The accessMethodClause must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($exclusionConstraintList), 'The exclusionConstraintList must be a generated immutable SQL value.');
@@ -42,15 +43,25 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('EXCLUDE');
+        $writer->comments($this->comments, 1);
         $this->accessMethodClause->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->exclusionConstraintList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $this->optCInclude->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optDefinition->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optConsTableSpace->write($writer);
+        $writer->comments($this->comments, 8);
         $this->optWhereClause->write($writer);
+        $writer->comments($this->comments, 9);
         $this->constraintAttributeSpec->write($writer);
     }
 
@@ -59,7 +70,7 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
      */
     public function withAccessMethodClause(\SqlSemantics\Statement\Model\PostgreSql\Role\AccessMethodClauseForm $accessMethodClause): self
     {
-        return new self($accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec);
+        return new self($accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -67,7 +78,7 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
      */
     public function withExclusionConstraintList(\SqlSemantics\Statement\Model\PostgreSql\Role\ExclusionConstraintListForm $exclusionConstraintList): self
     {
-        return new self($this->accessMethodClause, $exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec);
+        return new self($this->accessMethodClause, $exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -75,7 +86,7 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
      */
     public function withOptCInclude(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCIncludeForm $optCInclude): self
     {
-        return new self($this->accessMethodClause, $this->exclusionConstraintList, $optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec);
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -83,7 +94,7 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
      */
     public function withOptDefinition(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDefinitionForm $optDefinition): self
     {
-        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec);
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -91,7 +102,7 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
      */
     public function withOptConsTableSpace(\SqlSemantics\Statement\Model\PostgreSql\Role\OptConsTableSpaceForm $optConsTableSpace): self
     {
-        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec);
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -99,7 +110,7 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
      */
     public function withOptWhereClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptWhereClauseForm $optWhereClause): self
     {
-        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $optWhereClause, $this->constraintAttributeSpec);
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $optWhereClause, $this->constraintAttributeSpec, $this->comments);
     }
 
     /**
@@ -107,6 +118,14 @@ final class ConstraintElemWithExcludeAccessMethodClauseExclusionConstraintListOp
      */
     public function withConstraintAttributeSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\ConstraintAttributeSpecForm $constraintAttributeSpec): self
     {
-        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $constraintAttributeSpec);
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $constraintAttributeSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->accessMethodClause, $this->exclusionConstraintList, $this->optCInclude, $this->optDefinition, $this->optConsTableSpace, $this->optWhereClause, $this->constraintAttributeSpec, $comments);
     }
 }

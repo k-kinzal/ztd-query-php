@@ -17,11 +17,12 @@ final class OperatorDefElemWithColLabelOperatorDefArg_aec0065f implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm $operatorDefArg,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colLabel), 'The colLabel must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($operatorDefArg), 'The operatorDefArg must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class OperatorDefElemWithColLabelOperatorDefArg_aec0065f implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->colLabel->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->operatorDefArg->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class OperatorDefElemWithColLabelOperatorDefArg_aec0065f implements \SqlSe
      */
     public function withColLabel(\SqlSemantics\Statement\Model\PostgreSql\Role\ColLabelForm $colLabel): self
     {
-        return new self($colLabel, $this->operatorDefArg);
+        return new self($colLabel, $this->operatorDefArg, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class OperatorDefElemWithColLabelOperatorDefArg_aec0065f implements \SqlSe
      */
     public function withOperatorDefArg(\SqlSemantics\Statement\Model\PostgreSql\Role\OperatorDefArgForm $operatorDefArg): self
     {
-        return new self($this->colLabel, $operatorDefArg);
+        return new self($this->colLabel, $operatorDefArg, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colLabel, $this->operatorDefArg, $comments);
     }
 }

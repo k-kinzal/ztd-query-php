@@ -17,10 +17,11 @@ final class VariableWithVariableAux_9dda7caf implements \SqlSemantics\Statement\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\VariableAuxForm $variableAux,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($variableAux), 'The variableAux must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class VariableWithVariableAux_9dda7caf implements \SqlSemantics\Statement\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
-        $writer->append('@');
+        $writer->comments($this->comments, 0);
+        $writer->append('@', prefix: true);
+        $writer->comments($this->comments, 1);
         $this->variableAux->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class VariableWithVariableAux_9dda7caf implements \SqlSemantics\Statement\
      */
     public function withVariableAux(\SqlSemantics\Statement\Model\MySql\Role\VariableAuxForm $variableAux): self
     {
-        return new self($variableAux);
+        return new self($variableAux, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->variableAux, $comments);
     }
 }

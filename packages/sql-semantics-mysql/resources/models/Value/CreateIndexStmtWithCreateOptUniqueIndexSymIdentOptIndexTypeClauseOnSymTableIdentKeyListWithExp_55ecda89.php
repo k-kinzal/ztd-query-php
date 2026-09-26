@@ -17,7 +17,7 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUniqueForm $optUnique,
@@ -27,6 +27,7 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm $optIndexOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAndAlgorithmForm $optIndexLockAndAlgorithm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnique), 'The optUnique must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -42,17 +43,29 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optUnique->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('INDEX');
+        $writer->comments($this->comments, 3);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optIndexTypeClause->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('ON');
+        $writer->comments($this->comments, 6);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append('(');
+        $writer->comments($this->comments, 8);
         $this->keyListWithExpression->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append(')');
+        $writer->comments($this->comments, 10);
         $this->optIndexOptions->write($writer);
+        $writer->comments($this->comments, 11);
         $this->optIndexLockAndAlgorithm->write($writer);
     }
 
@@ -61,7 +74,7 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
      */
     public function withOptUnique(\SqlSemantics\Statement\Model\MySql\Role\OptUniqueForm $optUnique): self
     {
-        return new self($optUnique, $this->ident, $this->optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm);
+        return new self($optUnique, $this->ident, $this->optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm, $this->comments);
     }
 
     /**
@@ -69,7 +82,7 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->optUnique, $ident, $this->optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm);
+        return new self($this->optUnique, $ident, $this->optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm, $this->comments);
     }
 
     /**
@@ -77,7 +90,7 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
      */
     public function withOptIndexTypeClause(\SqlSemantics\Statement\Model\MySql\Role\OptIndexTypeClauseForm $optIndexTypeClause): self
     {
-        return new self($this->optUnique, $this->ident, $optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm);
+        return new self($this->optUnique, $this->ident, $optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm, $this->comments);
     }
 
     /**
@@ -85,7 +98,7 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->optUnique, $this->ident, $this->optIndexTypeClause, $tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm);
+        return new self($this->optUnique, $this->ident, $this->optIndexTypeClause, $tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm, $this->comments);
     }
 
     /**
@@ -93,7 +106,7 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
      */
     public function withKeyListWithExpression(\SqlSemantics\Statement\Model\MySql\Role\KeyListWithExpressionForm $keyListWithExpression): self
     {
-        return new self($this->optUnique, $this->ident, $this->optIndexTypeClause, $this->tableIdent, $keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm);
+        return new self($this->optUnique, $this->ident, $this->optIndexTypeClause, $this->tableIdent, $keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm, $this->comments);
     }
 
     /**
@@ -101,7 +114,7 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
      */
     public function withOptIndexOptions(\SqlSemantics\Statement\Model\MySql\Role\OptIndexOptionsForm $optIndexOptions): self
     {
-        return new self($this->optUnique, $this->ident, $this->optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $optIndexOptions, $this->optIndexLockAndAlgorithm);
+        return new self($this->optUnique, $this->ident, $this->optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $optIndexOptions, $this->optIndexLockAndAlgorithm, $this->comments);
     }
 
     /**
@@ -109,6 +122,14 @@ final class CreateIndexStmtWithCreateOptUniqueIndexSymIdentOptIndexTypeClauseOnS
      */
     public function withOptIndexLockAndAlgorithm(\SqlSemantics\Statement\Model\MySql\Role\OptIndexLockAndAlgorithmForm $optIndexLockAndAlgorithm): self
     {
-        return new self($this->optUnique, $this->ident, $this->optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $optIndexLockAndAlgorithm);
+        return new self($this->optUnique, $this->ident, $this->optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $optIndexLockAndAlgorithm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optUnique, $this->ident, $this->optIndexTypeClause, $this->tableIdent, $this->keyListWithExpression, $this->optIndexOptions, $this->optIndexLockAndAlgorithm, $comments);
     }
 }

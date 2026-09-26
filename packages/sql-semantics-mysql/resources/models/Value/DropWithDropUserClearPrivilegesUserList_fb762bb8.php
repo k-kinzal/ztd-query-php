@@ -17,12 +17,13 @@ final class DropWithDropUserClearPrivilegesUserList_fb762bb8 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($clearPrivileges), 'The clearPrivileges must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class DropWithDropUserClearPrivilegesUserList_fb762bb8 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append($this->user);
+        $writer->comments($this->comments, 2);
         $this->clearPrivileges->write($writer);
+        $writer->comments($this->comments, 3);
         $this->userList->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class DropWithDropUserClearPrivilegesUserList_fb762bb8 implements \SqlSema
      */
     public function withUser(string $user): self
     {
-        return new self($user, $this->clearPrivileges, $this->userList);
+        return new self($user, $this->clearPrivileges, $this->userList, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class DropWithDropUserClearPrivilegesUserList_fb762bb8 implements \SqlSema
      */
     public function withClearPrivileges(\SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges): self
     {
-        return new self($this->user, $clearPrivileges, $this->userList);
+        return new self($this->user, $clearPrivileges, $this->userList, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class DropWithDropUserClearPrivilegesUserList_fb762bb8 implements \SqlSema
      */
     public function withUserList(\SqlSemantics\Statement\Model\MySql\Role\UserListForm $userList): self
     {
-        return new self($this->user, $this->clearPrivileges, $userList);
+        return new self($this->user, $this->clearPrivileges, $userList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->clearPrivileges, $this->userList, $comments);
     }
 }

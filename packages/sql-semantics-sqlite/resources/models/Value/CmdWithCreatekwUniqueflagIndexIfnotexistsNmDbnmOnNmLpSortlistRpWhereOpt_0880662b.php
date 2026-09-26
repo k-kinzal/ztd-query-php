@@ -17,7 +17,7 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw,
@@ -28,6 +28,7 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($createkw), 'The createkw must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($uniqueflag), 'The uniqueflag must be a generated immutable SQL value.');
@@ -44,17 +45,29 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createkw->write($writer);
+        $writer->comments($this->comments, 1);
         $this->uniqueflag->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('INDEX');
+        $writer->comments($this->comments, 3);
         $this->ifnotexists->write($writer);
+        $writer->comments($this->comments, 4);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 5);
         $this->dbnm->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append('ON');
+        $writer->comments($this->comments, 7);
         $this->nm2->write($writer);
+        $writer->comments($this->comments, 8);
         $writer->append('(');
+        $writer->comments($this->comments, 9);
         $this->sortlist->write($writer);
+        $writer->comments($this->comments, 10);
         $writer->append(')');
+        $writer->comments($this->comments, 11);
         $this->where->write($writer);
     }
 
@@ -63,7 +76,7 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
      */
     public function withCreatekw(\SqlSemantics\Statement\Model\Sqlite\Role\CreatekwForm $createkw): self
     {
-        return new self($createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where);
+        return new self($createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where, $this->comments);
     }
 
     /**
@@ -71,7 +84,7 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
      */
     public function withUniqueflag(\SqlSemantics\Statement\Model\Sqlite\Role\UniqueflagForm $uniqueflag): self
     {
-        return new self($this->createkw, $uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where);
+        return new self($this->createkw, $uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where, $this->comments);
     }
 
     /**
@@ -79,7 +92,7 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
      */
     public function withIfnotexists(\SqlSemantics\Statement\Model\Sqlite\Role\IfnotexistsForm $ifnotexists): self
     {
-        return new self($this->createkw, $this->uniqueflag, $ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where);
+        return new self($this->createkw, $this->uniqueflag, $ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where, $this->comments);
     }
 
     /**
@@ -87,7 +100,7 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where);
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where, $this->comments);
     }
 
     /**
@@ -95,7 +108,7 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $dbnm, $this->nm2, $this->sortlist, $this->where);
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $dbnm, $this->nm2, $this->sortlist, $this->where, $this->comments);
     }
 
     /**
@@ -103,7 +116,7 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
      */
     public function withNm2(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm2): self
     {
-        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $nm2, $this->sortlist, $this->where);
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $nm2, $this->sortlist, $this->where, $this->comments);
     }
 
     /**
@@ -111,7 +124,7 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
      */
     public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
     {
-        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $sortlist, $this->where);
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $sortlist, $this->where, $this->comments);
     }
 
     /**
@@ -119,6 +132,14 @@ final class CmdWithCreatekwUniqueflagIndexIfnotexistsNmDbnmOnNmLpSortlistRpWhere
      */
     public function withWhere(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptForm $where): self
     {
-        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $where);
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $where, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createkw, $this->uniqueflag, $this->ifnotexists, $this->nm, $this->dbnm, $this->nm2, $this->sortlist, $this->where, $comments);
     }
 }

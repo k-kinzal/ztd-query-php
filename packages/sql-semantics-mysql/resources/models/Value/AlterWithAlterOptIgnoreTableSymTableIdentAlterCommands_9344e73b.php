@@ -17,12 +17,13 @@ final class AlterWithAlterOptIgnoreTableSymTableIdentAlterCommands_9344e73b impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm $optIgnore,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm $alterCommands,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnore), 'The optIgnore must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tableIdent), 'The tableIdent must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class AlterWithAlterOptIgnoreTableSymTableIdentAlterCommands_9344e73b impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $this->optIgnore->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 4);
         $this->alterCommands->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class AlterWithAlterOptIgnoreTableSymTableIdentAlterCommands_9344e73b impl
      */
     public function withOptIgnore(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm $optIgnore): self
     {
-        return new self($optIgnore, $this->tableIdent, $this->alterCommands);
+        return new self($optIgnore, $this->tableIdent, $this->alterCommands, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class AlterWithAlterOptIgnoreTableSymTableIdentAlterCommands_9344e73b impl
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->optIgnore, $tableIdent, $this->alterCommands);
+        return new self($this->optIgnore, $tableIdent, $this->alterCommands, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class AlterWithAlterOptIgnoreTableSymTableIdentAlterCommands_9344e73b impl
      */
     public function withAlterCommands(\SqlSemantics\Statement\Model\MySql\Role\AlterCommandsForm $alterCommands): self
     {
-        return new self($this->optIgnore, $this->tableIdent, $alterCommands);
+        return new self($this->optIgnore, $this->tableIdent, $alterCommands, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optIgnore, $this->tableIdent, $this->alterCommands, $comments);
     }
 }

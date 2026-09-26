@@ -17,12 +17,13 @@ final class ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeKeywordForm $analyzeKeyword,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($analyzeKeyword), 'The analyzeKeyword must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optVerbose), 'The optVerbose must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('EXPLAIN');
+        $writer->comments($this->comments, 1);
         $this->analyzeKeyword->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optVerbose->write($writer);
+        $writer->comments($this->comments, 3);
         $this->explainableStmt->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e
      */
     public function withAnalyzeKeyword(\SqlSemantics\Statement\Model\PostgreSql\Role\AnalyzeKeywordForm $analyzeKeyword): self
     {
-        return new self($analyzeKeyword, $this->optVerbose, $this->explainableStmt);
+        return new self($analyzeKeyword, $this->optVerbose, $this->explainableStmt, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e
      */
     public function withOptVerbose(\SqlSemantics\Statement\Model\PostgreSql\Role\OptVerboseForm $optVerbose): self
     {
-        return new self($this->analyzeKeyword, $optVerbose, $this->explainableStmt);
+        return new self($this->analyzeKeyword, $optVerbose, $this->explainableStmt, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class ExplainStmtWithExplainAnalyzeKeywordOptVerboseExplainableStmt_a4d28e
      */
     public function withExplainableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\ExplainableStmtForm $explainableStmt): self
     {
-        return new self($this->analyzeKeyword, $this->optVerbose, $explainableStmt);
+        return new self($this->analyzeKeyword, $this->optVerbose, $explainableStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->analyzeKeyword, $this->optVerbose, $this->explainableStmt, $comments);
     }
 }

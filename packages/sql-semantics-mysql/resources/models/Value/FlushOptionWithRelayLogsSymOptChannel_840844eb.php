@@ -17,10 +17,11 @@ final class FlushOptionWithRelayLogsSymOptChannel_840844eb implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChannel), 'The optChannel must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class FlushOptionWithRelayLogsSymOptChannel_840844eb implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('RELAY');
+        $writer->comments($this->comments, 1);
         $writer->append('LOGS');
+        $writer->comments($this->comments, 2);
         $this->optChannel->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class FlushOptionWithRelayLogsSymOptChannel_840844eb implements \SqlSemant
      */
     public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
     {
-        return new self($optChannel);
+        return new self($optChannel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optChannel, $comments);
     }
 }

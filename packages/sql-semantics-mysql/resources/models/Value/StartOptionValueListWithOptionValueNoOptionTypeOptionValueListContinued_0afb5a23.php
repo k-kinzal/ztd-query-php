@@ -17,11 +17,12 @@ final class StartOptionValueListWithOptionValueNoOptionTypeOptionValueListContin
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionValueNoOptionTypeForm $optionValueNoOptionType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptionValueListContinuedForm $optionValueListContinued,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionValueNoOptionType), 'The optionValueNoOptionType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optionValueListContinued), 'The optionValueListContinued must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class StartOptionValueListWithOptionValueNoOptionTypeOptionValueListContin
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optionValueNoOptionType->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optionValueListContinued->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class StartOptionValueListWithOptionValueNoOptionTypeOptionValueListContin
      */
     public function withOptionValueNoOptionType(\SqlSemantics\Statement\Model\MySql\Role\OptionValueNoOptionTypeForm $optionValueNoOptionType): self
     {
-        return new self($optionValueNoOptionType, $this->optionValueListContinued);
+        return new self($optionValueNoOptionType, $this->optionValueListContinued, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class StartOptionValueListWithOptionValueNoOptionTypeOptionValueListContin
      */
     public function withOptionValueListContinued(\SqlSemantics\Statement\Model\MySql\Role\OptionValueListContinuedForm $optionValueListContinued): self
     {
-        return new self($this->optionValueNoOptionType, $optionValueListContinued);
+        return new self($this->optionValueNoOptionType, $optionValueListContinued, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optionValueNoOptionType, $this->optionValueListContinued, $comments);
     }
 }

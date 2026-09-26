@@ -17,11 +17,12 @@ final class LiteralWithUnderscoreCharsetBinNum_326cde49 implements \SqlSemantics
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $underscoreCharset,
         public readonly string $binNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($underscoreCharset, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['UNDERSCORE_CHARSET'], 'The underscoreCharset must be a complete UNDERSCORE_CHARSET lexical spelling.');
         $this->assertMatchesPattern($binNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['BIN_NUM'], 'The binNum must be a complete BIN_NUM lexical spelling.');
@@ -32,7 +33,9 @@ final class LiteralWithUnderscoreCharsetBinNum_326cde49 implements \SqlSemantics
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->underscoreCharset);
+        $writer->comments($this->comments, 1);
         $writer->append($this->binNum);
     }
 
@@ -41,7 +44,7 @@ final class LiteralWithUnderscoreCharsetBinNum_326cde49 implements \SqlSemantics
      */
     public function withUnderscoreCharset(string $underscoreCharset): self
     {
-        return new self($underscoreCharset, $this->binNum);
+        return new self($underscoreCharset, $this->binNum, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class LiteralWithUnderscoreCharsetBinNum_326cde49 implements \SqlSemantics
      */
     public function withBinNum(string $binNum): self
     {
-        return new self($this->underscoreCharset, $binNum);
+        return new self($this->underscoreCharset, $binNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->underscoreCharset, $this->binNum, $comments);
     }
 }

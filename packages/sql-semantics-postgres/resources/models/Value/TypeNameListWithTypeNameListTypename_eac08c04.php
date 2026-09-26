@@ -17,11 +17,12 @@ final class TypeNameListWithTypeNameListTypename_eac08c04 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypeNameListForm $typeNameList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typeNameList), 'The typeNameList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($typename), 'The typename must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class TypeNameListWithTypeNameListTypename_eac08c04 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->typeNameList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->typename->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class TypeNameListWithTypeNameListTypename_eac08c04 implements \SqlSemanti
      */
     public function withTypeNameList(\SqlSemantics\Statement\Model\PostgreSql\Role\TypeNameListForm $typeNameList): self
     {
-        return new self($typeNameList, $this->typename);
+        return new self($typeNameList, $this->typename, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class TypeNameListWithTypeNameListTypename_eac08c04 implements \SqlSemanti
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($this->typeNameList, $typename);
+        return new self($this->typeNameList, $typename, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->typeNameList, $this->typename, $comments);
     }
 }

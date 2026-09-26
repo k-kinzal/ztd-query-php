@@ -17,7 +17,7 @@ final class CmdWithWithUpdateOrconfXfullnameIndexedOptSetSetlistFromWhereOptRet_
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WithForm $with,
@@ -27,6 +27,7 @@ final class CmdWithWithUpdateOrconfXfullnameIndexedOptSetSetlistFromWhereOptRet_
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FromForm $from,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\WhereOptRetForm $whereOptRet,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($with), 'The with must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($orconf), 'The orconf must be a generated immutable SQL value.');
@@ -42,14 +43,23 @@ final class CmdWithWithUpdateOrconfXfullnameIndexedOptSetSetlistFromWhereOptRet_
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->with->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 2);
         $this->orconf->write($writer);
+        $writer->comments($this->comments, 3);
         $this->xfullname->write($writer);
+        $writer->comments($this->comments, 4);
         $this->indexedOpt->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('SET');
+        $writer->comments($this->comments, 6);
         $this->setlist->write($writer);
+        $writer->comments($this->comments, 7);
         $this->from->write($writer);
+        $writer->comments($this->comments, 8);
         $this->whereOptRet->write($writer);
     }
 
@@ -58,7 +68,7 @@ final class CmdWithWithUpdateOrconfXfullnameIndexedOptSetSetlistFromWhereOptRet_
      */
     public function withWith(\SqlSemantics\Statement\Model\Sqlite\Role\WithForm $with): self
     {
-        return new self($with, $this->orconf, $this->xfullname, $this->indexedOpt, $this->setlist, $this->from, $this->whereOptRet);
+        return new self($with, $this->orconf, $this->xfullname, $this->indexedOpt, $this->setlist, $this->from, $this->whereOptRet, $this->comments);
     }
 
     /**
@@ -66,7 +76,7 @@ final class CmdWithWithUpdateOrconfXfullnameIndexedOptSetSetlistFromWhereOptRet_
      */
     public function withOrconf(\SqlSemantics\Statement\Model\Sqlite\Role\OrconfForm $orconf): self
     {
-        return new self($this->with, $orconf, $this->xfullname, $this->indexedOpt, $this->setlist, $this->from, $this->whereOptRet);
+        return new self($this->with, $orconf, $this->xfullname, $this->indexedOpt, $this->setlist, $this->from, $this->whereOptRet, $this->comments);
     }
 
     /**
@@ -74,7 +84,7 @@ final class CmdWithWithUpdateOrconfXfullnameIndexedOptSetSetlistFromWhereOptRet_
      */
     public function withXfullname(\SqlSemantics\Statement\Model\Sqlite\Role\XfullnameForm $xfullname): self
     {
-        return new self($this->with, $this->orconf, $xfullname, $this->indexedOpt, $this->setlist, $this->from, $this->whereOptRet);
+        return new self($this->with, $this->orconf, $xfullname, $this->indexedOpt, $this->setlist, $this->from, $this->whereOptRet, $this->comments);
     }
 
     /**
@@ -82,7 +92,7 @@ final class CmdWithWithUpdateOrconfXfullnameIndexedOptSetSetlistFromWhereOptRet_
      */
     public function withIndexedOpt(\SqlSemantics\Statement\Model\Sqlite\Role\IndexedOptForm $indexedOpt): self
     {
-        return new self($this->with, $this->orconf, $this->xfullname, $indexedOpt, $this->setlist, $this->from, $this->whereOptRet);
+        return new self($this->with, $this->orconf, $this->xfullname, $indexedOpt, $this->setlist, $this->from, $this->whereOptRet, $this->comments);
     }
 
     /**
@@ -90,7 +100,7 @@ final class CmdWithWithUpdateOrconfXfullnameIndexedOptSetSetlistFromWhereOptRet_
      */
     public function withSetlist(\SqlSemantics\Statement\Model\Sqlite\Role\SetlistForm $setlist): self
     {
-        return new self($this->with, $this->orconf, $this->xfullname, $this->indexedOpt, $setlist, $this->from, $this->whereOptRet);
+        return new self($this->with, $this->orconf, $this->xfullname, $this->indexedOpt, $setlist, $this->from, $this->whereOptRet, $this->comments);
     }
 
     /**
@@ -98,7 +108,7 @@ final class CmdWithWithUpdateOrconfXfullnameIndexedOptSetSetlistFromWhereOptRet_
      */
     public function withFrom(\SqlSemantics\Statement\Model\Sqlite\Role\FromForm $from): self
     {
-        return new self($this->with, $this->orconf, $this->xfullname, $this->indexedOpt, $this->setlist, $from, $this->whereOptRet);
+        return new self($this->with, $this->orconf, $this->xfullname, $this->indexedOpt, $this->setlist, $from, $this->whereOptRet, $this->comments);
     }
 
     /**
@@ -106,6 +116,14 @@ final class CmdWithWithUpdateOrconfXfullnameIndexedOptSetSetlistFromWhereOptRet_
      */
     public function withWhereOptRet(\SqlSemantics\Statement\Model\Sqlite\Role\WhereOptRetForm $whereOptRet): self
     {
-        return new self($this->with, $this->orconf, $this->xfullname, $this->indexedOpt, $this->setlist, $this->from, $whereOptRet);
+        return new self($this->with, $this->orconf, $this->xfullname, $this->indexedOpt, $this->setlist, $this->from, $whereOptRet, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->with, $this->orconf, $this->xfullname, $this->indexedOpt, $this->setlist, $this->from, $this->whereOptRet, $comments);
     }
 }

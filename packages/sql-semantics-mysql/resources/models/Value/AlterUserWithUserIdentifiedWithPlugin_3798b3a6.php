@@ -17,11 +17,12 @@ final class AlterUserWithUserIdentifiedWithPlugin_3798b3a6 implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginForm $identifiedWithPlugin,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identifiedWithPlugin), 'The identifiedWithPlugin must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class AlterUserWithUserIdentifiedWithPlugin_3798b3a6 implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->user->write($writer);
+        $writer->comments($this->comments, 1);
         $this->identifiedWithPlugin->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class AlterUserWithUserIdentifiedWithPlugin_3798b3a6 implements \SqlSemant
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($user, $this->identifiedWithPlugin);
+        return new self($user, $this->identifiedWithPlugin, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class AlterUserWithUserIdentifiedWithPlugin_3798b3a6 implements \SqlSemant
      */
     public function withIdentifiedWithPlugin(\SqlSemantics\Statement\Model\MySql\Role\IdentifiedWithPluginForm $identifiedWithPlugin): self
     {
-        return new self($this->user, $identifiedWithPlugin);
+        return new self($this->user, $identifiedWithPlugin, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->identifiedWithPlugin, $comments);
     }
 }

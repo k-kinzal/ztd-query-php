@@ -17,13 +17,14 @@ final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconca
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDistinctForm $optDistinct,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGorderClauseForm $optGorderClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptGconcatSeparatorForm $optGconcatSeparator,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDistinct), 'The optDistinct must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($exprList), 'The exprList must be a generated immutable SQL value.');
@@ -36,12 +37,19 @@ final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconca
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GROUP_CONCAT');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->optDistinct->write($writer);
+        $writer->comments($this->comments, 3);
         $this->exprList->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optGorderClause->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optGconcatSeparator->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
     }
 
@@ -50,7 +58,7 @@ final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconca
      */
     public function withOptDistinct(\SqlSemantics\Statement\Model\MySql\Role\OptDistinctForm $optDistinct): self
     {
-        return new self($optDistinct, $this->exprList, $this->optGorderClause, $this->optGconcatSeparator);
+        return new self($optDistinct, $this->exprList, $this->optGorderClause, $this->optGconcatSeparator, $this->comments);
     }
 
     /**
@@ -58,7 +66,7 @@ final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconca
      */
     public function withExprList(\SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList): self
     {
-        return new self($this->optDistinct, $exprList, $this->optGorderClause, $this->optGconcatSeparator);
+        return new self($this->optDistinct, $exprList, $this->optGorderClause, $this->optGconcatSeparator, $this->comments);
     }
 
     /**
@@ -66,7 +74,7 @@ final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconca
      */
     public function withOptGorderClause(\SqlSemantics\Statement\Model\MySql\Role\OptGorderClauseForm $optGorderClause): self
     {
-        return new self($this->optDistinct, $this->exprList, $optGorderClause, $this->optGconcatSeparator);
+        return new self($this->optDistinct, $this->exprList, $optGorderClause, $this->optGconcatSeparator, $this->comments);
     }
 
     /**
@@ -74,6 +82,14 @@ final class SumExprWithGroupConcatSymOptDistinctExprListOptGorderClauseOptGconca
      */
     public function withOptGconcatSeparator(\SqlSemantics\Statement\Model\MySql\Role\OptGconcatSeparatorForm $optGconcatSeparator): self
     {
-        return new self($this->optDistinct, $this->exprList, $this->optGorderClause, $optGconcatSeparator);
+        return new self($this->optDistinct, $this->exprList, $this->optGorderClause, $optGconcatSeparator, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optDistinct, $this->exprList, $this->optGorderClause, $this->optGconcatSeparator, $comments);
     }
 }

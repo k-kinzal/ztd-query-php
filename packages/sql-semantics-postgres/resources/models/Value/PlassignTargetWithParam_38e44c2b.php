@@ -17,10 +17,11 @@ final class PlassignTargetWithParam_38e44c2b implements \SqlSemantics\Statement\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $param,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($param, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['PARAM'], 'The param must be a complete PARAM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class PlassignTargetWithParam_38e44c2b implements \SqlSemantics\Statement\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->param);
     }
 
@@ -38,6 +40,14 @@ final class PlassignTargetWithParam_38e44c2b implements \SqlSemantics\Statement\
      */
     public function withParam(string $param): self
     {
-        return new self($param);
+        return new self($param, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->param, $comments);
     }
 }

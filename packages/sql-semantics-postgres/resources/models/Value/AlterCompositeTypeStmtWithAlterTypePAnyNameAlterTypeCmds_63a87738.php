@@ -17,11 +17,12 @@ final class AlterCompositeTypeStmtWithAlterTypePAnyNameAlterTypeCmds_63a87738 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterTypeCmdsForm $alterTypeCmds,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($alterTypeCmds), 'The alterTypeCmds must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class AlterCompositeTypeStmtWithAlterTypePAnyNameAlterTypeCmds_63a87738 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('TYPE');
+        $writer->comments($this->comments, 2);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 3);
         $this->alterTypeCmds->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class AlterCompositeTypeStmtWithAlterTypePAnyNameAlterTypeCmds_63a87738 im
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->alterTypeCmds);
+        return new self($anyName, $this->alterTypeCmds, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class AlterCompositeTypeStmtWithAlterTypePAnyNameAlterTypeCmds_63a87738 im
      */
     public function withAlterTypeCmds(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterTypeCmdsForm $alterTypeCmds): self
     {
-        return new self($this->anyName, $alterTypeCmds);
+        return new self($this->anyName, $alterTypeCmds, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->alterTypeCmds, $comments);
     }
 }

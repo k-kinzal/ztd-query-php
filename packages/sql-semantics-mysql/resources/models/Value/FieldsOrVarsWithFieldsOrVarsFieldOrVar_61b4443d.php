@@ -17,11 +17,12 @@ final class FieldsOrVarsWithFieldsOrVarsFieldOrVar_61b4443d implements \SqlSeman
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldsOrVarsForm $fieldsOrVars,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldOrVarForm $fieldOrVar,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldsOrVars), 'The fieldsOrVars must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fieldOrVar), 'The fieldOrVar must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class FieldsOrVarsWithFieldsOrVarsFieldOrVar_61b4443d implements \SqlSeman
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->fieldsOrVars->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->fieldOrVar->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class FieldsOrVarsWithFieldsOrVarsFieldOrVar_61b4443d implements \SqlSeman
      */
     public function withFieldsOrVars(\SqlSemantics\Statement\Model\MySql\Role\FieldsOrVarsForm $fieldsOrVars): self
     {
-        return new self($fieldsOrVars, $this->fieldOrVar);
+        return new self($fieldsOrVars, $this->fieldOrVar, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class FieldsOrVarsWithFieldsOrVarsFieldOrVar_61b4443d implements \SqlSeman
      */
     public function withFieldOrVar(\SqlSemantics\Statement\Model\MySql\Role\FieldOrVarForm $fieldOrVar): self
     {
-        return new self($this->fieldsOrVars, $fieldOrVar);
+        return new self($this->fieldsOrVars, $fieldOrVar, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fieldsOrVars, $this->fieldOrVar, $comments);
     }
 }

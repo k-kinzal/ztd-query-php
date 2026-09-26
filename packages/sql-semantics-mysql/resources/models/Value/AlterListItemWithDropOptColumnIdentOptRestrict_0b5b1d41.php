@@ -17,12 +17,13 @@ final class AlterListItemWithDropOptColumnIdentOptRestrict_0b5b1d41 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm $optRestrict,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class AlterListItemWithDropOptColumnIdentOptRestrict_0b5b1d41 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $this->optColumn->write($writer);
+        $writer->comments($this->comments, 2);
         $this->ident->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optRestrict->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class AlterListItemWithDropOptColumnIdentOptRestrict_0b5b1d41 implements \
      */
     public function withOptColumn(\SqlSemantics\Statement\Model\MySql\Role\OptColumnForm $optColumn): self
     {
-        return new self($optColumn, $this->ident, $this->optRestrict);
+        return new self($optColumn, $this->ident, $this->optRestrict, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class AlterListItemWithDropOptColumnIdentOptRestrict_0b5b1d41 implements \
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->optColumn, $ident, $this->optRestrict);
+        return new self($this->optColumn, $ident, $this->optRestrict, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class AlterListItemWithDropOptColumnIdentOptRestrict_0b5b1d41 implements \
      */
     public function withOptRestrict(\SqlSemantics\Statement\Model\MySql\Role\OptRestrictForm $optRestrict): self
     {
-        return new self($this->optColumn, $this->ident, $optRestrict);
+        return new self($this->optColumn, $this->ident, $optRestrict, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optColumn, $this->ident, $this->optRestrict, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class FuncExprCommonSubexprWithTrimTrailingTrimList_1ab21fb7 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm $trimList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($trimList), 'The trimList must be a generated immutable SQL value.');
     }
@@ -30,10 +31,15 @@ final class FuncExprCommonSubexprWithTrimTrailingTrimList_1ab21fb7 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TRIM');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $writer->append('TRAILING');
+        $writer->comments($this->comments, 3);
         $this->trimList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -42,6 +48,14 @@ final class FuncExprCommonSubexprWithTrimTrailingTrimList_1ab21fb7 implements \S
      */
     public function withTrimList(\SqlSemantics\Statement\Model\PostgreSql\Role\TrimListForm $trimList): self
     {
-        return new self($trimList);
+        return new self($trimList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->trimList, $comments);
     }
 }

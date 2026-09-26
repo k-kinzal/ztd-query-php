@@ -17,12 +17,13 @@ final class CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm $caseArg,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm $whenClauseList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CaseDefaultForm $caseDefault,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($caseArg), 'The caseArg must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($whenClauseList), 'The whenClauseList must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CASE');
+        $writer->comments($this->comments, 1);
         $this->caseArg->write($writer);
+        $writer->comments($this->comments, 2);
         $this->whenClauseList->write($writer);
+        $writer->comments($this->comments, 3);
         $this->caseDefault->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('END');
     }
 
@@ -46,7 +52,7 @@ final class CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 implem
      */
     public function withCaseArg(\SqlSemantics\Statement\Model\PostgreSql\Role\CaseArgForm $caseArg): self
     {
-        return new self($caseArg, $this->whenClauseList, $this->caseDefault);
+        return new self($caseArg, $this->whenClauseList, $this->caseDefault, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 implem
      */
     public function withWhenClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\WhenClauseListForm $whenClauseList): self
     {
-        return new self($this->caseArg, $whenClauseList, $this->caseDefault);
+        return new self($this->caseArg, $whenClauseList, $this->caseDefault, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class CaseExprWithCaseCaseArgWhenClauseListCaseDefaultEndP_f1b65b13 implem
      */
     public function withCaseDefault(\SqlSemantics\Statement\Model\PostgreSql\Role\CaseDefaultForm $caseDefault): self
     {
-        return new self($this->caseArg, $this->whenClauseList, $caseDefault);
+        return new self($this->caseArg, $this->whenClauseList, $caseDefault, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->caseArg, $this->whenClauseList, $this->caseDefault, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class SelectDerived2WithSelectOptionsSelectItemListOptSelectFrom_92aa25b9 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm $optSelectFrom,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($options), 'The options must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($projections), 'The projections must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class SelectDerived2WithSelectOptionsSelectItemListOptSelectFrom_92aa25b9 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->options->write($writer);
+        $writer->comments($this->comments, 1);
         $this->projections->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optSelectFrom->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class SelectDerived2WithSelectOptionsSelectItemListOptSelectFrom_92aa25b9 
      */
     public function withOptions(\SqlSemantics\Statement\Model\MySql\Role\SelectOptionsForm $options): self
     {
-        return new self($options, $this->projections, $this->optSelectFrom);
+        return new self($options, $this->projections, $this->optSelectFrom, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class SelectDerived2WithSelectOptionsSelectItemListOptSelectFrom_92aa25b9 
      */
     public function withProjections(\SqlSemantics\Statement\Model\MySql\Role\SelectItemListForm $projections): self
     {
-        return new self($this->options, $projections, $this->optSelectFrom);
+        return new self($this->options, $projections, $this->optSelectFrom, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class SelectDerived2WithSelectOptionsSelectItemListOptSelectFrom_92aa25b9 
      */
     public function withOptSelectFrom(\SqlSemantics\Statement\Model\MySql\Role\OptSelectFromForm $optSelectFrom): self
     {
-        return new self($this->options, $this->projections, $optSelectFrom);
+        return new self($this->options, $this->projections, $optSelectFrom, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->options, $this->projections, $this->optSelectFrom, $comments);
     }
 }

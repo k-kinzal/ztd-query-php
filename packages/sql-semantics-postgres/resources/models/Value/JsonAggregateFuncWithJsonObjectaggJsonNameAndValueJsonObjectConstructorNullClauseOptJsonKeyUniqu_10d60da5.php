@@ -17,13 +17,14 @@ final class JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstruc
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueForm $jsonNameAndValue,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonObjectConstructorNullClauseOptForm $jsonObjectConstructorNullClauseOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonKeyUniquenessConstraintOptForm $jsonKeyUniquenessConstraintOpt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonNameAndValue), 'The jsonNameAndValue must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($jsonObjectConstructorNullClauseOpt), 'The jsonObjectConstructorNullClauseOpt must be a generated immutable SQL value.');
@@ -36,12 +37,19 @@ final class JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstruc
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('JSON_OBJECTAGG');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->jsonNameAndValue->write($writer);
+        $writer->comments($this->comments, 3);
         $this->jsonObjectConstructorNullClauseOpt->write($writer);
+        $writer->comments($this->comments, 4);
         $this->jsonKeyUniquenessConstraintOpt->write($writer);
+        $writer->comments($this->comments, 5);
         $this->jsonReturningClauseOpt->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
     }
 
@@ -50,7 +58,7 @@ final class JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstruc
      */
     public function withJsonNameAndValue(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonNameAndValueForm $jsonNameAndValue): self
     {
-        return new self($jsonNameAndValue, $this->jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $this->jsonReturningClauseOpt);
+        return new self($jsonNameAndValue, $this->jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $this->jsonReturningClauseOpt, $this->comments);
     }
 
     /**
@@ -58,7 +66,7 @@ final class JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstruc
      */
     public function withJsonObjectConstructorNullClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonObjectConstructorNullClauseOptForm $jsonObjectConstructorNullClauseOpt): self
     {
-        return new self($this->jsonNameAndValue, $jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $this->jsonReturningClauseOpt);
+        return new self($this->jsonNameAndValue, $jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $this->jsonReturningClauseOpt, $this->comments);
     }
 
     /**
@@ -66,7 +74,7 @@ final class JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstruc
      */
     public function withJsonKeyUniquenessConstraintOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonKeyUniquenessConstraintOptForm $jsonKeyUniquenessConstraintOpt): self
     {
-        return new self($this->jsonNameAndValue, $this->jsonObjectConstructorNullClauseOpt, $jsonKeyUniquenessConstraintOpt, $this->jsonReturningClauseOpt);
+        return new self($this->jsonNameAndValue, $this->jsonObjectConstructorNullClauseOpt, $jsonKeyUniquenessConstraintOpt, $this->jsonReturningClauseOpt, $this->comments);
     }
 
     /**
@@ -74,6 +82,14 @@ final class JsonAggregateFuncWithJsonObjectaggJsonNameAndValueJsonObjectConstruc
      */
     public function withJsonReturningClauseOpt(\SqlSemantics\Statement\Model\PostgreSql\Role\JsonReturningClauseOptForm $jsonReturningClauseOpt): self
     {
-        return new self($this->jsonNameAndValue, $this->jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $jsonReturningClauseOpt);
+        return new self($this->jsonNameAndValue, $this->jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $jsonReturningClauseOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->jsonNameAndValue, $this->jsonObjectConstructorNullClauseOpt, $this->jsonKeyUniquenessConstraintOpt, $this->jsonReturningClauseOpt, $comments);
     }
 }

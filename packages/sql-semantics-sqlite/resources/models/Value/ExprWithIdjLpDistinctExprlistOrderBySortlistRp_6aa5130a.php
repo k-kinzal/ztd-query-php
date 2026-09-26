@@ -17,13 +17,14 @@ final class ExprWithIdjLpDistinctExprlistOrderBySortlistRp_6aa5130a implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $idj,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($idj, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['idj'], 'The idj must be a complete idj lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($distinct), 'The distinct must be a generated immutable SQL value.');
@@ -36,13 +37,21 @@ final class ExprWithIdjLpDistinctExprlistOrderBySortlistRp_6aa5130a implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->idj);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->distinct->write($writer);
+        $writer->comments($this->comments, 3);
         $this->exprlist->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('ORDER');
+        $writer->comments($this->comments, 5);
         $writer->append('BY');
+        $writer->comments($this->comments, 6);
         $this->sortlist->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append(')');
     }
 
@@ -51,7 +60,7 @@ final class ExprWithIdjLpDistinctExprlistOrderBySortlistRp_6aa5130a implements \
      */
     public function withIdj(string $idj): self
     {
-        return new self($idj, $this->distinct, $this->exprlist, $this->sortlist);
+        return new self($idj, $this->distinct, $this->exprlist, $this->sortlist, $this->comments);
     }
 
     /**
@@ -59,7 +68,7 @@ final class ExprWithIdjLpDistinctExprlistOrderBySortlistRp_6aa5130a implements \
      */
     public function withDistinct(\SqlSemantics\Statement\Model\Sqlite\Role\DistinctForm $distinct): self
     {
-        return new self($this->idj, $distinct, $this->exprlist, $this->sortlist);
+        return new self($this->idj, $distinct, $this->exprlist, $this->sortlist, $this->comments);
     }
 
     /**
@@ -67,7 +76,7 @@ final class ExprWithIdjLpDistinctExprlistOrderBySortlistRp_6aa5130a implements \
      */
     public function withExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\ExprlistForm $exprlist): self
     {
-        return new self($this->idj, $this->distinct, $exprlist, $this->sortlist);
+        return new self($this->idj, $this->distinct, $exprlist, $this->sortlist, $this->comments);
     }
 
     /**
@@ -75,6 +84,14 @@ final class ExprWithIdjLpDistinctExprlistOrderBySortlistRp_6aa5130a implements \
      */
     public function withSortlist(\SqlSemantics\Statement\Model\Sqlite\Role\SortlistForm $sortlist): self
     {
-        return new self($this->idj, $this->distinct, $this->exprlist, $sortlist);
+        return new self($this->idj, $this->distinct, $this->exprlist, $sortlist, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->idj, $this->distinct, $this->exprlist, $this->sortlist, $comments);
     }
 }

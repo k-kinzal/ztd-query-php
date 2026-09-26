@@ -16,6 +16,9 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\SqlSemantics\Facade\Semantics::class)]
 #[UsesClass(\SqlSemantics\Statement\Element::class)]
 #[UsesClass(\SqlSemantics\Statement\Statement::class)]
+#[UsesClass(\SqlSemantics\Statement\Comments::class)]
+#[UsesClass(\SqlSemantics\Core\Analysis\TriviaReader::class)]
+#[UsesClass(\SqlSemantics\Core\Analysis\SourceComments::class)]
 #[UsesClass(\SqlSemantics\Core\Ast\DialectParser::class)]
 #[UsesClass(\SqlSemantics\Platform\MySql\Platform::class)]
 #[UsesClass(\SqlSemantics\Platform\PostgreSql\Platform::class)]
@@ -81,5 +84,41 @@ final class WriterTest extends TestCase
         $writer->append("'one'");
         $writer->append("'two'");
         self::assertSame("'one' 'two'", $writer->toString());
+    }
+
+    public function testAppendAttachesTheNextValueToAPrefixButSeparatesOperators(): void
+    {
+        $variable = new \SqlSemantics\Statement\Writer();
+        $variable->append('@', prefix: true);
+        $variable->append('@', prefix: true);
+        $variable->append('name', true);
+        self::assertSame('@@name', $variable->toString());
+        $operator = new \SqlSemantics\Statement\Writer();
+        $operator->append('@');
+        $operator->append('-');
+        $operator->append('1');
+        self::assertSame('@ - 1', $operator->toString());
+    }
+
+    public function testCommentsWritesEachCommentBeforeItsSymbolAndEndsALineComment(): void
+    {
+        $comments = new \SqlSemantics\Statement\Comments([0 => ['/* lead */'], 1 => ['-- one', '#two'], 2 => ['/* c */']]);
+        $writer = new \SqlSemantics\Statement\Writer();
+        $writer->comments($comments, 0);
+        $writer->append('SELECT');
+        $writer->comments($comments, 1);
+        $writer->append('COUNT');
+        $writer->comments($comments, 2);
+        $writer->append('(');
+        $writer->append('*');
+        $writer->append(')');
+        $writer->comments($comments, 3);
+        self::assertSame("/* lead */ SELECT -- one\n#two\nCOUNT /* c */ ( * )", $writer->toString());
+    }
+
+    public function testRenderWritesTheCommentsOfEveryValue(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT /* a */ foo -- b\n FROM items /* c */ WHERE foo = /* d */ 1");
+        self::assertSame("SELECT /* a */ foo -- b\nFROM items /* c */ WHERE foo = /* d */ 1", \SqlSemantics\Statement\Writer::render($statement->command));
     }
 }

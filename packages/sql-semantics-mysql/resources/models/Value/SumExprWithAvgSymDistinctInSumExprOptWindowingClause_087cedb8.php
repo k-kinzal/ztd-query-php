@@ -17,12 +17,13 @@ final class SumExprWithAvgSymDistinctInSumExprOptWindowingClause_087cedb8 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $distinct,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm $optWindowingClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($distinct, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DISTINCT'], 'The distinct must be a complete DISTINCT lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($inSumExpr), 'The inSumExpr must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class SumExprWithAvgSymDistinctInSumExprOptWindowingClause_087cedb8 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('AVG');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $writer->append($this->distinct);
+        $writer->comments($this->comments, 3);
         $this->inSumExpr->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
+        $writer->comments($this->comments, 5);
         $this->optWindowingClause->write($writer);
     }
 
@@ -47,7 +54,7 @@ final class SumExprWithAvgSymDistinctInSumExprOptWindowingClause_087cedb8 implem
      */
     public function withDistinct(string $distinct): self
     {
-        return new self($distinct, $this->inSumExpr, $this->optWindowingClause);
+        return new self($distinct, $this->inSumExpr, $this->optWindowingClause, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class SumExprWithAvgSymDistinctInSumExprOptWindowingClause_087cedb8 implem
      */
     public function withInSumExpr(\SqlSemantics\Statement\Model\MySql\Role\InSumExprForm $inSumExpr): self
     {
-        return new self($this->distinct, $inSumExpr, $this->optWindowingClause);
+        return new self($this->distinct, $inSumExpr, $this->optWindowingClause, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class SumExprWithAvgSymDistinctInSumExprOptWindowingClause_087cedb8 implem
      */
     public function withOptWindowingClause(\SqlSemantics\Statement\Model\MySql\Role\OptWindowingClauseForm $optWindowingClause): self
     {
-        return new self($this->distinct, $this->inSumExpr, $optWindowingClause);
+        return new self($this->distinct, $this->inSumExpr, $optWindowingClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->distinct, $this->inSumExpr, $this->optWindowingClause, $comments);
     }
 }

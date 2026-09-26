@@ -17,13 +17,14 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm $selectDerivedUnion,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectDerivedUnion), 'The selectDerivedUnion must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($unionOption), 'The unionOption must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->selectDerivedUnion->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('UNION');
+        $writer->comments($this->comments, 2);
         $this->unionOption->write($writer);
+        $writer->comments($this->comments, 3);
         $this->query->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optUnionOrderOrLimit->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
      */
     public function withSelectDerivedUnion(\SqlSemantics\Statement\Model\MySql\Role\SelectDerivedUnionForm $selectDerivedUnion): self
     {
-        return new self($selectDerivedUnion, $this->unionOption, $this->query, $this->optUnionOrderOrLimit);
+        return new self($selectDerivedUnion, $this->unionOption, $this->query, $this->optUnionOrderOrLimit, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
      */
     public function withUnionOption(\SqlSemantics\Statement\Model\MySql\Role\UnionOptionForm $unionOption): self
     {
-        return new self($this->selectDerivedUnion, $unionOption, $this->query, $this->optUnionOrderOrLimit);
+        return new self($this->selectDerivedUnion, $unionOption, $this->query, $this->optUnionOrderOrLimit, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
      */
     public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query): self
     {
-        return new self($this->selectDerivedUnion, $this->unionOption, $query, $this->optUnionOrderOrLimit);
+        return new self($this->selectDerivedUnion, $this->unionOption, $query, $this->optUnionOrderOrLimit, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class SelectDerivedUnionWithSelectDerivedUnionUnionSymUnionOptionQuerySpec
      */
     public function withOptUnionOrderOrLimit(\SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit): self
     {
-        return new self($this->selectDerivedUnion, $this->unionOption, $this->query, $optUnionOrderOrLimit);
+        return new self($this->selectDerivedUnion, $this->unionOption, $this->query, $optUnionOrderOrLimit, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->selectDerivedUnion, $this->unionOption, $this->query, $this->optUnionOrderOrLimit, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class CExprWithParamOptIndirection_07877588 implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $param,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($param, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['PARAM'], 'The param must be a complete PARAM lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optIndirection), 'The optIndirection must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class CExprWithParamOptIndirection_07877588 implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->param);
+        $writer->comments($this->comments, 1);
         $this->optIndirection->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class CExprWithParamOptIndirection_07877588 implements \SqlSemantics\State
      */
     public function withParam(string $param): self
     {
-        return new self($param, $this->optIndirection);
+        return new self($param, $this->optIndirection, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class CExprWithParamOptIndirection_07877588 implements \SqlSemantics\State
      */
     public function withOptIndirection(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection): self
     {
-        return new self($this->param, $optIndirection);
+        return new self($this->param, $optIndirection, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->param, $this->optIndirection, $comments);
     }
 }

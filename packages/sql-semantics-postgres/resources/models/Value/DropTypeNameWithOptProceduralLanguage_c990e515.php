@@ -17,10 +17,11 @@ final class DropTypeNameWithOptProceduralLanguage_c990e515 implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm $optProcedural,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optProcedural), 'The optProcedural must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class DropTypeNameWithOptProceduralLanguage_c990e515 implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optProcedural->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('LANGUAGE');
     }
 
@@ -39,6 +42,14 @@ final class DropTypeNameWithOptProceduralLanguage_c990e515 implements \SqlSemant
      */
     public function withOptProcedural(\SqlSemantics\Statement\Model\PostgreSql\Role\OptProceduralForm $optProcedural): self
     {
-        return new self($optProcedural);
+        return new self($optProcedural, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optProcedural, $comments);
     }
 }

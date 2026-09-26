@@ -17,12 +17,13 @@ final class CreateSchemaStmtWithCreateSchemaOptSingleNameAuthorizationRoleSpecOp
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSingleNameForm $optSingleName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optSingleName), 'The optSingleName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class CreateSchemaStmtWithCreateSchemaOptSingleNameAuthorizationRoleSpecOp
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('SCHEMA');
+        $writer->comments($this->comments, 2);
         $this->optSingleName->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('AUTHORIZATION');
+        $writer->comments($this->comments, 4);
         $this->roleSpec->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optSchemaEltList->write($writer);
     }
 
@@ -47,7 +54,7 @@ final class CreateSchemaStmtWithCreateSchemaOptSingleNameAuthorizationRoleSpecOp
      */
     public function withOptSingleName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSingleNameForm $optSingleName): self
     {
-        return new self($optSingleName, $this->roleSpec, $this->optSchemaEltList);
+        return new self($optSingleName, $this->roleSpec, $this->optSchemaEltList, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class CreateSchemaStmtWithCreateSchemaOptSingleNameAuthorizationRoleSpecOp
      */
     public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
     {
-        return new self($this->optSingleName, $roleSpec, $this->optSchemaEltList);
+        return new self($this->optSingleName, $roleSpec, $this->optSchemaEltList, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class CreateSchemaStmtWithCreateSchemaOptSingleNameAuthorizationRoleSpecOp
      */
     public function withOptSchemaEltList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSchemaEltListForm $optSchemaEltList): self
     {
-        return new self($this->optSingleName, $this->roleSpec, $optSchemaEltList);
+        return new self($this->optSingleName, $this->roleSpec, $optSchemaEltList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optSingleName, $this->roleSpec, $this->optSchemaEltList, $comments);
     }
 }

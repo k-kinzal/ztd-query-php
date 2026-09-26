@@ -17,11 +17,12 @@ final class ChangeTablespaceAccessWithTablespaceNameTsAccessMode_eb4b17e4 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm $tablespaceName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TsAccessModeForm $tsAccessMode,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tablespaceName), 'The tablespaceName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($tsAccessMode), 'The tsAccessMode must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ChangeTablespaceAccessWithTablespaceNameTsAccessMode_eb4b17e4 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->tablespaceName->write($writer);
+        $writer->comments($this->comments, 1);
         $this->tsAccessMode->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ChangeTablespaceAccessWithTablespaceNameTsAccessMode_eb4b17e4 implem
      */
     public function withTablespaceName(\SqlSemantics\Statement\Model\MySql\Role\TablespaceNameForm $tablespaceName): self
     {
-        return new self($tablespaceName, $this->tsAccessMode);
+        return new self($tablespaceName, $this->tsAccessMode, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ChangeTablespaceAccessWithTablespaceNameTsAccessMode_eb4b17e4 implem
      */
     public function withTsAccessMode(\SqlSemantics\Statement\Model\MySql\Role\TsAccessModeForm $tsAccessMode): self
     {
-        return new self($this->tablespaceName, $tsAccessMode);
+        return new self($this->tablespaceName, $tsAccessMode, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->tablespaceName, $this->tsAccessMode, $comments);
     }
 }

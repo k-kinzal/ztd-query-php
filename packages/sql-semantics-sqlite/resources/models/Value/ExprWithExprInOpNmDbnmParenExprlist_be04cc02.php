@@ -17,7 +17,7 @@ final class ExprWithExprInOpNmDbnmParenExprlist_be04cc02 implements \SqlSemantic
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr,
@@ -25,6 +25,7 @@ final class ExprWithExprInOpNmDbnmParenExprlist_be04cc02 implements \SqlSemantic
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ParenExprlistForm $parenExprlist,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($expr), 'The expr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($expr, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::BINDING_POWERS, array (  'sqlite-3.47.2' => 4,));
@@ -39,10 +40,15 @@ final class ExprWithExprInOpNmDbnmParenExprlist_be04cc02 implements \SqlSemantic
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 1);
         $this->inOp->write($writer);
+        $writer->comments($this->comments, 2);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 3);
         $this->dbnm->write($writer);
+        $writer->comments($this->comments, 4);
         $this->parenExprlist->write($writer);
     }
 
@@ -51,7 +57,7 @@ final class ExprWithExprInOpNmDbnmParenExprlist_be04cc02 implements \SqlSemantic
      */
     public function withExpr(\SqlSemantics\Statement\Model\Sqlite\Role\ExprForm $expr): self
     {
-        return new self($expr, $this->inOp, $this->nm, $this->dbnm, $this->parenExprlist);
+        return new self($expr, $this->inOp, $this->nm, $this->dbnm, $this->parenExprlist, $this->comments);
     }
 
     /**
@@ -59,7 +65,7 @@ final class ExprWithExprInOpNmDbnmParenExprlist_be04cc02 implements \SqlSemantic
      */
     public function withInOp(\SqlSemantics\Statement\Model\Sqlite\Role\InOpForm $inOp): self
     {
-        return new self($this->expr, $inOp, $this->nm, $this->dbnm, $this->parenExprlist);
+        return new self($this->expr, $inOp, $this->nm, $this->dbnm, $this->parenExprlist, $this->comments);
     }
 
     /**
@@ -67,7 +73,7 @@ final class ExprWithExprInOpNmDbnmParenExprlist_be04cc02 implements \SqlSemantic
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->expr, $this->inOp, $nm, $this->dbnm, $this->parenExprlist);
+        return new self($this->expr, $this->inOp, $nm, $this->dbnm, $this->parenExprlist, $this->comments);
     }
 
     /**
@@ -75,7 +81,7 @@ final class ExprWithExprInOpNmDbnmParenExprlist_be04cc02 implements \SqlSemantic
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->expr, $this->inOp, $this->nm, $dbnm, $this->parenExprlist);
+        return new self($this->expr, $this->inOp, $this->nm, $dbnm, $this->parenExprlist, $this->comments);
     }
 
     /**
@@ -83,6 +89,14 @@ final class ExprWithExprInOpNmDbnmParenExprlist_be04cc02 implements \SqlSemantic
      */
     public function withParenExprlist(\SqlSemantics\Statement\Model\Sqlite\Role\ParenExprlistForm $parenExprlist): self
     {
-        return new self($this->expr, $this->inOp, $this->nm, $this->dbnm, $parenExprlist);
+        return new self($this->expr, $this->inOp, $this->nm, $this->dbnm, $parenExprlist, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->expr, $this->inOp, $this->nm, $this->dbnm, $this->parenExprlist, $comments);
     }
 }

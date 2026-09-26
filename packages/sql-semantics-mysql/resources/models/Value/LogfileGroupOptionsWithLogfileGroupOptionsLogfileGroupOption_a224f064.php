@@ -17,11 +17,12 @@ final class LogfileGroupOptionsWithLogfileGroupOptionsLogfileGroupOption_a224f06
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionsForm $logfileGroupOptions,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionForm $logfileGroupOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($logfileGroupOptions), 'The logfileGroupOptions must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($logfileGroupOption), 'The logfileGroupOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class LogfileGroupOptionsWithLogfileGroupOptionsLogfileGroupOption_a224f06
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->logfileGroupOptions->write($writer);
+        $writer->comments($this->comments, 1);
         $this->logfileGroupOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class LogfileGroupOptionsWithLogfileGroupOptionsLogfileGroupOption_a224f06
      */
     public function withLogfileGroupOptions(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionsForm $logfileGroupOptions): self
     {
-        return new self($logfileGroupOptions, $this->logfileGroupOption);
+        return new self($logfileGroupOptions, $this->logfileGroupOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class LogfileGroupOptionsWithLogfileGroupOptionsLogfileGroupOption_a224f06
      */
     public function withLogfileGroupOption(\SqlSemantics\Statement\Model\MySql\Role\LogfileGroupOptionForm $logfileGroupOption): self
     {
-        return new self($this->logfileGroupOptions, $logfileGroupOption);
+        return new self($this->logfileGroupOptions, $logfileGroupOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->logfileGroupOptions, $this->logfileGroupOption, $comments);
     }
 }

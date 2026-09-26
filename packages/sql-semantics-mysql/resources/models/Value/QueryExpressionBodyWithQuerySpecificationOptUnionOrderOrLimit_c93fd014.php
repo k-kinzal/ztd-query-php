@@ -17,11 +17,12 @@ final class QueryExpressionBodyWithQuerySpecificationOptUnionOrderOrLimit_c93fd0
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($query), 'The query must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionOrderOrLimit), 'The optUnionOrderOrLimit must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class QueryExpressionBodyWithQuerySpecificationOptUnionOrderOrLimit_c93fd0
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->query->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optUnionOrderOrLimit->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class QueryExpressionBodyWithQuerySpecificationOptUnionOrderOrLimit_c93fd0
      */
     public function withQuery(\SqlSemantics\Statement\Model\MySql\Role\QuerySpecificationForm $query): self
     {
-        return new self($query, $this->optUnionOrderOrLimit);
+        return new self($query, $this->optUnionOrderOrLimit, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class QueryExpressionBodyWithQuerySpecificationOptUnionOrderOrLimit_c93fd0
      */
     public function withOptUnionOrderOrLimit(\SqlSemantics\Statement\Model\MySql\Role\OptUnionOrderOrLimitForm $optUnionOrderOrLimit): self
     {
-        return new self($this->query, $optUnionOrderOrLimit);
+        return new self($this->query, $optUnionOrderOrLimit, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->query, $this->optUnionOrderOrLimit, $comments);
     }
 }

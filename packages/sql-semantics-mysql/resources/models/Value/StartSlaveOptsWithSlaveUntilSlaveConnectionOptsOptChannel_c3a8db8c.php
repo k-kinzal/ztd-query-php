@@ -17,12 +17,13 @@ final class StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveUntilForm $slaveUntil,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SlaveConnectionOptsForm $slaveConnectionOpts,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveUntil), 'The slaveUntil must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($slaveConnectionOpts), 'The slaveConnectionOpts must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->slaveUntil->write($writer);
+        $writer->comments($this->comments, 1);
         $this->slaveConnectionOpts->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optChannel->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c i
      */
     public function withSlaveUntil(\SqlSemantics\Statement\Model\MySql\Role\SlaveUntilForm $slaveUntil): self
     {
-        return new self($slaveUntil, $this->slaveConnectionOpts, $this->optChannel);
+        return new self($slaveUntil, $this->slaveConnectionOpts, $this->optChannel, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c i
      */
     public function withSlaveConnectionOpts(\SqlSemantics\Statement\Model\MySql\Role\SlaveConnectionOptsForm $slaveConnectionOpts): self
     {
-        return new self($this->slaveUntil, $slaveConnectionOpts, $this->optChannel);
+        return new self($this->slaveUntil, $slaveConnectionOpts, $this->optChannel, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class StartSlaveOptsWithSlaveUntilSlaveConnectionOptsOptChannel_c3a8db8c i
      */
     public function withOptChannel(\SqlSemantics\Statement\Model\MySql\Role\OptChannelForm $optChannel): self
     {
-        return new self($this->slaveUntil, $this->slaveConnectionOpts, $optChannel);
+        return new self($this->slaveUntil, $this->slaveConnectionOpts, $optChannel, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->slaveUntil, $this->slaveConnectionOpts, $this->optChannel, $comments);
     }
 }

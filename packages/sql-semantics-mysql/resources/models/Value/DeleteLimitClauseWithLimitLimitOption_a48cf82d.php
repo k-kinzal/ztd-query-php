@@ -17,10 +17,11 @@ final class DeleteLimitClauseWithLimitLimitOption_a48cf82d implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\LimitOptionForm $limitOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($limitOption), 'The limitOption must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class DeleteLimitClauseWithLimitLimitOption_a48cf82d implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('LIMIT');
+        $writer->comments($this->comments, 1);
         $this->limitOption->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class DeleteLimitClauseWithLimitLimitOption_a48cf82d implements \SqlSemant
      */
     public function withLimitOption(\SqlSemantics\Statement\Model\MySql\Role\LimitOptionForm $limitOption): self
     {
-        return new self($limitOption);
+        return new self($limitOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->limitOption, $comments);
     }
 }

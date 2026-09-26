@@ -17,11 +17,12 @@ final class CallWithCallSymSpNameOptSpCparamList_50cac9e7 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSpCparamListForm $optSpCparamList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spName), 'The spName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSpCparamList), 'The optSpCparamList must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class CallWithCallSymSpNameOptSpCparamList_50cac9e7 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CALL');
+        $writer->comments($this->comments, 1);
         $this->spName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optSpCparamList->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class CallWithCallSymSpNameOptSpCparamList_50cac9e7 implements \SqlSemanti
      */
     public function withSpName(\SqlSemantics\Statement\Model\MySql\Role\SpNameForm $spName): self
     {
-        return new self($spName, $this->optSpCparamList);
+        return new self($spName, $this->optSpCparamList, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class CallWithCallSymSpNameOptSpCparamList_50cac9e7 implements \SqlSemanti
      */
     public function withOptSpCparamList(\SqlSemantics\Statement\Model\MySql\Role\OptSpCparamListForm $optSpCparamList): self
     {
-        return new self($this->spName, $optSpCparamList);
+        return new self($this->spName, $optSpCparamList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spName, $this->optSpCparamList, $comments);
     }
 }

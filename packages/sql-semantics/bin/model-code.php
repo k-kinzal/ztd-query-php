@@ -91,6 +91,9 @@ function roles(string $name, string $dialect, array $parents, array $entryRules 
 /**
  * Emits a class with named, typed arguments and fixed SQL in its writer.
  *
+ * Every symbol position writes its comments first. A fixed `@` is a prefix that
+ * the following value must touch, so the writer never separates them.
+ *
  * @param list<array{name: string, terminal: bool, fixed: ?string, identifier?: bool}> $symbols
  * @param list<string> $roles
  * @return array{class: class-string, fields: list<int>}
@@ -111,10 +114,12 @@ function valueClass(string $directory, string $dialect, string $rule, array $sym
     $types = [];
     $assertions = [];
     $contract = '\\SqlSemantics\\Statement\\Model\\' . $dialect . '\\Contract\\Contracts';
+    $comments = '\\SqlSemantics\\Statement\\Comments';
     foreach ($symbols as $index => $symbol) {
+        $writes[] = "        \$writer->comments(\$this->comments, {$index});";
         if ($symbol['fixed'] !== null) {
             if ($symbol['fixed'] !== '') {
-                $writes[] = '        $writer->append(' . var_export($symbol['fixed'], true) . ');';
+                $writes[] = '        $writer->append(' . var_export($symbol['fixed'], true) . ($symbol['fixed'] === '@' ? ', prefix: true' : '') . ');';
             }
             continue;
         }
@@ -140,7 +145,9 @@ function valueClass(string $directory, string $dialect, string $rule, array $sym
         $writes[] = $symbol['terminal'] ? "        \$writer->append(\$this->{$field}{$identifier});" : "        \$this->{$field}->write(\$writer);";
         $fields[] = $index;
     }
-    $constructor = $parameters === [] ? '' : "    use \\SqlSemantics\\Statement\\Assertion;\n\n    /**\n     * Supplies the SQL values of this form.\n     */\n    public function __construct(\n" . implode("\n", $parameters) . "\n    ) {\n" . implode("\n", $assertions) . "\n    }\n\n";
+    $parameters[] = "        public readonly {$comments} \$comments = new {$comments}(),";
+    $types['comments'] = $comments;
+    $constructor = ($assertions === [] ? '' : "    use \\SqlSemantics\\Statement\\Assertion;\n\n") . "    /**\n     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.\n     */\n    public function __construct(\n" . implode("\n", $parameters) . "\n    ) {\n" . ($assertions === [] ? '' : implode("\n", $assertions) . "\n") . "    }\n\n";
     $body = modelDoc($rule, $fqcn) . "final class {$name} implements " . implode(', ', $roles) . "\n{\n{$constructor}    /**\n     * Writes SQL entirely from this value's fields.\n     */\n    public function write(\\SqlSemantics\\Statement\\Writer \$writer): void\n    {\n" . implode("\n", $writes) . "\n    }" . copyMethods($types) . "\n}";
     writeModel($directory, $dialect, 'Value', $name, $body);
 
@@ -174,6 +181,9 @@ function choiceEnum(string $directory, string $dialect, string $rule, array $cho
     $cases = [];
     $mapping = [];
     foreach ($choices as $ordinal => $sql) {
+        if (in_array('@', explode(' ', $sql), true)) {
+            throw new RuntimeException('A fixed @ must be written as a prefix, which a choice cannot express: ' . $rule);
+        }
         $case = 'Use' . substr(modelName($sql), 0, 80) . '_' . substr(hash('sha256', $sql), 0, 8);
         $cases[$case] = '    case ' . $case . ' = ' . var_export($sql, true) . ';';
         $mapping[$ordinal] = ['constant' => $fqcn . '::' . $case];

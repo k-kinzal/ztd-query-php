@@ -17,11 +17,12 @@ final class JoinopWithJoinKwNmJoin_869cddff implements \SqlSemantics\Statement\M
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $joinKw,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($joinKw, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['JOIN_KW'], 'The joinKw must be a complete JOIN_KW lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class JoinopWithJoinKwNmJoin_869cddff implements \SqlSemantics\Statement\M
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->joinKw);
+        $writer->comments($this->comments, 1);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('JOIN');
     }
 
@@ -42,7 +46,7 @@ final class JoinopWithJoinKwNmJoin_869cddff implements \SqlSemantics\Statement\M
      */
     public function withJoinKw(string $joinKw): self
     {
-        return new self($joinKw, $this->nm);
+        return new self($joinKw, $this->nm, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class JoinopWithJoinKwNmJoin_869cddff implements \SqlSemantics\Statement\M
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($this->joinKw, $nm);
+        return new self($this->joinKw, $nm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->joinKw, $this->nm, $comments);
     }
 }

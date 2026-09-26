@@ -17,11 +17,12 @@ final class OptExplainOptionsWithOptExplainFormatOptExplainInto_9c6320d6 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExplainFormatForm $optExplainFormat,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptExplainIntoForm $optExplainInto,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExplainFormat), 'The optExplainFormat must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optExplainInto), 'The optExplainInto must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptExplainOptionsWithOptExplainFormatOptExplainInto_9c6320d6 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optExplainFormat->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optExplainInto->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptExplainOptionsWithOptExplainFormatOptExplainInto_9c6320d6 impleme
      */
     public function withOptExplainFormat(\SqlSemantics\Statement\Model\MySql\Role\OptExplainFormatForm $optExplainFormat): self
     {
-        return new self($optExplainFormat, $this->optExplainInto);
+        return new self($optExplainFormat, $this->optExplainInto, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptExplainOptionsWithOptExplainFormatOptExplainInto_9c6320d6 impleme
      */
     public function withOptExplainInto(\SqlSemantics\Statement\Model\MySql\Role\OptExplainIntoForm $optExplainInto): self
     {
-        return new self($this->optExplainFormat, $optExplainInto);
+        return new self($this->optExplainFormat, $optExplainInto, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optExplainFormat, $this->optExplainInto, $comments);
     }
 }

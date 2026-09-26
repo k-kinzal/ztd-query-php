@@ -17,12 +17,13 @@ final class CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmnumForm $nmnum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($dbnm), 'The dbnm must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PRAGMA');
+        $writer->comments($this->comments, 1);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 2);
         $this->dbnm->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->nmnum->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -47,7 +54,7 @@ final class CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 implements \SqlSemantics\State
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($nm, $this->dbnm, $this->nmnum);
+        return new self($nm, $this->dbnm, $this->nmnum, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 implements \SqlSemantics\State
      */
     public function withDbnm(\SqlSemantics\Statement\Model\Sqlite\Role\DbnmForm $dbnm): self
     {
-        return new self($this->nm, $dbnm, $this->nmnum);
+        return new self($this->nm, $dbnm, $this->nmnum, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class CmdWithPragmaNmDbnmLpNmnumRp_c4072dd8 implements \SqlSemantics\State
      */
     public function withNmnum(\SqlSemantics\Statement\Model\Sqlite\Role\NmnumForm $nmnum): self
     {
-        return new self($this->nm, $this->dbnm, $nmnum);
+        return new self($this->nm, $this->dbnm, $nmnum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nm, $this->dbnm, $this->nmnum, $comments);
     }
 }

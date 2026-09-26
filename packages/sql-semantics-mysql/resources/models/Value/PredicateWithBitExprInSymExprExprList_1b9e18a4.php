@@ -17,12 +17,13 @@ final class PredicateWithBitExprInSymExprExprList_1b9e18a4 implements \SqlSemant
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-8.0.44' => 27,  'mysql-8.1.0' => 27,  'mysql-8.2.0' => 27,  'mysql-8.3.0' => 27,  'mysql-8.4.7' => 27,  'mysql-9.0.1' => 27,  'mysql-9.1.0' => 27,));
@@ -35,12 +36,19 @@ final class PredicateWithBitExprInSymExprExprList_1b9e18a4 implements \SqlSemant
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('IN');
+        $writer->comments($this->comments, 2);
         $writer->append('(');
+        $writer->comments($this->comments, 3);
         $this->expr->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(',');
+        $writer->comments($this->comments, 5);
         $this->exprList->write($writer);
+        $writer->comments($this->comments, 6);
         $writer->append(')');
     }
 
@@ -49,7 +57,7 @@ final class PredicateWithBitExprInSymExprExprList_1b9e18a4 implements \SqlSemant
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($bitExpr, $this->expr, $this->exprList);
+        return new self($bitExpr, $this->expr, $this->exprList, $this->comments);
     }
 
     /**
@@ -57,7 +65,7 @@ final class PredicateWithBitExprInSymExprExprList_1b9e18a4 implements \SqlSemant
      */
     public function withExpr(\SqlSemantics\Statement\Model\MySql\Role\ExprForm $expr): self
     {
-        return new self($this->bitExpr, $expr, $this->exprList);
+        return new self($this->bitExpr, $expr, $this->exprList, $this->comments);
     }
 
     /**
@@ -65,6 +73,14 @@ final class PredicateWithBitExprInSymExprExprList_1b9e18a4 implements \SqlSemant
      */
     public function withExprList(\SqlSemantics\Statement\Model\MySql\Role\ExprListForm $exprList): self
     {
-        return new self($this->bitExpr, $this->expr, $exprList);
+        return new self($this->bitExpr, $this->expr, $exprList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bitExpr, $this->expr, $this->exprList, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class FuncArgWithArgClassParamNameFuncType_32a02f12 implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ArgClassForm $argClass,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm $paramName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm $funcType,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($argClass), 'The argClass must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($paramName), 'The paramName must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class FuncArgWithArgClassParamNameFuncType_32a02f12 implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->argClass->write($writer);
+        $writer->comments($this->comments, 1);
         $this->paramName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->funcType->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class FuncArgWithArgClassParamNameFuncType_32a02f12 implements \SqlSemanti
      */
     public function withArgClass(\SqlSemantics\Statement\Model\PostgreSql\Role\ArgClassForm $argClass): self
     {
-        return new self($argClass, $this->paramName, $this->funcType);
+        return new self($argClass, $this->paramName, $this->funcType, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class FuncArgWithArgClassParamNameFuncType_32a02f12 implements \SqlSemanti
      */
     public function withParamName(\SqlSemantics\Statement\Model\PostgreSql\Role\ParamNameForm $paramName): self
     {
-        return new self($this->argClass, $paramName, $this->funcType);
+        return new self($this->argClass, $paramName, $this->funcType, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class FuncArgWithArgClassParamNameFuncType_32a02f12 implements \SqlSemanti
      */
     public function withFuncType(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncTypeForm $funcType): self
     {
-        return new self($this->argClass, $this->paramName, $funcType);
+        return new self($this->argClass, $this->paramName, $funcType, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->argClass, $this->paramName, $this->funcType, $comments);
     }
 }

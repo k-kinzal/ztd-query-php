@@ -17,12 +17,13 @@ final class AlterUserCommandWithAlterUserIfExistsClearPrivileges_065ec341 implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $user,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($user, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['USER'], 'The user must be a complete USER lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ifExists), 'The ifExists must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class AlterUserCommandWithAlterUserIfExistsClearPrivileges_065ec341 implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append($this->user);
+        $writer->comments($this->comments, 2);
         $this->ifExists->write($writer);
+        $writer->comments($this->comments, 3);
         $this->clearPrivileges->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class AlterUserCommandWithAlterUserIfExistsClearPrivileges_065ec341 implem
      */
     public function withUser(string $user): self
     {
-        return new self($user, $this->ifExists, $this->clearPrivileges);
+        return new self($user, $this->ifExists, $this->clearPrivileges, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class AlterUserCommandWithAlterUserIfExistsClearPrivileges_065ec341 implem
      */
     public function withIfExists(\SqlSemantics\Statement\Model\MySql\Role\IfExistsForm $ifExists): self
     {
-        return new self($this->user, $ifExists, $this->clearPrivileges);
+        return new self($this->user, $ifExists, $this->clearPrivileges, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class AlterUserCommandWithAlterUserIfExistsClearPrivileges_065ec341 implem
      */
     public function withClearPrivileges(\SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges): self
     {
-        return new self($this->user, $this->ifExists, $clearPrivileges);
+        return new self($this->user, $this->ifExists, $clearPrivileges, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->ifExists, $this->clearPrivileges, $comments);
     }
 }

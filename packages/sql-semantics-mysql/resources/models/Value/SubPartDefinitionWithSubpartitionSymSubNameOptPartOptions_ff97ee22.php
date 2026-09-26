@@ -17,11 +17,12 @@ final class SubPartDefinitionWithSubpartitionSymSubNameOptPartOptions_ff97ee22 i
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SubNameForm $subName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm $optPartOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($subName), 'The subName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optPartOptions), 'The optPartOptions must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SubPartDefinitionWithSubpartitionSymSubNameOptPartOptions_ff97ee22 i
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SUBPARTITION');
+        $writer->comments($this->comments, 1);
         $this->subName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optPartOptions->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SubPartDefinitionWithSubpartitionSymSubNameOptPartOptions_ff97ee22 i
      */
     public function withSubName(\SqlSemantics\Statement\Model\MySql\Role\SubNameForm $subName): self
     {
-        return new self($subName, $this->optPartOptions);
+        return new self($subName, $this->optPartOptions, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SubPartDefinitionWithSubpartitionSymSubNameOptPartOptions_ff97ee22 i
      */
     public function withOptPartOptions(\SqlSemantics\Statement\Model\MySql\Role\OptPartOptionsForm $optPartOptions): self
     {
-        return new self($this->subName, $optPartOptions);
+        return new self($this->subName, $optPartOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->subName, $this->optPartOptions, $comments);
     }
 }

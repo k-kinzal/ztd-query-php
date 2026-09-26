@@ -17,7 +17,7 @@ final class CreateForeignTableStmtWithCreateForeignTableQualifiedNamePartitionOf
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
@@ -26,6 +26,7 @@ final class CreateForeignTableStmtWithCreateForeignTableQualifiedNamePartitionOf
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm $partitionBoundSpec,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName2), 'The qualifiedName2 must be a generated immutable SQL value.');
@@ -40,17 +41,29 @@ final class CreateForeignTableStmtWithCreateForeignTableQualifiedNamePartitionOf
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $writer->append('FOREIGN');
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('PARTITION');
+        $writer->comments($this->comments, 5);
         $writer->append('OF');
+        $writer->comments($this->comments, 6);
         $this->qualifiedName2->write($writer);
+        $writer->comments($this->comments, 7);
         $this->optTypedTableElementList->write($writer);
+        $writer->comments($this->comments, 8);
         $this->partitionBoundSpec->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append('SERVER');
+        $writer->comments($this->comments, 10);
         $this->name->write($writer);
+        $writer->comments($this->comments, 11);
         $this->createGenericOptions->write($writer);
     }
 
@@ -59,7 +72,7 @@ final class CreateForeignTableStmtWithCreateForeignTableQualifiedNamePartitionOf
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->name, $this->createGenericOptions);
+        return new self($qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->name, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -67,7 +80,7 @@ final class CreateForeignTableStmtWithCreateForeignTableQualifiedNamePartitionOf
      */
     public function withQualifiedName2(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName2): self
     {
-        return new self($this->qualifiedName, $qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->name, $this->createGenericOptions);
+        return new self($this->qualifiedName, $qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->name, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -75,7 +88,7 @@ final class CreateForeignTableStmtWithCreateForeignTableQualifiedNamePartitionOf
      */
     public function withOptTypedTableElementList(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTypedTableElementListForm $optTypedTableElementList): self
     {
-        return new self($this->qualifiedName, $this->qualifiedName2, $optTypedTableElementList, $this->partitionBoundSpec, $this->name, $this->createGenericOptions);
+        return new self($this->qualifiedName, $this->qualifiedName2, $optTypedTableElementList, $this->partitionBoundSpec, $this->name, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -83,7 +96,7 @@ final class CreateForeignTableStmtWithCreateForeignTableQualifiedNamePartitionOf
      */
     public function withPartitionBoundSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\PartitionBoundSpecForm $partitionBoundSpec): self
     {
-        return new self($this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $partitionBoundSpec, $this->name, $this->createGenericOptions);
+        return new self($this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $partitionBoundSpec, $this->name, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -91,7 +104,7 @@ final class CreateForeignTableStmtWithCreateForeignTableQualifiedNamePartitionOf
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $name, $this->createGenericOptions);
+        return new self($this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $name, $this->createGenericOptions, $this->comments);
     }
 
     /**
@@ -99,6 +112,14 @@ final class CreateForeignTableStmtWithCreateForeignTableQualifiedNamePartitionOf
      */
     public function withCreateGenericOptions(\SqlSemantics\Statement\Model\PostgreSql\Role\CreateGenericOptionsForm $createGenericOptions): self
     {
-        return new self($this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->name, $createGenericOptions);
+        return new self($this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->name, $createGenericOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->qualifiedName, $this->qualifiedName2, $this->optTypedTableElementList, $this->partitionBoundSpec, $this->name, $this->createGenericOptions, $comments);
     }
 }

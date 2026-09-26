@@ -17,11 +17,12 @@ final class AlterOwnerStmtWithAlterDomainPAnyNameOwnerToRoleSpec_b38c90ae implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyName), 'The anyName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class AlterOwnerStmtWithAlterDomainPAnyNameOwnerToRoleSpec_b38c90ae implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('DOMAIN');
+        $writer->comments($this->comments, 2);
         $this->anyName->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('OWNER');
+        $writer->comments($this->comments, 4);
         $writer->append('TO');
+        $writer->comments($this->comments, 5);
         $this->roleSpec->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class AlterOwnerStmtWithAlterDomainPAnyNameOwnerToRoleSpec_b38c90ae implem
      */
     public function withAnyName(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyNameForm $anyName): self
     {
-        return new self($anyName, $this->roleSpec);
+        return new self($anyName, $this->roleSpec, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class AlterOwnerStmtWithAlterDomainPAnyNameOwnerToRoleSpec_b38c90ae implem
      */
     public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
     {
-        return new self($this->anyName, $roleSpec);
+        return new self($this->anyName, $roleSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->anyName, $this->roleSpec, $comments);
     }
 }

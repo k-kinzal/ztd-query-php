@@ -17,7 +17,7 @@ final class AlterTableCmdWithAlterOptColumnColIdOptSetDataTypePTypenameOptCollat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn,
@@ -26,6 +26,7 @@ final class AlterTableCmdWithAlterOptColumnColIdOptSetDataTypePTypenameOptCollat
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateClauseForm $optCollateClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AlterUsingForm $alterUsing,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optColumn), 'The optColumn must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
@@ -40,13 +41,21 @@ final class AlterTableCmdWithAlterOptColumnColIdOptSetDataTypePTypenameOptCollat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $this->optColumn->write($writer);
+        $writer->comments($this->comments, 2);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optSetData->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('TYPE');
+        $writer->comments($this->comments, 5);
         $this->typename->write($writer);
+        $writer->comments($this->comments, 6);
         $this->optCollateClause->write($writer);
+        $writer->comments($this->comments, 7);
         $this->alterUsing->write($writer);
     }
 
@@ -55,7 +64,7 @@ final class AlterTableCmdWithAlterOptColumnColIdOptSetDataTypePTypenameOptCollat
      */
     public function withOptColumn(\SqlSemantics\Statement\Model\PostgreSql\Role\OptColumnForm $optColumn): self
     {
-        return new self($optColumn, $this->colId, $this->optSetData, $this->typename, $this->optCollateClause, $this->alterUsing);
+        return new self($optColumn, $this->colId, $this->optSetData, $this->typename, $this->optCollateClause, $this->alterUsing, $this->comments);
     }
 
     /**
@@ -63,7 +72,7 @@ final class AlterTableCmdWithAlterOptColumnColIdOptSetDataTypePTypenameOptCollat
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($this->optColumn, $colId, $this->optSetData, $this->typename, $this->optCollateClause, $this->alterUsing);
+        return new self($this->optColumn, $colId, $this->optSetData, $this->typename, $this->optCollateClause, $this->alterUsing, $this->comments);
     }
 
     /**
@@ -71,7 +80,7 @@ final class AlterTableCmdWithAlterOptColumnColIdOptSetDataTypePTypenameOptCollat
      */
     public function withOptSetData(\SqlSemantics\Statement\Model\PostgreSql\Role\OptSetDataForm $optSetData): self
     {
-        return new self($this->optColumn, $this->colId, $optSetData, $this->typename, $this->optCollateClause, $this->alterUsing);
+        return new self($this->optColumn, $this->colId, $optSetData, $this->typename, $this->optCollateClause, $this->alterUsing, $this->comments);
     }
 
     /**
@@ -79,7 +88,7 @@ final class AlterTableCmdWithAlterOptColumnColIdOptSetDataTypePTypenameOptCollat
      */
     public function withTypename(\SqlSemantics\Statement\Model\PostgreSql\Role\TypenameForm $typename): self
     {
-        return new self($this->optColumn, $this->colId, $this->optSetData, $typename, $this->optCollateClause, $this->alterUsing);
+        return new self($this->optColumn, $this->colId, $this->optSetData, $typename, $this->optCollateClause, $this->alterUsing, $this->comments);
     }
 
     /**
@@ -87,7 +96,7 @@ final class AlterTableCmdWithAlterOptColumnColIdOptSetDataTypePTypenameOptCollat
      */
     public function withOptCollateClause(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateClauseForm $optCollateClause): self
     {
-        return new self($this->optColumn, $this->colId, $this->optSetData, $this->typename, $optCollateClause, $this->alterUsing);
+        return new self($this->optColumn, $this->colId, $this->optSetData, $this->typename, $optCollateClause, $this->alterUsing, $this->comments);
     }
 
     /**
@@ -95,6 +104,14 @@ final class AlterTableCmdWithAlterOptColumnColIdOptSetDataTypePTypenameOptCollat
      */
     public function withAlterUsing(\SqlSemantics\Statement\Model\PostgreSql\Role\AlterUsingForm $alterUsing): self
     {
-        return new self($this->optColumn, $this->colId, $this->optSetData, $this->typename, $this->optCollateClause, $alterUsing);
+        return new self($this->optColumn, $this->colId, $this->optSetData, $this->typename, $this->optCollateClause, $alterUsing, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optColumn, $this->colId, $this->optSetData, $this->typename, $this->optCollateClause, $this->alterUsing, $comments);
     }
 }

@@ -17,7 +17,7 @@ final class ViewStmtWithCreateOptTempRecursiveViewQualifiedNameColumnListOptRelo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp,
@@ -26,6 +26,7 @@ final class ViewStmtWithCreateOptTempRecursiveViewQualifiedNameColumnListOptRelo
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCheckOptionForm $optCheckOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optTemp), 'The optTemp must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
@@ -40,17 +41,29 @@ final class ViewStmtWithCreateOptTempRecursiveViewQualifiedNameColumnListOptRelo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optTemp->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('RECURSIVE');
+        $writer->comments($this->comments, 3);
         $writer->append('VIEW');
+        $writer->comments($this->comments, 4);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('(');
+        $writer->comments($this->comments, 6);
         $this->columnList->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append(')');
+        $writer->comments($this->comments, 8);
         $this->optReloptions->write($writer);
+        $writer->comments($this->comments, 9);
         $writer->append('AS');
+        $writer->comments($this->comments, 10);
         $this->selectStmt->write($writer);
+        $writer->comments($this->comments, 11);
         $this->optCheckOption->write($writer);
     }
 
@@ -59,7 +72,7 @@ final class ViewStmtWithCreateOptTempRecursiveViewQualifiedNameColumnListOptRelo
      */
     public function withOptTemp(\SqlSemantics\Statement\Model\PostgreSql\Role\OptTempForm $optTemp): self
     {
-        return new self($optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption);
+        return new self($optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption, $this->comments);
     }
 
     /**
@@ -67,7 +80,7 @@ final class ViewStmtWithCreateOptTempRecursiveViewQualifiedNameColumnListOptRelo
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->optTemp, $qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption);
+        return new self($this->optTemp, $qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption, $this->comments);
     }
 
     /**
@@ -75,7 +88,7 @@ final class ViewStmtWithCreateOptTempRecursiveViewQualifiedNameColumnListOptRelo
      */
     public function withColumnList(\SqlSemantics\Statement\Model\PostgreSql\Role\ColumnListForm $columnList): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption);
+        return new self($this->optTemp, $this->qualifiedName, $columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption, $this->comments);
     }
 
     /**
@@ -83,7 +96,7 @@ final class ViewStmtWithCreateOptTempRecursiveViewQualifiedNameColumnListOptRelo
      */
     public function withOptReloptions(\SqlSemantics\Statement\Model\PostgreSql\Role\OptReloptionsForm $optReloptions): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->columnList, $optReloptions, $this->selectStmt, $this->optCheckOption);
+        return new self($this->optTemp, $this->qualifiedName, $this->columnList, $optReloptions, $this->selectStmt, $this->optCheckOption, $this->comments);
     }
 
     /**
@@ -91,7 +104,7 @@ final class ViewStmtWithCreateOptTempRecursiveViewQualifiedNameColumnListOptRelo
      */
     public function withSelectStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\SelectStmtForm $selectStmt): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $selectStmt, $this->optCheckOption);
+        return new self($this->optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $selectStmt, $this->optCheckOption, $this->comments);
     }
 
     /**
@@ -99,6 +112,14 @@ final class ViewStmtWithCreateOptTempRecursiveViewQualifiedNameColumnListOptRelo
      */
     public function withOptCheckOption(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCheckOptionForm $optCheckOption): self
     {
-        return new self($this->optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $optCheckOption);
+        return new self($this->optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $optCheckOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTemp, $this->qualifiedName, $this->columnList, $this->optReloptions, $this->selectStmt, $this->optCheckOption, $comments);
     }
 }

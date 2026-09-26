@@ -17,12 +17,13 @@ final class SubPartFuncWithRememberNamePartFuncExprRememberEnd_f9f43feb implemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm $partFuncExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($rememberName), 'The rememberName must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partFuncExpr), 'The partFuncExpr must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class SubPartFuncWithRememberNamePartFuncExprRememberEnd_f9f43feb implemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->rememberName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->partFuncExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $this->rememberEnd->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -46,7 +52,7 @@ final class SubPartFuncWithRememberNamePartFuncExprRememberEnd_f9f43feb implemen
      */
     public function withRememberName(\SqlSemantics\Statement\Model\MySql\Role\RememberNameForm $rememberName): self
     {
-        return new self($rememberName, $this->partFuncExpr, $this->rememberEnd);
+        return new self($rememberName, $this->partFuncExpr, $this->rememberEnd, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class SubPartFuncWithRememberNamePartFuncExprRememberEnd_f9f43feb implemen
      */
     public function withPartFuncExpr(\SqlSemantics\Statement\Model\MySql\Role\PartFuncExprForm $partFuncExpr): self
     {
-        return new self($this->rememberName, $partFuncExpr, $this->rememberEnd);
+        return new self($this->rememberName, $partFuncExpr, $this->rememberEnd, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class SubPartFuncWithRememberNamePartFuncExprRememberEnd_f9f43feb implemen
      */
     public function withRememberEnd(\SqlSemantics\Statement\Model\MySql\Role\RememberEndForm $rememberEnd): self
     {
-        return new self($this->rememberName, $this->partFuncExpr, $rememberEnd);
+        return new self($this->rememberName, $this->partFuncExpr, $rememberEnd, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->rememberName, $this->partFuncExpr, $this->rememberEnd, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class ExprWithIdjLpStarRpFilterOver_27a4a7eb implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $idj,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FilterOverForm $filterOver,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($idj, \SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::SPELLINGS['idj'], 'The idj must be a complete idj lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($filterOver), 'The filterOver must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class ExprWithIdjLpStarRpFilterOver_27a4a7eb implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->idj);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $writer->append('*');
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->filterOver->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class ExprWithIdjLpStarRpFilterOver_27a4a7eb implements \SqlSemantics\Stat
      */
     public function withIdj(string $idj): self
     {
-        return new self($idj, $this->filterOver);
+        return new self($idj, $this->filterOver, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class ExprWithIdjLpStarRpFilterOver_27a4a7eb implements \SqlSemantics\Stat
      */
     public function withFilterOver(\SqlSemantics\Statement\Model\Sqlite\Role\FilterOverForm $filterOver): self
     {
-        return new self($this->idj, $filterOver);
+        return new self($this->idj, $filterOver, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->idj, $this->filterOver, $comments);
     }
 }

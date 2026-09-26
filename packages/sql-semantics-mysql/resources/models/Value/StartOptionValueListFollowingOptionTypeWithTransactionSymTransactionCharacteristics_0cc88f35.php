@@ -17,10 +17,11 @@ final class StartOptionValueListFollowingOptionTypeWithTransactionSymTransaction
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TransactionCharacteristicsForm $transactionCharacteristics,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($transactionCharacteristics), 'The transactionCharacteristics must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class StartOptionValueListFollowingOptionTypeWithTransactionSymTransaction
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('TRANSACTION');
+        $writer->comments($this->comments, 1);
         $this->transactionCharacteristics->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class StartOptionValueListFollowingOptionTypeWithTransactionSymTransaction
      */
     public function withTransactionCharacteristics(\SqlSemantics\Statement\Model\MySql\Role\TransactionCharacteristicsForm $transactionCharacteristics): self
     {
-        return new self($transactionCharacteristics);
+        return new self($transactionCharacteristics, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->transactionCharacteristics, $comments);
     }
 }

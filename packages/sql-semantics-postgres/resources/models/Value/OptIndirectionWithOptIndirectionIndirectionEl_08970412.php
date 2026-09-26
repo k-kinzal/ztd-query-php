@@ -17,11 +17,12 @@ final class OptIndirectionWithOptIndirectionIndirectionEl_08970412 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionElForm $indirectionEl,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optIndirection), 'The optIndirection must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indirectionEl), 'The indirectionEl must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptIndirectionWithOptIndirectionIndirectionEl_08970412 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optIndirection->write($writer);
+        $writer->comments($this->comments, 1);
         $this->indirectionEl->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptIndirectionWithOptIndirectionIndirectionEl_08970412 implements \S
      */
     public function withOptIndirection(\SqlSemantics\Statement\Model\PostgreSql\Role\OptIndirectionForm $optIndirection): self
     {
-        return new self($optIndirection, $this->indirectionEl);
+        return new self($optIndirection, $this->indirectionEl, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptIndirectionWithOptIndirectionIndirectionEl_08970412 implements \S
      */
     public function withIndirectionEl(\SqlSemantics\Statement\Model\PostgreSql\Role\IndirectionElForm $indirectionEl): self
     {
-        return new self($this->optIndirection, $indirectionEl);
+        return new self($this->optIndirection, $indirectionEl, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optIndirection, $this->indirectionEl, $comments);
     }
 }

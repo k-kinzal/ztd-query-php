@@ -17,10 +17,11 @@ final class OptConstraintNameWithConstraintOptIdent_7a9f6bf0 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIdent), 'The optIdent must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class OptConstraintNameWithConstraintOptIdent_7a9f6bf0 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CONSTRAINT');
+        $writer->comments($this->comments, 1);
         $this->optIdent->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class OptConstraintNameWithConstraintOptIdent_7a9f6bf0 implements \SqlSema
      */
     public function withOptIdent(\SqlSemantics\Statement\Model\MySql\Role\OptIdentForm $optIdent): self
     {
-        return new self($optIdent);
+        return new self($optIdent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optIdent, $comments);
     }
 }

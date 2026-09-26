@@ -17,12 +17,13 @@ final class RollbackWithRollbackSymOptWorkToSymOptSavepointIdent_9126be6a implem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWorkForm $optWork,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptSavepointForm $optSavepoint,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWork), 'The optWork must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optSavepoint), 'The optSavepoint must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class RollbackWithRollbackSymOptWorkToSymOptSavepointIdent_9126be6a implem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ROLLBACK');
+        $writer->comments($this->comments, 1);
         $this->optWork->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TO');
+        $writer->comments($this->comments, 3);
         $this->optSavepoint->write($writer);
+        $writer->comments($this->comments, 4);
         $this->ident->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class RollbackWithRollbackSymOptWorkToSymOptSavepointIdent_9126be6a implem
      */
     public function withOptWork(\SqlSemantics\Statement\Model\MySql\Role\OptWorkForm $optWork): self
     {
-        return new self($optWork, $this->optSavepoint, $this->ident);
+        return new self($optWork, $this->optSavepoint, $this->ident, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class RollbackWithRollbackSymOptWorkToSymOptSavepointIdent_9126be6a implem
      */
     public function withOptSavepoint(\SqlSemantics\Statement\Model\MySql\Role\OptSavepointForm $optSavepoint): self
     {
-        return new self($this->optWork, $optSavepoint, $this->ident);
+        return new self($this->optWork, $optSavepoint, $this->ident, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class RollbackWithRollbackSymOptWorkToSymOptSavepointIdent_9126be6a implem
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->optWork, $this->optSavepoint, $ident);
+        return new self($this->optWork, $this->optSavepoint, $ident, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optWork, $this->optSavepoint, $this->ident, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireIntervalSymRealU
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PasswordExpireForm $passwordExpire,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum,
         public readonly string $daySym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($passwordExpire), 'The passwordExpire must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($realUlongNum), 'The realUlongNum must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireIntervalSymRealU
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->passwordExpire->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('INTERVAL');
+        $writer->comments($this->comments, 2);
         $this->realUlongNum->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append($this->daySym);
     }
 
@@ -45,7 +50,7 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireIntervalSymRealU
      */
     public function withPasswordExpire(\SqlSemantics\Statement\Model\MySql\Role\PasswordExpireForm $passwordExpire): self
     {
-        return new self($passwordExpire, $this->realUlongNum, $this->daySym);
+        return new self($passwordExpire, $this->realUlongNum, $this->daySym, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireIntervalSymRealU
      */
     public function withRealUlongNum(\SqlSemantics\Statement\Model\MySql\Role\RealUlongNumForm $realUlongNum): self
     {
-        return new self($this->passwordExpire, $realUlongNum, $this->daySym);
+        return new self($this->passwordExpire, $realUlongNum, $this->daySym, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class OptAccountLockPasswordExpireOptionWithPasswordExpireIntervalSymRealU
      */
     public function withDaySym(string $daySym): self
     {
-        return new self($this->passwordExpire, $this->realUlongNum, $daySym);
+        return new self($this->passwordExpire, $this->realUlongNum, $daySym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->passwordExpire, $this->realUlongNum, $this->daySym, $comments);
     }
 }

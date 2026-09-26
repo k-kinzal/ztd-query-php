@@ -17,7 +17,7 @@ final class CreateTableStmtWithCreateOptTemporaryTableSymOptIfNotExistsTableIden
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptTemporaryForm $optTemporary,
@@ -25,6 +25,7 @@ final class CreateTableStmtWithCreateOptTemporaryTableSymOptIfNotExistsTableIden
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TableElementListForm $tableElementList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsEtcForm $optCreateTableOptionsEtc,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optTemporary), 'The optTemporary must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIfNotExists), 'The optIfNotExists must be a generated immutable SQL value.');
@@ -38,14 +39,23 @@ final class CreateTableStmtWithCreateOptTemporaryTableSymOptIfNotExistsTableIden
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CREATE');
+        $writer->comments($this->comments, 1);
         $this->optTemporary->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('TABLE');
+        $writer->comments($this->comments, 3);
         $this->optIfNotExists->write($writer);
+        $writer->comments($this->comments, 4);
         $this->tableIdent->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append('(');
+        $writer->comments($this->comments, 6);
         $this->tableElementList->write($writer);
+        $writer->comments($this->comments, 7);
         $writer->append(')');
+        $writer->comments($this->comments, 8);
         $this->optCreateTableOptionsEtc->write($writer);
     }
 
@@ -54,7 +64,7 @@ final class CreateTableStmtWithCreateOptTemporaryTableSymOptIfNotExistsTableIden
      */
     public function withOptTemporary(\SqlSemantics\Statement\Model\MySql\Role\OptTemporaryForm $optTemporary): self
     {
-        return new self($optTemporary, $this->optIfNotExists, $this->tableIdent, $this->tableElementList, $this->optCreateTableOptionsEtc);
+        return new self($optTemporary, $this->optIfNotExists, $this->tableIdent, $this->tableElementList, $this->optCreateTableOptionsEtc, $this->comments);
     }
 
     /**
@@ -62,7 +72,7 @@ final class CreateTableStmtWithCreateOptTemporaryTableSymOptIfNotExistsTableIden
      */
     public function withOptIfNotExists(\SqlSemantics\Statement\Model\MySql\Role\OptIfNotExistsForm $optIfNotExists): self
     {
-        return new self($this->optTemporary, $optIfNotExists, $this->tableIdent, $this->tableElementList, $this->optCreateTableOptionsEtc);
+        return new self($this->optTemporary, $optIfNotExists, $this->tableIdent, $this->tableElementList, $this->optCreateTableOptionsEtc, $this->comments);
     }
 
     /**
@@ -70,7 +80,7 @@ final class CreateTableStmtWithCreateOptTemporaryTableSymOptIfNotExistsTableIden
      */
     public function withTableIdent(\SqlSemantics\Statement\Model\MySql\Role\TableIdentForm $tableIdent): self
     {
-        return new self($this->optTemporary, $this->optIfNotExists, $tableIdent, $this->tableElementList, $this->optCreateTableOptionsEtc);
+        return new self($this->optTemporary, $this->optIfNotExists, $tableIdent, $this->tableElementList, $this->optCreateTableOptionsEtc, $this->comments);
     }
 
     /**
@@ -78,7 +88,7 @@ final class CreateTableStmtWithCreateOptTemporaryTableSymOptIfNotExistsTableIden
      */
     public function withTableElementList(\SqlSemantics\Statement\Model\MySql\Role\TableElementListForm $tableElementList): self
     {
-        return new self($this->optTemporary, $this->optIfNotExists, $this->tableIdent, $tableElementList, $this->optCreateTableOptionsEtc);
+        return new self($this->optTemporary, $this->optIfNotExists, $this->tableIdent, $tableElementList, $this->optCreateTableOptionsEtc, $this->comments);
     }
 
     /**
@@ -86,6 +96,14 @@ final class CreateTableStmtWithCreateOptTemporaryTableSymOptIfNotExistsTableIden
      */
     public function withOptCreateTableOptionsEtc(\SqlSemantics\Statement\Model\MySql\Role\OptCreateTableOptionsEtcForm $optCreateTableOptionsEtc): self
     {
-        return new self($this->optTemporary, $this->optIfNotExists, $this->tableIdent, $this->tableElementList, $optCreateTableOptionsEtc);
+        return new self($this->optTemporary, $this->optIfNotExists, $this->tableIdent, $this->tableElementList, $optCreateTableOptionsEtc, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optTemporary, $this->optIfNotExists, $this->tableIdent, $this->tableElementList, $this->optCreateTableOptionsEtc, $comments);
     }
 }

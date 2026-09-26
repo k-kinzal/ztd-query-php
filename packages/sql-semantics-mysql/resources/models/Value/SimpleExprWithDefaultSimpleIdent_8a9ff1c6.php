@@ -17,10 +17,11 @@ final class SimpleExprWithDefaultSimpleIdent_8a9ff1c6 implements \SqlSemantics\S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleIdentForm $simpleIdent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($simpleIdent), 'The simpleIdent must be a generated immutable SQL value.');
     }
@@ -30,9 +31,13 @@ final class SimpleExprWithDefaultSimpleIdent_8a9ff1c6 implements \SqlSemantics\S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DEFAULT');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->simpleIdent->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -41,6 +46,14 @@ final class SimpleExprWithDefaultSimpleIdent_8a9ff1c6 implements \SqlSemantics\S
      */
     public function withSimpleIdent(\SqlSemantics\Statement\Model\MySql\Role\SimpleIdentForm $simpleIdent): self
     {
-        return new self($simpleIdent);
+        return new self($simpleIdent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->simpleIdent, $comments);
     }
 }

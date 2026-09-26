@@ -17,11 +17,12 @@ final class ColumnnameWithNmTypetoken_92826a89 implements \SqlSemantics\Statemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm $typetoken,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($nm), 'The nm must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($typetoken), 'The typetoken must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class ColumnnameWithNmTypetoken_92826a89 implements \SqlSemantics\Statemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->nm->write($writer);
+        $writer->comments($this->comments, 1);
         $this->typetoken->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class ColumnnameWithNmTypetoken_92826a89 implements \SqlSemantics\Statemen
      */
     public function withNm(\SqlSemantics\Statement\Model\Sqlite\Role\NmForm $nm): self
     {
-        return new self($nm, $this->typetoken);
+        return new self($nm, $this->typetoken, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class ColumnnameWithNmTypetoken_92826a89 implements \SqlSemantics\Statemen
      */
     public function withTypetoken(\SqlSemantics\Statement\Model\Sqlite\Role\TypetokenForm $typetoken): self
     {
-        return new self($this->nm, $typetoken);
+        return new self($this->nm, $typetoken, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->nm, $this->typetoken, $comments);
     }
 }

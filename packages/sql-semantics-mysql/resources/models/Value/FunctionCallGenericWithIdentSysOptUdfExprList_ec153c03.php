@@ -17,11 +17,12 @@ final class FunctionCallGenericWithIdentSysOptUdfExprList_ec153c03 implements \S
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUdfExprListForm $optUdfExprList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identSys), 'The identSys must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUdfExprList), 'The optUdfExprList must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class FunctionCallGenericWithIdentSysOptUdfExprList_ec153c03 implements \S
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->identSys->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->optUdfExprList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
     }
 
@@ -43,7 +48,7 @@ final class FunctionCallGenericWithIdentSysOptUdfExprList_ec153c03 implements \S
      */
     public function withIdentSys(\SqlSemantics\Statement\Model\MySql\Role\IdentSysForm $identSys): self
     {
-        return new self($identSys, $this->optUdfExprList);
+        return new self($identSys, $this->optUdfExprList, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class FunctionCallGenericWithIdentSysOptUdfExprList_ec153c03 implements \S
      */
     public function withOptUdfExprList(\SqlSemantics\Statement\Model\MySql\Role\OptUdfExprListForm $optUdfExprList): self
     {
-        return new self($this->identSys, $optUdfExprList);
+        return new self($this->identSys, $optUdfExprList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->identSys, $this->optUdfExprList, $comments);
     }
 }

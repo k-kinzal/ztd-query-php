@@ -17,13 +17,14 @@ final class FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeO
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\RangeOrRowsForm $rangeOrRows,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundSForm $frameBoundS,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundEForm $frameBoundE,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\FrameExcludeOptForm $frameExcludeOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($rangeOrRows), 'The rangeOrRows must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($frameBoundS), 'The frameBoundS must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeO
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->rangeOrRows->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('BETWEEN');
+        $writer->comments($this->comments, 2);
         $this->frameBoundS->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('AND');
+        $writer->comments($this->comments, 4);
         $this->frameBoundE->write($writer);
+        $writer->comments($this->comments, 5);
         $this->frameExcludeOpt->write($writer);
     }
 
@@ -49,7 +56,7 @@ final class FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeO
      */
     public function withRangeOrRows(\SqlSemantics\Statement\Model\Sqlite\Role\RangeOrRowsForm $rangeOrRows): self
     {
-        return new self($rangeOrRows, $this->frameBoundS, $this->frameBoundE, $this->frameExcludeOpt);
+        return new self($rangeOrRows, $this->frameBoundS, $this->frameBoundE, $this->frameExcludeOpt, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeO
      */
     public function withFrameBoundS(\SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundSForm $frameBoundS): self
     {
-        return new self($this->rangeOrRows, $frameBoundS, $this->frameBoundE, $this->frameExcludeOpt);
+        return new self($this->rangeOrRows, $frameBoundS, $this->frameBoundE, $this->frameExcludeOpt, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeO
      */
     public function withFrameBoundE(\SqlSemantics\Statement\Model\Sqlite\Role\FrameBoundEForm $frameBoundE): self
     {
-        return new self($this->rangeOrRows, $this->frameBoundS, $frameBoundE, $this->frameExcludeOpt);
+        return new self($this->rangeOrRows, $this->frameBoundS, $frameBoundE, $this->frameExcludeOpt, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class FrameOptWithRangeOrRowsBetweenFrameBoundSAndFrameBoundEFrameExcludeO
      */
     public function withFrameExcludeOpt(\SqlSemantics\Statement\Model\Sqlite\Role\FrameExcludeOptForm $frameExcludeOpt): self
     {
-        return new self($this->rangeOrRows, $this->frameBoundS, $this->frameBoundE, $frameExcludeOpt);
+        return new self($this->rangeOrRows, $this->frameBoundS, $this->frameBoundE, $frameExcludeOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->rangeOrRows, $this->frameBoundS, $this->frameBoundE, $this->frameExcludeOpt, $comments);
     }
 }

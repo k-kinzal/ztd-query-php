@@ -17,11 +17,12 @@ final class ValuesWithValuesExprOrDefault_1c75d8ad implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ValuesForm $values,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm $exprOrDefault,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($values), 'The values must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($exprOrDefault), 'The exprOrDefault must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class ValuesWithValuesExprOrDefault_1c75d8ad implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->values->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->exprOrDefault->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class ValuesWithValuesExprOrDefault_1c75d8ad implements \SqlSemantics\Stat
      */
     public function withValues(\SqlSemantics\Statement\Model\MySql\Role\ValuesForm $values): self
     {
-        return new self($values, $this->exprOrDefault);
+        return new self($values, $this->exprOrDefault, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class ValuesWithValuesExprOrDefault_1c75d8ad implements \SqlSemantics\Stat
      */
     public function withExprOrDefault(\SqlSemantics\Statement\Model\MySql\Role\ExprOrDefaultForm $exprOrDefault): self
     {
-        return new self($this->values, $exprOrDefault);
+        return new self($this->values, $exprOrDefault, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->values, $this->exprOrDefault, $comments);
     }
 }

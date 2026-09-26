@@ -17,11 +17,12 @@ final class OptTableAliasWithOptAsIdent_35f95dae implements \SqlSemantics\Statem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptAsForm $optAs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optAs), 'The optAs must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ident), 'The ident must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class OptTableAliasWithOptAsIdent_35f95dae implements \SqlSemantics\Statem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optAs->write($writer);
+        $writer->comments($this->comments, 1);
         $this->ident->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class OptTableAliasWithOptAsIdent_35f95dae implements \SqlSemantics\Statem
      */
     public function withOptAs(\SqlSemantics\Statement\Model\MySql\Role\OptAsForm $optAs): self
     {
-        return new self($optAs, $this->ident);
+        return new self($optAs, $this->ident, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class OptTableAliasWithOptAsIdent_35f95dae implements \SqlSemantics\Statem
      */
     public function withIdent(\SqlSemantics\Statement\Model\MySql\Role\IdentForm $ident): self
     {
-        return new self($this->optAs, $ident);
+        return new self($this->optAs, $ident, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optAs, $this->ident, $comments);
     }
 }

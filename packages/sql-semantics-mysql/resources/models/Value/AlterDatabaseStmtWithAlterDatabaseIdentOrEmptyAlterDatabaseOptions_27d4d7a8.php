@@ -17,12 +17,13 @@ final class AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_2
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $database,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IdentOrEmptyForm $identOrEmpty,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm $alterDatabaseOptions,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($database, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DATABASE'], 'The database must be a complete DATABASE lexical spelling.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($identOrEmpty), 'The identOrEmpty must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_2
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append($this->database);
+        $writer->comments($this->comments, 2);
         $this->identOrEmpty->write($writer);
+        $writer->comments($this->comments, 3);
         $this->alterDatabaseOptions->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_2
      */
     public function withDatabase(string $database): self
     {
-        return new self($database, $this->identOrEmpty, $this->alterDatabaseOptions);
+        return new self($database, $this->identOrEmpty, $this->alterDatabaseOptions, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_2
      */
     public function withIdentOrEmpty(\SqlSemantics\Statement\Model\MySql\Role\IdentOrEmptyForm $identOrEmpty): self
     {
-        return new self($this->database, $identOrEmpty, $this->alterDatabaseOptions);
+        return new self($this->database, $identOrEmpty, $this->alterDatabaseOptions, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class AlterDatabaseStmtWithAlterDatabaseIdentOrEmptyAlterDatabaseOptions_2
      */
     public function withAlterDatabaseOptions(\SqlSemantics\Statement\Model\MySql\Role\AlterDatabaseOptionsForm $alterDatabaseOptions): self
     {
-        return new self($this->database, $this->identOrEmpty, $alterDatabaseOptions);
+        return new self($this->database, $this->identOrEmpty, $alterDatabaseOptions, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->database, $this->identOrEmpty, $this->alterDatabaseOptions, $comments);
     }
 }

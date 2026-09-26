@@ -17,7 +17,7 @@ final class UpdateWithUpdateSymOptLowPriorityOptIgnoreJoinTableListSetUpdateList
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLowPriorityForm $optLowPriority,
@@ -27,6 +27,7 @@ final class UpdateWithUpdateSymOptLowPriorityOptIgnoreJoinTableListSetUpdateList
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\DeleteLimitClauseForm $deleteLimitClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLowPriority), 'The optLowPriority must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optIgnore), 'The optIgnore must be a generated immutable SQL value.');
@@ -42,14 +43,23 @@ final class UpdateWithUpdateSymOptLowPriorityOptIgnoreJoinTableListSetUpdateList
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('UPDATE');
+        $writer->comments($this->comments, 1);
         $this->optLowPriority->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optIgnore->write($writer);
+        $writer->comments($this->comments, 3);
         $this->joinTableList->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append('SET');
+        $writer->comments($this->comments, 5);
         $this->updateList->write($writer);
+        $writer->comments($this->comments, 6);
         $this->where->write($writer);
+        $writer->comments($this->comments, 7);
         $this->orderBy->write($writer);
+        $writer->comments($this->comments, 8);
         $this->deleteLimitClause->write($writer);
     }
 
@@ -58,7 +68,7 @@ final class UpdateWithUpdateSymOptLowPriorityOptIgnoreJoinTableListSetUpdateList
      */
     public function withOptLowPriority(\SqlSemantics\Statement\Model\MySql\Role\OptLowPriorityForm $optLowPriority): self
     {
-        return new self($optLowPriority, $this->optIgnore, $this->joinTableList, $this->updateList, $this->where, $this->orderBy, $this->deleteLimitClause);
+        return new self($optLowPriority, $this->optIgnore, $this->joinTableList, $this->updateList, $this->where, $this->orderBy, $this->deleteLimitClause, $this->comments);
     }
 
     /**
@@ -66,7 +76,7 @@ final class UpdateWithUpdateSymOptLowPriorityOptIgnoreJoinTableListSetUpdateList
      */
     public function withOptIgnore(\SqlSemantics\Statement\Model\MySql\Role\OptIgnoreForm $optIgnore): self
     {
-        return new self($this->optLowPriority, $optIgnore, $this->joinTableList, $this->updateList, $this->where, $this->orderBy, $this->deleteLimitClause);
+        return new self($this->optLowPriority, $optIgnore, $this->joinTableList, $this->updateList, $this->where, $this->orderBy, $this->deleteLimitClause, $this->comments);
     }
 
     /**
@@ -74,7 +84,7 @@ final class UpdateWithUpdateSymOptLowPriorityOptIgnoreJoinTableListSetUpdateList
      */
     public function withJoinTableList(\SqlSemantics\Statement\Model\MySql\Role\JoinTableListForm $joinTableList): self
     {
-        return new self($this->optLowPriority, $this->optIgnore, $joinTableList, $this->updateList, $this->where, $this->orderBy, $this->deleteLimitClause);
+        return new self($this->optLowPriority, $this->optIgnore, $joinTableList, $this->updateList, $this->where, $this->orderBy, $this->deleteLimitClause, $this->comments);
     }
 
     /**
@@ -82,7 +92,7 @@ final class UpdateWithUpdateSymOptLowPriorityOptIgnoreJoinTableListSetUpdateList
      */
     public function withUpdateList(\SqlSemantics\Statement\Model\MySql\Role\UpdateListForm $updateList): self
     {
-        return new self($this->optLowPriority, $this->optIgnore, $this->joinTableList, $updateList, $this->where, $this->orderBy, $this->deleteLimitClause);
+        return new self($this->optLowPriority, $this->optIgnore, $this->joinTableList, $updateList, $this->where, $this->orderBy, $this->deleteLimitClause, $this->comments);
     }
 
     /**
@@ -90,7 +100,7 @@ final class UpdateWithUpdateSymOptLowPriorityOptIgnoreJoinTableListSetUpdateList
      */
     public function withWhere(\SqlSemantics\Statement\Model\MySql\Role\WhereClauseForm $where): self
     {
-        return new self($this->optLowPriority, $this->optIgnore, $this->joinTableList, $this->updateList, $where, $this->orderBy, $this->deleteLimitClause);
+        return new self($this->optLowPriority, $this->optIgnore, $this->joinTableList, $this->updateList, $where, $this->orderBy, $this->deleteLimitClause, $this->comments);
     }
 
     /**
@@ -98,7 +108,7 @@ final class UpdateWithUpdateSymOptLowPriorityOptIgnoreJoinTableListSetUpdateList
      */
     public function withOrderBy(\SqlSemantics\Statement\Model\MySql\Role\OptOrderClauseForm $orderBy): self
     {
-        return new self($this->optLowPriority, $this->optIgnore, $this->joinTableList, $this->updateList, $this->where, $orderBy, $this->deleteLimitClause);
+        return new self($this->optLowPriority, $this->optIgnore, $this->joinTableList, $this->updateList, $this->where, $orderBy, $this->deleteLimitClause, $this->comments);
     }
 
     /**
@@ -106,6 +116,14 @@ final class UpdateWithUpdateSymOptLowPriorityOptIgnoreJoinTableListSetUpdateList
      */
     public function withDeleteLimitClause(\SqlSemantics\Statement\Model\MySql\Role\DeleteLimitClauseForm $deleteLimitClause): self
     {
-        return new self($this->optLowPriority, $this->optIgnore, $this->joinTableList, $this->updateList, $this->where, $this->orderBy, $deleteLimitClause);
+        return new self($this->optLowPriority, $this->optIgnore, $this->joinTableList, $this->updateList, $this->where, $this->orderBy, $deleteLimitClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optLowPriority, $this->optIgnore, $this->joinTableList, $this->updateList, $this->where, $this->orderBy, $this->deleteLimitClause, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class RoleListWithRoleListRoleSpec_3aabdaf7 implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleList), 'The roleList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class RoleListWithRoleListRoleSpec_3aabdaf7 implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->roleList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->roleSpec->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class RoleListWithRoleListRoleSpec_3aabdaf7 implements \SqlSemantics\State
      */
     public function withRoleList(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleListForm $roleList): self
     {
-        return new self($roleList, $this->roleSpec);
+        return new self($roleList, $this->roleSpec, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class RoleListWithRoleListRoleSpec_3aabdaf7 implements \SqlSemantics\State
      */
     public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
     {
-        return new self($this->roleList, $roleSpec);
+        return new self($this->roleList, $roleSpec, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleList, $this->roleSpec, $comments);
     }
 }

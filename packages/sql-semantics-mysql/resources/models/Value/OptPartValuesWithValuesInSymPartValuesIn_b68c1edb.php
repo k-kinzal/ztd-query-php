@@ -17,10 +17,11 @@ final class OptPartValuesWithValuesInSymPartValuesIn_b68c1edb implements \SqlSem
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm $partValuesIn,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($partValuesIn), 'The partValuesIn must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class OptPartValuesWithValuesInSymPartValuesIn_b68c1edb implements \SqlSem
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('VALUES');
+        $writer->comments($this->comments, 1);
         $writer->append('IN');
+        $writer->comments($this->comments, 2);
         $this->partValuesIn->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class OptPartValuesWithValuesInSymPartValuesIn_b68c1edb implements \SqlSem
      */
     public function withPartValuesIn(\SqlSemantics\Statement\Model\MySql\Role\PartValuesInForm $partValuesIn): self
     {
-        return new self($partValuesIn);
+        return new self($partValuesIn, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->partValuesIn, $comments);
     }
 }

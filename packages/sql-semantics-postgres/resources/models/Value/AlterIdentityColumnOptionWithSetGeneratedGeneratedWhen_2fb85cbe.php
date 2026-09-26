@@ -17,10 +17,11 @@ final class AlterIdentityColumnOptionWithSetGeneratedGeneratedWhen_2fb85cbe impl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\GeneratedWhenForm $generatedWhen,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($generatedWhen), 'The generatedWhen must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class AlterIdentityColumnOptionWithSetGeneratedGeneratedWhen_2fb85cbe impl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SET');
+        $writer->comments($this->comments, 1);
         $writer->append('GENERATED');
+        $writer->comments($this->comments, 2);
         $this->generatedWhen->write($writer);
     }
 
@@ -40,6 +44,14 @@ final class AlterIdentityColumnOptionWithSetGeneratedGeneratedWhen_2fb85cbe impl
      */
     public function withGeneratedWhen(\SqlSemantics\Statement\Model\PostgreSql\Role\GeneratedWhenForm $generatedWhen): self
     {
-        return new self($generatedWhen);
+        return new self($generatedWhen, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->generatedWhen, $comments);
     }
 }

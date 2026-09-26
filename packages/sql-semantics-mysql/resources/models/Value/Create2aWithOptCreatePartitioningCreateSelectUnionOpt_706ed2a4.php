@@ -17,12 +17,13 @@ final class Create2aWithOptCreatePartitioningCreateSelectUnionOpt_706ed2a4 imple
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm $optCreatePartitioning,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optCreatePartitioning), 'The optCreatePartitioning must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createSelect), 'The createSelect must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class Create2aWithOptCreatePartitioningCreateSelectUnionOpt_706ed2a4 imple
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optCreatePartitioning->write($writer);
+        $writer->comments($this->comments, 1);
         $this->createSelect->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $this->unionOpt->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class Create2aWithOptCreatePartitioningCreateSelectUnionOpt_706ed2a4 imple
      */
     public function withOptCreatePartitioning(\SqlSemantics\Statement\Model\MySql\Role\OptCreatePartitioningForm $optCreatePartitioning): self
     {
-        return new self($optCreatePartitioning, $this->createSelect, $this->unionOpt);
+        return new self($optCreatePartitioning, $this->createSelect, $this->unionOpt, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class Create2aWithOptCreatePartitioningCreateSelectUnionOpt_706ed2a4 imple
      */
     public function withCreateSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect): self
     {
-        return new self($this->optCreatePartitioning, $createSelect, $this->unionOpt);
+        return new self($this->optCreatePartitioning, $createSelect, $this->unionOpt, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class Create2aWithOptCreatePartitioningCreateSelectUnionOpt_706ed2a4 imple
      */
     public function withUnionOpt(\SqlSemantics\Statement\Model\MySql\Role\UnionOptForm $unionOpt): self
     {
-        return new self($this->optCreatePartitioning, $this->createSelect, $unionOpt);
+        return new self($this->optCreatePartitioning, $this->createSelect, $unionOpt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optCreatePartitioning, $this->createSelect, $this->unionOpt, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class FilterDbListWithFilterDbListFilterDbIdent_f0ae01d2 implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbListForm $filterDbList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbList), 'The filterDbList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($filterDbIdent), 'The filterDbIdent must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class FilterDbListWithFilterDbListFilterDbIdent_f0ae01d2 implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->filterDbList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->filterDbIdent->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class FilterDbListWithFilterDbListFilterDbIdent_f0ae01d2 implements \SqlSe
      */
     public function withFilterDbList(\SqlSemantics\Statement\Model\MySql\Role\FilterDbListForm $filterDbList): self
     {
-        return new self($filterDbList, $this->filterDbIdent);
+        return new self($filterDbList, $this->filterDbIdent, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class FilterDbListWithFilterDbListFilterDbIdent_f0ae01d2 implements \SqlSe
      */
     public function withFilterDbIdent(\SqlSemantics\Statement\Model\MySql\Role\FilterDbIdentForm $filterDbIdent): self
     {
-        return new self($this->filterDbList, $filterDbIdent);
+        return new self($this->filterDbList, $filterDbIdent, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->filterDbList, $this->filterDbIdent, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class FuncExprCommonSubexprWithXmlexistsCExprXmlexistsArgument_0e9bf12f im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\XmlexistsArgumentForm $xmlexistsArgument,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($cExpr), 'The cExpr must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($xmlexistsArgument), 'The xmlexistsArgument must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class FuncExprCommonSubexprWithXmlexistsCExprXmlexistsArgument_0e9bf12f im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('XMLEXISTS');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->cExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $this->xmlexistsArgument->write($writer);
+        $writer->comments($this->comments, 4);
         $writer->append(')');
     }
 
@@ -44,7 +50,7 @@ final class FuncExprCommonSubexprWithXmlexistsCExprXmlexistsArgument_0e9bf12f im
      */
     public function withCExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\CExprForm $cExpr): self
     {
-        return new self($cExpr, $this->xmlexistsArgument);
+        return new self($cExpr, $this->xmlexistsArgument, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class FuncExprCommonSubexprWithXmlexistsCExprXmlexistsArgument_0e9bf12f im
      */
     public function withXmlexistsArgument(\SqlSemantics\Statement\Model\PostgreSql\Role\XmlexistsArgumentForm $xmlexistsArgument): self
     {
-        return new self($this->cExpr, $xmlexistsArgument);
+        return new self($this->cExpr, $xmlexistsArgument, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->cExpr, $this->xmlexistsArgument, $comments);
     }
 }

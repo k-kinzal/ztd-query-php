@@ -17,11 +17,12 @@ final class WsLevelListWithWsLevelListWsLevelListItem_637627eb implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelListForm $wsLevelList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelListItemForm $wsLevelListItem,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelList), 'The wsLevelList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelListItem), 'The wsLevelListItem must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class WsLevelListWithWsLevelListWsLevelListItem_637627eb implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->wsLevelList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->wsLevelListItem->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class WsLevelListWithWsLevelListWsLevelListItem_637627eb implements \SqlSe
      */
     public function withWsLevelList(\SqlSemantics\Statement\Model\MySql\Role\WsLevelListForm $wsLevelList): self
     {
-        return new self($wsLevelList, $this->wsLevelListItem);
+        return new self($wsLevelList, $this->wsLevelListItem, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class WsLevelListWithWsLevelListWsLevelListItem_637627eb implements \SqlSe
      */
     public function withWsLevelListItem(\SqlSemantics\Statement\Model\MySql\Role\WsLevelListItemForm $wsLevelListItem): self
     {
-        return new self($this->wsLevelList, $wsLevelListItem);
+        return new self($this->wsLevelList, $wsLevelListItem, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->wsLevelList, $this->wsLevelListItem, $comments);
     }
 }

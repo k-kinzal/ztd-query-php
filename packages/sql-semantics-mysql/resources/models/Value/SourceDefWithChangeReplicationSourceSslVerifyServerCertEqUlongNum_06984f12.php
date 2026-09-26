@@ -17,11 +17,12 @@ final class SourceDefWithChangeReplicationSourceSslVerifyServerCertEqUlongNum_06
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslVerifyServerCertForm $changeReplicationSourceSslVerifyServerCert,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($changeReplicationSourceSslVerifyServerCert), 'The changeReplicationSourceSslVerifyServerCert must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($ulongNum), 'The ulongNum must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SourceDefWithChangeReplicationSourceSslVerifyServerCertEqUlongNum_06
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->changeReplicationSourceSslVerifyServerCert->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('=');
+        $writer->comments($this->comments, 2);
         $this->ulongNum->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SourceDefWithChangeReplicationSourceSslVerifyServerCertEqUlongNum_06
      */
     public function withChangeReplicationSourceSslVerifyServerCert(\SqlSemantics\Statement\Model\MySql\Role\ChangeReplicationSourceSslVerifyServerCertForm $changeReplicationSourceSslVerifyServerCert): self
     {
-        return new self($changeReplicationSourceSslVerifyServerCert, $this->ulongNum);
+        return new self($changeReplicationSourceSslVerifyServerCert, $this->ulongNum, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SourceDefWithChangeReplicationSourceSslVerifyServerCertEqUlongNum_06
      */
     public function withUlongNum(\SqlSemantics\Statement\Model\MySql\Role\UlongNumForm $ulongNum): self
     {
-        return new self($this->changeReplicationSourceSslVerifyServerCert, $ulongNum);
+        return new self($this->changeReplicationSourceSslVerifyServerCert, $ulongNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->changeReplicationSourceSslVerifyServerCert, $this->ulongNum, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class StatsParamsWithStatsParamsStatsParam_1884e53d implements \SqlSemanti
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm $statsParam,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($statsParams), 'The statsParams must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($statsParam), 'The statsParam must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class StatsParamsWithStatsParamsStatsParam_1884e53d implements \SqlSemanti
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->statsParams->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->statsParam->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class StatsParamsWithStatsParamsStatsParam_1884e53d implements \SqlSemanti
      */
     public function withStatsParams(\SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamsForm $statsParams): self
     {
-        return new self($statsParams, $this->statsParam);
+        return new self($statsParams, $this->statsParam, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class StatsParamsWithStatsParamsStatsParam_1884e53d implements \SqlSemanti
      */
     public function withStatsParam(\SqlSemantics\Statement\Model\PostgreSql\Role\StatsParamForm $statsParam): self
     {
-        return new self($this->statsParams, $statsParam);
+        return new self($this->statsParams, $statsParam, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->statsParams, $this->statsParam, $comments);
     }
 }

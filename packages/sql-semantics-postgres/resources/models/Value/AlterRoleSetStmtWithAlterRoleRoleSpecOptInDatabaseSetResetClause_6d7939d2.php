@@ -17,12 +17,13 @@ final class AlterRoleSetStmtWithAlterRoleRoleSpecOptInDatabaseSetResetClause_6d7
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptInDatabaseForm $optInDatabase,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetResetClauseForm $setResetClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($roleSpec), 'The roleSpec must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optInDatabase), 'The optInDatabase must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class AlterRoleSetStmtWithAlterRoleRoleSpecOptInDatabaseSetResetClause_6d7
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ALTER');
+        $writer->comments($this->comments, 1);
         $writer->append('ROLE');
+        $writer->comments($this->comments, 2);
         $this->roleSpec->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optInDatabase->write($writer);
+        $writer->comments($this->comments, 4);
         $this->setResetClause->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class AlterRoleSetStmtWithAlterRoleRoleSpecOptInDatabaseSetResetClause_6d7
      */
     public function withRoleSpec(\SqlSemantics\Statement\Model\PostgreSql\Role\RoleSpecForm $roleSpec): self
     {
-        return new self($roleSpec, $this->optInDatabase, $this->setResetClause);
+        return new self($roleSpec, $this->optInDatabase, $this->setResetClause, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class AlterRoleSetStmtWithAlterRoleRoleSpecOptInDatabaseSetResetClause_6d7
      */
     public function withOptInDatabase(\SqlSemantics\Statement\Model\PostgreSql\Role\OptInDatabaseForm $optInDatabase): self
     {
-        return new self($this->roleSpec, $optInDatabase, $this->setResetClause);
+        return new self($this->roleSpec, $optInDatabase, $this->setResetClause, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class AlterRoleSetStmtWithAlterRoleRoleSpecOptInDatabaseSetResetClause_6d7
      */
     public function withSetResetClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SetResetClauseForm $setResetClause): self
     {
-        return new self($this->roleSpec, $this->optInDatabase, $setResetClause);
+        return new self($this->roleSpec, $this->optInDatabase, $setResetClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->roleSpec, $this->optInDatabase, $this->setResetClause, $comments);
     }
 }

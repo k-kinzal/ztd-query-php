@@ -17,12 +17,13 @@ final class RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 implements
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWorkForm $optWork,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptChainForm $optChain,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReleaseForm $optRelease,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWork), 'The optWork must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optChain), 'The optChain must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 implements
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ROLLBACK');
+        $writer->comments($this->comments, 1);
         $this->optWork->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optChain->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optRelease->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 implements
      */
     public function withOptWork(\SqlSemantics\Statement\Model\MySql\Role\OptWorkForm $optWork): self
     {
-        return new self($optWork, $this->optChain, $this->optRelease);
+        return new self($optWork, $this->optChain, $this->optRelease, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 implements
      */
     public function withOptChain(\SqlSemantics\Statement\Model\MySql\Role\OptChainForm $optChain): self
     {
-        return new self($this->optWork, $optChain, $this->optRelease);
+        return new self($this->optWork, $optChain, $this->optRelease, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class RollbackWithRollbackSymOptWorkOptChainOptRelease_6c2ebc58 implements
      */
     public function withOptRelease(\SqlSemantics\Statement\Model\MySql\Role\OptReleaseForm $optRelease): self
     {
-        return new self($this->optWork, $this->optChain, $optRelease);
+        return new self($this->optWork, $this->optChain, $optRelease, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optWork, $this->optChain, $this->optRelease, $comments);
     }
 }

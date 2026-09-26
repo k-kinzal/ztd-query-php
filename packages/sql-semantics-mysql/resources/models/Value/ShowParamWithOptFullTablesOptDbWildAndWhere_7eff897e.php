@@ -17,12 +17,13 @@ final class ShowParamWithOptFullTablesOptDbWildAndWhere_7eff897e implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFullForm $optFull,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optFull), 'The optFull must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optDb), 'The optDb must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class ShowParamWithOptFullTablesOptDbWildAndWhere_7eff897e implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->optFull->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('TABLES');
+        $writer->comments($this->comments, 2);
         $this->optDb->write($writer);
+        $writer->comments($this->comments, 3);
         $this->wildAndWhere->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class ShowParamWithOptFullTablesOptDbWildAndWhere_7eff897e implements \Sql
      */
     public function withOptFull(\SqlSemantics\Statement\Model\MySql\Role\OptFullForm $optFull): self
     {
-        return new self($optFull, $this->optDb, $this->wildAndWhere);
+        return new self($optFull, $this->optDb, $this->wildAndWhere, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class ShowParamWithOptFullTablesOptDbWildAndWhere_7eff897e implements \Sql
      */
     public function withOptDb(\SqlSemantics\Statement\Model\MySql\Role\OptDbForm $optDb): self
     {
-        return new self($this->optFull, $optDb, $this->wildAndWhere);
+        return new self($this->optFull, $optDb, $this->wildAndWhere, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class ShowParamWithOptFullTablesOptDbWildAndWhere_7eff897e implements \Sql
      */
     public function withWildAndWhere(\SqlSemantics\Statement\Model\MySql\Role\WildAndWhereForm $wildAndWhere): self
     {
-        return new self($this->optFull, $this->optDb, $wildAndWhere);
+        return new self($this->optFull, $this->optDb, $wildAndWhere, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optFull, $this->optDb, $this->wildAndWhere, $comments);
     }
 }

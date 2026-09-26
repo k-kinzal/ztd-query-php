@@ -17,10 +17,11 @@ final class DefinitionWithDefList_58dfa35f implements \SqlSemantics\Statement\Mo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm $defList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($defList), 'The defList must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class DefinitionWithDefList_58dfa35f implements \SqlSemantics\Statement\Mo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->defList->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
     }
 
@@ -40,6 +44,14 @@ final class DefinitionWithDefList_58dfa35f implements \SqlSemantics\Statement\Mo
      */
     public function withDefList(\SqlSemantics\Statement\Model\PostgreSql\Role\DefListForm $defList): self
     {
-        return new self($defList);
+        return new self($defList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->defList, $comments);
     }
 }

@@ -17,13 +17,14 @@ final class StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePas
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm $optReplacePassword,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($equal), 'The equal must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringPassword), 'The textStringPassword must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePas
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PASSWORD');
+        $writer->comments($this->comments, 1);
         $this->equal->write($writer);
+        $writer->comments($this->comments, 2);
         $this->textStringPassword->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optReplacePassword->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optRetainCurrentPassword->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePas
      */
     public function withEqual(\SqlSemantics\Statement\Model\MySql\Role\EqualForm $equal): self
     {
-        return new self($equal, $this->textStringPassword, $this->optReplacePassword, $this->optRetainCurrentPassword);
+        return new self($equal, $this->textStringPassword, $this->optReplacePassword, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePas
      */
     public function withTextStringPassword(\SqlSemantics\Statement\Model\MySql\Role\TextStringPasswordForm $textStringPassword): self
     {
-        return new self($this->equal, $textStringPassword, $this->optReplacePassword, $this->optRetainCurrentPassword);
+        return new self($this->equal, $textStringPassword, $this->optReplacePassword, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePas
      */
     public function withOptReplacePassword(\SqlSemantics\Statement\Model\MySql\Role\OptReplacePasswordForm $optReplacePassword): self
     {
-        return new self($this->equal, $this->textStringPassword, $optReplacePassword, $this->optRetainCurrentPassword);
+        return new self($this->equal, $this->textStringPassword, $optReplacePassword, $this->optRetainCurrentPassword, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class StartOptionValueListWithPasswordEqualTextStringPasswordOptReplacePas
      */
     public function withOptRetainCurrentPassword(\SqlSemantics\Statement\Model\MySql\Role\OptRetainCurrentPasswordForm $optRetainCurrentPassword): self
     {
-        return new self($this->equal, $this->textStringPassword, $this->optReplacePassword, $optRetainCurrentPassword);
+        return new self($this->equal, $this->textStringPassword, $this->optReplacePassword, $optRetainCurrentPassword, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->equal, $this->textStringPassword, $this->optReplacePassword, $this->optRetainCurrentPassword, $comments);
     }
 }

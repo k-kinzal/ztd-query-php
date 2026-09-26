@@ -17,10 +17,11 @@ final class CExprWithArrayArrayExpr_b9ae5efc implements \SqlSemantics\Statement\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ArrayExprForm $arrayExpr,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($arrayExpr), 'The arrayExpr must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class CExprWithArrayArrayExpr_b9ae5efc implements \SqlSemantics\Statement\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ARRAY');
+        $writer->comments($this->comments, 1);
         $this->arrayExpr->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class CExprWithArrayArrayExpr_b9ae5efc implements \SqlSemantics\Statement\
      */
     public function withArrayExpr(\SqlSemantics\Statement\Model\PostgreSql\Role\ArrayExprForm $arrayExpr): self
     {
-        return new self($arrayExpr);
+        return new self($arrayExpr, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->arrayExpr, $comments);
     }
 }

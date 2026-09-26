@@ -17,12 +17,13 @@ final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptEscapeForm $optEscape,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 8,  'mysql-5.7.44' => 9,));
@@ -35,9 +36,13 @@ final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('LIKE');
+        $writer->comments($this->comments, 2);
         $this->simpleExpr->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optEscape->write($writer);
     }
 
@@ -46,7 +51,7 @@ final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \Sql
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($bitExpr, $this->simpleExpr, $this->optEscape);
+        return new self($bitExpr, $this->simpleExpr, $this->optEscape, $this->comments);
     }
 
     /**
@@ -54,7 +59,7 @@ final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \Sql
      */
     public function withSimpleExpr(\SqlSemantics\Statement\Model\MySql\Role\SimpleExprForm $simpleExpr): self
     {
-        return new self($this->bitExpr, $simpleExpr, $this->optEscape);
+        return new self($this->bitExpr, $simpleExpr, $this->optEscape, $this->comments);
     }
 
     /**
@@ -62,6 +67,14 @@ final class PredicateWithBitExprLikeSimpleExprOptEscape_2697d22c implements \Sql
      */
     public function withOptEscape(\SqlSemantics\Statement\Model\MySql\Role\OptEscapeForm $optEscape): self
     {
-        return new self($this->bitExpr, $this->simpleExpr, $optEscape);
+        return new self($this->bitExpr, $this->simpleExpr, $optEscape, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bitExpr, $this->simpleExpr, $this->optEscape, $comments);
     }
 }

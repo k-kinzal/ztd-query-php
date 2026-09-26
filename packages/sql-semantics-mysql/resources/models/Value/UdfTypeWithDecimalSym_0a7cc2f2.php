@@ -17,10 +17,11 @@ final class UdfTypeWithDecimalSym_0a7cc2f2 implements \SqlSemantics\Statement\Mo
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $decimalSym,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($decimalSym, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['DECIMAL_SYM'], 'The decimalSym must be a complete DECIMAL_SYM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class UdfTypeWithDecimalSym_0a7cc2f2 implements \SqlSemantics\Statement\Mo
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->decimalSym);
     }
 
@@ -38,6 +40,14 @@ final class UdfTypeWithDecimalSym_0a7cc2f2 implements \SqlSemantics\Statement\Mo
      */
     public function withDecimalSym(string $decimalSym): self
     {
-        return new self($decimalSym);
+        return new self($decimalSym, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->decimalSym, $comments);
     }
 }

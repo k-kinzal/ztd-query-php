@@ -17,11 +17,12 @@ final class TypeWithEnumStringListOptBinary_a6e96516 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\StringListForm $stringList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($stringList), 'The stringList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optBinary), 'The optBinary must be a generated immutable SQL value.');
@@ -32,10 +33,15 @@ final class TypeWithEnumStringListOptBinary_a6e96516 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('ENUM');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->stringList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->optBinary->write($writer);
     }
 
@@ -44,7 +50,7 @@ final class TypeWithEnumStringListOptBinary_a6e96516 implements \SqlSemantics\St
      */
     public function withStringList(\SqlSemantics\Statement\Model\MySql\Role\StringListForm $stringList): self
     {
-        return new self($stringList, $this->optBinary);
+        return new self($stringList, $this->optBinary, $this->comments);
     }
 
     /**
@@ -52,6 +58,14 @@ final class TypeWithEnumStringListOptBinary_a6e96516 implements \SqlSemantics\St
      */
     public function withOptBinary(\SqlSemantics\Statement\Model\MySql\Role\OptBinaryForm $optBinary): self
     {
-        return new self($this->stringList, $optBinary);
+        return new self($this->stringList, $optBinary, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->stringList, $this->optBinary, $comments);
     }
 }

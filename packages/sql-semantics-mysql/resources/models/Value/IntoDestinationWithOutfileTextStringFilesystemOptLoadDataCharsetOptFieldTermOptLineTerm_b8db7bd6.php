@@ -17,13 +17,14 @@ final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptF
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLoadDataCharsetForm $optLoadDataCharset,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm $optFieldTerm,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm $optLineTerm,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($textStringFilesystem), 'The textStringFilesystem must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optLoadDataCharset), 'The optLoadDataCharset must be a generated immutable SQL value.');
@@ -36,10 +37,15 @@ final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptF
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('OUTFILE');
+        $writer->comments($this->comments, 1);
         $this->textStringFilesystem->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optLoadDataCharset->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optFieldTerm->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optLineTerm->write($writer);
     }
 
@@ -48,7 +54,7 @@ final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptF
      */
     public function withTextStringFilesystem(\SqlSemantics\Statement\Model\MySql\Role\TextStringFilesystemForm $textStringFilesystem): self
     {
-        return new self($textStringFilesystem, $this->optLoadDataCharset, $this->optFieldTerm, $this->optLineTerm);
+        return new self($textStringFilesystem, $this->optLoadDataCharset, $this->optFieldTerm, $this->optLineTerm, $this->comments);
     }
 
     /**
@@ -56,7 +62,7 @@ final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptF
      */
     public function withOptLoadDataCharset(\SqlSemantics\Statement\Model\MySql\Role\OptLoadDataCharsetForm $optLoadDataCharset): self
     {
-        return new self($this->textStringFilesystem, $optLoadDataCharset, $this->optFieldTerm, $this->optLineTerm);
+        return new self($this->textStringFilesystem, $optLoadDataCharset, $this->optFieldTerm, $this->optLineTerm, $this->comments);
     }
 
     /**
@@ -64,7 +70,7 @@ final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptF
      */
     public function withOptFieldTerm(\SqlSemantics\Statement\Model\MySql\Role\OptFieldTermForm $optFieldTerm): self
     {
-        return new self($this->textStringFilesystem, $this->optLoadDataCharset, $optFieldTerm, $this->optLineTerm);
+        return new self($this->textStringFilesystem, $this->optLoadDataCharset, $optFieldTerm, $this->optLineTerm, $this->comments);
     }
 
     /**
@@ -72,6 +78,14 @@ final class IntoDestinationWithOutfileTextStringFilesystemOptLoadDataCharsetOptF
      */
     public function withOptLineTerm(\SqlSemantics\Statement\Model\MySql\Role\OptLineTermForm $optLineTerm): self
     {
-        return new self($this->textStringFilesystem, $this->optLoadDataCharset, $this->optFieldTerm, $optLineTerm);
+        return new self($this->textStringFilesystem, $this->optLoadDataCharset, $this->optFieldTerm, $optLineTerm, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->textStringFilesystem, $this->optLoadDataCharset, $this->optFieldTerm, $this->optLineTerm, $comments);
     }
 }

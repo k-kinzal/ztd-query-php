@@ -17,12 +17,13 @@ final class PartElemWithColIdOptCollateOptQualifiedName_27de4c71 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optCollate), 'The optCollate must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class PartElemWithColIdOptCollateOptQualifiedName_27de4c71 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optCollate->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optQualifiedName->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class PartElemWithColIdOptCollateOptQualifiedName_27de4c71 implements \Sql
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($colId, $this->optCollate, $this->optQualifiedName);
+        return new self($colId, $this->optCollate, $this->optQualifiedName, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class PartElemWithColIdOptCollateOptQualifiedName_27de4c71 implements \Sql
      */
     public function withOptCollate(\SqlSemantics\Statement\Model\PostgreSql\Role\OptCollateForm $optCollate): self
     {
-        return new self($this->colId, $optCollate, $this->optQualifiedName);
+        return new self($this->colId, $optCollate, $this->optQualifiedName, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class PartElemWithColIdOptCollateOptQualifiedName_27de4c71 implements \Sql
      */
     public function withOptQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\OptQualifiedNameForm $optQualifiedName): self
     {
-        return new self($this->colId, $this->optCollate, $optQualifiedName);
+        return new self($this->colId, $this->optCollate, $optQualifiedName, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colId, $this->optCollate, $this->optQualifiedName, $comments);
     }
 }

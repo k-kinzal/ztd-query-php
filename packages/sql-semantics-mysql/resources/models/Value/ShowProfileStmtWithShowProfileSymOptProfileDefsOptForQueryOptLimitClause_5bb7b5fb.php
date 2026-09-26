@@ -17,12 +17,13 @@ final class ShowProfileStmtWithShowProfileSymOptProfileDefsOptForQueryOptLimitCl
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptProfileDefsForm $optProfileDefs,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptForQueryForm $optForQuery,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optProfileDefs), 'The optProfileDefs must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optForQuery), 'The optForQuery must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class ShowProfileStmtWithShowProfileSymOptProfileDefsOptForQueryOptLimitCl
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('SHOW');
+        $writer->comments($this->comments, 1);
         $writer->append('PROFILE');
+        $writer->comments($this->comments, 2);
         $this->optProfileDefs->write($writer);
+        $writer->comments($this->comments, 3);
         $this->optForQuery->write($writer);
+        $writer->comments($this->comments, 4);
         $this->optLimitClause->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class ShowProfileStmtWithShowProfileSymOptProfileDefsOptForQueryOptLimitCl
      */
     public function withOptProfileDefs(\SqlSemantics\Statement\Model\MySql\Role\OptProfileDefsForm $optProfileDefs): self
     {
-        return new self($optProfileDefs, $this->optForQuery, $this->optLimitClause);
+        return new self($optProfileDefs, $this->optForQuery, $this->optLimitClause, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class ShowProfileStmtWithShowProfileSymOptProfileDefsOptForQueryOptLimitCl
      */
     public function withOptForQuery(\SqlSemantics\Statement\Model\MySql\Role\OptForQueryForm $optForQuery): self
     {
-        return new self($this->optProfileDefs, $optForQuery, $this->optLimitClause);
+        return new self($this->optProfileDefs, $optForQuery, $this->optLimitClause, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class ShowProfileStmtWithShowProfileSymOptProfileDefsOptForQueryOptLimitCl
      */
     public function withOptLimitClause(\SqlSemantics\Statement\Model\MySql\Role\OptLimitClauseForm $optLimitClause): self
     {
-        return new self($this->optProfileDefs, $this->optForQuery, $optLimitClause);
+        return new self($this->optProfileDefs, $this->optForQuery, $optLimitClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optProfileDefs, $this->optForQuery, $this->optLimitClause, $comments);
     }
 }

@@ -17,11 +17,12 @@ final class VarListWithVarListVarValue_47a8198d implements \SqlSemantics\Stateme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm $varList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm $varValue,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($varList), 'The varList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($varValue), 'The varValue must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class VarListWithVarListVarValue_47a8198d implements \SqlSemantics\Stateme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->varList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->varValue->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class VarListWithVarListVarValue_47a8198d implements \SqlSemantics\Stateme
      */
     public function withVarList(\SqlSemantics\Statement\Model\PostgreSql\Role\VarListForm $varList): self
     {
-        return new self($varList, $this->varValue);
+        return new self($varList, $this->varValue, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class VarListWithVarListVarValue_47a8198d implements \SqlSemantics\Stateme
      */
     public function withVarValue(\SqlSemantics\Statement\Model\PostgreSql\Role\VarValueForm $varValue): self
     {
-        return new self($this->varList, $varValue);
+        return new self($this->varList, $varValue, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->varList, $this->varValue, $comments);
     }
 }

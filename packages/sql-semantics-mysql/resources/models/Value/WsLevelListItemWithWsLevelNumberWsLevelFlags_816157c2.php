@@ -17,11 +17,12 @@ final class WsLevelListItemWithWsLevelNumberWsLevelFlags_816157c2 implements \Sq
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelNumberForm $wsLevelNumber,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagsForm $wsLevelFlags,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelNumber), 'The wsLevelNumber must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($wsLevelFlags), 'The wsLevelFlags must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class WsLevelListItemWithWsLevelNumberWsLevelFlags_816157c2 implements \Sq
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->wsLevelNumber->write($writer);
+        $writer->comments($this->comments, 1);
         $this->wsLevelFlags->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class WsLevelListItemWithWsLevelNumberWsLevelFlags_816157c2 implements \Sq
      */
     public function withWsLevelNumber(\SqlSemantics\Statement\Model\MySql\Role\WsLevelNumberForm $wsLevelNumber): self
     {
-        return new self($wsLevelNumber, $this->wsLevelFlags);
+        return new self($wsLevelNumber, $this->wsLevelFlags, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class WsLevelListItemWithWsLevelNumberWsLevelFlags_816157c2 implements \Sq
      */
     public function withWsLevelFlags(\SqlSemantics\Statement\Model\MySql\Role\WsLevelFlagsForm $wsLevelFlags): self
     {
-        return new self($this->wsLevelNumber, $wsLevelFlags);
+        return new self($this->wsLevelNumber, $wsLevelFlags, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->wsLevelNumber, $this->wsLevelFlags, $comments);
     }
 }

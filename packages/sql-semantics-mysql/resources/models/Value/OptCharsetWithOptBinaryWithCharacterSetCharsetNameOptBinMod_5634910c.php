@@ -17,12 +17,13 @@ final class OptCharsetWithOptBinaryWithCharacterSetCharsetNameOptBinMod_5634910c
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($characterSet), 'The characterSet must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($charsetName), 'The charsetName must be a generated immutable SQL value.');
@@ -34,8 +35,11 @@ final class OptCharsetWithOptBinaryWithCharacterSetCharsetNameOptBinMod_5634910c
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->characterSet->write($writer);
+        $writer->comments($this->comments, 1);
         $this->charsetName->write($writer);
+        $writer->comments($this->comments, 2);
         $this->optBinMod->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class OptCharsetWithOptBinaryWithCharacterSetCharsetNameOptBinMod_5634910c
      */
     public function withCharacterSet(\SqlSemantics\Statement\Model\MySql\Role\CharacterSetForm $characterSet): self
     {
-        return new self($characterSet, $this->charsetName, $this->optBinMod);
+        return new self($characterSet, $this->charsetName, $this->optBinMod, $this->comments);
     }
 
     /**
@@ -52,7 +56,7 @@ final class OptCharsetWithOptBinaryWithCharacterSetCharsetNameOptBinMod_5634910c
      */
     public function withCharsetName(\SqlSemantics\Statement\Model\MySql\Role\CharsetNameForm $charsetName): self
     {
-        return new self($this->characterSet, $charsetName, $this->optBinMod);
+        return new self($this->characterSet, $charsetName, $this->optBinMod, $this->comments);
     }
 
     /**
@@ -60,6 +64,14 @@ final class OptCharsetWithOptBinaryWithCharacterSetCharsetNameOptBinMod_5634910c
      */
     public function withOptBinMod(\SqlSemantics\Statement\Model\MySql\Role\OptBinModForm $optBinMod): self
     {
-        return new self($this->characterSet, $this->charsetName, $optBinMod);
+        return new self($this->characterSet, $this->charsetName, $optBinMod, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->characterSet, $this->charsetName, $this->optBinMod, $comments);
     }
 }

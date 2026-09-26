@@ -17,13 +17,14 @@ final class IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsag
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexHintTypeForm $indexHintType,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IndexHintClauseForm $indexHintClause,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\KeyUsageListForm $keyUsageList,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($indexHintType), 'The indexHintType must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($keyOrIndex), 'The keyOrIndex must be a generated immutable SQL value.');
@@ -36,11 +37,17 @@ final class IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsag
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->indexHintType->write($writer);
+        $writer->comments($this->comments, 1);
         $this->keyOrIndex->write($writer);
+        $writer->comments($this->comments, 2);
         $this->indexHintClause->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->keyUsageList->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -49,7 +56,7 @@ final class IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsag
      */
     public function withIndexHintType(\SqlSemantics\Statement\Model\MySql\Role\IndexHintTypeForm $indexHintType): self
     {
-        return new self($indexHintType, $this->keyOrIndex, $this->indexHintClause, $this->keyUsageList);
+        return new self($indexHintType, $this->keyOrIndex, $this->indexHintClause, $this->keyUsageList, $this->comments);
     }
 
     /**
@@ -57,7 +64,7 @@ final class IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsag
      */
     public function withKeyOrIndex(\SqlSemantics\Statement\Model\MySql\Role\KeyOrIndexForm $keyOrIndex): self
     {
-        return new self($this->indexHintType, $keyOrIndex, $this->indexHintClause, $this->keyUsageList);
+        return new self($this->indexHintType, $keyOrIndex, $this->indexHintClause, $this->keyUsageList, $this->comments);
     }
 
     /**
@@ -65,7 +72,7 @@ final class IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsag
      */
     public function withIndexHintClause(\SqlSemantics\Statement\Model\MySql\Role\IndexHintClauseForm $indexHintClause): self
     {
-        return new self($this->indexHintType, $this->keyOrIndex, $indexHintClause, $this->keyUsageList);
+        return new self($this->indexHintType, $this->keyOrIndex, $indexHintClause, $this->keyUsageList, $this->comments);
     }
 
     /**
@@ -73,6 +80,14 @@ final class IndexHintDefinitionWithIndexHintTypeKeyOrIndexIndexHintClauseKeyUsag
      */
     public function withKeyUsageList(\SqlSemantics\Statement\Model\MySql\Role\KeyUsageListForm $keyUsageList): self
     {
-        return new self($this->indexHintType, $this->keyOrIndex, $this->indexHintClause, $keyUsageList);
+        return new self($this->indexHintType, $this->keyOrIndex, $this->indexHintClause, $keyUsageList, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->indexHintType, $this->keyOrIndex, $this->indexHintClause, $this->keyUsageList, $comments);
     }
 }

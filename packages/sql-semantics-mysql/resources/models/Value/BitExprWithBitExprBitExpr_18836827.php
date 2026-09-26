@@ -17,11 +17,12 @@ final class BitExprWithBitExprBitExpr_18836827 implements \SqlSemantics\Statemen
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($bitExpr), 'The bitExpr must be a generated immutable SQL value.');
         $this->assertOperandBindingStrength($bitExpr, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::BINDING_POWERS, array (  'mysql-5.6.51' => 12,  'mysql-5.7.44' => 13,  'mysql-8.0.44' => 18,  'mysql-8.1.0' => 18,  'mysql-8.2.0' => 18,  'mysql-8.3.0' => 18,  'mysql-8.4.7' => 18,  'mysql-9.0.1' => 18,  'mysql-9.1.0' => 18,));
@@ -34,8 +35,11 @@ final class BitExprWithBitExprBitExpr_18836827 implements \SqlSemantics\Statemen
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->bitExpr->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('+');
+        $writer->comments($this->comments, 2);
         $this->bitExpr2->write($writer);
     }
 
@@ -44,7 +48,7 @@ final class BitExprWithBitExprBitExpr_18836827 implements \SqlSemantics\Statemen
      */
     public function withBitExpr(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr): self
     {
-        return new self($bitExpr, $this->bitExpr2);
+        return new self($bitExpr, $this->bitExpr2, $this->comments);
     }
 
     /**
@@ -52,6 +56,14 @@ final class BitExprWithBitExprBitExpr_18836827 implements \SqlSemantics\Statemen
      */
     public function withBitExpr2(\SqlSemantics\Statement\Model\MySql\Role\BitExprForm $bitExpr2): self
     {
-        return new self($this->bitExpr, $bitExpr2);
+        return new self($this->bitExpr, $bitExpr2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->bitExpr, $this->bitExpr2, $comments);
     }
 }

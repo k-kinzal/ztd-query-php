@@ -17,11 +17,12 @@ final class GrantUserWithUserIdentifiedSymByTextString_46e8e039 implements \SqlS
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\UserForm $user,
         public readonly string $value,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($user), 'The user must be a generated immutable SQL value.');
         $this->assertMatchesPattern($value, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['TEXT_STRING'], 'The value must be a complete TEXT_STRING lexical spelling.');
@@ -32,9 +33,13 @@ final class GrantUserWithUserIdentifiedSymByTextString_46e8e039 implements \SqlS
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->user->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('IDENTIFIED');
+        $writer->comments($this->comments, 2);
         $writer->append('BY');
+        $writer->comments($this->comments, 3);
         $writer->append($this->value);
     }
 
@@ -43,7 +48,7 @@ final class GrantUserWithUserIdentifiedSymByTextString_46e8e039 implements \SqlS
      */
     public function withUser(\SqlSemantics\Statement\Model\MySql\Role\UserForm $user): self
     {
-        return new self($user, $this->value);
+        return new self($user, $this->value, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class GrantUserWithUserIdentifiedSymByTextString_46e8e039 implements \SqlS
      */
     public function withValue(string $value): self
     {
-        return new self($this->user, $value);
+        return new self($this->user, $value, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->user, $this->value, $comments);
     }
 }

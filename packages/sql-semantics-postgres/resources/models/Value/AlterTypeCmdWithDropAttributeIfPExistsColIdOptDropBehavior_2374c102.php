@@ -17,11 +17,12 @@ final class AlterTypeCmdWithDropAttributeIfPExistsColIdOptDropBehavior_2374c102 
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($colId), 'The colId must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($optDropBehavior), 'The optDropBehavior must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class AlterTypeCmdWithDropAttributeIfPExistsColIdOptDropBehavior_2374c102 
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DROP');
+        $writer->comments($this->comments, 1);
         $writer->append('ATTRIBUTE');
+        $writer->comments($this->comments, 2);
         $writer->append('IF');
+        $writer->comments($this->comments, 3);
         $writer->append('EXISTS');
+        $writer->comments($this->comments, 4);
         $this->colId->write($writer);
+        $writer->comments($this->comments, 5);
         $this->optDropBehavior->write($writer);
     }
 
@@ -45,7 +52,7 @@ final class AlterTypeCmdWithDropAttributeIfPExistsColIdOptDropBehavior_2374c102 
      */
     public function withColId(\SqlSemantics\Statement\Model\PostgreSql\Role\ColIdForm $colId): self
     {
-        return new self($colId, $this->optDropBehavior);
+        return new self($colId, $this->optDropBehavior, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class AlterTypeCmdWithDropAttributeIfPExistsColIdOptDropBehavior_2374c102 
      */
     public function withOptDropBehavior(\SqlSemantics\Statement\Model\PostgreSql\Role\OptDropBehaviorForm $optDropBehavior): self
     {
-        return new self($this->colId, $optDropBehavior);
+        return new self($this->colId, $optDropBehavior, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->colId, $this->optDropBehavior, $comments);
     }
 }

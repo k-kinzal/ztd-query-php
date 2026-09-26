@@ -17,12 +17,13 @@ final class SpDeclWithDeclareSymSpDeclIdentsTypeWithOptCollateSpOptDefault_0ec33
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpDeclIdentsForm $spDeclIdents,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\TypeWithOptCollateForm $typeWithOptCollate,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SpOptDefaultForm $spOptDefault,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($spDeclIdents), 'The spDeclIdents must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($typeWithOptCollate), 'The typeWithOptCollate must be a generated immutable SQL value.');
@@ -34,9 +35,13 @@ final class SpDeclWithDeclareSymSpDeclIdentsTypeWithOptCollateSpOptDefault_0ec33
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('DECLARE');
+        $writer->comments($this->comments, 1);
         $this->spDeclIdents->write($writer);
+        $writer->comments($this->comments, 2);
         $this->typeWithOptCollate->write($writer);
+        $writer->comments($this->comments, 3);
         $this->spOptDefault->write($writer);
     }
 
@@ -45,7 +50,7 @@ final class SpDeclWithDeclareSymSpDeclIdentsTypeWithOptCollateSpOptDefault_0ec33
      */
     public function withSpDeclIdents(\SqlSemantics\Statement\Model\MySql\Role\SpDeclIdentsForm $spDeclIdents): self
     {
-        return new self($spDeclIdents, $this->typeWithOptCollate, $this->spOptDefault);
+        return new self($spDeclIdents, $this->typeWithOptCollate, $this->spOptDefault, $this->comments);
     }
 
     /**
@@ -53,7 +58,7 @@ final class SpDeclWithDeclareSymSpDeclIdentsTypeWithOptCollateSpOptDefault_0ec33
      */
     public function withTypeWithOptCollate(\SqlSemantics\Statement\Model\MySql\Role\TypeWithOptCollateForm $typeWithOptCollate): self
     {
-        return new self($this->spDeclIdents, $typeWithOptCollate, $this->spOptDefault);
+        return new self($this->spDeclIdents, $typeWithOptCollate, $this->spOptDefault, $this->comments);
     }
 
     /**
@@ -61,6 +66,14 @@ final class SpDeclWithDeclareSymSpDeclIdentsTypeWithOptCollateSpOptDefault_0ec33
      */
     public function withSpOptDefault(\SqlSemantics\Statement\Model\MySql\Role\SpOptDefaultForm $spOptDefault): self
     {
-        return new self($this->spDeclIdents, $this->typeWithOptCollate, $spOptDefault);
+        return new self($this->spDeclIdents, $this->typeWithOptCollate, $spOptDefault, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->spDeclIdents, $this->typeWithOptCollate, $this->spOptDefault, $comments);
     }
 }

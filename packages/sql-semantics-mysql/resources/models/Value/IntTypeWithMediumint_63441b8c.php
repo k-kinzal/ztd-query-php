@@ -17,10 +17,11 @@ final class IntTypeWithMediumint_63441b8c implements \SqlSemantics\Statement\Mod
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $mediumint,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($mediumint, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['MEDIUMINT'], 'The mediumint must be a complete MEDIUMINT lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class IntTypeWithMediumint_63441b8c implements \SqlSemantics\Statement\Mod
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->mediumint);
     }
 
@@ -38,6 +40,14 @@ final class IntTypeWithMediumint_63441b8c implements \SqlSemantics\Statement\Mod
      */
     public function withMediumint(string $mediumint): self
     {
-        return new self($mediumint);
+        return new self($mediumint, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->mediumint, $comments);
     }
 }

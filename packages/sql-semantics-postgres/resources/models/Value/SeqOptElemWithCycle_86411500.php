@@ -15,10 +15,27 @@ namespace SqlSemantics\Statement\Model\PostgreSql\Value;
 final class SeqOptElemWithCycle_86411500 implements \SqlSemantics\Statement\Model\PostgreSql\Role\OptSeqOptListForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptElemForm, \SqlSemantics\Statement\Model\PostgreSql\Role\SeqOptListForm
 {
     /**
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
+     */
+    public function __construct(
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
+    ) {
+    }
+
+    /**
      * Writes SQL entirely from this value's fields.
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CYCLE');
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($comments);
     }
 }

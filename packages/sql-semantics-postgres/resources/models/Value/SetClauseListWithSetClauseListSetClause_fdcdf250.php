@@ -17,11 +17,12 @@ final class SetClauseListWithSetClauseListSetClause_fdcdf250 implements \SqlSema
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseForm $setClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setClauseList), 'The setClauseList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($setClause), 'The setClause must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class SetClauseListWithSetClauseListSetClause_fdcdf250 implements \SqlSema
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->setClauseList->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append(',');
+        $writer->comments($this->comments, 2);
         $this->setClause->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class SetClauseListWithSetClauseListSetClause_fdcdf250 implements \SqlSema
      */
     public function withSetClauseList(\SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseListForm $setClauseList): self
     {
-        return new self($setClauseList, $this->setClause);
+        return new self($setClauseList, $this->setClause, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class SetClauseListWithSetClauseListSetClause_fdcdf250 implements \SqlSema
      */
     public function withSetClause(\SqlSemantics\Statement\Model\PostgreSql\Role\SetClauseForm $setClause): self
     {
-        return new self($this->setClauseList, $setClause);
+        return new self($this->setClauseList, $setClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->setClauseList, $this->setClause, $comments);
     }
 }

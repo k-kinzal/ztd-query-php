@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql;
 
 use SqlParser\MySql\MySqlParser;
+use SqlParser\MySql\MySqlVersion;
 use SqlParser\Parser\SqlParser;
+use SqlSemantics\Core\Analysis\TriviaReader;
 use SqlSemantics\Core\Dialect;
 use SqlSemantics\Core\Platform as Contract;
 use SqlSemantics\Core\Policy;
@@ -37,7 +39,7 @@ final class Platform implements Contract
      */
     public function values(string $version): \SqlSemantics\Core\Analysis\ValueReader
     {
-        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php');
+        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php', new TriviaReader(executableVersion: MySqlVersion::resolve($version)->id()));
     }
 
     /**

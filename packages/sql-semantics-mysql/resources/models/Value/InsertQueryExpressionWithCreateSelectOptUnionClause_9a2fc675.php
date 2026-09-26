@@ -17,11 +17,12 @@ final class InsertQueryExpressionWithCreateSelectOptUnionClause_9a2fc675 impleme
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($createSelect), 'The createSelect must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optUnionClause), 'The optUnionClause must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class InsertQueryExpressionWithCreateSelectOptUnionClause_9a2fc675 impleme
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->createSelect->write($writer);
+        $writer->comments($this->comments, 1);
         $this->optUnionClause->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class InsertQueryExpressionWithCreateSelectOptUnionClause_9a2fc675 impleme
      */
     public function withCreateSelect(\SqlSemantics\Statement\Model\MySql\Role\CreateSelectForm $createSelect): self
     {
-        return new self($createSelect, $this->optUnionClause);
+        return new self($createSelect, $this->optUnionClause, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class InsertQueryExpressionWithCreateSelectOptUnionClause_9a2fc675 impleme
      */
     public function withOptUnionClause(\SqlSemantics\Statement\Model\MySql\Role\OptUnionClauseForm $optUnionClause): self
     {
-        return new self($this->createSelect, $optUnionClause);
+        return new self($this->createSelect, $optUnionClause, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->createSelect, $this->optUnionClause, $comments);
     }
 }

@@ -17,10 +17,11 @@ final class QueryExpressionParensWithQueryExpressionParens_830c0f99 implements \
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionParensForm $queryExpressionParens,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionParens), 'The queryExpressionParens must be a generated immutable SQL value.');
     }
@@ -30,8 +31,11 @@ final class QueryExpressionParensWithQueryExpressionParens_830c0f99 implements \
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->queryExpressionParens->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
     }
 
@@ -40,6 +44,14 @@ final class QueryExpressionParensWithQueryExpressionParens_830c0f99 implements \
      */
     public function withQueryExpressionParens(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionParensForm $queryExpressionParens): self
     {
-        return new self($queryExpressionParens);
+        return new self($queryExpressionParens, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->queryExpressionParens, $comments);
     }
 }

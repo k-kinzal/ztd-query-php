@@ -17,10 +17,11 @@ final class BeginWithBeginSymOptWork_609f10f0 implements \SqlSemantics\Statement
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\OptWorkForm $optWork,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($optWork), 'The optWork must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class BeginWithBeginSymOptWork_609f10f0 implements \SqlSemantics\Statement
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('BEGIN');
+        $writer->comments($this->comments, 1);
         $this->optWork->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class BeginWithBeginSymOptWork_609f10f0 implements \SqlSemantics\Statement
      */
     public function withOptWork(\SqlSemantics\Statement\Model\MySql\Role\OptWorkForm $optWork): self
     {
-        return new self($optWork);
+        return new self($optWork, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->optWork, $comments);
     }
 }

@@ -17,12 +17,13 @@ final class PrepareStmtWithPrepareNamePrepTypeClauseAsPreparableStmt_3ccc7742 im
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PrepTypeClauseForm $prepTypeClause,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm $preparableStmt,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($name), 'The name must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($prepTypeClause), 'The prepTypeClause must be a generated immutable SQL value.');
@@ -34,10 +35,15 @@ final class PrepareStmtWithPrepareNamePrepTypeClauseAsPreparableStmt_3ccc7742 im
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('PREPARE');
+        $writer->comments($this->comments, 1);
         $this->name->write($writer);
+        $writer->comments($this->comments, 2);
         $this->prepTypeClause->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append('AS');
+        $writer->comments($this->comments, 4);
         $this->preparableStmt->write($writer);
     }
 
@@ -46,7 +52,7 @@ final class PrepareStmtWithPrepareNamePrepTypeClauseAsPreparableStmt_3ccc7742 im
      */
     public function withName(\SqlSemantics\Statement\Model\PostgreSql\Role\NameForm $name): self
     {
-        return new self($name, $this->prepTypeClause, $this->preparableStmt);
+        return new self($name, $this->prepTypeClause, $this->preparableStmt, $this->comments);
     }
 
     /**
@@ -54,7 +60,7 @@ final class PrepareStmtWithPrepareNamePrepTypeClauseAsPreparableStmt_3ccc7742 im
      */
     public function withPrepTypeClause(\SqlSemantics\Statement\Model\PostgreSql\Role\PrepTypeClauseForm $prepTypeClause): self
     {
-        return new self($this->name, $prepTypeClause, $this->preparableStmt);
+        return new self($this->name, $prepTypeClause, $this->preparableStmt, $this->comments);
     }
 
     /**
@@ -62,6 +68,14 @@ final class PrepareStmtWithPrepareNamePrepTypeClauseAsPreparableStmt_3ccc7742 im
      */
     public function withPreparableStmt(\SqlSemantics\Statement\Model\PostgreSql\Role\PreparableStmtForm $preparableStmt): self
     {
-        return new self($this->name, $this->prepTypeClause, $preparableStmt);
+        return new self($this->name, $this->prepTypeClause, $preparableStmt, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->name, $this->prepTypeClause, $this->preparableStmt, $comments);
     }
 }

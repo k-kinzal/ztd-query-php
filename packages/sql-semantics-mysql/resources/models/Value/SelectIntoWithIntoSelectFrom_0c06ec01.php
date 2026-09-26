@@ -17,11 +17,12 @@ final class SelectIntoWithIntoSelectFrom_0c06ec01 implements \SqlSemantics\State
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\IntoForm $into,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\SelectFromForm $selectFrom,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($into), 'The into must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($selectFrom), 'The selectFrom must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class SelectIntoWithIntoSelectFrom_0c06ec01 implements \SqlSemantics\State
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->into->write($writer);
+        $writer->comments($this->comments, 1);
         $this->selectFrom->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class SelectIntoWithIntoSelectFrom_0c06ec01 implements \SqlSemantics\State
      */
     public function withInto(\SqlSemantics\Statement\Model\MySql\Role\IntoForm $into): self
     {
-        return new self($into, $this->selectFrom);
+        return new self($into, $this->selectFrom, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class SelectIntoWithIntoSelectFrom_0c06ec01 implements \SqlSemantics\State
      */
     public function withSelectFrom(\SqlSemantics\Statement\Model\MySql\Role\SelectFromForm $selectFrom): self
     {
-        return new self($this->into, $selectFrom);
+        return new self($this->into, $selectFrom, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->into, $this->selectFrom, $comments);
     }
 }

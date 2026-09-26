@@ -17,11 +17,12 @@ final class QueryExpressionOptionListWithQueryExpressionOptionListQueryExpressio
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionListForm $queryExpressionOptionList,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionForm $queryExpressionOption,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionOptionList), 'The queryExpressionOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($queryExpressionOption), 'The queryExpressionOption must be a generated immutable SQL value.');
@@ -32,7 +33,9 @@ final class QueryExpressionOptionListWithQueryExpressionOptionListQueryExpressio
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->queryExpressionOptionList->write($writer);
+        $writer->comments($this->comments, 1);
         $this->queryExpressionOption->write($writer);
     }
 
@@ -41,7 +44,7 @@ final class QueryExpressionOptionListWithQueryExpressionOptionListQueryExpressio
      */
     public function withQueryExpressionOptionList(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionListForm $queryExpressionOptionList): self
     {
-        return new self($queryExpressionOptionList, $this->queryExpressionOption);
+        return new self($queryExpressionOptionList, $this->queryExpressionOption, $this->comments);
     }
 
     /**
@@ -49,6 +52,14 @@ final class QueryExpressionOptionListWithQueryExpressionOptionListQueryExpressio
      */
     public function withQueryExpressionOption(\SqlSemantics\Statement\Model\MySql\Role\QueryExpressionOptionForm $queryExpressionOption): self
     {
-        return new self($this->queryExpressionOptionList, $queryExpressionOption);
+        return new self($this->queryExpressionOptionList, $queryExpressionOption, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->queryExpressionOptionList, $this->queryExpressionOption, $comments);
     }
 }

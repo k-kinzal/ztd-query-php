@@ -17,10 +17,11 @@ final class CallStmtWithCallFuncApplication_623111f0 implements \SqlSemantics\St
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\FuncApplicationForm $funcApplication,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($funcApplication), 'The funcApplication must be a generated immutable SQL value.');
     }
@@ -30,7 +31,9 @@ final class CallStmtWithCallFuncApplication_623111f0 implements \SqlSemantics\St
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CALL');
+        $writer->comments($this->comments, 1);
         $this->funcApplication->write($writer);
     }
 
@@ -39,6 +42,14 @@ final class CallStmtWithCallFuncApplication_623111f0 implements \SqlSemantics\St
      */
     public function withFuncApplication(\SqlSemantics\Statement\Model\PostgreSql\Role\FuncApplicationForm $funcApplication): self
     {
-        return new self($funcApplication);
+        return new self($funcApplication, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->funcApplication, $comments);
     }
 }

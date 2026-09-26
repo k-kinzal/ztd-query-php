@@ -17,11 +17,12 @@ final class GrantWithGrantClearPrivilegesGrantCommand_7560798e implements \SqlSe
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\GrantCommandForm $grantCommand,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($clearPrivileges), 'The clearPrivileges must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($grantCommand), 'The grantCommand must be a generated immutable SQL value.');
@@ -32,8 +33,11 @@ final class GrantWithGrantClearPrivilegesGrantCommand_7560798e implements \SqlSe
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('GRANT');
+        $writer->comments($this->comments, 1);
         $this->clearPrivileges->write($writer);
+        $writer->comments($this->comments, 2);
         $this->grantCommand->write($writer);
     }
 
@@ -42,7 +46,7 @@ final class GrantWithGrantClearPrivilegesGrantCommand_7560798e implements \SqlSe
      */
     public function withClearPrivileges(\SqlSemantics\Statement\Model\MySql\Role\ClearPrivilegesForm $clearPrivileges): self
     {
-        return new self($clearPrivileges, $this->grantCommand);
+        return new self($clearPrivileges, $this->grantCommand, $this->comments);
     }
 
     /**
@@ -50,6 +54,14 @@ final class GrantWithGrantClearPrivilegesGrantCommand_7560798e implements \SqlSe
      */
     public function withGrantCommand(\SqlSemantics\Statement\Model\MySql\Role\GrantCommandForm $grantCommand): self
     {
-        return new self($this->clearPrivileges, $grantCommand);
+        return new self($this->clearPrivileges, $grantCommand, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->clearPrivileges, $this->grantCommand, $comments);
     }
 }

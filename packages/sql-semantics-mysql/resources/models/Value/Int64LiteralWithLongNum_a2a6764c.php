@@ -17,10 +17,11 @@ final class Int64LiteralWithLongNum_a2a6764c implements \SqlSemantics\Statement\
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $longNum,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($longNum, \SqlSemantics\Statement\Model\MySql\Contract\Contracts::SPELLINGS['LONG_NUM'], 'The longNum must be a complete LONG_NUM lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class Int64LiteralWithLongNum_a2a6764c implements \SqlSemantics\Statement\
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->longNum);
     }
 
@@ -38,6 +40,14 @@ final class Int64LiteralWithLongNum_a2a6764c implements \SqlSemantics\Statement\
      */
     public function withLongNum(string $longNum): self
     {
-        return new self($longNum);
+        return new self($longNum, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->longNum, $comments);
     }
 }

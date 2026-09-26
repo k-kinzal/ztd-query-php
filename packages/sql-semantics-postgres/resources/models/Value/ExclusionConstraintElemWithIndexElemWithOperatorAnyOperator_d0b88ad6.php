@@ -17,11 +17,12 @@ final class ExclusionConstraintElemWithIndexElemWithOperatorAnyOperator_d0b88ad6
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemForm $indexElem,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm $anyOperator,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($indexElem), 'The indexElem must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($anyOperator), 'The anyOperator must be a generated immutable SQL value.');
@@ -32,11 +33,17 @@ final class ExclusionConstraintElemWithIndexElemWithOperatorAnyOperator_d0b88ad6
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->indexElem->write($writer);
+        $writer->comments($this->comments, 1);
         $writer->append('WITH');
+        $writer->comments($this->comments, 2);
         $writer->append('OPERATOR');
+        $writer->comments($this->comments, 3);
         $writer->append('(');
+        $writer->comments($this->comments, 4);
         $this->anyOperator->write($writer);
+        $writer->comments($this->comments, 5);
         $writer->append(')');
     }
 
@@ -45,7 +52,7 @@ final class ExclusionConstraintElemWithIndexElemWithOperatorAnyOperator_d0b88ad6
      */
     public function withIndexElem(\SqlSemantics\Statement\Model\PostgreSql\Role\IndexElemForm $indexElem): self
     {
-        return new self($indexElem, $this->anyOperator);
+        return new self($indexElem, $this->anyOperator, $this->comments);
     }
 
     /**
@@ -53,6 +60,14 @@ final class ExclusionConstraintElemWithIndexElemWithOperatorAnyOperator_d0b88ad6
      */
     public function withAnyOperator(\SqlSemantics\Statement\Model\PostgreSql\Role\AnyOperatorForm $anyOperator): self
     {
-        return new self($this->indexElem, $anyOperator);
+        return new self($this->indexElem, $anyOperator, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->indexElem, $this->anyOperator, $comments);
     }
 }

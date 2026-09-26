@@ -17,11 +17,12 @@ final class InsertFromConstructorWithFieldsInsertValues_aa046466 implements \Sql
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\MySql\Role\FieldsForm $fields,
         public readonly \SqlSemantics\Statement\Model\MySql\Role\InsertValuesForm $insertValues,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($fields), 'The fields must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\MySql\Contract\Contracts::contains($insertValues), 'The insertValues must be a generated immutable SQL value.');
@@ -32,9 +33,13 @@ final class InsertFromConstructorWithFieldsInsertValues_aa046466 implements \Sql
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('(');
+        $writer->comments($this->comments, 1);
         $this->fields->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append(')');
+        $writer->comments($this->comments, 3);
         $this->insertValues->write($writer);
     }
 
@@ -43,7 +48,7 @@ final class InsertFromConstructorWithFieldsInsertValues_aa046466 implements \Sql
      */
     public function withFields(\SqlSemantics\Statement\Model\MySql\Role\FieldsForm $fields): self
     {
-        return new self($fields, $this->insertValues);
+        return new self($fields, $this->insertValues, $this->comments);
     }
 
     /**
@@ -51,6 +56,14 @@ final class InsertFromConstructorWithFieldsInsertValues_aa046466 implements \Sql
      */
     public function withInsertValues(\SqlSemantics\Statement\Model\MySql\Role\InsertValuesForm $insertValues): self
     {
-        return new self($this->fields, $insertValues);
+        return new self($this->fields, $insertValues, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->fields, $this->insertValues, $comments);
     }
 }

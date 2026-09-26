@@ -17,10 +17,11 @@ final class UtilityOptionNameWithFormatLa_ea3d4370 implements \SqlSemantics\Stat
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly string $formatLa,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assertMatchesPattern($formatLa, \SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::SPELLINGS['FORMAT_LA'], 'The formatLa must be a complete FORMAT_LA lexical spelling.');
     }
@@ -30,6 +31,7 @@ final class UtilityOptionNameWithFormatLa_ea3d4370 implements \SqlSemantics\Stat
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append($this->formatLa);
     }
 
@@ -38,6 +40,14 @@ final class UtilityOptionNameWithFormatLa_ea3d4370 implements \SqlSemantics\Stat
      */
     public function withFormatLa(string $formatLa): self
     {
-        return new self($formatLa);
+        return new self($formatLa, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->formatLa, $comments);
     }
 }

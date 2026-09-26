@@ -17,12 +17,13 @@ final class ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpec
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName,
         public readonly \SqlSemantics\Statement\Model\PostgreSql\Role\ClusterIndexSpecificationForm $clusterIndexSpecification,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($utilityOptionList), 'The utilityOptionList must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\PostgreSql\Contract\Contracts::contains($qualifiedName), 'The qualifiedName must be a generated immutable SQL value.');
@@ -34,11 +35,17 @@ final class ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpec
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $writer->append('CLUSTER');
+        $writer->comments($this->comments, 1);
         $writer->append('(');
+        $writer->comments($this->comments, 2);
         $this->utilityOptionList->write($writer);
+        $writer->comments($this->comments, 3);
         $writer->append(')');
+        $writer->comments($this->comments, 4);
         $this->qualifiedName->write($writer);
+        $writer->comments($this->comments, 5);
         $this->clusterIndexSpecification->write($writer);
     }
 
@@ -47,7 +54,7 @@ final class ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpec
      */
     public function withUtilityOptionList(\SqlSemantics\Statement\Model\PostgreSql\Role\UtilityOptionListForm $utilityOptionList): self
     {
-        return new self($utilityOptionList, $this->qualifiedName, $this->clusterIndexSpecification);
+        return new self($utilityOptionList, $this->qualifiedName, $this->clusterIndexSpecification, $this->comments);
     }
 
     /**
@@ -55,7 +62,7 @@ final class ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpec
      */
     public function withQualifiedName(\SqlSemantics\Statement\Model\PostgreSql\Role\QualifiedNameForm $qualifiedName): self
     {
-        return new self($this->utilityOptionList, $qualifiedName, $this->clusterIndexSpecification);
+        return new self($this->utilityOptionList, $qualifiedName, $this->clusterIndexSpecification, $this->comments);
     }
 
     /**
@@ -63,6 +70,14 @@ final class ClusterStmtWithClusterUtilityOptionListQualifiedNameClusterIndexSpec
      */
     public function withClusterIndexSpecification(\SqlSemantics\Statement\Model\PostgreSql\Role\ClusterIndexSpecificationForm $clusterIndexSpecification): self
     {
-        return new self($this->utilityOptionList, $this->qualifiedName, $clusterIndexSpecification);
+        return new self($this->utilityOptionList, $this->qualifiedName, $clusterIndexSpecification, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->utilityOptionList, $this->qualifiedName, $this->clusterIndexSpecification, $comments);
     }
 }

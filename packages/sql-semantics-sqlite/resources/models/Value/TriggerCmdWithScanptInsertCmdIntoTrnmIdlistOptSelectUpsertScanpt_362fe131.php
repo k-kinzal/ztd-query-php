@@ -17,7 +17,7 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
     use \SqlSemantics\Statement\Assertion;
 
     /**
-     * Supplies the SQL values of this form.
+     * Supplies the SQL values of this form; comments are kept by the position of the symbol each precedes.
      */
     public function __construct(
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt,
@@ -27,6 +27,7 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm $upsert,
         public readonly \SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt2,
+        public readonly \SqlSemantics\Statement\Comments $comments = new \SqlSemantics\Statement\Comments(),
     ) {
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($scanpt), 'The scanpt must be a generated immutable SQL value.');
         $this->assert(\SqlSemantics\Statement\Model\Sqlite\Contract\Contracts::contains($insertCmd), 'The insertCmd must be a generated immutable SQL value.');
@@ -42,13 +43,21 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
      */
     public function write(\SqlSemantics\Statement\Writer $writer): void
     {
+        $writer->comments($this->comments, 0);
         $this->scanpt->write($writer);
+        $writer->comments($this->comments, 1);
         $this->insertCmd->write($writer);
+        $writer->comments($this->comments, 2);
         $writer->append('INTO');
+        $writer->comments($this->comments, 3);
         $this->trnm->write($writer);
+        $writer->comments($this->comments, 4);
         $this->idlistOpt->write($writer);
+        $writer->comments($this->comments, 5);
         $this->select->write($writer);
+        $writer->comments($this->comments, 6);
         $this->upsert->write($writer);
+        $writer->comments($this->comments, 7);
         $this->scanpt2->write($writer);
     }
 
@@ -57,7 +66,7 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
      */
     public function withScanpt(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt): self
     {
-        return new self($scanpt, $this->insertCmd, $this->trnm, $this->idlistOpt, $this->select, $this->upsert, $this->scanpt2);
+        return new self($scanpt, $this->insertCmd, $this->trnm, $this->idlistOpt, $this->select, $this->upsert, $this->scanpt2, $this->comments);
     }
 
     /**
@@ -65,7 +74,7 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
      */
     public function withInsertCmd(\SqlSemantics\Statement\Model\Sqlite\Role\InsertCmdForm $insertCmd): self
     {
-        return new self($this->scanpt, $insertCmd, $this->trnm, $this->idlistOpt, $this->select, $this->upsert, $this->scanpt2);
+        return new self($this->scanpt, $insertCmd, $this->trnm, $this->idlistOpt, $this->select, $this->upsert, $this->scanpt2, $this->comments);
     }
 
     /**
@@ -73,7 +82,7 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
      */
     public function withTrnm(\SqlSemantics\Statement\Model\Sqlite\Role\TrnmForm $trnm): self
     {
-        return new self($this->scanpt, $this->insertCmd, $trnm, $this->idlistOpt, $this->select, $this->upsert, $this->scanpt2);
+        return new self($this->scanpt, $this->insertCmd, $trnm, $this->idlistOpt, $this->select, $this->upsert, $this->scanpt2, $this->comments);
     }
 
     /**
@@ -81,7 +90,7 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
      */
     public function withIdlistOpt(\SqlSemantics\Statement\Model\Sqlite\Role\IdlistOptForm $idlistOpt): self
     {
-        return new self($this->scanpt, $this->insertCmd, $this->trnm, $idlistOpt, $this->select, $this->upsert, $this->scanpt2);
+        return new self($this->scanpt, $this->insertCmd, $this->trnm, $idlistOpt, $this->select, $this->upsert, $this->scanpt2, $this->comments);
     }
 
     /**
@@ -89,7 +98,7 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
      */
     public function withSelect(\SqlSemantics\Statement\Model\Sqlite\Role\SelectForm $select): self
     {
-        return new self($this->scanpt, $this->insertCmd, $this->trnm, $this->idlistOpt, $select, $this->upsert, $this->scanpt2);
+        return new self($this->scanpt, $this->insertCmd, $this->trnm, $this->idlistOpt, $select, $this->upsert, $this->scanpt2, $this->comments);
     }
 
     /**
@@ -97,7 +106,7 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
      */
     public function withUpsert(\SqlSemantics\Statement\Model\Sqlite\Role\UpsertForm $upsert): self
     {
-        return new self($this->scanpt, $this->insertCmd, $this->trnm, $this->idlistOpt, $this->select, $upsert, $this->scanpt2);
+        return new self($this->scanpt, $this->insertCmd, $this->trnm, $this->idlistOpt, $this->select, $upsert, $this->scanpt2, $this->comments);
     }
 
     /**
@@ -105,6 +114,14 @@ final class TriggerCmdWithScanptInsertCmdIntoTrnmIdlistOptSelectUpsertScanpt_362
      */
     public function withScanpt2(\SqlSemantics\Statement\Model\Sqlite\Role\ScanptForm $scanpt2): self
     {
-        return new self($this->scanpt, $this->insertCmd, $this->trnm, $this->idlistOpt, $this->select, $this->upsert, $scanpt2);
+        return new self($this->scanpt, $this->insertCmd, $this->trnm, $this->idlistOpt, $this->select, $this->upsert, $scanpt2, $this->comments);
+    }
+
+    /**
+     * Returns a copy with a new comments, preserving every other field.
+     */
+    public function withComments(\SqlSemantics\Statement\Comments $comments): self
+    {
+        return new self($this->scanpt, $this->insertCmd, $this->trnm, $this->idlistOpt, $this->select, $this->upsert, $this->scanpt2, $comments);
     }
 }
