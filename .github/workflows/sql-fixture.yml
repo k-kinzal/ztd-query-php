@@ -34,7 +34,7 @@ jobs:
     name: Test (PHP ${{ matrix.php }})
     services:
       mysql:
-        image: container-registry.oracle.com/mysql/community-server:8.4.7
+        image: container-registry.oracle.com/mysql/community-server:8.4.12
         env:
           MYSQL_ROOT_PASSWORD: toolkit
           MYSQL_ROOT_HOST: '%'
@@ -44,7 +44,7 @@ jobs:
           --health-cmd="mysqladmin ping -h 127.0.0.1 -ptoolkit"
           --health-interval=10s --health-timeout=5s --health-retries=12
       postgres:
-        image: postgres:17.2
+        image: postgres:17.11
         env:
           POSTGRES_PASSWORD: toolkit
           POSTGRES_DB: sql_fixture
