@@ -64,9 +64,6 @@ The repository is also an experiment in how AI agents can build something this c
 - [packages/sql-faker/docs/algorithm.md](packages/sql-faker/docs/algorithm.md) - How SQL is derived from the official grammars, and its limitations
 - [packages/sql-fixture/README.md](packages/sql-fixture/README.md) - Generating fixture data from CREATE TABLE statements, databases, or DDL files
 - [packages/sql-formatter/README.md](packages/sql-formatter/README.md) - Formatting SQL with layout presets: installation and usage
-- [packages/sql-formatter/docs/design.md](packages/sql-formatter/docs/design.md) - Formatter design and why it builds on sql-parser
-- [packages/sql-formatter/docs/verification.md](packages/sql-formatter/docs/verification.md) - How formatting output and equivalence are verified
-- [packages/sql-formatter/fuzz/README.md](packages/sql-formatter/fuzz/README.md) - Format and equivalence fuzz targets per database
 - [packages/sql-parser/README.md](packages/sql-parser/README.md) - Lossless LALR(1) SQL parsers built from the official grammars
 - [packages/sql-parser/docs/architecture.md](packages/sql-parser/docs/architecture.md) - The layers from grammar to parse table to syntax tree
 - [packages/sql-parser/docs/usage.md](packages/sql-parser/docs/usage.md) - Parsing, tokenizing, and working with the syntax tree
